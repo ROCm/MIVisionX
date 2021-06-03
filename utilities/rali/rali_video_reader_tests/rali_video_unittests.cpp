@@ -249,20 +249,7 @@ int main(int argc, const char **argv)
         count++;
         if (raliRun(handle) != 0)
             break;
-        if (enable_metadata)
-        {
-            raliGetImageLabels(handle, label_id);
-            int img_size = raliGetImageNameLen(handle, image_name_length);
-            char img_name[img_size];
-            raliGetImageName(handle, img_name);
 
-            std::cout << "\nPrinting image names of batch: " << img_name << "\n";
-            for (int i = 0; i < input_batch_size; i++)
-            {
-                std::cout << "\t Printing label_id : " << label_id[i * sequence_length] << std::endl;
-                std::cout << "\n";
-            }
-        }
         if (raliGetIntValue(color_temp_adj) <= -99 || raliGetIntValue(color_temp_adj) >= 99)
             color_temp_increment *= -1;
 
@@ -284,6 +271,34 @@ int main(int argc, const char **argv)
             cv::imwrite("output.png", mat_output);
         }
         // cv::waitKey(1);
+        if (enable_metadata)
+        {
+            raliGetImageLabels(handle, label_id);
+            int img_size = raliGetImageNameLen(handle, image_name_length);
+            char img_name[img_size];
+            raliGetImageName(handle, img_name);
+
+            std::cout << "\nPrinting image names of batch: " << img_name << "\n";
+            for (int i = 0; i < 1; i++)
+            {
+                std::cout << "\t Printing label_id : " << label_id[i * sequence_length] << std::endl;
+                std::cout << "\n";
+            }
+        }
+        // Add API to get size;
+        unsigned int start_frame_num[input_batch_size];
+        float frame_timestamps[input_batch_size * sequence_length];
+        raliGetSequenceStartFrameNumber(handle, start_frame_num);
+        raliGetSequenceFrameTimestamps(handle, frame_timestamps);
+        for (int i = 0; i < input_batch_size; i++)
+        {
+            std::cout << "\nFrame number : " << start_frame_num[i] << std::endl;
+            for (int j = 0; j < sequence_length; j++)
+            {
+                std::cout << "T" << j << " : " << frame_timestamps[(i * sequence_length) + j] << "\t";
+            }
+            std::cout << "\n";
+        }
         col_counter = (col_counter + 1) % number_of_cols;
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();

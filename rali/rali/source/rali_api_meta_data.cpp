@@ -336,3 +336,30 @@ RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext p_context, const char
 
 }
 
+void
+RALI_API_CALL raliGetSequenceStartFrameNumber(RaliContext p_context,  unsigned int* buf)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliGetSequenceStartFrameNumber")
+    auto context = static_cast<Context*>(p_context);
+    std::vector<size_t> sequence_start_frame = context->master_graph->sequence_start_frame_number();
+    for (unsigned int i = 0; i < sequence_start_frame.size(); i++)
+    {
+        buf[i] = sequence_start_frame[i];
+    }
+}
+
+void
+RALI_API_CALL raliGetSequenceFrameTimestamps(RaliContext p_context,  float* buf)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliGetSequenceFrameTimestamps")
+    auto context = static_cast<Context*>(p_context);
+    std::vector<std::vector<float>> sequence_frame_timestamps = context->master_graph->sequence_frame_timestamps();
+    for (unsigned int i = 0; i < sequence_frame_timestamps.size(); i++)
+    {
+        for (unsigned int j = 0; j < sequence_frame_timestamps[i].size(); j++)
+            buf[(i * sequence_frame_timestamps[i].size())  + j] = sequence_frame_timestamps[i][j];
+    }
+}
+

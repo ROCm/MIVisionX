@@ -44,6 +44,7 @@ public:
     {
        _video_process_count = (video_count <= _max_video_count)? video_count: _max_video_count;
     }
+    float convert_framenum_to_timestamp(size_t frame_number, int video_index);
 
     //! Loads a decompressed batch of images into the buffer indicated by buff
     /// \param buff User's buffer provided to be filled with decoded image samples
@@ -62,6 +63,8 @@ public:
             std::vector<uint32_t> &roi_height,
             std::vector<uint32_t> &actual_width,
             std::vector<uint32_t> &actual_height,
+            std::vector<size_t> &sequence_start_framenum,
+            std::vector<std::vector<float>> &sequence_frame_timestamps,
             RaliColorFormat output_color_format);
 
     //! returns timing info or other status information
@@ -102,6 +105,7 @@ private:
     size_t _stride;
     size_t _video_count; // based on video_count
     size_t _frame_count;
+    std::vector<size_t> _frame_rate;
     VideoDecoderConfig _video_decoder_config;
     bool decoder_keep_original;
 };

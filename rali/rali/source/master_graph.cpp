@@ -306,6 +306,24 @@ MasterGraph::output_height()
     return _output_image_info.height_batch()*_user_to_internal_batch_ratio;
 }
 
+std::vector<size_t>
+MasterGraph::sequence_start_frame_number()
+{
+    std::vector<size_t> sequence_start_framenum;
+    sequence_start_framenum = _sequence_start_framenum_vec.back();
+    _sequence_start_framenum_vec.pop_back();
+    return sequence_start_framenum;
+}
+
+std::vector<std::vector<float>>
+MasterGraph::sequence_frame_timestamps()
+{
+    std::vector<std::vector<float>> sequence_frame_timestamp;
+    sequence_frame_timestamp = _sequence_frame_timestamps_vec.back();
+    _sequence_frame_timestamps_vec.pop_back();
+    return sequence_frame_timestamp;
+}
+
 MasterGraph::Status
 MasterGraph::allocate_output_tensor()
 {
@@ -352,6 +370,8 @@ MasterGraph::reset()
     if(is_video_loader())
     {
         _video_loader_module->reset();
+        _sequence_start_framenum_vec.clear();
+        _sequence_frame_timestamps_vec.clear();
     }
     else
     {
@@ -700,6 +720,18 @@ ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
     return dest;
 }
 
+std::vector<size_t>& operator+=(std::vector<size_t>& dest, const std::vector<size_t>& src)
+{
+    dest.insert(dest.end(), src.cbegin(), src.cend());
+    return dest;
+}
+
+std::vector<std::vector<float>>& operator+=(std::vector<std::vector<float>>& dest, const std::vector<std::vector<float>>& src)
+{
+    dest.insert(dest.end(), src.cbegin(), src.cend());
+    return dest;
+}
+
 void MasterGraph::output_routine()
 {
     INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
@@ -714,6 +746,8 @@ void MasterGraph::output_routine()
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
             pMetaDataBatch augmented_batch_meta_data = nullptr;
+            std::vector<size_t> full_batch_sequence_start_frame_number = {};
+            std::vector<std::vector<float>> full_batch_sequence_frame_timestamps = {};
             size_t _count ;
             if(is_video_loader())
             {
@@ -762,10 +796,16 @@ void MasterGraph::output_routine()
 
                 decoded_image_info decode_image_info;
                 std::vector<std::string> this_cycle_names;
+                std::vector<size_t> sequence_start_framenum;
+                std::vector<std::vector<float>> sequence_frame_timestamp;
                 if(is_video_loader())
                 {
                     this_cycle_names = _video_loader_module->get_id();
                     decode_image_info = _video_loader_module->get_decode_image_info();
+                    sequence_start_framenum = _video_loader_module->get_sequence_start_frame_number();
+                    sequence_frame_timestamp = _video_loader_module->get_sequence_frame_timestamps();
+                    full_batch_sequence_start_frame_number += sequence_start_framenum;
+                    full_batch_sequence_frame_timestamps += sequence_frame_timestamp;
                 }
                 else
                 {
@@ -833,6 +873,8 @@ void MasterGraph::output_routine()
                 _process_time.end();
             }
 
+            _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), full_batch_sequence_start_frame_number);
+            _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), full_batch_sequence_frame_timestamps);
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
             _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
 

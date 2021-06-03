@@ -461,7 +461,7 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
                                                         bool is_output = false,
                                                         bool loop = false, 
                                                         const char* text_file_path = NULL,
-                                                        bool file_list_frame_num = true,
+                                                        bool file_list_frame_num = true
                                                         );
 
 extern "C"  RaliImage  RALI_API_CALL raliVideoFileResize(RaliContext context,
@@ -477,7 +477,7 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileResize(RaliContext context,
                                                         bool is_output = false,
                                                         bool loop = false,
                                                         const char* text_file_path = NULL,
-                                                        bool file_list_frame_num = true,
+                                                        bool file_list_frame_num = true
                                                         );
 
 extern "C"  RaliImage  RALI_API_CALL raliVideoFileSourceSingleShard(RaliContext context,

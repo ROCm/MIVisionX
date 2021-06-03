@@ -1532,6 +1532,7 @@ raliVideoFileSource(
         const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frame_count;
+        std::vector<size_t> frame_rate;
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame;
 
@@ -1548,9 +1549,11 @@ raliVideoFileSource(
         height = video_prop.height ;
         number_of_video_files = video_prop.videos_count;
         frame_count.resize(number_of_video_files);
+        frame_rate.resize(number_of_video_files);
         video_file_names.resize(number_of_video_files);
         start_end_frame.resize(number_of_video_files);
         frame_count = video_prop.frames_count;
+        frame_rate = video_prop.frame_rate;
         video_file_names = video_prop.video_file_names;
         start_end_frame = video_prop.start_end_frame_num;
         std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
@@ -1576,6 +1579,7 @@ raliVideoFileSource(
                                                                           stride,
                                                                           number_of_video_files,
                                                                           frame_count,
+                                                                          frame_rate,
                                                                           start_end_frame,
                                                                           shuffle,
                                                                           loop,
@@ -1642,6 +1646,7 @@ raliVideoFileResize(
         const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frame_count;
+        std::vector<size_t> frame_rate;
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame;
         
@@ -1659,6 +1664,7 @@ raliVideoFileResize(
         video_file_names.resize(number_of_video_files);
         start_end_frame.resize(number_of_video_files);
         frame_count = video_prop.frames_count;
+        frame_rate = video_prop.frame_rate;
         video_file_names = video_prop.video_file_names;
         start_end_frame = video_prop.start_end_frame_num;
         std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
@@ -1690,6 +1696,7 @@ raliVideoFileResize(
                                                                           stride,
                                                                           number_of_video_files,
                                                                           frame_count,
+                                                                          frame_rate,
                                                                           start_end_frame,
                                                                           shuffle,
                                                                           loop,

@@ -50,6 +50,8 @@ public:
     VideoLoaderModuleStatus set_cpu_sched_policy(struct sched_param sched_policy);
     std::vector<std::string> get_id() override;
     decoded_image_info get_decode_image_info() override;
+    std::vector<size_t> get_sequence_start_frame_number();
+    std::vector<std::vector<float>> get_sequence_frame_timestamps();
 private:
     bool is_out_of_data();
     void de_init();
@@ -76,6 +78,10 @@ private:
     size_t _image_counter = 0;//!< How many images have been loaded already
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
     bool _decoder_keep_original = false;
+    std::vector<std::vector<size_t>> _sequence_start_framenum_vec;
+    std::vector<std::vector<std::vector<float>>> _sequence_frame_timestamps_vec;
+    std::vector<size_t> _sequence_start_framenum;
+    std::vector<std::vector<float>> _sequence_frame_timestamps;
 };
 
 #endif

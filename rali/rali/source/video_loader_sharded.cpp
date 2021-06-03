@@ -143,6 +143,20 @@ void VideoLoaderSharded::increment_loader_idx()
     _loader_idx = (_loader_idx + 1)%_shard_count;
 }
 
+std::vector<size_t> VideoLoaderSharded::get_sequence_start_frame_number()
+{
+    if(!_initialized)
+        THROW("get_sequence_start_frame_number() should be called after initialize() function");
+    return _loaders[_loader_idx]->get_sequence_start_frame_number();
+}
+
+std::vector<std::vector<float>> VideoLoaderSharded::get_sequence_frame_timestamps()
+{
+    if(!_initialized)
+        THROW("get_sequence_frame_timestamps() should be called after initialize() function");
+    return _loaders[_loader_idx]->get_sequence_frame_timestamps();
+}
+
 Timing VideoLoaderSharded::timing()
 {
     Timing t;

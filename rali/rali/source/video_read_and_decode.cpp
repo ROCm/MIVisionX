@@ -77,6 +77,7 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     _stride = reader_config.get_frame_stride();
     _video_count = reader_config.get_video_count();
     _video_names = reader_config.get_video_file_names();
+    _frame_rate = reader_config.get_video_frame_rate();
     _batch_size = batch_size;
     set_video_process_count(_video_count);
     std::cerr<<"\n _sequence_length ::"<<_sequence_length;
@@ -136,6 +137,14 @@ VideoReadAndDecode::count()
     return _reader->count();
 }
 
+float
+VideoReadAndDecode::convert_framenum_to_timestamp(size_t frame_number, int video_index)
+{
+    float timestamp;
+    timestamp = (float)frame_number / _frame_rate[video_index];
+    return timestamp;
+}
+
 VideoLoaderModuleStatus
 VideoReadAndDecode::load(unsigned char* buff,
                          std::vector<std::string>& names,
@@ -145,6 +154,8 @@ VideoReadAndDecode::load(unsigned char* buff,
                          std::vector<uint32_t> &roi_height,
                          std::vector<uint32_t> &actual_width,
                          std::vector<uint32_t> &actual_height,
+                         std::vector<size_t> &sequence_start_framenum,
+                         std::vector<std::vector<float>> &sequence_frame_timestamps,
                          RaliColorFormat output_color_format)
 {
     if(max_decoded_width == 0 || max_decoded_height == 0 )
@@ -181,12 +192,6 @@ VideoReadAndDecode::load(unsigned char* buff,
 
     for(int i = 0; i < 1; i++)
     {
-        for(size_t s = 0; s < _sequence_length; s++)
-        {
-            _actual_decoded_width[s] = max_decoded_width;
-            _actual_decoded_height[s] = max_decoded_height;
-        }
-
         // std::cerr << "\nThe source video is " << _video_path << " MAP : "<<_video_file_name_map[_video_path]<< "\tThe start index is : " << start_frame << "\n";
         // video_idx_map = _video_file_name_map[_video_path];
         itr = _video_file_name_map.find(_video_path);
@@ -209,20 +214,27 @@ VideoReadAndDecode::load(unsigned char* buff,
             }
         }
         video_idx_map = itr->second._is_decoder_instance;
+        sequence_start_framenum[i] = start_frame;
+        for(size_t s = 0; s < _sequence_length; s++)
+        {
+            sequence_frame_timestamps[i][s] = convert_framenum_to_timestamp(start_frame + ( s * _stride), video_idx_map); 
+            _actual_decoded_width[s] = max_decoded_width;
+            _actual_decoded_height[s] = max_decoded_height;
+        }
         if(_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length, _stride) != VideoDecoder::Status::OK)
         {
             continue;
         }
     }
 
-    std::vector<std::string> substrings;
+    std::vector<std::string> substrings1, substrings2;
     char delim = '/';
-    substring_extraction(_video_path, delim, substrings);
+    substring_extraction(_video_path, delim, substrings1);
 
-    std::string file_name = substrings[substrings.size()- 1];
+    std::string file_name = substrings1[substrings1.size()- 1];
     delim = '#';
-    substring_extraction(_video_path, delim, substrings);
-    std::string video_idx = substrings[0];
+    substring_extraction(_video_path, delim, substrings2);
+    std::string video_idx = substrings2[0];
     for(size_t i = 0; i < _sequence_length ; i++)
     {
         names[i] =  video_idx   + "#" + file_name +"_"+  std::to_string(start_frame+ (i*_stride));

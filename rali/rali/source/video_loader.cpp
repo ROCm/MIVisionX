@@ -136,6 +136,10 @@ VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg,
         de_init();
         throw;
     }
+    _sequence_start_framenum.resize(_batch_size/_sequence_length);
+    _sequence_frame_timestamps.resize(_batch_size/_sequence_length);
+    for(size_t it=0; it < (_batch_size/_sequence_length); it++)
+        _sequence_frame_timestamps[it].resize(_sequence_length);
     _decoded_img_info._image_names.resize(_sequence_length);
     _decoded_img_info._roi_height.resize(_sequence_length);
     _decoded_img_info._roi_width.resize(_sequence_length);
@@ -182,6 +186,8 @@ VideoLoader::load_routine()
                                              _decoded_img_info._roi_height,
                                              _decoded_img_info._original_width,
                                              _decoded_img_info._original_height,
+                                             _sequence_start_framenum,
+                                             _sequence_frame_timestamps,
                                              _output_image->info().color_format());
 
             if(load_status == VideoLoaderModuleStatus::OK)
@@ -189,6 +195,8 @@ VideoLoader::load_routine()
                 _circ_buff.set_image_info(_decoded_img_info);
                 _circ_buff.push();
                 _image_counter += _output_image->info().batch_size();
+                _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), _sequence_start_framenum);
+                _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), _sequence_frame_timestamps);
             }
         }
         if(load_status != VideoLoaderModuleStatus::OK)
@@ -311,6 +319,21 @@ decoded_image_info VideoLoader::get_decode_image_info()
     return _output_decoded_img_info;
 }
 
+std::vector<size_t> VideoLoader::get_sequence_start_frame_number()
+{
+    std::vector<size_t> sequence_start_framenum;
+    sequence_start_framenum = _sequence_start_framenum_vec.back();
+    _sequence_start_framenum_vec.pop_back();
+    return sequence_start_framenum;
+}
+
+std::vector<std::vector<float>> VideoLoader::get_sequence_frame_timestamps()
+{
+    std::vector<std::vector<float>> sequence_frame_timestamp;
+    sequence_frame_timestamp = _sequence_frame_timestamps_vec.back();
+    _sequence_frame_timestamps_vec.pop_back();
+    return sequence_frame_timestamp;
+}
 
 /*size_t VideoLoader::count()
 {

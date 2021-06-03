@@ -120,6 +120,7 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
             video_props.labels.push_back(label);
             video_props.start_end_frame_num.push_back(std::make_tuple(start, end));
             video_props.frames_count.push_back(end - start);
+            video_props.frame_rate.push_back(props[3]);
             video_count++;
         }
         video_props.width = max_width;
@@ -158,6 +159,7 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
             props.height = video_prop[1];
             props.videos_count = 1;
             props.frames_count.push_back(video_prop[2]);
+            props.frame_rate.push_back(video_prop[3]);
             props.start_end_frame_num.push_back(std::make_tuple(0, (int)video_prop[2]));
             vid_file_path = std::to_string(0) +  "#" + _full_path;
             props.video_file_names.push_back(vid_file_path);
@@ -197,6 +199,7 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                 max_width = video_prop[0];
                 max_height = video_prop[1];
                 props.frames_count.push_back(video_prop[2]);
+                props.frame_rate.push_back(video_prop[3]);
                 vid_file_path = std::to_string(video_count) +  "#" + subfolder_path;
                 props.video_file_names.push_back(vid_file_path);
                 props.start_end_frame_num.push_back(std::make_tuple(0, (int)video_prop[2]));
@@ -236,6 +239,7 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                     props.video_file_names.push_back(vid_file_path);
                     // props.video_file_names.push_back(_full_path);
                     props.frames_count.push_back(video_prop[2]);
+                    props.frame_rate.push_back(video_prop[3]);
                     props.start_end_frame_num.push_back(std::make_tuple(0, (int)video_prop[2]));
                     video_count++;
                     _full_path = subfolder_path;

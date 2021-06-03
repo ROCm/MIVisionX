@@ -62,6 +62,8 @@ public:
     size_t output_height();
     size_t output_byte_size();
     size_t output_depth();
+    std::vector<size_t> sequence_start_frame_number();
+    std::vector<std::vector<float>> sequence_frame_timestamps();
     size_t augmentation_branch_count();
     size_t output_sample_size();
     RaliColorFormat output_color_format();
@@ -155,6 +157,8 @@ private:
     bool _is_random_bbox_crop = false;
     bool _is_video_loader = false;
     size_t _sequence_rearrange_batch_decremter = -1;
+    std::vector<std::vector<size_t>> _sequence_start_framenum_vec;
+    std::vector<std::vector<std::vector<float>>>_sequence_frame_timestamps_vec;
 };
 
 template <typename T>

@@ -41,6 +41,8 @@ public:
     void start_loading() override;
     std::vector<std::string> get_id() override;
     decoded_image_info get_decode_image_info() override;
+    std::vector<size_t> get_sequence_start_frame_number() override;
+    std::vector<std::vector<float>> get_sequence_frame_timestamps() override;
     Timing timing() override;
 private:
     void increment_loader_idx();

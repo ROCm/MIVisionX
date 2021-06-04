@@ -26,7 +26,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.9.6"
+__version__ = "1.9.7"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -211,9 +211,11 @@ else:
             os.system(
                 '(cd '+deps_dir+'/boost_1_72_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python3 )')
         os.system(
-            '(cd '+deps_dir+'/boost_1_72_0/; ./b2 stage -j16 threading=multi link=shared )')
+            '(cd '+deps_dir+'/boost_1_72_0/; ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11" )')
         os.system(
             '(cd '+deps_dir+'/boost_1_72_0/; sudo ./b2 install threading=multi link=shared --with-system --with-filesystem)')
+        os.system(
+            '(cd '+deps_dir+'/boost_1_72_0/; ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" )')
         os.system(
             '(cd '+deps_dir+'/boost_1_72_0/; sudo ./b2 install threading=multi link=static --with-system --with-filesystem)')
         # Install half.hpp
@@ -257,7 +259,6 @@ else:
         os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
                   ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
         os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
-        os.system('(cd '+deps_dir+'/build/MIOpen; make MIOpenDriver )')
         os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
                   linuxFlag+' make install )')
         os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')

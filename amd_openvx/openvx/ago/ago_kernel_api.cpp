@@ -16642,6 +16642,11 @@ int agoKernel_FastCorners_XY_U8_Supression(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oNumCorners = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+        if (oNumCorners) {
+            node->gpu_scalar_array_output_sync.enable = true;
+            node->gpu_scalar_array_output_sync.paramIndexArray = 0;
+            node->gpu_scalar_array_output_sync.paramIndexScalar = 1;
+        }
         if (HipExec_FastCorners_XY_U8_Supression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, oXY->hip_memory, oXY->gpu_buffer_offset,
             iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, strength_threshold)) {
             status = VX_FAILURE;
@@ -16714,6 +16719,11 @@ int agoKernel_FastCorners_XY_U8_NoSupression(AgoNode * node, AgoKernelCommand cm
         AgoData * oNumCorners = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+        if (oNumCorners) {
+            node->gpu_scalar_array_output_sync.enable = true;
+            node->gpu_scalar_array_output_sync.paramIndexArray = 0;
+            node->gpu_scalar_array_output_sync.paramIndexScalar = 1;
+        }
         if (HipExec_FastCorners_XY_U8_NoSupression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, oXY->hip_memory, oXY->gpu_buffer_offset,
             iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, strength_threshold)) {
             status = VX_FAILURE;

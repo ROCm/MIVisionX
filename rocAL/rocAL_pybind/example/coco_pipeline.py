@@ -3,8 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from math import sqrt
 import torch
-import ctypes
-import logging
+import random
 import itertools
 
 from amd.rali.pipeline import Pipeline
@@ -17,11 +16,11 @@ import numpy as np
 
 
 class COCOPipeline(Pipeline):
-    def __init__(self, batch_size, num_threads, device_id, data_dir, ann_dir, default_boxes,  crop, rali_cpu=True):
+    def __init__(self, batch_size, num_threads, device_id, seed, data_dir, ann_dir, default_boxes,  crop, rali_cpu=True):
         super(COCOPipeline, self).__init__(batch_size, num_threads,
-                                           device_id, seed=12 + device_id, rali_cpu=rali_cpu)
+                                           device_id, seed=seed, rali_cpu=rali_cpu)
         self.input = ops.COCOReader(
-            file_root=data_dir, annotations_file=ann_dir,random_shuffle=True)
+            file_root=data_dir, annotations_file=ann_dir,random_shuffle=True,seed=seed)
         rali_device = 'cpu' if rali_cpu else 'gpu'
         decoder_device = 'cpu' if rali_cpu else 'mixed'
         # device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
@@ -291,6 +290,7 @@ def main():
     nt = 1
     di = 0
     crop_size = 300
+    random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     def coco_anchors(): # Should be Tensor of floats in ltrb format - input - Mx4 where M="No of anchor boxes"
         fig_size = 300
         feat_size = [38, 19, 10, 5, 3, 1]
@@ -330,7 +330,7 @@ def main():
 
     dboxes = coco_anchors()
 
-    pipe = COCOPipeline(batch_size=bs, num_threads=nt, device_id=di,
+    pipe = COCOPipeline(batch_size=bs, num_threads=nt, device_id=di,seed = random_seed,
                         data_dir=image_path, ann_dir=ann_path, crop=crop_size, rali_cpu=_rali_cpu, default_boxes=dboxes)
     pipe.build()
     imageIterator = RALICOCOIterator(

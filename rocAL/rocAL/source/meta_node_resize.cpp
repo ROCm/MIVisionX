@@ -29,36 +29,5 @@ void ResizeMetaNode::initialize()
 void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
 {
     initialize();
-    if(_batch_size != input_meta_data->size())
-    {
-        _batch_size = input_meta_data->size();
-    }
-    _src_width = _node->get_src_width();
-    _src_height = _node->get_src_height();
-    vxCopyArrayRange((vx_array)_src_width, 0, _batch_size, sizeof(uint),_src_width_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    vxCopyArrayRange((vx_array)_src_height, 0, _batch_size, sizeof(uint),_src_height_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    _dst_width = _node->get_dst_width();
-    _dst_height = _node->get_dst_height();
-    for(int i = 0; i < _batch_size; i++)
-    {
-        auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
-        int labels_buf[bb_count];
-        float coords_buf[bb_count*4];
-        memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
-        memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
-        BoundingBoxCords bb_coords;
-        BoundingBoxLabels bb_labels;
-        for(uint j = 0, m = 0; j < bb_count; j++)
-        {
-            BoundingBoxCord box;
-            box.l = (coords_buf[m++] );
-            box.t = (coords_buf[m++] );
-            box.r = (coords_buf[m++] );
-            box.b = (coords_buf[m++] );
-            bb_coords.push_back(box);
-            bb_labels.push_back(labels_buf[j]);
-        }
-        input_meta_data->get_bb_cords_batch()[i] = bb_coords;
-        input_meta_data->get_bb_labels_batch()[i] = bb_labels;
-    }
+    //Resize does not require updating meta data since the bounding box co-ordinates are already in Normalized format
 }

@@ -87,6 +87,8 @@ void SSDRandomCropNode::update_node()
     _y1_val = _crop_param->get_y1_arr_val();
     _crop_width_val = _crop_param->get_cropw_arr_val();
     _crop_height_val = _crop_param->get_croph_arr_val();
+    std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
+    size_t sample = 0;
     for (uint i = 0; i < _batch_size; i++)
     {
         int bb_count = _meta_data_info->get_bb_labels_batch()[i].size();
@@ -118,14 +120,10 @@ void SSDRandomCropNode::update_node()
             }
             for (int j = 0; j < _num_of_attempts; j++)
             {
-                x_drift_factor->renew();
-                float factor = 0.3f;
-                w_factor = factor + (x_drift_factor->get() * (1 - factor));
-                // crop_box.w = w_factor * in_width[i];
-                y_drift_factor->renew();
-                y_drift_factor->renew();
-                h_factor = factor + (y_drift_factor->get() * (1 - factor));
-                // crop_box.h = h_factor * in_height[i];
+                
+                // Setting width and height factor btw 0.3 and 1.0";
+                float w_factor = _float_dis(_rngs[sample]);
+                float h_factor = _float_dis(_rngs[sample]);
                 //aspect ratio check
                 if ((w_factor / h_factor < 0.5) || (w_factor / h_factor > 2.))
                     continue;
@@ -133,12 +131,15 @@ void SSDRandomCropNode::update_node()
             }
             if ((w_factor / h_factor < 0.5) || (w_factor / h_factor > 2.))
                 continue;
-            //Got the crop;
-            x_drift_factor->renew();
-            x_drift_factor->renew();
-            y_drift_factor->renew();
-            crop_box.l = static_cast<size_t>(x_drift_factor->get() * (1 - w_factor));
-            crop_box.t = static_cast<size_t>(y_drift_factor->get() * (1 - h_factor));
+            
+            
+            // Setting width factor btw 0 and 1 - width_factor and height factor btw 0 and 1 - height_factor
+            std::uniform_real_distribution<float> l_dis(0.0, 1.0 - w_factor), t_dis(0.0, 1.0-h_factor);
+            float x_factor = l_dis(_rngs[sample]);
+            float y_factor = t_dis(_rngs[sample]);
+            //Got the crop
+            crop_box.l = x_factor;
+            crop_box.t = y_factor;
             crop_box.r = crop_box.l + w_factor;
             crop_box.b = crop_box.t + h_factor;
 

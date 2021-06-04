@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include <cstring>
 #include <chrono>
 #include <cstdio>
-#include <string>
 
 #include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
@@ -58,10 +57,10 @@ int main(int argc, const char ** argv)
     int decode_height = 0;
     bool processing_device = 1;
     size_t shard_count = 2;
+    int shuffle = 0;
     unsigned sequence_length = 3;
     unsigned frame_step = 3;
     unsigned frame_stride = 1;
-    bool shuffle = 0;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
@@ -80,24 +79,21 @@ int main(int argc, const char ** argv)
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         display = atoi(argv[++argIdx]);
-        // display = 1;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         shard_count = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
-        shuffle = atoi(argv[++argIdx]) ? true : false;
+        shuffle = atoi(argv[++argIdx]);
 
 
-    int inputBatchSize = 1;
+    int inputBatchSize = 2;
 
     std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
 
     RaliImageColor color_format = (rgb != 0) ? RaliImageColor::RALI_COLOR_RGB24 : RaliImageColor::RALI_COLOR_U8;
 
-    RaliContext handle;
-
-    handle = raliCreate(inputBatchSize, processing_device?RaliProcessMode::RALI_PROCESS_GPU:RaliProcessMode::RALI_PROCESS_CPU, 0,1);
+    auto handle = raliCreate(inputBatchSize, processing_device?RaliProcessMode::RALI_PROCESS_GPU:RaliProcessMode::RALI_PROCESS_CPU, 0,1);
 
     if(raliGetStatus(handle) != RALI_OK)
     {
@@ -110,7 +106,7 @@ int main(int argc, const char ** argv)
     /*>>>>>>>>>>>>>>>> Creating Rali parameters  <<<<<<<<<<<<<<<<*/
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
-    //RaliFloatParam rand_crop_area = raliCreateFloatUniformRand( 0.3, 0.5 );
+    RaliFloatParam rand_crop_area = raliCreateFloatUniformRand( 0.3, 0.5 );
     RaliIntParam color_temp_adj = raliCreateIntParameter(0);
 
     // Creating a custom random object to set a limited number of values to randomize the rotation angle
@@ -118,11 +114,11 @@ int main(int argc, const char ** argv)
     float values[num_values] = {0,10,135};
     double frequencies[num_values] = {1, 5, 5};
 
-    //RaliFloatParam rand_angle =   raliCreateFloatRand( values , frequencies, num_values);
+    RaliFloatParam rand_angle =   raliCreateFloatRand( values , frequencies, num_values);
 
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
-    RaliImage input1, seq_img;
+    RaliImage input1;
 
 
     if(video_mode != 0)
@@ -133,13 +129,6 @@ int main(int argc, const char ** argv)
             return -1;
         }
         input1 = raliVideoFileSource(handle, folderPath1, color_format, shard_count, sequence_length, frame_step, frame_stride, shuffle, true, false);
-        // input1 = raliSequenceReader(handle, folderPath1, color_format, shard_count, sequence_length, frame_step, frame_stride, true, shuffle, false);
-        // input1 = raliResize(handle, seq_img, 1280, 720, true);
-        // input1 = raliVideoFileResize(handle, folderPath1, color_format, shard_count, sequence_length, frame_step, frame_stride, 500, 300, false, true, false);
-        // unsigned int new_order[] = {0, 2, 0};
-        // unsigned new_sequence_length = sizeof(new_order) / sizeof(new_order[0]);
-        // RaliImage input_seq = raliSequenceRearrange(handle, input1,new_order,new_sequence_length, sequence_length,true );
-
     }
     else
     {
@@ -166,11 +155,10 @@ int main(int argc, const char ** argv)
         resize_w = decode_width;
         image0 = input1;
     }
-    /*else
+    else
     {
         image0 = raliResize(handle, input1, resize_w, resize_h, true);
     }
-
     RaliImage image1 = raliRain(handle, image0, false);
 
     RaliImage image11 = raliFishEye(handle, image1, false);
@@ -200,7 +188,7 @@ int main(int argc, const char ** argv)
 
     RaliImage image10 = raliLensCorrection(handle, image9, false);
 
-    raliExposure(handle, image0, true);*/
+    raliExposure(handle, image10, true);
 
     if(raliGetStatus(handle) != RALI_OK)
     {
@@ -229,16 +217,15 @@ int main(int argc, const char ** argv)
     cv::Mat mat_input(h, w, cv_color_format);
     cv::Mat mat_color;
     int col_counter = 0;
-    // if (display)
-    //     cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
+    if (display)
+        cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
     int color_temp_increment = 1;
-    int count = 0;
+
     while (!raliIsEmpty(handle))
     {
-        count++;
         if(raliRun(handle) != 0)
             break;
 
@@ -256,13 +243,13 @@ int main(int argc, const char ** argv)
         if(color_format ==  RaliImageColor::RALI_COLOR_RGB24 )
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imwrite("output_"+std::to_string(count)+".png",mat_output);
+            cv::imshow("output",mat_color);
         }
         else
         {
-            cv::imwrite("output.png",mat_output);
+            cv::imshow("output",mat_output);
         }
-        // cv::waitKey(1);
+        cv::waitKey(1);
         col_counter = (col_counter+1)%number_of_cols;
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();

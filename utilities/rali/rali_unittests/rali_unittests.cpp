@@ -45,10 +45,6 @@ using namespace cv;
 //  #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
 
-//#define VIDEO_READER
-#define VIDEO_READER_RESIZE
-// #define SEQUENCE_READER
-
 //#define RANDOMBBOXCROP
 
 using namespace std::chrono;
@@ -96,18 +92,14 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 {
     size_t num_threads = 1;
     int inputBatchSize = 1;
-    int sequence_length = 3;
     int decode_max_width = width;
     int decode_max_height = height;
-    unsigned frame_step = 10;
-    unsigned frame_stride = 2;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , " << (rgb ? " Color " : " Grayscale ") << std::endl;
 
     RaliImageColor color_format = (rgb != 0) ? RaliImageColor::RALI_COLOR_RGB24
                                              : RaliImageColor::RALI_COLOR_U8;
     
-    RaliDecodeDevice decode_device = RALI_SW_DECODE;
 
     auto handle = raliCreate(inputBatchSize,
                              gpu ? RaliProcessMode::RALI_PROCESS_GPU : RaliProcessMode::RALI_PROCESS_CPU, 0,
@@ -124,9 +116,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     raliSetSeed(0);
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
-#ifdef VIDEO_READER || defined VIDEO_READER_RESIZE
-    /* dO NOTHING*/
-#else
     RaliFloatParam rand_crop_area = raliCreateFloatUniformRand(0.3, 0.5);
     RaliIntParam color_temp_adj = raliCreateIntParameter(-50);
 
@@ -143,7 +132,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     double new_freq[2] = {40, 60};
     RaliIntParam rand_mirror = raliCreateIntRand(new_values, new_freq, 2);
 
-#endif 
    /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
     RaliMetaData meta_data;
@@ -188,10 +176,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     meta_data = raliCreateTFReader(handle, path, true, key2, key8);
 #elif defined TF_READER_DETECTION
     meta_data = raliCreateTFReaderDetection(handle, path, true, key2, key3, key4, key5, key6, key7, key8);
-#elif defined VIDEO_READER 
-    meta_data = raliCreateVideoLabelReader(handle, path);
-#elif defined SEQUENCE_READER || defined VIDEO_READER_RESIZE
-/*dO NOTHING*/
 #else
     meta_data = raliCreateLabelReader(handle, path);
 #endif
@@ -231,17 +215,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                                         RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined COCO_READER_PARTIAL
         input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
-#elif defined VIDEO_READER
-    input1 = raliVideoFileSource(handle, path, color_format, num_threads, sequence_length, frame_step, frame_stride, true, true, false);
-#elif defined VIDEO_READER_RESIZE
-    input1 = raliVideoFileResize(handle, path, color_format, num_threads, sequence_length, frame_step, frame_stride, 300, 300, false, true, false);
-
-#elif defined SEQUENCE_READER
-    if (decode_max_height <= 0 || decode_max_width <= 0)
-        input1 = raliSequenceReader(handle, path, color_format, num_threads, sequence_length,frame_step, frame_stride, true, false);
-    else
-        input1 = raliSequenceReader(handle, path, color_format, num_threads, sequence_length, frame_step, frame_stride, true, false, false,
-                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
@@ -704,9 +677,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
             std::cout<<"\nwidth:"<<img_sizes_batch[i*2];
             std::cout<<"\nHeight:"<<img_sizes_batch[(i*2)+1];
         }
-#elif defined VIDEO_READER || defined VIDEO_READER_RESIZE || defined SEQUENCE_READER
-/*Do nothing*/
-#else
         raliGetImageLabels(handle, label_id);
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];
@@ -752,17 +722,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         compression_params.push_back(9);
 
         mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));
-#if defined VIDEO_READER || defined VIDEO_READER_RESIZE || defined SEQUENCE_READER
-        if(color_format ==  RaliImageColor::RALI_COLOR_RGB24 )
-        {
-            // cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imwrite("output_"+std::to_string(count)+".png",mat_output);
-        }
-        else
-        {
-            cv::imwrite("output.png",mat_output);
-        }
-#else
         if (color_format == RaliImageColor::RALI_COLOR_RGB24)
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
@@ -772,7 +731,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         {
             cv::imwrite(outName, mat_output, compression_params);
         }
-#endif
         col_counter = (col_counter + 1) % number_of_cols;
     }
 

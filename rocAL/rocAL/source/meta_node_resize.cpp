@@ -28,6 +28,7 @@ void ResizeMetaNode::initialize()
 }
 void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
 {
+#if 0  
     initialize();
     if(_batch_size != input_meta_data->size())
     {
@@ -51,7 +52,7 @@ void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
-            box.l = (coords_buf[m++] );
+            box.l = (coords_buf[m++]);
             box.t = (coords_buf[m++] );
             box.r = (coords_buf[m++] );
             box.b = (coords_buf[m++] );
@@ -61,4 +62,7 @@ void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;
     }
+#else
+    // nothing to do in normalized coordinates
+#endif    
 }

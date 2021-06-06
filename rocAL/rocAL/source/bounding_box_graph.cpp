@@ -111,20 +111,16 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
         crop_box.t = crop_cords[i]->crop_top;
         crop_box.r = crop_cords[i]->crop_right;
         crop_box.b = crop_cords[i]->crop_bottom;
-    //    std::cout<<"CROP Co-ordinates in bounding box grpah: lxtxrxb::\t"<<crop_box.l<<"x\t"<<crop_box.t<<"x\t"<<crop_box.r<<"x\t"<<crop_box.b<<"x\t"<<std::endl;
 
         for (uint j = 0; j < bb_count; j++)
         {
             int m = j * 4; // change if required
-
             //Mask Criteria
-
             BoundingBoxCord box;
             box.l = coords_buf[m];
             box.t = coords_buf[m + 1];
             box.r = coords_buf[m + 2];
             box.b = coords_buf[m + 3];
-
             auto x_c = 0.5 * (box.l + box.r);
             auto y_c = 0.5 * (box.t + box.b);
             if ((x_c > crop_box.l) && (x_c < crop_box.r) && (y_c > crop_box.t) && (y_c < crop_box.b))

@@ -42,6 +42,7 @@ void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data)
     vxCopyArrayRange((vx_array)_src_width, 0, _batch_size, sizeof(uint),_src_width_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_src_height, 0, _batch_size, sizeof(uint),_src_height_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_angle, 0, _batch_size, sizeof(float),_angle_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    BoundingBoxCord temp_box = {0, 0, 1, 1};
     for(int i = 0; i < _batch_size; i++)
     {
         auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
@@ -50,9 +51,6 @@ void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
         memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
-        BoundingBoxCord temp_box;
-        temp_box.l = temp_box.t = 0;
-        temp_box.r = temp_box.b = 1;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord dest_image;
         dest_image.l = dest_image.t = 0;
@@ -95,8 +93,8 @@ void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data)
             {
                 box.l = std::max(dest_image.l, box.l);
                 box.t = std::max(dest_image.t, box.t);
-                box.r = std::min(dest_image.r, box.r) ;
-                box.b = std::min(dest_image.b, box.b) ;
+                box.r = std::min(dest_image.r, box.r);
+                box.b = std::min(dest_image.b, box.b);
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
             }

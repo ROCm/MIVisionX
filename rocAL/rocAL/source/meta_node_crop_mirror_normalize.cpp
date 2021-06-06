@@ -62,7 +62,7 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
         memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
         memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
-        BoundingBoxCord temp_box;
+        BoundingBoxCord temp_box = {0, 0, 1, 1};
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
         crop_box.l = (_x1_val[i]) / _src_width_val[i];
@@ -89,8 +89,6 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
                 box.t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
                 box.r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
                 box.b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
-                // std::cout<<"\n AFTER IN CMN: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
-
                 if (_mirror_val[i] == 1)
                 {
 
@@ -98,19 +96,14 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
                     box.r = 1 - box.l;
                     box.l = l;
                 }
-                // std::cout<<"\n AFTER MIRROR IN CMN: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
-
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
             }
         }
+        // the following shouldn't happen since all crops should atleast have one bbox
         if(bb_coords.size() == 0)
         {
-	        //std::cout << "Crop mirror Normalize - Zero Bounding boxes" << std::endl;
-            temp_box.l = 0;
-            temp_box.t = 0;
-	        temp_box.r = 1;
-	        temp_box.b = 1;
+            std::cerr <<"Crop mirror Normalize - Zero Bounding boxes" << std::endl;
             bb_coords.push_back(temp_box);
             bb_labels.push_back(0);
         }

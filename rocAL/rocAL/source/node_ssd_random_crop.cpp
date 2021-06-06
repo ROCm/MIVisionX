@@ -42,18 +42,14 @@ inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const B
     float yA = std::max(box1.t, box2.t);
     float xB = std::min(box1.r, box2.r);
     float yB = std::min(box1.b, box2.b);
-
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
     float box1_h, box1_w, box2_h, box2_w;
     box1_w = box1.r - box1.l;
     box2_w = box2.r - box2.l;
     box1_h = box1.b - box1.t;
     box2_h = box2.b - box2.t;
-
-
     float box1_area = box1_h * box1_w;
     float box2_area = box2_h * box2_w;
-
     if (is_iou)
         iou = intersection_area / float(box1_area + box2_area - intersection_area);
     else
@@ -99,7 +95,6 @@ void SSDRandomCropNode::update_node()
         crop_box.r = _x1_val[i] + _crop_width_val[i];
         crop_box.l = _x1_val[i];
         crop_box.t = _y1_val[i];
-
         while (true)
         {
             sample_option = dis(gen);
@@ -187,11 +182,6 @@ void SSDRandomCropNode::update_node()
     vxCopyArrayRange((vx_array)_crop_param->croph_arr, 0, _batch_size, sizeof(uint), _crop_height_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_crop_param->x1_arr, 0, _batch_size, sizeof(uint), _x1_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_crop_param->y1_arr, 0, _batch_size, sizeof(uint), _y1_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    // std::cerr<<"\n Crop values after ssd ::";
-    // for(int i = 0; i < _batch_size; i++)
-    // {
-    //     std::cerr<<"\n "<<_x1_val[i]<<"\t"<<_y1_val[i]<<"\t"<<_crop_width_val[i]<<"\t"<<_crop_height_val[i];
-    // }
     _outputs[0]->update_image_roi(_crop_width_val, _crop_height_val);  
 }
 

@@ -51,9 +51,10 @@ class COCOPipeline(Pipeline):
                                             output_layout=types.NCHW,
                                             crop=(crop, crop),
                                             image_type=types.RGB,
-                                            mean=[0.485 * 255, 0.456 *
-                                                  255, 0.406 * 255],
-                                            std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
+                                            #mean=[0.485 * 255, 0.456 *255, 0.406 * 255],
+                                            #std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
+                                            mean=[0, 0, 0],
+                                            std=[1, 1, 1])
         self.boxEncoder = ops.BoxEncoder(device=rali_device,
                                          criteria=0.5,
                                          anchors=default_boxes)
@@ -71,6 +72,7 @@ class COCOPipeline(Pipeline):
         contrast = self.rng1()
         brightness = self.rng2()
         hue = self.rng3()
+        
         self.jpegs, self.bb, self.labels = self.input(name="Reader")
         # images = self.decode(self.jpegs)
         # images = self.crop(images)
@@ -264,6 +266,7 @@ def draw_patches(img,idx, bboxes):
     import cv2
     image = img.detach().numpy()
     image = image.transpose([1,2,0])
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
  
     _,htot ,wtot = img.shape
     
@@ -274,7 +277,8 @@ def draw_patches(img,idx, bboxes):
         thickness = 2
         image = cv2.UMat(image).get()
         image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)  
-        cv2.imwrite(str(idx)+"_"+"train"+".png", 255*image)
+        #cv2.imwrite(str(idx)+"_"+"train"+".png", 255*image)
+        cv2.imwrite(str(idx)+"_"+"train"+".png", image)
 
 def main():
     if len(sys.argv) < 5:

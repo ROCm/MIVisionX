@@ -47,6 +47,7 @@ void CropResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
     vxCopyArrayRange((vx_array)_y1, 0, _batch_size, sizeof(uint),_y1_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_x2, 0, _batch_size, sizeof(uint),_x2_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_y2, 0, _batch_size, sizeof(uint),_y2_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    BoundingBoxCord temp_box = {0, 0, 1, 1};
 
     for(int i = 0; i < _batch_size; i++)
     {
@@ -56,7 +57,6 @@ void CropResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
         memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
-        BoundingBoxCord temp_box;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
         _crop_w = _x2_val[i] - _x1_val[i];
@@ -91,10 +91,6 @@ void CropResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         }
         if(bb_coords.size() == 0)
         {
-            temp_box.l = 0;
-            temp_box.t = 0;
-            temp_box.r = 1;
-	        temp_box.b = 1;
             bb_coords.push_back(temp_box);
             bb_labels.push_back(0);
         }

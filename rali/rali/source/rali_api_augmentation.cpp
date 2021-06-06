@@ -90,18 +90,13 @@ raliSequenceRearrange(
         context->master_graph->set_user_batch_size((size_t)(new_sequence_length * (context->user_batch_size()/context->master_graph->internal_batch_size())));
         std::cerr<<"\n user batch size:: "<<context->master_graph->user_batch_size();
         auto info = ImageInfo(input->info().width(), input->info().height_single(),
-        //                       context->master_graph->user_batch_size(),
-                            //   context->master_graph->internal_batch_size(),
                               new_sequence_length,
                               input->info().color_plane_count(),
                               context->master_graph->mem_type(),
                               input->info().color_format() );
-        // ImageInfo info = input->info();
         output = context->master_graph->create_image(info, is_output);
         std::shared_ptr<SequenceRearrangeNode> sequence_rearrange_node =  context->master_graph->add_node<SequenceRearrangeNode>({input}, {output});
         sequence_rearrange_node->init(new_order, new_sequence_length, sequence_length);
-        // if (context->master_graph->meta_data_graph())
-        //     context->master_graph->meta_add_node<FlipMetaNode,FlipNode>(flip_node);
 #else
         THROW("Video decoder is not enabled since amd media decoder is not present")
 #endif

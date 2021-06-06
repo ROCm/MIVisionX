@@ -51,7 +51,6 @@ void SequenceRearrangeNode::init(unsigned int* new_order, unsigned int new_seque
     _sequence_length = sequence_length;
     _new_order.resize(_new_sequence_length);
     std::copy(new_order, new_order + _new_sequence_length, _new_order.begin());
-    std::cerr<<"\n new sequence order of sequence length"<<_new_sequence_length;
 }
 
 void SequenceRearrangeNode::update_node()

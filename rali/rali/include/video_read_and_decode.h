@@ -81,21 +81,19 @@ private:
     size_t _max_video_count = 50;
     size_t _video_process_count;
     std::vector<unsigned char> _compressed_buff;
-    std::vector<std::string> _video_names; // based on video_count
+    std::vector<std::string> _video_names;
     std::map<std::string, video_map> _video_file_name_map;
     std::map<std::string, video_map>::iterator itr;
     size_t _compressed_image_size;
     size_t _actual_read_size;
     unsigned char* _decompressed_buff_ptrs;
-    std::vector<size_t> _actual_decoded_width; // check needed
-    std::vector<size_t> _actual_decoded_height; // check needed
-    std::vector<size_t> _original_width;// based on video_count
-    std::vector<size_t> _original_height;// based on video_count
-    std::vector<size_t> _video_frame_count; // based on video_count
-    std::vector<size_t> _video_frame_start_idx; // add frame start index depending on the batch size and sequencelength
-    // [0,10,20,0,10,20,0,10,20,30,40,50] // for 3 videos with sequence_length 10 0video -  30 frames, 1video - 25 frames, 2video - 54
+    std::vector<size_t> _actual_decoded_width;
+    std::vector<size_t> _actual_decoded_height;
+    std::vector<size_t> _original_width;
+    std::vector<size_t> _original_height;
+    std::vector<size_t> _video_frame_count;
+    std::vector<size_t> _video_frame_start_idx;
     std::vector<size_t> _video_idx;
-    // [0,0,0,1,1,1,2,2,2,2,2,2]
     std::string _video_path;
     size_t start_frame;
     static const size_t MAX_COMPRESSED_SIZE = 1*1024*1024; // 1 Meg
@@ -103,7 +101,7 @@ private:
     size_t _batch_size;
     size_t _sequence_length;
     size_t _stride;
-    size_t _video_count; // based on video_count
+    size_t _video_count;
     size_t _frame_count;
     std::vector<size_t> _frame_rate;
     VideoDecoderConfig _video_decoder_config;

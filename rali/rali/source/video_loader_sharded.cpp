@@ -70,34 +70,35 @@ VideoLoaderModuleStatus VideoLoaderSharded::load_next()
 
     return ret;
 }
+
 void
 VideoLoaderSharded::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type,
                                unsigned batch_size, bool keep_orig_size)
 {
-    std::cerr<<"\n VideoLoaderSharded::initialize";
     if(_initialized)
         return;
     // _shard_count = reader_cfg.get_shard_count();
     _shard_count = 1; // change the shard count to user given
-    std::cerr<<"\n _shard_count:: "<<_shard_count;
+
     // Create loader modules
     for(size_t i = 0; i < _shard_count; i++)
     {
         auto loader = std::make_shared<VideoLoader>(_dev_resources);
         _loaders.push_back(loader);
     }
-    // std::cerr<<"\n Finished creating loader module";
+
     // Initialize loader modules
     for(size_t idx = 0; idx < _shard_count; idx++)
     {
         _loaders[idx]->set_output_image(_output_image);
-        reader_cfg.set_shard_count(_shard_count); // check if it is needed
+        reader_cfg.set_shard_count(_shard_count);
         reader_cfg.set_shard_id(idx);
         _loaders[idx]->initialize(reader_cfg, decoder_cfg, mem_type, batch_size, keep_orig_size);
     }
-    // std::cerr<<"\n Finished initializing loader module\n";
+
     _initialized = true;
 }
+
 void VideoLoaderSharded::start_loading()
 {
     for(unsigned i = 0; i < _loaders.size(); i++)
@@ -122,10 +123,12 @@ void VideoLoaderSharded::start_loading()
     }
 
 }
+
 void VideoLoaderSharded::set_output_image (Image* output_image)
 {
     _output_image = output_image;
 }
+
 size_t VideoLoaderSharded::remaining_count()
 {
     int sum = 0;
@@ -133,11 +136,13 @@ size_t VideoLoaderSharded::remaining_count()
         sum += loader->remaining_count();
     return sum;
 }
+
 void VideoLoaderSharded::reset()
 {
     for(auto& loader: _loaders)
         loader->reset();
 }
+
 void VideoLoaderSharded::increment_loader_idx()
 {
     _loader_idx = (_loader_idx + 1)%_shard_count;

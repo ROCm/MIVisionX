@@ -1,7 +1,7 @@
 #include "video_properties.h"
 #include <cmath>
 
-void substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out)
+void substring_extraction(std::string const &str, const char delim, std::vector<std::string> &out)
 {
     size_t start;
     size_t end = 0;
@@ -15,7 +15,7 @@ void substring_extraction(std::string const &str, const char delim,  std::vector
 
 std::vector<unsigned> open_video_context(const char *video_file_path)
 {
-    std::vector<unsigned> video_prop;
+    std::vector<unsigned> props;
     AVFormatContext *pFormatCtx = NULL;
     AVCodecContext *pCodecCtx = NULL;
     int videoStream = -1;
@@ -39,82 +39,94 @@ std::vector<unsigned> open_video_context(const char *video_file_path)
         {
             videoStream = i;
         }
-    } // end for i
+    }
     assert(videoStream != -1);
 
     // Get a pointer to the codec context for the video stream
     pCodecCtx = pFormatCtx->streams[videoStream]->codec;
     assert(pCodecCtx != NULL);
     frame_rate = (float)pFormatCtx->streams[videoStream]->avg_frame_rate.num / pFormatCtx->streams[videoStream]->avg_frame_rate.den;
-    video_prop.push_back(pCodecCtx->width);
-    video_prop.push_back(pCodecCtx->height);
-    video_prop.push_back(pFormatCtx->streams[videoStream]->nb_frames);
-    video_prop.push_back(round(frame_rate));
+    props.push_back(pCodecCtx->width);
+    props.push_back(pCodecCtx->height);
+    props.push_back(pFormatCtx->streams[videoStream]->nb_frames);
+    props.push_back(round(frame_rate));
     avcodec_close(pCodecCtx);
     avformat_close_input(&pFormatCtx);
-    return video_prop;
+    return props;
 }
 
 video_properties get_video_properties_from_txt_file(const char *file_path, bool file_list_frame_num)
 {
     std::ifstream text_file(file_path);
 
-    if (text_file.good()) {
+    if (text_file.good())
+    {
         //_text_file.open(path.c_str(), std::ifstream::in);
         video_properties video_props;
         std::vector<unsigned> props;
         std::string line;
         int label;
         unsigned int max_width = 0;
-        int max_height = 0;
+        unsigned int max_height = 0;
         unsigned int start, end;
         float start_time, end_time;
         int video_count = 0;
         std::string video_file_name;
-        while (std::getline(text_file, line)) {
+        while (std::getline(text_file, line))
+        {
             start = end = 0;
             std::istringstream line_ss(line);
             if (!(line_ss >> video_file_name >> label))
                 continue;
             props = open_video_context(video_file_name.c_str());
-            if( props[0] >= max_width ) {    
-                if (max_width != 0)           
+            if (props[0] != max_width)
+            {
+                if (max_width != 0)
                     std::cerr << "[WARN] The given video files are of different resolution\n";
                 max_width = props[0];
             }
-            if ( props[1] >= max_height ) {
+            if (props[1] != max_height)
+            {
                 if (max_height != 0)
                     std::cerr << "[WARN] The given video files are of different resolution\n";
                 max_height = props[1];
             }
-            if(!file_list_frame_num) {
-                if (line_ss >> start_time) {
-                    if (line_ss >> end_time) {
-                        if (start_time >= end_time) {
+            if (!file_list_frame_num)
+            {
+                if (line_ss >> start_time)
+                {
+                    if (line_ss >> end_time)
+                    {
+                        if (start_time >= end_time)
+                        {
                             std::cerr << "[WRN] Start and end time/frame are not satisfying the condition, skipping the file " << video_file_name << "\n";
                             continue;
                         }
                         start = start_time * props[3];
                         end = end_time * props[3];
-                        end = end ?end : props[2];
+                        end = end ? end : props[2];
                     }
                 }
-                video_props.start_end_timestamps.push_back(std::make_tuple(start_time, end_time)); 
+                video_props.start_end_timestamps.push_back(std::make_tuple(start_time, end_time));
             }
-            else {
-                if (line_ss >> start) {
-                    if (line_ss >> end) {
-                        if (start >= end) {
+            else
+            {
+                if (line_ss >> start)
+                {
+                    if (line_ss >> end)
+                    {
+                        if (start >= end)
+                        {
                             std::cerr << "[WRN] Start and end time/frame are the same, skipping the file " << video_file_name << "\n";
                             continue;
                         }
-                        end = end ?end : props[2];
+                        end = end ? end : props[2];
                     }
                 }
             }
             if (end > props[2])
-                THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + video_file_name) 
-            
+                THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + video_file_name)
+
             video_file_name = std::to_string(video_count) + "#" + video_file_name;
             video_props.video_file_names.push_back(video_file_name);
             video_props.labels.push_back(label);
@@ -128,21 +140,21 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
         video_props.videos_count = video_count;
         return video_props;
     }
-    else {
+    else
+    {
         THROW("Can't open the metadata file at " + std::string(file_path))
     }
 }
 
 video_properties find_video_properties(const char *source_path, bool file_list_frame_num)
 {
-
     DIR *_sub_dir;
     struct dirent *_entity;
-    std::string vid_file_path;
-    video_properties props;
-    std::vector<unsigned> video_prop;
-    // video_prop.resize(4);
-    unsigned max_width = 0, max_height = 0;
+    std::string video_file_path;
+    video_properties video_props;
+    std::vector<unsigned> props;
+    unsigned int max_width = 0;
+    unsigned int max_height = 0;
     std::string _full_path = source_path;
     filesys::path pathObj(_full_path);
 
@@ -150,34 +162,30 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
     {
         if (pathObj.has_extension() && pathObj.extension().string() == ".txt")
         {
-            props = get_video_properties_from_txt_file(source_path, file_list_frame_num);
+            video_props = get_video_properties_from_txt_file(source_path, file_list_frame_num);
         }
         else
         {
-            video_prop = open_video_context(source_path);
-            props.width = video_prop[0];
-            props.height = video_prop[1];
-            props.videos_count = 1;
-            props.frames_count.push_back(video_prop[2]);
-            props.frame_rate.push_back(video_prop[3]);
-            props.start_end_frame_num.push_back(std::make_tuple(0, (int)video_prop[2]));
-            vid_file_path = std::to_string(0) +  "#" + _full_path;
-            props.video_file_names.push_back(vid_file_path);
+            props = open_video_context(source_path);
+            video_props.width = props[0];
+            video_props.height = props[1];
+            video_props.videos_count = 1;
+            video_props.frames_count.push_back(props[2]);
+            video_props.frame_rate.push_back(props[3]);
+            video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
+            video_file_path = std::to_string(0) + "#" + _full_path;
+            video_props.video_file_names.push_back(video_file_path);
         }
     }
     else if (filesys::exists(pathObj) && filesys::is_directory(pathObj))
     {
-        //subfolder_reading(source_path, props);
-
+        //subfolder_reading(source_path, video_props);
         std::vector<std::string> video_files;
         unsigned video_count = 0;
-
+        std::vector<std::string> entry_name_list;
         std::string _folder_path = source_path;
         if ((_sub_dir = opendir(_folder_path.c_str())) == nullptr)
             THROW("ERROR: Failed opening the directory at " + _folder_path);
-
-        std::vector<std::string> entry_name_list;
-        //std::string _full_path = _folder_path;
 
         while ((_entity = readdir(_sub_dir)) != nullptr)
         {
@@ -195,14 +203,24 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
             filesys::path pathObj(subfolder_path);
             if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
             {
-                video_prop = open_video_context(subfolder_path.c_str());
-                max_width = video_prop[0];
-                max_height = video_prop[1];
-                props.frames_count.push_back(video_prop[2]);
-                props.frame_rate.push_back(video_prop[3]);
-                vid_file_path = std::to_string(video_count) +  "#" + subfolder_path;
-                props.video_file_names.push_back(vid_file_path);
-                props.start_end_frame_num.push_back(std::make_tuple(0, (int)video_prop[2]));
+                props = open_video_context(subfolder_path.c_str());
+                if (props[0] != max_width)
+                {
+                    if (max_width != 0)
+                        std::cerr << "[WARN] The given video files are of different resolution\n";
+                    max_width = props[0];
+                }
+                if (props[1] != max_height)
+                {
+                    if (max_height != 0)
+                        std::cerr << "[WARN] The given video files are of different resolution\n";
+                    max_height = props[1];
+                }
+                video_props.frames_count.push_back(props[2]);
+                video_props.frame_rate.push_back(props[3]);
+                video_file_path = std::to_string(video_count) + "#" + subfolder_path;
+                video_props.video_file_names.push_back(video_file_path);
+                video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
                 video_count++;
             }
             else if (filesys::exists(pathObj) && filesys::is_directory(pathObj))
@@ -227,29 +245,33 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                     file_path.append(video_files[i]);
                     _full_path = file_path;
 
-                    video_prop = open_video_context(_full_path.c_str());
-                    if (((video_prop[0] > max_width) || (video_prop[1] > max_height)) && (max_width != 0 && max_height != 0))
+                    props = open_video_context(_full_path.c_str());
+                    if (props[0] != max_width)
                     {
-                        max_width = video_prop[0];
-                        std::cerr << "[WARN] The given video files are of different resolution\n";
+                        if (max_width != 0)
+                            std::cerr << "[WARN] The given video files are of different resolution\n";
+                        max_width = props[0];
                     }
-                    if (video_prop[1] > max_height)
-                        max_height = video_prop[1];
-                    vid_file_path = std::to_string(video_count) +  "#" + _full_path;
-                    props.video_file_names.push_back(vid_file_path);
-                    // props.video_file_names.push_back(_full_path);
-                    props.frames_count.push_back(video_prop[2]);
-                    props.frame_rate.push_back(video_prop[3]);
-                    props.start_end_frame_num.push_back(std::make_tuple(0, (int)video_prop[2]));
+                    if (props[1] != max_height)
+                    {
+                        if (max_height != 0)
+                            std::cerr << "[WARN] The given video files are of different resolution\n";
+                        max_height = props[1];
+                    }
+                    video_file_path = std::to_string(video_count) + "#" + _full_path;
+                    video_props.video_file_names.push_back(video_file_path);
+                    video_props.frames_count.push_back(props[2]);
+                    video_props.frame_rate.push_back(props[3]);
+                    video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
                     video_count++;
                     _full_path = subfolder_path;
                 }
                 video_files.clear();
             }
         }
-        props.videos_count = video_count;
-        props.width = max_width;
-        props.height = max_height;
+        video_props.videos_count = video_count;
+        video_props.width = max_width;
+        video_props.height = max_height;
     }
-    return props;
+    return video_props;
 }

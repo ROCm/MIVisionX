@@ -29,7 +29,6 @@ THE SOFTWARE.
 #include "exception.h"
 #include "video_label_reader_folders.h"
 
-
 using namespace std;
 
 namespace filesys = boost::filesystem;
@@ -41,12 +40,12 @@ VideoLabelReaderFolders::VideoLabelReaderFolders()
     _sub_dir = nullptr;
 }
 
-void VideoLabelReaderFolders::init(const MetaDataConfig& cfg)
+void VideoLabelReaderFolders::init(const MetaDataConfig &cfg)
 {
     _path = cfg.path();
     _output = new LabelBatch();
 }
-bool VideoLabelReaderFolders::exists(const std::string& image_name)
+bool VideoLabelReaderFolders::exists(const std::string &image_name)
 {
     return _map_content.find(image_name) != _map_content.end();
 }
@@ -56,23 +55,23 @@ void VideoLabelReaderFolders::add(std::string image_name, int label, unsigned in
 
     std::vector<unsigned> video_prop;
     video_prop = open_video_context(image_name.c_str());
-    size_t frame_count = video_frame_count ? video_frame_count : video_prop[2];
-    if ( video_frame_count + start_frame > video_prop[2] )
-        THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + image_name) 
+    unsigned frame_count = video_frame_count ? video_frame_count : video_prop[2];
+    if (video_frame_count + start_frame > video_prop[2])
+        THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + image_name)
     std::vector<std::string> substrings;
     char delim = '/';
     substring_extraction(image_name, delim, substrings);
-    std::string file_name = substrings[substrings.size()- 1];
-    for(uint i = start_frame; i < (start_frame + frame_count); i++)
+    std::string file_name = substrings[substrings.size() - 1];
+    for (unsigned i = start_frame; i < (start_frame + frame_count); i++)
     {
         pMetaData info = std::make_shared<Label>(label);
-        std::string frame_name = std::to_string(_video_idx) + "#" + file_name +"_"+  std::to_string(i);
-        if(exists(frame_name))
+        std::string frame_name = std::to_string(_video_idx) + "#" + file_name + "_" + std::to_string(i);
+        if (exists(frame_name))
         {
             WRN("Entity with the same name exists")
             return;
         }
-        _map_content.insert(pair<std::string, std::shared_ptr<Label>>(frame_name, info));
+        _map_content.insert(pair<std::string, std::shared_ptr<Label> >(frame_name, info));
     }
     _video_idx++;
 }
@@ -80,7 +79,8 @@ void VideoLabelReaderFolders::add(std::string image_name, int label, unsigned in
 void VideoLabelReaderFolders::print_map_contents()
 {
     std::cerr << "\nMap contents: \n";
-    for (auto& elem : _map_content) {
+    for (auto &elem : _map_content)
+    {
         std::cerr << "Name :\t " << elem.first << "\t ID:  " << elem.second->get_label() << std::endl;
     }
 }
@@ -92,7 +92,7 @@ void VideoLabelReaderFolders::release()
 
 void VideoLabelReaderFolders::release(std::string image_name)
 {
-    if(!exists(image_name))
+    if (!exists(image_name))
     {
         WRN("ERROR: Given not present in the map" + image_name);
         return;
@@ -100,133 +100,152 @@ void VideoLabelReaderFolders::release(std::string image_name)
     _map_content.erase(image_name);
 }
 
-void VideoLabelReaderFolders::lookup(const std::vector<std::string>& image_names)
+void VideoLabelReaderFolders::lookup(const std::vector<std::string> &image_names)
 {
-    if(image_names.empty())
+    if (image_names.empty())
     {
         WRN("No image names passed")
         return;
     }
-    if(image_names.size() != (unsigned)_output->size())
+    if (image_names.size() != (unsigned)_output->size())
         _output->resize(image_names.size());
 
-    for(unsigned i = 0; i < image_names.size(); i++)
+    for (unsigned i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
-        if(_map_content.end() == it)
-            THROW("ERROR: Video label reader folders Given name not present in the map"+ image_name )
+        if (_map_content.end() == it)
+            THROW("ERROR: Video label reader folders Given name not present in the map" + image_name)
         _output->get_label_batch()[i] = it->second->get_label();
     }
 }
 
-void VideoLabelReaderFolders::read_text_file(const std::string& _path)
+void VideoLabelReaderFolders::read_text_file(const std::string &_path)
 {
     std::ifstream text_file(_path);
 
-    if (text_file.good()) {
-        //_text_file.open(path.c_str(), std::ifstream::in);
+    if (text_file.good())
+    {
         std::string line;
         int label, start, end;
         float start_time, end_time;
         std::string video_file_name;
         std::vector<unsigned> props;
-        while (std::getline(text_file, line)) {
+        while (std::getline(text_file, line))
+        {
             start = end = 0;
             std::istringstream line_ss(line);
             if (!(line_ss >> video_file_name >> label))
                 continue;
             props = open_video_context(video_file_name.c_str());
-            if(!_file_list_frame_num) {
-                if (line_ss >> start_time) {
-                    if (line_ss >> end_time) {
-                        if (start_time >= end_time) {
+            if (!_file_list_frame_num)
+            {
+                if (line_ss >> start_time)
+                {
+                    if (line_ss >> end_time)
+                    {
+                        if (start_time >= end_time)
+                        {
                             std::cerr << "[WRN] Start and end time/frame are not satisfying the condition, skipping the file " << video_file_name << "\n";
                             continue;
                         }
                         start = start_time * props[3];
                         end = end_time * props[3];
-                        end = end ?end : props[2];
+                        end = end ? end : props[2];
                     }
                 }
             }
-            else {
-                if (line_ss >> start) {
-                    if (line_ss >> end) {
-                        if (start >= end) {
+            else
+            {
+                if (line_ss >> start)
+                {
+                    if (line_ss >> end)
+                    {
+                        if (start >= end)
+                        {
                             std::cerr << "[WRN] Start and end time/frame are the same, skipping the file " << video_file_name << "\n";
                             continue;
                         }
-                        end = end ?end : props[2];
+                        end = end ? end : props[2];
                     }
                 }
             }
             add(video_file_name, label, (end - start), start);
         }
     }
-    else {
+    else
+    {
         THROW("Can't open the metadata file at " + std::string(_path))
     }
 }
 
-void VideoLabelReaderFolders::read_all(const std::string& _path)
+void VideoLabelReaderFolders::read_all(const std::string &_path)
 {
     std::string _folder_path = _path;
 
     filesys::path pathObj(_folder_path);
 
-    if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) { // Single file as input
-        if (pathObj.has_extension() && pathObj.extension().string() == ".txt") {
+    if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
+    { // Single file as input
+        if (pathObj.has_extension() && pathObj.extension().string() == ".txt")
+        {
             read_text_file(_path);
         }
-        else if (pathObj.has_extension() && pathObj.extension().string() == ".mp4") {
+        else if (pathObj.has_extension() && pathObj.extension().string() == ".mp4")
+        {
             add(_path, 0);
         }
     }
-    else {
+    else
+    {
         if ((_sub_dir = opendir(_folder_path.c_str())) == nullptr)
             THROW("ERROR: Failed opening the directory at " + _folder_path);
 
         std::vector<std::string> entry_name_list;
         std::string _full_path = _folder_path;
 
-        while((_entity = readdir (_sub_dir)) != nullptr)
+        while ((_entity = readdir(_sub_dir)) != nullptr)
         {
             std::string entry_name(_entity->d_name);
-            if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) continue;
+            if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0)
+                continue;
             entry_name_list.push_back(entry_name);
         }
         std::sort(entry_name_list.begin(), entry_name_list.end());
         closedir(_sub_dir);
 
-        for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
+        for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count)
+        {
             std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
             filesys::path pathObj(subfolder_path);
-            if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
+            if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
             {
                 // ignore files with extensions .tar, .zip, .7z
                 auto file_extension_idx = subfolder_path.find_last_of(".");
-                if (file_extension_idx  != std::string::npos) {
-                    std::string file_extension = subfolder_path.substr(file_extension_idx+1);
+                if (file_extension_idx != std::string::npos)
+                {
+                    std::string file_extension = subfolder_path.substr(file_extension_idx + 1);
                     if ((file_extension == "tar") || (file_extension == "zip") || (file_extension == "7z") || (file_extension == "rar"))
                         continue;
                 }
                 read_files(_folder_path);
-                for(unsigned i = 0; i < _subfolder_video_file_names.size(); i++) {
+                for (unsigned i = 0; i < _subfolder_video_file_names.size(); i++)
+                {
                     add(_subfolder_video_file_names[i], i);
                 }
-                break;  // assume directory has only files.
+                break; // assume directory has only files.
             }
-            else if(filesys::exists(pathObj) && filesys::is_directory(pathObj))
+            else if (filesys::exists(pathObj) && filesys::is_directory(pathObj))
             {
                 _folder_path = subfolder_path;
                 _subfolder_video_file_names.clear();
                 read_files(_folder_path);
-                for(unsigned i = 0; i < _subfolder_video_file_names.size(); i++) {
+                for (unsigned i = 0; i < _subfolder_video_file_names.size(); i++)
+                {
                     std::vector<std::string> substrings;
                     char delim = '/';
                     substring_extraction(_subfolder_video_file_names[i], delim, substrings);
-                    int label = atoi(substrings[substrings.size()- 2].c_str());
+                    int label = atoi(substrings[substrings.size() - 2].c_str());
                     add(_subfolder_video_file_names[i], label);
                 }
             }
@@ -235,14 +254,14 @@ void VideoLabelReaderFolders::read_all(const std::string& _path)
     // print_map_contents();
 }
 
-void VideoLabelReaderFolders::read_files(const std::string& _path)
+void VideoLabelReaderFolders::read_files(const std::string &_path)
 {
-    if ((_src_dir = opendir (_path.c_str())) == nullptr)
+    if ((_src_dir = opendir(_path.c_str())) == nullptr)
         THROW("ERROR: Failed opening the directory at " + _path);
 
-    while((_entity = readdir (_src_dir)) != nullptr)
+    while ((_entity = readdir(_src_dir)) != nullptr)
     {
-        if(_entity->d_type != DT_REG)
+        if (_entity->d_type != DT_REG)
             continue;
 
         std::string file_path = _path;
@@ -251,9 +270,8 @@ void VideoLabelReaderFolders::read_files(const std::string& _path)
         _file_names.push_back(file_path);
         _subfolder_video_file_names.push_back(file_path);
     }
-    if(_file_names.empty())
+    if (_file_names.empty())
         WRN("LabelReader: Could not find any file in " + _path)
     closedir(_src_dir);
     std::sort(_subfolder_video_file_names.begin(), _subfolder_video_file_names.end());
 }
-

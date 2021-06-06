@@ -30,10 +30,10 @@ int FFMPEG_VIDEO_DECODER::seek_frame(AVRational avg_frame_rate, AVRational time_
 {
     auto seek_time = av_rescale_q((int64_t)frame_number, av_inv_q(avg_frame_rate), AV_TIME_BASE_Q);
     int64_t select_frame_pts = av_rescale_q((int64_t)frame_number, av_inv_q(avg_frame_rate), time_base);
-    // std::cerr << "Seeking to frame " << frame_number << " timestamp " << seek_time << std::endl;    
-
+    // std::cerr << "Seeking to frame " << frame_number << " timestamp " << seek_time << std::endl;
     int ret = av_seek_frame(_fmt_ctx, -1, seek_time, AVSEEK_FLAG_BACKWARD);
-    if (ret < 0) {
+    if (ret < 0)
+    {
         std::cerr << "\n Error in seeking frame..Unable to seek the given frame in a video" << std::endl;
         return ret;
     }
@@ -45,9 +45,10 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
 
     VideoDecoder::Status status = Status::OK;
     int ret;
-	unsigned skipped_frames = 0;
+    unsigned skipped_frames = 0;
     bool end_of_stream = false;
     int got_pic = 0;
+    
     /* Allocate a codec context for the decoder */
     _video_dec_ctx = avcodec_alloc_context3(_decoder);
     if (!_video_dec_ctx)
@@ -72,7 +73,6 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
                 av_get_media_type_string(AVMEDIA_TYPE_VIDEO));
         return Status::FAILED;
     }
-    // _video_stream = _fmt_ctx->streams[_video_stream_idx];
 
     // initialize sample scaler
     const int dst_width = _video_stream->codec->width;
@@ -106,7 +106,7 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
 
     // decoding loop
     _decframe = av_frame_alloc();
-    int fcount = 0;
+    int frame_count = 0;
     int select_frame_pts = seek_frame(_video_stream->avg_frame_rate, _video_stream->time_base, seek_frame_number);
     // std::cerr << "Seeking the frame : " << seek_frame_number << " at the pts : " << select_frame_pts << "\n";
 
@@ -137,7 +137,7 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
             _pkt.data = nullptr;
             _pkt.size = 0;
         }
-        // decode video _frame
+        // decode video frame
         avcodec_decode_video2(_video_dec_ctx, _decframe, &got_pic, &_pkt);
 
         if ((_decframe->pkt_pts < select_frame_pts) || !got_pic)
@@ -146,7 +146,7 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
                 ++skipped_frames;
             goto next_packet;
         }
-        if(fcount % stride == 0)
+        if (frame_count % stride == 0)
         {
             _frame->data[0] = out_buffer;
             sws_scale(swsctx, _decframe->data, _decframe->linesize, 0, _decframe->height, _frame->data, _frame->linesize);
@@ -154,8 +154,8 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
         }
 
         ++_nb_frames;
-        ++fcount;
-        if (fcount == sequence_length * stride)
+        ++frame_count;
+        if (frame_count == sequence_length * stride)
         {
             av_free_packet(&_pkt);
             break;
@@ -167,8 +167,8 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
 
     av_frame_free(&_frame);
     av_frame_free(&_decframe);
-    avformat_flush(_fmt_ctx);
-    avio_flush(_fmt_ctx->pb);
+    // avformat_flush(_fmt_ctx);
+    // avio_flush(_fmt_ctx->pb);
     sws_freeContext(swsctx);
     avcodec_free_context(&_video_dec_ctx);
     return status;

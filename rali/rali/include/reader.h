@@ -55,11 +55,11 @@ struct ReaderConfig
     bool loop() { return _loop; }
     void set_shuffle(bool shuffle) { _shuffle = shuffle; }
     void set_loop(bool loop) { _loop = loop; }
-    void set_sequence_length(unsigned sequence_length) { _sequence_length = (size_t)sequence_length; }
-    void set_frame_step(unsigned step) { _video_frame_step = (size_t)step; }
-    void set_frame_stride(unsigned stride) { _video_frame_stride = (size_t)stride; }
+    void set_sequence_length(unsigned sequence_length) { _sequence_length = sequence_length; }
+    void set_frame_step(unsigned step) { _video_frame_step = step; }
+    void set_frame_stride(unsigned stride) { _video_frame_stride = stride; }
     void set_video_count(unsigned video_count) { _video_count = video_count; }
-    void set_frame_count(std::vector<size_t> frame_count) { _frame_count = frame_count; }
+    void set_video_frames_count(std::vector<size_t> frame_count) { _frame_count = frame_count; }
     void set_video_frame_rate(std::vector<size_t> frame_rate) { _frame_rate = frame_rate; }
     void set_total_frames_count(size_t total) { _total_frames_count = total; }
     void set_video_file_names(std::vector<std::string> video_file_names) { _video_file_names = video_file_names; }
@@ -72,7 +72,7 @@ struct ReaderConfig
     size_t get_frame_stride() { return _video_frame_stride; }
     size_t get_video_count() { return _video_count; }
     std::vector<size_t> get_video_frame_rate() { return _frame_rate; }
-    std::vector<size_t> get_frame_count() { return _frame_count; }
+    std::vector<size_t> get_video_frames_count() { return _frame_count; }
     size_t get_total_frames_count() { return _total_frames_count; }
     std::vector<std::string> get_video_file_names() { return _video_file_names; }
     std::vector<std::tuple<int, int>> get_start_end_frame_vector() { return _start_end_frame_vector; }

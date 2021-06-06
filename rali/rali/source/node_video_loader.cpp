@@ -37,8 +37,8 @@ VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources
 }
 
 void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-                           VideoDecoderType decoder_type, unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frame_count, std::vector<size_t> frame_rate,
-                           std::vector<std::tuple<int, int>> start_end_frame, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names)
+                           VideoDecoderType decoder_type, unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frames_count, std::vector<size_t> frame_rate,
+                           std::vector<std::tuple<int, int>> start_end_frame_num, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names)
 {
     //_decode_mode = decoder_mode;
     _source_path = source_path;
@@ -56,12 +56,12 @@ void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &sou
     step > 0 ? reader_cfg.set_frame_step(step) : reader_cfg.set_frame_step(sequence_length);
     reader_cfg.set_frame_stride(stride);
     reader_cfg.set_video_count(video_count);
-    reader_cfg.set_frame_count(frame_count);
+    reader_cfg.set_video_frames_count(frames_count);
     reader_cfg.set_video_frame_rate(frame_rate);
     reader_cfg.set_video_file_names(video_file_names);
-    reader_cfg.set_start_end_frame_vector(start_end_frame);
+    reader_cfg.set_start_end_frame_vector(start_end_frame_num);
     size_t total_frames;
-    total_frames = std::accumulate(frame_count.begin(), frame_count.end(), 0);
+    total_frames = std::accumulate(frames_count.begin(), frames_count.end(), 0);
     reader_cfg.set_total_frames_count(total_frames);
     _loader_module->initialize(reader_cfg, VideoDecoderConfig(decoder_type),
                                mem_type,

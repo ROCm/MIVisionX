@@ -1513,7 +1513,6 @@ raliVideoFileSource(
         const char* text_file_path,
         bool file_list_frame_num)
 {
-    std::cerr<<"\n Coming to raliVideoFileSource";
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     try
@@ -1531,10 +1530,10 @@ raliVideoFileSource(
 
         const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
-        std::vector<size_t> frame_count;
+        std::vector<size_t> frames_count;
         std::vector<size_t> frame_rate;
         std::vector<std::string> video_file_names;
-        std::vector<std::tuple<int, int>> start_end_frame;
+        std::vector<std::tuple<int, int>> start_end_frame_num;
 
         if ( source_path != NULL && text_file_path == NULL)
             file_path = source_path;
@@ -1544,20 +1543,17 @@ raliVideoFileSource(
             THROW("Invalid input passed");
 
         video_properties video_prop = find_video_properties(file_path, file_list_frame_num);
-        //std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
         width = video_prop.width;
-        height = video_prop.height ;
+        height = video_prop.height;
         number_of_video_files = video_prop.videos_count;
-        frame_count.resize(number_of_video_files);
+        frames_count.resize(number_of_video_files);
         frame_rate.resize(number_of_video_files);
         video_file_names.resize(number_of_video_files);
-        start_end_frame.resize(number_of_video_files);
-        frame_count = video_prop.frames_count;
+        start_end_frame_num.resize(number_of_video_files);
+        frames_count = video_prop.frames_count;
         frame_rate = video_prop.frame_rate;
         video_file_names = video_prop.video_file_names;
-        start_end_frame = video_prop.start_end_frame_num;
-        std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
-        std::cerr<<"\n number_of_video_files:: "<<number_of_video_files<<"\t";
+        start_end_frame_num = video_prop.start_end_frame_num;
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         //auto decoder_mode = convert_decoder_mode(rali_decode_device);
@@ -1578,9 +1574,9 @@ raliVideoFileSource(
                                                                           step,
                                                                           stride,
                                                                           number_of_video_files,
-                                                                          frame_count,
+                                                                          frames_count,
                                                                           frame_rate,
-                                                                          start_end_frame,
+                                                                          start_end_frame_num,
                                                                           shuffle,
                                                                           loop,
                                                                           context->master_graph->internal_batch_size(),
@@ -1645,10 +1641,10 @@ raliVideoFileResize(
 
         const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
-        std::vector<size_t> frame_count;
+        std::vector<size_t> frames_count;
         std::vector<size_t> frame_rate;
         std::vector<std::string> video_file_names;
-        std::vector<std::tuple<int, int>> start_end_frame;
+        std::vector<std::tuple<int, int>> start_end_frame_num;
         
         if ( source_path != NULL && text_file_path == NULL )
             file_path = source_path;
@@ -1656,19 +1652,17 @@ raliVideoFileResize(
             file_path = text_file_path;
 
         video_properties video_prop = find_video_properties(file_path, file_list_frame_num);
-        //std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
         width = video_prop.width;
         height = video_prop.height ;
         number_of_video_files = video_prop.videos_count;
-        frame_count.resize(number_of_video_files);
+        frames_count.resize(number_of_video_files);
+        frame_rate.resize(number_of_video_files);
         video_file_names.resize(number_of_video_files);
-        start_end_frame.resize(number_of_video_files);
-        frame_count = video_prop.frames_count;
+        start_end_frame_num.resize(number_of_video_files);
+        frames_count = video_prop.frames_count;
         frame_rate = video_prop.frame_rate;
         video_file_names = video_prop.video_file_names;
-        start_end_frame = video_prop.start_end_frame_num;
-        std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
-        std::cerr<<"\n number_of_video_files:: "<<number_of_video_files<<"\t";
+        start_end_frame_num = video_prop.start_end_frame_num;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         //auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(width, height,
@@ -1679,7 +1673,7 @@ raliVideoFileResize(
 
         output = context->master_graph->create_loader_output_image(info);
 
-                // For the resize node, user can create an image with a different width and height
+        // For the resize node, user can create an image with a different width and height
         ImageInfo output_info = info;
         output_info.width(dest_width);
         output_info.height(dest_height);
@@ -1695,9 +1689,9 @@ raliVideoFileResize(
                                                                           step,
                                                                           stride,
                                                                           number_of_video_files,
-                                                                          frame_count,
+                                                                          frames_count,
                                                                           frame_rate,
-                                                                          start_end_frame,
+                                                                          start_end_frame_num,
                                                                           shuffle,
                                                                           loop,
                                                                           context->master_graph->internal_batch_size(),
@@ -1727,7 +1721,6 @@ raliVideoFileResize(
         std::cerr << e.what() << '\n';
     }
     return resize_output;
-
 }
 
 // loader for CFAR10 raw data: Can be used for other raw data loaders as well

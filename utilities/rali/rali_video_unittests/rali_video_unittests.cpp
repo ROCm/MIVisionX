@@ -234,7 +234,7 @@ int main(int argc, const char **argv)
         std::cerr << "[ERR]Could not verify the augmentation graph" << std::endl;
         return -1;
     }
-    std::cout << "Remaining images " << raliGetRemainingImages(handle) << std::endl;
+    std::cout << "\nRemaining images " << raliGetRemainingImages(handle) << std::endl;
     std::cout << "Augmented copies count " << raliGetAugmentationBranchCount(handle) << std::endl;
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/

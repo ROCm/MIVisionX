@@ -79,7 +79,7 @@ message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:
 message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D BACKEND=HIP/OPENCL [select backend for GPU support (HIP or OPENCL) (default:OPENCL)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=HIP [select HIP for GPU backend (default:OPENCL)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)

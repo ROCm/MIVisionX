@@ -175,7 +175,7 @@ class RALICOCOIterator(object):
         self.img_size = np.zeros((self.bs * 2), dtype="int32")
         self.loader.GetImgSizes(self.img_size)
         print("Image sizes:", self.img_size)
-        img = torch.from_numpy(self.out)
+        #img = torch.from_numpy(self.out)
         count = 0
         sum_count = 0
         for i in range(self.bs):

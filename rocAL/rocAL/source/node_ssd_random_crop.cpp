@@ -111,6 +111,7 @@ void SSDRandomCropNode::update_node()
                 crop_box.b = 1;
                 break;
             }
+            float aspect_ratio;
             for (int j = 0; j < _num_of_attempts; j++)
             {
                 
@@ -118,11 +119,11 @@ void SSDRandomCropNode::update_node()
                 float w_factor = _float_dis(_rngs[sample]);
                 float h_factor = _float_dis(_rngs[sample]);
                 //aspect ratio check
-                if ((w_factor / h_factor < 0.5) || (w_factor / h_factor > 2.))
+                aspect_ratio = w_factor/h_factor;
+                if ((aspect_ratio < 0.5) || (aspect_ratio > 2.))
                     continue;
-                break;
             }
-            if ((w_factor / h_factor < 0.5) || (w_factor / h_factor > 2.))
+            if ((aspect_ratio < 0.5) || (aspect_ratio > 2.))
                 continue;
             
             

@@ -102,9 +102,22 @@ else()
             set(OpenCL_LIBRARIES ${ROCM_PATH}/opencl/lib/libOpenCL.so CACHE INTERNAL "")
             set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")
         endif()
-        set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
-        add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
-        message("-- ${Magenta}ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION}${ColourReset}")
+    endif()
+
+    if(OpenCL_FOUND)
+        execute_process(
+            COMMAND bash -c "nm -gDC ${OPENCL_LIBRARIES} | grep OPENCL_2.2"
+            OUTPUT_VARIABLE outVar
+        )
+        if(NOT ${outVar} STREQUAL "")
+            set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
+            add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
+            message("-- ${Magenta}ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION}${ColourReset}")
+        else()
+            message( "-- ${Yellow}FindOpenCL failed to find: OpenCL 2.2${ColourReset}" )
+            set(CL_TARGET_OPENCL_VERSION 120 CACHE INTERNAL "")
+            message("-- ${Magenta}ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION}${ColourReset}")
+        endif()
     endif()
 
     if( NOT OpenCL_FOUND )

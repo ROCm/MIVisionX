@@ -342,7 +342,6 @@ MasterGraph::Status
 MasterGraph::reset()
 {
     // stop the internal processing thread so that the
-    std::cerr<<"In RESET !!";
     _processing = false;
     _ring_buffer.unblock_writer();
     if(_output_thread.joinable())

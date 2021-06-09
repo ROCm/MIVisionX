@@ -22,6 +22,7 @@ class RALIGenericImageIterator(object):
 
     def __next__(self):
         if b.getRemainingImages(self.loader._handle) < self.bs:
+            b.raliResetLoaders(self.loader._handle)
             raise StopIteration
 
         if self.loader.run() != 0:
@@ -46,7 +47,6 @@ class RALIGenericImageIterator(object):
         b.raliResetLoaders(self.loader._handle)
 
     def __iter__(self):
-        b.raliResetLoaders(self.loader._handle)
         return self
 
 
@@ -89,6 +89,7 @@ class RALIGenericIterator(object):
             print("Decode   time ::",timing_info.decode_time)
             print("Process  time ::",timing_info.process_time)
             print("Transfer time ::",timing_info.transfer_time)
+            b.raliResetLoaders(self.loader._handle)
             raise StopIteration
 
         if self.loader.run() != 0:
@@ -168,7 +169,6 @@ class RALIGenericIterator(object):
         b.raliResetLoaders(self.loader._handle)
 
     def __iter__(self):
-        b.raliResetLoaders(self.loader._handle)
         return self
 
     def __len__(self):

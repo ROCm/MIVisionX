@@ -100,6 +100,7 @@ void RandomBBoxCropReader::lookup(const std::vector<std::string> &image_names)
 
 pCropCord RandomBBoxCropReader::get_crop_cord(const std::string &image_name)
 {
+    // print_map_contents();
     if (image_name.empty())
     {
         WRN("No image names passed")
@@ -111,15 +112,16 @@ pCropCord RandomBBoxCropReader::get_crop_cord(const std::string &image_name)
     return it->second;
 }
 
-void RandomBBoxCropReader::add(std::string image_name, BoundingBoxCord crop_box)
+int RandomBBoxCropReader::add(std::string image_name, BoundingBoxCord crop_box)
 {
     
     pCropCord random_bbox_cords = std::make_shared<CropCord>(crop_box.l, crop_box.t, crop_box.r , crop_box.b );
     if (exists(image_name))
     {
-        return;
+        return 0;
     }
     _map_content.insert(std::pair<std::string, std::shared_ptr<CropCord>>(image_name, random_bbox_cords));
+    return 1;
 }
 
 void RandomBBoxCropReader::print_map_contents()
@@ -137,6 +139,8 @@ void RandomBBoxCropReader::print_map_contents()
 
 void RandomBBoxCropReader::read_all()
 {
+    std::cerr<<"READ ALL()";
+    release();
     const std::vector<float> sample_options = {-1.0f, 0.1f, 0.3f, 0.5f, 0.7f, 0.9f, 0.0f};
     int sample_option;
     std::pair<bool, float> option;
@@ -234,8 +238,12 @@ void RandomBBoxCropReader::read_all()
                 break;
         } // while loop
 
-        //        std::cout << image_name << " wxh: " << in_width << "X" << in_height << " crop<x,y, w, h>: " << crop_box.x << " X " << crop_box.y << " X " << crop_box.w << " X " << crop_box.h << std::endl;
-        add(image_name, crop_box);
+        // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
+        if(!add(image_name, crop_box))
+        {
+            THROW("ERROR: Given name already present in the map" + image_name)
+        }
+        
         sample++;
     }
 }

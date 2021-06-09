@@ -196,6 +196,8 @@ ImageReadAndDecode::load(unsigned char* buff,
                 coords_buf[1] = _CropCord->crop_top;
                 coords_buf[2] = _CropCord->crop_right- _CropCord->crop_left ;
                 coords_buf[3] = _CropCord->crop_bottom- _CropCord->crop_top;
+                // std::cout << _image_names[file_counter] << " In image_read_decode.cpp crop<l,t,r,b>: " << coords_buf[0] << " X " << coords_buf[1]<< " X " << coords_buf[2] << " X " << coords_buf[3] << std::endl;
+
                 _bbox_coords.push_back(coords_buf);
                 coords_buf.clear();
             }

@@ -20,7 +20,7 @@ class COCOPipeline(Pipeline):
         super(COCOPipeline, self).__init__(batch_size, num_threads,
                                            device_id, seed=seed, rali_cpu=rali_cpu)
         self.input = ops.COCOReader(
-            file_root=data_dir, annotations_file=ann_dir,random_shuffle=True,seed=seed)
+            file_root=data_dir, annotations_file=ann_dir,random_shuffle=False,seed=seed)
         rali_device = 'cpu' if rali_cpu else 'gpu'
         decoder_device = 'cpu' if rali_cpu else 'mixed'
         # device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
@@ -50,6 +50,7 @@ class COCOPipeline(Pipeline):
                                             output_layout=types.NCHW,
                                             crop=(crop, crop),
                                             image_type=types.RGB,
+                                            mirror=0,
                                             mean=[0.485 * 255, 0.456 *255, 0.406 * 255],
                                             std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
                                             #mean=[0, 0, 0],
@@ -81,7 +82,7 @@ class COCOPipeline(Pipeline):
         images = self.res(images)
         images = self.twist(images, saturation=saturation,
                             contrast=contrast, brightness=brightness, hue=hue)
-        output = self.cmnp(images, mirror=coin)
+        output = self.cmnp(images)
         encoded_bboxes, encoded_labels = self.boxEncoder(bboxes, labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
         encoded_labels = self.cast(encoded_labels)
         return [output, encoded_bboxes, encoded_labels] #Encoded Bbox and labels output in "ltrb" format
@@ -132,6 +133,7 @@ class RALICOCOIterator(object):
     def __next__(self):
         print("In the next routine of COCO Iterator")
         if(self.loader.isEmpty()):
+            self.loader.raliResetLoaders()
             timing_info = self.loader.Timing_Info()
             print("Load     time ::", timing_info.load_time)
             print("Decode   time ::", timing_info.decode_time)
@@ -154,15 +156,15 @@ class RALICOCOIterator(object):
         self.img_names_length = np.empty(self.bs, dtype="int32")
         self.img_names_size = self.loader.GetImageNameLen(
             self.img_names_length)
-        print("Image name length:", self.img_names_size)
+        # print("Image name length:", self.img_names_size)
 # Images names of a batch
         self.Img_name = self.loader.GetImageName(self.img_names_size)
-        print("Image names in a batch ", self.Img_name)
+        # print("Image names in a batch ", self.Img_name)
 # Count of labels/ bboxes in a batch
         self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
         self.count_batch = self.loader.GetBoundingBoxCount(
             self.bboxes_label_count)
-        print("Count Batch:", self.count_batch)
+        # print("Count Batch:", self.count_batch)
 # 1D labels array in a batch
         self.labels = np.zeros(self.count_batch, dtype="int32")
         self.loader.GetBBLabels(self.labels)
@@ -174,7 +176,7 @@ class RALICOCOIterator(object):
 # Image sizes of a batch
         self.img_size = np.zeros((self.bs * 2), dtype="int32")
         self.loader.GetImgSizes(self.img_size)
-        print("Image sizes:", self.img_size)
+        # print("Image sizes:", self.img_size)
         img = torch.from_numpy(self.out)
         count = 0
         sum_count = 0
@@ -257,7 +259,6 @@ class RALICOCOIterator(object):
         self.loader.raliResetLoaders()
 
     def __iter__(self):
-        self.loader.raliResetLoaders()
         return self
 
 def draw_patches(img,idx, bboxes):
@@ -339,13 +340,21 @@ def main():
     pipe.build()
     imageIterator = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset)
-    for i, it in enumerate(imageIterator, 0):
-        print("**************", i, "*******************")
-        print("**************starts*******************")
-        print("\nBBOXES:\n", it[1])
-        print("\nLABELS:\n", it[2])
-        print("**************ends*******************")
-        print("**************", i, "*******************")
+    epochs = 5
+    for epoch in range(int(epochs)):
+        print("EPOCH:::::",epoch)
+        for i, it in enumerate(imageIterator, 0):
+            print("**************", i, "*******************")
+            print("**************starts*******************")
+            ral_box_and_label = {'epoch' : epoch,'bbox' : it[1] , 'label' : it[2]}
+            ral_path = "/media/swetha/colortwist_change/MIVisionX/rocAL/rocAL_pybind/example/epoch" + str(epoch)+'.txt'
+            with open(ral_path, "w") as f:
+                f.write(str(ral_box_and_label))
+            f.close()  
+            print("\nBBOXES:\n", it[1])
+            print("\nLABELS:\n", it[2])
+            print("**************ends*******************")
+            print("**************", i, "*******************")
 
 
 if __name__ == '__main__':

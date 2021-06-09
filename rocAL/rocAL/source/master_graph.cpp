@@ -197,7 +197,7 @@ MasterGraph::build()
 {
     if(_output_images.empty())
         THROW("No output images are there, cannot create the pipeline")
-
+    std::cout<<"MASTER Graph Build()";
     // Verify all output images have the same dimension, otherwise creating a unified tensor from them is not supported
     _output_image_info = _output_images.front()->info();
     for(auto&& output_image : _output_images)
@@ -342,6 +342,7 @@ MasterGraph::Status
 MasterGraph::reset()
 {
     // stop the internal processing thread so that the
+    std::cerr<<"In RESET !!";
     _processing = false;
     _ring_buffer.unblock_writer();
     if(_output_thread.joinable())
@@ -351,7 +352,6 @@ MasterGraph::reset()
     // if random_bbox meta reader is used: read again to get different crops
     if (_randombboxcrop_meta_data_reader != nullptr)
         _randombboxcrop_meta_data_reader->read_all();
-
     // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
     _loader_module->reset();
     // restart processing of the images

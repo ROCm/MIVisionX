@@ -91,6 +91,8 @@ extern "C"  RaliImage  RALI_API_CALL raliSequenceReaderSingleShard(RaliContext c
                                                                    unsigned shard_id,
                                                                    unsigned shard_count,
                                                                    unsigned sequence_length,
+                                                                   unsigned step,
+                                                                   unsigned stride,
                                                                    bool is_output ,
                                                                    bool shuffle = false,
                                                                    bool loop = false,

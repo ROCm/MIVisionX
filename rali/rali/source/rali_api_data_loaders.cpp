@@ -167,7 +167,7 @@ raliJpegFileSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0,
+                                                                                        source_path, "", 0, 0, 0,
                                                                                         StorageType::FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -354,6 +354,8 @@ raliSequenceReaderSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         unsigned sequence_length,
+        unsigned step,
+        unsigned stride,
         bool is_output,
         bool shuffle,
         bool loop,
@@ -406,6 +408,7 @@ raliSequenceReaderSingleShard(
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "", sequence_length,
+                                                                                        step, stride,
                                                                                         StorageType::FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -552,7 +555,7 @@ raliJpegCaffe2LMDBRecordSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0,
+                                                                                        source_path, "", 0, 0, 0,
                                                                                         StorageType::CAFFE2_LMDB_RECORD,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -700,7 +703,7 @@ raliJpegCaffeLMDBRecordSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0,
+                                                                                        source_path, "", 0, 0, 0,
                                                                                         StorageType::CAFFE_LMDB_RECORD,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -850,7 +853,7 @@ raliJpegCOCOFileSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, json_path, 0,
+                                                                                        source_path, json_path, 0, 0, 0,
                                                                                         StorageType::COCO_FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -1252,7 +1255,7 @@ raliJpegTFRecordSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0,
+                                                                                        source_path, "", 0, 0, 0,
                                                                                         StorageType::TF_RECORD,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -1391,7 +1394,7 @@ raliRawTFRecordSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0,
+                                                                                        source_path, "", 0, 0, 0,
                                                                                         StorageType::TF_RECORD,
                                                                                         DecoderType::SKIP_DECODE,
                                                                                         shuffle,

@@ -207,6 +207,7 @@ int main(int argc, const char **argv)
     case 5:
     {
         std::cout << "\n>>>> SEQUENCE READER\n";
+        enable_framenumbers = enable_timestamps = 0;
         input1 = raliSequenceReader(handle, folder_path, color_format, shard_count, sequence_length, frame_step, frame_stride, is_output, shuffle, false, RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
         break;
     }
@@ -310,7 +311,8 @@ int main(int argc, const char **argv)
             }
             for (int i = 0; i < input_batch_size; i++)
             {
-                std::cout << "\nFrame number : " << start_frame_num[i] << std::endl;
+                if (enable_framenumbers)
+                    std::cout << "\nFrame number : " << start_frame_num[i] << std::endl;
                 if (enable_timestamps)
                     for (int j = 0; j < sequence_length; j++)
                         std::cout << "T" << j << " : " << frame_timestamps[(i * sequence_length) + j] << "\t";

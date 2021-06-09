@@ -60,7 +60,7 @@ struct ReaderConfig
     void set_frame_stride(unsigned stride) { _video_frame_stride = stride; }
     void set_video_count(unsigned video_count) { _video_count = video_count; }
     void set_video_frames_count(std::vector<size_t> frame_count) { _frame_count = frame_count; }
-    void set_video_frame_rate(std::vector<size_t> frame_rate) { _frame_rate = frame_rate; }
+    void set_video_frame_rate(std::vector<std::tuple<int, int>> frame_rate) { _frame_rate = frame_rate; }
     void set_total_frames_count(size_t total) { _total_frames_count = total; }
     void set_video_file_names(std::vector<std::string> video_file_names) { _video_file_names = video_file_names; }
     void set_start_end_frame_vector(std::vector<std::tuple<int, int>> start_end_frame) {_start_end_frame_vector = start_end_frame;}
@@ -71,7 +71,7 @@ struct ReaderConfig
     size_t get_frame_step() { return _video_frame_step; }
     size_t get_frame_stride() { return _video_frame_stride; }
     size_t get_video_count() { return _video_count; }
-    std::vector<size_t> get_video_frame_rate() { return _frame_rate; }
+    std::vector<std::tuple<int, int>> get_video_frame_rate() { return _frame_rate; }
     std::vector<size_t> get_video_frames_count() { return _frame_count; }
     size_t get_total_frames_count() { return _total_frames_count; }
     std::vector<std::string> get_video_file_names() { return _video_file_names; }
@@ -95,7 +95,7 @@ private:
     size_t _video_frame_stride = 1;
     unsigned _video_count;
     std::vector<size_t> _frame_count;
-    std::vector<size_t> _frame_rate;
+    std::vector<std::tuple<int, int>> _frame_rate;
     size_t _total_frames_count;
     std::vector<std::string> _video_file_names;
     std::vector<std::tuple<int, int>> _start_end_frame_vector;

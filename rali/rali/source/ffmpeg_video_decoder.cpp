@@ -106,7 +106,7 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
 
     // decoding loop
     _decframe = av_frame_alloc();
-    int frame_count = 0;
+    size_t frame_count = 0;
     int select_frame_pts = seek_frame(_video_stream->avg_frame_rate, _video_stream->time_base, seek_frame_number);
     // std::cerr << "Seeking the frame : " << seek_frame_number << " at the pts : " << select_frame_pts << "\n";
 

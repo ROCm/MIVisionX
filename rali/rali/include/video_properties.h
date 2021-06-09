@@ -19,10 +19,10 @@ typedef struct video_properties
 {
     unsigned width, height, videos_count;
     std::vector<size_t> frames_count;
-    std::vector<size_t> frame_rate;
     std::vector<std::string> video_file_names;
     std::vector<std::tuple<int, int>> start_end_frame_num;
     std::vector<std::tuple<float, float>> start_end_timestamps;
+    std::vector<std::tuple<int, int>> frame_rate;
     std::vector<int> labels;
 } video_properties;
 

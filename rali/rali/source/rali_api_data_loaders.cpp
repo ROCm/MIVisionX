@@ -1531,7 +1531,7 @@ raliVideoFileSource(
         const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frames_count;
-        std::vector<size_t> frame_rate;
+        std::vector<std::tuple<int, int>> frame_rate;
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame_num;
 
@@ -1642,7 +1642,7 @@ raliVideoFileResize(
         const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frames_count;
-        std::vector<size_t> frame_rate;
+        std::vector<std::tuple<int, int>> frame_rate;
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame_num;
         

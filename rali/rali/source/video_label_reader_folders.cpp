@@ -149,11 +149,11 @@ void VideoLabelReaderFolders::read_text_file(const std::string &_path)
                             std::cerr << "[WRN] Start and end time/frame are not satisfying the condition, skipping the file " << video_file_name << "\n";
                             continue;
                         }
-                        start = start_time * props[3];
-                        end = end_time * props[3];
-                        end = end ? end : props[2];
+                        start = static_cast<int>(std::ceil(start_time * (props[3] / (double)props[4])));
+                        end = static_cast<int>(std::floor(end_time * (props[3] / (double)props[4])));
                     }
                 }
+                end = end != 0 ? end : props[2];
             }
             else
             {

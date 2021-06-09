@@ -37,7 +37,7 @@ VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources
 }
 
 void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-                           VideoDecoderType decoder_type, unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frames_count, std::vector<size_t> frame_rate,
+                           VideoDecoderType decoder_type, unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frames_count, std::vector<std::tuple<int, int>> frame_rate,
                            std::vector<std::tuple<int, int>> start_end_frame_num, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names)
 {
     //_decode_mode = decoder_mode;

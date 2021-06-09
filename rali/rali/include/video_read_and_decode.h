@@ -103,7 +103,7 @@ private:
     size_t _stride;
     size_t _video_count;
     size_t _frame_count;
-    std::vector<size_t> _frame_rate;
+    std::vector<std::tuple<int, int>> _frame_rate;
     VideoDecoderConfig _video_decoder_config;
     bool decoder_keep_original;
 };

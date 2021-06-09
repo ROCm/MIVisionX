@@ -93,7 +93,7 @@ void Caffe2MetaDataReaderDetection::print_map_contents()
         std::cerr << "\nsize of the element  : " << bb_coords.size() << std::endl;
         for (unsigned int i = 0; i < bb_coords.size(); i++)
         {
-            std::cerr << " x : " << bb_coords[i].x << " y: :" << bb_coords[i].y << " width : " << bb_coords[i].w << " height: :" << bb_coords[i].h << std::endl;
+            std::cerr << " l : " << bb_coords[i].l << " t: :" << bb_coords[i].t << " r : " << bb_coords[i].r << " b: :" << bb_coords[i].b << std::endl;
             std::cerr << "Label Id : " << bb_labels[i] << std::endl;
         }
     }
@@ -181,11 +181,13 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
                 int boundIter = 0;
                 for (int i = 0; i < boundBox_size / 4; i++)
                 {
-                    // Parsing the bounding box points using Iterator
-                    box.x = boundingBox_proto.dims(boundIter);
-                    box.y = boundingBox_proto.dims(boundIter + 1);
-                    box.w = boundingBox_proto.dims(boundIter + 2);
-                    box.h = boundingBox_proto.dims(boundIter + 3);
+                    // Parsing the bounding box points using Iterator 
+                    // && Normalizing the box Co-ordinates
+                    box.l = boundingBox_proto.dims(boundIter) / img_size.w;
+                    box.t = boundingBox_proto.dims(boundIter + 1) / img_size.h;
+                    box.r = boundingBox_proto.dims(boundIter + 2) / img_size.w;
+                    box.b = boundingBox_proto.dims(boundIter + 3) / img_size.h;
+
                     boundIter += 4;
 
                     // Parsing the image label using Iterator
@@ -200,7 +202,8 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
             }
             else
             {
-                box.x = box.y = box.w = box.h = 0;
+                box.l = box.t = 0;
+                box.r = box.b = 1;
                 bb_coords.push_back(box);
                 bb_labels.push_back(0);
                 add(str_key.c_str(), bb_coords, bb_labels,img_sizes);

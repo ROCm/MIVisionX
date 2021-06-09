@@ -38,17 +38,19 @@ void SSDRandomCropNode::create_node()
 inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false) 
 {
     double iou;
-    float xA = std::max(box1.x, box2.x);
-    float yA = std::max(box1.y, box2.y);
-    float xB = std::min(box1.x + box1.w, box2.x + box2.w);
-    float yB = std::min(box1.y + box1.h, box2.y + box2.h);
-
+    float xA = std::max(box1.l, box2.l);
+    float yA = std::max(box1.t, box2.t);
+    float xB = std::min(box1.r, box2.r);
+    float yB = std::min(box1.b, box2.b);
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
-
-    float box1_area = box1.h * box1.w;
-    float box2_area = box2.h * box2.w;
-
-    if(is_iou)
+    float box1_h, box1_w, box2_h, box2_w;
+    box1_w = box1.r - box1.l;
+    box2_w = box2.r - box2.l;
+    box1_h = box1.b - box1.t;
+    box2_h = box2.b - box2.t;
+    float box1_area = box1_h * box1_w;
+    float box2_area = box2_h * box2_w;
+    if (is_iou)
         iou = intersection_area / float(box1_area + box2_area - intersection_area);
     else
         iou = intersection_area / float(box1_area);
@@ -69,17 +71,18 @@ void SSDRandomCropNode::update_node()
     int sample_option;
     std::pair<float, float> iou;
     float min_iou, max_iou;
+    float w_factor = 0.0f, h_factor = 0.0f;
     in_width = _crop_param->in_width;
     in_height = _crop_param->in_height;
     bool invalid_bboxes = true;
     _entire_iou = true;
     BoundingBoxCord crop_box, jth_box;
-    Parameter<float> * x_drift_factor = _crop_param->get_x_drift_factor();
-    Parameter<float> * y_drift_factor = _crop_param->get_y_drift_factor();
     _x1_val = _crop_param->get_x1_arr_val();
     _y1_val = _crop_param->get_y1_arr_val();
     _crop_width_val = _crop_param->get_cropw_arr_val();
     _crop_height_val = _crop_param->get_croph_arr_val();
+    std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
+    size_t sample = 0;
     for (uint i = 0; i < _batch_size; i++)
     {
         int bb_count = _meta_data_info->get_bb_labels_batch()[i].size();
@@ -87,10 +90,11 @@ void SSDRandomCropNode::update_node()
         memcpy(labels_buf.data(), _meta_data_info->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         std::vector<float> coords_buf(bb_count * 4);
         memcpy(coords_buf.data(), _meta_data_info->get_bb_cords_batch()[i].data(), _meta_data_info->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
-        crop_box.h = _crop_height_val[i];
-        crop_box.w = _crop_width_val[i];
-        crop_box.x = _x1_val[i];
-        crop_box.y = _y1_val[i];
+
+        crop_box.b = _y1_val[i] + _crop_height_val[i];
+        crop_box.r = _x1_val[i] + _crop_width_val[i];
+        crop_box.l = _x1_val[i];
+        crop_box.t = _y1_val[i];
         while (true)
         {
             sample_option = dis(gen);
@@ -101,44 +105,47 @@ void SSDRandomCropNode::update_node()
             //sample_option = 0;
             if (!sample_option)
             {
-                crop_box.x = 0;
-                crop_box.y = 0;
-                crop_box.h = in_height[i];
-                crop_box.w = in_width[i];
+                crop_box.l = 0;
+                crop_box.t = 0;
+                crop_box.r = 1;
+                crop_box.b = 1;
                 break;
             }
+            float aspect_ratio;
             for (int j = 0; j < _num_of_attempts; j++)
             {
-                x_drift_factor->renew();
-                float factor = 0.3f;
-                auto w_factor = factor + (x_drift_factor->get() * (1 - factor));
-                crop_box.w = w_factor * in_width[i];
-                y_drift_factor->renew();
-                y_drift_factor->renew();
-                auto h_factor = factor + (y_drift_factor->get() * (1 - factor));
-                crop_box.h = h_factor * in_height[i];
+                
+                // Setting width and height factor btw 0.3 and 1.0";
+                float w_factor = _float_dis(_rngs[sample]);
+                float h_factor = _float_dis(_rngs[sample]);
                 //aspect ratio check
-                if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
+                aspect_ratio = w_factor/h_factor;
+                if ((aspect_ratio < 0.5) || (aspect_ratio > 2.))
                     continue;
-                break;
             }
-            if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
+            if ((aspect_ratio < 0.5) || (aspect_ratio > 2.))
                 continue;
-            //Got the crop;
-            x_drift_factor->renew();
-            x_drift_factor->renew();
-            y_drift_factor->renew();
-            crop_box.x = static_cast<size_t>(x_drift_factor->get() * (in_width[i] - crop_box.w));
-            crop_box.y = static_cast<size_t>(y_drift_factor->get() * (in_height[i] - crop_box.h));
+            
+            
+            // Setting width factor btw 0 and 1 - width_factor and height factor btw 0 and 1 - height_factor
+            std::uniform_real_distribution<float> l_dis(0.0, 1.0 - w_factor), t_dis(0.0, 1.0-h_factor);
+            float x_factor = l_dis(_rngs[sample]);
+            float y_factor = t_dis(_rngs[sample]);
+            //Got the crop
+            crop_box.l = x_factor;
+            crop_box.t = y_factor;
+            crop_box.r = crop_box.l + w_factor;
+            crop_box.b = crop_box.t + h_factor;
+
             invalid_bboxes = false;
 
             for (int j = 0; j < bb_count; j++)
             {
                 int m = j * 4;
-                jth_box.x = coords_buf[m];
-                jth_box.y = coords_buf[m + 1];
-                jth_box.w = coords_buf[m + 2];
-                jth_box.h = coords_buf[m + 3];
+                jth_box.l = coords_buf[m];
+                jth_box.t = coords_buf[m + 1];
+                jth_box.r = coords_buf[m + 2];
+                jth_box.b = coords_buf[m + 3];
                 float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, _entire_iou); 
                 if (bb_iou < min_iou || bb_iou > max_iou )
                 {
@@ -150,7 +157,7 @@ void SSDRandomCropNode::update_node()
             if (invalid_bboxes)
                 continue;
             int valid_bbox_count = 0;
-            auto left = crop_box.x, top = crop_box.y, right = crop_box.x + crop_box.w, bottom = crop_box.y + crop_box.h;
+            auto left = crop_box.l, top = crop_box.t, right = crop_box.r, bottom = crop_box.b;
             for (int j = 0; j < bb_count; j++)
             {
                 int m = j * 4;
@@ -163,23 +170,18 @@ void SSDRandomCropNode::update_node()
                 continue;
             break;
         } // while loop
-        _x1_val[i] = crop_box.x;
-        _y1_val[i] = crop_box.y;
-        _crop_width_val[i] = crop_box.w;
-        _crop_height_val[i] = crop_box.h;
-        _x2_val[i] = _x1_val[i] + crop_box.w;
-        _y2_val[i] = _y2_val[i] + crop_box.h;
+        _x1_val[i] = (crop_box.l) * in_width[i];
+        _y1_val[i] = (crop_box.t) * in_height[i];
+        _crop_width_val[i] = (crop_box.r - crop_box.l) * in_width[i];
+        _crop_height_val[i] = (crop_box.b - crop_box.t) * in_height[i];
+        _x2_val[i] =  (crop_box.r) * in_width[i];
+        _y2_val[i] =  (crop_box.b) * in_height[i];
 
     }
     vxCopyArrayRange((vx_array)_crop_param->cropw_arr, 0, _batch_size, sizeof(uint), _crop_width_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_crop_param->croph_arr, 0, _batch_size, sizeof(uint), _crop_height_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_crop_param->x1_arr, 0, _batch_size, sizeof(uint), _x1_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_crop_param->y1_arr, 0, _batch_size, sizeof(uint), _y1_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    // std::cerr<<"\n Crop values after ssd ::";
-    // for(int i = 0; i < _batch_size; i++)
-    // {
-    //     std::cerr<<"\n "<<_x1_val[i]<<"\t"<<_y1_val[i]<<"\t"<<_crop_width_val[i]<<"\t"<<_crop_height_val[i];
-    // }
     _outputs[0]->update_image_roi(_crop_width_val, _crop_height_val);  
 }
 

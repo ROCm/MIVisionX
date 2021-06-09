@@ -53,10 +53,12 @@ private:
     int _num_attempts;
     FloatParam* _scaling;
     int _total_num_attempts;
+    int64_t _seed;
 public:
     RandomBBoxCrop_MetaDataConfig(const RandomBBoxCrop_MetaDataType& type, const RandomBBoxCrop_MetaDataReaderType& reader_type, const bool& all_boxes_overlap,
-                        const bool& no_crop, FloatParam* aspect_ratio, const bool& has_shape, const int& crop_width, const int& crop_height, const int& num_attempts, FloatParam* scaling, const int& total_num_attempts):  _type(type), _reader_type(reader_type),
-                        _all_boxes_overlap(all_boxes_overlap), _no_crop(no_crop), _aspect_ratio(aspect_ratio) ,_has_shape(has_shape), _crop_width(crop_width), _crop_height(crop_height), _num_attempts(num_attempts), _scaling(scaling), _total_num_attempts(total_num_attempts){}
+                        const bool& no_crop, FloatParam* aspect_ratio, const bool& has_shape, const int& crop_width, const int& crop_height, const int& num_attempts,
+                        FloatParam* scaling, const int& total_num_attempts, const int64_t& seed):  _type(type), _reader_type(reader_type), _all_boxes_overlap(all_boxes_overlap), _no_crop(no_crop), _aspect_ratio(aspect_ratio),
+                        _has_shape(has_shape), _crop_width(crop_width), _crop_height(crop_height), _num_attempts(num_attempts), _scaling(scaling), _total_num_attempts(total_num_attempts), _seed(seed){}
     RandomBBoxCrop_MetaDataConfig() = delete;
     RandomBBoxCrop_MetaDataType type() const { return _type; }
     RandomBBoxCrop_MetaDataReaderType reader_type() const { return _reader_type; }
@@ -69,6 +71,7 @@ public:
     FloatParam* scaling() const { return _scaling; }
     int num_attempts() const { return _num_attempts; }
     int total_num_attempts() const { return _total_num_attempts; }
+    int seed() const { return _seed; }
 };
 
 class RandomBBoxCrop_MetaDataReader

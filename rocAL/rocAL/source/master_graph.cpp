@@ -197,7 +197,7 @@ MasterGraph::build()
 {
     if(_output_images.empty())
         THROW("No output images are there, cannot create the pipeline")
-    std::cout<<"MASTER Graph Build()";
+
     // Verify all output images have the same dimension, otherwise creating a unified tensor from them is not supported
     _output_image_info = _output_images.front()->info();
     for(auto&& output_image : _output_images)

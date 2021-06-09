@@ -95,7 +95,7 @@ private:
     FloatParam *crop_aspect_ratio = NULL;
     int _user_batch_size;
     int64_t _seed;
-    void add(std::string image_name, BoundingBoxCord bbox);
+    int add(std::string image_name, BoundingBoxCord bbox);
     bool exists(const std::string &image_name);
     std::map<std::string, std::shared_ptr<CropCord>> _map_content;
     std::map<std::string, std::shared_ptr<CropCord>>::iterator _itr;

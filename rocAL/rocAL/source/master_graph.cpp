@@ -351,7 +351,6 @@ MasterGraph::reset()
     // if random_bbox meta reader is used: read again to get different crops
     if (_randombboxcrop_meta_data_reader != nullptr)
         _randombboxcrop_meta_data_reader->read_all();
-
     // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
     _loader_module->reset();
     // restart processing of the images

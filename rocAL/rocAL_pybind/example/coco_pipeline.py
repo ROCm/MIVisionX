@@ -61,7 +61,7 @@ class COCOPipeline(Pipeline):
         # Random variables
         self.rng1 = ops.Uniform(range=[0.5, 1.5])
         self.rng2 = ops.Uniform(range=[0.875, 1.125])
-        self.rng3 = ops.Uniform(range=[-0.5, 0.5])
+        self.rng3 = ops.Uniform(range=[-0.05, 0.05])
         self.coin_flip = ops.CoinFlip(probability=0.5)
         print('rali "{0}" variant'.format(rali_device))
 
@@ -137,6 +137,7 @@ class RALICOCOIterator(object):
             print("Decode   time ::", timing_info.decode_time)
             print("Process  time ::", timing_info.process_time)
             print("Transfer time ::", timing_info.transfer_time)
+            self.loader.raliResetLoaders()
             raise StopIteration
 
         if self.loader.run() != 0:
@@ -175,7 +176,8 @@ class RALICOCOIterator(object):
         self.img_size = np.zeros((self.bs * 2), dtype="int32")
         self.loader.GetImgSizes(self.img_size)
         print("Image sizes:", self.img_size)
-        #img = torch.from_numpy(self.out)
+        # Draw images: Make sure to uncomment the below line to dump images
+        # img = torch.from_numpy(self.out)
         count = 0
         sum_count = 0
         for i in range(self.bs):
@@ -195,7 +197,7 @@ class RALICOCOIterator(object):
             self.bb_2d_numpy = (self.bboxes[sum_count*4: (sum_count+count)*4])
             self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
             # Draw images: make sure to revert the mean and std to 0 and 1 for displaying original images without normalization
-            #draw_patches(img[i],self.img_name, self.bb_2d_numpy)
+            # draw_patches(img[i],self.img_name, self.bb_2d_numpy)
             if(self.loader._BoxEncoder == True):
                 
                 # Converting from "xywh" to "ltrb" format ,
@@ -257,7 +259,6 @@ class RALICOCOIterator(object):
         self.loader.raliResetLoaders()
 
     def __iter__(self):
-        self.loader.raliResetLoaders()
         return self
 
 def draw_patches(img,idx, bboxes):
@@ -276,8 +277,8 @@ def draw_patches(img,idx, bboxes):
         thickness = 2
         image = cv2.UMat(image).get()
         image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)  
-        #cv2.imwrite(str(idx)+"_"+"train"+".png", 255*image)
-        cv2.imwrite(str(idx)+"_"+"train"+".png", image)
+        cv2.imwrite(str(idx)+"_"+"train"+".png", 255*image)
+        # cv2.imwrite(str(idx)+"_"+"train"+".png", image)
 
 def main():
     if len(sys.argv) < 5:
@@ -339,13 +340,16 @@ def main():
     pipe.build()
     imageIterator = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset)
-    for i, it in enumerate(imageIterator, 0):
-        print("**************", i, "*******************")
-        print("**************starts*******************")
-        print("\nBBOXES:\n", it[1])
-        print("\nLABELS:\n", it[2])
-        print("**************ends*******************")
-        print("**************", i, "*******************")
+    epochs = 5
+    for epoch in range(int(epochs)):
+        print("EPOCH:::::",epoch)
+        for i, it in enumerate(imageIterator, 0):
+            print("**************", i, "*******************")
+            print("**************starts*******************")
+            print("\nBBOXES:\n", it[1])
+            print("\nLABELS:\n", it[2])
+            print("**************ends*******************")
+            print("**************", i, "*******************")
 
 
 if __name__ == '__main__':

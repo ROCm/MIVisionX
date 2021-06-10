@@ -133,7 +133,10 @@ void CircularBuffer::sync()
                 THROW("hipMemcpyAsync of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
             }
         }
-        hipStreamSynchronize(_hip_stream);      // todo:: evaluate if this is needed?
+        hipError_t err = hipStreamSynchronize(_hip_stream);      // todo:: evaluate if this is needed?
+        if (err != hipSuccess) {
+                THROW("hipStreamSynchronize  failed " + TOSTR(err));
+        }
     }
 #endif
     else

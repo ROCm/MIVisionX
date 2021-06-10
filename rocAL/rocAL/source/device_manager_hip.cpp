@@ -76,7 +76,10 @@ void DeviceManagerHip::init_hip(vx_context context)
     }
     _resources.hip_stream = stream;
     _resources.device_id = dev_id;
-    initialize();
+    err = initialize();
+    if (err != hipSuccess) {
+        THROW("init_hip::initialize failed " + TOSTR(err))
+    }
     LOG("RALI HIP initialized ...")
 }
 #endif

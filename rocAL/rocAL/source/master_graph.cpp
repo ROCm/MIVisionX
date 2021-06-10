@@ -413,7 +413,10 @@ MasterGraph::deallocate_output_tensor()
         clReleaseMemObject((cl_mem)_output_tensor );
 #else
     if(processing_on_device_hip() && _output_tensor != nullptr) {
-        hipFree(_output_tensor );
+        hipError_t err = hipFree(_output_tensor );
+        if (err != hipSuccess) {
+            THROW("MasterGraph::deallocate_output_tensor  hipFree failed " + TOSTR(err))
+        }
         _output_tensor = nullptr;
     }
 #endif

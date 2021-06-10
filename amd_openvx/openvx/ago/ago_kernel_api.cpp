@@ -5209,9 +5209,15 @@ int agoKernel_And_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
         if (HipExec_And_U8_U8U1(node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
+            iImg0->hip_memory + iImg0->gpu_buffer_offset, iImg0->u.img.stride_in_bytes,
+            iImg1->hip_memory + iImg1->gpu_buffer_offset, iImg1->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
     }
 #endif
     return status;
+}
 
 int agoKernel_And_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
 {
@@ -5280,9 +5286,15 @@ int agoKernel_And_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
             status = VX_FAILURE;
         }
     }
+	#endif
+    return status;
+}
+
+int agoKernel_And_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
 {
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
@@ -17614,8 +17626,13 @@ int agoKernel_CannySobel_U16_U8_3x3_L2NORM(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg = node->paramList[1];
         if (HipExec_CannySobel_U16_U8_3x3_L2NORM(
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            (vx_uint16 *) (oImg->hip_memory + oImg->gpu_buffer_offset), oImg->u.img.stride_in_bytes,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
     }
 #endif
+    return status;
 }
 
 int agoKernel_CannySobel_U16_U8_5x5_L1NORM(AgoNode * node, AgoKernelCommand cmd)
@@ -17679,8 +17696,13 @@ int agoKernel_CannySobel_U16_U8_5x5_L1NORM(AgoNode * node, AgoKernelCommand cmd)
             status = VX_FAILURE;
         }
     }
+#endif
+    return status;
+}
+
 int agoKernel_CannySobel_U16_U8_5x5_L2NORM(AgoNode * node, AgoKernelCommand cmd)
 {
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];

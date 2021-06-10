@@ -281,23 +281,17 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryContext(vx_context context, vx_enum at
                 }
                 break;
 #elif ENABLE_HIP
-            case VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE:
-                if (size == sizeof(int)) {
-                    if (context->hip_device_id < 0 && agoGpuHipCreateContext(context, -1) != VX_SUCCESS) {
-                        status = VX_FAILURE;
-                    }
-                    else {
-                        *(int *)ptr = context->hip_device_id;
-                        status = VX_SUCCESS;
-                    }
+        case VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE:
+            if (size == sizeof(hipDevice_t)) {
+                if (context->hip_device < 0 && agoGpuHipCreateContext(context, context->hip_device) != VX_SUCCESS) {
+                    status = VX_FAILURE;
                 }
-                else if (size == 0) {
-                    // special case to just request internal context without creating one
-                    // when not available
+                else {
                     *(int *)ptr = context->hip_device_id;
                     status = VX_SUCCESS;
                 }
-                break;
+            }
+            break;
 #endif
             case VX_CONTEXT_MAX_TENSOR_DIMS:
                 if (size == sizeof(vx_size)) {
@@ -407,6 +401,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
                 status = VX_SUCCESS;
             }
             break;
+#elif ENABLE_HIP
+            case VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE:
+                if (size == sizeof(int)) {
+                    if (context->hip_device_id < 0 && agoGpuHipCreateContext(context, -1) != VX_SUCCESS) {
+                        status = VX_FAILURE;
+                    }
+                    else {
+                        *(int *)ptr = context->hip_device_id;
+                        status = VX_SUCCESS;
+                    }
+                }
+                else if (size == 0) {
+                    // special case to just request internal context without creating one
+                    // when not available
+                    *(int *)ptr = context->hip_device_id;
+                    status = VX_SUCCESS;
+                }
+                break;
 #endif
         default:
             status = VX_ERROR_NOT_SUPPORTED;
@@ -1006,7 +1018,11 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                     data->u.img.stride_in_bytes = addrs[0].stride_y;
                     data->gpu_buffer_offset = 0;
                 }
+            }
+        }
+#endif
     }
+    return (vx_image)data;
 }
 
 /*! \brief Swaps the image handle of an image previously created from handle.
@@ -3356,6 +3372,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
                     status = VX_SUCCESS;
                 }
                 break;
+#elif ENABLE_HIP
+            case VX_NODE_ATTRIBUTE_AMD_HIP_STREAM:
+                if (size == sizeof(hipStream_t)){
+                    AgoGraph * graph = (AgoGraph *)node->ref.scope;
+                    *(hipStream_t *)ptr = graph->hip_stream0;
+                    status = VX_SUCCESS;
+            }
+            break;
 #endif
             default:
                 status = VX_ERROR_NOT_SUPPORTED;

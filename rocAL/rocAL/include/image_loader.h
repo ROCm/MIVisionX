@@ -76,7 +76,7 @@ private:
     bool _is_initialized;
     bool _stopped = false;
     bool _loop;//<! If true the reader will wrap around at the end of the media (files/images/...) and wouldn't stop
-    size_t CIRC_BUFFER_DEPTH; // Used for circular buffer's internal buffer
+    size_t _prefetch_queue_depth; // Used for circular buffer's internal buffer
     size_t _image_counter = 0;//!< How many images have been loaded already
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
     bool _decoder_keep_original = false;

@@ -223,7 +223,6 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
 
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
         {
-    #if 1  //  use pinned memory and zero copy if available
             hipError_t err = hipHostMalloc((void **)&_host_buffer_ptrs[buffIdx], _output_mem_size, hipHostMallocMapped|hipHostMallocWriteCombined);
             if(err != hipSuccess)
             {
@@ -243,13 +242,6 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
                     THROW("hipMalloc of size " + TOSTR(_output_mem_size) + " failed " + TOSTR(err));
                 }
             }
-    #else
-            hipError_t err = hipMalloc((void **)&_dev_buffer[buffIdx], _output_mem_size);
-            if(err != hipSuccess)
-            {
-                THROW("hipMalloc of size " + TOSTR(_output_mem_size) + " failed " + TOSTR(err));
-            }
-    #endif
         }
     }
 #endif

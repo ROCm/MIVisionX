@@ -50,7 +50,7 @@ using half_float::half;
 #include <rali_hip_kernels.h>
 #endif
 
-static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
+static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char* string)
 {
     size_t len = strlen(string);
     if (len > 0) {
@@ -150,14 +150,6 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
                             &hipDevice, sizeof(hipDevice)) != VX_SUCCESS))
                         THROW("vxSetContextAttribute for hipDevice(%d) failed " + TOSTR(hipDevice) + TOSTR(status))
                 }
-            #if 0    // todo:: fall back to cpu if device not available
-                else {
-                    LOG("Found no available gpu device: falling back to cpu")
-                    _affinity = RaliAffinity::CPU;
-                    _mem_type = RaliMemType::HOST;
-                    auto vx_affinity = get_ago_affinity_info(_affinity, 0, -1);
-                }
-            #endif
             }
 #endif
         }
@@ -568,6 +560,8 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
 
         auto output_buffers =_ring_buffer.get_read_buffers();
         unsigned dest_buf_offset = 0;
+        // copy hip buffer to output.
+        // todo:: add callback routing to exchange memory pointer to avoid extra copy
         for( auto&& out_image: output_buffers)
         {
             auto img_buffer = out_image;
@@ -583,8 +577,6 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
             }
             dest_buf_offset += single_output_image_size;
         }
-        // copy hip buffer to output.
-        // todo:: add callback routing to exchange memory pointer to avoid extra copy
     }
 #endif
     if(_output_image_info.mem_type() == RaliMemType::HOST)

@@ -73,7 +73,6 @@ private:
     std::vector<size_t> _actual_read_size;
     std::vector<std::string> _output_names;
     CircularBuffer _circ_buff;
-    // const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
     size_t _prefetch_queue_depth;
     TimingDBG _file_load_time, _swap_handle_time;
     size_t _loader_idx;

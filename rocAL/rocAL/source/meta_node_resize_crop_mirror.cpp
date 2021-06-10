@@ -63,37 +63,33 @@ void ResizeCropMirrorMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         BoundingBoxCord crop_box;
         _crop_w = _x2_val[i] - _x1_val[i];
         _crop_h = _y2_val[i] - _y1_val[i];
-        crop_box.x = _x1_val[i];
-        crop_box.y = _y1_val[i];
-        crop_box.w = _crop_w;
-        crop_box.h = _crop_h;
+        crop_box.l = _x1_val[i];
+        crop_box.t = _y1_val[i];
+        crop_box.r = _x2_val[i] ;
+        crop_box.b = _y2_val[i];
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
-            box.x = coords_buf[m++];
-            box.y = coords_buf[m++];
-            box.w = coords_buf[m++];
-            box.h = coords_buf[m++];
+            box.l = coords_buf[m++];
+            box.t = coords_buf[m++];
+            box.r = coords_buf[m++];
+            box.b = coords_buf[m++];
             if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
             {
-                float xA = std::max(crop_box.x, box.x);
-                float yA = std::max(crop_box.y, box.y);
-                float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
-                float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
-                box.x = xA - _x1_val[i];
-                box.y = yA - _y1_val[i];
-                box.w = xB - xA;
-                box.h = yB - yA;
-                _dst_to_src_width_ratio = _dst_width / float(_crop_w);
-                _dst_to_src_height_ratio = _dst_height / float(_crop_h);
-                box.x *= _dst_to_src_width_ratio;
-                box.y *= _dst_to_src_height_ratio;
-                box.w *= _dst_to_src_width_ratio;
-                box.h *= _dst_to_src_height_ratio;
+                float xA = std::max(crop_box.l, box.l);
+                float yA = std::max(crop_box.t, box.t);
+                float xB = std::min(crop_box.r, box.r);
+                float yB = std::min(crop_box.b, box.b);
+                box.l = (xA - crop_box.l) / (crop_box.r - crop_box.l);
+                box.t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
+                box.r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
+                box.b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
+                
                 if(_mirror_val[i] == 1)
                 {
-                    float centre_x = _dst_width / 2;
-                    box.x += ((centre_x - box.x) * 2) - box.w;
+                    float l = 1 - box.r;
+                    box.r = 1 - box.l;
+                    box.l = l;
                 }                  
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
@@ -101,10 +97,8 @@ void ResizeCropMirrorMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         }
         if(bb_coords.size() == 0)
         {
-            temp_box.x = 0;
-            temp_box.y = 0;
-            temp_box.w =  crop_box.w - 1;
-	        temp_box.h =  crop_box.h - 1;
+            temp_box.l = temp_box.t = 0;
+            temp_box.r = temp_box.b = 1;
             bb_coords.push_back(temp_box);
             bb_labels.push_back(0);
         }

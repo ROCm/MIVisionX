@@ -1100,12 +1100,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                 data->children[child]->u.img.x_scale_factor_is_2 = (data->children[child]->u.img.width  != data->u.img.width ) ? 1 : 0;
                 data->children[child]->u.img.y_scale_factor_is_2 = (data->children[child]->u.img.height != data->u.img.height) ? 1 : 0;
                 data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-                data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
+                data->children[child]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
             }
         }
         else if (data->u.img.planes == 1) {
             data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width , data));
-            data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
+            data->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
         }
         // sanity check and update
         if (agoDataSanityCheckAndUpdate(data)) {
@@ -1168,12 +1168,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                     data->children[child]->u.img.maxValue = (vx_int32)data->children[child]->u.img.uniform[0];
                 }
                 data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-                data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
+                data->children[child]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
             }
         }
         else if (data->u.img.planes == 1) {
             data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width, data));
-            data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
+            data->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
         }
         // set min/max values as uniform value
         if (data->u.img.format == VX_DF_IMAGE_U8 ||
@@ -1266,14 +1266,14 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                 data->children[child]->u.img.x_scale_factor_is_2 = (data->children[child]->u.img.width  != data->u.img.width ) ? 1 : 0;
                 data->children[child]->u.img.y_scale_factor_is_2 = (data->children[child]->u.img.height != data->u.img.height) ? 1 : 0;
                 data->children[child]->u.img.stride_in_bytes = dataMaster->children[child]->u.img.stride_in_bytes;
-                data->children[child]->opencl_buffer_offset = dataMaster->children[child]->opencl_buffer_offset +
+                data->children[child]->gpu_buffer_offset = dataMaster->children[child]->gpu_buffer_offset +
                     data->children[child]->u.img.rect_roi.start_y * data->children[child]->u.img.stride_in_bytes +
                     ImageWidthInBytesFloor(data->children[child]->u.img.rect_roi.start_x, data->children[child]);
             }
         }
         else if (data->u.img.planes == 1) {
             data->u.img.stride_in_bytes = dataMaster->u.img.stride_in_bytes;
-            data->opencl_buffer_offset = dataMaster->opencl_buffer_offset +
+            data->gpu_buffer_offset = dataMaster->gpu_buffer_offset +
                 data->u.img.rect_roi.start_y * data->u.img.stride_in_bytes +
                 ImageWidthInBytesFloor(data->u.img.rect_roi.start_x, data);
         }
@@ -1317,7 +1317,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
             data->children[level]->siblingIndex = (vx_int32)level;
             data->children[level]->parent = data;
             data->children[level]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[level]->u.img.width, data->children[level]));
-            data->children[level]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes*3;
+            data->children[level]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes*3;
             if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) {
                 float orb_scale_factor[4] = {
                     VX_SCALE_PYRAMID_ORB,
@@ -3158,11 +3158,11 @@ AgoData::AgoData()
 #elif ENABLE_HIP
       hip_memory { nullptr}, hip_memory_allocated{nullptr},
 #endif
-      opencl_buffer_offset{ 0 }, alias_data{ nullptr }, alias_offset{ 0 },
+      gpu_buffer_offset{ 0 }, alias_data{ nullptr }, alias_offset{ 0 },
       isVirtual{ vx_false_e }, isDelayed{ vx_false_e }, isNotFullyConfigured{ vx_false_e }, isInitialized{ vx_false_e }, siblingIndex{ 0 },
       numChildren{ 0 }, children{ nullptr }, parent{ nullptr }, inputUsageCount{ 0 }, outputUsageCount{ 0 }, inoutUsageCount{ 0 },
       initialization_flags{ 0 }, device_type_unused{ 0 },
-      nextMapId{ 0 }, hierarchical_level{ 0 }, hierarchical_life_start{ 0 }, hierarchical_life_end{ 0 }, ownerOfUserBufferOpenCL{ nullptr }
+      nextMapId{ 0 }, hierarchical_level{ 0 }, hierarchical_life_start{ 0 }, hierarchical_life_end{ 0 }, ownerOfUserBufferGPU{ nullptr }
 {
     memset(&u, 0, sizeof(u));
 }
@@ -3198,7 +3198,7 @@ AgoKernel::AgoKernel()
       localDataSize{ 0 }, localDataPtr{ nullptr }, external_kernel{ false }, finalized{ false },
       kernel_f{ nullptr }, validate_f{ nullptr }, input_validate_f{ nullptr }, output_validate_f{ nullptr }, initialize_f{ nullptr }, deinitialize_f{ nullptr },
       query_target_support_f{ nullptr }, opencl_codegen_callback_f{ nullptr }, regen_callback_f{ nullptr }, opencl_global_work_update_callback_f{ nullptr },
-      opencl_buffer_update_callback_f{ nullptr }, opencl_buffer_update_param_index{ 0 },
+      gpu_buffer_update_callback_f{ nullptr }, opencl_buffer_update_param_index{ 0 },
       opencl_buffer_access_enable{ vx_false_e }, importing_module_index_plus1{ 0 }
 {
     memset(&name, 0, sizeof(name));
@@ -3285,7 +3285,7 @@ AgoGraph::AgoGraph()
       virtualDataGenerationCount{ 0 }, optimizer_flags{ AGO_GRAPH_OPTIMIZER_FLAGS_DEFAULT }, verified{ false }, enable_performance_profiling{ false }, execFrameCount{ 0 }
 #if ENABLE_OPENCL
     , supernodeList{ nullptr }, opencl_cmdq{ nullptr }, opencl_device{ nullptr }
-    , enable_node_level_opencl_flush{ true }
+    , enable_node_level_gpu_flush{ true }
 #elif ENABLE_HIP
     , supernodeList{ nullptr }, hip_stream0{ nullptr }
 #endif
@@ -3293,8 +3293,8 @@ AgoGraph::AgoGraph()
     memset(&dataList, 0, sizeof(dataList));
     memset(&nodeList, 0, sizeof(nodeList));
     memset(&perf, 0, sizeof(perf));
-    memset(&opencl_perf, 0, sizeof(opencl_perf));
-    memset(&opencl_perf_total, 0, sizeof(opencl_perf_total));
+    memset(&gpu_perf, 0, sizeof(gpu_perf));
+    memset(&gpu_perf_total, 0, sizeof(gpu_perf_total));
     memset(&attr_affinity, 0, sizeof(attr_affinity));
     // critical section
     InitializeCriticalSection(&cs);

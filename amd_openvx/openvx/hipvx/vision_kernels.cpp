@@ -29,8 +29,8 @@ THE SOFTWARE.
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -251,6 +251,484 @@ int HipExec_CannySobel_U16_U8_3x3_L1NORM(hipStream_t stream, vx_uint32 dstWidth,
 
     return VX_SUCCESS;
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_CannySobel_U16_U8_5x5_L1NORM(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    bool valid = (x < dstWidth) && (y < dstHeight);
+
+    __shared__ uchar lbuf[2720]; // 136x20 bytes
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+    { // load 136x20 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 136 + (lx << 3);
+        int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 4) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
+        } else {
+            int id = (ly - 4) * 16 + lx;
+            loffset = id * 136 + 128;
+            goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            doExtraLoad = (id < 20) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        }
+        __syncthreads();
+    }
+    d_float8 sum1 = {0.0f};
+    d_float8 sum2 = {0.0f};
+    uint2 pix;
+    float fval;
+    __shared__ uint2 * lbufptr;
+    lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
+    // filterRow = 0
+    pix = lbufptr[0];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] -= fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -4.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] -= fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -4.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] -= fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -4.000000000000e+00f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -4.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] -= fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] -= fval;
+    sum1.data[1]  = fmaf(fval, 2.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -4.000000000000e+00f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -4.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] -= fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] -= fval;
+    sum1.data[2]  = fmaf(fval, 2.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -4.000000000000e+00f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -4.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] -= fval;
+    pix = lbufptr[1];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2] += fval;
+    sum2.data[2] -= fval;
+    sum1.data[3]  = fmaf(fval, 2.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -4.000000000000e+00f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -4.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] -= fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] -= fval;
+    sum1.data[4]  = fmaf(fval, 2.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -4.000000000000e+00f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -4.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] -= fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] -= fval;
+    sum1.data[5]  = fmaf(fval, 2.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -4.000000000000e+00f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] -= fval;
+    sum1.data[6]  = fmaf(fval, 2.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -4.000000000000e+00f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6] += fval;
+    sum2.data[6] -= fval;
+    sum1.data[7]  = fmaf(fval, 2.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] -= fval;
+    // filterRow = 1
+    pix = lbufptr[17];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -2.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -8.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -8.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -2.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -1.200000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -8.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -8.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -2.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 8.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -8.000000000000e+00f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -1.200000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -8.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -8.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -2.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 8.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -8.000000000000e+00f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -1.200000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -8.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -8.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -2.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[1]  = fmaf(fval, 4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 8.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -8.000000000000e+00f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -1.200000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -8.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -8.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -2.000000000000e+00f, sum2.data[5]);
+    pix = lbufptr[18];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2]  = fmaf(fval, 4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 8.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -8.000000000000e+00f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -1.200000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -8.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -8.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -2.000000000000e+00f, sum2.data[6]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[3]  = fmaf(fval, 4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 8.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -8.000000000000e+00f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -1.200000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -8.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -8.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -2.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[4]  = fmaf(fval, 4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 8.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -8.000000000000e+00f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -1.200000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -8.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -8.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5]  = fmaf(fval, 4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 8.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -8.000000000000e+00f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -1.200000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6]  = fmaf(fval, 4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 8.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -8.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7]  = fmaf(fval, 4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -2.000000000000e+00f, sum2.data[7]);
+    // filterRow = 2
+    pix = lbufptr[34];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+00f, sum1.data[0]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -1.200000000000e+01f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+00f, sum1.data[1]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[1]  = fmaf(fval, -1.200000000000e+01f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+00f, sum1.data[2]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 1.200000000000e+01f, sum1.data[0]);
+    sum1.data[2]  = fmaf(fval, -1.200000000000e+01f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+00f, sum1.data[3]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+00f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, 1.200000000000e+01f, sum1.data[1]);
+    sum1.data[3]  = fmaf(fval, -1.200000000000e+01f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+00f, sum1.data[4]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+00f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, 1.200000000000e+01f, sum1.data[2]);
+    sum1.data[4]  = fmaf(fval, -1.200000000000e+01f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+00f, sum1.data[5]);
+    pix = lbufptr[35];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+00f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, 1.200000000000e+01f, sum1.data[3]);
+    sum1.data[5]  = fmaf(fval, -1.200000000000e+01f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+00f, sum1.data[6]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+00f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, 1.200000000000e+01f, sum1.data[4]);
+    sum1.data[6]  = fmaf(fval, -1.200000000000e+01f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+00f, sum1.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+00f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, 1.200000000000e+01f, sum1.data[5]);
+    sum1.data[7]  = fmaf(fval, -1.200000000000e+01f, sum1.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+00f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, 1.200000000000e+01f, sum1.data[6]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+00f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, 1.200000000000e+01f, sum1.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+00f, sum1.data[7]);
+    // filterRow = 3
+    pix = lbufptr[51];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 2.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -8.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 8.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 2.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 1.200000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -8.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 8.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 2.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 8.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 8.000000000000e+00f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 1.200000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -8.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 8.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 2.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 8.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 8.000000000000e+00f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 1.200000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -8.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 8.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 2.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[1]  = fmaf(fval, 4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 8.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 8.000000000000e+00f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 1.200000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -8.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 8.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 2.000000000000e+00f, sum2.data[5]);
+    pix = lbufptr[52];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2]  = fmaf(fval, 4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 8.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 8.000000000000e+00f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 1.200000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -8.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 8.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 2.000000000000e+00f, sum2.data[6]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[3]  = fmaf(fval, 4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 8.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 8.000000000000e+00f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 1.200000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -8.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 8.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 2.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[4]  = fmaf(fval, 4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 8.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 8.000000000000e+00f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 1.200000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -8.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 8.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5]  = fmaf(fval, 4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 8.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 8.000000000000e+00f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 1.200000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6]  = fmaf(fval, 4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 8.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 8.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7]  = fmaf(fval, 4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 2.000000000000e+00f, sum2.data[7]);
+    // filterRow = 4
+    pix = lbufptr[68];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] += fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 4.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] += fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 4.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] += fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 4.000000000000e+00f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 4.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] += fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] += fval;
+    sum1.data[1]  = fmaf(fval, 2.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 4.000000000000e+00f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 4.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] += fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] += fval;
+    sum1.data[2]  = fmaf(fval, 2.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 4.000000000000e+00f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 4.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] += fval;
+    pix = lbufptr[69];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2] += fval;
+    sum2.data[2] += fval;
+    sum1.data[3]  = fmaf(fval, 2.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 4.000000000000e+00f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 4.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] += fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] += fval;
+    sum1.data[4]  = fmaf(fval, 2.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 4.000000000000e+00f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 4.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] += fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] += fval;
+    sum1.data[5]  = fmaf(fval, 2.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 4.000000000000e+00f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] += fval;
+    sum1.data[6]  = fmaf(fval, 2.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 4.000000000000e+00f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6] += fval;
+    sum2.data[6] += fval;
+    sum1.data[7]  = fmaf(fval, 2.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] += fval;
+
+    uint mask = HIPSELECT(0xffffu, 0u, y < 2);
+    mask = HIPSELECT(0u, mask, y < (dstHeight - 2));
+    uint4 dst;
+    uint mp;
+
+    mp = hip_canny_mag_phase_L1(sum1.data[0], sum2.data[0]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 2);
+    dst.x = mp;
+
+    mp = hip_canny_mag_phase_L1(sum1.data[1], sum2.data[1]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 1);
+    dst.x |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L1(sum1.data[2], sum2.data[2]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 0);
+    dst.y = mp;
+
+    mp = hip_canny_mag_phase_L1(sum1.data[3], sum2.data[3]) & mask;
+    dst.y |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L1(sum1.data[4], sum2.data[4]) & mask;
+    dst.z = mp;
+
+    mp = hip_canny_mag_phase_L1(sum1.data[5], sum2.data[5]) & mask;
+
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 7));
+    dst.z |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L1(sum1.data[6], sum2.data[6]) & mask;
+
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 8));
+    dst.w  =  mp;
+
+    mp = hip_canny_mag_phase_L1(sum1.data[7], sum2.data[7]) & mask;
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 9));
+    dst.w |= (mp << 16);
+
+    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    if (valid) {
+        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+    }
+}
+
 int HipExec_CannySobel_U16_U8_5x5_L1NORM(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
@@ -259,8 +737,885 @@ int HipExec_CannySobel_U16_U8_5x5_L1NORM(hipStream_t stream, vx_uint32 dstWidth,
     int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
-    return VX_ERROR_NOT_IMPLEMENTED;
+    hipLaunchKernelGGL(Hip_CannySobel_U16_U8_5x5_L1NORM, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_CannySobel_U16_U8_7x7_L1NORM(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    bool valid = (x < dstWidth) && (y < dstHeight);
+
+    __shared__ uchar lbuf[2992]; // 136x22 bytes
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+    { // load 136x22 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 136 + (lx << 3);
+        int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 6) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
+        } else {
+            int id = (ly - 6) * 16 + lx;
+            loffset = id * 136 + 128;
+            goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            doExtraLoad = (id < 22) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        }
+        __syncthreads();
+    }
+    d_float8 sum1 = {0.0f};
+    d_float8 sum2 = {0.0f};
+    uint2 pix;
+    float fval;
+    __shared__ uint2 * lbufptr;
+    lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
+    // filterRow = 0
+    pix = lbufptr[0];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] -= fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] -= fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -5.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -1.500000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] -= fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -2.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -5.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -1.500000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] -= fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 5.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -1.500000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -2.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -5.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -1.500000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] -= fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 5.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -1.500000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -2.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -5.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -1.500000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] -= fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] -= fval;
+    sum1.data[1]  = fmaf(fval, 4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 5.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -1.500000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -2.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -5.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -1.500000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] -= fval;
+    pix = lbufptr[1];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1] += fval;
+    sum2.data[1] -= fval;
+    sum1.data[2]  = fmaf(fval, 4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 5.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -1.500000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -2.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -5.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -1.500000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] -= fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[2] += fval;
+    sum2.data[2] -= fval;
+    sum1.data[3]  = fmaf(fval, 4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 5.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -1.500000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -2.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -5.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -1.500000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] -= fval;
+    sum1.data[4]  = fmaf(fval, 4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 5.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -1.500000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -2.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -5.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -1.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] -= fval;
+    sum1.data[5]  = fmaf(fval, 4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 5.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -1.500000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -2.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5] += fval;
+    sum2.data[5] -= fval;
+    sum1.data[6]  = fmaf(fval, 4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 5.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -1.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6] += fval;
+    sum2.data[6] -= fval;
+    sum1.data[7]  = fmaf(fval, 4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] -= fval;
+    // filterRow = 1
+    pix = lbufptr[17];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -4.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.400000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -2.400000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -4.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -3.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.400000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -2.400000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -4.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -8.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -3.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.400000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -2.400000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -4.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 3.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -8.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -3.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.400000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -2.400000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -4.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.400000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -2.400000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 3.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -8.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -3.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.400000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -2.400000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -4.000000000000e+00f, sum2.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -4.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 2.400000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -2.400000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 3.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -8.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -3.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.400000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -2.400000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -4.000000000000e+00f, sum2.data[6]);
+    pix = lbufptr[18];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -4.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 2.400000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -2.400000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 3.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -8.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -3.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.400000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -2.400000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -4.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 2.400000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -2.400000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 3.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -8.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -3.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.400000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -2.400000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -4.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 2.400000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -2.400000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 3.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -8.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -3.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -4.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 2.400000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -2.400000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 3.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -8.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -4.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 2.400000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -2.400000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 3.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -4.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 2.400000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -2.400000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -4.000000000000e+00f, sum2.data[7]);
+    // filterRow = 2
+    pix = lbufptr[34];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -1.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -5.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -3.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -1.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -5.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -7.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -7.500000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -3.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -1.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -5.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -1.000000000000e+02f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -7.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -7.500000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -3.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -1.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -5.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 7.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -7.500000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -1.000000000000e+02f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -7.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -7.500000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -3.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -1.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -5.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -3.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 7.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -7.500000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -1.000000000000e+02f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -7.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -7.500000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -3.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -1.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -5.000000000000e+00f, sum2.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 1.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -5.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -3.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 7.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -7.500000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -1.000000000000e+02f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -7.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -7.500000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -3.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -1.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -5.000000000000e+00f, sum2.data[6]);
+    pix = lbufptr[35];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 1.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -5.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -3.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 7.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -7.500000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -1.000000000000e+02f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -7.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -7.500000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -3.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -1.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -5.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 1.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -5.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -3.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 7.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -7.500000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -1.000000000000e+02f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -7.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -7.500000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -3.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 1.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -5.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -3.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 7.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -7.500000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -1.000000000000e+02f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -7.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -7.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 1.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -5.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -3.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 7.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -7.500000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -1.000000000000e+02f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 1.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -5.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -3.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 7.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -7.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 1.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -5.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -3.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 1.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -5.000000000000e+00f, sum2.data[7]);
+    // filterRow = 3
+    pix = lbufptr[51];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.000000000000e+01f, sum1.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -8.000000000000e+01f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.000000000000e+01f, sum1.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -1.000000000000e+02f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, -8.000000000000e+01f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.000000000000e+01f, sum1.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[1]  = fmaf(fval, -1.000000000000e+02f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, -8.000000000000e+01f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.000000000000e+01f, sum1.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 1.000000000000e+02f, sum1.data[0]);
+    sum1.data[2]  = fmaf(fval, -1.000000000000e+02f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, -8.000000000000e+01f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.000000000000e+01f, sum1.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 8.000000000000e+01f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, 1.000000000000e+02f, sum1.data[1]);
+    sum1.data[3]  = fmaf(fval, -1.000000000000e+02f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, -8.000000000000e+01f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.000000000000e+01f, sum1.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.000000000000e+01f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, 8.000000000000e+01f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, 1.000000000000e+02f, sum1.data[2]);
+    sum1.data[4]  = fmaf(fval, -1.000000000000e+02f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, -8.000000000000e+01f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.000000000000e+01f, sum1.data[6]);
+    pix = lbufptr[52];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 2.000000000000e+01f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, 8.000000000000e+01f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, 1.000000000000e+02f, sum1.data[3]);
+    sum1.data[5]  = fmaf(fval, -1.000000000000e+02f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, -8.000000000000e+01f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.000000000000e+01f, sum1.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 2.000000000000e+01f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, 8.000000000000e+01f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, 1.000000000000e+02f, sum1.data[4]);
+    sum1.data[6]  = fmaf(fval, -1.000000000000e+02f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, -8.000000000000e+01f, sum1.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 2.000000000000e+01f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, 8.000000000000e+01f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, 1.000000000000e+02f, sum1.data[5]);
+    sum1.data[7]  = fmaf(fval, -1.000000000000e+02f, sum1.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 2.000000000000e+01f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, 8.000000000000e+01f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, 1.000000000000e+02f, sum1.data[6]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 2.000000000000e+01f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, 8.000000000000e+01f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, 1.000000000000e+02f, sum1.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 2.000000000000e+01f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, 8.000000000000e+01f, sum1.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 2.000000000000e+01f, sum1.data[7]);
+    // filterRow = 4
+    pix = lbufptr[68];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -1.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 5.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 3.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -1.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 5.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -7.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 7.500000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 3.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -1.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 5.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 1.000000000000e+02f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -7.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 7.500000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 3.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -1.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 5.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 7.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 7.500000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 1.000000000000e+02f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -7.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 7.500000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 3.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -1.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 5.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 3.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 7.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 7.500000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 1.000000000000e+02f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -7.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 7.500000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 3.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -1.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 5.000000000000e+00f, sum2.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 1.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 5.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 3.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 7.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 7.500000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 1.000000000000e+02f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -7.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 7.500000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 3.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -1.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 5.000000000000e+00f, sum2.data[6]);
+    pix = lbufptr[69];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 1.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 5.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 3.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 7.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 7.500000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 1.000000000000e+02f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -7.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 7.500000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 3.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -1.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 5.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 1.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 5.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 3.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 7.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 7.500000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 1.000000000000e+02f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -7.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 7.500000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 3.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 1.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 5.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 3.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 7.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 7.500000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 1.000000000000e+02f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -7.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 7.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 1.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 5.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 3.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 7.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 7.500000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 1.000000000000e+02f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 1.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 5.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 3.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 7.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 7.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 1.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 5.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 3.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 1.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 5.000000000000e+00f, sum2.data[7]);
+    // filterRow = 5
+    pix = lbufptr[85];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 4.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.400000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 2.400000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 4.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -3.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.400000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 2.400000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 4.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 8.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -3.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.400000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 2.400000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 4.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 3.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 8.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -3.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.400000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 2.400000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 4.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.400000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 2.400000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 3.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 8.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -3.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.400000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 2.400000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 4.000000000000e+00f, sum2.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 4.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 2.400000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 2.400000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 3.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 8.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -3.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.400000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 2.400000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 4.000000000000e+00f, sum2.data[6]);
+    pix = lbufptr[86];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 4.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 2.400000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 2.400000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 3.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 8.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -3.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.400000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 2.400000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 4.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 2.400000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 2.400000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 3.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 8.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -3.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.400000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 2.400000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 4.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 2.400000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 2.400000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 3.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 8.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -3.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 4.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 2.400000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 2.400000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 3.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 8.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 4.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 2.400000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 2.400000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 3.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 4.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 2.400000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 2.400000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 4.000000000000e+00f, sum2.data[7]);
+    // filterRow = 6
+    pix = lbufptr[102];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] += fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] += fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -5.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 1.500000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] += fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 2.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -5.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 1.500000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] += fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 5.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 1.500000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 2.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -5.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 1.500000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] += fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 5.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 1.500000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 2.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -5.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 1.500000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] += fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] += fval;
+    sum1.data[1]  = fmaf(fval, 4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 5.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 1.500000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 2.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -5.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 1.500000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] += fval;
+    pix = lbufptr[103];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1] += fval;
+    sum2.data[1] += fval;
+    sum1.data[2]  = fmaf(fval, 4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 5.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 1.500000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 2.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -5.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 1.500000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] += fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[2] += fval;
+    sum2.data[2] += fval;
+    sum1.data[3]  = fmaf(fval, 4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 5.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 1.500000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 2.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -5.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 1.500000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] += fval;
+    sum1.data[4]  = fmaf(fval, 4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 5.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 1.500000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 2.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -5.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 1.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] += fval;
+    sum1.data[5]  = fmaf(fval, 4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 5.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 1.500000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 2.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5] += fval;
+    sum2.data[5] += fval;
+    sum1.data[6]  = fmaf(fval, 4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 5.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 1.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6] += fval;
+    sum2.data[6] += fval;
+    sum1.data[7]  = fmaf(fval, 4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] += fval;
+
+    uint mask = HIPSELECT(0xffffu, 0u, y < 3);
+    mask = HIPSELECT(0u, mask, y < (dstHeight - 3));
+    uint4 dst;
+    uint mp;
+
+    mp = hip_canny_mag_phase_L1_7x7(sum1.data[0], sum2.data[0]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 3);
+    dst.x = mp;
+
+    mp = hip_canny_mag_phase_L1_7x7(sum1.data[1], sum2.data[1]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 2);
+    dst.x |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L1_7x7(sum1.data[2], sum2.data[2]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 1);
+    dst.y = mp;
+
+    mp = hip_canny_mag_phase_L1_7x7(sum1.data[3], sum2.data[3]) & mask;
+    dst.y |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L1_7x7(sum1.data[4], sum2.data[4]) & mask;
+    dst.z = mp;
+
+    mp = hip_canny_mag_phase_L1_7x7(sum1.data[5], sum2.data[5]) & mask;
+
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 8));
+    dst.z |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L1_7x7(sum1.data[6], sum2.data[6]) & mask;
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 9));
+    dst.w  =  mp;
+
+    mp = hip_canny_mag_phase_L1_7x7(sum1.data[7], sum2.data[7]) & mask;
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 10));
+    dst.w |= (mp << 16);
+
+    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    if (valid) {
+        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+    }
+}
+
 int HipExec_CannySobel_U16_U8_7x7_L1NORM(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
@@ -269,13 +1624,17 @@ int HipExec_CannySobel_U16_U8_7x7_L1NORM(hipStream_t stream, vx_uint32 dstWidth,
     int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
-    return VX_ERROR_NOT_IMPLEMENTED;
+    hipLaunchKernelGGL(Hip_CannySobel_U16_U8_7x7_L1NORM, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
 }
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -496,6 +1855,482 @@ int HipExec_CannySobel_U16_U8_3x3_L2NORM(hipStream_t stream, vx_uint32 dstWidth,
 
     return VX_SUCCESS;
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_CannySobel_U16_U8_5x5_L2NORM(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    bool valid = (x < dstWidth) && (y < dstHeight);
+
+    __shared__ uchar lbuf[2720]; // 136x20 bytes
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+    { // load 136x20 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 136 + (lx << 3);
+        int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 4) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
+        } else {
+            int id = (ly - 4) * 16 + lx;
+            loffset = id * 136 + 128;
+            goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            doExtraLoad = (id < 20) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        }
+        __syncthreads();
+    }
+    d_float8 sum1 = {0.0f};
+    d_float8 sum2 = {0.0f};
+    uint2 pix;
+    float fval;
+    __shared__ uint2 * lbufptr;
+    lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
+    // filterRow = 0
+      pix = lbufptr[0];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] -= fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -4.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] -= fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -4.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] -= fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -4.000000000000e+00f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -4.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] -= fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] -= fval;
+    sum1.data[1]  = fmaf(fval, 2.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -4.000000000000e+00f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -4.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] -= fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] -= fval;
+    sum1.data[2]  = fmaf(fval, 2.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -4.000000000000e+00f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -4.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] -= fval;
+    pix = lbufptr[1];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2] += fval;
+    sum2.data[2] -= fval;
+    sum1.data[3]  = fmaf(fval, 2.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -4.000000000000e+00f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -4.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] -= fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] -= fval;
+    sum1.data[4]  = fmaf(fval, 2.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -4.000000000000e+00f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -4.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] -= fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] -= fval;
+    sum1.data[5]  = fmaf(fval, 2.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -4.000000000000e+00f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] -= fval;
+    sum1.data[6]  = fmaf(fval, 2.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -4.000000000000e+00f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6] += fval;
+    sum2.data[6] -= fval;
+    sum1.data[7]  = fmaf(fval, 2.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] -= fval;
+    // filterRow = 1
+    pix = lbufptr[17];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -2.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -8.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -8.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -2.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -1.200000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -8.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -8.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -2.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 8.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -8.000000000000e+00f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -1.200000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -8.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -8.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -2.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 8.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -8.000000000000e+00f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -1.200000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -8.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -8.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -2.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[1]  = fmaf(fval, 4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 8.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -8.000000000000e+00f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -1.200000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -8.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -8.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -2.000000000000e+00f, sum2.data[5]);
+    pix = lbufptr[18];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2]  = fmaf(fval, 4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 8.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -8.000000000000e+00f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -1.200000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -8.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -8.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -2.000000000000e+00f, sum2.data[6]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[3]  = fmaf(fval, 4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 8.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -8.000000000000e+00f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -1.200000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -8.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -8.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -2.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[4]  = fmaf(fval, 4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 8.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -8.000000000000e+00f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -1.200000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -8.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -8.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5]  = fmaf(fval, 4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 8.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -8.000000000000e+00f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -1.200000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6]  = fmaf(fval, 4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 8.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -8.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7]  = fmaf(fval, 4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -2.000000000000e+00f, sum2.data[7]);
+    // filterRow = 2
+    pix = lbufptr[34];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+00f, sum1.data[0]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -1.200000000000e+01f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+00f, sum1.data[1]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[1]  = fmaf(fval, -1.200000000000e+01f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+00f, sum1.data[2]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 1.200000000000e+01f, sum1.data[0]);
+    sum1.data[2]  = fmaf(fval, -1.200000000000e+01f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+00f, sum1.data[3]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+00f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, 1.200000000000e+01f, sum1.data[1]);
+    sum1.data[3]  = fmaf(fval, -1.200000000000e+01f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+00f, sum1.data[4]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+00f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, 1.200000000000e+01f, sum1.data[2]);
+    sum1.data[4]  = fmaf(fval, -1.200000000000e+01f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+00f, sum1.data[5]);
+    pix = lbufptr[35];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+00f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, 1.200000000000e+01f, sum1.data[3]);
+    sum1.data[5]  = fmaf(fval, -1.200000000000e+01f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+00f, sum1.data[6]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+00f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, 1.200000000000e+01f, sum1.data[4]);
+    sum1.data[6]  = fmaf(fval, -1.200000000000e+01f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+00f, sum1.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+00f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, 1.200000000000e+01f, sum1.data[5]);
+    sum1.data[7]  = fmaf(fval, -1.200000000000e+01f, sum1.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+00f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, 1.200000000000e+01f, sum1.data[6]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+00f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, 1.200000000000e+01f, sum1.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+00f, sum1.data[7]);
+    // filterRow = 3
+    pix = lbufptr[51];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 2.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -8.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 8.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 2.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 1.200000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -8.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 8.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 2.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 8.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 8.000000000000e+00f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 1.200000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -8.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 8.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 2.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 8.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 8.000000000000e+00f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 1.200000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -8.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 8.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 2.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[1]  = fmaf(fval, 4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 8.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 8.000000000000e+00f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 1.200000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -8.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 8.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 2.000000000000e+00f, sum2.data[5]);
+    pix = lbufptr[52];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2]  = fmaf(fval, 4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 8.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 8.000000000000e+00f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 1.200000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -8.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 8.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 2.000000000000e+00f, sum2.data[6]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[3]  = fmaf(fval, 4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 8.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 8.000000000000e+00f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 1.200000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -8.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 8.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 2.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[4]  = fmaf(fval, 4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 8.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 8.000000000000e+00f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 1.200000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -8.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 8.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5]  = fmaf(fval, 4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 8.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 8.000000000000e+00f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 1.200000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6]  = fmaf(fval, 4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 8.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 8.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7]  = fmaf(fval, 4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 2.000000000000e+00f, sum2.data[7]);
+    // filterRow = 4
+    pix = lbufptr[68];
+    fval = hip_unpack2(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] += fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 4.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] += fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 4.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] += fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 4.000000000000e+00f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 4.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] += fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] += fval;
+    sum1.data[1]  = fmaf(fval, 2.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 4.000000000000e+00f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 4.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] += fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] += fval;
+    sum1.data[2]  = fmaf(fval, 2.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 4.000000000000e+00f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 4.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] += fval;
+    pix = lbufptr[69];
+    fval = hip_unpack0(pix.x);
+    sum1.data[2] += fval;
+    sum2.data[2] += fval;
+    sum1.data[3]  = fmaf(fval, 2.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 4.000000000000e+00f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 4.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] += fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] += fval;
+    sum1.data[4]  = fmaf(fval, 2.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 4.000000000000e+00f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 4.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] += fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] += fval;
+    sum1.data[5]  = fmaf(fval, 2.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 4.000000000000e+00f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] += fval;
+    sum1.data[6]  = fmaf(fval, 2.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 4.000000000000e+00f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[6] += fval;
+    sum2.data[6] += fval;
+    sum1.data[7]  = fmaf(fval, 2.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] += fval;
+
+    uint mask = HIPSELECT(0xffffu, 0u, y < 2);
+    mask = HIPSELECT(0u, mask, y < (dstHeight - 2));
+    uint4 dst;
+    uint mp;
+
+    mp = hip_canny_mag_phase_L2(sum1.data[0], sum2.data[0]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 2);
+    dst.x = mp;
+
+    mp = hip_canny_mag_phase_L2(sum1.data[1], sum2.data[1]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 1);
+    dst.x |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L2(sum1.data[2], sum2.data[2]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 0);
+    dst.y = mp;
+
+    mp = hip_canny_mag_phase_L2(sum1.data[3], sum2.data[3]) & mask;
+    dst.y |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L2(sum1.data[4], sum2.data[4]) & mask;
+    dst.z = mp;
+
+    mp = hip_canny_mag_phase_L2(sum1.data[5], sum2.data[5]) & mask;
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 7));
+    dst.z |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L2(sum1.data[6], sum2.data[6]) & mask;
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 8));
+    dst.w  =  mp;
+
+    mp = hip_canny_mag_phase_L2(sum1.data[7], sum2.data[7]) & mask;
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 9));
+    dst.w |= (mp << 16);
+
+    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    if (valid) {
+        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+    }
+}
+
 int HipExec_CannySobel_U16_U8_5x5_L2NORM(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
@@ -504,8 +2339,884 @@ int HipExec_CannySobel_U16_U8_5x5_L2NORM(hipStream_t stream, vx_uint32 dstWidth,
     int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
-    return VX_ERROR_NOT_IMPLEMENTED;
+    hipLaunchKernelGGL(Hip_CannySobel_U16_U8_5x5_L2NORM, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_CannySobel_U16_U8_7x7_L2NORM(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    bool valid = (x < dstWidth) && (y < dstHeight);
+
+    __shared__ uchar lbuf[2992]; // 136x22 bytes
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+    { // load 136x22 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 136 + (lx << 3);
+        int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 6) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
+        } else {
+            int id = (ly - 6) * 16 + lx;
+            loffset = id * 136 + 128;
+            goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            doExtraLoad = (id < 22) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        }
+        __syncthreads();
+    }
+    d_float8 sum1 = {0.0f};
+    d_float8 sum2 = {0.0f};
+    uint2 pix;
+    float fval;
+    __shared__ uint2 * lbufptr;
+    lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
+    // filterRow = 0
+      pix = lbufptr[0];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] -= fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] -= fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -5.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -1.500000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] -= fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -2.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -5.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -1.500000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] -= fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 5.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -1.500000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -2.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -5.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -1.500000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] -= fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 5.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -1.500000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -2.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -5.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -1.500000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] -= fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] -= fval;
+    sum1.data[1]  = fmaf(fval, 4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 5.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -1.500000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -2.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -5.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -1.500000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] -= fval;
+    pix = lbufptr[1];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1] += fval;
+    sum2.data[1] -= fval;
+    sum1.data[2]  = fmaf(fval, 4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 5.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -1.500000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -2.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -5.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -1.500000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] -= fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[2] += fval;
+    sum2.data[2] -= fval;
+    sum1.data[3]  = fmaf(fval, 4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 5.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -1.500000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -2.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -5.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -1.500000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] -= fval;
+    sum1.data[4]  = fmaf(fval, 4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 5.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -1.500000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -2.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -5.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -1.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] -= fval;
+    sum1.data[5]  = fmaf(fval, 4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 5.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -1.500000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -2.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5] += fval;
+    sum2.data[5] -= fval;
+    sum1.data[6]  = fmaf(fval, 4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 5.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -1.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6] += fval;
+    sum2.data[6] -= fval;
+    sum1.data[7]  = fmaf(fval, 4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] -= fval;
+    // filterRow = 1
+    pix = lbufptr[17];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -4.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.400000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -2.400000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -4.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -3.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.400000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -2.400000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -4.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -8.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -3.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.400000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -2.400000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -4.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 3.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -6.000000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -8.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -3.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.400000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -2.400000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -4.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.400000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -2.400000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 3.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -6.000000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -8.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -3.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.400000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -2.400000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -4.000000000000e+00f, sum2.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -4.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 2.400000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -2.400000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 3.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -6.000000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -8.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -3.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.400000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -2.400000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -4.000000000000e+00f, sum2.data[6]);
+    pix = lbufptr[18];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -4.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 2.400000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -2.400000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 3.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -6.000000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -8.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -3.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.400000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -2.400000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -4.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 2.400000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -2.400000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 3.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -6.000000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -8.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -3.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.400000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -2.400000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -4.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 2.400000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -2.400000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 3.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -6.000000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -8.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -3.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -4.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 2.400000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -2.400000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 3.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -6.000000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -8.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -4.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 2.400000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -2.400000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 3.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -6.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -4.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 2.400000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -2.400000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -4.000000000000e+00f, sum2.data[7]);
+    // filterRow = 2
+    pix = lbufptr[34];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -1.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -5.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -3.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -1.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -5.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -7.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -7.500000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -3.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -1.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -5.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, -1.000000000000e+02f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -7.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -7.500000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -3.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -1.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -5.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 7.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -7.500000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, -1.000000000000e+02f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -7.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -7.500000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -3.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -1.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -5.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -3.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 7.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -7.500000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, -1.000000000000e+02f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -7.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -7.500000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -3.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -1.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -5.000000000000e+00f, sum2.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 1.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, -5.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -3.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 7.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -7.500000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, -1.000000000000e+02f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -7.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -7.500000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -3.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -1.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -5.000000000000e+00f, sum2.data[6]);
+    pix = lbufptr[35];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 1.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, -5.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -3.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 7.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -7.500000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, -1.000000000000e+02f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -7.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -7.500000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -3.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -1.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -5.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 1.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, -5.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -3.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 7.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -7.500000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, -1.000000000000e+02f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -7.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -7.500000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -3.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 1.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, -5.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -3.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 7.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -7.500000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, -1.000000000000e+02f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -7.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -7.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 1.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, -5.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -3.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 7.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -7.500000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, -1.000000000000e+02f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 1.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, -5.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -3.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 7.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -7.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 1.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, -5.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -3.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 1.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, -5.000000000000e+00f, sum2.data[7]);
+    // filterRow = 3
+    pix = lbufptr[51];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.000000000000e+01f, sum1.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -8.000000000000e+01f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.000000000000e+01f, sum1.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -1.000000000000e+02f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, -8.000000000000e+01f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.000000000000e+01f, sum1.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[1]  = fmaf(fval, -1.000000000000e+02f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, -8.000000000000e+01f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.000000000000e+01f, sum1.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 1.000000000000e+02f, sum1.data[0]);
+    sum1.data[2]  = fmaf(fval, -1.000000000000e+02f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, -8.000000000000e+01f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.000000000000e+01f, sum1.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 8.000000000000e+01f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, 1.000000000000e+02f, sum1.data[1]);
+    sum1.data[3]  = fmaf(fval, -1.000000000000e+02f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, -8.000000000000e+01f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.000000000000e+01f, sum1.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.000000000000e+01f, sum1.data[0]);
+    sum1.data[1]  = fmaf(fval, 8.000000000000e+01f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, 1.000000000000e+02f, sum1.data[2]);
+    sum1.data[4]  = fmaf(fval, -1.000000000000e+02f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, -8.000000000000e+01f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.000000000000e+01f, sum1.data[6]);
+    pix = lbufptr[52];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 2.000000000000e+01f, sum1.data[1]);
+    sum1.data[2]  = fmaf(fval, 8.000000000000e+01f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, 1.000000000000e+02f, sum1.data[3]);
+    sum1.data[5]  = fmaf(fval, -1.000000000000e+02f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, -8.000000000000e+01f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.000000000000e+01f, sum1.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 2.000000000000e+01f, sum1.data[2]);
+    sum1.data[3]  = fmaf(fval, 8.000000000000e+01f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, 1.000000000000e+02f, sum1.data[4]);
+    sum1.data[6]  = fmaf(fval, -1.000000000000e+02f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, -8.000000000000e+01f, sum1.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 2.000000000000e+01f, sum1.data[3]);
+    sum1.data[4]  = fmaf(fval, 8.000000000000e+01f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, 1.000000000000e+02f, sum1.data[5]);
+    sum1.data[7]  = fmaf(fval, -1.000000000000e+02f, sum1.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 2.000000000000e+01f, sum1.data[4]);
+    sum1.data[5]  = fmaf(fval, 8.000000000000e+01f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, 1.000000000000e+02f, sum1.data[6]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 2.000000000000e+01f, sum1.data[5]);
+    sum1.data[6]  = fmaf(fval, 8.000000000000e+01f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, 1.000000000000e+02f, sum1.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 2.000000000000e+01f, sum1.data[6]);
+    sum1.data[7]  = fmaf(fval, 8.000000000000e+01f, sum1.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 2.000000000000e+01f, sum1.data[7]);
+    // filterRow = 4
+    pix = lbufptr[68];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -1.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 5.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 3.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -1.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 5.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -7.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 7.500000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 3.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -1.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 5.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 1.000000000000e+02f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -7.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 7.500000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 3.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -1.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 5.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 7.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 7.500000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 1.000000000000e+02f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -7.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 7.500000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 3.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -1.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 5.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 3.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 7.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 7.500000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 1.000000000000e+02f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -7.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 7.500000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 3.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -1.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 5.000000000000e+00f, sum2.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 1.500000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 5.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 3.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 7.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 7.500000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 1.000000000000e+02f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -7.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 7.500000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 3.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -1.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 5.000000000000e+00f, sum2.data[6]);
+    pix = lbufptr[69];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 1.500000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 5.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 3.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 7.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 7.500000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 1.000000000000e+02f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -7.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 7.500000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 3.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -1.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 5.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 1.500000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 5.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 3.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 7.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 7.500000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 1.000000000000e+02f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -7.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 7.500000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 3.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 1.500000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 5.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 3.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 7.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 7.500000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 1.000000000000e+02f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -7.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 7.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 1.500000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 5.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 3.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 7.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 7.500000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 1.000000000000e+02f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 1.500000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 5.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 3.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 7.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 7.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 1.500000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 5.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 3.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 1.500000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 5.000000000000e+00f, sum2.data[7]);
+    // filterRow = 5
+    pix = lbufptr[85];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0]  = fmaf(fval, -6.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 4.000000000000e+00f, sum2.data[0]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -2.400000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 2.400000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -6.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 4.000000000000e+00f, sum2.data[1]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -3.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -2.400000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 2.400000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -6.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 4.000000000000e+00f, sum2.data[2]);
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 8.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -3.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -2.400000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 2.400000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -6.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 4.000000000000e+00f, sum2.data[3]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 3.000000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 8.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -3.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -2.400000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 2.400000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -6.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 4.000000000000e+00f, sum2.data[4]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 2.400000000000e+01f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 2.400000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 3.000000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 8.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -3.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -2.400000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 2.400000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -6.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 4.000000000000e+00f, sum2.data[5]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[0]  = fmaf(fval, 6.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 4.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 2.400000000000e+01f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 2.400000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 3.000000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 8.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -3.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -2.400000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 2.400000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -6.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 4.000000000000e+00f, sum2.data[6]);
+    pix = lbufptr[86];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1]  = fmaf(fval, 6.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 4.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 2.400000000000e+01f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 2.400000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 3.000000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 8.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -3.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -2.400000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 2.400000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -6.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 4.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[2]  = fmaf(fval, 6.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 4.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 2.400000000000e+01f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 2.400000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 3.000000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 8.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -3.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -2.400000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 2.400000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3]  = fmaf(fval, 6.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 4.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 2.400000000000e+01f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 2.400000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 3.000000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 8.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -3.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4]  = fmaf(fval, 6.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 4.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 2.400000000000e+01f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 2.400000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 3.000000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 8.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5]  = fmaf(fval, 6.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 4.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 2.400000000000e+01f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 2.400000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 3.000000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6]  = fmaf(fval, 6.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 4.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 2.400000000000e+01f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 2.400000000000e+01f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7]  = fmaf(fval, 6.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 4.000000000000e+00f, sum2.data[7]);
+    // filterRow = 6
+    pix = lbufptr[102];
+    fval = hip_unpack1(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] += fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[0]  = fmaf(fval, -4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] += fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[0]  = fmaf(fval, -5.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 1.500000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] += fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0]  = fmaf(fval, 2.000000000000e+01f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, -5.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 1.500000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] += fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0]  = fmaf(fval, 5.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 1.500000000000e+01f, sum2.data[0]);
+    sum2.data[1]  = fmaf(fval, 2.000000000000e+01f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, -5.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 1.500000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] += fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[0]  = fmaf(fval, 4.000000000000e+00f, sum1.data[0]);
+    sum2.data[0]  = fmaf(fval, 6.000000000000e+00f, sum2.data[0]);
+    sum1.data[1]  = fmaf(fval, 5.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 1.500000000000e+01f, sum2.data[1]);
+    sum2.data[2]  = fmaf(fval, 2.000000000000e+01f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, -5.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 1.500000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] += fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] += fval;
+    sum1.data[1]  = fmaf(fval, 4.000000000000e+00f, sum1.data[1]);
+    sum2.data[1]  = fmaf(fval, 6.000000000000e+00f, sum2.data[1]);
+    sum1.data[2]  = fmaf(fval, 5.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 1.500000000000e+01f, sum2.data[2]);
+    sum2.data[3]  = fmaf(fval, 2.000000000000e+01f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, -5.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 1.500000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] += fval;
+    pix = lbufptr[103];
+    fval = hip_unpack0(pix.x);
+    sum1.data[1] += fval;
+    sum2.data[1] += fval;
+    sum1.data[2]  = fmaf(fval, 4.000000000000e+00f, sum1.data[2]);
+    sum2.data[2]  = fmaf(fval, 6.000000000000e+00f, sum2.data[2]);
+    sum1.data[3]  = fmaf(fval, 5.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 1.500000000000e+01f, sum2.data[3]);
+    sum2.data[4]  = fmaf(fval, 2.000000000000e+01f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, -5.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 1.500000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] += fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[2] += fval;
+    sum2.data[2] += fval;
+    sum1.data[3]  = fmaf(fval, 4.000000000000e+00f, sum1.data[3]);
+    sum2.data[3]  = fmaf(fval, 6.000000000000e+00f, sum2.data[3]);
+    sum1.data[4]  = fmaf(fval, 5.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 1.500000000000e+01f, sum2.data[4]);
+    sum2.data[5]  = fmaf(fval, 2.000000000000e+01f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, -5.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 1.500000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] += fval;
+    sum1.data[4]  = fmaf(fval, 4.000000000000e+00f, sum1.data[4]);
+    sum2.data[4]  = fmaf(fval, 6.000000000000e+00f, sum2.data[4]);
+    sum1.data[5]  = fmaf(fval, 5.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 1.500000000000e+01f, sum2.data[5]);
+    sum2.data[6]  = fmaf(fval, 2.000000000000e+01f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, -5.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 1.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] += fval;
+    sum1.data[5]  = fmaf(fval, 4.000000000000e+00f, sum1.data[5]);
+    sum2.data[5]  = fmaf(fval, 6.000000000000e+00f, sum2.data[5]);
+    sum1.data[6]  = fmaf(fval, 5.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 1.500000000000e+01f, sum2.data[6]);
+    sum2.data[7]  = fmaf(fval, 2.000000000000e+01f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[5] += fval;
+    sum2.data[5] += fval;
+    sum1.data[6]  = fmaf(fval, 4.000000000000e+00f, sum1.data[6]);
+    sum2.data[6]  = fmaf(fval, 6.000000000000e+00f, sum2.data[6]);
+    sum1.data[7]  = fmaf(fval, 5.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 1.500000000000e+01f, sum2.data[7]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[6] += fval;
+    sum2.data[6] += fval;
+    sum1.data[7]  = fmaf(fval, 4.000000000000e+00f, sum1.data[7]);
+    sum2.data[7]  = fmaf(fval, 6.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] += fval;
+
+    uint mask = HIPSELECT(0xffffu, 0u, y < 3);
+    mask = HIPSELECT(0u, mask, y < (dstHeight - 3));
+    uint4 dst;
+    uint mp;
+
+    mp = hip_canny_mag_phase_L2_7x7(sum1.data[0], sum2.data[0]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 3);
+    dst.x = mp;
+
+    mp = hip_canny_mag_phase_L2_7x7(sum1.data[1], sum2.data[1]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 2);
+    dst.x |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L2_7x7(sum1.data[2], sum2.data[2]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 1);
+    dst.y = mp;
+
+    mp = hip_canny_mag_phase_L2_7x7(sum1.data[3], sum2.data[3]) & mask;
+    dst.y |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L2_7x7(sum1.data[4], sum2.data[4]) & mask;
+    dst.z = mp;
+
+    mp = hip_canny_mag_phase_L2_7x7(sum1.data[5], sum2.data[5]) & mask;
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 8));
+    dst.z |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L2_7x7(sum1.data[6], sum2.data[6]) & mask;
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 9));
+    dst.w  =  mp;
+
+    mp = hip_canny_mag_phase_L2_7x7(sum1.data[7], sum2.data[7]) & mask;
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 10));
+    dst.w |= (mp << 16);
+
+    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    if (valid) {
+        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+    }
+}
+
 int HipExec_CannySobel_U16_U8_7x7_L2NORM(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
@@ -514,13 +3225,17 @@ int HipExec_CannySobel_U16_U8_7x7_L2NORM(hipStream_t stream, vx_uint32 dstWidth,
     int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
-    return VX_ERROR_NOT_IMPLEMENTED;
+    hipLaunchKernelGGL(Hip_CannySobel_U16_U8_7x7_L2NORM, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
 }
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
     const uchar *xyStack, uint xyStackOffset, uint capacityOfXY, uint2 hyst,
     uint dstWidthComp) {
 
@@ -535,7 +3250,7 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
 
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -545,7 +3260,7 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
         } else {
             int id = (ly - 2) * 16 + lx;
             loffset = id * 136 + 128;
-            goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            goffset = (y - ly + id - 1) * srcImageStrideInBytes + ((x - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
         if (doExtraLoad) {
@@ -691,10 +3406,8 @@ int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream,
 // ----------------------------------------------------------------------------
 
 __global__ void __attribute__((visibility("default")))
-Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners,
-    uint srcWidth, uint srcHeight,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float strength_threshold) {
+Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, uint cornerBufferOffset,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes, float strength_threshold) {
 
     int idx = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) + 3;
     int idy = (hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y) + 3;
@@ -710,7 +3423,7 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners,
     candn = pTempImg[-3];
     neg_mask = (candp < centerPixel_neg) | ((candn < centerPixel_neg) << 8);
     pos_mask = (candp > centerPixel_pos) | ((candn > centerPixel_pos) << 8);
-    int offs = -stride*3;
+    int offs = -stride * 3;
     candp = pTempImg[offs];
     candn = pTempImg[-offs];
     neg_mask |= (((candp < centerPixel_neg) << 4) | ((candn < centerPixel_neg) << 12));
@@ -718,13 +3431,13 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners,
     if(((pos_mask | neg_mask) & MASK_EARLY_EXIT) == 0)
         return;
 
-    offs = -stride*3 + 1;
+    offs = -stride * 3 + 1;
     candp = pTempImg[offs];
     candn = pTempImg[-offs];
     neg_mask |= (((candp < centerPixel_neg) << 3) | ((candn < centerPixel_neg) << 11));
     pos_mask |= (((candp > centerPixel_pos) << 3) | ((candn > centerPixel_pos) << 11));
 
-    offs = -stride*3 - 1;
+    offs = -stride * 3 - 1;
     candp = pTempImg[offs];
     candn = pTempImg[-offs];
     neg_mask |= (((candp < centerPixel_neg) << 5) | ((candn < centerPixel_neg) << 13));
@@ -759,18 +3472,18 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners,
 
     int cornerMask = 511, isCorner = 0;
 
-    for(int i = 0; i < 16; i++)	{
+    for(int i = 0; i < 16; i++) {
         isCorner += ((pos_mask & cornerMask) == cornerMask);
         isCorner += ((neg_mask & cornerMask) == cornerMask);
         pos_mask >>= 1;
         neg_mask >>= 1;
     }
 
-    uint *numKeypoints = (uint *) pDstCorners;
-    d_KeyPt *keypt_list = (d_KeyPt *) pDstCorners;
-    if(isCorner) {
-        uint old_idx = atomicInc(numKeypoints, 1);
-        if(old_idx < capacityOfDstCorner) {
+    int *numKeypoints = (int *) pDstCorners;
+    d_KeyPt *keypt_list = (d_KeyPt *) (pDstCorners + cornerBufferOffset);
+    if (isCorner) {
+        int old_idx = atomicAdd(numKeypoints, 1);
+        if (old_idx < capacityOfDstCorner) {
             keypt_list[old_idx].x = idx;
             keypt_list[old_idx].y = idy;
             keypt_list[old_idx].strength = strength_threshold;
@@ -781,9 +3494,8 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners,
         }
     }
 }
-int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_uint8 *pDstCorner, vx_uint32 cornerBufferOffset,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     vx_float32 strength_threshold) {
     int localThreads_x = 16;
     int localThreads_y = 16;
@@ -791,7 +3503,7 @@ int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacit
     int globalThreads_y = ceil((srcHeight - 4) / 14) * 16;
 
     hipLaunchKernelGGL(Hip_FastCorners_XY_U8_NoSupression, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pHipDstCorner,
+                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pDstCorner, cornerBufferOffset,
                         srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         strength_threshold);
 
@@ -799,10 +3511,8 @@ int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacit
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
-    uint srcWidth, uint srcHeight,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float strength_threshold) {
+Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, uint cornerBufferOffset,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, int srcImageStrideInBytes, float strength_threshold) {
 
     int lidx = hipThreadIdx_x;
     int lidy = hipThreadIdx_y;
@@ -810,8 +3520,8 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
     int gidy = hipBlockIdx_y;
     int xoffset = gidx * 14 + lidx + 2;
     int yoffset = gidy * 14 + lidy + 2;
-    const uchar *pTempImg = pSrcImage + hip_mad24(yoffset, (int)srcImageStrideInBytes, xoffset);
-    int pLocalStrengthShare[16][16];
+    const uchar *pTempImg = pSrcImage + hip_mad24(yoffset, srcImageStrideInBytes, xoffset);
+    __shared__ int pLocalStrengthShare[16][16];
     bool doCompute = true;
     if((xoffset > (int)srcWidth - 3) || (yoffset > (int)srcHeight - 3) || (xoffset < 3) || (yoffset < 3)) {
         doCompute = false;
@@ -819,11 +3529,11 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
     }
 
     int local_strength = 0;
-    if(doCompute) {
+    if (doCompute) {
         int boundary[16];
         int pos_mask, neg_mask, offs;
         int centerPixel_neg = pTempImg[0];
-        for(int i = 0; i < 16; i++)
+        for (int i = 0; i < 16; i++)
             boundary[i] = centerPixel_neg;
         int centerPixel_pos = centerPixel_neg + (int)strength_threshold;
         centerPixel_neg -= (int) strength_threshold;
@@ -843,9 +3553,8 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
         if(((pos_mask | neg_mask) & MASK_EARLY_EXIT) == 0) {
             pLocalStrengthShare[lidy][lidx] = 0;
             doCompute = false;
-        }
-        else {
-            offs = -srcImageStrideInBytes*3 + 1;
+        } else {
+            offs = -srcImageStrideInBytes * 3 + 1;
             candp = pTempImg[offs];
             candn = pTempImg[-offs];
             neg_mask |= (((candp < centerPixel_neg) << 3) | ((candn < centerPixel_neg) << 11));
@@ -853,7 +3562,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
             boundary[3] -= candp;
             boundary[11] -= candn;
 
-            offs = -srcImageStrideInBytes*3 - 1;
+            offs = -srcImageStrideInBytes * 3 - 1;
             candp = pTempImg[offs];
             candn = pTempImg[-offs];
             neg_mask |= (((candp < centerPixel_neg) << 5) | ((candn < centerPixel_neg) << 13));
@@ -861,7 +3570,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
             boundary[5] -= candp;
             boundary[13] -= candn;
 
-            offs = -(srcImageStrideInBytes<<1) + 2;
+            offs = -(srcImageStrideInBytes << 1) + 2;
             candp = pTempImg[offs];
             candn = pTempImg[-offs];
             neg_mask |= (((candp < centerPixel_neg) << 2) | ((candn < centerPixel_neg) << 10));
@@ -869,7 +3578,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
             boundary[2] -= candp;
             boundary[10] -= candn;
 
-            offs = -(srcImageStrideInBytes<<1) - 2;
+            offs = -(srcImageStrideInBytes << 1) - 2;
             candp = pTempImg[offs];
             candn = pTempImg[-offs];
             neg_mask |= (((candp < centerPixel_neg) << 6) | ((candn < centerPixel_neg) << 14));
@@ -909,8 +3618,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
             if(isCorner == 0) {
                 pLocalStrengthShare[lidy][lidx] = 0;
                 doCompute = false;
-            }
-            else {
+            } else {
                 int strength;
                 int tmp = 0;
                 for (int i = 0; i < 16; i += 2)	{
@@ -945,24 +3653,24 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
     __syncthreads();
 
     bool writeCorner = doCompute &&
-                        (local_strength >= pLocalStrengthShare[lidy-1][lidx-1]) &&
-                        (local_strength >= pLocalStrengthShare[lidy-1][lidx]) &&
-                        (local_strength >= pLocalStrengthShare[lidy-1][lidx+1]) &&
-                        (local_strength >= pLocalStrengthShare[lidy][lidx-1]) &&
-                        (local_strength > pLocalStrengthShare[lidy][lidx+1]) &&
-                        (local_strength > pLocalStrengthShare[lidy+1][lidx-1]) &&
-                        (local_strength > pLocalStrengthShare[lidy+1][lidx]) &&
-                        (local_strength >= pLocalStrengthShare[lidy+1][lidx+1]) &&
-                        (lidx > 0) &&
-                        (lidy > 0) &&
-                        (lidx < 15) &&
-                        (lidy < 15);
+                       (lidx > 0) &&
+                       (lidy > 0) &&
+                       (lidx < 15) &&
+                       (lidy < 15) &&
+                       (local_strength >= pLocalStrengthShare[lidy - 1][lidx - 1]) &&
+                       (local_strength >= pLocalStrengthShare[lidy - 1][lidx]) &&
+                       (local_strength >= pLocalStrengthShare[lidy - 1][lidx + 1]) &&
+                       (local_strength >= pLocalStrengthShare[lidy][lidx - 1]) &&
+                       (local_strength >  pLocalStrengthShare[lidy][lidx + 1]) &&
+                       (local_strength >  pLocalStrengthShare[lidy + 1][lidx - 1]) &&
+                       (local_strength >  pLocalStrengthShare[lidy + 1][lidx]) &&
+                       (local_strength >= pLocalStrengthShare[lidy + 1][lidx + 1]);
 
-    uint *numKeypoints = (uint *) pDstCorners;
-    d_KeyPt *keypt_list = (d_KeyPt *) pDstCorners;
-    if(writeCorner)	{
-        uint old_idx = atomicInc(numKeypoints, 1);
-        if(old_idx < capacityOfDstCorner) {
+    int *numKeypoints = (int *) pDstCorners;
+    d_KeyPt *keypt_list = (d_KeyPt *) (pDstCorners + cornerBufferOffset);
+    if (writeCorner) {
+        int old_idx = atomicAdd(numKeypoints, 1);
+        if (old_idx < capacityOfDstCorner) {
             keypt_list[old_idx].x = xoffset;
             keypt_list[old_idx].y = yoffset;
             keypt_list[old_idx].strength = (float) local_strength;
@@ -973,17 +3681,15 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
         }
     }
 }
-int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    vx_float32 strength_threshold, vx_uint8 *pHipScratch) {
+int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_uint8* pDstCorner, vx_uint32 cornerBufferOffset,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_float32 strength_threshold) {
     int localThreads_x = 16;
     int localThreads_y = 16;
     int globalThreads_x = ceil((srcWidth - 4) / 14) * 16;
     int globalThreads_y = ceil((srcHeight - 4) / 14) * 16;
 
     hipLaunchKernelGGL(Hip_FastCorners_XY_U8_Supression, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pHipDstCorner,
+                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pDstCorner, cornerBufferOffset,
                         srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         strength_threshold);
 

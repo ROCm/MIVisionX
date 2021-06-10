@@ -119,8 +119,20 @@ __device__ __forceinline__ uint hip_lerp(uint src0, uint src1, uint src2) {
     return __builtin_amdgcn_lerp(src0, src1, src2);
 }
 
+__device__ __forceinline__ uint hip_sad(uint a, uint b, uint c) {
+    return __builtin_amdgcn_sad_u8(a, b, c);
+}
+
+__device__ __forceinline__ uint hip_bytealign(uint a, uint b, uint c) {
+    return __builtin_amdgcn_alignbyte(a, b, c);
+}
+
 __device__ __forceinline__ float4 hip_fabs4(float4 src) {
     return make_float4(fabsf(src.x), fabsf(src.y), fabsf(src.z), fabsf(src.w));
+}
+
+__device__ __forceinline__ float4 hip_floorf4(float4 src) {
+    return make_float4(floorf(src.x), floorf(src.y), floorf(src.z), floorf(src.w));
 }
 
 __device__ __forceinline__ uint hip_mul24(uint a, uint b) {
@@ -309,6 +321,32 @@ __device__ __forceinline__ uint hip_canny_mag_phase_L2(float gx, float gy) {
     float dx = fabsf(gx);
     float dy = fabsf(gy);
     float dr = hip_min3(__fsqrt_rn(fmaf(gy, gy, gx * gx)), 16383.0f, 16383.0f);
+    float d1 = dx * 0.4142135623730950488016887242097f;
+    float d2 = dx * 2.4142135623730950488016887242097f;
+    uint mp = HIPSELECT(1u, 3u, (gx * gy) < 0.0f);
+    mp = HIPSELECT(mp, 0u, dy <= d1);
+    mp = HIPSELECT(mp, 2u, dy >= d2);
+    mp += (((uint)dr) << 2);
+    return mp;
+}
+
+__device__ __forceinline__ uint hip_canny_mag_phase_L1_7x7(float gx, float gy) {
+    float dx = fabsf(gx);
+    float dy = fabsf(gy);
+    float dr = hip_min3((dx + dy) * 0.25f, 16383.0f, 16383.0f);
+    float d1 = dx * 0.4142135623730950488016887242097f;
+    float d2 = dx * 2.4142135623730950488016887242097f;
+    uint mp = HIPSELECT(1u, 3u, (gx * gy) < 0.0f);
+    mp = HIPSELECT(mp, 0u, dy <= d1);
+    mp = HIPSELECT(mp, 2u, dy >= d2);
+    mp += (((uint)dr) << 2);
+    return mp;
+}
+
+__device__ __forceinline__ uint hip_canny_mag_phase_L2_7x7(float gx, float gy) {
+    float dx = fabsf(gx);
+    float dy = fabsf(gy);
+    float dr = hip_min3(__fsqrt_rn(fmaf(gy, gy, gx * gx) * 0.0625f), 16383.0f, 16383.0f);
     float d1 = dx * 0.4142135623730950488016887242097f;
     float d2 = dx * 2.4142135623730950488016887242097f;
     uint mp = HIPSELECT(1u, 3u, (gx * gy) < 0.0f);

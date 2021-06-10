@@ -1,7 +1,7 @@
 import os
-from PyQt4 import QtGui, uic
+from PyQt5 import QtWidgets, uic
 
-class inference_control(QtGui.QMainWindow):
+class inference_control(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(inference_control, self).__init__(parent)
         self.model_format = ''
@@ -59,24 +59,24 @@ class inference_control(QtGui.QMainWindow):
 
     def browseFile(self):
         if self.format_comboBox.currentText() == 'nnef':
-            self.file_lineEdit.setText(QtGui.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))    
+            self.file_lineEdit.setText(QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))
         else:
-            self.file_lineEdit.setText(QtGui.QFileDialog.getOpenFileName(self, 'Open File', './', '*'))
+            self.file_lineEdit.setText(QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*'))
 
     def browseOutput(self):
-        self.output_lineEdit.setText(QtGui.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))
+        self.output_lineEdit.setText(QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))
 
     def browseLabel(self):
-        self.label_lineEdit.setText(QtGui.QFileDialog.getOpenFileName(self, 'Open File', './', '*.txt'))
+        self.label_lineEdit.setText(QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*.txt'))
 
     def browseImage(self):
-        self.image_lineEdit.setText(QtGui.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))
+        self.image_lineEdit.setText(QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))
 
     def browseVal(self):
-        self.val_lineEdit.setText(QtGui.QFileDialog.getOpenFileName(self, 'Open File', './', '*.txt'))
+        self.val_lineEdit.setText(QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*.txt'))
 
     def browseHier(self):
-        self.hier_lineEdit.setText(QtGui.QFileDialog.getOpenFileName(self, 'Open File', './', '*.csv'))
+        self.hier_lineEdit.setText(QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*.csv'))
 
     def readSetupFile(self):
         setupDir = '~/.mivisionx-inference-analyzer'
@@ -178,10 +178,10 @@ class inference_control(QtGui.QMainWindow):
                         self.format_comboBox.setEnabled(False)
 
     def checkInput(self):
-        if not self.file_lineEdit.text().isEmpty() and not self.name_lineEdit.text().isEmpty() \
-            and not self.idims_lineEdit.text().isEmpty() and not self.odims_lineEdit.text().isEmpty() \
-            and not self.output_lineEdit.text().isEmpty() and not self.label_lineEdit.text().isEmpty() \
-            and not self.image_lineEdit.text().isEmpty():
+        if not (self.file_lineEdit.text() == '') and not (self.name_lineEdit.text() == '') \
+            and not (self.idims_lineEdit.text() == '')  and not (self.odims_lineEdit.text() == '') \
+            and not (self.output_lineEdit.text() == '') and not (self.label_lineEdit.text() == '') \
+            and not (self.image_lineEdit.text() == ''):
                 self.run_pushButton.setEnabled(True)
                 self.run_pushButton.setStyleSheet("background-color: lightgreen")
         else:

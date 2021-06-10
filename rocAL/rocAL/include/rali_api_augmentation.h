@@ -99,7 +99,7 @@ extern "C"  RaliImage  RALI_API_CALL raliRotateFixed(RaliContext context, RaliIm
 /// \param beta
 /// \return
 extern "C"  RaliImage  RALI_API_CALL raliBrightness(RaliContext context, RaliImage input, bool is_output ,
-                                                    RaliFloatParam alpha = NULL, RaliIntParam beta = NULL);
+                                                    RaliFloatParam alpha = NULL, RaliFloatParam beta = NULL);
 
 /// Accepts U8 and RGB24 inputs
 /// \param context
@@ -108,7 +108,7 @@ extern "C"  RaliImage  RALI_API_CALL raliBrightness(RaliContext context, RaliIma
 /// \param is_output
 /// \return
 extern "C"  RaliImage  RALI_API_CALL raliBrightnessFixed(RaliContext context, RaliImage input,
-                                                            float alpha, int beta,
+                                                            float alpha, float beta,
                                                             bool is_output );
 
 /// Accepts U8 and RGB24 inputs
@@ -516,7 +516,7 @@ extern "C" RaliImage  RALI_API_CALL raliCrop(RaliContext context, RaliImage inpu
                                              RaliFloatParam crop_depth = NULL,
                                              RaliFloatParam crop_pox_x = NULL,
                                              RaliFloatParam crop_pos_y = NULL,
-                                             RaliFloatParam crop_pos_z = NULL); 
+                                             RaliFloatParam crop_pos_z = NULL);
 
 extern "C"  RaliImage  RALI_API_CALL raliCropFixed(RaliContext context, RaliImage  input,
                                                    unsigned crop_width,

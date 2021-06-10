@@ -1,11 +1,11 @@
-# RALI
+# rocAL
 
-The AMD Radeon Augmentation Library (RALI) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user. RALI currently provides C API.
+The AMD ROCm Augmentation Library (rocAL) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user. rocAL currently provides C API.
 For more details, go to [docs](docs) page.
 
 ## Supported Operations
 
-RALI can be currently used to perform the following operations either with randomized or fixed parameters:
+rocAL can be currently used to perform the following operations either with randomized or fixed parameters:
 
 * Brightness
 * Contrast
@@ -49,7 +49,7 @@ RALI can be currently used to perform the following operations either with rando
 
 ## Build instructions
 
-RALI builds and installs as part of the MIVisonX toolkit. RALI depends on the AMD's Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for RALI to build. RALI also needs the Turbo JPEG library to decode input JPEG images.
+rocAL builds and installs as part of the MIVisonX toolkit. rocAL depends on the AMD's Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for rocAL to build. rocAL also needs the Turbo JPEG library to decode input JPEG images.
 
 1. Make sure to have the AMD's RPP library installed. Please refer to the [RPP's page](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp) for instructions on how to install RPP.
 2. Make sure you've installed the Turbo JPEG library version 2.0 or later, refer to the section below.
@@ -57,7 +57,7 @@ RALI builds and installs as part of the MIVisonX toolkit. RALI depends on the AM
 
 ### Turbo JPEG installation
 
-Turbo JPEG library is a SIMD optimized library which currently RALI uses to decode input JPEG images. It needs to be built from the source and installed in the default path for libraries and include headers. You can follow the instruction below to download the source, build and install it.
+Turbo JPEG library is a SIMD optimized library which currently rocAL uses to decode input JPEG images. It needs to be built from the source and installed in the default path for libraries and include headers. You can follow the instruction below to download the source, build and install it.
 Note: Make sure you have installed nasm Debian package before installation, it's the dependency required by libturbo-jpeg.
 
 ``` 
@@ -71,9 +71,8 @@ Note: You need wget package to download the tar file.
 ```
 
 ``` 
-wget  https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz
-tar xf libjpeg-turbo-2.0.3.tar.gz
-cd libjpeg-turbo-2.0.3
+git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git
+cd libjpeg-turbo
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr \
@@ -101,5 +100,5 @@ sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
 
 ## Sample and test applications
 
-*  [Image augmentation application](../apps/image_augmentation) demonstrates how RALI's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of modifications.
-*  [Augmentation unit tests](../utilities/rali/rali_unittests) can be used to test RALI's API individually.
+*  [Image augmentation application](../apps/image_augmentation) demonstrates how rocAL's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of modifications.
+*  [Augmentation unit tests](../utilities/rali/rali_unittests) can be used to test rocAL's API individually.

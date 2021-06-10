@@ -169,7 +169,7 @@
       <item row="3" column="4">
        <widget class="QLabel" name="mode_label">
         <property name="text">
-         <string>RALI Mode</string>
+         <string>rocAL Mode</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

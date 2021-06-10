@@ -97,13 +97,13 @@ int main(int argc, const char ** argv)
 
     if(raliGetStatus(handle) != RALI_OK)
     {
-        std::cout << "Could not create the Rali contex\n";
+        std::cout << "Could not create the rocAL contex\n";
         return -1;
     }
 
     RaliDecoderType dec_type = (dec_mode==0)? RaliDecoderType::RALI_DECODER_TJPEG : RaliDecoderType::RALI_DECODER_OPENCV;
 
-    /*>>>>>>>>>>>>>>>> Creating Rali parameters  <<<<<<<<<<<<<<<<*/
+    /*>>>>>>>>>>>>>>>> Creating rocAL parameters  <<<<<<<<<<<<<<<<*/
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
     RaliFloatParam rand_crop_area = raliCreateFloatUniformRand( 0.3, 0.5 );

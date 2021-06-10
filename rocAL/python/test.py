@@ -87,7 +87,7 @@ class DataLoader(RaliGraph):
         #param for rotate
         self.degree_param = RaliFloatParameter(0.0)
 
-        #rali list of augmentation
+        #rocAL list of augmentation
         self.rali_list = None
 
         if model_batch_size == 16:
@@ -234,7 +234,7 @@ class DataLoader(RaliGraph):
 
                 for i in range(63):
                     self.nop_img = self.nop(self.input, True)
-        #rali iterator
+        #rocAL iterator
         if self.build() != 0:
             raise Exception('Failed to build the augmentation graph')
         self.tensor_format =tensor_layout

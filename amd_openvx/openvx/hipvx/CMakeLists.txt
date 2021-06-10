@@ -41,6 +41,5 @@ set(HIPVX_SOURCES
 
     hip_add_library(openvx_hip ${HIPVX_SOURCES} HIPCC_OPTIONS "${HIP_CXX_FLAGS}" SHARED)
     target_compile_definitions(openvx_hip PRIVATE __HIP_PLATFORM_HCC__)
-    message("Cmake CXX compiler " ${CMAKE_CXX_COMPILER})
     install(TARGETS openvx_hip DESTINATION lib)
 

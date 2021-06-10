@@ -1,12 +1,12 @@
 # rali_dataloader_mt application
-This application demonstrates a basic usage of RALI's C API to use sharded data_loader  in a multithreaded application.
+This application demonstrates a basic usage of rocAL's C API to use sharded data_loader  in a multithreaded application.
 <p align="center"><img width="90%" src="../../docs/images/image_augmentation.png" /></p>
 
 ## Build Instructions
 
 ### Pre-requisites
 * Ubuntu Linux, [version `16.04` or later](https://www.microsoft.com/software-download/windows10)
-* RALI library (Part of the MIVisionX toolkit)
+* rocAL library (Part of the MIVisionX toolkit)
 * [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Radeon Performance Primitives (RPP)
 

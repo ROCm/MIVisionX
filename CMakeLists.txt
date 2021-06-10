@@ -1,15 +1,15 @@
 # Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-#  
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-#  
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -64,7 +64,7 @@ else()
 ENDIF()
 
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
-option(RALI       "Build MIVisionX with RALI Support"         ON)
+option(ROCAL      "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM       "Build MIVisionX with LOOM Support"         ON)
 
 if (NOT DEFINED BACKEND)
@@ -76,10 +76,10 @@ option(GPU_SUPPORT "Build MIVisionX with GPU Support"   ON)
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D RALI=OFF [Turn OFF RALI Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D BACKEND=HIP/OPENCL [select backend for GPU support (HIP or OPENCL) (default:OPENCL)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=HIP [select HIP for GPU backend (default:OPENCL)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
@@ -90,10 +90,10 @@ endif()
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
 add_subdirectory(utilities)
-if(RALI)
-  add_subdirectory(rali)
+if(ROCAL)
+  add_subdirectory(rocAL)
 else()
-  message("-- ${Cyan}RALI Module turned OFF by user option -D RALI=OFF ${ColourReset}")
+  message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
 endif()
 
 install(DIRECTORY docs DESTINATION .)

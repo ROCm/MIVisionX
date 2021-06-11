@@ -22371,7 +22371,6 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
     }
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
-        // TBD: refer to hip implementation
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];

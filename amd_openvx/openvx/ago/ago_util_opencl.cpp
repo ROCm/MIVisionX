@@ -1668,7 +1668,6 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
         "  return (float4)(amd_unpack0(src), amd_unpack1(src), amd_unpack2(src), amd_unpack3(src));\n"
         "}\n"
         "\n"
-        "// HIP functions equivalent\n"
         "float4 make_float4(float f1, float f2, float f3, float f4)\n"
         "{\n"
         "  return (float4)(f1, f2, f3, f4);\n"

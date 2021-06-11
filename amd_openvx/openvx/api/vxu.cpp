@@ -27,11 +27,6 @@
 
 static void vxuSetGraphAffinityDefault(vx_graph graph)
 {
-#if ENABLE_OPENCL
-	graph->attr_affinity.device_type = AGO_TARGET_AFFINITY_GPU;
-#else
-	graph->attr_affinity.device_type = AGO_TARGET_AFFINITY_CPU;
-#endif
 	graph->attr_affinity.device_info = 0;
 }
 

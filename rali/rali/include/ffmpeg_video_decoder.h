@@ -37,19 +37,13 @@ public:
 
     ~FFMPEG_VIDEO_DECODER() override;
 private:
-	const char *_src_filename = NULL;
-	AVFormatContext *_fmt_ctx = NULL;
-	AVCodecContext *_video_dec_ctx = NULL;
-	AVStream *_video_stream = NULL;
-	int _video_stream_idx = -1;
-
-	AVFrame *_frame = NULL, *_decframe = NULL;
-	AVPacket _pkt;
-	int _video_frame_count = 0;
-	unsigned _nb_frames = 0;
-	const AVPixelFormat _dst_pix_fmt = AV_PIX_FMT_BGR24;
-
-    // AVStream *_video;
-	AVCodec *_decoder = NULL;
-    AVDictionary *_opts = NULL;
+    const char * _src_filename = NULL;
+    AVFormatContext * _fmt_ctx = NULL;
+    AVCodecContext * _video_dec_ctx = NULL;
+    AVCodec * _decoder = NULL;
+    AVStream * _video_stream = NULL;
+    int _video_stream_idx = -1;
+    SwsContext * _swsctx = NULL;
+    const AVPixelFormat _dst_pix_fmt = AV_PIX_FMT_BGR24;
+    const int _channels = 3;
 };

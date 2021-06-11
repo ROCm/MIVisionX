@@ -22371,8 +22371,23 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
     }
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
-        // TBD: not implemented yet
-        status = VX_ERROR_NOT_SUPPORTED;
+        // TBD: refer to hip implementation
+        status = VX_SUCCESS;
+        node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
+        char textBuffer[2048];
+        sprintf(textBuffer, OPENCL_FORMAT(
+            "void %s (U8x8 * p0, U8x8 p1, float alpha, U8x8 p2)\n"
+            "{\n"
+            "   U8x8 r;\n"
+            "   float invAlpha = (float)1 - alpha;\n"
+            "   float4 alpha_f4 = make_float4(alpha, alpha, alpha, alpha);\n"
+            "   float4 invAlpha_f4 = make_float4(invAlpha, invAlpha, invAlpha, invAlpha);\n"
+            "   r.s0 = amd_pack(opencl_floorf4(amd_unpack(p1.s0) * alpha_f4 + amd_unpack(p2.s0) * invAlpha_f4));\n"
+            "   r.s1 = amd_pack(opencl_floorf4(amd_unpack(p1.s1) * alpha_f4 + amd_unpack(p2.s1) * invAlpha_f4));\n"
+            "   *p0 = r;\n"
+            "}\n"
+            ), node->opencl_name);
+        node->opencl_code += textBuffer;
     }
 #endif
     else if (cmd == ago_kernel_cmd_query_target_support) {

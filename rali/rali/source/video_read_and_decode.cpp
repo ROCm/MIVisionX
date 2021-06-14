@@ -158,9 +158,9 @@ VideoReadAndDecode::load(unsigned char *buff,
     if (_reader->count() < _batch_size)
         return VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
 
-    // const auto ret = video_interpret_color_format(output_color_format);
-    // const VideoDecoder::ColorFormat decoder_color_format = std::get<0>(ret);
-    // const unsigned output_planes = std::get<1>(ret);
+    const auto ret = video_interpret_color_format(output_color_format);
+    const unsigned output_planes = std::get<1>(ret);
+    AVPixelFormat out_pix_fmt = AV_PIX_FMT_BGR24;
 
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start(); // Debug timing
@@ -171,21 +171,21 @@ VideoReadAndDecode::load(unsigned char *buff,
         WRN("Opened file " + _reader->id() + " of size 0");
     }
 
-    start_frame = _reader->read(_compressed_buff.data(), fsize);
-    _video_path = _reader->id();
+    size_t start_frame = _reader->read(_compressed_buff.data(), fsize);
+    std::string video_path = _reader->id();
     _reader->close();
 
     _file_load_time.end(); // Debug timing
-    // const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
     _decompressed_buff_ptrs = buff;
     _decode_time.start(); // Debug timing
+
 // #pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
 
     for (int i = 0; i < 1; i++)
     {
         int video_idx_map;
-        // std::cerr << "\nThe source video is " << _video_path << " MAP : "<<_video_file_name_map.find(_video_path)->second._video_map_idx << "\tThe start index is : " << start_frame << "\n";
-        itr = _video_file_name_map.find(_video_path);
+        // std::cerr << "\nThe source video is " << video_path << " MAP : "<<_video_file_name_map.find(video_path)->second._video_map_idx << "\tThe start index is : " << start_frame << "\n";
+        std::map<std::string, video_map>::iterator itr = _video_file_name_map.find(video_path);
         if (itr->second._is_decoder_instance == false)
         {
             std::map<std::string, video_map>::iterator temp_itr;
@@ -212,7 +212,8 @@ VideoReadAndDecode::load(unsigned char *buff,
             _actual_decoded_width[s] = max_decoded_width;
             _actual_decoded_height[s] = max_decoded_height;
         }
-        if (_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length, _stride) != VideoDecoder::Status::OK)
+        if (_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length, _stride, max_decoded_width, max_decoded_height, 
+            max_decoded_width * output_planes, out_pix_fmt) != VideoDecoder::Status::OK)
         {
             continue;
         }
@@ -220,11 +221,11 @@ VideoReadAndDecode::load(unsigned char *buff,
 
     std::vector<std::string> substrings1, substrings2;
     char delim = '/';
-    substring_extraction(_video_path, delim, substrings1);
+    substring_extraction(video_path, delim, substrings1);
 
     std::string file_name = substrings1[substrings1.size() - 1];
     delim = '#';
-    substring_extraction(_video_path, delim, substrings2);
+    substring_extraction(video_path, delim, substrings2);
     std::string video_idx = substrings2[0];
     for (size_t i = 0; i < _sequence_length; i++)
     {

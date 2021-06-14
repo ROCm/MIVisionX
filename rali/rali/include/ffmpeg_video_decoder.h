@@ -30,7 +30,7 @@ public:
     FFMPEG_VIDEO_DECODER();
 
     VideoDecoder::Status Initialize(const char *src_filename) override;
-    VideoDecoder::Status Decode(unsigned char* output_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride) override;
+    VideoDecoder::Status Decode(unsigned char* output_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_format) override;
 	int seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number) override;
 
     void release() override;
@@ -43,7 +43,6 @@ private:
     AVCodec * _decoder = NULL;
     AVStream * _video_stream = NULL;
     int _video_stream_idx = -1;
-    SwsContext * _swsctx = NULL;
-    const AVPixelFormat _dst_pix_fmt = AV_PIX_FMT_BGR24;
-    const int _channels = 3;
+    AVPixelFormat _dec_pix_fmt;
+    int _codec_width, _codec_height;
 };

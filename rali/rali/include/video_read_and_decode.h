@@ -31,6 +31,9 @@ THE SOFTWARE.
 #include "timing_debug.h"
 #include "video_loader_module.h"
 #include "video_properties.h"
+extern "C" {
+#include <libavutil/pixdesc.h>
+}
 
 class VideoReadAndDecode
 {
@@ -83,7 +86,6 @@ private:
     std::vector<unsigned char> _compressed_buff;
     std::vector<std::string> _video_names;
     std::map<std::string, video_map> _video_file_name_map;
-    std::map<std::string, video_map>::iterator itr;
     size_t _compressed_image_size;
     size_t _actual_read_size;
     unsigned char* _decompressed_buff_ptrs;
@@ -91,19 +93,12 @@ private:
     std::vector<size_t> _actual_decoded_height;
     std::vector<size_t> _original_width;
     std::vector<size_t> _original_height;
-    std::vector<size_t> _video_frame_count;
-    std::vector<size_t> _video_frame_start_idx;
-    std::vector<size_t> _video_idx;
-    std::string _video_path;
-    size_t start_frame;
     static const size_t MAX_COMPRESSED_SIZE = 1*1024*1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
     size_t _sequence_length;
     size_t _stride;
     size_t _video_count;
-    size_t _frame_count;
     std::vector<std::tuple<int, int>> _frame_rate;
     VideoDecoderConfig _video_decoder_config;
-    bool decoder_keep_original;
 };

@@ -32,22 +32,23 @@ struct CropCord
 {
     CropCord()
     {
-        crop_x = 0;
-        crop_y = 0;
-        crop_width = 0;
-        crop_height = 0;
+        crop_left = 0;
+        crop_top = 0;
+        crop_right = 0;
+        crop_bottom = 0;
     }
-    CropCord(float x, float y, float c_w, float c_h)
+    CropCord(float l, float t, float r, float b)
     {
-        crop_x = x;
-        crop_y = y;
-        crop_width = c_w;
-        crop_height = c_h;
+        crop_left = l;
+        crop_top = t;
+        crop_right= r;
+        crop_bottom = b;
+        
     }
-    float crop_x;
-    float crop_y;
-    float crop_width;
-    float crop_height;
+    float crop_left;
+    float crop_top;
+    float crop_right;
+    float crop_bottom;
 };
 
 using pCropCord = std::shared_ptr<CropCord>;

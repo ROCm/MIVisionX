@@ -7085,7 +7085,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
             goffset += 16 * srcStride;
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
         }
-        __shared__ uchar *lbufptr;
+        uchar *lbufptr;
         lbufptr = lbuf + 128;
         goffset = -2 * srcStride + 124;
         int id = ly * 16 + lx;
@@ -7095,7 +7095,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
         __syncthreads();
     }
 
-    __shared__ uchar *lbuf_ptr;
+    uchar *lbuf_ptr;
     lbuf_ptr = lbuf + ly * 136 + (lx << 3);
     float4 sum;
     float v;

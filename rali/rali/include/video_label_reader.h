@@ -33,7 +33,7 @@ extern "C"
 }
 #include "video_properties.h"
 
-class VideoLabelReaderFolders: public MetaDataReader
+class VideoLabelReader: public MetaDataReader
 {
 public :
     void init(const MetaDataConfig& cfg) override;
@@ -44,8 +44,8 @@ public :
     void set_timestamps_bool() override { _file_list_frame_num = false; }
     void print_map_contents();
     MetaDataBatch * get_output() override { return _output; }
-    VideoLabelReaderFolders();
-    ~VideoLabelReaderFolders() override { delete _output; }
+    VideoLabelReader();
+    ~VideoLabelReader() override { delete _output; }
 private:
     void read_files(const std::string& _path);
     void read_text_file(const std::string& _path);

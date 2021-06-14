@@ -27,30 +27,30 @@ THE SOFTWARE.
 #include <boost/filesystem.hpp>
 #include "commons.h"
 #include "exception.h"
-#include "video_label_reader_folders.h"
+#include "video_label_reader.h"
 
 using namespace std;
 
 namespace filesys = boost::filesystem;
 
-VideoLabelReaderFolders::VideoLabelReaderFolders()
+VideoLabelReader::VideoLabelReader()
 {
     _src_dir = nullptr;
     _entity = nullptr;
     _sub_dir = nullptr;
 }
 
-void VideoLabelReaderFolders::init(const MetaDataConfig &cfg)
+void VideoLabelReader::init(const MetaDataConfig &cfg)
 {
     _path = cfg.path();
     _output = new LabelBatch();
 }
-bool VideoLabelReaderFolders::exists(const std::string &image_name)
+bool VideoLabelReader::exists(const std::string &image_name)
 {
     return _map_content.find(image_name) != _map_content.end();
 }
 
-void VideoLabelReaderFolders::add(std::string image_name, int label, unsigned int video_frame_count, unsigned int start_frame)
+void VideoLabelReader::add(std::string image_name, int label, unsigned int video_frame_count, unsigned int start_frame)
 {
 
     std::vector<unsigned> video_prop;
@@ -76,7 +76,7 @@ void VideoLabelReaderFolders::add(std::string image_name, int label, unsigned in
     _video_idx++;
 }
 
-void VideoLabelReaderFolders::print_map_contents()
+void VideoLabelReader::print_map_contents()
 {
     std::cerr << "\nMap contents: \n";
     for (auto &elem : _map_content)
@@ -85,12 +85,12 @@ void VideoLabelReaderFolders::print_map_contents()
     }
 }
 
-void VideoLabelReaderFolders::release()
+void VideoLabelReader::release()
 {
     _map_content.clear();
 }
 
-void VideoLabelReaderFolders::release(std::string image_name)
+void VideoLabelReader::release(std::string image_name)
 {
     if (!exists(image_name))
     {
@@ -100,7 +100,7 @@ void VideoLabelReaderFolders::release(std::string image_name)
     _map_content.erase(image_name);
 }
 
-void VideoLabelReaderFolders::lookup(const std::vector<std::string> &image_names)
+void VideoLabelReader::lookup(const std::vector<std::string> &image_names)
 {
     if (image_names.empty())
     {
@@ -120,7 +120,7 @@ void VideoLabelReaderFolders::lookup(const std::vector<std::string> &image_names
     }
 }
 
-void VideoLabelReaderFolders::read_text_file(const std::string &_path)
+void VideoLabelReader::read_text_file(const std::string &_path)
 {
     std::ifstream text_file(_path);
 
@@ -179,7 +179,7 @@ void VideoLabelReaderFolders::read_text_file(const std::string &_path)
     }
 }
 
-void VideoLabelReaderFolders::read_all(const std::string &_path)
+void VideoLabelReader::read_all(const std::string &_path)
 {
     std::string _folder_path = _path;
 
@@ -254,7 +254,7 @@ void VideoLabelReaderFolders::read_all(const std::string &_path)
     // print_map_contents();
 }
 
-void VideoLabelReaderFolders::read_files(const std::string &_path)
+void VideoLabelReader::read_files(const std::string &_path)
 {
     if ((_src_dir = opendir(_path.c_str())) == nullptr)
         THROW("ERROR: Failed opening the directory at " + _path);

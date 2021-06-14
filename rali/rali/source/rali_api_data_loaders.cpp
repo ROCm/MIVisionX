@@ -284,12 +284,12 @@ raliSequenceReader(
     try
     {
         /* The internal batch size and user batch size are modified here in master graph */
-        context->master_graph->set_user_internal_batch_size((size_t)sequence_length);
-        context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
-        context->set_internal_batch_size((size_t)sequence_length);
-        std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
+        context->set_user_batch_size(sequence_length * context->user_batch_size());
+        context->set_internal_batch_size(sequence_length);
+        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
 
@@ -368,12 +368,12 @@ raliSequenceReaderSingleShard(
     try
     {
         /* The internal batch size and user batch size are modified here in master graph */
-        context->master_graph->set_user_internal_batch_size((size_t)sequence_length);
-        context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
-        context->set_internal_batch_size((size_t)sequence_length);
-        std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
+        context->set_user_batch_size(sequence_length * context->user_batch_size());
+        context->set_internal_batch_size(sequence_length);
+        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
 
@@ -1523,13 +1523,12 @@ raliVideoFileSource(
 #ifdef RALI_VIDEO
         /* The internal batch size and user batch size are modified here in master graph */
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_user_internal_batch_size((size_t)sequence_length);
-        context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
-        context->set_internal_batch_size((size_t)sequence_length);
-        std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
-        // std::cout << "\nThe user batch size has been set to : " << context->master_graph->user_batch_size() << "\n";
+        context->set_user_batch_size(sequence_length * context->user_batch_size());
+        context->set_internal_batch_size(sequence_length);
+        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
         const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
@@ -1538,9 +1537,9 @@ raliVideoFileSource(
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame_num;
 
-        if ( source_path != NULL && text_file_path == NULL)
+        if (source_path != NULL && text_file_path == NULL)
             file_path = source_path;
-        else if ( text_file_path != NULL )
+        else if (text_file_path != NULL)
             file_path = text_file_path;
         else
             THROW("Invalid input passed");
@@ -1634,13 +1633,12 @@ raliVideoFileResize(
 #ifdef RALI_VIDEO
         /* The internal batch size and user batch size are modified here in master graph */
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_user_internal_batch_size((size_t)sequence_length);
-        context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
-        context->set_internal_batch_size((size_t)sequence_length);
-        std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
-        // std::cout << "\nThe user batch size has been set to : " << context->master_graph->user_batch_size() << "\n";
+        context->set_user_batch_size(sequence_length * context->user_batch_size());
+        context->set_internal_batch_size(sequence_length);
+        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
         const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
@@ -1649,14 +1647,14 @@ raliVideoFileResize(
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame_num;
         
-        if ( source_path != NULL && text_file_path == NULL )
+        if (source_path != NULL && text_file_path == NULL)
             file_path = source_path;
-        else if ( text_file_path != NULL)
+        else if (text_file_path != NULL)
             file_path = text_file_path;
 
         video_properties video_prop = find_video_properties(file_path, file_list_frame_num);
         width = video_prop.width;
-        height = video_prop.height ;
+        height = video_prop.height;
         number_of_video_files = video_prop.videos_count;
         frames_count.resize(number_of_video_files);
         frame_rate.resize(number_of_video_files);

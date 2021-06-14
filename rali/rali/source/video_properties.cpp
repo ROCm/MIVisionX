@@ -164,7 +164,7 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
         }
         else
         {
-            props = open_video_context(source_path);          
+            props = open_video_context(source_path);
             video_props.width = props[0];
             video_props.height = props[1];
             video_props.videos_count = 1;

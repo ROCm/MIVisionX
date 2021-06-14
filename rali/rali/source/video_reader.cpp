@@ -137,7 +137,6 @@ int VideoReader::close()
 
 VideoReader::~VideoReader()
 {
-    //release();
 }
 
 void VideoReader::reset()

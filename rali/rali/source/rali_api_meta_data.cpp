@@ -72,7 +72,7 @@ RALI_API_CALL raliCreateVideoLabelReader(RaliContext p_context, const char* sour
         THROW("Invalid rali context passed to raliCreateLabelReader")
     auto context = static_cast<Context*>(p_context);
 
-    return context->master_graph->create_video_label_reader(source_path, MetaDataReaderType::FOLDER_BASED_VIDEO_LABEL_READER, file_list_frame_num);
+    return context->master_graph->create_video_label_reader(source_path, MetaDataReaderType::VIDEO_LABEL_READER, file_list_frame_num);
 
 }
 

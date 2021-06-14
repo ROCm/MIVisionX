@@ -30,7 +30,11 @@ THE SOFTWARE.
 class CIFAR10DataLoader : public LoaderModule
 {
 public:
+#if ENABLE_HIP
+    explicit CIFAR10DataLoader(DeviceResourcesHip dev_resources);
+#else
     explicit CIFAR10DataLoader(DeviceResources dev_resources);
+#endif
     ~CIFAR10DataLoader() override;
     LoaderModuleStatus load_next() override;
     void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=true) override;
@@ -42,6 +46,7 @@ public:
     std::vector<std::string> get_id() override;
     decoded_image_info get_decode_image_info() override;
     Timing timing() override;
+    void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
 private:
     void increment_loader_idx();
     bool is_out_of_data();
@@ -50,9 +55,12 @@ private:
     LoaderModuleStatus update_output_image();
     LoaderModuleStatus load_routine();
     std::shared_ptr<Reader> _reader;
-
+#if ENABLE_HIP
+    const DeviceResourcesHip _dev_resources;
+#else
     const DeviceResources _dev_resources;
-    decoded_image_info _raw_img_info;       // image info to store the names. In this case the ID of image is stored in _roi_width field 
+#endif
+    decoded_image_info _raw_img_info;       // image info to store the names. In this case the ID of image is stored in _roi_width field
     decoded_image_info _output_decoded_img_info;
     bool _initialized = false;
     RaliMemType _mem_type;
@@ -65,7 +73,7 @@ private:
     std::vector<size_t> _actual_read_size;
     std::vector<std::string> _output_names;
     CircularBuffer _circ_buff;
-    const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
+    size_t _prefetch_queue_depth;
     TimingDBG _file_load_time, _swap_handle_time;
     size_t _loader_idx;
     size_t _shard_count = 1;

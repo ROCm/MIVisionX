@@ -19,16 +19,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-
 #include <cstdio>
+#if !ENABLE_HIP
 #include <CL/cl.h>
-#include <stdexcept>
+#endif
 #include <vx_ext_amd.h>
 #include <cstring>
 #include "commons.h"
 #include "image.h"
 
-vx_enum vx_mem_type(RaliMemType mem) 
+vx_enum vx_mem_type(RaliMemType mem)
 {
     switch(mem)
     {
@@ -42,10 +42,15 @@ vx_enum vx_mem_type(RaliMemType mem)
             return VX_MEMORY_TYPE_HOST;
         }
         break;
+        case RaliMemType::HIP:
+        {
+            return VX_MEMORY_TYPE_HIP;
+        }
+        break;
         default:
             throw std::runtime_error("Memory type not valid");
     }
-    
+
 }
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs)
 {
@@ -120,7 +125,7 @@ ImageInfo::ImageInfo(
     unsigned height_,
     unsigned batches,
     unsigned planes,
-    RaliMemType mem_type_, 
+    RaliMemType mem_type_,
     RaliColorFormat col_fmt_):
         _type(Type::UNKNOWN),
         _width(width_),
@@ -171,7 +176,7 @@ void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vect
 }
 
 Image::~Image()
-{  
+{
     vxReleaseImage(&vx_handle);
 }
 
@@ -181,9 +186,9 @@ Image::~Image()
  * The input images loaded in GBR format should be
  * reordered before passed to OpenVX, and match RGB.
  */
-vx_df_image interpret_color_fmt(RaliColorFormat color_format) 
+vx_df_image interpret_color_fmt(RaliColorFormat color_format)
 {
-    switch(color_format){   
+    switch(color_format){
 
         case RaliColorFormat::RGB24:
         case RaliColorFormat::BGR24:
@@ -218,7 +223,7 @@ int Image::create_virtual(vx_context context, vx_graph graph)
         THROW("Error: vxCreateVirtualImage(input:[" + TOSTR(_info.width()) + "x" + TOSTR(_info.height_batch()) + "]): failed " + TOSTR(status))
 
     _info._type = ImageInfo::Type::VIRTUAL;
-    return 0;                                             
+    return 0;
 }
 
 int Image::create_from_handle(vx_context context)
@@ -282,6 +287,7 @@ int Image::create(vx_context context)
     return 0;
 }
 
+#if !ENABLE_HIP
 unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync)
 {
     if(_info._type != ImageInfo::Type::HANDLE)
@@ -304,7 +310,8 @@ unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bo
                                          0 , nullptr, nullptr)) != CL_SUCCESS)
             THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
 
-    } else
+    }
+    else
     {
         memcpy(user_buffer, _mem_handle, size);
     }
@@ -314,7 +321,40 @@ unsigned Image::copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync)
 {
     return 0;
 }
+#else
+unsigned Image::copy_data(hipStream_t stream, unsigned char* user_buffer, bool sync)
+{
+    if(_info._type != ImageInfo::Type::HANDLE)
+        return 0;
 
+    unsigned size = _info.width() *
+                    _info.height_batch() *
+                    _info.color_plane_count();
+
+    if (_info._mem_type == RaliMemType::HIP)
+    {
+        // copy from device to host
+        hipError_t status;
+        if ((status = hipMemcpyDtoHAsync((void *)user_buffer, _mem_handle, size, stream)))
+            THROW("copy_data::hipMemcpyDtoHAsync failed: " + TOSTR(status))
+        if (sync) {
+            if ((status =hipStreamSynchronize(stream)))
+                THROW("copy_data::hipStreamSynchronize failed: " + TOSTR(status))
+        }
+
+    }
+    else
+    {
+        memcpy(user_buffer, _mem_handle, size);
+    }
+    return size;
+}
+unsigned Image::copy_data(hipStream_t stream, void* hip_memory, bool sync)
+{
+    // todo:: copy from host to device
+    return 0;
+}
+#endif
 int Image::swap_handle(void* handle)
 {
     vx_status vxstatus;

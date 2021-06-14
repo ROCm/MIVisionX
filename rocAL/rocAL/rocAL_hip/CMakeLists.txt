@@ -1,4 +1,4 @@
-# Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2020 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +18,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.0)
-project(amd_rocAL)
+cmake_minimum_required(VERSION 3.5)
+project(rocAL_hip CXX)
 
-add_subdirectory(rocAL)
-#add_subdirectory(rocAL_pybind)
+set(RALIHIP_SOURCES
+    rali_hip_kernels.cpp
+    )
+
+if(HIP_COMPILER STREQUAL clang)
+    set(hip_library_name amdhip64)
+else()
+    set(hip_library_name hip_hcc)
+endif()
+#message("HIP library name: ${hip_library_name}")
+
+set_source_files_properties(${RALIHIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
+set(HIP_HCC_FLAGS -std=c++14)
+hip_add_library(${PROJECT_NAME} ${RALIHIP_SOURCES} HIPCC_OPTIONS "${HIP_HCC_FLAGS}" HCC_OPTIONS "${HIP_HCC_FLAGS}" SHARED)
+target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_HCC__)
+message("Cmake CXX compiler " ${CMAKE_CXX_COMPILER})
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)

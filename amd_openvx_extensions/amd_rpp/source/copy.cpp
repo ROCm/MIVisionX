@@ -24,9 +24,7 @@ THE SOFTWARE.
 
 struct CopyLocalData {
 
-#if ENABLE_OPENCL
     RPPCommonHandle handle;
-#endif
     RppiSize dimensions;
     RppPtr_t pSrc;
     RppPtr_t pDst;
@@ -35,14 +33,33 @@ struct CopyLocalData {
 #if ENABLE_OPENCL
     cl_mem cl_pSrc;
     cl_mem cl_pDst;
-#endif
-
-#if ENABLE_HIP
+#elif ENABLE_HIP
     void *hip_pSrc;
     void *hip_pDst;
 #endif
 
 };
+
+static vx_status VX_CALLBACK refreshcopy(vx_node node, const vx_reference *parameters, vx_uint32 num, CopyLocalData *data)
+{
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
+        if (data->device_type == AGO_TARGET_AFFINITY_GPU)
+        {
+    #if ENABLE_OPENCL
+            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
+            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
+    #elif ENABLE_HIP
+            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
+            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
+    #endif
+        }
+        if (data->device_type == AGO_TARGET_AFFINITY_CPU)
+        {
+            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc, sizeof(vx_uint8)));
+            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pDst, sizeof(vx_uint8)));
+        }
+}
 
 static vx_status VX_CALLBACK validateCopy(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {
@@ -77,16 +94,11 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference * para
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     vx_df_image df_image = VX_DF_IMAGE_VIRT;
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
-
+    unsigned size = data->dimensions.height* data->dimensions.width;
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
+        refreshcopy(node, parameters, num, data);
         cl_command_queue handle = data->handle.cmdq;
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
-        unsigned size = data->dimensions.height* data->dimensions.width;
-
         if (df_image == VX_DF_IMAGE_U8 ){
             clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size, 0 , NULL, NULL);
         }
@@ -94,15 +106,17 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference * para
             clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size*3, 0 , NULL, NULL);
         }
         return_status = VX_SUCCESS;
-
+#elif ENABLE_HIP
+        refreshcopy(node, parameters, num, data);
+        if (df_image == VX_DF_IMAGE_U8 ){
+            hipMemcpy(data->hip_pDst,data->hip_pSrc,size, hipMemcpyDeviceToDevice);
+        }
+        else if(df_image == VX_DF_IMAGE_RGB) {
+            hipMemcpy(data->hip_pDst,data->hip_pSrc,size * 3, hipMemcpyDeviceToDevice);
+        }
 #endif
     } else if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc, sizeof(vx_uint8)));
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pDst, sizeof(vx_uint8)));
-        unsigned size = data->dimensions.height* data->dimensions.width;
-
+        refreshcopy(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
             memcpy(data->pDst, data->pSrc, size);
         }
@@ -121,18 +135,11 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
 
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+#elif ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
-
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
+    refreshcopy(node, parameters, num, data);
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
-#if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
-#else
-    //STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, data->pSrc, sizeof(data->pSrc)));
-#endif
-
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
     return VX_SUCCESS;
@@ -158,7 +165,7 @@ vx_status Copy_Register(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL|| ENABLE_HIP
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)

@@ -31,6 +31,7 @@ project (rali_unittests)
 set (CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
+
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 

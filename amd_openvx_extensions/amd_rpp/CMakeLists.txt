@@ -21,12 +21,27 @@
 cmake_minimum_required(VERSION 3.0)
 project(vx_rpp)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 
 find_package(AMDRPP    REQUIRED)
-find_package(OpenCL    QUIET)
+if( "${BACKEND}" STREQUAL "OPENCL")
+    find_package(OpenCL    QUIET)
+elseif( "${BACKEND}" STREQUAL "HIP")
+    SET(OpenCL_FOUND FALSE)
+    IF(NOT DEFINED ENV{HSA_PATH})
+        SET(HSA_PATH ${ROCM_PATH}/hsa)
+    ELSE()
+        SET(HSA_PATH $ENV{HSA_PATH})
+    ENDIF()
+    find_package(HIP QUIET REQUIRED)
+    if(HIP_COMPILER STREQUAL clang)
+        set(HIP_LIBRARY amdhip64)
+    else()
+        set(HIP_LIBRARY hip_hcc)
+    endif()
+endif()
 
 include_directories(../../amd_openvx/openvx/include/
                     ${AMDRPP_INCLUDE_DIRS}
@@ -41,15 +56,15 @@ list(APPEND SOURCES
         source/Accumulate.cpp
         source/AccumulatebatchPD.cpp
         source/AccumulatebatchPDROID.cpp
-        source/AccumulatebatchPS.cpp   
+        source/AccumulatebatchPS.cpp
         source/AccumulateSquared.cpp
         source/AccumulateSquaredbatchPD.cpp
         source/AccumulateSquaredbatchPDROID.cpp
-        source/AccumulateSquaredbatchPS.cpp   
+        source/AccumulateSquaredbatchPS.cpp
         source/AccumulateWeighted.cpp
         source/AccumulateWeightedbatchPD.cpp
         source/AccumulateWeightedbatchPDROID.cpp
-        source/AccumulateWeightedbatchPS.cpp   
+        source/AccumulateWeightedbatchPS.cpp
         source/Add.cpp
         source/AddbatchPD.cpp
         source/AddbatchPDROID.cpp
@@ -57,7 +72,7 @@ list(APPEND SOURCES
         source/BilateralFilter.cpp
         source/BilateralFilterbatchPD.cpp
         source/BilateralFilterbatchPDROID.cpp
-        source/BilateralFilterbatchPS.cpp   
+        source/BilateralFilterbatchPS.cpp
         source/BitwiseAND.cpp
         source/BitwiseANDbatchPD.cpp
         source/BitwiseANDbatchPDROID.cpp
@@ -77,23 +92,23 @@ list(APPEND SOURCES
         source/BoxFilter.cpp
         source/BoxFilterbatchPD.cpp
         source/BoxFilterbatchPDROID.cpp
-        source/BoxFilterbatchPS.cpp   
+        source/BoxFilterbatchPS.cpp
         source/Brightness.cpp
         source/BrightnessbatchPD.cpp
         source/BrightnessbatchPDROID.cpp
         source/BrightnessbatchPS.cpp
         source/CannyEdgeDetector.cpp
-        source/CannyEdgeDetector.cpp   
+        source/CannyEdgeDetector.cpp
         source/ChannelCombine.cpp
         source/ChannelCombinebatchPD.cpp
         source/ChannelCombinebatchPS.cpp
         source/ChannelExtract.cpp
         source/ChannelExtractbatchPD.cpp
-        source/ChannelExtractbatchPS.cpp   
+        source/ChannelExtractbatchPS.cpp
         source/ColorTemperature.cpp
         source/ColorTemperaturebatchPD.cpp
-        source/ColorTemperaturebatchPDROID.cpp    
-        source/ColorTemperaturebatchPS.cpp   
+        source/ColorTemperaturebatchPDROID.cpp
+        source/ColorTemperaturebatchPS.cpp
         source/ColorTwist.cpp
         source/ColorTwistbatchPD.cpp
         source/Contrast.cpp
@@ -103,26 +118,26 @@ list(APPEND SOURCES
         source/ControlFlow.cpp
         source/ControlFlowbatchPD.cpp
         source/ControlFlowbatchPDROID.cpp
-        source/ControlFlowbatchPS.cpp   
+        source/ControlFlowbatchPS.cpp
         source/copy.cpp
         source/CropMirrorNormalizePD.cpp
         source/CropPD.cpp
         source/CustomConvolution.cpp
         source/CustomConvolutionbatchPD.cpp
         source/CustomConvolutionbatchPDROID.cpp
-        source/CustomConvolutionbatchPS.cpp   
-        source/DataObjectCopy.cpp   
+        source/CustomConvolutionbatchPS.cpp
+        source/DataObjectCopy.cpp
         source/DataObjectCopybatchPD.cpp
         source/DataObjectCopybatchPDROID.cpp
         source/DataObjectCopybatchPS.cpp
         source/Dilate.cpp
         source/DilatebatchPD.cpp
-        source/DilatebatchPDROID.cpp   
-        source/DilatebatchPS.cpp   
+        source/DilatebatchPDROID.cpp
+        source/DilatebatchPS.cpp
         source/Erode.cpp
         source/ErodebatchPD.cpp
         source/ErodebatchPDROID.cpp
-        source/ErodebatchPS.cpp   
+        source/ErodebatchPS.cpp
         source/ExclusiveOR.cpp
         source/ExclusiveORbatchPD.cpp
         source/ExclusiveORbatchPDROID.cpp
@@ -131,15 +146,15 @@ list(APPEND SOURCES
         source/ExposurebatchPD.cpp
         source/ExposurebatchPDROID.cpp
         source/ExposurebatchPS.cpp
-        source/FastCornerDetector.cpp   
-        source/Fisheye.cpp   
+        source/FastCornerDetector.cpp
+        source/Fisheye.cpp
         source/FisheyebatchPD.cpp
         source/FisheyebatchPDROID.cpp
-        source/FisheyebatchPS.cpp   
+        source/FisheyebatchPS.cpp
         source/Flip.cpp
         source/FlipbatchPD.cpp
         source/FlipbatchPDROID.cpp
-        source/FlipbatchPS.cpp   
+        source/FlipbatchPS.cpp
         source/Fog.cpp
         source/FogbatchPD.cpp
         source/FogbatchPDROID.cpp
@@ -148,27 +163,27 @@ list(APPEND SOURCES
         source/GammaCorrectionbatchPD.cpp
         source/GammaCorrectionbatchPDROID.cpp
         source/GammaCorrectionbatchPS.cpp
-        source/GaussianFilter.cpp   
+        source/GaussianFilter.cpp
         source/GaussianFilterbatchPD.cpp
         source/GaussianFilterbatchPDROID.cpp
-        source/GaussianFilterbatchPS.cpp   
+        source/GaussianFilterbatchPS.cpp
         source/GaussianImagePyramid.cpp
         source/GaussianImagePyramidbatchPD.cpp
-        source/GaussianImagePyramidbatchPS.cpp   
-        source/HarrisCornerDetector.cpp   
+        source/GaussianImagePyramidbatchPS.cpp
+        source/HarrisCornerDetector.cpp
         source/Histogram.cpp
         source/HistogramBalance.cpp
         source/HistogramBalancebatchPD.cpp
         source/HistogramBalancebatchPDROID.cpp
-        source/HistogramBalancebatchPS.cpp   
+        source/HistogramBalancebatchPS.cpp
         source/HistogramEqualize.cpp
         source/HistogramEqualizebatchPD.cpp
         source/HistogramEqualizebatchPDROID.cpp
-        source/HistogramEqualizebatchPS.cpp   
+        source/HistogramEqualizebatchPS.cpp
         source/Hue.cpp
         source/HuebatchPD.cpp
         source/HuebatchPDROID.cpp
-        source/HuebatchPS.cpp   
+        source/HuebatchPS.cpp
         source/InclusiveOR.cpp
         source/InclusiveORbatchPD.cpp
         source/InclusiveORbatchPDROID.cpp
@@ -177,19 +192,19 @@ list(APPEND SOURCES
         source/JitterbatchPD.cpp
         source/JitterbatchPDROID.cpp
         source/JitterbatchPS.cpp
-        source/LaplacianImagePyramid.cpp   
-        source/LensCorrection.cpp   
+        source/LaplacianImagePyramid.cpp
+        source/LensCorrection.cpp
         source/LensCorrectionbatchPD.cpp
         source/LensCorrectionbatchPDROID.cpp
-        source/LensCorrectionbatchPS.cpp   
+        source/LensCorrectionbatchPS.cpp
         source/LocalBinaryPattern.cpp
         source/LocalBinaryPatternbatchPD.cpp
         source/LocalBinaryPatternbatchPDROID.cpp
-        source/LocalBinaryPatternbatchPS.cpp   
+        source/LocalBinaryPatternbatchPS.cpp
         source/LookUpTable.cpp
         source/LookUpTablebatchPD.cpp
         source/LookUpTablebatchPDROID.cpp
-        source/LookUpTablebatchPS.cpp   
+        source/LookUpTablebatchPS.cpp
         source/Magnitude.cpp
         source/MagnitudebatchPD.cpp
         source/MagnitudebatchPDROID.cpp
@@ -202,10 +217,10 @@ list(APPEND SOURCES
         source/MedianFilter.cpp
         source/MedianFilterbatchPD.cpp
         source/MedianFilterbatchPDROID.cpp
-        source/MedianFilterbatchPS.cpp   
+        source/MedianFilterbatchPS.cpp
         source/Min.cpp
         source/MinbatchPD.cpp
-        source/MinbatchPDROID.cpp   
+        source/MinbatchPDROID.cpp
         source/MinbatchPS.cpp
         source/MinMaxLoc.cpp
         source/Multiply.cpp
@@ -216,19 +231,19 @@ list(APPEND SOURCES
         source/NoisebatchPD.cpp
         source/NoisebatchPDROID.cpp
         source/NoisebatchPS.cpp
-        source/NonLinearFilter.cpp   
+        source/NonLinearFilter.cpp
         source/NonLinearFilterbatchPD.cpp
         source/NonLinearFilterbatchPDROID.cpp
-        source/NonLinearFilterbatchPS.cpp   
+        source/NonLinearFilterbatchPS.cpp
         source/NonMaxSupression.cpp
         source/NonMaxSupressionbatchPD.cpp
         source/NonMaxSupressionbatchPDROID.cpp
-        source/NonMaxSupressionbatchPS.cpp   
+        source/NonMaxSupressionbatchPS.cpp
         source/nop.cpp
         source/Occlusion.cpp
         source/OcclusionbatchPD.cpp
         source/OcclusionbatchPDROID.cpp
-        source/OcclusionbatchPS.cpp   
+        source/OcclusionbatchPS.cpp
         source/Phase.cpp
         source/PhasebatchPD.cpp
         source/PhasebatchPDROID.cpp
@@ -244,50 +259,50 @@ list(APPEND SOURCES
         source/RandomCropLetterBox.cpp
         source/RandomCropLetterBoxbatchPD.cpp
         source/RandomCropLetterBoxbatchPDROID.cpp
-        source/RandomCropLetterBoxbatchPS.cpp   
+        source/RandomCropLetterBoxbatchPS.cpp
         source/RandomShadow.cpp
         source/RandomShadowbatchPD.cpp
         source/RandomShadowbatchPDROID.cpp
-        source/RandomShadowbatchPS.cpp   
+        source/RandomShadowbatchPS.cpp
         source/Remap.cpp
         source/Resize.cpp
         source/ResizebatchPD.cpp
         source/ResizebatchPDROID.cpp
-        source/ResizebatchPS.cpp   
+        source/ResizebatchPS.cpp
         source/ResizeCrop.cpp
         source/ResizeCropbatchPD.cpp
         source/ResizeCropbatchPDROID.cpp
-        source/ResizeCropbatchPS.cpp   
+        source/ResizeCropbatchPS.cpp
         source/ResizeCropMirrorPD.cpp
-        source/Rotate.cpp   
+        source/Rotate.cpp
         source/RotatebatchPD.cpp
         source/RotatebatchPDROID.cpp
-        source/RotatebatchPS.cpp   
+        source/RotatebatchPS.cpp
         source/Saturation.cpp
         source/SaturationbatchPD.cpp
         source/SaturationbatchPDROID.cpp
-        source/SaturationbatchPS.cpp   
-        source/Scale.cpp    
+        source/SaturationbatchPS.cpp
+        source/Scale.cpp
         source/ScalebatchPD.cpp
         source/ScalebatchPDROID.cpp
-        source/ScalebatchPS.cpp   
+        source/ScalebatchPS.cpp
         source/Snow.cpp
         source/SnowbatchPD.cpp
         source/SnowbatchPDROID.cpp
         source/SnowbatchPS.cpp
         source/Sobel.cpp
         source/SobelbatchPD.cpp
-        source/SobelbatchPDROID.cpp   
-        source/SobelbatchPS.cpp   
+        source/SobelbatchPDROID.cpp
+        source/SobelbatchPS.cpp
         source/Subtract.cpp
         source/SubtractbatchPD.cpp
         source/SubtractbatchPDROID.cpp
         source/SubtractbatchPS.cpp
         source/TensorAdd.cpp
-        source/TensorLookup.cpp   
-        source/TensorMatrixMultiply.cpp   
+        source/TensorLookup.cpp
+        source/TensorMatrixMultiply.cpp
         source/TensorMultiply.cpp
-        source/TensorSubtract.cpp   
+        source/TensorSubtract.cpp
         source/Thresholding.cpp
         source/ThresholdingbatchPD.cpp
         source/ThresholdingbatchPDROID.cpp
@@ -295,7 +310,7 @@ list(APPEND SOURCES
         source/Vignette.cpp
         source/VignettebatchPD.cpp
         source/VignettebatchPDROID.cpp
-        source/VignettebatchPS.cpp   
+        source/VignettebatchPS.cpp
         source/WarpAffine.cpp
         source/WarpAffinebatchPD.cpp
         source/WarpAffinebatchPDROID.cpp
@@ -310,20 +325,32 @@ list(APPEND SOURCES
 
 link_directories(${AMDRPP_LIBRARIES_DIR})
 
-if(OpenCL_FOUND)
+if("${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
 	message("-- ${Green}AMD VX RPP -- BUILDING WITH OPENCL BACKEND${ColourReset}")
 	set(ENABLE_OPENCL 1)
-	add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DRPP_BACKEND_OPENCL=1)
+	set(ENABLE_HIP 0)
+	add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_OPENCL=1)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	add_library(vx_rpp SHARED ${SOURCES})
-	target_link_libraries(vx_rpp amd_rpp boost_filesystem boost_system ${OpenCL_LIBRARIES})
-else(OpenCL_FOUND)
-	message("-- ${Red}AMD VX RPP -- OPENCL NOT FOUND${ColourReset}")
+    target_link_libraries(vx_rpp amd_rpp boost_filesystem boost_system ${OpenCL_LIBRARIES})
+elseif ("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
+    message("-- ${Green}AMD VX RPP -- BUILDING WITH HIP BACKEND${ColourReset}")
 	set(ENABLE_OPENCL 0)
-	add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL})
+	set(ENABLE_HIP 1)
+	add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_HIP=1 -D__HIP_PLATFORM_HCC__)
+    include_directories(${HIP_PATH}/include  ${HSA_PATH}/include)
+    link_directories(${ROCM_PATH}/mivisionx/lib ${HIP_PATH}/lib)
+	add_library(vx_rpp SHARED ${SOURCES})
+    set_target_properties(openvx PROPERTIES LINKER_LANGUAGE CXX)
+    set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_link_libraries(vx_rpp amd_rpp boost_filesystem boost_system ${HIP_LIBRARY})
+else()
+	message("-- ${Red}AMD VX RPP -- OPENCL/HIP NOT FOUND${ColourReset}")
+	set(ENABLE_OPENCL 0)
+	add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=0)
 	add_library(vx_rpp SHARED ${SOURCES})
 	target_link_libraries(vx_rpp amd_rpp boost_filesystem boost_system)
-endif(OpenCL_FOUND)
+endif()
 
 install(TARGETS vx_rpp DESTINATION lib)
 install(FILES include/vx_ext_rpp.h DESTINATION include)

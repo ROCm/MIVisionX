@@ -1671,11 +1671,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
     mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
-    mask = ~mask;
-    x &= mask;
-    y &= mask;
     v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    v = HIPSELECT(borderValue, v, mask);
     dst.x  = v;
 
     map = remap[1];

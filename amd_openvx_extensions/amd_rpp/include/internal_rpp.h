@@ -57,6 +57,8 @@ using namespace std;
 struct RPPCommonHandle {
 #if ENABLE_OPENCL
     cl_command_queue cmdq;
+#elif ENABLE_HIP
+    hipStream_t hipstream;
 #endif
     void* cpuHandle = NULL;
     int count;

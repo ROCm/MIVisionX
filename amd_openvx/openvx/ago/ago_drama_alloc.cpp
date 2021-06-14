@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -762,7 +762,7 @@ static int agoOptimizeDramaAllocMergeSuperNodes(AgoGraph * graph)
     }
     // perform  one hierarchical level at a time
     for (auto enode = graph->nodeList.head; enode;) {
-        // get snode..enode with next hierarchical_level 
+        // get snode..enode with next hierarchical_level
         auto hierarchical_level = enode->hierarchical_level;
         auto snode = enode; enode = enode->next;
         while (enode && enode->hierarchical_level == hierarchical_level)
@@ -891,14 +891,14 @@ int agoOptimizeDramaAlloc(AgoGraph * agraph)
     // make sure all buffers are allocated and initialized
     for (AgoData * adata = agraph->dataList.head; adata; adata = adata->next) {
         if (agoAllocData(adata)) {
-            vx_char name[256]; agoGetDataName(name, adata); 
+            vx_char name[256]; agoGetDataName(name, adata);
             agoAddLogEntry(&adata->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAlloc: data allocation failed for %s\n", name);
             return -1;
         }
     }
     for (AgoData * adata = agraph->ref.context->dataList.head; adata; adata = adata->next) {
         if (agoAllocData(adata)) {
-            vx_char name[256]; agoGetDataName(name, adata); 
+            vx_char name[256]; agoGetDataName(name, adata);
             agoAddLogEntry(&adata->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAlloc: data allocation failed for %s\n", name);
             return -1;
         }

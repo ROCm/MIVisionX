@@ -146,7 +146,7 @@ void VideoLabelReader::read_text_file(const std::string &_path)
                     {
                         if (start_time >= end_time)
                         {
-                            std::cerr << "[WRN] Start and end time/frame are not satisfying the condition, skipping the file " << video_file_name << "\n";
+                            WRN("Start and end time/frame are not satisfying the condition, skipping the file" + video_file_name)
                             continue;
                         }
                         start = static_cast<int>(std::ceil(start_time * (props[3] / (double)props[4])));
@@ -163,7 +163,7 @@ void VideoLabelReader::read_text_file(const std::string &_path)
                     {
                         if (start >= end)
                         {
-                            std::cerr << "[WRN] Start and end time/frame are the same, skipping the file " << video_file_name << "\n";
+                            WRN("Start and end time/frame are not satisfying the condition, skipping the file" + video_file_name)
                             continue;
                         }
                         end = end ? end : props[2];

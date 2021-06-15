@@ -98,7 +98,7 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
                     {
                         if (start_time >= end_time)
                         {
-                            std::cerr << "[WRN] Start and end time/frame are not satisfying the condition, skipping the file " << video_file_name << "\n";
+                            WRN("Start and end time/frame are not satisfying the condition, skipping the file" + video_file_name)
                             continue;
                         }
                         start = static_cast<unsigned int>(std::ceil(start_time * (props[3] / (double)props[4])));
@@ -115,7 +115,7 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
                     {
                         if (start >= end)
                         {
-                            std::cerr << "[WRN] Start and end time/frame are the same, skipping the file " << video_file_name << "\n";
+                            WRN("Start and end time/frame are not satisfying the condition, skipping the file " + video_file_name)
                             continue;
                         }
                     }

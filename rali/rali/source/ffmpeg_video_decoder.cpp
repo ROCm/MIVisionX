@@ -52,7 +52,6 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
       if (!swsctx)
       {
           std::cerr << "fail to sws_getCachedContext";
-          release();
           return Status::FAILED;
       }
     }

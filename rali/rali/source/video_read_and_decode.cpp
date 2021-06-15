@@ -28,19 +28,19 @@ THE SOFTWARE.
 
 namespace filesys = boost::filesystem;
 
-std::tuple<VideoDecoder::ColorFormat, unsigned>
+std::tuple<VideoDecoder::ColorFormat, unsigned, AVPixelFormat>
 video_interpret_color_format(RaliColorFormat color_format)
 {
     switch (color_format)
     {
     case RaliColorFormat::RGB24:
-        return std::make_tuple(VideoDecoder::ColorFormat::RGB, 3);
+        return std::make_tuple(VideoDecoder::ColorFormat::RGB, 3, AV_PIX_FMT_RGB24);
 
     case RaliColorFormat::BGR24:
-        return std::make_tuple(VideoDecoder::ColorFormat::BGR, 3);
+        return std::make_tuple(VideoDecoder::ColorFormat::BGR, 3, AV_PIX_FMT_BGR24);
 
     case RaliColorFormat::U8:
-        return std::make_tuple(VideoDecoder::ColorFormat::GRAY, 1);
+        return std::make_tuple(VideoDecoder::ColorFormat::GRAY, 1, AV_PIX_FMT_GRAY8);
 
     default:
         throw std::invalid_argument("Invalid color format\n");
@@ -160,7 +160,7 @@ VideoReadAndDecode::load(unsigned char *buff,
 
     const auto ret = video_interpret_color_format(output_color_format);
     const unsigned output_planes = std::get<1>(ret);
-    AVPixelFormat out_pix_fmt = AV_PIX_FMT_BGR24;
+    AVPixelFormat out_pix_fmt = std::get<2>(ret);
 
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start(); // Debug timing

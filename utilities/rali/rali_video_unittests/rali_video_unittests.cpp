@@ -255,7 +255,7 @@ int main(int argc, const char **argv)
         if (color_format == RaliImageColor::RALI_COLOR_RGB24)
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imwrite("output_" + std::to_string(count) + ".png", mat_output);
+            cv::imwrite("output_" + std::to_string(count) + ".png", mat_color);
         }
         else
         {

@@ -25,7 +25,8 @@ THE SOFTWARE.
 #include <cstddef>
 #include <iostream>
 #include <vector>
-extern "C" {
+extern "C"
+{
 #include <libavutil/imgutils.h>
 #include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
@@ -38,42 +39,40 @@ extern "C" {
 #include "parameter_factory.h"
 enum class VideoDecoderType
 {
-    FFMPEG_VIDEO = 0,//!< Can decode video stream
+    FFMPEG_VIDEO = 0, //!< Can decode video stream
 };
-
-
 
 class VideoDecoderConfig
 {
 public:
     VideoDecoderConfig() {}
-    explicit VideoDecoderConfig(VideoDecoderType type):_type(type){}
-    virtual VideoDecoderType type() {return _type; };
+    explicit VideoDecoderConfig(VideoDecoderType type) : _type(type) {}
+    virtual VideoDecoderType type() { return _type; };
     VideoDecoderType _type = VideoDecoderType::FFMPEG_VIDEO;
 };
-
 
 class VideoDecoder
 {
 public:
-
-    enum class Status {
+    enum class Status
+    {
         OK = 0,
         HEADER_DECODE_FAILED,
         CONTENT_DECODE_FAILED,
         UNSUPPORTED,
-	FAILED,
-	NO_MEMORY
+        FAILED,
+        NO_MEMORY
     };
 
-    enum class ColorFormat {
+    enum class ColorFormat
+    {
         GRAY = 0,
-        RGB, 
+        RGB,
         BGR
     };
-    
+
     virtual VideoDecoder::Status Initialize(const char *src_filename) = 0;
-    virtual VideoDecoder::Status Decode(unsigned char* output_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_format) = 0;
+    virtual VideoDecoder::Status Decode(unsigned char *output_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_format) = 0;
     virtual int seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number) = 0;
     virtual void release() = 0;
 

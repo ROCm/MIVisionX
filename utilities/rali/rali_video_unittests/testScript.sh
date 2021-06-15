@@ -7,10 +7,8 @@ make
 
 ################ AVAILABLE READERS ###############
 ##   DEFAULT : VideoReader                      ##
-##   CASE 2  : VideoReader + Textfileinput      ##
-##   CASE 3  : VideoReaderResize                ##
-##   CASE 4  : VideoReaderResize + Textfileinput##
-##   CASE 5  : SequenceReader                   ##
+##   CASE 2  : VideoReaderResize                ##
+##   CASE 3  : SequenceReader                   ##
 ##################################################
 PATH=$1
 CASE=$2
@@ -23,8 +21,7 @@ fi
 
 if [ -z "$2" ]
   then
-    echo "Reader case not provided"
-    exit
+    CASE=1
 fi
 
 DISPLAY=1     # (diplay:on/off)

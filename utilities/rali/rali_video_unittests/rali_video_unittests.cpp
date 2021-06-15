@@ -26,15 +26,10 @@ int check_extension(std::string file_name)
 {
     //store the position of last '.' in the file name
     int position = file_name.find_last_of(".");
-
     //store the characters after the '.' from the file_name string
     std::string result = file_name.substr(position + 1);
     if ((result.compare("txt") != 0) || (result.size() == 0))
-    {
-        std::cerr << "\n[ERR]Invalid text file passed as input\n"
-                  << result;
         return -1;
-    }
     return 0;
 }
 
@@ -49,7 +44,7 @@ int main(int argc, const char **argv)
     }
 
     int argIdx = 0;
-    const char *folder_path = argv[++argIdx];
+    const char *source_path = argv[++argIdx];
     int video_reader_case = 0;
     bool display = 1; // Display the images
     int rgb = 1;      // process color images
@@ -58,7 +53,7 @@ int main(int argc, const char **argv)
     bool processing_device = 1;
     size_t shard_count = 1;
     bool shuffle = false;
-    int input_batch_size = 1;
+    unsigned input_batch_size = 1;
     unsigned sequence_length = 1;
     unsigned frame_step = 1;
     unsigned frame_stride = 1;
@@ -117,16 +112,19 @@ int main(int argc, const char **argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         enable_sequence_rearrange = atoi(argv[++argIdx]) ? true : false;
 
-    if (!IsPathExist(folder_path))
+    if (!IsPathExist(source_path))
     {
         std::cout << "\nThe folder/file path does not exist\n";
         return -1;
     }
 
-    if (video_reader_case == 2 || video_reader_case == 4)
+    if (video_reader_case == 3)
     {
-        if (check_extension(folder_path) < 0)
+        if (check_extension(source_path) == 0)
+        {
+            std::cerr << "\n[ERR]Text file passed as input to SEQUENCE READER\n";
             return -1;
+        }
     }
 
     if (enable_sequence_rearrange)
@@ -150,7 +148,6 @@ int main(int argc, const char **argv)
         return -1;
     }
 
-    RaliMetaData meta_data;
     if (enable_metadata)
     {
         if (video_reader_case == 5)
@@ -161,7 +158,7 @@ int main(int argc, const char **argv)
         else
         {
             std::cout << "\n>>>> META DATA READER\n";
-            meta_data = raliCreateVideoLabelReader(handle, folder_path, file_list_frame_num);
+            RaliMetaData meta_data = raliCreateVideoLabelReader(handle, source_path, file_list_frame_num);
         }
     }
 
@@ -172,17 +169,10 @@ int main(int argc, const char **argv)
     default:
     {
         std::cout << "\n>>>> VIDEO READER\n";
-        input1 = raliVideoFileSource(handle, folder_path, color_format, shard_count, sequence_length, frame_step, frame_stride, shuffle, is_output, false);
+        input1 = raliVideoFileSource(handle, source_path, color_format, shard_count, sequence_length, frame_step, frame_stride, shuffle, is_output, false, file_list_frame_num);
         break;
     }
     case 2:
-    {
-        std::cout << sizeof(folder_path) / sizeof(char);
-        std::cout << "\n>>>> VIDEO READER with text file input\n";
-        input1 = raliVideoFileSource(handle, NULL, color_format, shard_count, sequence_length, frame_step, frame_stride, shuffle, is_output, false, folder_path, file_list_frame_num);
-        break;
-    }
-    case 3:
     {
         std::cout << "\n>>>> VIDEO READER RESIZE\n";
         if (decode_width <= 0 || decode_height <= 0)
@@ -190,25 +180,14 @@ int main(int argc, const char **argv)
             std::cerr << "\n[ERR]Decoded width and height passed as NULL values\n";
             return -1;
         }
-        input1 = raliVideoFileResize(handle, folder_path, color_format, shard_count, sequence_length, frame_step, frame_stride, decode_width, decode_height, shuffle, is_output, false);
+        input1 = raliVideoFileResize(handle, source_path, color_format, shard_count, sequence_length, frame_step, frame_stride, decode_width, decode_height, shuffle, is_output, false, file_list_frame_num);
         break;
     }
-    case 4:
-    {
-        std::cout << "\n>>>> VIDEO READER RESIZE with text file input\n";
-        if (decode_width <= 0 || decode_height <= 0)
-        {
-            std::cerr << "\n[ERR]Decoded width and height passed as NULL values\n";
-            return -1;
-        }
-        input1 = raliVideoFileResize(handle, NULL, color_format, shard_count, sequence_length, frame_step, frame_stride, decode_width, decode_height, shuffle, is_output, false, folder_path, file_list_frame_num);
-        break;
-    }
-    case 5:
+    case 3:
     {
         std::cout << "\n>>>> SEQUENCE READER\n";
         enable_framenumbers = enable_timestamps = 0;
-        input1 = raliSequenceReader(handle, folder_path, color_format, shard_count, sequence_length, frame_step, frame_stride, is_output, shuffle, false, RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
+        input1 = raliSequenceReader(handle, source_path, color_format, shard_count, sequence_length, frame_step, frame_stride, is_output, shuffle, false, RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
         break;
     }
     }
@@ -309,12 +288,12 @@ int main(int argc, const char **argv)
             {
                 raliGetSequenceFrameTimestamps(handle, frame_timestamps);
             }
-            for (int i = 0; i < input_batch_size; i++)
+            for (unsigned i = 0; i < input_batch_size; i++)
             {
                 if (enable_framenumbers)
                     std::cout << "\nFrame number : " << start_frame_num[i] << std::endl;
                 if (enable_timestamps)
-                    for (int j = 0; j < sequence_length; j++)
+                    for (unsigned j = 0; j < sequence_length; j++)
                         std::cout << "T" << j << " : " << frame_timestamps[(i * sequence_length) + j] << "\t";
                 std::cout << "\n";
             }

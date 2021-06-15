@@ -1513,7 +1513,6 @@ raliVideoFileSource(
         bool shuffle,
         bool is_output,
         bool loop,
-        const char* text_file_path,
         bool file_list_frame_num)
 {
     Image* output = nullptr;
@@ -1530,21 +1529,13 @@ raliVideoFileSource(
         context->set_internal_batch_size(sequence_length);
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
-        const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frames_count;
         std::vector<std::tuple<int, int>> frame_rate;
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame_num;
 
-        if (source_path != NULL && text_file_path == NULL)
-            file_path = source_path;
-        else if (text_file_path != NULL)
-            file_path = text_file_path;
-        else
-            THROW("Invalid input passed");
-
-        video_properties video_prop = find_video_properties(file_path, file_list_frame_num);
+        video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
         width = video_prop.width;
         height = video_prop.height;
         number_of_video_files = video_prop.videos_count;
@@ -1568,7 +1559,7 @@ raliVideoFileSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          file_path, "",
+                                                                          source_path, "",
 									                                      std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,
@@ -1618,14 +1609,12 @@ raliVideoFileResize(
         bool shuffle,
         bool is_output,
         bool loop,
-        const char* text_file_path,
         bool file_list_frame_num)
 {
     Image* resize_output = nullptr;
     if(!p_context || dest_width == 0 || dest_height == 0)
         THROW("Null values passed as input")
 
-    std::cerr<<"\n Coming to raliVideoFileResize";
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     try
@@ -1640,19 +1629,13 @@ raliVideoFileResize(
         context->set_internal_batch_size(sequence_length);
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
-        const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frames_count;
         std::vector<std::tuple<int, int>> frame_rate;
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame_num;
-        
-        if (source_path != NULL && text_file_path == NULL)
-            file_path = source_path;
-        else if (text_file_path != NULL)
-            file_path = text_file_path;
 
-        video_properties video_prop = find_video_properties(file_path, file_list_frame_num);
+        video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
         width = video_prop.width;
         height = video_prop.height;
         number_of_video_files = video_prop.videos_count;
@@ -1682,7 +1665,7 @@ raliVideoFileResize(
         resize_output = context->master_graph->create_image(output_info, false);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          file_path, "",
+                                                                          source_path, "",
 									                                      std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,

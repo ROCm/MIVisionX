@@ -148,14 +148,14 @@ int main(int argc, const char **argv)
         return -1;
     }
 
-    if (enable_metadata)
+    if (enable_metadata || enable_framenumbers || enable_timestamps)
     {
-        if (video_reader_case == 5)
+        if (video_reader_case == 3)
         {
-            std::cout << "METADATA READER cannot be enabled for SEQUENCE READER";
+            std::cout << "METADATA cannot be enabled for SEQUENCE READER";
             enable_metadata = false;
         }
-        else
+        else if(enable_metadata)
         {
             std::cout << "\n>>>> META DATA READER\n";
             RaliMetaData meta_data = raliCreateVideoLabelReader(handle, source_path, file_list_frame_num);

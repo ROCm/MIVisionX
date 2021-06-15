@@ -125,8 +125,8 @@ static vx_status VX_CALLBACK processSequenceRearrange(vx_node node, const vx_ref
             for(unsigned dst_index=0; dst_index < data->new_sequence_length ; dst_index++)
             {
                 src_index = data->new_order[dst_index];
-                RppPtr_t dst_address = data->pDst + (dst_index * elem_size);
-                RppPtr_t src_address = data->pSrc + (src_index * elem_size);
+                RppPtr_t dst_address = (unsigned *)data->pDst + (dst_index * elem_size);
+                RppPtr_t src_address = (unsigned *)data->pSrc + (src_index * elem_size);
                 memcpy(dst_address, src_address, elem_size);
             }
         }

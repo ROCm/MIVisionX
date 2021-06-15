@@ -134,7 +134,7 @@ VideoReadAndDecode::count()
 float VideoReadAndDecode::convert_framenum_to_timestamp(size_t frame_number, int video_index)
 {
     float timestamp;
-    timestamp = (float)frame_number / (std::get<0>(_frame_rate[video_index]) / std::get<1>(_frame_rate[video_index]));
+    timestamp = (float)frame_number / _frame_rate;
     return timestamp;
 }
 

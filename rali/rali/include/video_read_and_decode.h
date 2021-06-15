@@ -99,6 +99,6 @@ private:
     size_t _sequence_length;
     size_t _stride;
     size_t _video_count;
-    std::vector<std::tuple<int, int>> _frame_rate;
+    size_t _frame_rate;
     VideoDecoderConfig _video_decoder_config;
 };

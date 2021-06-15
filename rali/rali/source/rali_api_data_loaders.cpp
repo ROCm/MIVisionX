@@ -1529,9 +1529,8 @@ raliVideoFileSource(
         context->set_internal_batch_size(sequence_length);
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
-        unsigned width , height, number_of_video_files;
+        unsigned width , height, number_of_video_files, frame_rate;
         std::vector<size_t> frames_count;
-        std::vector<std::tuple<int, int>> frame_rate;
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame_num;
 
@@ -1540,7 +1539,6 @@ raliVideoFileSource(
         height = video_prop.height;
         number_of_video_files = video_prop.videos_count;
         frames_count.resize(number_of_video_files);
-        frame_rate.resize(number_of_video_files);
         video_file_names.resize(number_of_video_files);
         start_end_frame_num.resize(number_of_video_files);
         frames_count = video_prop.frames_count;
@@ -1629,9 +1627,8 @@ raliVideoFileResize(
         context->set_internal_batch_size(sequence_length);
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
-        unsigned width , height, number_of_video_files;
+        unsigned width , height, number_of_video_files, frame_rate;
         std::vector<size_t> frames_count;
-        std::vector<std::tuple<int, int>> frame_rate;
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame_num;
 
@@ -1640,7 +1637,6 @@ raliVideoFileResize(
         height = video_prop.height;
         number_of_video_files = video_prop.videos_count;
         frames_count.resize(number_of_video_files);
-        frame_rate.resize(number_of_video_files);
         video_file_names.resize(number_of_video_files);
         start_end_frame_num.resize(number_of_video_files);
         frames_count = video_prop.frames_count;

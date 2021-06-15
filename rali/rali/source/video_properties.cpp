@@ -130,7 +130,10 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
             video_props.labels.push_back(label);
             video_props.start_end_frame_num.push_back(std::make_tuple(start, end));
             video_props.frames_count.push_back(end - start);
-            video_props.frame_rate.push_back(std::make_tuple(props[3], props[4]));
+            unsigned video_frame_rate = props[3] / props[4];
+            if(video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
+                THROW("Variable frame rate videos cannot be processed")
+            video_props.frame_rate = video_frame_rate;
             video_count++;
         }
         video_props.width = max_width;
@@ -169,7 +172,10 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
             video_props.height = props[1];
             video_props.videos_count = 1;
             video_props.frames_count.push_back(props[2]);
-            video_props.frame_rate.push_back(std::make_tuple(props[3], props[4]));
+            unsigned video_frame_rate = props[3] / props[4];
+            if(video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
+                THROW("Variable frame rate videos cannot be processed")
+            video_props.frame_rate = video_frame_rate;
             video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
             video_file_path = std::to_string(0) + "#" + _full_path;
             video_props.video_file_names.push_back(video_file_path);
@@ -215,7 +221,10 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                     max_height = props[1];
                 }
                 video_props.frames_count.push_back(props[2]);
-                video_props.frame_rate.push_back(std::make_tuple(props[3], props[4]));
+                unsigned video_frame_rate = props[3] / props[4];
+                if(video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
+                    THROW("Variable frame rate videos cannot be processed")
+                video_props.frame_rate = video_frame_rate;
                 video_file_path = std::to_string(video_count) + "#" + subfolder_path;
                 video_props.video_file_names.push_back(video_file_path);
                 video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
@@ -259,7 +268,10 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                     video_file_path = std::to_string(video_count) + "#" + _full_path;
                     video_props.video_file_names.push_back(video_file_path);
                     video_props.frames_count.push_back(props[2]);
-                    video_props.frame_rate.push_back(std::make_tuple(props[3], props[4]));
+                    unsigned video_frame_rate = props[3] / props[4];
+                    if(video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
+                        THROW("Variable frame rate videos cannot be processed")
+                    video_props.frame_rate = video_frame_rate;
                     video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
                     video_count++;
                     _full_path = subfolder_path;

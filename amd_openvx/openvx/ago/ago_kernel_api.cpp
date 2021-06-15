@@ -16642,11 +16642,6 @@ int agoKernel_FastCorners_XY_U8_Supression(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oNumCorners = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
-        if (oNumCorners) {
-            node->gpu_scalar_array_output_sync.enable = true;
-            node->gpu_scalar_array_output_sync.paramIndexArray = 0;
-            node->gpu_scalar_array_output_sync.paramIndexScalar = 1;
-        }
         if (HipExec_FastCorners_XY_U8_Supression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, oXY->hip_memory, oXY->gpu_buffer_offset,
             iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, strength_threshold)) {
             status = VX_FAILURE;
@@ -16719,11 +16714,6 @@ int agoKernel_FastCorners_XY_U8_NoSupression(AgoNode * node, AgoKernelCommand cm
         AgoData * oNumCorners = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
-        if (oNumCorners) {
-            node->gpu_scalar_array_output_sync.enable = true;
-            node->gpu_scalar_array_output_sync.paramIndexArray = 0;
-            node->gpu_scalar_array_output_sync.paramIndexScalar = 1;
-        }
         if (HipExec_FastCorners_XY_U8_NoSupression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, oXY->hip_memory, oXY->gpu_buffer_offset,
             iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, strength_threshold)) {
             status = VX_FAILURE;
@@ -18022,7 +18012,7 @@ int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand c
         AgoData * oStack = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         AgoData * iThr = node->paramList[3];
-        printf("canny sup thresh 7x7\n");
+
         // divide the threshold values by 4 if gradient size = 7
         iThr->u.thr.threshold_lower.U1 /= 4;
         iThr->u.thr.threshold_upper.U1 /= 4;
@@ -18044,11 +18034,6 @@ int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand c
     }
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
-        AgoData * iThr = node->paramList[3];
-        // divide the threshold values by 4 if gradient size = 7
-        node->paramList[3]->u.thr.threshold_lower.U1 /= 4;
-        node->paramList[3]->u.thr.threshold_upper.U1 /= 4;
-        printf("node values are %d %d\n", iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1);
         status = HafGpu_CannySuppThreshold(node);
     }
 #endif
@@ -20882,7 +20867,6 @@ int agoKernel_CannyEdgeTrace_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iStack = node->paramList[1];
-        printf("edge trace u8\n");
         if (HafCpu_CannyEdgeTrace_U8_U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
                                         iStack->u.cannystack.count, (ago_coord2d_ushort_t *)iStack->buffer))
         {
@@ -20918,7 +20902,6 @@ int agoKernel_CannyEdgeTrace_U8_U8XY(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iStack = node->paramList[1];
-        printf("edge trace xy\n");
         if (HafCpu_CannyEdgeTrace_U8_U8XY(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
                                           iStack->u.cannystack.count, (ago_coord2d_ushort_t *)iStack->buffer, iStack->u.cannystack.stackTop))
         {
@@ -22388,22 +22371,8 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
     }
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
-        status = VX_SUCCESS;
-        node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
-        char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
-            "void %s (U8x8 * p0, U8x8 p1, float alpha, U8x8 p2)\n"
-            "{\n"
-            "   U8x8 r;\n"
-            "   float invAlpha = (float)1 - alpha;\n"
-            "   float4 alpha_f4 = (float4)(alpha, alpha, alpha, alpha);\n"
-            "   float4 invAlpha_f4 = (float4)(invAlpha, invAlpha, invAlpha, invAlpha);\n"
-            "   r.s0 = amd_pack(opencl_floorf4(amd_unpack(p1.s0) * alpha_f4 + amd_unpack(p2.s0) * invAlpha_f4));\n"
-            "   r.s1 = amd_pack(opencl_floorf4(amd_unpack(p1.s1) * alpha_f4 + amd_unpack(p2.s1) * invAlpha_f4));\n"
-            "   *p0 = r;\n"
-            "}\n"
-            ), node->opencl_name);
-        node->opencl_code += textBuffer;
+        // TBD: not implemented yet
+        status = VX_ERROR_NOT_SUPPORTED;
     }
 #endif
     else if (cmd == ago_kernel_cmd_query_target_support) {

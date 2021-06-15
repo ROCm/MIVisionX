@@ -18012,7 +18012,7 @@ int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand c
         AgoData * oStack = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         AgoData * iThr = node->paramList[3];
-
+        printf("canny sup thresh 7x7\n");
         // divide the threshold values by 4 if gradient size = 7
         iThr->u.thr.threshold_lower.U1 /= 4;
         iThr->u.thr.threshold_upper.U1 /= 4;
@@ -18034,6 +18034,11 @@ int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand c
     }
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
+        AgoData * iThr = node->paramList[3];
+        // divide the threshold values by 4 if gradient size = 7
+        node->paramList[3]->u.thr.threshold_lower.U1 /= 4;
+        node->paramList[3]->u.thr.threshold_upper.U1 /= 4;
+        printf("node values are %d %d\n", iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1);
         status = HafGpu_CannySuppThreshold(node);
     }
 #endif
@@ -20867,6 +20872,7 @@ int agoKernel_CannyEdgeTrace_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iStack = node->paramList[1];
+        printf("edge trace u8\n");
         if (HafCpu_CannyEdgeTrace_U8_U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
                                         iStack->u.cannystack.count, (ago_coord2d_ushort_t *)iStack->buffer))
         {
@@ -20902,6 +20908,7 @@ int agoKernel_CannyEdgeTrace_U8_U8XY(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iStack = node->paramList[1];
+        printf("edge trace xy\n");
         if (HafCpu_CannyEdgeTrace_U8_U8XY(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
                                           iStack->u.cannystack.count, (ago_coord2d_ushort_t *)iStack->buffer, iStack->u.cannystack.stackTop))
         {

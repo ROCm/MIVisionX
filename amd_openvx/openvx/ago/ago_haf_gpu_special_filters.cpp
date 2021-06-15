@@ -838,6 +838,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 		node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_5x5_L1NORM ||
 		node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM)
 	{ // L1NORM
+		printf("l1 norm\n");
 		sprintf(item,
 			OPENCL_FORMAT(
 			"uint CannyMagPhase(float gx, float gy) {\n"
@@ -851,7 +852,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 			"  mp += (((uint)dr) << 2);\n"
 			"  return mp;\n"
 			"}\n")
-			, node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM ? "*0.25f" : "");
+			, node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM ? "*0.01f" : "");
 		node->opencl_code += item;
 	}
 	else
@@ -869,7 +870,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 			"  mp += (((uint)dr) << 2);\n"
 			"  return mp;\n"
 			"}\n")
-			, node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L2NORM ? "*0.0625f" : ""); 
+			, node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L2NORM ? "*0.0001f" : ""); 
 		node->opencl_code += item;
 	}
 	int width = node->paramList[0]->u.img.width;
@@ -944,6 +945,7 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 		"  bool valid = (gx < %d) && (gy < %d);\n" // (width+3)/4, height
 		"  p0_buf += p0_offset + (gy * p0_stride) + (gx << 2);\n"
 		"  p2_buf += p2_offset;\n"
+		// "  printf(\"thresh is %%u and %%u\\n\", p3.s0, p3.s1); \n"
 		"  int gstride = p2_stride;\n"
 		"  __global uchar * gbuf = p2_buf;\n"
 		)
@@ -979,6 +981,7 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 		"  M.s3 &= mask;\n"
 		"  uint4 P;\n"
 		"%s" // THRESHOLD /= 2 when gradient_size = 7
+		// "  printf(\"thresh is %%u and %%u\\n\", p3.s0, p3.s1); \n"
 		"  P.s0 = select(  0u, 127u, M.s0 > p3.s0);\n"
 		"  P.s1 = select(  0u, 127u, M.s1 > p3.s0);\n"
 		"  P.s2 = select(  0u, 127u, M.s2 > p3.s0);\n"
@@ -993,7 +996,7 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 		"  p0 += P.s3 << 24;\n"
 		"  if (valid)  *(__global uint *)p0_buf = p0;\n"
 		)
-		, LMemStride, LMemStride, LMemStride * 2, (width + 3) / 4, height, (gradient_size == 7) ? "  p3.s0 = p3.s0 >> 2; p3.s1 = p3.s1 >> 2;\n" : "");
+		, LMemStride, LMemStride, LMemStride * 2, (width + 3) / 4, height, (gradient_size == 7) ? "" : "");
 	node->opencl_code += item;
 	if (node->akernel->id == VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3 || node->akernel->id == VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_7x7) {
 		node->opencl_code +=

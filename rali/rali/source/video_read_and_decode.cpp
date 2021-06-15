@@ -147,8 +147,8 @@ VideoReadAndDecode::load(unsigned char *buff,
                          std::vector<uint32_t> &roi_height,
                          std::vector<uint32_t> &actual_width,
                          std::vector<uint32_t> &actual_height,
-                         std::vector<size_t> &sequence_start_framenum,
-                         std::vector<std::vector<float> > &sequence_frame_timestamps,
+                         std::vector<std::vector<size_t>> &sequence_start_framenum_vec,
+                         std::vector<std::vector<std::vector<float>>> &sequence_frame_timestamps_vec,
                          RaliColorFormat output_color_format)
 {
     if (max_decoded_width == 0 || max_decoded_height == 0)
@@ -157,6 +157,13 @@ VideoReadAndDecode::load(unsigned char *buff,
         THROW("Null pointer passed as output buffer")
     if (_reader->count() < _batch_size)
         return VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
+
+    std::vector<size_t> sequence_start_framenum;
+    std::vector<std::vector<float>> sequence_frame_timestamps;
+    sequence_start_framenum.resize(_batch_size / _sequence_length);
+    sequence_frame_timestamps.resize(_batch_size / _sequence_length);
+    for (size_t it = 0; it < (_batch_size / _sequence_length); it++)
+        sequence_frame_timestamps[it].resize(_sequence_length);
 
     const auto ret = video_interpret_color_format(output_color_format);
     const unsigned output_planes = std::get<1>(ret);
@@ -218,6 +225,10 @@ VideoReadAndDecode::load(unsigned char *buff,
             continue;
         }
     }
+    _decode_time.end(); // Debug timing
+    
+    sequence_start_framenum_vec.insert(sequence_start_framenum_vec.begin(), sequence_start_framenum);
+    sequence_frame_timestamps_vec.insert(sequence_frame_timestamps_vec.begin(), sequence_frame_timestamps);
 
     std::vector<std::string> substrings1, substrings2;
     char delim = '/';
@@ -233,8 +244,5 @@ VideoReadAndDecode::load(unsigned char *buff,
         roi_width[i] = _actual_decoded_width[i];
         roi_height[i] = _actual_decoded_height[i];
     }
-
-    _decode_time.end(); // Debug timing
-
     return VideoLoaderModuleStatus::OK;
 }

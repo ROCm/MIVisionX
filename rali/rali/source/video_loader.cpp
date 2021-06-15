@@ -128,10 +128,6 @@ void VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder
         de_init();
         throw;
     }
-    _sequence_start_framenum.resize(_batch_size / _sequence_length);
-    _sequence_frame_timestamps.resize(_batch_size / _sequence_length);
-    for (size_t it = 0; it < (_batch_size / _sequence_length); it++)
-        _sequence_frame_timestamps[it].resize(_sequence_length);
     _decoded_img_info._image_names.resize(_sequence_length);
     _decoded_img_info._roi_height.resize(_sequence_length);
     _decoded_img_info._roi_width.resize(_sequence_length);
@@ -176,8 +172,8 @@ VideoLoader::load_routine()
                                               _decoded_img_info._roi_height,
                                               _decoded_img_info._original_width,
                                               _decoded_img_info._original_height,
-                                              _sequence_start_framenum,
-                                              _sequence_frame_timestamps,
+                                              _sequence_start_framenum_vec,
+                                              _sequence_frame_timestamps_vec,
                                               _output_image->info().color_format());
 
             if (load_status == VideoLoaderModuleStatus::OK)
@@ -185,8 +181,6 @@ VideoLoader::load_routine()
                 _circ_buff.set_image_info(_decoded_img_info);
                 _circ_buff.push();
                 _image_counter += _output_image->info().batch_size();
-                _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), _sequence_start_framenum);
-                _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), _sequence_frame_timestamps);
             }
         }
         if (load_status != VideoLoaderModuleStatus::OK)

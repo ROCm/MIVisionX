@@ -31,7 +31,8 @@ THE SOFTWARE.
 #include "timing_debug.h"
 #include "video_loader_module.h"
 #include "video_properties.h"
-extern "C" {
+extern "C"
+{
 #include <libavutil/pixdesc.h>
 }
 
@@ -45,7 +46,7 @@ public:
     void create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size);
     void set_video_process_count(size_t video_count)
     {
-       _video_process_count = (video_count <= _max_video_count)? video_count: _max_video_count;
+        _video_process_count = (video_count <= _max_video_count) ? video_count : _max_video_count;
     }
     float convert_framenum_to_timestamp(size_t frame_number, int video_index);
 
@@ -58,17 +59,17 @@ public:
     /// \param roi_height  is set by the load() function tp the width of the region that decoded image is located.It's less than max_height and is either equal to the original image height if original image height is smaller than max_height or downscaled if necessary to fit the max_height criterion.
     /// \param output_color_format defines what color format user expects decoder to decode images into if capable of doing so supported is
     VideoLoaderModuleStatus load(
-            unsigned char* buff,
-            std::vector<std::string>& names,
-            const size_t  max_decoded_width,
-            const size_t max_decoded_height,
-            std::vector<uint32_t> &roi_width,
-            std::vector<uint32_t> &roi_height,
-            std::vector<uint32_t> &actual_width,
-            std::vector<uint32_t> &actual_height,
-            std::vector<size_t> &sequence_start_framenum,
-            std::vector<std::vector<float>> &sequence_frame_timestamps,
-            RaliColorFormat output_color_format);
+        unsigned char *buff,
+        std::vector<std::string> &names,
+        const size_t max_decoded_width,
+        const size_t max_decoded_height,
+        std::vector<uint32_t> &roi_width,
+        std::vector<uint32_t> &roi_height,
+        std::vector<uint32_t> &actual_width,
+        std::vector<uint32_t> &actual_height,
+        std::vector<std::vector<size_t> > &sequence_start_framenum_vec,
+        std::vector<std::vector<std::vector<float> > > &sequence_frame_timestamps_vec,
+        RaliColorFormat output_color_format);
 
     //! returns timing info or other status information
     Timing timing();
@@ -79,7 +80,7 @@ private:
         int _video_map_idx;
         bool _is_decoder_instance;
     };
-    std::vector<std::shared_ptr<VideoDecoder>> _video_decoder;
+    std::vector<std::shared_ptr<VideoDecoder> > _video_decoder;
     std::shared_ptr<Reader> _reader;
     size_t _max_video_count = 50;
     size_t _video_process_count;
@@ -88,12 +89,12 @@ private:
     std::map<std::string, video_map> _video_file_name_map;
     size_t _compressed_image_size;
     size_t _actual_read_size;
-    unsigned char* _decompressed_buff_ptrs;
+    unsigned char *_decompressed_buff_ptrs;
     std::vector<size_t> _actual_decoded_width;
     std::vector<size_t> _actual_decoded_height;
     std::vector<size_t> _original_width;
     std::vector<size_t> _original_height;
-    static const size_t MAX_COMPRESSED_SIZE = 1*1024*1024; // 1 Meg
+    static const size_t MAX_COMPRESSED_SIZE = 1 * 1024 * 1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
     size_t _sequence_length;

@@ -80,8 +80,6 @@ private:
     bool _decoder_keep_original = false;
     std::vector<std::vector<size_t>> _sequence_start_framenum_vec;
     std::vector<std::vector<std::vector<float>>> _sequence_frame_timestamps_vec;
-    std::vector<size_t> _sequence_start_framenum;
-    std::vector<std::vector<float>> _sequence_frame_timestamps;
 };
 
 #endif

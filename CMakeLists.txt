@@ -72,7 +72,7 @@ if (NOT DEFINED BACKEND)
     message("-- ${BoldBlue}MIVisionX Backend set to OPENCL")
 endif()
 
-option(GPU_SUPPORT "Build MIVisionX with GPU Support"   OFF)
+option(GPU_SUPPORT "Build MIVisionX with GPU Support"   ON)
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")

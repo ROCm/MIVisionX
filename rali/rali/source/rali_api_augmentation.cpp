@@ -83,12 +83,8 @@ raliSequenceRearrange(
     try
     {
 #ifdef RALI_VIDEO
-        std::cerr<<"\n internal batch size:: "<<context->master_graph->internal_batch_size();
-        std::cerr<<"\n user batch size:: "<<context->master_graph->user_batch_size();
         context->master_graph->set_sequence_rearrange_batch_decremter(context->master_graph->user_batch_size());
-        std::cerr<<"\n new sequence length:: "<<new_sequence_length;
         context->master_graph->set_user_batch_size((size_t)(new_sequence_length * (context->user_batch_size()/context->master_graph->internal_batch_size())));
-        std::cerr<<"\n user batch size:: "<<context->master_graph->user_batch_size();
         auto info = ImageInfo(input->info().width(), input->info().height_single(),
                               new_sequence_length,
                               input->info().color_plane_count(),

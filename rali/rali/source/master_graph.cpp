@@ -752,7 +752,6 @@ void MasterGraph::output_routine()
             if(is_video_loader())
             {
                 _count = _video_loader_module->remaining_count();
-                // std::cerr<<"\n _count:: "<<_count;
             }
             else
             {
@@ -894,7 +893,6 @@ void MasterGraph::start_processing()
     if(is_video_loader())
     {
         _remaining_images_count = _video_loader_module->remaining_count();
-        // std::cerr<<"\n _remaining_images_count:: "<<_remaining_images_count;
     }
     else
     {

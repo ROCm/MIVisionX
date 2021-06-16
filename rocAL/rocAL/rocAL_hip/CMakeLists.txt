@@ -27,14 +27,12 @@ set(RALIHIP_SOURCES
 
 if(HIP_COMPILER STREQUAL clang)
     set(hip_library_name amdhip64)
-else()
-    set(hip_library_name hip_hcc)
 endif()
 #message("HIP library name: ${hip_library_name}")
 
 set_source_files_properties(${RALIHIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
 set(HIP_HCC_FLAGS -std=c++14)
-hip_add_library(${PROJECT_NAME} ${RALIHIP_SOURCES} HIPCC_OPTIONS "${HIP_HCC_FLAGS}" HCC_OPTIONS "${HIP_HCC_FLAGS}" SHARED)
-target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_HCC__)
+hip_add_library(${PROJECT_NAME} ${RALIHIP_SOURCES} HIPCC_OPTIONS "${HIP_HCC_FLAGS}"  SHARED)
+target_compile_definitions(${PROJECT_NAME} PRIVATE)
 message("Cmake CXX compiler " ${CMAKE_CXX_COMPILER})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)

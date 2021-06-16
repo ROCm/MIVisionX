@@ -168,16 +168,16 @@ void CircularBuffer::pop()
 }
 void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, size_t buffer_depth)
 {
-    BUFF_DEPTH = buffer_depth;
-    _dev_buffer.reserve(BUFF_DEPTH);
-    _host_buffer_ptrs.reserve(BUFF_DEPTH);
-    for(size_t bufIdx = 0; bufIdx < BUFF_DEPTH; bufIdx++)
+    _buff_depth = buffer_depth;
+    _dev_buffer.reserve(_buff_depth);
+    _host_buffer_ptrs.reserve(_buff_depth);
+    for(size_t bufIdx = 0; bufIdx < _buff_depth; bufIdx++)
         _dev_buffer[bufIdx] = nullptr;
     if(_initialized)
         return;
     _output_mem_type = output_mem_type;
     _output_mem_size = output_mem_size;
-    if(BUFF_DEPTH < 2)
+    if(_buff_depth < 2)
         THROW ("Error internal buffer size for the circular buffer should be greater than one")
 
     // Allocating buffers
@@ -189,7 +189,7 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
 
         cl_int err = CL_SUCCESS;
 
-        for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
+        for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
         {
             //NOTE: we don't need to use CL_MEM_ALLOC_HOST_PTR memory if this buffer is not going to be
             // used in the host. But we cannot ensure which Rali's copy function is going to be called
@@ -221,7 +221,7 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
         if(!_hip_stream  || _hip_device_id == -1 )
             THROW("Error HIP device resource is not initialized");
 
-        for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
+        for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
         {
             hipError_t err = hipHostMalloc((void **)&_host_buffer_ptrs[buffIdx], _output_mem_size, hipHostMallocMapped|hipHostMallocWriteCombined);
             if(err != hipSuccess)
@@ -247,7 +247,7 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
 #endif
     else
     {
-        for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
+        for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
         {
             // a minimum of extra MEM_ALIGNMENT is allocated
             _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
@@ -263,7 +263,7 @@ bool CircularBuffer::empty()
 
 bool CircularBuffer::full()
 {
-    return (_level >= BUFF_DEPTH - 1);
+    return (_level >= _buff_depth - 1);
 }
 
 size_t CircularBuffer::level()
@@ -274,7 +274,7 @@ size_t CircularBuffer::level()
 void CircularBuffer::increment_read_ptr()
 {
     std::unique_lock<std::mutex> lock(_lock);
-    _read_ptr = (_read_ptr+1)%BUFF_DEPTH;
+    _read_ptr = (_read_ptr+1)%_buff_depth;
     _level--;
     lock.unlock();
     // Wake up the writer thread (in case waiting) since there is an empty spot to write to,
@@ -285,7 +285,7 @@ void CircularBuffer::increment_read_ptr()
 void CircularBuffer::increment_write_ptr()
 {
     std::unique_lock<std::mutex> lock(_lock);
-    _write_ptr = (_write_ptr+1)%BUFF_DEPTH;
+    _write_ptr = (_write_ptr+1)%_buff_depth;
     _level++;
     lock.unlock();
     // Wake up the reader thread (in case waiting) since there is a new load to be read
@@ -313,7 +313,7 @@ void CircularBuffer:: block_if_full()
 
 CircularBuffer::~CircularBuffer()
 {
-    for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
+    for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
     {
 #if !ENABLE_HIP
         if(_output_mem_type== RaliMemType::OCL)

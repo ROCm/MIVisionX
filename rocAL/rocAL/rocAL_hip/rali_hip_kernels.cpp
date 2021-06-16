@@ -40,7 +40,7 @@ Hip_CopyInt8ToNHWC_fp32
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    const int W = nchw.y; const int H = nchw.z; 
+    const int W = nchw.y; const int H = nchw.z;
     const int img_offset = nchw.y * nchw.z * nchw.w;
 
     if ((x >= W) || (y >= H)) return;
@@ -51,7 +51,7 @@ Hip_CopyInt8ToNHWC_fp32
         if (nchw.y == 3){
             const uchar *inp_img = &inp_image_u8[n*img_offset];
             float3 *out_tensor = (float3 *)((float*)output_tensor + n*img_offset);
-            if (reverse_channels) 
+            if (reverse_channels)
                 out_tensor[dstIdx] = make_float3((float)inp_img[srcIdx+2], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx])*multiplier + offset;
             else
                 out_tensor[dstIdx] = make_float3((float)inp_img[srcIdx], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx+2])*multiplier + offset;
@@ -77,7 +77,7 @@ Hip_CopyInt8ToNHWC_fp16
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    const int W = nchw.w; const int H = nchw.z; 
+    const int W = nchw.w; const int H = nchw.z;
     const int img_offset = nchw.y * W * H;
 
     if ((x >= W) || (y >= H)) return;
@@ -89,7 +89,7 @@ Hip_CopyInt8ToNHWC_fp16
             unsigned int dstIdx =  y*W + x*3;
             const uchar *inp_img = &inp_image_u8[n*img_offset];
             float3 dst;
-            if (reverse_channels) 
+            if (reverse_channels)
                 dst = make_float3((float)inp_img[srcIdx+2], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx])*multiplier + offset;
             else
                 dst = make_float3((float)inp_img[srcIdx], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx+2])*multiplier + offset;
@@ -119,7 +119,7 @@ Hip_CopyInt8ToNCHW_fp32
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    const int W = nchw.w; const int H = nchw.z; 
+    const int W = nchw.w; const int H = nchw.z;
     const int img_offset = nchw.y * nchw.z * nchw.w;
 
     if ((x >= W) || (y >= H)) return;
@@ -131,7 +131,7 @@ Hip_CopyInt8ToNCHW_fp32
         float *out_tensor = (float *)output_tensor + n*img_offset + dst_buf_offset;
         if (nchw.y == 3){
             float3 dst;
-            if (reverse_channels) 
+            if (reverse_channels)
                 dst = make_float3((float)inp_img[srcIdx+2], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx])*multiplier + offset;
             else
                 dst = make_float3((float)inp_img[srcIdx], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx+2])*multiplier + offset;
@@ -158,7 +158,7 @@ Hip_CopyInt8ToNCHW_fp16
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    const int W = nchw.w; const int H = nchw.z; 
+    const int W = nchw.w; const int H = nchw.z;
     const int img_offset = nchw.y * W * H;
 
     if ((x >= W) || (y >= H)) return;
@@ -170,7 +170,7 @@ Hip_CopyInt8ToNCHW_fp16
         unsigned int dstIdx =  y*W + x;
         if (nchw.y == 3){
             float3 dst;
-            if (reverse_channels) 
+            if (reverse_channels)
                 dst = make_float3((float)inp_img[srcIdx+2], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx])*multiplier + offset;
             else
                 dst = make_float3((float)inp_img[srcIdx], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx+2])*multiplier + offset;
@@ -205,13 +205,6 @@ int HipExecCopyInt8ToNHWC
 {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = w, globalThreads_y = h;
-#if ENABLE_EVENT_BASED_SYNC   
-    hipEvent_t start, stop;
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
-#endif    
     if (!fp16){
         hipLaunchKernelGGL(Hip_CopyInt8ToNHWC_fp32,
                         dim3(ceil((float) globalThreads_x / localThreads_x), ceil((float) globalThreads_y / localThreads_y)),
@@ -229,12 +222,6 @@ int HipExecCopyInt8ToNHWC
                         make_float3(multiplier0, multiplier1, multiplier2), make_float3(offset0, offset1, offset2),
                         reverse_channels);
     }
-#if ENABLE_EVENT_BASED_SYNC   
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    printf("HipExecCopyInt8ToNHWC: Kernel time: %f\n", eventMs);
-#endif    
     return 0;
 }
 
@@ -260,13 +247,6 @@ int HipExecCopyInt8ToNCHW
 {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = w, globalThreads_y = h;
-#if ENABLE_EVENT_BASED_SYNC   
-    hipEvent_t start, stop;
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
-#endif    
     if (!fp16){
         hipLaunchKernelGGL(Hip_CopyInt8ToNCHW_fp32,
                         dim3(ceil((float) globalThreads_x / localThreads_x), ceil((float) globalThreads_y / localThreads_y)),
@@ -284,12 +264,6 @@ int HipExecCopyInt8ToNCHW
                         make_float3(multiplier0, multiplier1, multiplier2), make_float3(offset0, offset1, offset2),
                         reverse_channels);
     }
-#if ENABLE_EVENT_BASED_SYNC   
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    printf("HipExecCopyInt8ToNHWC: Kernel time: %f\n", eventMs);
-#endif    
     return 0;
 }
 

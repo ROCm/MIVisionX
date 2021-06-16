@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #include "image_source_evaluator.h"
 #include "decoder_factory.h"
-#include "video_decoder_factory.h"
 #include "reader_factory.h"
 void ImageSourceEvaluator::set_size_evaluation_policy(MaxSizeEvaluationPolicy arg)
 {

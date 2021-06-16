@@ -1,6 +1,5 @@
-/* 
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+/*
+ * Copyright (c) 2012-2020 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * NOTE: Some safety-critical environments may enforce software development
+ *       guidelines (for example MISRA C:2012) to facilitate code quality,
+ *       safety, security, portability and reliability. In order to meet
+ *       such guidelines, developers may modify OpenVX standard header files
+ *       without deviating from the OpenVX specification.
  */
 
 #ifndef _OPENVX_H_
@@ -53,12 +60,12 @@
 /*! \brief Defines the major version number macro.
  * \ingroup group_basic_features
  */
-#define VX_VERSION_MAJOR(x) ((x & 0xFF) << 8)
+#define VX_VERSION_MAJOR(x) ((vx_uint32)((vx_uint32)(x) & 0xFFU) << 8)
 
 /*! \brief Defines the minor version number macro.
  * \ingroup group_basic_features
  */
-#define VX_VERSION_MINOR(x) ((x & 0xFF) << 0)
+#define VX_VERSION_MINOR(x) ((vx_uint32)((vx_uint32)(x) & 0xFFU) << 0)
 
 /*! \brief Defines the predefined version number for 1.0.
  * \ingroup group_basic_features
@@ -75,9 +82,14 @@
  */
 #define VX_VERSION_1_2      (VX_VERSION_MAJOR(1) | VX_VERSION_MINOR(2))
 
+/*! \brief Defines the predefined version number for 1.3.
+ * \ingroup group_basic_features
+ */
+#define VX_VERSION_1_3      (VX_VERSION_MAJOR(1) | VX_VERSION_MINOR(3))
+
 /*! \brief Defines the OpenVX Version Number.
  * \ingroup group_basic_features
  */
-#define VX_VERSION          VX_VERSION_1_2
+#define VX_VERSION          (VX_VERSION_1_3)
 
 #endif

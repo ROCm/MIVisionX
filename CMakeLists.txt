@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
-set(VERSION "1.9.7")
+set(VERSION "2.0.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -64,30 +64,36 @@ else()
 ENDIF()
 
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
-option(RALI       "Build MIVisionX with RALI Support"         ON)
+option(ROCAL      "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM       "Build MIVisionX with LOOM Support"         ON)
-option(OPENCL_SUPPORT "Build MIVisionX with OpenCL Support"   ON)
+
+if (NOT DEFINED BACKEND)
+    SET(BACKEND "OPENCL")   # set default backend to OPENCL
+    message("-- ${BoldBlue}MIVisionX Backend set to OPENCL")
+endif()
+
+option(GPU_SUPPORT "Build MIVisionX with GPU Support"   ON)
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D RALI=OFF [Turn OFF RALI Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D OPENCL_SUPPORT=OFF [Turn OFF OpenCL Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=HIP [select HIP for GPU backend (default:OPENCL)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
-  set(OPENCL_SUPPORT OFF)
-  message("-- ${Magenta}Apple macOS Detected -- OpenCL Support turned OFF${ColourReset}")
+  set(GPU_SUPPORT OFF)
+  message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
 endif()
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
-add_subdirectory(apps)
 add_subdirectory(utilities)
-if(RALI)
-  add_subdirectory(rali)
+if(ROCAL)
+  add_subdirectory(rocAL)
 else()
-  message("-- ${Cyan}RALI Module turned OFF by user option -D RALI=OFF ${ColourReset}")
+  message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
 endif()
 
 install(DIRECTORY docs DESTINATION .)

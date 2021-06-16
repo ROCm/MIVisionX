@@ -29,6 +29,8 @@ void CropMirrorNormalizeMetaNode::initialize()
     _x1_val.resize(_batch_size);
     _y1_val.resize(_batch_size);
     _mirror_val.resize(_batch_size);
+    _src_height_val.resize(_batch_size);
+    _src_width_val.resize(_batch_size);
 }
 void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
 {
@@ -43,6 +45,10 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
     _dstImgHeight = _meta_crop_param->croph_arr;
     _x1 = _meta_crop_param->x1_arr;
     _y1 = _meta_crop_param->y1_arr;
+    _src_width = _node->get_src_width();
+    _src_height = _node->get_src_height();
+    vxCopyArrayRange((vx_array)_src_width, 0, _batch_size, sizeof(uint),_src_width_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    vxCopyArrayRange((vx_array)_src_height, 0, _batch_size, sizeof(uint),_src_height_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_dstImgWidth, 0, _batch_size, sizeof(uint),_width_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_dstImgHeight, 0, _batch_size, sizeof(uint),_height_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_x1, 0, _batch_size, sizeof(uint),_x1_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
@@ -56,46 +62,48 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
         memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
         memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
-        BoundingBoxCord temp_box;
+        BoundingBoxCord temp_box = {0, 0, 1, 1};
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
-        crop_box.x = _x1_val[i];
-        crop_box.y = _y1_val[i];
-        crop_box.w = _width_val[i];
-        crop_box.h = _height_val[i];
+        crop_box.l = (_x1_val[i]) / _src_width_val[i];
+        crop_box.t = (_y1_val[i]) / _src_height_val[i];
+        crop_box.r = (_x1_val[i] + _width_val[i]) / _src_width_val[i];
+        crop_box.b = (_y1_val[i] + _height_val[i]) / _src_height_val[i];
+        // std::cout<<"CROP Co-ordinates in CMN: lxtxrxb::\t"<<crop_box.l<<"x"<<crop_box.t<<"x"<<crop_box.r<<"x"<<crop_box.b<<"x";
+        
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
-            box.x = coords_buf[m++];
-            box.y = coords_buf[m++];
-            box.w = coords_buf[m++];
-            box.h = coords_buf[m++];
+            box.l = coords_buf[m++];
+            box.t = coords_buf[m++];
+            box.r = coords_buf[m++];
+            box.b = coords_buf[m++];
+            // std::cout<<"\nIn BEFORE CMN: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
             if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
             {
-                float xA = std::max(crop_box.x, box.x);
-                float yA = std::max(crop_box.y, box.y);
-                float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
-                float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
-                box.x = xA - _x1_val[i];
-                box.y = yA - _y1_val[i];
-                box.w = xB - xA;
-                box.h = yB - yA;
-                if(_mirror_val[i] == 1)
+                float xA = std::max(crop_box.l, box.l);
+                float yA = std::max(crop_box.t, box.t);
+                float xB = std::min(crop_box.r, box.r);
+                float yB = std::min(crop_box.b, box.b);
+                box.l = (xA - crop_box.l) / (crop_box.r - crop_box.l);
+                box.t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
+                box.r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
+                box.b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
+                if (_mirror_val[i] == 1)
                 {
-                    float centre_x = _width_val[i] / 2;
-                    box.x += ((centre_x - box.x) * 2) - box.w;
+
+                    float l = 1 - box.r;
+                    box.r = 1 - box.l;
+                    box.l = l;
                 }
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
             }
         }
+        // the following shouldn't happen since all crops should atleast have one bbox
         if(bb_coords.size() == 0)
         {
-	        //std::cout << "Crop mirror Normalize - Zero Bounding boxes" << std::endl;
-            temp_box.x = 0;
-            temp_box.y = 0;
-	        temp_box.w =  crop_box.w - 1;
-	        temp_box.h =  crop_box.h - 1;
+            std::cerr <<"Crop mirror Normalize - Zero Bounding boxes" << std::endl;
             bb_coords.push_back(temp_box);
             bb_labels.push_back(0);
         }

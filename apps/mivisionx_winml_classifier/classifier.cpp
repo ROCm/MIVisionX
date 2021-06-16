@@ -1070,7 +1070,7 @@ int main(int argc, const char ** argv)
 					return -1;
 				}
 				count = dims[0] * dims[1] * dims[2] * dims[3];
-				status = vxMapTensorPatch(prob_inception, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				status = vxMapTensorPatch(prob_inception, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
 				if (status) {
 					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
 					return -1;
@@ -1093,7 +1093,7 @@ int main(int argc, const char ** argv)
 					return -1;
 				}
 				count = dims[0] * dims[1] * dims[2] * dims[3];
-				status = vxMapTensorPatch(prob_resnet, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				status = vxMapTensorPatch(prob_resnet, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
 				if (status) {
 					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
 					return -1;
@@ -1116,7 +1116,7 @@ int main(int argc, const char ** argv)
 					return -1;
 				}
 				count = dims[0] * dims[1] * dims[2] * dims[3];
-				status = vxMapTensorPatch(prob_vgg19, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				status = vxMapTensorPatch(prob_vgg19, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
 				if (status) {
 					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
 					return -1;
@@ -1139,7 +1139,7 @@ int main(int argc, const char ** argv)
 					return -1;
 				}
 				count = dims[0] * dims[1] * dims[2] * dims[3];
-				status = vxMapTensorPatch(prob_shufflenet, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				status = vxMapTensorPatch(prob_shufflenet, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
 				if (status) {
 					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
 					return -1;
@@ -1162,7 +1162,7 @@ int main(int argc, const char ** argv)
 					return -1;
 				}
 				count = dims[0] * dims[1] * dims[2] * dims[3];
-				status = vxMapTensorPatch(prob_squeezenet, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				status = vxMapTensorPatch(prob_squeezenet, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
 				if (status) {
 					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
 					return -1;
@@ -1185,7 +1185,7 @@ int main(int argc, const char ** argv)
 					return -1;
 				}
 				count = dims[0] * dims[1] * dims[2] * dims[3];
-				status = vxMapTensorPatch(prob_densenet121, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				status = vxMapTensorPatch(prob_densenet121, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
 				if (status) {
 					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
 					return -1;
@@ -1208,7 +1208,7 @@ int main(int argc, const char ** argv)
 					return -1;
 				}
 				count = dims[0] * dims[1] * dims[2] * dims[3];
-				status = vxMapTensorPatch(prob_zfnet512, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				status = vxMapTensorPatch(prob_zfnet512, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
 				if (status) {
 					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
 					return -1;

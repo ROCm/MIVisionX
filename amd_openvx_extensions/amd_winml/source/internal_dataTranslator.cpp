@@ -37,7 +37,7 @@ TensorFloat VX_to_ML_tensor(vx_tensor inputTensor)
 	status = (vxQueryTensor(inputTensor, VX_TENSOR_DIMS, &inputDims, sizeof(inputDims[0])*num_of_dims));
 	if (status) { std::cerr << "ERROR: vxQueryTensor(VX_TENSOR_DIMS) failed for inputTensor" << std::endl; return nullptr; }
 
-	status = vxMapTensorPatch(inputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+	status = vxMapTensorPatch(inputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
 	if (status) { std::cerr << "ERROR: vxMapTensorPatch() failed for inputTensor" << std::endl; return nullptr; }
 
 	vx_size inputTensorSize = inputDims[0] * inputDims[1] * inputDims[2] * inputDims[3];
@@ -64,7 +64,7 @@ vx_status ML_to_VX_tensor(IVectorView<float> inputTensor, vx_tensor outputTensor
 	STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
 	STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_DIMS, &outputDims, sizeof(outputDims[0])*num_of_dims));
 	vx_size outputTensorSize = outputDims[0] * outputDims[1] * outputDims[2] * outputDims[3];
-	status = vxMapTensorPatch(outputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&outputPtr, usage, VX_MEMORY_TYPE_HOST, 0);
+	status = vxMapTensorPatch(outputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&outputPtr, usage, VX_MEMORY_TYPE_HOST);
 	if (status) { std::cerr << "ERROR: vxMapTensorPatch() failed for outputTensor" << std::endl; return status; }
 
 	for (int i = 0; i < outputTensorSize; i++) {

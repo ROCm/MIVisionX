@@ -104,8 +104,7 @@ private:
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader and tf_record_reader
 };
 
-class Reader
-{
+class Reader {
 public:
     enum class Status
     {
@@ -113,6 +112,7 @@ public:
     };
 
     // TODO: change method names to open_next, read_next , ...
+
 
     //! Initializes the resource which it's spec is defined by the desc argument
     /*!
@@ -150,8 +150,8 @@ public:
 
     virtual ~Reader() = default;
 
-#define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
-#define CHECK_CAFFE(test, msg) \
-    ;                          \
-    ((test) ? (void)0 : ((void)fprintf(stderr, "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
+    #define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
+    #define CHECK_CAFFE(test, msg); ((test) ? (void)0 : ((void)fprintf(stderr, \
+    "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
 };
+

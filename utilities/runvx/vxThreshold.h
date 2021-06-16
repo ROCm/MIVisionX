@@ -44,7 +44,8 @@ public:
 private:
 	// vx configuration
 	vx_enum m_thresh_type;
-	vx_enum m_data_type;
+	vx_df_image m_input_format;
+	vx_df_image m_output_format;
 	// vx object
 	vx_threshold m_threshold;
 };

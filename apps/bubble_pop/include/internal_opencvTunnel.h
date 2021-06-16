@@ -97,7 +97,7 @@ public:
 			node * Kernel = top;
 			for (int i = 0; i < count; i++){ STATUS_ERROR_CHECK(Kernel->func(context)); Kernel = Kernel->next;}
 		}
-		return_status;
+		return status;
 	}
 
 private:

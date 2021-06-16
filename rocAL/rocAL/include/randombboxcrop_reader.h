@@ -30,6 +30,41 @@ THE SOFTWARE.
 #include "parameter_crop_factory.h"
 #include "meta_data_reader.h"
 #include "coco_meta_data_reader.h"
+#include <random>
+
+// todo:: move this to common header
+template<typename T = std::mt19937, std::size_t state_size = T::state_size>
+class SeededRNG {
+  /*
+  * @param batch_size How many RNGs to store
+  * @param state_size How many seed are used to initialize one RNG. Used to lower probablity of
+  * collisions between seeds used to initialize RNGs in different operators.
+  */
+public: 
+  SeededRNG (int batch_size = 128) {
+      std::random_device source;
+      _batch_size = batch_size;
+      std::size_t _random_data_size = state_size * batch_size ;
+      std::vector<std::random_device::result_type> random_data(_random_data_size);
+      std::generate(random_data.begin(), random_data.end(), std::ref(source));
+      _rngs.reserve(batch_size);
+      for (int i=0; i < (int)(_batch_size*state_size); i += state_size) {
+        std::seed_seq seeds(std::begin(random_data) + i, std::begin(random_data)+ i +state_size);
+        _rngs.emplace_back(T(seeds));
+      }
+  }
+
+  /**
+   * Returns engine corresponding to given sample ID
+   */
+   T &operator[](int sample) noexcept {
+    return _rngs[sample % _batch_size];
+  }
+
+private:
+    std::vector<T> _rngs;
+    int _batch_size;
+};
 
 class RandomBBoxCropReader: public RandomBBoxCrop_MetaDataReader
 {
@@ -40,47 +75,31 @@ public:
     void release() override;
     void print_map_contents();
     void update_meta_data();
-
     CropCordBatch * get_output() override { return _output; }
-    
-    std::shared_ptr<RaliRandomCropParam> get_crop_param() { return _crop_param; }
-    float get_threshold(){return _threshold;}
-    std::vector<std::pair<bool, float>> get_iou_range(){return _iou_range;}
     bool is_entire_iou(){return _entire_iou;}
-
     void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader) override;
     pCropCord get_crop_cord(const std::string &image_names) override;
-
     RandomBBoxCropReader();
     ~RandomBBoxCropReader() override {}
+
 private:
-    std::shared_ptr<RaliRandomCropParam> _meta_crop_param;
     std::shared_ptr<COCOMetaDataReader> _meta_data_reader = nullptr;
     std::map<std::string, std::shared_ptr<BoundingBox>> _meta_bbox_map_content;
-    std::vector<uint> _crop_width_val, _crop_height_val, _x1_val, _y1_val, _x2_val, _y2_val;
-    std::vector<uint32_t> in_width, in_height;
-    float  _threshold = 0.05;
-    int _batch_size = 1;
-    std::vector<std::pair<bool, float>> _iou_range;
     bool _all_boxes_overlap;
     bool _no_crop;
     bool _has_shape;
-    int _crop_width;
-    int _crop_height;
     int _num_of_attempts = 20;
     int _total_num_of_attempts = 0;
     bool _entire_iou = false;
     FloatParam *crop_area_factor = NULL;
     FloatParam *crop_aspect_ratio = NULL;
-    constexpr static float ASPECT_RATIO_RANGE [2] = {0.5, 2.0};
-    FloatParam *x_drift = NULL;
-    FloatParam *y_drift = NULL;
-    std::shared_ptr<RaliRandomCropParam> _crop_param;
+    int _user_batch_size;
+    int64_t _seed;
     void add(std::string image_name, BoundingBoxCord bbox);
     bool exists(const std::string &image_name);
     std::map<std::string, std::shared_ptr<CropCord>> _map_content;
     std::map<std::string, std::shared_ptr<CropCord>>::iterator _itr;
     std::shared_ptr<Graph> _graph = nullptr;
     CropCordBatch* _output;
+    SeededRNG<std::mt19937, 4> _rngs;     // setting the state_size to 4 for 4 random parameters.
 };
-

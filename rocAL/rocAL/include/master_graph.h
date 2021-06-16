@@ -25,7 +25,6 @@ THE SOFTWARE.
 #include <list>
 #include <variant>
 #include <map>
-#include <iostream>
 #include "graph.h"
 #include "ring_buffer.h"
 #include "timing_debug.h"
@@ -84,12 +83,10 @@ public:
     MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch *create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
-    void create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts);
+    void create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts, int64_t seed=0);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
-    bool empty() {
-        // std::cerr<<"\n *************Remaining images count::"<<remaining_images_count()<<"\t_user_batch_size::"<<_user_batch_size<<"****************";
-         return (remaining_images_count() < _user_batch_size); }
+    bool empty() { return (remaining_images_count() < _user_batch_size); }
     void set_user_internal_batch_size(size_t user_internal_batch_size) {_internal_batch_size = user_internal_batch_size;}
     void set_user_batch_size(size_t new_user_batch_size) {_user_batch_size = new_user_batch_size;}
     void set_user_internal_batch_ratio() {_user_to_internal_batch_ratio = _user_batch_size/_internal_batch_size; }

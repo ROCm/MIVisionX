@@ -131,7 +131,7 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateTextCifar10LabelReader(RaliConte
 /// \param buf user's buffer that will be filled with labels. Its needs to be at least of size batch_size.
 extern "C" void RALI_API_CALL raliGetOneHotImageLabels(RaliContext rali_context,int *buf, int numOfClasses);
 
-extern "C" void RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, bool no_crop, RaliFloatParam aspect_ratio = NULL, bool has_shape = false, int crop_width = 0, int crop_height = 0, int num_attempts = 1, RaliFloatParam scaling = NULL, int total_num_attempts = 0);
+extern "C" void RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, bool no_crop, RaliFloatParam aspect_ratio = NULL, bool has_shape = false, int crop_width = 0, int crop_height = 0, int num_attempts = 1, RaliFloatParam scaling = NULL, int total_num_attempts = 0, int64_t seed = 0);
 
 ///
 /// \param rali_context
@@ -142,5 +142,6 @@ extern "C" void RALI_API_CALL raliGetSequenceStartFrameNumber(RaliContext rali_c
 /// \param rali_context
 /// \param buf The user's buffer that will be filled with frame timestamps of each of the frames in output batch sequences.
 extern "C" void RALI_API_CALL raliGetSequenceFrameTimestamps(RaliContext rali_context, float* buf);
+
 
 #endif //MIVISIONX_RALI_API_META_DATA_H

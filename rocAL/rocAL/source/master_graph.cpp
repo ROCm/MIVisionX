@@ -201,9 +201,8 @@ MasterGraph::build()
     // Verify all output images have the same dimension, otherwise creating a unified tensor from them is not supported
     _output_image_info = _output_images.front()->info();
     for(auto&& output_image : _output_images)
-        if(!(output_image->info() == _output_image_info)) {
-              THROW("Dimension of the output images do not match")
-        }
+        if(!(output_image->info() == _output_image_info))
+            THROW("Dimension of the output images do not match")
 
     allocate_output_tensor();
 
@@ -375,7 +374,11 @@ MasterGraph::reset()
     }
     else
     {
-    // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
+        // if random_bbox meta reader is used: read again to get different crops
+        if (_randombboxcrop_meta_data_reader != nullptr)
+            _randombboxcrop_meta_data_reader->read_all();
+
+        // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
         _loader_module->reset();
     }
 
@@ -992,12 +995,12 @@ MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, 
     return _meta_data_reader->get_output();
 }
 
-void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts)
+void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts, int64_t seed)
 {
     if( _randombboxcrop_meta_data_reader)
         THROW("A metadata reader has already been created")
     _is_random_bbox_crop = true;
-    RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts);
+    RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts, seed);
     _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
     _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
     _randombboxcrop_meta_data_reader->read_all();

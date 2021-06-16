@@ -42,17 +42,16 @@ public:
 inline double MetaNode::BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false) const
 {
     double iou;
-    float xA = std::max(box1.x, box2.x);
-    float yA = std::max(box1.y, box2.y);
-    float xB = std::min(box1.x + box1.w, box2.x + box2.w);
-    float yB = std::min(box1.y + box1.h, box2.y + box2.h);
+    float xA = std::max(box1.l, box2.l);
+    float yA = std::max(box1.t, box2.t);
+    float xB = std::min(box1.r, box2.r);
+    float yB = std::min(box1.b, box2.b);
 
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
+    float box1_area = (box1.b - box1.t) * (box1.r - box1.l);
+    float box2_area = (box2.b - box2.t) * (box2.r - box2.l);
 
-    float box1_area = box1.h * box1.w;
-    float box2_area = box2.h * box2.w;
-
-    if(is_iou)
+    if (is_iou)
         iou = intersection_area / float(box1_area + box2_area - intersection_area);
     else
         iou = intersection_area / float(box1_area);

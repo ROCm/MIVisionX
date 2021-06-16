@@ -515,7 +515,7 @@ raliBrightness(
         RaliImage p_input,
         bool is_output,
         RaliFloatParam p_alpha,
-        RaliIntParam p_beta)
+        RaliFloatParam p_beta)
 {
     Image* output = nullptr;
     if(!p_input || !p_context)
@@ -523,7 +523,7 @@ raliBrightness(
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto alpha = static_cast<FloatParam*>(p_alpha);
-    auto beta = static_cast<IntParam*>(p_beta);
+    auto beta = static_cast<FloatParam*>(p_beta);
     try
     {
 
@@ -544,7 +544,7 @@ raliBrightnessFixed(
         RaliContext p_context,
         RaliImage p_input,
         float alpha,
-        int beta,
+        float beta,
         bool is_output)
 {
     Image* output = nullptr;

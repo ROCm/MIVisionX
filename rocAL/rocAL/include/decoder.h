@@ -30,8 +30,9 @@ enum class DecoderType
 {
     TURBO_JPEG = 0,//!< Can only decode
     FUSED_TURBO_JPEG = 1, //!< FOR PARTIAL DECODING
-    SKIP_DECODE  = 2, //!< For skipping decoding in case of uncompressed data from reader
-    OVX_FFMPEG = 3,//!< Uses FFMPEG to decode video streams, can decode up to 4 video streams simultaneously
+    OPENCV_DEC = 2, //!< for back_up decoding
+    SKIP_DECODE  = 3, //!< For skipping decoding in case of uncompressed data from reader
+    OVX_FFMPEG,//!< Uses FFMPEG to decode video streams, can decode up to 4 video streams simultaneously
     FFMPEG_VIDEO,
 };
 
@@ -108,7 +109,6 @@ public:
                                    Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original) = 0;
 
     virtual ~Decoder() = default;
-
     virtual bool is_partial_decoder() = 0;
     virtual void set_bbox_coords(std::vector <float> bbox_coords) = 0;
     virtual std::vector <float> get_bbox_coords() = 0;

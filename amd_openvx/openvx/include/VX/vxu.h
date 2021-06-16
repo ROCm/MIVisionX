@@ -1,6 +1,5 @@
 /*
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+ * Copyright (c) 2012-2020 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,8 +101,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxuPhase(vx_context context, vx_image grad_x,
 
 /*! \brief [Immediate] Scales an input image to an output image.
  * \param [in] context The reference to the overall context.
- * \param [in] src The source image of type <tt>\ref VX_DF_IMAGE_U8</tt>.
- * \param [out] dst The destintation image of type <tt>\ref VX_DF_IMAGE_U8</tt>.
+ * \param [in] src The source image of type <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt>.
+ * \param [out] dst The destination image of type <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt>.
+ * Must be of the same format as the input image.
  * \param [in] type The interpolation type. \see vx_interpolation_type_e.
  * \ingroup group_vision_function_scale_image
  * \return A <tt>\ref vx_status_e</tt> enumeration.
@@ -116,7 +116,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuScaleImage(vx_context context, vx_image sr
  * \param [in] context The reference to the overall context.
  * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_S16</tt>.
  * \param [in] lut The LUT which is of type <tt>\ref VX_TYPE_UINT8</tt> if input image is <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_TYPE_INT16</tt> if input image is <tt>\ref VX_DF_IMAGE_S16</tt>.
- * \param [out] output The output image of the same type as the input image.
+ * \param [out] output The output image of the same size as the input image.
  * \ingroup group_vision_function_lut
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -160,7 +160,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuAbsDiff(vx_context context, vx_image in1, 
 
 /*! \brief [Immediate] Computes the mean value and optionally the standard deviation.
  * \param [in] context The reference to the overall context.
- * \param [in] input The input image. <tt>\ref VX_DF_IMAGE_U8</tt> is supported.
+ * \param [in] input The input image. <tt>\ref VX_DF_IMAGE_U8</tt> and <tt>\ref VX_DF_IMAGE_U1</tt> are supported.
  * \param [out] mean The average pixel value.
  * \param [out] stddev [optional] The standard deviation of the pixel values.
  * \ingroup group_vision_function_meanstddev
@@ -177,9 +177,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxuMeanStdDev(vx_context context, vx_image in
  * \param [in] thresh The thresholding object that defines the parameters of
  * the operation. The <tt>\ref VX_THRESHOLD_INPUT_FORMAT</tt> must be the same as the input image format and
  * the <tt>\ref VX_THRESHOLD_OUTPUT_FORMAT</tt> must be the same as the output image format.
- * \param [out] output The output image, that will contain as pixel value
- * true and false values defined by \p thresh. Only images with format
- * <tt>\ref VX_DF_IMAGE_U8</tt> are supported.
+ * \param [out] output The output image, that will contain as pixel values true and false values defined by \p thresh.
+ * Only images with format <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> are supported.
+ * Must be of the same size as the input image.
  * \ingroup group_vision_function_threshold
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -190,8 +190,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxuThreshold(vx_context context, vx_image inp
 /*! \brief [Immediate] Performs Non-Maxima Suppression on an image, producing an image of the same type.
  * \param [in] context The reference to the overall context.
  * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_S16</tt> format.
- * \param [in] mask [optional] Constrict suppression to a ROI. The mask image is of type <tt>\ref VX_DF_IMAGE_U8</tt> and must be the same dimensions as the input image.
- * \param [in] win_size The size of window over which to perform the localized non-maxima suppression.  Must be odd, and less than or equal to the smallest dimension of the input image.
+ * \param [in] mask [optional] Constrict suppression to a ROI. The mask image is of type <tt>\ref VX_DF_IMAGE_U8</tt>
+ * or <tt>\ref VX_DF_IMAGE_U1</tt> and must be the same dimensions as the input image.
+ * \param [in] win_size The size of window over which to perform the localized non-maxima suppression.  Must be odd,
+ * and less than or equal to the smallest dimension of the input image.
  * \param [out] output The output image, of the same type as the input, that has been non-maxima suppressed.
  * \ingroup group_vision_function_nms
  * \return A <tt>\ref vx_status_e</tt> enumeration.
@@ -213,8 +215,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxuIntegralImage(vx_context context, vx_image
 
 /*! \brief [Immediate] Erodes an image by a 3x3 window.
  * \param [in] context The reference to the overall context.
- * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
+ * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format.
+ * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format, which
+ * must have the same dimensions and type as the input image.
  * \ingroup group_vision_function_erode_image
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -224,8 +227,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxuErode3x3(vx_context context, vx_image inpu
 
 /*! \brief [Immediate] Dilates an image by a 3x3 window.
  * \param [in] context The reference to the overall context.
- * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
+ * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format.
+ * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format, which
+ * must have the same dimensions and type as the input image.
  * \ingroup group_vision_function_dilate_image
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -235,8 +239,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxuDilate3x3(vx_context context, vx_image inp
 
 /*! \brief [Immediate] Computes a median filter on the image by a 3x3 window.
  * \param [in] context The reference to the overall context.
- * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
+ * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format.
+ * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format, which
+ * must have the same dimensions and type as the input image.
  * \ingroup group_vision_function_median_image
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -269,10 +274,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxuGaussian3x3(vx_context context, vx_image i
 /*! \brief [Immediate] Performs Non-linear Filtering.
  * \param [in] context The reference to the overall context.
  * \param [in] function The non-linear filter function. See <tt>\ref vx_non_linear_filter_e</tt>.
- * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
+ * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format.
  * \param [in] mask The mask to be applied to the Non-linear function. <tt>\ref VX_MATRIX_ORIGIN</tt> attribute is used
  * to place the mask appropriately when computing the resulting image. See <tt>\ref vxCreateMatrixFromPattern</tt> and <tt>\ref vxCreateMatrixFromPatternAndOrigin</tt>.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
+ * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format, which
+ * must have the same dimensions and type as the input image.
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
  * \retval * An error occurred. See <tt>\ref vx_status_e</tt>.
@@ -332,40 +338,18 @@ VX_API_ENTRY vx_status VX_API_CALL vxuLaplacianPyramid(vx_context context, vx_im
 VX_API_ENTRY vx_status VX_API_CALL vxuLaplacianReconstruct(vx_context context, vx_pyramid laplacian, vx_image input,
                                        vx_image output);
 
-/*! \brief [Immediate] Computes an accumulation.
+/*! \brief [Immediate] Computes a weighted average image.
  * \param [in] context The reference to the overall context.
- * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
- * \param [in,out] accum The accumulation image in <tt>\ref VX_DF_IMAGE_S16</tt>
- * \ingroup group_vision_function_accumulate
- * \return A <tt>\ref vx_status_e</tt> enumeration.
- * \retval VX_SUCCESS Success
- * \retval * An error occurred. See <tt>\ref vx_status_e</tt>.
- */
-VX_API_ENTRY vx_status VX_API_CALL vxuAccumulateImage(vx_context context, vx_image input, vx_image accum);
-
-/*! \brief [Immediate] Computes a weighted accumulation.
- * \param [in] context The reference to the overall context.
- * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
+ * \param [in] img1 The first <tt>\ref VX_DF_IMAGE_U8</tt> image.
  * \param [in] alpha A <tt>\ref VX_TYPE_FLOAT32</tt> type, the input value with the range \f$ 0.0 \le \alpha \le 1.0 \f$.
- * \param [in,out] accum The <tt>\ref VX_DF_IMAGE_U8</tt> accumulation image.
- * \ingroup group_vision_function_accumulate_weighted
+ * \param [in] img2 The second <tt>\ref VX_DF_IMAGE_U8</tt> image.
+ * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> image.
+ * \ingroup group_vision_function_weighted_average
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
  * \retval * An error occurred. See <tt>\ref vx_status_e</tt>.
  */
-VX_API_ENTRY vx_status VX_API_CALL vxuAccumulateWeightedImage(vx_context context, vx_image input, vx_scalar alpha, vx_image accum);
-
-/*! \brief [Immediate] Computes a squared accumulation.
- * \param [in] context The reference to the overall context.
- * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
- * \param [in] shift A <tt>\ref VX_TYPE_UINT32</tt> type, the input value with the range \f$ 0 \le shift \le 15 \f$.
- * \param [in,out] accum The accumulation image in <tt>\ref VX_DF_IMAGE_S16</tt>
- * \ingroup group_vision_function_accumulate_square
- * \return A <tt>\ref vx_status_e</tt> enumeration.
- * \retval VX_SUCCESS Success
- * \retval * An error occurred. See <tt>\ref vx_status_e</tt>.
- */
-VX_API_ENTRY vx_status VX_API_CALL vxuAccumulateSquareImage(vx_context context, vx_image input, vx_scalar shift, vx_image accum);
+VX_API_ENTRY vx_status VX_API_CALL vxuWeightedAverage(vx_context context, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output);
 
 /*! \brief [Immediate] Computes the minimum and maximum values of the image.
  * \param [in] context The reference to the overall context.
@@ -426,11 +410,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxuConvertDepth(vx_context context, vx_image 
 /*! \brief [Immediate] Computes Canny Edges on the input image into the output image.
  * \param [in] context The reference to the overall context.
  * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
- * \param [in] hyst The double threshold for hysteresis. The <tt>\ref VX_THRESHOLD_INPUT_FORMAT</tt> shall be either 
+ * \param [in] hyst The double threshold for hysteresis. The <tt>\ref VX_THRESHOLD_INPUT_FORMAT</tt> shall be either
  * <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_S16</tt>. The <tt>\ref VX_THRESHOLD_OUTPUT_FORMAT</tt> is ignored.
  * \param [in] gradient_size The size of the Sobel filter window, must support at least 3, 5 and 7.
  * \param [in] norm_type A flag indicating the norm used to compute the gradient, <tt>\ref VX_NORM_L1</tt> or <tt>\ref VX_NORM_L2</tt>.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format with values either 0 or 255.
+ * \param [out] output The binary output image in <tt>\ref VX_DF_IMAGE_U1</tt> or <tt>\ref VX_DF_IMAGE_U8</tt> format
+ * with values either 0 and 1 (<tt>VX_DF_IMAGE_U1</tt>), or 0 and 255 (<tt>VX_DF_IMAGE_U8</tt>).
  * \ingroup group_vision_function_canny
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -454,9 +439,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxuHalfScaleGaussian(vx_context context, vx_i
 
 /*! \brief [Immediate] Computes the bitwise and between two images.
  * \param [in] context The reference to the overall context.
- * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> input image
- * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> input image
- * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> output image.
+ * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> output image, which must have the
+ * same dimensions and type as the input images.
  * \ingroup group_vision_function_and
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -466,9 +452,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxuAnd(vx_context context, vx_image in1, vx_i
 
 /*! \brief [Immediate] Computes the bitwise inclusive-or between two images.
  * \param [in] context The reference to the overall context.
- * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> input image
- * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> input image
- * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> output image.
+ * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> output image, which must have the
+ * same dimensions and type as the input images.
  * \ingroup group_vision_function_or
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -478,9 +465,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxuOr(vx_context context, vx_image in1, vx_im
 
 /*! \brief [Immediate] Computes the bitwise exclusive-or between two images.
  * \param [in] context The reference to the overall context.
- * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> input image
- * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> input image
- * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> output image.
+ * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> output image, which must have the
+ * same dimensions and type as the input images.
  * \ingroup group_vision_function_xor
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -490,8 +478,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxuXor(vx_context context, vx_image in1, vx_i
 
 /*! \brief [Immediate] Computes the bitwise not of an image.
  * \param [in] context The reference to the overall context.
- * \param [in] input The <tt>\ref VX_DF_IMAGE_U8</tt> input image
- * \param [out] output The <tt>\ref VX_DF_IMAGE_U8</tt> output image.
+ * \param [in] input A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [out] output The <tt>\ref VX_DF_IMAGE_U8</tt>  or <tt>\ref VX_DF_IMAGE_U1</tt> output image, which must have
+ * the same dimensions and type as the input image.
  * \ingroup group_vision_function_not
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -542,11 +531,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxuSubtract(vx_context context, vx_image in1,
 
 /*! \brief [Immediate] Performs an Affine warp on an image.
  * \param [in] context The reference to the overall context.
- * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
+ * \param [in] input The input <tt>\ref VX_DF_IMAGE_U1</tt> or <tt>\ref VX_DF_IMAGE_U8</tt> image.
  * \param [in] matrix The affine matrix. Must be 2x3 of type \ref VX_TYPE_FLOAT32.
  * \param [in] type The interpolation type from \ref vx_interpolation_type_e.
  * \ref VX_INTERPOLATION_AREA is not supported.
- * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> image.
+ * \param [out] output The output <tt>\ref VX_DF_IMAGE_U1</tt> or <tt>\ref VX_DF_IMAGE_U8</tt> image of the same
+ * format as the input image.
  * \ingroup group_vision_function_warp_affine
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -647,7 +637,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuOpticalFlowPyrLK(vx_context context,
                               vx_scalar num_iterations,
                               vx_scalar use_initial_estimate,
                               vx_size window_dimension);
-							  
+
 /*! \brief [Immediate]  The function compares an image template against overlapped image regions.
  * \details The detailed equation to the matching can be found in <tt>\ref vx_comp_metric_e</tt>.
  * The output of the template matching node is a comparison map as described in <tt>\ref vx_comp_metric_e</tt>.
@@ -678,7 +668,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuOpticalFlowPyrLK(vx_context context,
  */
 VX_API_ENTRY vx_status VX_API_CALL vxuLBP(vx_context context,
 	vx_image in, vx_enum format, vx_int8 kernel_size, vx_image out);
-					  							  
+
 /*! \brief [Immediate] Performs cell calculations for the average gradient magnitude and gradient orientation histograms.
  * \details Firstly, the gradient magnitude and gradient orientation are computed for each pixel in the input image.
  * Two 1-D centred, point discrete derivative masks are applied to the input image in the horizontal and vertical directions.
@@ -707,7 +697,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuLBP(vx_context context,
  * Each pixel votes for a specific cell histogram bin based on its gradient orientation.  The vote itself is the pixel's gradient magnitude.
  * \f[bins(c, n) = \sum\limits_{w=0}^{cell\_width} \sum\limits_{h=0}^{cell\_height} G_c(w,h) * 1[B_c(w, h, num\_bins) == n]\f]
  * where \f$B_c\f$ produces the histogram bin number based on the gradient orientation of the pixel at location (\f$w\f$, \f$h\f$) in cell \f$c\f$ based on
- * the \f$num\_bins\f$ and \f[1[B_c(w, h, num\_bins) == n]\f] is a delta-function with value 1 when \f$B_c(w, h, num\_bins) == n\f$ or 0 otherwise. 
+ * the \f$num\_bins\f$ and \f[1[B_c(w, h, num\_bins) == n]\f] is a delta-function with value 1 when \f$B_c(w, h, num\_bins) == n\f$ or 0 otherwise.
  * \param [in] context The reference to the overall context.
  * \param [in] input The input image of type <tt>\ref VX_DF_IMAGE_U8</tt>.
  * \param [in] cell_width The histogram cell width of type <tt>\ref VX_TYPE_INT32</tt>.
@@ -760,14 +750,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxuHOGCells(vx_context context, vx_image inpu
  * \retval VX_SUCCESS Success
  * \retval * An error occurred. See <tt>\ref vx_status_e</tt>.
  */
- 
+
 VX_API_ENTRY vx_status VX_API_CALL vxuHOGFeatures(vx_context context, vx_image input, vx_tensor magnitudes, vx_tensor bins, const vx_hog_t *params, vx_size hog_param_size, vx_tensor features);
 
 /*! \brief [Immediate] Finds the Probabilistic Hough Lines detected in the input binary image, each line is stored in the output array as a set of points (x1, y1, x2, y2) .
- * \details Some implementations of the algorithm may have a random or non-deterministic element. If the target application is in a safety-critical environment this 
+ * \details Some implementations of the algorithm may have a random or non-deterministic element. If the target application is in a safety-critical environment this
  * should be borne in mind and steps taken in the implementation, the application or both to achieve the level of determinism required by the system design.
  * \param [in] context The reference to the overall context.
- * \param [in] input 8 bit, single channel binary source image
+ * \param [in] input A single channel binary source image of type <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt>.
  * \param [in] params parameters of the struct <tt>\ref vx_hough_lines_p_t</tt>
  * \param [out] lines_array lines_array contains array of lines, see <tt>\ref vx_line2d_t</tt> The order of lines in implementation dependent
  * \param [out] num_lines [optional] The total number of detected lines in image. Use a VX_TYPE_SIZE scalar
@@ -815,7 +805,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuBilateralFilter(vx_context context, vx_ten
 /*! \brief [Immediate] Performs element wise multiplications on element values in the input tensor data with a scale.
  * \param [in] context The reference to the overall context.
  * \param [in] input1 Input tensor data.  Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.  
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.
  * \param [in] input2 Input tensor data. The dimensions and sizes of input2 match those of input1, unless the vx_tensor of one or more dimensions in input2 is 1.
  * In this case, those dimensions are treated as if this tensor was expanded to match the size of the corresponding dimension of input1,
  * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal.
@@ -835,11 +825,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxuTensorMultiply(vx_context context, vx_tens
 /*! \brief [Immediate] Performs arithmetic addition on element values in the input tensor data.
  * \param [in] context The reference to the overall context.
  * \param [in] input1 Input tensor data.  Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.  
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.
  * \param [in] input2 Input tensor data. The dimensions and sizes of input2 match those of input1, unless the vx_tensor of one or more dimensions in input2 is 1.
  * In this case, those dimensions are treated as if this tensor was expanded to match the size of the corresponding dimension of input1,
- * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal. 
- * The data type must match the data type of Input1. 
+ * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal.
+ * The data type must match the data type of Input1.
  * \param [in] policy A <tt>\ref vx_convert_policy_e</tt> enumeration.
  * \param [out] output The output tensor data with the same dimensions as the input tensor data.
  * \ingroup group_vision_function_tensor_add
@@ -852,11 +842,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxuTensorAdd(vx_context context, vx_tensor in
 /*! \brief [Immediate] Performs arithmetic subtraction on element values in the input tensor data.
  * \param [in] context The reference to the overall context.
  * \param [in] input1 Input tensor data.  Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.  
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.
  * \param [in] input2 Input tensor data. The dimensions and sizes of input2 match those of input1, unless the vx_tensor of one or more dimensions in input2 is 1.
  * In this case, those dimensions are treated as if this tensor was expanded to match the size of the corresponding dimension of input1,
- * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal. 
- * The data type must match the data type of Input1. 
+ * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal.
+ * The data type must match the data type of Input1.
  * \param [in] policy A <tt>\ref vx_convert_policy_e</tt> enumeration.
  * \param [out] output The output tensor data with the same dimensions as the input tensor data.
  * \ingroup group_vision_function_tensor_subtract
@@ -868,8 +858,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxuTensorSubtract(vx_context context, vx_tens
 
 /*! \brief [Immediate] Performs LUT on element values in the input tensor data.
  * \param [in] context The reference to the overall context.
- * \param [in] input1 Input tensor data. Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8, 
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt>, with fixed_point_position 0. 
+ * \param [in] input1 Input tensor data. Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt>, with fixed_point_position 0.
  * \param [in] lut The look-up table to use, of type <tt>\ref vx_lut</tt>.
  * The elements of input1 are treated as unsigned integers to determine an index into the look-up table.
  * The data type of the items in the look-up table must match that of the output tensor.
@@ -885,7 +875,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuTensorTableLookup(vx_context context, vx_t
  * The tensor is transposed according to a specified 2 indexes in the tensor (0-based indexing)
  * \param [in] context The reference to the overall context.
  * \param [in] input Input tensor data, Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0. 
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.
  * \param [out] output output tensor data,
  * \param [in] dimension1 Dimension index that is transposed with dim 2.
  * \param [in] dimension2 Dimension index that is transposed with dim 1.
@@ -926,7 +916,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuTensorConvertDepth(vx_context context, vx_
  */
 VX_API_ENTRY vx_status VX_API_CALL vxuTensorMatrixMultiply(vx_context context, vx_tensor input1, vx_tensor input2, vx_tensor input3,
     const vx_tensor_matrix_multiply_params_t *matrix_multiply_params, vx_tensor output);
-					  
+
 
 /*! \brief [Immediate] Copy data from one object to another.
  * \param [in] context The reference to the overall context.

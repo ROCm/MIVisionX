@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include <decoder.h>
 #include <turbo_jpeg_decoder.h>
 #include <fused_crop_decoder.h>
+#include <open_cv_decoder.h>
 #include "decoder_factory.h"
 #include "commons.h"
 
@@ -36,6 +37,11 @@ std::shared_ptr<Decoder> create_decoder(DecoderConfig config) {
         case DecoderType::FUSED_TURBO_JPEG:
             return std::make_shared<FusedCropTJDecoder>();
             break;
+#if ENABLE_OPENCV
+        case DecoderType::OPENCV_DEC:
+            return std::make_shared<CVDecoder>();
+            break;
+#endif
         default:
             THROW("Unsupported decoder type "+ TOSTR(config.type()));
     }

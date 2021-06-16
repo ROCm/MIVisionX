@@ -65,6 +65,7 @@ private:
     }; 
     FindMaxSize _width_max; 
     FindMaxSize _height_max;
+    DecoderConfig _decoder_cfg_cv;
     std::shared_ptr<Decoder> _decoder;
     std::shared_ptr<VideoDecoder> _video_decoder;
     std::shared_ptr<Reader> _reader;

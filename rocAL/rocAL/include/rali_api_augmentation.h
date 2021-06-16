@@ -24,6 +24,13 @@ THE SOFTWARE.
 #define MIVISIONX_RALI_API_AUGMENTATION_H
 #include "rali_api_types.h"
 
+/// \param context
+/// \param input
+/// \param new_order
+/// \param new_sequence_length
+/// \param sequence_length
+/// \param is_output
+/// \return
 extern "C"  RaliImage  RALI_API_CALL raliSequenceRearrange(RaliContext context, RaliImage input,
                                                 unsigned int* new_order, unsigned int  new_sequence_length,
                                                 unsigned int sequence_length, bool is_output );
@@ -103,7 +110,7 @@ extern "C"  RaliImage  RALI_API_CALL raliRotateFixed(RaliContext context, RaliIm
 /// \param beta
 /// \return
 extern "C"  RaliImage  RALI_API_CALL raliBrightness(RaliContext context, RaliImage input, bool is_output ,
-                                                    RaliFloatParam alpha = NULL, RaliIntParam beta = NULL);
+                                                    RaliFloatParam alpha = NULL, RaliFloatParam beta = NULL);
 
 /// Accepts U8 and RGB24 inputs
 /// \param context
@@ -112,7 +119,7 @@ extern "C"  RaliImage  RALI_API_CALL raliBrightness(RaliContext context, RaliIma
 /// \param is_output
 /// \return
 extern "C"  RaliImage  RALI_API_CALL raliBrightnessFixed(RaliContext context, RaliImage input,
-                                                            float alpha, int beta,
+                                                            float alpha, float beta,
                                                             bool is_output );
 
 /// Accepts U8 and RGB24 inputs

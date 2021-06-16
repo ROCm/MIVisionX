@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include "commons.h"
 
 
-typedef  struct { float x; float y; float w; float h; } BoundingBoxCord;
+typedef  struct { float l; float t; float r; float b; } BoundingBoxCord;
 typedef  std::vector<BoundingBoxCord> BoundingBoxCords;
 typedef  std::vector<int> BoundingBoxLabels;
 typedef  struct { int w; int h; } ImgSize;

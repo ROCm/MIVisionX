@@ -164,16 +164,6 @@ ImageLoader::load_routine()
 
         auto load_status = LoaderModuleStatus::NO_MORE_DATA_TO_READ;
         {
-            // Till here we can access metadata reader from loader module
-            // In image_loader (image_read_and_decode) introduce a vector of vector (_bbox_vector)
-            // here with the image names fetch the bounding boxes and append it in _image_loader()
-            // for images_name vector:
-            //     fetch meta data using lookup
-            //     convert Bboxcords to image_read_and_decode->_bbox_vector
-            // _meta_data_reader->lookup(_decoded_img_info._image_names);
-            // _meta_data = _meta_data_reader->get_output();
-            // std::cerr << "\nMeta data size ; " << _meta_data->size();
-
             load_status = _image_loader->load(data,
                                               _decoded_img_info._image_names,
                                               _output_image->info().width(),

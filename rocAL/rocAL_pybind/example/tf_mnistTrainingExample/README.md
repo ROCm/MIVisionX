@@ -1,4 +1,4 @@
-## Tensorflow MNIST digit classification example with RALI pipeline
+## Tensorflow MNIST digit classification example with rocAL pipeline
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@
 
 ### Step 1. Build and install rali_pybind plugin 
 ```
-sudo ./run.sh (MIVisionX/rali/rali_pybind/)
+sudo ./run.sh (MIVisionX/rocAL/rocAL_pybind/)
 ```
 ### Step 2. Create venv and install tensorflow 1.15 into it & activate venv to run TF. (alternatively use on of the ROCm tensorflow docker container) 
 * Install [TF1.15](https://www.tensorflow.org/install/pip)
@@ -24,7 +24,7 @@ sudo ./run.sh (MIVisionX/rali/rali_pybind/)
 * python3 mnist_tfrecord.py --directory <folderName> (creates tfrecord in <folderName>)
 
 ```
-### Step 4. Run training with RALI on MNIST dataset
+### Step 4. Run training with rocAL on MNIST dataset
 ```
 * python3 tf_mnist_classification_rali_py <mnist_tfrecord_folder, eg./tmp/mnist> cpu <batch_size>
 

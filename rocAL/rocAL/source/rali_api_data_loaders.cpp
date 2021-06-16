@@ -24,11 +24,11 @@ THE SOFTWARE.
 #include <assert.h>
 #include <boost/filesystem.hpp>
 #ifdef RALI_VIDEO
-    extern "C"
-    {
+extern "C"
+{
     #include <libavformat/avformat.h>
     #include <libavcodec/avcodec.h>
-    }
+}
     #include "node_video_loader.h"
     #include "node_video_loader_single_shard.h"
 #include "video_properties.h"
@@ -47,9 +47,7 @@ THE SOFTWARE.
 #include "node_resize.h"
 #include "meta_node_resize.h"
 
-
 namespace filesys = boost::filesystem;
-
 
 std::tuple<unsigned, unsigned>
 evaluate_image_data_set(RaliImageSizeEvaluationPolicy decode_size_policy, StorageType storage_type,
@@ -202,7 +200,8 @@ raliJpegFileSource(
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RaliDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -210,6 +209,8 @@ raliJpegFileSource(
     {
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == RALI_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -241,7 +242,7 @@ raliJpegFileSource(
                                                                           source_path, "", 0, 0, 0,
                                                                           std::map<std::string, std::string>(),
                                                                           StorageType::FILE_SYSTEM,
-                                                                          DecoderType::TURBO_JPEG,
+                                                                          decType,
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),

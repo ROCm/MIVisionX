@@ -36,6 +36,7 @@ THE SOFTWARE.
 // common header files
 #include <VX/vx.h>
 #include <VX/vx_khr_nn.h>
+#include <VX/vx_compatibility.h>
 #include <vx_ext_amd.h>
 #include <miopen/miopen.h>
 #include <iostream>
@@ -143,6 +144,7 @@ vx_status publishFullyConnectedLayer(vx_context context);
 vx_status publishPoolingLayer(vx_context context);
 vx_status publishSoftmaxLayer(vx_context context);
 vx_status publishNormalizationLayer(vx_context context);
+vx_status publishLocalResponseNormalizationLayer(vx_context context);
 vx_status publishActivationLayer(vx_context context);
 vx_status publishROIPoolingLayer(vx_context context);
 vx_status publishDeconvolutionLayer(vx_context context);

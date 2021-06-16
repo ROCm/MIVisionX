@@ -5804,7 +5804,6 @@ VX_API_CALL vx_node VX_API_CALL vxExtrppNode_Nop(vx_graph graph, vx_image pSrc, 
     return node;
 }
 
-
 VX_API_CALL vx_node VX_API_CALL  vxExtrppNode_SequenceRearrange(vx_graph graph,vx_image pSrc,vx_image pDst, vx_array newOrder, vx_uint32 newSequenceLength, vx_uint32 sequenceLength)
 {
 	vx_node node = NULL;

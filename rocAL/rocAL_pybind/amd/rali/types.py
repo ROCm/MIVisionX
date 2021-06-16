@@ -28,6 +28,7 @@ from rali_pybind.types import USER_GIVEN_SIZE_ORIG
 from rali_pybind.types import RGB
 from rali_pybind.types import BGR
 from rali_pybind.types import GRAY
+from rali_pybind.types import RGB_PLANAR
 
 #     RaliTensorLayout
 from rali_pybind.types import NHWC
@@ -63,7 +64,8 @@ _known_types={
     NCHW : ("NCHW", NCHW),
 	BGR : ("BGR", BGR),
     RGB : ("RGB", RGB),
-	GRAY : ("GRAY", GRAY)
+	GRAY : ("GRAY", GRAY),
+    RGB_PLANAR : ("RGB_PLANAR", RGB_PLANAR)
 }
 
 

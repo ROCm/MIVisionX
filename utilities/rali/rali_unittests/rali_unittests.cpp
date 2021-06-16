@@ -53,7 +53,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 int main(int argc, const char **argv)
 {
     // check command-line usage
-    const size_t MIN_ARG_COUNT = 2;
+    const int MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT)
     {
         printf("Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0 one_hot_labels=num_of_classes/0 \n");
@@ -91,7 +91,7 @@ int main(int argc, const char **argv)
 int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes)
 {
     size_t num_threads = 1;
-    int inputBatchSize = 1;
+    unsigned int inputBatchSize = 2;
     int decode_max_width = width;
     int decode_max_height = height;
     std::cout << ">>> test case " << test_case << std::endl;
@@ -99,7 +99,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 
     RaliImageColor color_format = (rgb != 0) ? RaliImageColor::RALI_COLOR_RGB24
                                              : RaliImageColor::RALI_COLOR_U8;
-    
 
     auto handle = raliCreate(inputBatchSize,
                              gpu ? RaliProcessMode::RALI_PROCESS_GPU : RaliProcessMode::RALI_PROCESS_CPU, 0,
@@ -116,37 +115,27 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     raliSetSeed(0);
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
-    RaliFloatParam rand_crop_area = raliCreateFloatUniformRand(0.3, 0.5);
     RaliIntParam color_temp_adj = raliCreateIntParameter(-50);
 
 
-    // Creating a custom random object to set a limited number of values to randomize the rotation angle
-    const size_t num_values = 3;
-    float values[num_values] = {0, 10, 135};
-    double frequencies[num_values] = {1, 5, 5};
-    RaliFloatParam rand_angle = raliCreateFloatRand(values, frequencies,
-                                                    sizeof(values) / sizeof(values[0]));
-
-    //num_values = 2;
-    int new_values[2] = {0, 1};
-    double new_freq[2] = {40, 60};
-    RaliIntParam rand_mirror = raliCreateIntRand(new_values, new_freq, 2);
-
-   /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
+    /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
     RaliMetaData meta_data;
-    char key1[25] = "image/encoded";
+
 #ifdef TF_READER
+    char key1[25] = "image/encoded";
     char key2[25] = "image/class/label";
+    char key8[25] = "image/filename";
 #elif defined TF_READER_DETECTION
+    char key1[25] = "image/encoded";
     char key2[25] = "image/object/class/label";
-#endif
     char key3[25] = "image/object/class/text";
     char key4[25] = "image/object/bbox/xmin";
     char key5[25] = "image/object/bbox/ymin";
     char key6[25] = "image/object/bbox/xmax";
     char key7[25] = "image/object/bbox/ymax";
     char key8[25] = "image/filename";
+#endif
 
 #if defined RANDOMBBOXCROP
     bool all_boxes_overlap = true;
@@ -231,13 +220,9 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 
     int resize_w = width, resize_h = height; // height and width
 
-    // RaliImage image0 = input1;
-    //RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
+    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
 
-    RaliFlipAxis axis_h = RALI_FLIP_HORIZONTAL;
-    RaliFlipAxis axis_v = RALI_FLIP_VERTICAL;
-
-    RaliImage image0, image1;
+    RaliImage image1;
 
     switch (test_case)
     {
@@ -246,8 +231,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         std::cout << ">>>>>>> Running "
                   << "raliResize" << std::endl;
         //auto image_int = raliResize(handle, image0, resize_w , resize_h , false);
-        // image1 = raliResize(handle, image0, resize_w, resize_h, true);
-        image1 = input1;
+        image1 = raliResize(handle, image0, resize_w, resize_h, true);
     }
     break;
     case 1:
@@ -631,7 +615,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         return -1;
     }
 
-    printf("\n\nAugmented copies count %d \n", raliGetAugmentationBranchCount(handle));
+    printf("\n\nAugmented copies count %lu \n", raliGetAugmentationBranchCount(handle));
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
     int h = raliGetAugmentationBranchCount(handle) * raliGetOutputHeight(handle);
@@ -645,13 +629,11 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     int col_counter = 0;
     //cv::namedWindow("output", CV_WINDOW_AUTOSIZE);
     printf("Going to process images\n");
-    printf("Remaining images %d \n", raliGetRemainingImages(handle));
+    printf("Remaining images %lu \n", raliGetRemainingImages(handle));
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    int count = 0;
     while (raliGetRemainingImages(handle) >= inputBatchSize)
     {
-        count++;
         if (raliRun(handle) != 0)
             break;
         int label_id[inputBatchSize];
@@ -677,19 +659,20 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
             std::cout<<"\nwidth:"<<img_sizes_batch[i*2];
             std::cout<<"\nHeight:"<<img_sizes_batch[(i*2)+1];
         }
+
+#else
         raliGetImageLabels(handle, label_id);
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];
         numOfClasses = num_of_classes;
         int label_one_hot_encoded[inputBatchSize * numOfClasses];
         raliGetImageName(handle, img_name);
-        if(num_of_classes != 0)
+        if (num_of_classes != 0)
         {
-        raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
+            raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
         }
         std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
-        for (int i = 0; i < inputBatchSize; i++)
-
+        for (unsigned int i = 0; i < inputBatchSize; i++)
         {   
             std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
             if(num_of_classes != 0)
@@ -704,14 +687,11 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                 {
                     std::cout << idx_value;
                 }
-
             }
             }
             std::cout << "\n";
         }
 #endif
-    RaliIntParam color_temp_adj = raliCreateIntParameter(-50);
-
         auto last_colot_temp = raliGetIntValue(color_temp_adj);
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);
 

@@ -1,6 +1,5 @@
 /*
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+ * Copyright (c) 2012-2020 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +42,6 @@ enum vx_library_e {
  * When programming the parameters, use
  * \arg <tt>\ref VX_INPUT</tt> for [in]
  * \arg <tt>\ref VX_OUTPUT</tt> for [out]
- * \arg <tt>\ref VX_BIDIRECTIONAL</tt> for [in,out]
  *
  * When programming the parameters, use
  * \arg <tt>\ref VX_TYPE_IMAGE</tt> for a <tt>\ref vx_image</tt> in the size field of <tt>\ref vxGetParameterByIndex</tt> or <tt>\ref vxSetParameterByIndex</tt>  * \arg <tt>\ref VX_TYPE_ARRAY</tt> for a <tt>\ref vx_array</tt> in the size field of <tt>\ref vxGetParameterByIndex</tt> or <tt>\ref vxSetParameterByIndex</tt>  * \arg or other appropriate types in \ref vx_type_e.
@@ -173,21 +171,6 @@ enum vx_kernel_e {
      * \see group_vision_function_gaussian_pyramid
      */
     VX_KERNEL_GAUSSIAN_PYRAMID = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x15,
-
-    /*! \brief The accumulation kernel.
-     * \see group_vision_function_accumulate
-     */
-    VX_KERNEL_ACCUMULATE = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x16,
-
-    /*! \brief The weigthed accumulation kernel.
-     * \see group_vision_function_accumulate_weighted
-     */
-    VX_KERNEL_ACCUMULATE_WEIGHTED = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x17,
-
-    /*! \brief The squared accumulation kernel.
-     * \see group_vision_function_accumulate_square
-     */
-    VX_KERNEL_ACCUMULATE_SQUARE = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x18,
 
     /*! \brief The min and max location kernel.
      * \see group_vision_function_minmaxloc
@@ -392,6 +375,12 @@ enum vx_kernel_e {
     * \see group_vision_function_min
     */
     VX_KERNEL_MIN = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x3F,
+
+    /*! \brief The weigthed average kernel.
+     * \see group_vision_function_weighted_average
+     */
+    VX_KERNEL_WEIGHTED_AVERAGE = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x40,
+
 };
 
 #ifdef  __cplusplus

@@ -10,3 +10,13 @@ rali/pybind_python/amd_rali.egg-info/
 rali/pybind_python/dist/
 rali/pybind_python/example/1.2.3/
 temp/
+opencv-3.4.0/*
+openvx_test_results*
+openvx_node_results*
+platform_report*
+rocprof_profiling_temp*
+rocprof_profiling_outputs*
+rocprof_vision_tests_outputs*
+dumps*
+generatedGDFs*
+vision_report_Linux*

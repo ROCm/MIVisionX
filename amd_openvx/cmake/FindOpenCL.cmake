@@ -106,7 +106,7 @@ else()
 
     if(OpenCL_FOUND)
         execute_process(
-            COMMAND bash -c "nm -gDC ${OPENCL_LIBRARIES} | grep OPENCL_2.2"
+            COMMAND bash -c "nm -gDC ${OpenCL_LIBRARIES} | grep OPENCL_2.2"
             OUTPUT_VARIABLE outVar
         )
         if(NOT ${outVar} STREQUAL "")

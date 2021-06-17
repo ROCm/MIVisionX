@@ -1867,6 +1867,8 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
     // INFO: use VX_KERNEL_AMD_HARRIS_SOBEL_* kernels to compute Gx^2, Gx*Gy, Gy^2
     //       use VX_KERNEL_AMD_HARRIS_SCORE_* kernels to compute Vc
     //       use VX_KERNEL_AMD_HARRIS_MERGE_SORT_AND_PICK_XY_HVC kernel for final step
+    //       disable buffer merging for HarrisCorners
+    agoSetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS", "1");
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
         // TBD: not implemented yet

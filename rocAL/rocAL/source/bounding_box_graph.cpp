@@ -112,8 +112,7 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
         crop_box.t = crop_cords[i]->crop_top;
         crop_box.r = crop_cords[i]->crop_right;
         crop_box.b = crop_cords[i]->crop_bottom;
-        // std::cout<<"Original <Widthx,Height>"<<original_width[i]<<" X "<<original_height[i];
-        // std::cout  << " In bounding box graph ::crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
+        
 
         for (uint j = 0; j < bb_count; j++)
         {
@@ -124,7 +123,6 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
             box.t = coords_buf[m + 1];
             box.r = coords_buf[m + 2];
             box.b = coords_buf[m + 3];
-            // std::cout  << " In bounding box graph ::valid BBOXES ::bboxes<l,t,r,b>: " << box.l << " X " << box.t << " X " << box.r << " X " << box.b << std::endl;
 
             auto x_c = 0.5 * (box.l + box.r);
             auto y_c = 0.5 * (box.t + box.b);
@@ -138,7 +136,6 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
                 box.t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
                 box.r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
                 box.b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
-                // std::cout<<"\nn bounding box grpah: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
 
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);

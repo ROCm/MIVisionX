@@ -88,12 +88,10 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     {
         // Random bbox crop returns normalized crop cordinates
         // hence bringing it back to absolute cordinates 
-        std::cout<<"IN FUSED JEPG CROP DECODER"<<std::endl;
         x1 = _bbox_coord[0] * original_image_width;
         y1 = _bbox_coord[1] * original_image_height;
         crop_width = (_bbox_coord[2]) * original_image_width;
         crop_height = (_bbox_coord[3]) * original_image_height;
-        std::cout << "<x,y,w,h>"<<x1<<" x "<<y1<<" x "<<crop_width<<" x "<<crop_height<<std::endl;
 
     }
     else

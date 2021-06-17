@@ -269,16 +269,13 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
     std::uniform_int_distribution<> option_dis(0, 6);
     std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
-    // std::cout << "Inside get batch crop coordinates" << std::endl;
     size_t sample = 0;
     _crop_coords.clear();
     for (unsigned int i = 0; i < image_names.size(); i++)
     {
-        // std::cout<<"FOR loop"<<std::endl;
         auto image_name = image_names[i];
         if(exists(image_name) )
             {
-                std::cout<<"***IF statement****"<<std::endl;
                 pCropCord CropCord = get_crop_cord(image_name);
                 coords_buf[0] = CropCord->crop_left ;
                 coords_buf[1] = CropCord->crop_top;
@@ -288,7 +285,6 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
                 continue;
             }   
         
-        std::cout << "Image Name::" << image_name << std::endl;
         auto elem = _meta_bbox_map_content.find(image_name);
         if (_meta_bbox_map_content.end() == elem)
             THROW("ERROR: Given name not present in the map" + image_name)
@@ -298,11 +294,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
         ImgSizes img_sizes = elem->second->get_img_sizes();
 
         bb_count = bb_coords.size();
-        // std::cout << "BB count::" << bb_count << std::endl;
-        // std::cout << "Image Name::" << image_name << std::endl;
         
-        // std::cout << "Image img sizes wxh::" << img_sizes[0].w << "x" << img_sizes[0].h << std::endl;
-
         while (true)
         {
             crop_success = false;
@@ -367,8 +359,6 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
                     if ((x_c > crop_box.l) && (x_c < crop_box.r) && (y_c > crop_box.t) && (y_c < crop_box.b))
                     {
                         valid_bbox_count++;
-                        std::cout << image_name << " In random bbox crop ::valid BBOXES ::bboxes<l,t,r,b>: " << bb_coords[j].l << " X " << bb_coords[j].t << " X " << bb_coords[j].r << " X " << bb_coords[j].b << std::endl;
-
                     }
                 }
                 if (valid_bbox_count == 0)
@@ -384,9 +374,8 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
 
         // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
         add(image_name, crop_box);
-        std::cout << image_name << " In random bbox crop reader crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
+
         //Crop coordinates expected in "xywh" format
-        // std::vector<float> coords_buf(4);
         coords_buf[0] = crop_box.l;
         coords_buf[1] = crop_box.t;
         coords_buf[2] = crop_box.r - crop_box.l;
@@ -394,19 +383,6 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
 
         _crop_coords.push_back(coords_buf);
         
-        std::cout<<"PRINTING CROP VALUES INSIDE random bbox crop"<<std::endl;
-        std::cout<<"SIZE"<<_crop_coords.size();
-        std::vector< std::vector<float> > :: iterator row;
-        std::vector<float> ::iterator col;
-        for (row = _crop_coords.begin(); row !=_crop_coords.end(); row++)
-        {
-            for (col = row->begin(); col !=row->end(); col++)
-            {
-                std::cout << *col << std::endl;
-            }
-
-        }
-
         sample++;
     }
     return _crop_coords;

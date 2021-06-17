@@ -29,6 +29,7 @@ void BoundingBoxGraph::process(MetaDataBatch *meta_data)
     }
 }
 
+//not required since the bbox are normalized in the very beggining -> remove the call in master graph also
 void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info)
 {
     std::vector<uint32_t> original_height = decode_image_info._original_height;
@@ -111,6 +112,8 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
         crop_box.t = crop_cords[i]->crop_top;
         crop_box.r = crop_cords[i]->crop_right;
         crop_box.b = crop_cords[i]->crop_bottom;
+        // std::cout<<"Original <Widthx,Height>"<<original_width[i]<<" X "<<original_height[i];
+        // std::cout  << " In bounding box graph ::crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
 
         for (uint j = 0; j < bb_count; j++)
         {
@@ -121,6 +124,8 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
             box.t = coords_buf[m + 1];
             box.r = coords_buf[m + 2];
             box.b = coords_buf[m + 3];
+            // std::cout  << " In bounding box graph ::valid BBOXES ::bboxes<l,t,r,b>: " << box.l << " X " << box.t << " X " << box.r << " X " << box.b << std::endl;
+
             auto x_c = 0.5 * (box.l + box.r);
             auto y_c = 0.5 * (box.t + box.b);
             if ((x_c > crop_box.l) && (x_c < crop_box.r) && (y_c > crop_box.t) && (y_c < crop_box.b))

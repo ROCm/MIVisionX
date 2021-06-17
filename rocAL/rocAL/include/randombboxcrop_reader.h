@@ -71,6 +71,7 @@ class RandomBBoxCropReader: public RandomBBoxCrop_MetaDataReader
 public:
     void init(const RandomBBoxCrop_MetaDataConfig& cfg) override;
     void lookup(const std::vector<std::string>& image_names) override;
+    std::vector<std::vector <float>>  get_batch_crop_coords(const std::vector<std::string>& image_names) override ;
     void read_all() override;
     void release() override;
     void print_map_contents();
@@ -95,7 +96,8 @@ private:
     FloatParam *crop_aspect_ratio = NULL;
     int _user_batch_size;
     int64_t _seed;
-    int add(std::string image_name, BoundingBoxCord bbox);
+    void add(std::string image_name, BoundingBoxCord bbox);
+    std::vector<std::vector <float>> _crop_coords;
     bool exists(const std::string &image_name);
     std::map<std::string, std::shared_ptr<CropCord>> _map_content;
     std::map<std::string, std::shared_ptr<CropCord>>::iterator _itr;

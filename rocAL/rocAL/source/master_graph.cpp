@@ -350,7 +350,7 @@ MasterGraph::reset()
     // clearing meta ring buffer
     // if random_bbox meta reader is used: read again to get different crops
     if (_randombboxcrop_meta_data_reader != nullptr)
-        _randombboxcrop_meta_data_reader->read_all();
+        _randombboxcrop_meta_data_reader->release();
     // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
     _loader_module->reset();
     // restart processing of the images
@@ -892,7 +892,7 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
     RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts, seed);
     _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
     _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
-    _randombboxcrop_meta_data_reader->read_all();
+    // _randombboxcrop_meta_data_reader->read_all();
     if (_random_bbox_crop_cords_data)
         THROW("Metadata can only have a single output")
     else

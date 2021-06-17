@@ -177,7 +177,7 @@ class RALICOCOIterator(object):
         self.loader.GetImgSizes(self.img_size)
         print("Image sizes:", self.img_size)
         # Draw images: Make sure to uncomment the below line to dump images
-        # img = torch.from_numpy(self.out)
+        img = torch.from_numpy(self.out)
         count = 0
         sum_count = 0
         for i in range(self.bs):
@@ -197,7 +197,7 @@ class RALICOCOIterator(object):
             self.bb_2d_numpy = (self.bboxes[sum_count*4: (sum_count+count)*4])
             self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
             # Draw images: make sure to revert the mean and std to 0 and 1 for displaying original images without normalization
-            # draw_patches(img[i],self.img_name, self.bb_2d_numpy)
+            draw_patches(img[i],self.img_name, self.bb_2d_numpy)
             if(self.loader._BoxEncoder == True):
                 
                 # Converting from "xywh" to "ltrb" format ,
@@ -275,6 +275,7 @@ def draw_patches(img,idx, bboxes):
         loc_ = [l, t ,r, b]
         color = (255, 0, 0)
         thickness = 2
+        cv2.waitKey(20)
         image = cv2.UMat(image).get()
         image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)  
         cv2.imwrite(str(idx)+"_"+"train"+".png", 255*image)
@@ -340,7 +341,7 @@ def main():
     pipe.build()
     imageIterator = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset)
-    epochs = 5
+    epochs = 6
     for epoch in range(int(epochs)):
         print("EPOCH:::::",epoch)
         for i, it in enumerate(imageIterator, 0):

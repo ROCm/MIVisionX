@@ -178,6 +178,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         //return LoaderModuleStatus::OK;
     }else {
         while ((file_counter != _batch_size) && _reader->count() > 0) {
+            std::cout<<"file counter"<<file_counter;
             size_t fsize = _reader->open();
             if (fsize == 0) {
                 WRN("Opened file " + _reader->id() + " of size 0");
@@ -188,21 +189,47 @@ ImageReadAndDecode::load(unsigned char* buff,
 
             _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
             _image_names[file_counter] = _reader->id();
-            if(_randombboxcrop_meta_data_reader)
-            {
-                _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[file_counter]);
-                std::vector<float> coords_buf(4);
-                coords_buf[0] = _CropCord->crop_left ;
-                coords_buf[1] = _CropCord->crop_top;
-                coords_buf[2] = _CropCord->crop_right- _CropCord->crop_left ;
-                coords_buf[3] = _CropCord->crop_bottom- _CropCord->crop_top;
-                _bbox_coords.push_back(coords_buf);
-                coords_buf.clear();
-            }
+            // if(_randombboxcrop_meta_data_reader)
+            // {
+            //     _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[file_counter]);
+            //     std::vector<float> coords_buf(4);
+            //     coords_buf[0] = _CropCord->crop_left ;
+            //     coords_buf[1] = _CropCord->crop_top;
+            //     coords_buf[2] = _CropCord->crop_right- _CropCord->crop_left ;
+            //     coords_buf[3] = _CropCord->crop_bottom- _CropCord->crop_top;
+            //     _bbox_coords.push_back(coords_buf);
+            //     coords_buf.clear();
+            // }
             _reader->close();
             _compressed_image_size[file_counter] = fsize;
             file_counter++;
         }
+        for (unsigned i = 0; i < _image_names.size(); i++)
+        {
+            auto image_name = _image_names[i];
+            std::cout << "Images names vector of a batch in im read and decode::" << image_name << std::endl;
+        }
+        
+        
+        if (_randombboxcrop_meta_data_reader)
+        {
+            //Fetch the crop co-ordinates for a batch of images
+            std::cout << "Fetching the crop coordinates batch by batch";
+            _bbox_coords = _randombboxcrop_meta_data_reader->get_batch_crop_coords(_image_names);
+        }
+        std::cout<<"PRINTING CROP VALUES INSIDE IMAGE READ AND DECODE"<<std::endl;
+        std::vector< std::vector<float> > :: iterator row;
+        std::vector<float> ::iterator col;
+        for (row = _bbox_coords.begin(); row !=_bbox_coords.end(); row++)
+        {
+            for (col = row->begin(); col !=row->end(); col++)
+            {
+                std::cout << *col << std::endl;
+            }
+
+        }
+        
+    
     }
 
     _file_load_time.end();// Debug timing
@@ -245,6 +272,7 @@ ImageReadAndDecode::load(unsigned char* buff,
             size_t scaledw, scaledh;
             if(_decoder[i]->is_partial_decoder() && _randombboxcrop_meta_data_reader)
             {
+                std::cout<<"IS PARTIAL DECODER"<<std::endl;
                 _decoder[i]->set_bbox_coords(_bbox_coords[i]);
             }
             

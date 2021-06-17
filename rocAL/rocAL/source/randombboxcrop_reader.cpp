@@ -112,16 +112,15 @@ pCropCord RandomBBoxCropReader::get_crop_cord(const std::string &image_name)
     return it->second;
 }
 
-int RandomBBoxCropReader::add(std::string image_name, BoundingBoxCord crop_box)
+void RandomBBoxCropReader::add(std::string image_name, BoundingBoxCord crop_box)
 {
-    
-    pCropCord random_bbox_cords = std::make_shared<CropCord>(crop_box.l, crop_box.t, crop_box.r , crop_box.b );
+
+    pCropCord random_bbox_cords = std::make_shared<CropCord>(crop_box.l, crop_box.t, crop_box.r, crop_box.b);
     if (exists(image_name))
     {
-        return 0;
+        return;
     }
     _map_content.insert(std::pair<std::string, std::shared_ptr<CropCord>>(image_name, random_bbox_cords));
-    return 1;
 }
 
 void RandomBBoxCropReader::print_map_contents()
@@ -239,13 +238,178 @@ void RandomBBoxCropReader::read_all()
         } // while loop
 
         // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
-        if(!add(image_name, crop_box))
-        {
-            THROW("ERROR: Given name already present in the map" + image_name)
-        }
+        add(image_name, crop_box);
         
         sample++;
     }
+}
+
+std::vector<std::vector<float>>
+RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &image_names)
+{
+
+    if (image_names.empty())
+    {
+        std::cerr << "\n No images passed";
+        THROW("No image names passed")
+    }
+    if (image_names.size() != (unsigned)_output->size())
+    {
+        _output->resize(image_names.size());
+    }
+    const std::vector<float> sample_options = {-1.0f, 0.1f, 0.3f, 0.5f, 0.7f, 0.9f, 0.0f};
+    int sample_option;
+    std::vector<float> coords_buf(4);
+    std::pair<bool, float> option;
+    float min_iou;
+    bool invalid_bboxes;
+    bool crop_success;
+    BoundingBoxCord crop_box;
+    uint bb_count;
+    _meta_bbox_map_content = _meta_data_reader->get_map_content();
+    std::uniform_int_distribution<> option_dis(0, 6);
+    std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
+    // std::cout << "Inside get batch crop coordinates" << std::endl;
+    size_t sample = 0;
+    _crop_coords.clear();
+    for (unsigned int i = 0; i < image_names.size(); i++)
+    {
+        // std::cout<<"FOR loop"<<std::endl;
+        auto image_name = image_names[i];
+        if(exists(image_name) )
+            {
+                std::cout<<"***IF statement****"<<std::endl;
+                pCropCord CropCord = get_crop_cord(image_name);
+                coords_buf[0] = CropCord->crop_left ;
+                coords_buf[1] = CropCord->crop_top;
+                coords_buf[2] = CropCord->crop_right- CropCord->crop_left ;
+                coords_buf[3] = CropCord->crop_bottom- CropCord->crop_top;
+                _crop_coords.push_back(coords_buf);
+                continue;
+            }   
+        
+        std::cout << "Image Name::" << image_name << std::endl;
+        auto elem = _meta_bbox_map_content.find(image_name);
+        if (_meta_bbox_map_content.end() == elem)
+            THROW("ERROR: Given name not present in the map" + image_name)
+
+        image_name = elem->first;
+        BoundingBoxCords bb_coords = elem->second->get_bb_cords();
+        ImgSizes img_sizes = elem->second->get_img_sizes();
+
+        bb_count = bb_coords.size();
+        // std::cout << "BB count::" << bb_count << std::endl;
+        // std::cout << "Image Name::" << image_name << std::endl;
+        
+        // std::cout << "Image img sizes wxh::" << img_sizes[0].w << "x" << img_sizes[0].h << std::endl;
+
+        while (true)
+        {
+            crop_success = false;
+            sample_option = option_dis(_rngs[sample]);
+            min_iou = sample_options[sample_option];
+            invalid_bboxes = false;
+
+            //Condition for Original Image
+            if (sample_option == 6 || _has_shape)
+            {
+                crop_box.l = 0;
+                crop_box.t = 0;
+                crop_box.r = 1;
+                crop_box.b = 1;
+                break;
+            }
+
+            // If it has no shape, then area and aspect ratio thing should be provided
+            for (int j = 0; j < 1; j++)
+            {
+                // Setting width and height factor btw 0.3 and 1.0";
+                float width_factor = _float_dis(_rngs[sample]);
+                float height_factor = _float_dis(_rngs[sample]);
+                if ((width_factor / height_factor < 0.5) || (width_factor / height_factor > 2.))
+                {
+                    continue;
+                }
+                // Setting width factor btw 0 and 1 - width_factor and height factor btw 0 and 1 - height_factor
+                std::uniform_real_distribution<float> l_dis(0.0, 1.0 - width_factor), t_dis(0.0, 1.0 - height_factor);
+                float x_factor = l_dis(_rngs[sample]);
+                float y_factor = t_dis(_rngs[sample]);
+                crop_box.l = x_factor;
+                crop_box.t = y_factor;
+                crop_box.r = crop_box.l + width_factor;
+                crop_box.b = crop_box.t + height_factor;
+                //std::cout << "random crop params < option, xfactor, yfactor, wf, hf>: " << sample_option << " " << x_factor << " " << y_factor << " " << width_factor << " " << height_factor << std::endl;
+                // All boxes should satisfy IOU criteria
+                if (_all_boxes_overlap)
+                {
+                    for (uint j = 0; j < bb_count; j++)
+                    {
+                        float bb_iou = ssd_BBoxIntersectionOverUnion(bb_coords[j], crop_box, true);
+                        if (bb_iou < min_iou)
+                        {
+                            invalid_bboxes = true;
+                            break;
+                        }
+                    }
+                    if (invalid_bboxes)
+                    {
+                        continue; // Goes to for loop
+                    }
+                }
+
+                // Mask Condition
+                int valid_bbox_count = 0;
+                valid_bbox_count = 0;
+                for (uint j = 0; j < bb_count; j++)
+                {
+                    auto x_c = 0.5 * (bb_coords[j].l + bb_coords[j].r);
+                    auto y_c = 0.5 * (bb_coords[j].t + bb_coords[j].b);
+                    if ((x_c > crop_box.l) && (x_c < crop_box.r) && (y_c > crop_box.t) && (y_c < crop_box.b))
+                    {
+                        valid_bbox_count++;
+                        std::cout << image_name << " In random bbox crop ::valid BBOXES ::bboxes<l,t,r,b>: " << bb_coords[j].l << " X " << bb_coords[j].t << " X " << bb_coords[j].r << " X " << bb_coords[j].b << std::endl;
+
+                    }
+                }
+                if (valid_bbox_count == 0)
+                    break;
+
+                crop_success = true;
+                break;
+            }
+
+            if (crop_success == true)
+                break;
+        } // while loop
+
+        // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
+        add(image_name, crop_box);
+        std::cout << image_name << " In random bbox crop reader crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
+        //Crop coordinates expected in "xywh" format
+        // std::vector<float> coords_buf(4);
+        coords_buf[0] = crop_box.l;
+        coords_buf[1] = crop_box.t;
+        coords_buf[2] = crop_box.r - crop_box.l;
+        coords_buf[3] = crop_box.b - crop_box.t;
+
+        _crop_coords.push_back(coords_buf);
+        
+        std::cout<<"PRINTING CROP VALUES INSIDE random bbox crop"<<std::endl;
+        std::cout<<"SIZE"<<_crop_coords.size();
+        std::vector< std::vector<float> > :: iterator row;
+        std::vector<float> ::iterator col;
+        for (row = _crop_coords.begin(); row !=_crop_coords.end(); row++)
+        {
+            for (col = row->begin(); col !=row->end(); col++)
+            {
+                std::cout << *col << std::endl;
+            }
+
+        }
+
+        sample++;
+    }
+    return _crop_coords;
 }
 
 void RandomBBoxCropReader::release()

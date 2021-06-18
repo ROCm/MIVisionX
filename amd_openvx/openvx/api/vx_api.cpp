@@ -5739,7 +5739,6 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context conte
                         }
                         case VX_DF_IMAGE_U8:
                         {
-                            printf("set u8!!!!!!!\n");
                             data->u.thr.data_type = VX_TYPE_UINT8;
                             data->u.thr.true_value.U8  = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
                             data->u.thr.false_value.U8 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
@@ -5747,7 +5746,6 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context conte
                         }
                         case VX_DF_IMAGE_S16:
                         {
-                            printf("set s16!!!!!!!\n");
                             data->u.thr.data_type = VX_TYPE_INT16;
                             data->u.thr.true_value.S16  = AGO_S16_THRESHOLD_TRUE_VALUE;
                             data->u.thr.false_value.S16 = AGO_S16_THRESHOLD_FALSE_VALUE;

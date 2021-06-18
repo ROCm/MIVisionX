@@ -916,7 +916,7 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 	int LMemSideLR = 4;
 	int LMemStride = work_group_width * (4 * 2) + 2 * 2 * 2;
 	int LMemSize = LMemStride * (work_group_height + 2);
-
+  
 	// kernel declaration
 	char item[8192];
 	const char * xyarg = "";
@@ -978,7 +978,8 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 		"  M.s2 &= mask;\n"
 		"  M.s3 &= mask;\n"
 		"  uint4 P;\n"
-		"%s" // THRESHOLD /= 2 when gradient_size = 7
+        // "  printf(\"thresh is %%u and %%u\\n\", p3.s0, p3.s1); \n"
+		"%s" // THRESHOLD /= 4 when gradient_size = 7
 		"  P.s0 = select(  0u, 127u, M.s0 > p3.s0);\n"
 		"  P.s1 = select(  0u, 127u, M.s1 > p3.s0);\n"
 		"  P.s2 = select(  0u, 127u, M.s2 > p3.s0);\n"

@@ -1018,8 +1018,8 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
             if (data->u.thr.data_type == VX_TYPE_UINT8){
                 cl_uint2 value;
                 size_t size = sizeof(cl_uint2);
-                value.s0 = data->u.thr.threshold_lower.U16;
-                value.s1 = data->u.thr.threshold_upper.U16;
+                value.s0 = data->u.thr.threshold_lower.U8;
+                value.s1 = data->u.thr.threshold_upper.U8;
                 err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
                 if (err) {
                     agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);

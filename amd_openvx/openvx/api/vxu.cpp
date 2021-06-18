@@ -27,11 +27,9 @@
 
 static void vxuSetGraphAffinityDefault(vx_graph graph)
 {
-    graph->attr_affinity.device_type = AGO_TARGET_AFFINITY_CPU;
-    graph->attr_affinity.device_info = 0;
+	graph->attr_affinity.device_type = AGO_TARGET_AFFINITY_CPU;
+	graph->attr_affinity.device_info = 0;
 }
-
- 
 
 VX_API_ENTRY vx_status VX_API_CALL vxuColorConvert(vx_context context, vx_image src, vx_image dst)
 {

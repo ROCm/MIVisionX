@@ -137,7 +137,6 @@ class RALICOCOIterator(object):
             print("Decode   time ::", timing_info.decode_time)
             print("Process  time ::", timing_info.process_time)
             print("Transfer time ::", timing_info.transfer_time)
-            self.loader.raliResetLoaders()
             raise StopIteration
 
         if self.loader.run() != 0:
@@ -339,18 +338,19 @@ def main():
     pipe = COCOPipeline(batch_size=bs, num_threads=nt, device_id=di,seed = random_seed,
                         data_dir=image_path, ann_dir=ann_path, crop=crop_size, rali_cpu=_rali_cpu, default_boxes=dboxes)
     pipe.build()
-    imageIterator = RALICOCOIterator(
+    data_loader = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset)
-    epochs = 6
+    epochs = 3
     for epoch in range(int(epochs)):
         print("EPOCH:::::",epoch)
-        for i, it in enumerate(imageIterator, 0):
+        for i, it in enumerate(data_loader, 0):
             print("**************", i, "*******************")
             print("**************starts*******************")
             print("\nBBOXES:\n", it[1])
             print("\nLABELS:\n", it[2])
             print("**************ends*******************")
             print("**************", i, "*******************")
+        data_loader.reset()
 
 
 if __name__ == '__main__':

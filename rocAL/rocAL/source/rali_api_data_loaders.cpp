@@ -1582,7 +1582,7 @@ raliVideoFileSource(
             context->master_graph->add_node<CopyNode>({output}, {actual_output});
         }
 #else
-        THROW("Video decoder is not enabled since amd media decoder is not present")
+        THROW("Video decoder is not enabled since ffmpeg is not present")
 #endif
     }
     catch(const std::exception& e)
@@ -1693,7 +1693,7 @@ raliVideoFileResize(
             context->master_graph->add_node<CopyNode>({resize_output}, {actual_output});
         }
 #else
-        THROW("Video decoder is not enabled since amd media decoder is not present")
+        THROW("Video decoder is not enabled since ffmpeg is not present")
 #endif
     }
     catch(const std::exception& e)

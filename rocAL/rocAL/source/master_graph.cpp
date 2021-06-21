@@ -118,13 +118,13 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
             THROW("Cannot load vx_rpp extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
         else
             LOG("vx_rpp module loaded successfully")
-#ifdef RALI_VIDEO
-        // loading video decoder modules
-        if ((status = vxLoadKernels(_context, "vx_amd_media")) != VX_SUCCESS)
-            WRN("Cannot load vx_amd_media extension, video decode functionality will not be available")
-        else
-            LOG("vx_amd_media module loaded")
-#endif
+// #ifdef RALI_VIDEO
+//         // loading video decoder modules
+//         if ((status = vxLoadKernels(_context, "vx_amd_media")) != VX_SUCCESS)
+//             WRN("Cannot load vx_amd_media extension, video decode functionality will not be available")
+//         else
+//             LOG("vx_amd_media module loaded")
+// #endif
         if(_affinity == RaliAffinity::GPU)
             _device.init_ocl(_context);
     }
@@ -171,7 +171,7 @@ void
 MasterGraph::decrease_image_count()
 {
     if(!_loop)
-        _remaining_images_count -= ((_sequence_rearrange_batch_decremter >= 0)? _sequence_rearrange_batch_decremter:_user_batch_size);
+        _remaining_images_count -= ((_sequence_rearrange_batch_decrementer >= 0)? _sequence_rearrange_batch_decrementer:_user_batch_size);
 }
 void
 MasterGraph::create_single_graph()

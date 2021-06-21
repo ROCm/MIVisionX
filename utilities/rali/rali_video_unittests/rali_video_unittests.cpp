@@ -272,11 +272,12 @@ int main(int argc, const char **argv)
             raliGetImageName(handle, img_name);
 
             std::cout << "\nPrinting image names of batch: " << img_name << "\n";
-            for (int i = 0; i < 1; i++)
+            std::cout << "\t Printing label_id : ";
+            for (unsigned i = 0; i < input_batch_size*sequence_length; i+=sequence_length)
             {
-                std::cout << "\t Printing label_id : " << label_id[i * sequence_length] << std::endl;
-                std::cout << "\n";
+                std::cout << label_id[i] << "\t";
             }
+            std::cout << std::endl;
         }
         // Add API to get size;
         if(enable_framenumbers || enable_timestamps)

@@ -20,9 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <iterator>
-#include <cstring>
-#include <map>
 #include "video_decoder_factory.h"
 #include "video_read_and_decode.h"
 
@@ -85,9 +82,7 @@ void VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig d
     _actual_decoded_height.resize(_sequence_length);
     _original_height.resize(_sequence_length);
     _original_width.resize(_sequence_length);
-
     _video_decoder_config = decoder_config;
-
     _compressed_buff.resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
     size_t i = 0;
     for (; i < _video_process_count; i++)
@@ -99,9 +94,10 @@ void VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig d
 
         video_map video_instance;
         video_instance._video_map_idx = atoi(substrings[0].c_str());
-        video_instance._is_decoder_instance = false;
+        video_instance._is_decoder_instance = true;
+        if(_video_decoder[i]->Initialize(substrings[1].c_str()) != VideoDecoder::Status::OK)
+            video_instance._is_decoder_instance = false;
         _video_file_name_map.insert(std::pair<std::string, video_map>(_video_names[i], video_instance));
-        _video_decoder[i]->Initialize(substrings[1].c_str());
     }
     if (_video_process_count != _video_count)
     {
@@ -187,8 +183,9 @@ VideoReadAndDecode::load(unsigned char *buff,
     _decode_time.start(); // Debug timing
 
 // #pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
-
-    for (int i = 0; i < 1; i++)
+    // The loop is retained so that multi threading support can be added later
+    // Currently Decode function is capable of decoding a single sequence
+    for (int i = 0; i < 1; i++) // remove for loop
     {
         int video_idx_map;
         // std::cerr << "\nThe source video is " << video_path << " MAP : "<<_video_file_name_map.find(video_path)->second._video_map_idx << "\tThe start index is : " << start_frame << "\n";
@@ -204,13 +201,18 @@ VideoReadAndDecode::load(unsigned char *buff,
                     std::vector<std::string> substrings;
                     char delim = '#';
                     substring_extraction(itr->first, delim, substrings);
-                    _video_decoder[video_idx_map]->Initialize(substrings[1].c_str());
-                    itr->second._video_map_idx = video_idx_map;
-                    itr->second._is_decoder_instance = true;
+                    if(_video_decoder[video_idx_map]->Initialize(substrings[1].c_str()) == VideoDecoder::Status::OK)
+                    {
+                        itr->second._video_map_idx = video_idx_map;
+                        itr->second._is_decoder_instance = true;
+                    }
                     temp_itr->second._is_decoder_instance = false;
+                    break;
                 }
             }
         }
+        if(itr->second._is_decoder_instance == false)
+            continue;
         video_idx_map = itr->second._video_map_idx;
         sequence_start_framenum[i] = start_frame;
         for (size_t s = 0; s < _sequence_length; s++)

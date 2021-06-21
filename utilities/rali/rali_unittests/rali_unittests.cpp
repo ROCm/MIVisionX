@@ -35,9 +35,9 @@ THE SOFTWARE.
 
 using namespace cv;
 
-//#define PARTIAL_DECODE
+// #define PARTIAL_DECODE
 // #define COCO_READER
-//#define COCO_READER_PARTIAL
+// #define COCO_READER_PARTIAL
 // #define TF_READER
 // #define TF_READER_DETECTION
 // #define CAFFE2_READER
@@ -45,7 +45,7 @@ using namespace cv;
 //  #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
 
-//#define RANDOMBBOXCROP
+// #define RANDOMBBOXCROP
 
 using namespace std::chrono;
 

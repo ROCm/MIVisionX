@@ -24,6 +24,10 @@ THE SOFTWARE.
 #include <dirent.h>
 #include <vector>
 #include <memory>
+#include <iterator>
+#include <cstring>
+#include <map>
+#include <tuple>
 #include <boost/filesystem.hpp>
 #include "commons.h"
 #include "ffmpeg_video_decoder.h"
@@ -56,7 +60,9 @@ public:
     /// \param max_decoded_width User's buffer maximum width per decoded image. User expects the decoder to downscale the image if image's original width is bigger than max_width
     /// \param max_decoded_height user's buffer maximum height per decoded image. User expects the decoder to downscale the image if image's original height is bigger than max_height
     /// \param roi_width is set by the load() function tp the width of the region that decoded image is located. It's less than max_width and is either equal to the original image width if original image width is smaller than max_width or downscaled if necessary to fit the max_width criterion.
-    /// \param roi_height  is set by the load() function tp the width of the region that decoded image is located.It's less than max_height and is either equal to the original image height if original image height is smaller than max_height or downscaled if necessary to fit the max_height criterion.
+    /// \param roi_height  is set by the load() function tp the height of the region that decoded image is located.It's less than max_height and is either equal to the original image height if original image height is smaller than max_height or downscaled if necessary to fit the max_height criterion.
+    /// \param sequence_start_framenum_vec is set by the load() function. The starting frame number of the sequences will be updated.
+    /// \param sequence_frame_timestamps_vec is set by the load() function. The timestamps of each of the frames in the sequences will be updated.
     /// \param output_color_format defines what color format user expects decoder to decode images into if capable of doing so supported is
     VideoLoaderModuleStatus load(
         unsigned char *buff,

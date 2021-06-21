@@ -47,6 +47,7 @@ ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const 
     reader_cfg.set_shard_count(shard_count);
     reader_cfg.set_shard_id(shard_id);
     reader_cfg.set_batch_count(load_batch_count);
+    //  sequence_length, step and stride parameters used only for SequenceReader
     reader_cfg.set_sequence_length(sequence_length);
     reader_cfg.set_frame_step(step);
     reader_cfg.set_frame_stride(stride);

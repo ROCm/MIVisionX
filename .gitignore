@@ -2,13 +2,12 @@
 build*
 sample_ovx/
 warp_affine_old.cpp
-utilities/rali_unittests/build/
-apps/image_augmentation/build/
 build.sh
-utilities/rali_unittests/build.sh
 rali/pybind_python/amd_rali.egg-info/
 rali/pybind_python/dist/
 rali/pybind_python/example/1.2.3/
+utilities/rali_unittests/*.sh
+utilities/rali_unittests/1.2.3/*.o
 temp/
 opencv-3.4.0/*
 openvx_test_results*

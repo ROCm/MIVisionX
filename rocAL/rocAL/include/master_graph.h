@@ -33,10 +33,8 @@ THE SOFTWARE.
 #include "node_image_loader_single_shard.h"
 #include "node_fused_jpeg_crop.h"
 #include "node_fused_jpeg_crop_single_shard.h"
-#ifdef RALI_VIDEO
 #include "node_video_loader.h"
 #include "node_video_loader_single_shard.h"
-#endif
 #include "node_cifar10_loader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
@@ -97,7 +95,7 @@ public:
     bool is_random_bbox_crop() {return _is_random_bbox_crop; }
     void set_video_loader_flag() { _is_video_loader = true; }
     bool is_video_loader() {return _is_video_loader; }
-    void set_sequence_rearrange_batch_decremter(size_t batch_size) {_sequence_rearrange_batch_decremter = batch_size;}
+    void set_sequence_rearrange_batch_decrementer(size_t batch_size) {_sequence_rearrange_batch_decrementer = batch_size;}
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -129,9 +127,7 @@ private:
     const RaliAffinity _affinity;
     const int _gpu_id;//!< Defines the device id used for processing
     pLoaderModule _loader_module; //!< Keeps the loader module used to feed the input the images of the graph
-#ifdef RALI_VIDEO
-    pVideoLoaderModule _video_loader_module;
-#endif
+    pVideoLoaderModule _video_loader_module; //!< Keeps the video loader module used to feed the input sequences of the graph
     TimingDBG _convert_time;
     size_t _user_batch_size;//!< Batch size provided by the user
     const size_t _cpu_threads;//!< Not in use
@@ -153,7 +149,7 @@ private:
     bool _output_routine_finished_processing = false;
     bool _is_random_bbox_crop = false;
     bool _is_video_loader = false;
-    size_t _sequence_rearrange_batch_decremter = -1;
+    size_t _sequence_rearrange_batch_decrementer = -1;
     std::vector<std::vector<size_t>> _sequence_start_framenum_vec;
     std::vector<std::vector<std::vector<float>>>_sequence_frame_timestamps_vec;
 };

@@ -79,11 +79,11 @@ raliSequenceRearrange(
         THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
-    auto input = static_cast<Image*>(p_input);
     try
     {
 #ifdef RALI_VIDEO
-        context->master_graph->set_sequence_rearrange_batch_decremter(context->master_graph->user_batch_size());
+        auto input = static_cast<Image*>(p_input);
+        context->master_graph->set_sequence_rearrange_batch_decrementer(context->master_graph->user_batch_size());
         context->master_graph->set_user_batch_size((size_t)(new_sequence_length * (context->user_batch_size()/context->master_graph->internal_batch_size())));
         auto info = ImageInfo(input->info().width(), input->info().height_single(),
                               new_sequence_length,
@@ -94,7 +94,7 @@ raliSequenceRearrange(
         std::shared_ptr<SequenceRearrangeNode> sequence_rearrange_node =  context->master_graph->add_node<SequenceRearrangeNode>({input}, {output});
         sequence_rearrange_node->init(new_order, new_sequence_length, sequence_length);
 #else
-        THROW("Video decoder is not enabled since amd media decoder is not present")
+        THROW("Video decoder is not enabled since ffmpeg is not present")
 #endif
     }
     catch(const std::exception& e)

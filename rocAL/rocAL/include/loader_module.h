@@ -24,7 +24,6 @@ THE SOFTWARE.
 #include <memory>
 #include "reader.h"
 #include "decoder.h"
-#include "video_decoder.h"
 #include "commons.h"
 #include "image.h"
 #include "circular_buffer.h"

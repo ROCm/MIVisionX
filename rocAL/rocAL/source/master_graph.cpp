@@ -171,7 +171,7 @@ void
 MasterGraph::decrease_image_count()
 {
     if(!_loop)
-        _remaining_images_count -= ((_sequence_rearrange_batch_decrementer >= 0)? _sequence_rearrange_batch_decrementer:_user_batch_size);
+        _remaining_images_count -= ((_sequence_rearrange_batch_decrementer > 0)? _sequence_rearrange_batch_decrementer:_user_batch_size);
 }
 void
 MasterGraph::create_single_graph()
@@ -760,7 +760,7 @@ void MasterGraph::output_routine()
             {
                 _count = _loader_module->remaining_count();
             }
-            if (_count < _user_batch_size)
+            if (_count < ((_sequence_rearrange_batch_decrementer > 0)? _sequence_rearrange_batch_decrementer : _user_batch_size))
             {
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
                 // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func

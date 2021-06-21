@@ -84,7 +84,7 @@ public:
     void create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts, int64_t seed=0);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
-    bool empty() { return (remaining_images_count() < _user_batch_size); }
+    bool empty() { return (remaining_images_count() < ((_sequence_rearrange_batch_decrementer > 0)? _sequence_rearrange_batch_decrementer : _user_batch_size)); }
     void set_user_internal_batch_size(size_t user_internal_batch_size) {_internal_batch_size = user_internal_batch_size;}
     void set_user_batch_size(size_t new_user_batch_size) {_user_batch_size = new_user_batch_size;}
     void set_user_internal_batch_ratio() {_user_to_internal_batch_ratio = _user_batch_size/_internal_batch_size; }
@@ -149,7 +149,7 @@ private:
     bool _output_routine_finished_processing = false;
     bool _is_random_bbox_crop = false;
     bool _is_video_loader = false;
-    size_t _sequence_rearrange_batch_decrementer = -1;
+    size_t _sequence_rearrange_batch_decrementer = 0;
     std::vector<std::vector<size_t>> _sequence_start_framenum_vec;
     std::vector<std::vector<std::vector<float>>>_sequence_frame_timestamps_vec;
 };

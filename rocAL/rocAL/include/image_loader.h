@@ -48,6 +48,7 @@ public:
     LoaderModuleStatus set_cpu_sched_policy(struct sched_param sched_policy);
     std::vector<std::string> get_id() override;
     decoded_image_info get_decode_image_info() override;
+    crop_image_info get_crop_image_info() override;
 private:
     bool is_out_of_data();
     void de_init();
@@ -65,7 +66,9 @@ private:
     std::thread _load_thread;
     RaliMemType _mem_type;
     decoded_image_info _decoded_img_info;
+    crop_image_info _crop_image_info;
     decoded_image_info _output_decoded_img_info;
+    crop_image_info _output_cropped_img_info;
     CircularBuffer _circ_buff;
     TimingDBG _swap_handle_time;
     bool _is_initialized;

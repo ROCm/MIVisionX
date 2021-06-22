@@ -120,6 +120,18 @@ void ImageReadAndDecode::set_random_bbox_data_reader(std::shared_ptr<RandomBBoxC
     _randombboxcrop_meta_data_reader = randombboxcrop_meta_data_reader;
 }
 
+std::vector<std::vector<float>>
+ImageReadAndDecode::get_batch_random_bbox_crop_coords()
+{
+    // Return the crop co-ordinates for a batch of images
+    return _crop_coords_batch;
+}
+
+void
+ImageReadAndDecode::set_batch_random_bbox_crop_coords(std::vector<std::vector<float>> crop_coords)
+{
+    _crop_coords_batch = crop_coords;
+}
 
 LoaderModuleStatus 
 ImageReadAndDecode::load(unsigned char* buff,
@@ -186,10 +198,8 @@ ImageReadAndDecode::load(unsigned char* buff,
             }
 
             _compressed_buff[file_counter].reserve(fsize);
-
             _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
             _image_names[file_counter] = _reader->id();
-            
             _reader->close();
             _compressed_image_size[file_counter] = fsize;
             file_counter++;
@@ -199,6 +209,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         {
             //Fetch the crop co-ordinates for a batch of images
             _bbox_coords = _randombboxcrop_meta_data_reader->get_batch_crop_coords(_image_names);
+            set_batch_random_bbox_crop_coords(_bbox_coords);
         }
         
     

@@ -291,3 +291,8 @@ decoded_image_info CIFAR10DataLoader::get_decode_image_info()
     return _output_decoded_img_info;
 }
 
+
+crop_image_info CIFAR10DataLoader::get_crop_image_info()
+{
+    return _circ_buff.get_cropped_image_info();
+}

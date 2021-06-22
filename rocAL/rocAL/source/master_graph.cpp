@@ -726,9 +726,9 @@ void MasterGraph::output_routine()
 
                 if (!_processing)
                     break;
-
                 auto this_cycle_names =  _loader_module->get_id();
-                auto decode_image_info = _loader_module->get_decode_image_info();                
+                auto decode_image_info = _loader_module->get_decode_image_info();  
+                auto crop_image_info = _loader_module->get_crop_image_info();              
 
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -772,8 +772,7 @@ void MasterGraph::output_routine()
                     {
                         if(_is_random_bbox_crop)
                         {
-                            _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
-                            _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
+                            _meta_data_graph->update_random_bbox_meta_data(_augmented_meta_data, decode_image_info, crop_image_info);
                         }
                         else
                         {
@@ -892,7 +891,6 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
     RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts, seed);
     _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
     _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
-    // _randombboxcrop_meta_data_reader->read_all();
     if (_random_bbox_crop_cords_data)
         THROW("Metadata can only have a single output")
     else

@@ -91,13 +91,13 @@ inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const B
     return iou;
 }
 
-void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_crop_cords_data, MetaDataBatch *input_meta_data, decoded_image_info decode_image_info)
+void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info, crop_image_info crop_image_info)
 {
     std::vector<uint32_t> original_height = decode_image_info._original_height;
     std::vector<uint32_t> original_width = decode_image_info._original_width;
     std::vector<uint32_t> roi_width = decode_image_info._roi_width;
     std::vector<uint32_t> roi_height = decode_image_info._roi_height;
-    auto crop_cords = _random_bbox_crop_cords_data->get_bb_cords_batch();
+    auto crop_cords = crop_image_info._crop_image_coords;
     for (int i = 0; i < input_meta_data->size(); i++)
     {
         auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
@@ -108,12 +108,10 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
-        crop_box.l = crop_cords[i]->crop_left;
-        crop_box.t = crop_cords[i]->crop_top;
-        crop_box.r = crop_cords[i]->crop_right;
-        crop_box.b = crop_cords[i]->crop_bottom;
-        
-
+        crop_box.l = crop_cords[i][0];
+        crop_box.t = crop_cords[i][1];
+        crop_box.r = crop_box.l + crop_cords[i][2];
+        crop_box.b = crop_box.t + crop_cords[i][3];
         for (uint j = 0; j < bb_count; j++)
         {
             int m = j * 4; // change if required
@@ -136,7 +134,6 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
                 box.t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
                 box.r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
                 box.b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
-
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
             }

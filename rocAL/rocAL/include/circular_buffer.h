@@ -36,6 +36,11 @@ struct decoded_image_info
     std::vector<uint32_t> _original_height;
 };
 
+struct crop_image_info
+{
+    //Batch of Image Crop Coordinates in "xywh" format
+    std::vector<std::vector<float>> _crop_image_coords;
+};
 class CircularBuffer
 {
 public:
@@ -48,7 +53,10 @@ public:
     void push();// The latest write goes through, effectively adds one element to the buffer
     void pop();// The oldest write will be erased and overwritten in upcoming writes
     void set_image_info(const decoded_image_info& info) { _last_image_info = info; }
+    void set_crop_image_info(const crop_image_info& info) { _last_crop_image_info = info; }
     decoded_image_info& get_image_info();
+    crop_image_info& get_cropped_image_info();
+    bool _random_bbox_crop_flag = false;
     cl_mem get_read_buffer_dev();
     unsigned char* get_read_buffer_host();// blocks the caller if the buffer is empty
     unsigned char*  get_write_buffer(); // blocks the caller if the buffer is full
@@ -65,6 +73,8 @@ private:
     const size_t BUFF_DEPTH;
     decoded_image_info _last_image_info;
     std::queue<decoded_image_info> _circ_image_info;//!< Stores the loaded images names, decoded_width and decoded_height(data is stored in the _circ_buff)
+    crop_image_info _last_crop_image_info; // for Random BBox crop coordinates
+    std::queue<crop_image_info> _circ_crop_image_info;//!< Stores the crop coordinates of the images for random bbox crop (data is stored in the _circ_buff)
     std::mutex _names_buff_lock;
     /*
      *  Pinned memory allocated on the host used for fast host to device memory transactions,

@@ -45,8 +45,11 @@ void CircularBuffer::reset()
     _level = 0;
     while(!_circ_image_info.empty())
         _circ_image_info.pop();
-    while(!_circ_crop_image_info.empty())
+    if (_random_bbox_crop_flag == true) 
+    {
+        while(!_circ_crop_image_info.empty())
         _circ_crop_image_info.pop();
+    }
 }
 
 void CircularBuffer::unblock_reader()

@@ -872,7 +872,7 @@ int ovxKernel_Threshold(AgoNode * node, AgoKernelCommand cmd)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
-        if (node->paramList[1]->u.thr.data_type != VX_TYPE_UINT8)
+        if (node->paramList[1]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[1]->u.thr.data_type != VX_TYPE_INT16)
             return VX_ERROR_INVALID_TYPE;
         // set output image sizes are same as input image size
         vx_meta_format meta;
@@ -3727,7 +3727,7 @@ int agoKernel_Threshold_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
-            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || (node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[2]->u.thr.data_type != VX_TYPE_INT16))
                 return VX_ERROR_INVALID_TYPE;
         }
     }
@@ -3801,7 +3801,7 @@ int agoKernel_Threshold_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
-            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || (node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[2]->u.thr.data_type != VX_TYPE_INT16))
                 return VX_ERROR_INVALID_TYPE;
         }
     }

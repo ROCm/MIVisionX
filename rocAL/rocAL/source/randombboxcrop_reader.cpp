@@ -273,17 +273,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
     _crop_coords.clear();
     for (unsigned int i = 0; i < image_names.size(); i++)
     {
-        auto image_name = image_names[i];
-        if(exists(image_name) )
-            {
-                pCropCord CropCord = get_crop_cord(image_name);
-                coords_buf[0] = CropCord->crop_left ;
-                coords_buf[1] = CropCord->crop_top;
-                coords_buf[2] = CropCord->crop_right- CropCord->crop_left ;
-                coords_buf[3] = CropCord->crop_bottom- CropCord->crop_top;
-                _crop_coords.push_back(coords_buf);
-                continue;
-            }   
+        auto image_name = image_names[i]; 
         
         auto elem = _meta_bbox_map_content.find(image_name);
         if (_meta_bbox_map_content.end() == elem)

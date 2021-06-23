@@ -5688,7 +5688,7 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context conte
                     agoGenerateDataName(context, "thr", data->name);
                     agoAddData(&context->dataList, data);
 
-                    switch (output_format)
+                    switch (input_format)
                     {
                         case VX_DF_IMAGE_RGB:
                         {

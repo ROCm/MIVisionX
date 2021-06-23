@@ -872,7 +872,7 @@ int ovxKernel_Threshold(AgoNode * node, AgoKernelCommand cmd)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
-        if (node->paramList[1]->u.thr.data_type != VX_TYPE_UINT8)
+        if (node->paramList[1]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[1]->u.thr.data_type != VX_TYPE_INT16)
             return VX_ERROR_INVALID_TYPE;
         // set output image sizes are same as input image size
         vx_meta_format meta;
@@ -3729,7 +3729,7 @@ int agoKernel_Threshold_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
-            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || (node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[2]->u.thr.data_type != VX_TYPE_INT16))
                 return VX_ERROR_INVALID_TYPE;
         }
     }
@@ -3803,7 +3803,7 @@ int agoKernel_Threshold_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
-            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || (node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[2]->u.thr.data_type != VX_TYPE_INT16))
                 return VX_ERROR_INVALID_TYPE;
         }
     }
@@ -18082,7 +18082,7 @@ int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand c
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
             (vx_uint16 *) (iImg->hip_memory + iImg->gpu_buffer_offset), iImg->u.img.stride_in_bytes,
             oStack->hip_memory, oStack->gpu_buffer_offset, oStack->u.cannystack.count,
-            iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
+            iThr->u.thr.threshold_lower.U1 / 4, iThr->u.thr.threshold_upper.U1 / 4)) {
             status = VX_FAILURE;
         }
     }

@@ -51,7 +51,7 @@ void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &sou
     // Set reader and decoder config accordingly for the VideoLoaderNode
     auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, feature_key_map, shuffle, loop);
     reader_cfg.set_shard_count(internal_shard_count);
-    reader_cfg.set_batch_count(_batch_size);
+    reader_cfg.set_batch_count(load_batch_count);
     reader_cfg.set_sequence_length(sequence_length);
     step > 0 ? reader_cfg.set_frame_step(step) : reader_cfg.set_frame_step(sequence_length);
     reader_cfg.set_frame_stride(stride);

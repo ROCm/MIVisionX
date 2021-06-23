@@ -328,7 +328,7 @@ raliSequenceReader(
                                                                           DecoderType::TURBO_JPEG,
                                                                           shuffle,
                                                                           loop,
-                                                                          context->master_graph->internal_batch_size(),
+                                                                          context->user_batch_size(),
                                                                           context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
@@ -414,7 +414,7 @@ raliSequenceReaderSingleShard(
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
                                                                                         loop,
-                                                                                        context->master_graph->internal_batch_size(),
+                                                                                        context->user_batch_size(),
                                                                                         context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
@@ -1571,7 +1571,7 @@ raliVideoFileSource(
                                                                           start_end_frame_num,
                                                                           shuffle,
                                                                           loop,
-                                                                          context->master_graph->internal_batch_size(),
+                                                                          context->user_batch_size(),
                                                                           context->master_graph->mem_type(),
                                                                           video_file_names);
         context->master_graph->set_loop(loop);
@@ -1675,7 +1675,7 @@ raliVideoFileResize(
                                                                           start_end_frame_num,
                                                                           shuffle,
                                                                           loop,
-                                                                          context->master_graph->internal_batch_size(),
+                                                                          context->user_batch_size(),
                                                                           context->master_graph->mem_type(),
                                                                           video_file_names);
         context->master_graph->set_loop(loop);

@@ -131,7 +131,7 @@ int main(int argc, const char ** argv)
             std::cout << "Output width and height is needed for video decode\n";
             return -1;
         }
-        input1 = raliVideoFileSource(handle, folderPath1, color_format, shard_count, sequence_length, frame_step, frame_stride, shuffle, true, false);
+        input1 = raliVideoFileSource(handle, folderPath1, color_format, ((video_mode == 1) ? RaliDecodeDevice::RALI_HW_DECODE:RaliDecodeDevice::RALI_SW_DECODE), shard_count, sequence_length, frame_step, frame_stride, shuffle, true, false);
     }
     else
     {

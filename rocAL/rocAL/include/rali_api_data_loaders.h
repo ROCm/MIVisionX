@@ -449,6 +449,7 @@ extern "C"  RaliImage  RALI_API_CALL raliRawTFRecordSourceSingleShard(RaliContex
 /// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk, multiple sources can be separated using the ":" delimiter
 /// \param color_format The color format the images will be decoded to.
+/// \param rali_decode_device Enables software or hardware decoding. Currently only software decoding is supported.
 /// \param internal_shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances.
 /// \param sequence_length: The number of frames in a sequence.
 /// \param step: Frame interval between each sequence.
@@ -461,6 +462,7 @@ extern "C"  RaliImage  RALI_API_CALL raliRawTFRecordSourceSingleShard(RaliContex
 extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
                                                         const char* source_path,
                                                         RaliImageColor color_format,
+                                                        RaliDecodeDevice rali_decode_device,
                                                         unsigned internal_shard_count,
                                                         unsigned sequence_length,
                                                         unsigned step,
@@ -475,6 +477,7 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
 /// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk, multiple sources can be separated using the ":" delimiter
 /// \param color_format The color format the images will be decoded to.
+/// \param rali_decode_device Enables software or hardware decoding. Currently only software decoding is supported.
 /// \param internal_shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances.
 /// \param sequence_length: The number of frames in a sequence.
 /// \param step: Frame interval between each sequence.
@@ -489,6 +492,7 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
 extern "C"  RaliImage  RALI_API_CALL raliVideoFileResize(RaliContext context,
                                                         const char* source_path,
                                                         RaliImageColor color_format,
+                                                        RaliDecodeDevice rali_decode_device,
                                                         unsigned internal_shard_count,
                                                         unsigned sequence_length,
                                                         unsigned step,
@@ -504,6 +508,7 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileResize(RaliContext context,
 /// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk, multiple sources can be separated using the ":" delimiter
 /// \param color_format The color format the images will be decoded to.
+/// \param rali_decode_device Enables software or hardware decoding. Currently only software decoding is supported.
 /// \param sequence_length: The number of frames in a sequence.
 /// \param step: Frame interval between each sequence.
 /// \param stride: Frame interval between frames in a sequence.
@@ -517,6 +522,7 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileResize(RaliContext context,
 extern "C"  RaliImage  RALI_API_CALL raliVideoFileSourceSingleShard(RaliContext context,
                                                                     const char* source_path,
                                                                     RaliImageColor color_format,
+                                                                    RaliDecodeDevice rali_decode_device,
                                                                     unsigned sequence_length,
                                                                     unsigned step,
                                                                     unsigned stride,

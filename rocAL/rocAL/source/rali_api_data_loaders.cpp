@@ -1507,6 +1507,7 @@ raliVideoFileSource(
         RaliContext p_context,
         const char* source_path,
         RaliImageColor rali_color_format,
+        RaliDecodeDevice rali_decode_device,
         unsigned internal_shard_count,
         unsigned sequence_length,
         unsigned step,
@@ -1548,7 +1549,7 @@ raliVideoFileSource(
         start_end_frame_num = video_prop.start_end_frame_num;
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
-        //auto decoder_mode = convert_decoder_mode(rali_decode_device);
+        auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(width, height,
                               context->master_graph->internal_batch_size(),
                               num_of_planes,
@@ -1562,6 +1563,7 @@ raliVideoFileSource(
 									                                      std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,
+                                                                          decoder_mode,
                                                                           sequence_length,
                                                                           step,
                                                                           stride,
@@ -1599,6 +1601,7 @@ raliVideoFileResize(
         RaliContext p_context,
         const char* source_path,
         RaliImageColor rali_color_format,
+        RaliDecodeDevice rali_decode_device,
         unsigned internal_shard_count,
         unsigned sequence_length,
         unsigned step,
@@ -1645,7 +1648,7 @@ raliVideoFileResize(
         video_file_names = video_prop.video_file_names;
         start_end_frame_num = video_prop.start_end_frame_num;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
-        //auto decoder_mode = convert_decoder_mode(rali_decode_device);
+        auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(width, height,
                               context->master_graph->internal_batch_size(),
                               num_of_planes,
@@ -1666,6 +1669,7 @@ raliVideoFileResize(
 									                                      std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,
+                                                                          decoder_mode,
                                                                           sequence_length,
                                                                           step,
                                                                           stride,

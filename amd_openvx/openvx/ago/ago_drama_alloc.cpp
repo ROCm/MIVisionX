@@ -592,7 +592,6 @@ static int agoOptimizeDramaAllocSetDefaultTargets(AgoGraph * agraph)
                 agoAddLogEntry(&node->akernel->ref, status, "ERROR: kernel %s: query_target_support_f(*,*,%d,*) => %d\n", node->akernel->name, vx_false_e, status);
                 return -1;
             }
-            supported_target_affinity &= ~AGO_KERNEL_FLAG_DEVICE_GPU;
 #endif
             node->target_support_flags = 0;
             if (supported_target_affinity & AGO_KERNEL_FLAG_DEVICE_CPU) {

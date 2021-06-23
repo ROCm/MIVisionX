@@ -231,6 +231,24 @@ static vx_status VX_CALLBACK uninitializeResizebatchPD(vx_node node, const vx_re
 	return VX_SUCCESS;
 }
 
+//! \brief The kernel target support callback.
+// TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
+
+static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
+    vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
+    vx_uint32& supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+    )
+{
+	vx_context context = vxGetContext((vx_reference)graph);
+	AgoTargetAffinityInfo affinity;
+	vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
+	if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+    supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+  else
+    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+  return VX_SUCCESS;
+}
+
 vx_status ResizebatchPD_Register(vx_context context)
 {
 	vx_status status = VX_SUCCESS;
@@ -253,8 +271,11 @@ vx_status ResizebatchPD_Register(vx_context context)
 #else
 	vx_bool enableBufferAccess = vx_false_e;
 #endif
+  amd_kernel_query_target_support_f query_target_support_f = query_target_support;
+
 	if (kernel)
 	{
+	  STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));

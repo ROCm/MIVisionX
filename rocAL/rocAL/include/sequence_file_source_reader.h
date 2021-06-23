@@ -68,19 +68,20 @@ private:
     //! opens the folder containnig the images
     Reader::Status open_folder();
     Reader::Status subfolder_reading();
+    Reader::Status get_sequences();
     std::string _folder_path;
     DIR *_src_dir;
     DIR *_sub_dir;
     struct dirent *_entity;
     std::vector<std::string> _file_names;
-    std::vector<std::string> _sequence_frames;
-    std::vector<std::vector< std::string>> _video_file_names;
+    std::vector<std::string> _frame_names;
+    std::vector<std::vector< std::string>> _folder_file_names;
     std::vector<std::vector< std::string>> _sequence_frame_names;
     unsigned  _curr_file_idx;
     FILE* _current_fPtr;
     unsigned _current_file_size;
     std::string _last_id;
-    std::string _last_file_name;
+    std::vector<std::string> _last_sequence;
     size_t _sequence_length;
     size_t _step;
     size_t _stride;
@@ -90,18 +91,19 @@ private:
     /// The loader will repeat images if necessary to be able to have images available in multiples of the load_batch_count,
     /// for instance if there are 10 images in the dataset and _batch_count is 3, the loader repeats 2 images as if there are 12 images available.
     size_t _batch_count = 1;
-    size_t _file_id = 0;
+    size_t _user_batch_count = 1;
+    size_t _sequence_id = 0;
     size_t _in_batch_read_count = 0;
     bool _loop;
     bool _shuffle;
     int _read_counter = 0;
-    //!< _file_count_all_shards total_number of files in to figure out the max_batch_size (usually needed for distributed training).
-    size_t  _file_count_all_shards;
+    //!< _sequence_count_all_shards total_number of sequences in to figure out the max_batch_size (usually needed for distributed training).
+    size_t  _sequence_count_all_shards;
     void incremenet_read_ptr();
     int release();
-    size_t get_file_shard_id();
-    void incremenet_file_id() { _file_id++; }
-    void replicate_last_image_to_fill_last_shard();
+    size_t get_sequence_shard_id();
+    void incremenet_sequence_id() { _sequence_id++; }
+    void replicate_last_sequence_to_fill_last_shard();
     void replicate_last_batch_to_pad_partial_shard();
     TimingDBG _shuffle_time;
 };

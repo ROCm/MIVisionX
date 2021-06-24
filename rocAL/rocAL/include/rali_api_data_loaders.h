@@ -504,6 +504,35 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
                                                         bool file_list_frame_num = true
                                                         );
 
+/// \param context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk, multiple sources can be separated using the ":" delimiter
+/// \param color_format The color format the images will be decoded to.
+/// \param rali_decode_device Enables software or hardware decoding. Currently only software decoding is supported.
+/// \param shard_id Shard id for this loader.
+/// \param shard_count Total shard count.
+/// \param sequence_length: The number of frames in a sequence.
+/// \param step: Frame interval between each sequence.
+/// \param stride: Frame interval between frames in a sequence.
+/// \param shuffle: to shuffle sequences.
+/// \param is_output Determines if the user wants the loaded frames to be part of the output or not.
+/// \param loop: repeat data loading.
+/// \param file_list_frame_num: Determines if the user wants to read frame number or timestamps from the text file input.
+/// \return
+extern "C"  RaliImage  RALI_API_CALL raliVideoFileSourceSingleShard(RaliContext context,
+                                                                    const char* source_path,
+                                                                    RaliImageColor color_format,
+                                                                    RaliDecodeDevice rali_decode_device,
+                                                                    unsigned shard_id,
+                                                                    unsigned shard_count,
+                                                                    unsigned sequence_length,
+                                                                    unsigned step,
+                                                                    unsigned stride,
+                                                                    bool shuffle = false,
+                                                                    bool is_output = false,
+                                                                    bool loop = false, 
+                                                                    bool file_list_frame_num = true
+                                                                    );
+
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode H.264 videos stored on the file systems.
 /// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk, multiple sources can be separated using the ":" delimiter
@@ -536,34 +565,39 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileResize(RaliContext context,
                                                         bool file_list_frame_num = true
                                                         );
 
+/// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode H.264 videos stored on the file systems.
 /// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk, multiple sources can be separated using the ":" delimiter
 /// \param color_format The color format the images will be decoded to.
 /// \param rali_decode_device Enables software or hardware decoding. Currently only software decoding is supported.
+/// \param shard_id Shard id for this loader.
+/// \param shard_count Total shard count.
 /// \param sequence_length: The number of frames in a sequence.
 /// \param step: Frame interval between each sequence.
 /// \param stride: Frame interval between frames in a sequence.
-/// \param shard_id Shard id for this loader.
-/// \param shard_count Total shard count.
+/// \param dest_width The output width of image.
+/// \param dest_height The output height of image.
 /// \param shuffle: to shuffle sequences.
 /// \param is_output Determines if the user wants the loaded frames to be part of the output or not.
 /// \param loop: repeat data loading.
 /// \param file_list_frame_num: Determines if the user wants to read frame number or timestamps from the text file input.
 /// \return
-extern "C"  RaliImage  RALI_API_CALL raliVideoFileSourceSingleShard(RaliContext context,
-                                                                    const char* source_path,
-                                                                    RaliImageColor color_format,
-                                                                    RaliDecodeDevice rali_decode_device,
-                                                                    unsigned sequence_length,
-                                                                    unsigned step,
-                                                                    unsigned stride,
-                                                                    unsigned shard_id,
-                                                                    unsigned shard_count,
-                                                                    bool shuffle = false,
-                                                                    bool is_output = false,
-                                                                    bool loop = false, 
-                                                                    bool file_list_frame_num = true
-                                                                    );
+extern "C"  RaliImage  RALI_API_CALL raliVideoFileResizeSingleShard(RaliContext context,
+                                                        const char* source_path,
+                                                        RaliImageColor color_format,
+                                                        RaliDecodeDevice rali_decode_device,
+                                                        unsigned shard_id,
+                                                        unsigned shard_count,
+                                                        unsigned sequence_length,
+                                                        unsigned step,
+                                                        unsigned stride,
+                                                        unsigned dest_width,
+                                                        unsigned dest_height,
+                                                        bool shuffle = false,
+                                                        bool is_output = false,
+                                                        bool loop = false,
+                                                        bool file_list_frame_num = true
+                                                        );
 
 /// Creates CIFAR10 raw data reader and loader. It allocates the resources and objects required to read raw data stored on the file systems.
 /// \param context Rali context

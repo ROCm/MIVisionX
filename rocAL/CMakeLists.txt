@@ -22,4 +22,3 @@ cmake_minimum_required(VERSION 3.0)
 project(amd_rocAL)
 
 add_subdirectory(rocAL)
-#add_subdirectory(rocAL_pybind)

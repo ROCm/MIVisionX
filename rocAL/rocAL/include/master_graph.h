@@ -40,7 +40,7 @@ THE SOFTWARE.
 #include "device_manager_hip.h"
 #endif
 #include "randombboxcrop_meta_data_reader.h"
-
+#define MAX_STRING_LENGTH 100
 class MasterGraph
 {
 public:

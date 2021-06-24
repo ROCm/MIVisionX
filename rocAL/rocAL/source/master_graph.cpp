@@ -52,7 +52,7 @@ using half_float::half;
 
 static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char* string)
 {
-    size_t len = strlen(string);
+    size_t len = strnlen(string, MAX_STRING_LENGTH);
     if (len > 0) {
         printf("%s", string);
         if (string[len - 1] != '\n')

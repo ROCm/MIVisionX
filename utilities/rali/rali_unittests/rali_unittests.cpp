@@ -708,7 +708,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         if (color_format == RaliImageColor::RALI_COLOR_RGB24)
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imwrite(std::to_string(index)+outName, mat_color, compression_params);
+            cv::imwrite(outName, mat_color, compression_params);
         }
         else
         {

@@ -3736,7 +3736,7 @@ Hip_HarrisSobel_HG3_U8_3x3(uint dstWidth, uint dstHeight,
     d_float8 sum2 = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 * lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -3964,7 +3964,7 @@ Hip_HarrisScore_HVC_HG3_3x3(uint dstWidth, uint dstHeight,
 
     uchar *gbuf;
     gbuf = pSrcGxy;
-    __shared__ uchar *lbuf_ptr;
+    uchar *lbuf_ptr;
     float2 v2;
 
     { // load 272x18 bytes into local memory using 16x16 workgroup
@@ -4182,11 +4182,10 @@ Hip_HarrisScore_HVC_HG3_3x3(uint dstWidth, uint dstHeight,
             score.z = fmaf(sum0.z, -sensitivity, score.z);
             score.w = fmaf(sum0.w, -sensitivity, score.w);
             score *= (float4)normFactor;
-            score = HIPSELECT((float4)0.0f, score, (
-                score.x > strength_threshold &&
-                score.y > strength_threshold &&
-                score.z > strength_threshold &&
-                score.w > strength_threshold));
+            score.x = HIPSELECT(0.0f, score.x, score.x > strength_threshold);
+            score.y = HIPSELECT(0.0f, score.y, score.y > strength_threshold);
+            score.z = HIPSELECT(0.0f, score.z, score.z > strength_threshold);
+            score.w = HIPSELECT(0.0f, score.w, score.w > strength_threshold);
             score.x = HIPSELECT(score.x, 0.0f, gx < border);
             score.y = HIPSELECT(score.y, 0.0f, gx < border - 1);
             score.z = HIPSELECT(score.z, 0.0f, gx < border - 2);
@@ -4245,7 +4244,7 @@ int HipExec_HarrisScore_HVC_HG3_7x7(hipStream_t stream, vx_uint32 dstWidth, vx_u
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint capacityOfList,
+Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint dstListOffset, uint capacityOfList,
     uint srcWidth, uint srcHeight,
     uchar *pSrcImage, uint srcImageStrideInBytes,
     uint srcWidthComp1, uint srcWidthComp2) {
@@ -4255,11 +4254,10 @@ Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint capacityOfList,
     int gx = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int gy = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     int gstride = srcImageStrideInBytes;
-    uchar *gbuf = pSrcImage;
     __shared__ uchar lbuf[2448];
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (gy - 1) * srcImageStrideInBytes + gx - 4;
+        int goffset = (gy - 1) * srcImageStrideInBytes + (gx << 3) - 4;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -4269,7 +4267,7 @@ Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint capacityOfList,
         } else {
             int id = (ly - 2) * 16 + lx;
             loffset = id * 136 + 128;
-            goffset = (gy - ly + id - 1) * srcImageStrideInBytes + (((gx >> 3) - lx) << 3) + 124;
+            goffset = (gy - ly + id - 1) * srcImageStrideInBytes + ((gx  - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
         if (doExtraLoad) {
@@ -4277,12 +4275,14 @@ Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint capacityOfList,
         }
         __syncthreads();
     }
-    __shared__ uchar *lbuf_ptr;
+    uchar *lbuf_ptr;
     lbuf_ptr = lbuf + ly * 136 + (lx << 3);
     float4 L0 = *(float4 *)lbuf_ptr;
     float4 L1 = *(float4 *)&lbuf_ptr[136];
     float4 L2 = *(float4 *)&lbuf_ptr[272];
-    float2 T = *(float2 *)&L1;
+    float2 T;
+    T.x = L1.y;
+    T.y = L1.z;
     T.x = HIPSELECT(0.0f, T.x, T.x >= L1.x);
     T.x = HIPSELECT(0.0f, T.x, T.x >  L1.z);
     T.x = HIPSELECT(0.0f, T.x, T.x >= L0.x);
@@ -4306,24 +4306,24 @@ Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint capacityOfList,
     gx = gx + gx + HIPSELECT(0, 1, T.y > 0.0f);
     T.x = HIPSELECT(T.x, T.y, T.y > 0.0f);
     if (T.x > 0.0f) {
-        uint pos = atomicInc((uint *)pDstList, 1);
+        int pos = atomicAdd((int *)pDstList, 1);
         if(pos < capacityOfList) {
-            *((uint2 *)(&pDstList[pos << 3])) = make_uint2(gx | (gy << 16), (uint)(T.x));
+            *((uint2 *)(&pDstList[dstListOffset + (pos << 3)])) = make_uint2(gx | (gy << 16), __float_as_uint(T.x));
         }
     }
 }
-int HipExec_NonMaxSupp_XY_ANY_3x3(hipStream_t stream, vx_uint32 capacityOfList, ago_keypoint_xys_t *pHipDstList,
+int HipExec_NonMaxSupp_XY_ANY_3x3(hipStream_t stream, vx_uint32 capacityOfList, vx_uint8* pHipDstList, vx_uint32 dstListOffset,
     vx_uint32 srcWidth, vx_uint32 srcHeight, vx_float32 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 16;
-    int globalThreads_x = srcWidth;
+    int globalThreads_x = (srcWidth + 1) / 2;
     int globalThreads_y = srcHeight;
 
     vx_uint32 srcWidthComp1 = (srcWidth + 1) / 2;
     vx_uint32 srcWidthComp2 = srcWidth / 2;
 
     hipLaunchKernelGGL(Hip_NonMaxSupp_XY_ANY_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, (char *)pHipDstList, capacityOfList,
+                        dim3(localThreads_x, localThreads_y), 0, stream, (char *)pHipDstList, dstListOffset, capacityOfList,
                         srcWidth, srcHeight, (uchar *)pHipSrcImage, srcImageStrideInBytes,
                         srcWidthComp1, srcWidthComp2);
 

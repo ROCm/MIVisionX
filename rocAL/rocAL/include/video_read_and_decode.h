@@ -90,12 +90,12 @@ private:
     std::shared_ptr<Reader> _reader;
     size_t _max_video_count = 50;
     size_t _video_process_count;
-    std::vector<unsigned char> _compressed_buff;
+    std::vector<std::vector<unsigned char> > _compressed_buff;
     std::vector<std::string> _video_names;
     std::map<std::string, video_map> _video_file_name_map;
     size_t _compressed_image_size;
     size_t _actual_read_size;
-    unsigned char *_decompressed_buff_ptrs;
+    std::vector<unsigned char *> _decompressed_buff_ptrs;
     std::vector<size_t> _actual_decoded_width;
     std::vector<size_t> _actual_decoded_height;
     std::vector<size_t> _original_width;
@@ -103,6 +103,7 @@ private:
     static const size_t MAX_COMPRESSED_SIZE = 1 * 1024 * 1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
+    size_t _sequence_count;
     size_t _sequence_length;
     size_t _stride;
     size_t _video_count;

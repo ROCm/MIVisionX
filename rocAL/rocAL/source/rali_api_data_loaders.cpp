@@ -288,8 +288,8 @@ raliSequenceReader(
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->set_internal_batch_size(sequence_length);
+        context->set_internal_batch_size(context->master_graph->internal_batch_size());
+        context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
@@ -372,8 +372,8 @@ raliSequenceReaderSingleShard(
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->set_internal_batch_size(sequence_length);
+        context->set_internal_batch_size(context->master_graph->internal_batch_size());
+        context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
@@ -1527,8 +1527,8 @@ raliVideoFileSource(
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->set_internal_batch_size(sequence_length);
+        context->set_internal_batch_size(context->master_graph->internal_batch_size());
+        context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
         unsigned width , height, number_of_video_files, frame_rate;
@@ -1627,8 +1627,8 @@ raliVideoFileResize(
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->set_internal_batch_size(sequence_length);
+        context->set_internal_batch_size(context->master_graph->internal_batch_size());
+        context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
         unsigned width , height, number_of_video_files, frame_rate;

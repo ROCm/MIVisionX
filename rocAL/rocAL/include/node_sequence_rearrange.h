@@ -31,13 +31,12 @@ class SequenceRearrangeNode : public Node
 public:
     SequenceRearrangeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     SequenceRearrangeNode() = delete;
-    void init(unsigned int* new_order, unsigned int new_sequence_length, unsigned int sequence_length);
+    void init(unsigned int* new_order, unsigned int new_sequence_length, unsigned int sequence_length, unsigned int sequence_count);
 protected:
     void create_node() override;
     void update_node() override;
 private:
     std::vector<unsigned int> _new_order;
-    unsigned int  _new_sequence_length;
-    unsigned int _sequence_length;
+    unsigned int  _new_sequence_length, _sequence_length, _sequence_count;
     vx_array _sequence_array;
 };

@@ -85,7 +85,7 @@ public:
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
     bool empty() { return (remaining_images_count() < ((_sequence_rearrange_batch_decrementer > 0)? _sequence_rearrange_batch_decrementer : _user_batch_size)); }
-    void set_user_internal_batch_size(size_t user_internal_batch_size) {_internal_batch_size = user_internal_batch_size;}
+    void set_user_internal_batch_size(size_t sequence_length) { _internal_batch_size = (_user_batch_size >= _internal_batch_size)? _internal_batch_size * sequence_length: sequence_length; }
     void set_user_batch_size(size_t new_user_batch_size) {_user_batch_size = new_user_batch_size;}
     void set_user_internal_batch_ratio() {_user_to_internal_batch_ratio = _user_batch_size/_internal_batch_size; }
     size_t user_batch_size() {return _user_batch_size;}

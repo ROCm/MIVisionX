@@ -128,12 +128,11 @@ void VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder
         de_init();
         throw;
     }
-    _decoded_img_info._image_names.resize(_sequence_length);
-    _decoded_img_info._roi_height.resize(_sequence_length);
-    _decoded_img_info._roi_width.resize(_sequence_length);
-    _decoded_img_info._original_height.resize(_sequence_length);
-    _decoded_img_info._original_width.resize(_sequence_length);
-    // std::cerr<<"\n _output_mem_size:: "<<_output_mem_size;
+    _decoded_img_info._image_names.resize(_batch_size);
+    _decoded_img_info._roi_height.resize(_batch_size);
+    _decoded_img_info._roi_width.resize(_batch_size);
+    _decoded_img_info._original_height.resize(_batch_size);
+    _decoded_img_info._original_width.resize(_batch_size);
     _circ_buff.init(_mem_type, _output_mem_size);
     _is_initialized = true;
     LOG("Loader module initialized");

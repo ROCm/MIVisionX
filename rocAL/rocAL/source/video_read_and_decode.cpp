@@ -78,12 +78,16 @@ void VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig d
 
     _video_decoder.resize(_video_process_count);
     _video_names.resize(_video_count);
-    _actual_decoded_width.resize(_sequence_length);
-    _actual_decoded_height.resize(_sequence_length);
-    _original_height.resize(_sequence_length);
-    _original_width.resize(_sequence_length);
+    _actual_decoded_width.resize(_batch_size);
+    _actual_decoded_height.resize(_batch_size);
+    _original_height.resize(_batch_size);
+    _original_width.resize(_batch_size);
+    _sequence_count = _batch_size / _sequence_length;
+    _compressed_buff.resize(_sequence_count);
+    // _compressed_buff.resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
+    _decompressed_buff_ptrs.resize(_sequence_count);
+    
     _video_decoder_config = decoder_config;
-    _compressed_buff.resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
     size_t i = 0;
     for (; i < _video_process_count; i++)
     {
@@ -164,6 +168,7 @@ VideoReadAndDecode::load(unsigned char *buff,
     const auto ret = video_interpret_color_format(output_color_format);
     const unsigned output_planes = std::get<1>(ret);
     AVPixelFormat out_pix_fmt = std::get<2>(ret);
+    const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start(); // Debug timing
@@ -174,22 +179,29 @@ VideoReadAndDecode::load(unsigned char *buff,
         WRN("Opened file " + _reader->id() + " of size 0");
     }
 
-    size_t start_frame = _reader->read(_compressed_buff.data(), fsize);
-    std::string video_path = _reader->id();
-    _reader->close();
+    std::vector<size_t> start_frame;
+    std::vector<std::string> video_path;
+
+    start_frame.resize(_sequence_count);
+    video_path.resize(_sequence_count);
+    for (size_t i = 0; i < _sequence_count; i++)
+    {
+        _compressed_buff[i].resize(MAX_COMPRESSED_SIZE);
+        start_frame[i] = _reader->read(_compressed_buff[i].data(), fsize);
+        video_path[i] = _reader->id();
+        _reader->close();
+    }
 
     _file_load_time.end(); // Debug timing
-    _decompressed_buff_ptrs = buff;
+
     _decode_time.start(); // Debug timing
 
-// #pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
-    // The loop is retained so that multi threading support can be added later
-    // Currently Decode function is capable of decoding a single sequence
-    for (int i = 0; i < 1; i++) // remove for loop
+// #pragma omp parallel for num_threads(_sequence_count)  // default(none) TBD: option disabled in Ubuntu 20.04
+    for (size_t i = 0; i < _sequence_count; i++) // remove for loop
     {
         int video_idx_map;
         // std::cerr << "\nThe source video is " << video_path << " MAP : "<<_video_file_name_map.find(video_path)->second._video_map_idx << "\tThe start index is : " << start_frame << "\n";
-        std::map<std::string, video_map>::iterator itr = _video_file_name_map.find(video_path);
+        std::map<std::string, video_map>::iterator itr = _video_file_name_map.find(video_path[i]);
         if (itr->second._is_decoder_instance == false)
         {
             std::map<std::string, video_map>::iterator temp_itr;
@@ -214,37 +226,43 @@ VideoReadAndDecode::load(unsigned char *buff,
         if(itr->second._is_decoder_instance == false)
             continue;
         video_idx_map = itr->second._video_map_idx;
-        sequence_start_framenum[i] = start_frame;
-        for (size_t s = 0; s < _sequence_length; s++)
-        {
-            sequence_frame_timestamps[i][s] = convert_framenum_to_timestamp(start_frame + (s * _stride), video_idx_map);
-            _actual_decoded_width[s] = max_decoded_width;
-            _actual_decoded_height[s] = max_decoded_height;
-        }
-        if (_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length, _stride, max_decoded_width, max_decoded_height, 
+        _decompressed_buff_ptrs[i] = buff + (i * image_size * _sequence_length);
+        if (_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs[i], start_frame[i], _sequence_length, _stride, max_decoded_width, max_decoded_height, 
             max_decoded_width * output_planes, out_pix_fmt) != VideoDecoder::Status::OK)
         {
             continue;
         }
+
+        sequence_start_framenum[i] = start_frame[i];
+        for (size_t s = 0; s < _sequence_length; s++)
+        {
+            sequence_frame_timestamps[i][s] = convert_framenum_to_timestamp(start_frame[i] + (s * _stride), video_idx_map);
+            _actual_decoded_width[(i * _sequence_length) + s] = max_decoded_width;
+            _actual_decoded_height[(i * _sequence_length) + s] = max_decoded_height;
+        }
     }
     _decode_time.end(); // Debug timing
-    
-    sequence_start_framenum_vec.insert(sequence_start_framenum_vec.begin(), sequence_start_framenum);
-    sequence_frame_timestamps_vec.insert(sequence_frame_timestamps_vec.begin(), sequence_frame_timestamps);
 
-    std::vector<std::string> substrings1, substrings2;
-    char delim = '/';
-    substring_extraction(video_path, delim, substrings1);
+    sequence_start_framenum_vec.insert(sequence_start_framenum_vec.begin(), sequence_start_framenum);  // Needs change
+    sequence_frame_timestamps_vec.insert(sequence_frame_timestamps_vec.begin(), sequence_frame_timestamps); // Needs change
 
-    std::string file_name = substrings1[substrings1.size() - 1];
-    delim = '#';
-    substring_extraction(video_path, delim, substrings2);
-    std::string video_idx = substrings2[0];
-    for (size_t i = 0; i < _sequence_length; i++)
+    for(size_t i = 0; i < _sequence_count; i++)
     {
-        names[i] = video_idx + "#" + file_name + "_" + std::to_string(start_frame + (i * _stride));
-        roi_width[i] = _actual_decoded_width[i];
-        roi_height[i] = _actual_decoded_height[i];
+        std::vector<std::string> substrings1, substrings2;
+        char delim = '/';
+        substring_extraction(video_path[i], delim, substrings1);
+
+        std::string file_name = substrings1[substrings1.size() - 1];
+        delim = '#';
+        substring_extraction(video_path[i], delim, substrings2);
+        std::string video_idx = substrings2[0];
+        
+        for (size_t s = 0; s < _sequence_length; s++)
+        {
+            names[(i * _sequence_length) + s] = video_idx + "#" + file_name + "_" + std::to_string(start_frame[i] + (s * _stride));
+            roi_width[(i * _sequence_length) + s] = _actual_decoded_width[s];
+            roi_height[(i * _sequence_length) + s] = _actual_decoded_height[s];
+        }
     }
     return VideoLoaderModuleStatus::OK;
 }

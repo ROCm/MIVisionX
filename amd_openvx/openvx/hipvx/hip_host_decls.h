@@ -896,8 +896,8 @@ int HipExec_HarrisScore_HVC_HG3_7x7(
         vx_float32 sensitivity, vx_float32 strength_threshold,
         vx_int32 border, vx_float32 normFactor);
 int HipExec_NonMaxSupp_XY_ANY_3x3(
-        hipStream_t stream, vx_uint32 capacityOfList, ago_keypoint_xys_t *pHipDstList,
-        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        hipStream_t stream, vx_uint32 capacityOfList, vx_uint8 *pHipDstList,
+        vx_uint32 dstListOffset, vx_uint32 srcWidth, vx_uint32 srcHeight,
         vx_float32 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
 
 #endif //MIVISIONX_HIP_HOST_DECLS_H

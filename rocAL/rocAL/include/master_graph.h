@@ -274,4 +274,16 @@ template<> inline std::shared_ptr<VideoLoaderNode> MasterGraph::add_node(const s
 
     return node;
 }
+template<> inline std::shared_ptr<VideoLoaderSingleShardNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
+{
+    if(_video_loader_module)
+        THROW("A loader already exists, cannot have more than one loader")
+    auto node = std::make_shared<VideoLoaderSingleShardNode>(outputs[0], _device.resources());
+    _video_loader_module = node->get_loader_module();
+    _root_nodes.push_back(node);
+    for(auto& output: outputs)
+        _image_map.insert(make_pair(output, node));
+
+    return node;
+}
 #endif

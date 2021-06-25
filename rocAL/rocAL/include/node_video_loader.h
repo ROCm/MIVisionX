@@ -26,11 +26,6 @@ THE SOFTWARE.
 #include "graph.h"
 #include <tuple>
 
-enum class DecodeMode {
-    USE_HW = 0,
-    USE_SW = 1
-};
-
 #ifdef RALI_VIDEO
 class VideoLoaderNode: public Node
 {

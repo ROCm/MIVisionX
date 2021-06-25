@@ -29,8 +29,8 @@ extern "C"
     #include <libavformat/avformat.h>
     #include <libavcodec/avcodec.h>
 }
-    #include "node_video_loader.h"
-    #include "node_video_loader_single_shard.h"
+#include "node_video_loader.h"
+#include "node_video_loader_single_shard.h"
 #include "video_properties.h"
 #endif
 #include "rali_api.h"
@@ -408,7 +408,8 @@ raliSequenceReaderSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", sequence_length,
+                                                                                        source_path, "", 
+                                                                                        sequence_length,
                                                                                         step, stride,
                                                                                         StorageType::FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
@@ -1597,6 +1598,107 @@ raliVideoFileSource(
 }
 
 RaliImage  RALI_API_CALL
+raliVideoFileSourceSingleShard(
+        RaliContext p_context,
+        const char* source_path,
+        RaliImageColor rali_color_format,
+        RaliDecodeDevice rali_decode_device,
+        unsigned shard_id,
+        unsigned shard_count,
+        unsigned sequence_length,
+        unsigned step,
+        unsigned stride,
+        bool shuffle,
+        bool is_output,
+        bool loop,
+        bool file_list_frame_num)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+#ifdef RALI_VIDEO
+        /* The internal batch size and user batch size are modified here in master graph */
+        context->master_graph->set_video_loader_flag();
+        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
+        context->master_graph->set_user_internal_batch_ratio();
+        context->set_user_batch_size(sequence_length * context->user_batch_size());
+        context->set_internal_batch_size(sequence_length);
+        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
+        
+        if(shard_count < 1 )
+            THROW("Shard count should be bigger than 0")
+
+        if(shard_id >= shard_count)
+            THROW("Shard id should be smaller than shard count")
+        
+        unsigned width , height, number_of_video_files, frame_rate;
+        std::vector<size_t> frames_count;
+        std::vector<std::string> video_file_names;
+        std::vector<std::tuple<int, int>> start_end_frame_num;
+
+        video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
+        width = video_prop.width;
+        height = video_prop.height;
+        number_of_video_files = video_prop.videos_count;
+        frames_count.resize(number_of_video_files);
+        video_file_names.resize(number_of_video_files);
+        start_end_frame_num.resize(number_of_video_files);
+        frames_count = video_prop.frames_count;
+        frame_rate = video_prop.frame_rate;
+        video_file_names = video_prop.video_file_names;
+        start_end_frame_num = video_prop.start_end_frame_num;
+
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+        auto decoder_mode = convert_decoder_mode(rali_decode_device);
+        auto info = ImageInfo(width, height,
+                              context->master_graph->internal_batch_size(),
+                              num_of_planes,
+                              context->master_graph->mem_type(),
+                              color_format );
+
+        output = context->master_graph->create_loader_output_image(info);
+
+        context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
+                                                                          source_path, "",
+									                                      std::map<std::string, std::string>(),
+                                                                          StorageType::VIDEO_FILE_SYSTEM,
+                                                                          VideoDecoderType::FFMPEG_VIDEO,
+                                                                          decoder_mode,
+                                                                          sequence_length,
+                                                                          step,
+                                                                          stride,
+                                                                          number_of_video_files,
+                                                                          frames_count,
+                                                                          frame_rate,
+                                                                          start_end_frame_num,
+                                                                          shuffle,
+                                                                          loop,
+                                                                          context->user_batch_size(),
+                                                                          context->master_graph->mem_type(),
+                                                                          video_file_names);
+        context->master_graph->set_loop(loop);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(info, is_output);
+            context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
+#else
+        THROW("Video decoder is not enabled since ffmpeg is not present")
+#endif
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return output;
+
+}
+
+RaliImage  RALI_API_CALL
 raliVideoFileResize(
         RaliContext p_context,
         const char* source_path,
@@ -1665,6 +1767,125 @@ raliVideoFileResize(
         resize_output = context->master_graph->create_image(output_info, false);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
+                                                                          source_path, "",
+									                                      std::map<std::string, std::string>(),
+                                                                          StorageType::VIDEO_FILE_SYSTEM,
+                                                                          VideoDecoderType::FFMPEG_VIDEO,
+                                                                          decoder_mode,
+                                                                          sequence_length,
+                                                                          step,
+                                                                          stride,
+                                                                          number_of_video_files,
+                                                                          frames_count,
+                                                                          frame_rate,
+                                                                          start_end_frame_num,
+                                                                          shuffle,
+                                                                          loop,
+                                                                          context->user_batch_size(),
+                                                                          context->master_graph->mem_type(),
+                                                                          video_file_names);
+        context->master_graph->set_loop(loop);
+
+        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
+        resize_output->reset_image_roi();
+
+        std::shared_ptr<ResizeNode> resize_node =  context->master_graph->add_node<ResizeNode>({output}, {resize_output});
+        if (context->master_graph->meta_data_graph())
+            context->master_graph->meta_add_node<ResizeMetaNode,ResizeNode>(resize_node);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(output_info, is_output);
+            context->master_graph->add_node<CopyNode>({resize_output}, {actual_output});
+        }
+#else
+        THROW("Video decoder is not enabled since ffmpeg is not present")
+#endif
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return resize_output;
+}
+
+RaliImage  RALI_API_CALL
+raliVideoFileResizeSingleShard(
+        RaliContext p_context,
+        const char* source_path,
+        RaliImageColor rali_color_format,
+        RaliDecodeDevice rali_decode_device,
+        unsigned shard_id,
+        unsigned shard_count,
+        unsigned sequence_length,
+        unsigned step,
+        unsigned stride,
+        unsigned dest_width,
+        unsigned dest_height,
+        bool shuffle,
+        bool is_output,
+        bool loop,
+        bool file_list_frame_num)
+{
+    Image* resize_output = nullptr;
+    if(!p_context || dest_width == 0 || dest_height == 0)
+        THROW("Null values passed as input")
+
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+#ifdef RALI_VIDEO
+        /* The internal batch size and user batch size are modified here in master graph */
+        context->master_graph->set_video_loader_flag();
+        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
+        context->master_graph->set_user_internal_batch_ratio();
+        context->set_user_batch_size(sequence_length * context->user_batch_size());
+        context->set_internal_batch_size(sequence_length);
+        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
+
+        if(shard_count < 1 )
+            THROW("Shard count should be bigger than 0")
+
+        if(shard_id >= shard_count)
+            THROW("Shard id should be smaller than shard count")
+
+        unsigned width , height, number_of_video_files, frame_rate;
+        std::vector<size_t> frames_count;
+        std::vector<std::string> video_file_names;
+        std::vector<std::tuple<int, int>> start_end_frame_num;
+
+        video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
+        width = video_prop.width;
+        height = video_prop.height;
+        number_of_video_files = video_prop.videos_count;
+        frames_count.resize(number_of_video_files);
+        video_file_names.resize(number_of_video_files);
+        start_end_frame_num.resize(number_of_video_files);
+        frames_count = video_prop.frames_count;
+        frame_rate = video_prop.frame_rate;
+        video_file_names = video_prop.video_file_names;
+        start_end_frame_num = video_prop.start_end_frame_num;
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+        auto decoder_mode = convert_decoder_mode(rali_decode_device);
+        auto info = ImageInfo(width, height,
+                              context->master_graph->internal_batch_size(),
+                              num_of_planes,
+                              context->master_graph->mem_type(),
+                              color_format );
+
+        output = context->master_graph->create_loader_output_image(info);
+
+        // For the resize node, user can create an image with a different width and height
+        ImageInfo output_info = info;
+        output_info.width(dest_width);
+        output_info.height(dest_height);
+
+        resize_output = context->master_graph->create_image(output_info, false);
+
+        context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                           source_path, "",
 									                                      std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,

@@ -24,7 +24,7 @@ std::vector<unsigned> open_video_context(const char *video_file_path)
     int ret = avformat_open_input(&pFormatCtx, video_file_path, NULL, NULL);
     if (ret != 0)
     {
-        std::cerr << "\nUnable to open video file:" << video_file_path << "\n";
+        WRN("\nUnable to open video file:" + video_file_path + "\n")
         exit(0);
     }
 
@@ -81,13 +81,13 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
             if (props[0] != max_width)
             {
                 if (max_width != 0)
-                    std::cerr << "[WARN] The given video files are of different resolution\n";
+                    THROW("The given video files are of different resolution\n")
                 max_width = props[0];
             }
             if (props[1] != max_height)
             {
                 if (max_height != 0)
-                    std::cerr << "[WARN] The given video files are of different resolution\n";
+                    THROW("The given video files are of different resolution\n")
                 max_height = props[1];
             }
             if (!file_list_frame_num)
@@ -211,13 +211,13 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                 if (props[0] != max_width)
                 {
                     if (max_width != 0)
-                        std::cerr << "[WARN] The given video files are of different resolution\n";
+                        THROW("The given video files are of different resolution\n")
                     max_width = props[0];
                 }
                 if (props[1] != max_height)
                 {
                     if (max_height != 0)
-                        std::cerr << "[WARN] The given video files are of different resolution\n";
+                        THROW("The given video files are of different resolution\n")
                     max_height = props[1];
                 }
                 video_props.frames_count.push_back(props[2]);
@@ -256,13 +256,13 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                     if (props[0] != max_width)
                     {
                         if (max_width != 0)
-                            std::cerr << "[WARN] The given video files are of different resolution\n";
+                            THROW("The given video files are of different resolution\n")
                         max_width = props[0];
                     }
                     if (props[1] != max_height)
                     {
                         if (max_height != 0)
-                            std::cerr << "[WARN] The given video files are of different resolution\n";
+                            THROW("The given video files are of different resolution\n")
                         max_height = props[1];
                     }
                     video_file_path = std::to_string(video_count) + "#" + _full_path;

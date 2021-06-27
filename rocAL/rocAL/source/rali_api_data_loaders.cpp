@@ -411,7 +411,7 @@ raliSequenceReaderSingleShard(
                                                                                         source_path, "", 
                                                                                         sequence_length,
                                                                                         step, stride,
-                                                                                        StorageType::FILE_SYSTEM,
+                                                                                        StorageType::SEQUENCE_FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
                                                                                         loop,

@@ -179,11 +179,16 @@ Reader::Status SequenceFileSourceReader::get_sequences()
 {
     for (unsigned folder_idx = 0; folder_idx < _folder_file_names.size(); folder_idx++)
     {
+        if(_folder_file_names[folder_idx].size() == 0)
+        {
+            WRN("\nFolder #" + TOSTR(folder_idx) + "does not have any files")
+            continue;
+        }
         if (_sequence_length > _folder_file_names[folder_idx].size())
         {
-            THROW("\nSequence length is not valid");
+            THROW("Sequence length is not valid");
         }
-        for (unsigned file_idx = 0; (file_idx + (_stride * (_sequence_length))) < _folder_file_names[folder_idx].size(); file_idx+=_step)
+        for (unsigned file_idx = 0; (file_idx + (_stride * (_sequence_length - 1))) < _folder_file_names[folder_idx].size(); file_idx+=_step)
         {
             if (get_sequence_shard_id() != _shard_id)
             {

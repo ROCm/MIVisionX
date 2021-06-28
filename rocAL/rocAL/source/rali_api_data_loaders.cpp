@@ -1623,8 +1623,8 @@ raliVideoFileSourceSingleShard(
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->set_internal_batch_size(sequence_length);
+        context->set_internal_batch_size(context->master_graph->internal_batch_size());
+        context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
         
         if(shard_count < 1 )
@@ -1842,8 +1842,8 @@ raliVideoFileResizeSingleShard(
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
-        context->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->set_internal_batch_size(sequence_length);
+        context->set_internal_batch_size(context->master_graph->internal_batch_size());
+        context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
         if(shard_count < 1 )

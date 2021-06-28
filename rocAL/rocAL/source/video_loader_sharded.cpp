@@ -77,8 +77,7 @@ VideoLoaderSharded::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decod
 {
     if(_initialized)
         return;
-    // _shard_count = reader_cfg.get_shard_count();
-    _shard_count = 1; // change the shard count to user given
+    _shard_count = reader_cfg.get_shard_count();
 
     // Create loader modules
     for(size_t i = 0; i < _shard_count; i++)

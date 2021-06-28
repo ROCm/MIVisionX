@@ -105,7 +105,7 @@ else()
     target_link_libraries(runvx openvx pthread)
     target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=0)
     target_compile_definitions(runvx PUBLIC ENABLE_HIP=0)
-    message("-- ${Yellow}NOTE:GPU Support Not Found -- runVX built for CPU only${ColourReset}")
+    message("-- ${Yellow}NOTE:GPU Support Not Found or Turned OFF -- runVX built for CPU only${ColourReset}")
 endif()
 
 if(OpenCV_FOUND)

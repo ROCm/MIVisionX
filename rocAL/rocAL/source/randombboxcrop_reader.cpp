@@ -363,7 +363,6 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
         } // while loop
 
         // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
-        add(image_name, crop_box);
 
         //Crop coordinates expected in "xywh" format
         coords_buf[0] = crop_box.l;

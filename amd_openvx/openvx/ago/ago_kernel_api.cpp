@@ -5288,7 +5288,7 @@ int agoKernel_And_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
             status = VX_FAILURE;
         }
     }
-#endif
+	#endif
     return status;
 }
 

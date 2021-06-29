@@ -606,12 +606,12 @@ struct AgoNode {
     vx_perf_t perf;
     vx_bool local_data_change_is_enabled;
     vx_bool local_data_set_by_implementation;
+    struct { bool enable; int paramIndexScalar; int paramIndexArray; } gpu_scalar_array_output_sync;
 #if ENABLE_OPENCL
     vx_uint32 opencl_type;
     char opencl_name[VX_MAX_KERNEL_NAME];
     std::string opencl_code;
     std::string opencl_build_options;
-    struct { bool enable; int paramIndexScalar; int paramIndexArray; } opencl_scalar_array_output_sync;
     vx_uint32 opencl_param_mem2reg_mask;
     vx_uint32 opencl_param_discard_mask;
     vx_uint32 opencl_param_as_value_mask;

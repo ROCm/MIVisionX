@@ -30,7 +30,11 @@ THE SOFTWARE.
 class ImageLoaderSharded : public LoaderModule
 {
 public:
+#if ENABLE_HIP
+    explicit ImageLoaderSharded(DeviceResourcesHip dev_resources);
+#else
     explicit ImageLoaderSharded(DeviceResources dev_resources);
+#endif
     ~ImageLoaderSharded() override;
     LoaderModuleStatus load_next() override;
     void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
@@ -43,14 +47,20 @@ public:
     decoded_image_info get_decode_image_info() override;
     crop_image_info get_crop_image_info() override;
     Timing timing() override;
+    void set_prefetch_queue_depth(size_t prefetch_queue_depth) override;
 private:
     void increment_loader_idx();
+#if ENABLE_HIP
+    const DeviceResourcesHip _dev_resources;
+#else
     const DeviceResources _dev_resources;
+#endif
     bool _initialized = false;
     std::vector<std::shared_ptr<ImageLoader>> _loaders;
     size_t _loader_idx;
     size_t _shard_count = 1;
     void fast_forward_through_empty_loaders();
+    size_t _prefetch_queue_depth;
 
     Image *_output_image;
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;

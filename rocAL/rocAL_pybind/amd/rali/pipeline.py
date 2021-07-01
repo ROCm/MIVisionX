@@ -81,10 +81,10 @@ class Pipeline(object):
         if(rali_cpu):
             # print("comes to cpu")
             self._handle = b.raliCreate(
-                batch_size, types.CPU, device_id, num_threads)
+                batch_size, types.CPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         else:
             self._handle = b.raliCreate(
-                batch_size, types.GPU, device_id, num_threads)
+                batch_size, types.GPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         if(b.getStatus(self._handle) == types.OK):
             print("Pipeline has been created succesfully")
         else:
@@ -208,8 +208,8 @@ class Pipeline(object):
                     if(outputs[1].prev.data == "OneHotLabel"):
                         self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
                         self._oneHotEncoding = True
-        
-            
+
+
         status = b.raliVerify(self._handle)
         if(status != types.OK):
             print("Verify graph failed")
@@ -260,7 +260,7 @@ class Pipeline(object):
         bboxes_tensor = torch.tensor(bboxes_in).float()
         labels_tensor=  torch.tensor(labels_in).long()
         return self._encode_tensor.prev.rali_c_func_call(self._handle, bboxes_tensor , labels_tensor )
-    
+
     def GetOneHotEncodedLabels(self, array):
         return b.getOneHotEncodedLabels(self._handle, array, self._numOfClasses)
 
@@ -271,7 +271,7 @@ class Pipeline(object):
     def GetImageName(self, array_len):
 
         return b.getImageName(self._handle,array_len)
-        
+
     def GetBoundingBoxCount(self, array):
         return b.getBoundingBoxCount(self._handle, array)
 
@@ -303,7 +303,7 @@ class Pipeline(object):
         return b.getOutputWidth(self._handle)
 
     def getOutputHeight(self):
-        return b.getOutputHeight(self._handle) 
+        return b.getOutputHeight(self._handle)
 
     def getOutputImageCount(self):
         return b.getOutputImageCount(self._handle)

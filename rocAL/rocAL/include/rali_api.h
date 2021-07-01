@@ -38,7 +38,8 @@ THE SOFTWARE.
 /// \param gpu_id
 /// \param cpu_thread_count
 /// \return
-extern "C"  RaliContext  RALI_API_CALL raliCreate(size_t batch_size, RaliProcessMode affinity, int gpu_id = 0, size_t cpu_thread_count = 1);
+extern "C"  RaliContext  RALI_API_CALL raliCreate(size_t batch_size, RaliProcessMode affinity, int gpu_id = 0, size_t cpu_thread_count = 1, size_t prefetch_queue_depth = 3, RaliTensorOutputType output_tensor_data_type = RaliTensorOutputType::RALI_FP32);
+//extern "C"  RaliContext  RALI_API_CALL raliCreate(size_t batch_size, RaliProcessMode affinity, int gpu_id = 0, size_t cpu_thread_count = 1);
 
 ///
 /// \param context

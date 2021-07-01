@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#pragma once 
+#pragma once
 
 #include <string>
 #include <thread>
@@ -34,7 +34,11 @@ THE SOFTWARE.
 // it uses a circular buffer to store decoded frames and images for the user
 class ImageLoader : public LoaderModule {
 public:
+#if ENABLE_HIP
+    explicit ImageLoader(DeviceResourcesHip dev_resources);
+#else
     explicit ImageLoader(DeviceResources dev_resources);
+#endif
     ~ImageLoader() override;
     LoaderModuleStatus load_next() override;
     void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
@@ -49,6 +53,7 @@ public:
     std::vector<std::string> get_id() override;
     decoded_image_info get_decode_image_info() override;
     crop_image_info get_crop_image_info() override;
+    void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
 private:
     bool is_out_of_data();
     void de_init();
@@ -74,10 +79,10 @@ private:
     bool _is_initialized;
     bool _stopped = false;
     bool _loop;//<! If true the reader will wrap around at the end of the media (files/images/...) and wouldn't stop
-    const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
+    size_t _prefetch_queue_depth; // Used for circular buffer's internal buffer
     size_t _image_counter = 0;//!< How many images have been loaded already
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
     bool _decoder_keep_original = false;
-    std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr; 
+    std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
 };
 

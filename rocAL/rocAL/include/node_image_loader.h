@@ -31,7 +31,11 @@ public:
     /// \param device_resources shard count from user
 
     /// internal_shard_count number of loader/decoders are created and each shard is loaded and decoded using separate and independent resources increasing the parallelism and performance.
+#if ENABLE_HIP
+    ImageLoaderNode(Image *output, DeviceResourcesHip device_resources);
+#else
     ImageLoaderNode(Image *output, DeviceResources device_resources);
+#endif
     ~ImageLoaderNode() override;
     ImageLoaderNode() = delete;
     ///

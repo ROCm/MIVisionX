@@ -21,13 +21,14 @@ THE SOFTWARE.
 */
 
 #pragma once
-
+#if !ENABLE_HIP
 #include <map>
 #include <CL/cl.h>
 #include <vx_ext_amd.h>
 #include <VX/vx_types.h>
 #include <memory>
 #include "device_data_transfer_code.h"
+
 struct DeviceResources {
     cl_context context;
     cl_device_id device_id;
@@ -67,7 +68,7 @@ public:
     DeviceManager(){};
 
     cl_int initialize();
-    
+
     DeviceResources resources();
 
     const CLProgram& operator[](const std::string& prog_name);
@@ -84,3 +85,4 @@ private:
 };
 
 using pRaliOCL = std::shared_ptr<DeviceManager>;
+#endif

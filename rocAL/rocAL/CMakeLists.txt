@@ -23,31 +23,62 @@
 cmake_minimum_required(VERSION 3.0)
 project(rali)
 
-set(CMAKE_CXX_STANDARD 14)
-
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
 set(BUILD_RALI true)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 
-if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
-    find_package(OpenCL QUIET)
+if(GPU_SUPPORT)
     find_package(AMDRPP QUIET)
     find_package(TurboJpeg QUIET)
     find_package(Protobuf QUIET)
     # If FFMPEG is found, vx_amd_media is expected to be built as well
     find_package(FFmpeg QUIET)
     find_package(OpenCV QUIET)
-elseif(NOT GPU_SUPPORT OR "${BACKEND}" STREQUAL "HIP")
+elseif(NOT GPU_SUPPORT)
     SET(BUILD_RALI false)
-    message("-- ${Yellow}rocAL library requires GPU_SUPPORT=ON and BACKEND=OPENCL ${ColourReset}")
+    message("-- ${Yellow}rocAL library requires GPU_SUPPORT=ON and BACKEND=OPENCL/HIP ${ColourReset}")
 endif()
 
-if(NOT OpenCL_FOUND)
-    set(BUILD_RALI false)
-    message("-- ${Yellow}rocAL library requires OpenCL, Not Found ${ColourReset}")
+if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
+    if(NOT DEFINED HIP_PATH)
+        if(NOT DEFINED ENV{HIP_PATH})
+            set(HIP_PATH ${ROCM_PATH}/hip CACHE PATH "Path to which HIP has been installed")
+        else()
+            set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
+        endif()
+    endif()
+    list(APPEND CMAKE_MODULE_PATH ${HIP_PATH}/cmake)
+    # HSA_PATH
+    IF(NOT DEFINED ENV{HSA_PATH})
+        SET(HSA_PATH ${ROCM_PATH}/hsa)
+    ELSE()
+        SET(HSA_PATH $ENV{HSA_PATH})
+    ENDIF()
+    find_package(HIP QUIET REQUIRED)
+    if(HIP_FOUND)
+        SET(BUILD_RALI true)
+        message(STATUS "Found HIP for rocAL: " ${HIP_VERSION} ${HIP_PATH} )
+        if(HIP_COMPILER STREQUAL clang)
+            set(hip_library_name amdhip64)
+        else()
+            message(FATAL_ERROR "unsupported hip compiler")
+        endif()
+    else()
+        SET(BUILD_RALI false)
+        message(FATAL_ERROR "Could'nt find HIP. Ensure that HIP is either installed in /opt/rocm/hip or the variable HIP_PATH is set.")
+    endif()
 endif()
+
+if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
+  find_package(OpenCL QUIET)
+  if(NOT OpenCL_FOUND)
+      set(BUILD_RALI false)
+      message("-- ${Yellow}rocAL library requires OpenCL for  BACKEND=OPENCL, Not Found ${ColourReset}")
+  endif()
+endif()
+
 if(NOT AMDRPP_FOUND)
     set(BUILD_RALI false)
     message("-- ${Yellow}rocAL library requires AMD's rpp library, Not Found ${ColourReset}")
@@ -95,8 +126,6 @@ if(${BUILD_RALI})
         DESTINATION ./include
         )
     include_directories(
-                ${OpenCL_INCLUDE_DIRS}
-                ${OpenCL_INCLUDE_DIRS}/Headers
                 ${CMAKE_CURRENT_BINARY_DIR}
                 ${TurboJpeg_INCLUDE_DIRS}
                 ${PROTOBUF_INCLUDE_DIRS}
@@ -110,9 +139,26 @@ if(${BUILD_RALI})
     protobuf_generate_cpp(CAFFE2_PROTO_SRCS CAFFE2_PROTO_HEADERS proto/caffe2_protos.proto)
     protobuf_generate_cpp(CAFFE_PROTO_SRCS CAFFE_PROTO_HEADERS proto/caffe_protos.proto)
     link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR} ${PROTOBUF_LIBRARY_DIRS} /usr/local/lib/)
-
+    
+    if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
+        add_subdirectory(rocAL_hip)
+        link_directories(${HIP_PATH}/lib)
+        message("-- ${Yellow}rocAL library is going to be built with HIP support ${ColourReset}")
+    endif()
+    
     file(GLOB SOURCES "./source/*.cpp")
     add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS} ${CAFFE_PROTO_HEADERS} ${CAFFE_PROTO_SRCS} ${CAFFE2_PROTO_SRCS} ${CAFFE2_PROTO_HEADERS})
+    
+    if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
+        include_directories(${HIP_PATH}/include ${HSA_PATH}/include rocAL_hip)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_HCC__)
+        target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=1)
+        message("-- ${Yellow}rocAL library is going to be built with HIP support ${ColourReset}")
+    else()
+        include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
+        target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=0)
+        message("-- ${Yellow}rocAL library is going to be built with OpenCL support ${ColourReset}")
+    endif()
 
     target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
     target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
@@ -135,7 +181,11 @@ if(${BUILD_RALI})
         target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb boost_system boost_filesystem turbojpeg openvx vx_rpp jsoncpp)
     else()
         message("-- ${Green}rocAL library is going to be built with video decode functionality ${ColourReset}")
-        target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
+        target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp  jsoncpp)
+    endif()
+
+    if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
+        target_link_libraries(${PROJECT_NAME} openvx_hip rocAL_hip)
     endif()
 
     install(TARGETS rali DESTINATION lib)

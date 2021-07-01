@@ -29,19 +29,24 @@ THE SOFTWARE.
 #include <array>
 #include <queue>
 #include <memory>
+#if ENABLE_HIP
+#include "hip/hip_runtime.h"
+#include "device_manager_hip.h"
+#else
 #include "device_manager.h"
+#endif
 #include "commons.h"
 
 
 /*! \brief Converts Rali Memory type to OpenVX memory type
  *
- * @param mem input Rali type 
+ * @param mem input Rali type
  * @return the OpenVX type associated with input argument
  */
 vx_enum vx_mem_type(RaliMemType mem);
 struct Point
 {
-    unsigned x; // Along the width 
+    unsigned x; // Along the width
     unsigned y; // Along the height
 };
 
@@ -58,7 +63,7 @@ struct ROI {
 // |  |    |           |           |    |
 // |  -----------------o-----------------
 // |  |    |           |           |    |
-// |  |    +-----------|-----------+    | 
+// |  |    +-----------|-----------+    |
 // |  |                |        p2(x,y) |
 // |  +++++++++++++++++++++++++++++++++++
 // |
@@ -88,7 +93,7 @@ struct ImageInfo
         unsigned height,
         unsigned batch_size,
         unsigned color_planes_count,
-        RaliMemType mem_type, 
+        RaliMemType mem_type,
         RaliColorFormat color_format);
 
     unsigned width() const { return _width; }
@@ -127,7 +132,7 @@ private:
 };
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
 
-/*! \brief Holds an OpenVX image and it's info 
+/*! \brief Holds an OpenVX image and it's info
 *
 * Keeps the information about the image that can be queried using OVX API as well,
 * but for simplicity and ease of use, they are kept in separate fields
@@ -137,13 +142,18 @@ struct Image
     int swap_handle(void* handle);
 
     const ImageInfo& info() { return _info; }
-    //! Default constructor 
+    //! Default constructor
     Image() = delete;
     void* buffer() { return _mem_handle; }
     vx_image handle() { return vx_handle; }
     vx_context context() { return _context; }
+#if !ENABLE_HIP
     unsigned copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync);
     unsigned copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync);
+#else
+    unsigned copy_data(hipStream_t stream, unsigned char* user_buffer, bool sync);
+    unsigned copy_data(hipStream_t stream, void* hip_memory, bool sync);
+#endif
     //! Default destructor
     /*! Releases the OpenVX image */
     ~Image();
@@ -160,7 +170,7 @@ struct Image
 
 private:
     vx_image vx_handle = nullptr;//!< The OpenVX image
-    void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
+    void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl, host or hip)
     ImageInfo _info;//!< The structure holding the info related to the stored OpenVX image
     vx_context _context = nullptr;
 };

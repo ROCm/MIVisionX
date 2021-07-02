@@ -2752,7 +2752,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     }
                 }
                 break;
-            case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_ACCESS_ENABLE:
+            case VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE:
                 if (size == sizeof(vx_bool)) {
                     if (!kernel->finalized && !kernel->gpu_buffer_update_callback_f) {
                         kernel->opencl_buffer_access_enable = *(vx_bool *)ptr;

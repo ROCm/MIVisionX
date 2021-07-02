@@ -123,7 +123,7 @@ enum vx_kernel_attribute_amd_e {
     /*! \brief kernel callback for OpenCL global work[]. Use a <tt>\ref amd_kernel_opencl_global_work_update_callback_f</tt> parameter.*/
     VX_KERNEL_ATTRIBUTE_AMD_OPENCL_GLOBAL_WORK_UPDATE_CALLBACK = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x04,
     /*! \brief kernel flag to enable OpenCL buffer access (default OFF). Use a <tt>\ref vx_bool</tt> parameter.*/
-    VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_ACCESS_ENABLE        = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x05,
+    VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE        = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x05,
     /*! \brief kernel callback for OpenCL buffer update. Use a <tt>\ref AgoKernelOpenclBufferUpdateInfo</tt> parameter.*/
     VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x06,
 };

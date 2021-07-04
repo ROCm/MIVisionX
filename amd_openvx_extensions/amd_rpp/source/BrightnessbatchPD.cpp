@@ -221,7 +221,6 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
   return VX_SUCCESS;
 }
 
-
 vx_status BrightnessbatchPD_Register(vx_context context)
 {
     vx_status status = VX_SUCCESS;

@@ -104,4 +104,5 @@ private:
     std::shared_ptr<Graph> _graph = nullptr;
     CropCordBatch* _output;
     SeededRNG<std::mt19937, 4> _rngs;     // setting the state_size to 4 for 4 random parameters.
+    size_t _sample_cnt;
 };

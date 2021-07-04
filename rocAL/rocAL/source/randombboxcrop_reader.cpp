@@ -269,7 +269,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
     std::uniform_int_distribution<> option_dis(0, 6);
     std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
-    size_t sample = 0;
+    // size_t sample = 0;
     _crop_coords.clear();
     for (unsigned int i = 0; i < image_names.size(); i++)
     {
@@ -288,7 +288,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
         while (true)
         {
             crop_success = false;
-            sample_option = option_dis(_rngs[sample]);
+            sample_option = option_dis(_rngs[_sample_cnt]);
             min_iou = sample_options[sample_option];
             invalid_bboxes = false;
 
@@ -306,16 +306,16 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
             for (int j = 0; j < 1; j++)
             {
                 // Setting width and height factor btw 0.3 and 1.0";
-                float width_factor = _float_dis(_rngs[sample]);
-                float height_factor = _float_dis(_rngs[sample]);
+                float width_factor = _float_dis(_rngs[_sample_cnt]);
+                float height_factor = _float_dis(_rngs[_sample_cnt]);
                 if ((width_factor / height_factor < 0.5) || (width_factor / height_factor > 2.))
                 {
                     continue;
                 }
                 // Setting width factor btw 0 and 1 - width_factor and height factor btw 0 and 1 - height_factor
                 std::uniform_real_distribution<float> l_dis(0.0, 1.0 - width_factor), t_dis(0.0, 1.0 - height_factor);
-                float x_factor = l_dis(_rngs[sample]);
-                float y_factor = t_dis(_rngs[sample]);
+                float x_factor = l_dis(_rngs[_sample_cnt]);
+                float y_factor = t_dis(_rngs[_sample_cnt]);
                 crop_box.l = x_factor;
                 crop_box.t = y_factor;
                 crop_box.r = crop_box.l + width_factor;
@@ -372,7 +372,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
 
         _crop_coords.push_back(coords_buf);
         
-        sample++;
+        _sample_cnt++;
     }
     return _crop_coords;
 }
@@ -380,9 +380,10 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
 void RandomBBoxCropReader::release()
 {
     _map_content.clear();
+//    _sample_cnt = 0;
 }
 
 RandomBBoxCropReader::RandomBBoxCropReader() :
-      _rngs(128)
+      _rngs(128), _sample_cnt(0)
 {
 }

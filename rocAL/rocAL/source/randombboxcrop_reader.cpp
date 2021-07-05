@@ -269,39 +269,30 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
     std::uniform_int_distribution<> option_dis(0, 6);
     std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
-    // size_t sample = 0;
     _crop_coords.clear();
     for (unsigned int i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i]; 
-        
         auto elem = _meta_bbox_map_content.find(image_name);
         if (_meta_bbox_map_content.end() == elem)
             THROW("ERROR: Given name not present in the map" + image_name)
-
         image_name = elem->first;
         BoundingBoxCords bb_coords = elem->second->get_bb_cords();
         ImgSizes img_sizes = elem->second->get_img_sizes();
-
         bb_count = bb_coords.size();
-        
         while (true)
         {
             crop_success = false;
             sample_option = option_dis(_rngs[_sample_cnt]);
             min_iou = sample_options[sample_option];
             invalid_bboxes = false;
-
             //Condition for Original Image
             if (sample_option == 6 || _has_shape)
             {
-                crop_box.l = 0;
-                crop_box.t = 0;
-                crop_box.r = 1;
-                crop_box.b = 1;
+                crop_box.l = crop_box.t = 0;
+                crop_box.r = crop_box.b = 1;
                 break;
             }
-
             // If it has no shape, then area and aspect ratio thing should be provided
             for (int j = 0; j < 1; j++)
             {
@@ -361,9 +352,6 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
             if (crop_success == true)
                 break;
         } // while loop
-
-        // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
-
         //Crop coordinates expected in "xywh" format
         coords_buf[0] = crop_box.l;
         coords_buf[1] = crop_box.t;

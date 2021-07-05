@@ -22,11 +22,11 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-struct OcclusionbatchPDLocalData { 
+struct OcclusionbatchPDLocalData {
 	RPPCommonHandle handle;
 	rppHandle_t rppHandle;
-	Rpp32u device_type; 
-	Rpp32u nbatchSize; 
+	Rpp32u device_type;
+	Rpp32u nbatchSize;
 	RppiSize *srcDimensions;
 	RppiSize maxSrcDimensions;
 	RppiSize *dstDimensions;
@@ -46,7 +46,7 @@ struct OcclusionbatchPDLocalData {
 	cl_mem cl_pSrc1;
 	cl_mem cl_pSrc2;
 	cl_mem cl_pDst;
-#endif 
+#endif
 };
 
 static vx_status VX_CALLBACK refreshOcclusionbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, OcclusionbatchPDLocalData *data)
@@ -111,7 +111,7 @@ static vx_status VX_CALLBACK refreshOcclusionbatchPD(vx_node node, const vx_refe
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc2, sizeof(vx_uint8)));
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[4], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pDst, sizeof(vx_uint8)));
 	}
-	return status; 
+	return status;
 }
 
 static vx_status VX_CALLBACK validateOcclusionbatchPD(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -122,35 +122,35 @@ static vx_status VX_CALLBACK validateOcclusionbatchPD(vx_node node, const vx_ref
  	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #15 type=%d (must be size)\n", scalar_type);
 	STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[16], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
  	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #16 type=%d (must be size)\n", scalar_type);
-	// Check for input parameters 
-	vx_parameter input_param; 
-	vx_image input; 
+	// Check for input parameters
+	vx_parameter input_param;
+	vx_image input;
 	vx_df_image df_image;
 	input_param = vxGetParameterByIndex(node,0);
 	STATUS_ERROR_CHECK(vxQueryParameter(input_param, VX_PARAMETER_ATTRIBUTE_REF, &input, sizeof(vx_image)));
-	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image))); 
-	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB) 
+	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
+	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB)
 	{
 		return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: OcclusionbatchPD: image: #0 format=%4.4s (must be RGB2 or U008)\n", (char *)&df_image);
 	}
 
 	input_param = vxGetParameterByIndex(node,1);
 	STATUS_ERROR_CHECK(vxQueryParameter(input_param, VX_PARAMETER_ATTRIBUTE_REF, &input, sizeof(vx_image)));
-	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image))); 
-	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB) 
+	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
+	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB)
 	{
 		return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: OcclusionbatchPD: image: #1 format=%4.4s (must be RGB2 or U008)\n", (char *)&df_image);
 	}
 
-	// Check for output parameters 
-	vx_image output; 
-	vx_df_image format; 
-	vx_parameter output_param; 
-	vx_uint32  height, width; 
+	// Check for output parameters
+	vx_image output;
+	vx_df_image format;
+	vx_parameter output_param;
+	vx_uint32  height, width;
 	output_param = vxGetParameterByIndex(node,4);
-	STATUS_ERROR_CHECK(vxQueryParameter(output_param, VX_PARAMETER_ATTRIBUTE_REF, &output, sizeof(vx_image))); 
-	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width))); 
-	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height))); 
+	STATUS_ERROR_CHECK(vxQueryParameter(output_param, VX_PARAMETER_ATTRIBUTE_REF, &output, sizeof(vx_image)));
+	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)));
+	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
 	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[4], VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)));
 	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[4], VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
 	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[4], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
@@ -161,8 +161,8 @@ static vx_status VX_CALLBACK validateOcclusionbatchPD(vx_node node, const vx_ref
 	return status;
 }
 
-static vx_status VX_CALLBACK processOcclusionbatchPD(vx_node node, const vx_reference * parameters, vx_uint32 num) 
-{ 
+static vx_status VX_CALLBACK processOcclusionbatchPD(vx_node node, const vx_reference * parameters, vx_uint32 num)
+{
 	RppStatus rpp_status = RPP_SUCCESS;
 	vx_status return_status = VX_SUCCESS;
 	OcclusionbatchPDLocalData * data = NULL;
@@ -173,7 +173,7 @@ static vx_status VX_CALLBACK processOcclusionbatchPD(vx_node node, const vx_refe
 #if ENABLE_OPENCL
 		cl_command_queue handle = data->handle.cmdq;
 		refreshOcclusionbatchPD(node, parameters, num, data);
-		if (df_image == VX_DF_IMAGE_U8 ){ 
+		if (df_image == VX_DF_IMAGE_U8 ){
  			// rpp_status = rppi_occlusion_u8_pln1_batchPD_gpu((void *)data->cl_pSrc1,(void *)data->cl_pSrc2,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->src1x1,data->src1y1,data->src1x2,data->src1y2,data->src2x1,data->src2y1,data->src2x2,data->src2y2,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
@@ -197,7 +197,7 @@ static vx_status VX_CALLBACK processOcclusionbatchPD(vx_node node, const vx_refe
 	return return_status;
 }
 
-static vx_status VX_CALLBACK initializeOcclusionbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num) 
+static vx_status VX_CALLBACK initializeOcclusionbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
 	OcclusionbatchPDLocalData * data = new OcclusionbatchPDLocalData;
 	memset(data, 0, sizeof(*data));
@@ -219,7 +219,7 @@ static vx_status VX_CALLBACK initializeOcclusionbatchPD(vx_node node, const vx_r
 
 static vx_status VX_CALLBACK uninitializeOcclusionbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-	OcclusionbatchPDLocalData * data; 
+	OcclusionbatchPDLocalData * data;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_OPENCL
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
@@ -228,7 +228,25 @@ static vx_status VX_CALLBACK uninitializeOcclusionbatchPD(vx_node node, const vx
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
 		rppDestroyHost(data->rppHandle);
 	delete(data);
-	return VX_SUCCESS; 
+	return VX_SUCCESS;
+}
+
+//! \brief The kernel target support callback.
+// TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
+static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
+    vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
+    vx_uint32& supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+    )
+{
+    vx_context context = vxGetContext((vx_reference)graph);
+    AgoTargetAffinityInfo affinity;
+    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
+    if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+    supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+  else
+    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+
+  return VX_SUCCESS;
 }
 
 vx_status OcclusionbatchPD_Register(vx_context context)
@@ -253,8 +271,10 @@ vx_status OcclusionbatchPD_Register(vx_context context)
 #else
 	vx_bool enableBufferAccess = vx_false_e;
 #endif
+    amd_kernel_query_target_support_f query_target_support_f = query_target_support;
 	if (kernel)
 	{
+        STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
@@ -276,7 +296,7 @@ vx_status OcclusionbatchPD_Register(vx_context context)
 	}
 	if (status != VX_SUCCESS)
 	{
-	exit:	vxRemoveKernel(kernel);	return VX_FAILURE; 
+	exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
  	}
 	return status;
 }

@@ -22,11 +22,11 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-struct SubtractbatchPDLocalData { 
+struct SubtractbatchPDLocalData {
 	RPPCommonHandle handle;
 	rppHandle_t rppHandle;
-	Rpp32u device_type; 
-	Rpp32u nbatchSize; 
+	Rpp32u device_type;
+	Rpp32u nbatchSize;
 	RppiSize *srcDimensions;
 	RppiSize maxSrcDimensions;
 	RppPtr_t pSrc1;
@@ -36,7 +36,11 @@ struct SubtractbatchPDLocalData {
 	cl_mem cl_pSrc1;
 	cl_mem cl_pSrc2;
 	cl_mem cl_pDst;
-#endif 
+#elif ENABLE_HIP
+	void *hip_pSrc1;
+	void *hip_pSrc2;
+	void *hip_pDst;
+#endif
 };
 
 static vx_status VX_CALLBACK refreshSubtractbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, SubtractbatchPDLocalData *data)
@@ -62,6 +66,10 @@ static vx_status VX_CALLBACK refreshSubtractbatchPD(vx_node node, const vx_refer
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc1, sizeof(data->cl_pSrc1)));
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc2, sizeof(data->cl_pSrc2)));
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[4], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
+#elif ENABLE_HIP
+		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc1, sizeof(data->hip_pSrc1)));
+		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc2, sizeof(data->hip_pSrc2)));
+		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[4], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -69,7 +77,7 @@ static vx_status VX_CALLBACK refreshSubtractbatchPD(vx_node node, const vx_refer
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc2, sizeof(vx_uint8)));
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[4], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pDst, sizeof(vx_uint8)));
 	}
-	return status; 
+	return status;
 }
 
 static vx_status VX_CALLBACK validateSubtractbatchPD(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -80,35 +88,35 @@ static vx_status VX_CALLBACK validateSubtractbatchPD(vx_node node, const vx_refe
  	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #5 type=%d (must be size)\n", scalar_type);
 	STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
  	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #6 type=%d (must be size)\n", scalar_type);
-	// Check for input parameters 
-	vx_parameter input_param; 
-	vx_image input; 
+	// Check for input parameters
+	vx_parameter input_param;
+	vx_image input;
 	vx_df_image df_image;
 	input_param = vxGetParameterByIndex(node,0);
 	STATUS_ERROR_CHECK(vxQueryParameter(input_param, VX_PARAMETER_ATTRIBUTE_REF, &input, sizeof(vx_image)));
-	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image))); 
-	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB) 
+	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
+	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB)
 	{
 		return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: SubtractbatchPD: image: #0 format=%4.4s (must be RGB2 or U008)\n", (char *)&df_image);
 	}
 
 	input_param = vxGetParameterByIndex(node,1);
 	STATUS_ERROR_CHECK(vxQueryParameter(input_param, VX_PARAMETER_ATTRIBUTE_REF, &input, sizeof(vx_image)));
-	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image))); 
-	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB) 
+	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
+	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB)
 	{
 		return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: SubtractbatchPD: image: #1 format=%4.4s (must be RGB2 or U008)\n", (char *)&df_image);
 	}
 
-	// Check for output parameters 
-	vx_image output; 
-	vx_df_image format; 
-	vx_parameter output_param; 
-	vx_uint32  height, width; 
+	// Check for output parameters
+	vx_image output;
+	vx_df_image format;
+	vx_parameter output_param;
+	vx_uint32  height, width;
 	output_param = vxGetParameterByIndex(node,4);
-	STATUS_ERROR_CHECK(vxQueryParameter(output_param, VX_PARAMETER_ATTRIBUTE_REF, &output, sizeof(vx_image))); 
-	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width))); 
-	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height))); 
+	STATUS_ERROR_CHECK(vxQueryParameter(output_param, VX_PARAMETER_ATTRIBUTE_REF, &output, sizeof(vx_image)));
+	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)));
+	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
 	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[4], VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)));
 	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[4], VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
 	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[4], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
@@ -119,8 +127,8 @@ static vx_status VX_CALLBACK validateSubtractbatchPD(vx_node node, const vx_refe
 	return status;
 }
 
-static vx_status VX_CALLBACK processSubtractbatchPD(vx_node node, const vx_reference * parameters, vx_uint32 num) 
-{ 
+static vx_status VX_CALLBACK processSubtractbatchPD(vx_node node, const vx_reference * parameters, vx_uint32 num)
+{
 	RppStatus rpp_status = RPP_SUCCESS;
 	vx_status return_status = VX_SUCCESS;
 	SubtractbatchPDLocalData * data = NULL;
@@ -131,11 +139,20 @@ static vx_status VX_CALLBACK processSubtractbatchPD(vx_node node, const vx_refer
 #if ENABLE_OPENCL
 		cl_command_queue handle = data->handle.cmdq;
 		refreshSubtractbatchPD(node, parameters, num, data);
-		if (df_image == VX_DF_IMAGE_U8 ){ 
+		if (df_image == VX_DF_IMAGE_U8 ){
  			rpp_status = rppi_subtract_u8_pln1_batchPD_gpu((void *)data->cl_pSrc1,(void *)data->cl_pSrc2,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
 			rpp_status = rppi_subtract_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc1,(void *)data->cl_pSrc2,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
+		}
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#elif ENABLE_HIP
+		refreshSubtractbatchPD(node, parameters, num, data);
+		if (df_image == VX_DF_IMAGE_U8 ){
+ 			rpp_status = rppi_subtract_u8_pln1_batchPD_gpu((void *)data->hip_pSrc1,(void *)data->hip_pSrc2,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
+		}
+		else if(df_image == VX_DF_IMAGE_RGB) {
+			rpp_status = rppi_subtract_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc1,(void *)data->hip_pSrc2,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
 		}
 		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 
@@ -155,18 +172,23 @@ static vx_status VX_CALLBACK processSubtractbatchPD(vx_node node, const vx_refer
 	return return_status;
 }
 
-static vx_status VX_CALLBACK initializeSubtractbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num) 
+static vx_status VX_CALLBACK initializeSubtractbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
 	SubtractbatchPDLocalData * data = new SubtractbatchPDLocalData;
 	memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+#elif ENABLE_HIP
+	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
 	STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	refreshSubtractbatchPD(node, parameters, num, data);
 #if ENABLE_OPENCL
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
 		rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.cmdq, data->nbatchSize);
+#elif ENABLE_HIP
+	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
+		rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
 #endif
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
 		rppCreateWithBatchSize(&data->rppHandle, data->nbatchSize);
@@ -177,16 +199,16 @@ static vx_status VX_CALLBACK initializeSubtractbatchPD(vx_node node, const vx_re
 
 static vx_status VX_CALLBACK uninitializeSubtractbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-	SubtractbatchPDLocalData * data; 
+	SubtractbatchPDLocalData * data;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
 		rppDestroyGPU(data->rppHandle);
 #endif
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
 		rppDestroyHost(data->rppHandle);
 	delete(data);
-	return VX_SUCCESS; 
+	return VX_SUCCESS;
 }
 
 vx_status SubtractbatchPD_Register(vx_context context)
@@ -203,7 +225,7 @@ vx_status SubtractbatchPD_Register(vx_context context)
 	ERROR_CHECK_OBJECT(kernel);
 	AgoTargetAffinityInfo affinity;
 	vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
 	// enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
 	vx_bool enableBufferAccess = vx_true_e;
 	if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
@@ -224,7 +246,7 @@ vx_status SubtractbatchPD_Register(vx_context context)
 	}
 	if (status != VX_SUCCESS)
 	{
-	exit:	vxRemoveKernel(kernel);	return VX_FAILURE; 
+	exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
  	}
 	return status;
 }

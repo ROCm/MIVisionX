@@ -46,13 +46,13 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 ${cmake} ${buildTypeArg} ../..
                 make -j\$(nproc)
                 sudo make install
-                sudo make package
+                make package
                 cd ../
                 echo Build MIVisionX HIP - ${buildTypeDir}
                 mkdir -p ${buildTypeDir}-hip && cd ${buildTypeDir}-hip
                 ${cmake} ${buildTypeArg} -DBACKEND=HIP ../..
                 make -j\$(nproc)
-                sudo make package
+                make package
                 """
 
     platform.runCommand(this, command)
@@ -138,7 +138,7 @@ def runPackageCommand(platform, project) {
                 export HOME=/home/jenkins
                 echo Make MIVisionX Package - with OpenCL support
                 cd ${project.paths.project_build_prefix}/build/release-opencl
-                sudo make package
+                make package
                 mkdir -p package
                 mv *.${packageType} package/
                 python ../../tests/library_tests/runLibraryTests.py
@@ -146,7 +146,7 @@ def runPackageCommand(platform, project) {
                 ${packageInfo} package/*.${packageType}
                 echo Make MIVisionX Package - with HIP support
                 cd ../release-hip
-                sudo make package
+                make package
                 (for file in *.${packageType}; do mv "\$file" "HIP-\$file"; done;)
                 mkdir -p package
                 mv *.${packageType} package/

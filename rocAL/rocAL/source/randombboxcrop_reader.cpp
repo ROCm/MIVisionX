@@ -368,7 +368,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
 void RandomBBoxCropReader::release()
 {
     _map_content.clear();
-//    _sample_cnt = 0;
+    _sample_cnt = 0;
 }
 
 RandomBBoxCropReader::RandomBBoxCropReader() :

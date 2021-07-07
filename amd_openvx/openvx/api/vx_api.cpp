@@ -944,6 +944,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                         data->children[i]->buffer = (vx_uint8 *)(ptrs ? ptrs[i] : nullptr);
                         data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
                         data->children[i]->gpu_buffer_offset = 0;
+#if (ENABLE_OPENCL || ENABLE_HIP)
+                        data->children[i]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        data->children[i]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+#endif
                     }
                 }
                 else {
@@ -951,6 +955,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                     data->buffer = (vx_uint8 *)(ptrs ? ptrs[0] : nullptr);
                     data->u.img.stride_in_bytes = addrs[0].stride_y;
                     data->gpu_buffer_offset = 0;
+#if (ENABLE_OPENCL || ENABLE_HIP)
+                    data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+#endif
                 }
                 data->u.img.mem_handle = vx_false_e;
             }

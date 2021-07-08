@@ -9,14 +9,12 @@ import itertools
 from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
 import amd.rali.types as types
-
-
 import sys
 import numpy as np
 
 
 class COCOPipeline(Pipeline):
-    def __init__(self, batch_size, num_threads, device_id, seed, data_dir, ann_dir, default_boxes,  crop, rali_cpu=True):
+    def __init__(self, batch_size, num_threads, device_id, seed, data_dir, ann_dir, default_boxes,  crop, rali_cpu=True, display=False):
         super(COCOPipeline, self).__init__(batch_size, num_threads,
                                            device_id, seed=seed, rali_cpu=rali_cpu)
         self.input = ops.COCOReader(
@@ -45,15 +43,25 @@ class COCOPipeline(Pipeline):
         self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
         self.twist = ops.ColorTwist(device=rali_device)
         self.bbflip = ops.BBFlip(device=rali_device, ltrb=True)
-        self.cmnp = ops.CropMirrorNormalize(device="gpu",
-                                            output_dtype=types.FLOAT,
-                                            output_layout=types.NCHW,
-                                            crop=(crop, crop),
-                                            image_type=types.RGB,
-                                            mean=[0.485 * 255, 0.456 *255, 0.406 * 255],
-                                            std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
-                                            #mean=[0, 0, 0],
-                                            #std=[1, 1, 1])
+        if display:
+            self.cmnp = ops.CropMirrorNormalize(device="gpu",
+                                                output_dtype=types.FLOAT,
+                                                output_layout=types.NCHW,
+                                                crop=(crop, crop),
+                                                image_type=types.RGB,                                                    
+                                                #mean=[0.485 * 255, 0.456 *255, 0.406 * 255],
+                                                #std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
+                                                mean=[0, 0, 0],
+                                                std=[1, 1, 1])
+        else:
+            self.cmnp = ops.CropMirrorNormalize(device="gpu",
+                                                output_dtype=types.FLOAT,
+                                                output_layout=types.NCHW,
+                                                crop=(crop, crop),
+                                                image_type=types.RGB,                                                    
+                                                mean=[0.485 * 255, 0.456 *255, 0.406 * 255],
+                                                std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
+
         self.boxEncoder = ops.BoxEncoder(device=rali_device,
                                          criteria=0.5,
                                          anchors=default_boxes)
@@ -100,7 +108,7 @@ class RALICOCOIterator(object):
            Epoch size.
     """
 
-    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=[1.0, 1.0, 1.0], offset=[0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
+    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=[1.0, 1.0, 1.0], offset=[0.0, 0.0, 0.0], tensor_dtype=types.FLOAT,display=False):
 
         # self._num_gpus = len(pipelines)
         assert pipelines is not None, "Number of provided pipelines has to be at least 1"
@@ -116,6 +124,7 @@ class RALICOCOIterator(object):
         self.h = self.loader.getOutputHeight()
         self.n = self.loader.getOutputImageCount()
         self.rim = self.loader.getRemainingImages()
+        self.display = display
         print("____________REMAINING IMAGES____________:", self.rim)
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
@@ -175,8 +184,6 @@ class RALICOCOIterator(object):
         self.img_size = np.zeros((self.bs * 2), dtype="int32")
         self.loader.GetImgSizes(self.img_size)
         print("Image sizes:", self.img_size)
-        # Draw images: Make sure to uncomment the below line to dump images
-        img = torch.from_numpy(self.out)
         count = 0
         sum_count = 0
         for i in range(self.bs):
@@ -196,7 +203,9 @@ class RALICOCOIterator(object):
             self.bb_2d_numpy = (self.bboxes[sum_count*4: (sum_count+count)*4])
             self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
             # Draw images: make sure to revert the mean and std to 0 and 1 for displaying original images without normalization
-            draw_patches(img[i],self.img_name, self.bb_2d_numpy)
+            if self.display:
+               img = torch.from_numpy(self.out)
+               draw_patches(img[i], self.img_name, self.bb_2d_numpy)
             if(self.loader._BoxEncoder == True):
                 
                 # Converting from "xywh" to "ltrb" format ,
@@ -274,15 +283,13 @@ def draw_patches(img,idx, bboxes):
         loc_ = [l, t ,r, b]
         color = (255, 0, 0)
         thickness = 2
-        cv2.waitKey(20)
         image = cv2.UMat(image).get()
         image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)  
-        cv2.imwrite(str(idx)+"_"+"train"+".png", 255*image)
-        # cv2.imwrite(str(idx)+"_"+"train"+".png", image)
+        cv2.imwrite(str(idx)+"_"+"train"+".png", image)
 
 def main():
     if len(sys.argv) < 5:
-        print('Please pass the folder image_folder Annotation_file cpu/gpu batch_size')
+        print('Please pass the folder image_folder Annotation_file cpu/gpu batch_size display(True/False)')
         exit(0)
 
     image_path = sys.argv[1]
@@ -292,6 +299,7 @@ def main():
     else:
         _rali_cpu = False
     bs = int(sys.argv[4])
+    display = sys.argv[5]
     nt = 1
     di = 0
     crop_size = 300
@@ -336,10 +344,10 @@ def main():
     dboxes = coco_anchors()
 
     pipe = COCOPipeline(batch_size=bs, num_threads=nt, device_id=di,seed = random_seed,
-                        data_dir=image_path, ann_dir=ann_path, crop=crop_size, rali_cpu=_rali_cpu, default_boxes=dboxes)
+                        data_dir=image_path, ann_dir=ann_path, crop=crop_size, rali_cpu=_rali_cpu, default_boxes=dboxes, display=display)
     pipe.build()
     data_loader = RALICOCOIterator(
-        pipe, multiplier=pipe._multiplier, offset=pipe._offset)
+        pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display)
     epochs = 5
     for epoch in range(int(epochs)):
         print("EPOCH:::::",epoch)

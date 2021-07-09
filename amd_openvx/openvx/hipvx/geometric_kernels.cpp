@@ -838,7 +838,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    d_affine_matrix_t *affineMatrix, uint borderValue) {
+    d_affine_matrix_t *affineMatrix, uint borderValue, vx_rectangle_t rect_valid) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -859,12 +859,17 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     sy = fmaf(dy, affineMatrix->m[1][1], affineMatrix->m[2][1]);
     sy = fmaf(dx, affineMatrix->m[0][1], sy);
 
+	uint vl = rect_valid.start_x;
+	uint vr = rect_valid.end_x;
+	uint vt = rect_valid.start_y;
+	uint vb = rect_valid.end_y;
+
     x = (uint)(int)sx;
     y = (uint)(int)sy;
-    dstWidth -= 2;
-    dstHeight -= 2;
+    dstWidth -= vl;
+    dstHeight -= vt;
 
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -876,7 +881,7 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     sy += affineMatrix->m[0][1];
     x = (uint)(int)sx;
     y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -888,7 +893,7 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     sy += affineMatrix->m[0][1];
     x = (uint)(int)sx;
     y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -900,7 +905,7 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     sy += affineMatrix->m[0][1];
     x = (uint)(int)sx;
     y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -913,7 +918,7 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     x = (uint)(int)sx;
     y = (uint)(int)sy;
 
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -925,7 +930,7 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     sy += affineMatrix->m[0][1];
     x = (uint)(int)sx;
     y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -937,7 +942,7 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     sy += affineMatrix->m[0][1];
     x = (uint)(int)sx;
     y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -949,7 +954,7 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     sy += affineMatrix->m[0][1];
     x = (uint)(int)sx;
     y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -963,7 +968,7 @@ int HipExec_WarpAffine_U8_U8_Nearest_Constant(hipStream_t stream, vx_uint32 dstW
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     vx_uint32 srcWidth, vx_uint32 srcHeight,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    ago_affine_matrix_t *affineMatrix, vx_uint8 borderValue) {
+    ago_affine_matrix_t *affineMatrix, vx_uint8 borderValue, vx_rectangle_t rect_valid) {
     int localThreads_x = 16;
     int localThreads_y = 16;
     int globalThreads_x = (dstWidth + 7) >> 3;
@@ -972,7 +977,7 @@ int HipExec_WarpAffine_U8_U8_Nearest_Constant(hipStream_t stream, vx_uint32 dstW
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Nearest_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        (d_affine_matrix_t *) affineMatrix, (uint) borderValue);
+                        (d_affine_matrix_t *) affineMatrix, (uint) borderValue, rect_valid);
 
     return VX_SUCCESS;
 }

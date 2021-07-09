@@ -758,7 +758,7 @@ int HipExec_WarpAffine_U8_U8_Nearest_Constant(
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
         ago_affine_matrix_t *affineMatrix,
-        vx_uint8 borderValue);
+        vx_uint8 borderValue, vx_rectangle_t rect_valid);
 int HipExec_WarpAffine_U8_U8_Bilinear(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

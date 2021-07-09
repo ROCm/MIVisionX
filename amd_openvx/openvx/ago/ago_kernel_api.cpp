@@ -18142,7 +18142,7 @@ int agoKernel_NonMaxSupp_XY_ANY_3x3(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oList = node->paramList[0];
         AgoData * iImg = node->paramList[1];
         if (HipExec_NonMaxSupp_XY_ANY_3x3(
-            node->hip_stream0, (vx_uint32)oList->u.arr.capacity, (ago_keypoint_xys_t *)(oList->hip_memory + oList->gpu_buffer_offset),
+            node->hip_stream0, (vx_uint32)oList->u.arr.capacity, oList->hip_memory, oList->gpu_buffer_offset,
             iImg->u.img.width, iImg->u.img.height, (vx_float32 *)(iImg->hip_memory + iImg->gpu_buffer_offset), iImg->u.img.stride_in_bytes)) {
 
             status = VX_FAILURE;
@@ -19116,7 +19116,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
             (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset),
-            node->paramList[3]->u.scalar.u.u)) {
+            node->paramList[3]->u.scalar.u.u, iImg->u.img.rect_valid)) {
             status = VX_FAILURE;
         }
     }

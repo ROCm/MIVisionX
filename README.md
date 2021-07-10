@@ -240,6 +240,10 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
   **Note:** use `--installer yum` for **CentOS**
 
+  MIVisionX has support for two GPU backends: **OPENCL** and **HIP**:
+
+  Instructions for building MIVisionX with **OPENCL** (i.e., default GPU backend):
+
   ``` 
   mkdir build
   cd build
@@ -247,6 +251,21 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   make -j8
   sudo make install
   ```
+
+  Instructions for building MIVisionX with **HIP** GPU backend:
+
+  ```
+  mkdir build
+  cd build
+  cmake -DBACKEND=HIP ../
+  make -j8
+  sudo make install
+  ```
+
+  **Note:** MIVisionX cannot be installed for both GPU backends in the same default folder (i.e., /opt/rocm/mivisionx)
+  if an app interested in installing MIVisionX with both GPU backends, then add **-DCMAKE_INSTALL_PREFIX** in the cmake
+  commands to install MIVisionX with OPENCL and HIP backends into two separate custom folders.
+
   **Note:** vx_winml is not supported on Linux
 
 ## Verify the Installation

@@ -172,7 +172,7 @@ else:
     os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
     if neuralNetInstall == 'yes':
         os.system(
-            '(cd '+deps_dir+'; git clone https://github.com/RadeonOpenCompute/rocm-cmake.git )')
+            '(cd '+deps_dir+'; git clone -b rocm-4.2.0 https://github.com/RadeonOpenCompute/rocm-cmake.git )')
         os.system(
             '(cd '+deps_dir+'; wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/'+MIOpenGEMMVersion+'.zip )')
         os.system('(cd '+deps_dir+'; unzip '+MIOpenGEMMVersion+'.zip )')

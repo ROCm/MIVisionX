@@ -225,10 +225,6 @@ vx_status NonMaxSupressionbatchPD_Register(vx_context);
 vx_status NonMaxSupressionbatchPDROID_Register(vx_context);
 vx_status NonMaxSupressionbatchPS_Register(vx_context);
 vx_status Nop_Register(vx_context);
-vx_status Occlusion_Register(vx_context);
-vx_status OcclusionbatchPD_Register(vx_context);
-vx_status OcclusionbatchPDROID_Register(vx_context);
-vx_status OcclusionbatchPS_Register(vx_context);
 vx_status Phase_Register(vx_context);
 vx_status PhasebatchPD_Register(vx_context);
 vx_status PhasebatchPDROID_Register(vx_context);
@@ -337,10 +333,6 @@ vx_status WarpPerspectivebatchPS_Register(vx_context);
 #define VX_KERNEL_RPP_JITTERBATCHPS_NAME      			"org.rpp.JitterbatchPS"
 #define VX_KERNEL_RPP_JITTERBATCHPD_NAME      			"org.rpp.JitterbatchPD"
 #define VX_KERNEL_RPP_JITTERBATCHPDROID_NAME      		"org.rpp.JitterbatchPDROID"
-#define VX_KERNEL_RPP_OCCLUSION_NAME      				"org.rpp.Occlusion"
-#define VX_KERNEL_RPP_OCCLUSIONBATCHPS_NAME      		"org.rpp.OcclusionbatchPS"
-#define VX_KERNEL_RPP_OCCLUSIONBATCHPD_NAME      		"org.rpp.OcclusionbatchPD"
-#define VX_KERNEL_RPP_OCCLUSIONBATCHPDROID_NAME      	"org.rpp.OcclusionbatchPDROID"
 #define VX_KERNEL_RPP_SNOW_NAME      					"org.rpp.Snow"
 #define VX_KERNEL_RPP_SNOWBATCHPS_NAME      			"org.rpp.SnowbatchPS"
 #define VX_KERNEL_RPP_SNOWBATCHPD_NAME      			"org.rpp.SnowbatchPD"

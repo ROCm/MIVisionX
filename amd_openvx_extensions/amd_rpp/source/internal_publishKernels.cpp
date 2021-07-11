@@ -72,10 +72,6 @@ vx_status get_kernels_to_publish()
 	STATUS_ERROR_CHECK(ADD_KERENEL(JitterbatchPS_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(JitterbatchPD_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(JitterbatchPDROID_Register));
-	STATUS_ERROR_CHECK(ADD_KERENEL(Occlusion_Register));
-	STATUS_ERROR_CHECK(ADD_KERENEL(OcclusionbatchPS_Register));
-	STATUS_ERROR_CHECK(ADD_KERENEL(OcclusionbatchPD_Register));
-	STATUS_ERROR_CHECK(ADD_KERENEL(OcclusionbatchPDROID_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(Snow_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(SnowbatchPS_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(SnowbatchPD_Register));

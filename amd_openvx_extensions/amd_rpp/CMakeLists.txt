@@ -240,10 +240,6 @@ list(APPEND SOURCES
         source/NonMaxSupressionbatchPDROID.cpp
         source/NonMaxSupressionbatchPS.cpp
         source/nop.cpp
-        source/Occlusion.cpp
-        source/OcclusionbatchPD.cpp
-        source/OcclusionbatchPDROID.cpp
-        source/OcclusionbatchPS.cpp
         source/Phase.cpp
         source/PhasebatchPD.cpp
         source/PhasebatchPDROID.cpp

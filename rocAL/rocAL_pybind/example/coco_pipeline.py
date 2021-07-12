@@ -108,15 +108,15 @@ class RALICOCOIterator(object):
            Epoch size.
     """
 
-    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=[1.0, 1.0, 1.0], offset=[0.0, 0.0, 0.0], tensor_dtype=types.FLOAT,display=False):
+    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=None, offset=None, tensor_dtype=types.FLOAT, display=False):
 
         # self._num_gpus = len(pipelines)
         assert pipelines is not None, "Number of provided pipelines has to be at least 1"
 
         self.loader = pipelines
         self.tensor_format = tensor_layout
-        self.multiplier = multiplier
-        self.offset = offset
+        self.multiplier = multiplier if multiplier else [1.0, 1.0, 1.0]
+        self.offset = offset if offset else [0.0, 0.0, 0.0]
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
         self.bs = self.loader._batch_size

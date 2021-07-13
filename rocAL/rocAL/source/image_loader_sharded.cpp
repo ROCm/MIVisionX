@@ -51,6 +51,11 @@ decoded_image_info ImageLoaderSharded::get_decode_image_info()
     return _loaders[_loader_idx]->get_decode_image_info();
 }
 
+crop_image_info ImageLoaderSharded::get_crop_image_info()
+{
+    return _loaders[_loader_idx]->get_crop_image_info();
+}
+
 ImageLoaderSharded::~ImageLoaderSharded()
 {
     _loaders.clear();

@@ -18,13 +18,13 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         if (platform.jenkinsLabel.contains('centos7')) {
             update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y update'
         }
-        installPackage = 'python MIVisionX-setup.py --reinstall yes --installer yum --ffmpeg yes'
+        installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
         cmake = 'cmake3'
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo zypper --non-interactive ref && sudo zypper --non-interactive update && sudo zypper --non-interactive refresh'
-        installPackage = 'python MIVisionX-setup.py --reinstall yes --installer "zypper --non-interactive" --ffmpeg yes'
+        installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --installer "zypper --non-interactive"'
         cmake = 'cmake'
     }
     else {
@@ -45,14 +45,15 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 mkdir -p build/${buildTypeDir}-opencl && cd build/${buildTypeDir}-opencl
                 ${cmake} ${buildTypeArg} ../..
                 make -j\$(nproc)
-                sudo make install
                 sudo make package
+                sudo make install
                 cd ../
                 echo Build MIVisionX HIP - ${buildTypeDir}
                 mkdir -p ${buildTypeDir}-hip && cd ${buildTypeDir}-hip
                 ${cmake} ${buildTypeArg} -DBACKEND=HIP ../..
                 make -j\$(nproc)
                 sudo make package
+                sudo make install
                 """
 
     platform.runCommand(this, command)
@@ -60,14 +61,16 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 
 def runTestCommand (platform, project) {
 
-    String conformaceCPU = 'echo OpenVX 1.3 Conformance - CPU - NOT TESTED ON THIS PLATFORM'
+    String conformaceCPU_OCL = 'echo OpenVX 1.3 Conformance - CPU with OCL Backend Build - NOT TESTED ON THIS PLATFORM'
+    String conformaceCPU_HIP = 'echo OpenVX 1.3 Conformance - CPU with HIP Backend Build - NOT TESTED ON THIS PLATFORM'
     String conformaceOpenCL = 'echo OpenVX 1.3 Conformance - GPU OpenCL - NOT TESTED ON THIS PLATFORM'
     String conformaceHIP = 'echo OpenVX 1.3 Conformance - GPU HIP - NOT TESTED ON THIS PLATFORM'
     String moveFiles = ''
 
     if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
-        conformaceCPU = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log.md'
+        conformaceCPU_OCL = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log-OCL-Backend.md'
         conformaceOpenCL = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-vxCanny.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.MapRandomRemap:-*.OnRandomAndNatural:*.* | tee OpenVX-GPU-OPENCL-Conformance-log.md'
+        conformaceCPU_HIP = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log-HIP-Backend.md'
         conformaceHIP = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-vxCanny.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.MapRandomRemap:-*.OnRandomAndNatural:*.* | tee OpenVX-GPU-HIP-Conformance-log.md'
         moveFiles = 'mv *.md ../../'
     }
@@ -89,8 +92,8 @@ def runTestCommand (platform, project) {
                 cd build-cts
                 cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;\$OPENVX_DIR/lib/libvxu.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
                 cmake --build .
-                echo MIVisionX OpenVX 1.3 Conformance - CPU
-                ${conformaceCPU}
+                echo MIVisionX OpenVX 1.3 Conformance - CPU - OCL Backend Build
+                ${conformaceCPU_OCL}
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
                 ${conformaceOpenCL}
                 ${moveFiles}
@@ -108,6 +111,8 @@ def runTestCommand (platform, project) {
                 cd build-cts
                 cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;\$OPENVX_DIR/lib/libopenvx_hip.so\\;/opt/rocm/hip/lib/libamdhip64.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
                 cmake --build .
+                echo MIVisionX OpenVX 1.3 Conformance - CPU - HIP Backend Build
+                ${conformaceCPU_HIP}
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - HIP
                 ${conformaceHIP}
                 ${moveFiles}

@@ -69,23 +69,25 @@ def main():
 	image_path = sys.argv[1]
 	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu, rali_type=_rali_type)
 	pipe.build()
-	imageIterator = RALIClassificationIterator(pipe)
+	data_loader = RALIClassificationIterator(pipe)
 	num_classes = len(next(os.walk(image_path))[1])
 	print("num_classes:: ",num_classes)
 	# Training loop
 	for epoch in range(1):  # loop over the dataset multiple times
 		print("epoch:: ",epoch)
 		if _rali_type:
-			for i, (image_batch , labels) in enumerate(imageIterator, 0):  # Classification
+			for i, (image_batch , labels) in enumerate(data_loader, 0):  # Classification
 				sys.stdout.write("\r Mini-batch " + str(i))
 				print("Images",image_batch)
 				print("Labels",labels)
+			data_loader.reset()
 		else:
-			for i, (image_batch , bboxes, labels) in enumerate(imageIterator, 0): # Detection
+			for i, (image_batch , bboxes, labels) in enumerate(data_loader, 0): # Detection
 				sys.stdout.write("\r Mini-batch " + str(i))
 				print("Images",image_batch)
 				print("Bboxes",bboxes)
 				print("Labels",labels)
+			data_loader.reset()
 	# print('Finished Training')
 	# print('Finished !!')
 

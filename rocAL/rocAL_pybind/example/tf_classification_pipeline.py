@@ -78,6 +78,7 @@ def main():
 		print("\n\n",i)
 		print("\nIMAGES ARRAY:\n",images_array)
 		print("\nLABELS ARRAY:\n",labels_array)
+	imageIterator.reset()
 			
 		
 

@@ -46,7 +46,6 @@ class RALIGenericImageIterator(object):
         b.raliResetLoaders(self.loader._handle)
 
     def __iter__(self):
-        b.raliResetLoaders(self.loader._handle)
         return self
 
 
@@ -168,7 +167,6 @@ class RALIGenericIterator(object):
         b.raliResetLoaders(self.loader._handle)
 
     def __iter__(self):
-        b.raliResetLoaders(self.loader._handle)
         return self
 
     def __len__(self):

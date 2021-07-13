@@ -238,7 +238,9 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   python MIVisionX-setup.py
   ```
 
-  **Note:** use `--installer yum` for **CentOS**
+  **Note:** MIVisionX has support for two GPU backends: **OPENCL** and **HIP**:
+
+  + Instructions for building MIVisionX with **OPENCL** (i.e., default GPU backend):
 
   ``` 
   mkdir build
@@ -247,7 +249,22 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   make -j8
   sudo make install
   ```
-  **Note:** vx_winml is not supported on Linux
+
+  + Instructions for building MIVisionX with **HIP** GPU backend:
+
+  ```
+  mkdir build
+  cd build
+  cmake -DBACKEND=HIP ../
+  make -j8
+  sudo make install
+  ```
+
+  **Note:** 
+  + MIVisionX cannot be installed for both GPU backends in the same default folder (i.e., /opt/rocm/mivisionx)
+  if an app interested in installing MIVisionX with both GPU backends, then add **-DCMAKE_INSTALL_PREFIX** in the cmake
+  commands to install MIVisionX with OPENCL and HIP backends into two separate custom folders.
+  + vx_winml is not supported on Linux
 
 ## Verify the Installation
 
@@ -378,15 +395,15 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
-* ROCm: rocm-dkms - `4.1.0.40100-26`
-* rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
+* ROCm: rocm-dkms - `4.2.0.40200-21`
+* rocm-cmake - [rocm-4.2.0](https://github.com/RadeonOpenCompute/rocm-cmake/releases/tag/rocm-4.2.0)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.11.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.11.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.7](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.7)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.9.7`
+* MIVisionX Setup Script - `V1.9.8`
 
 ### Latest Release
 

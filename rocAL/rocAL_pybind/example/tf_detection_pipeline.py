@@ -133,6 +133,7 @@ def main():
             print("\nPROCESSED_TENSORS:\n", processed_tensors)
         print("\n\nPrinted first batch with", (bs), "images!")
         break
+    imageIterator.reset()
 
 
 if __name__ == '__main__':

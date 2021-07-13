@@ -537,6 +537,7 @@ int agoPublishKernels(AgoContext * acontext)
 		kernel->kernOpInfo = ago_kernel_list[i].kernOpInfo;
 		kernel->finalized = true;
 		kernel->ref.internal_count = 1;
+		kernel->user_kernel = false;
 		strcpy(kernel->name, ago_kernel_list[i].name);
 		memcpy(kernel->argConfig, ago_kernel_list[i].argConfig, sizeof(kernel->argConfig));
 		kernel->argCount = 0;

@@ -2431,13 +2431,13 @@ int agoGpuOclSingleNodeWait(AgoGraph * graph, AgoNode * node)
 #endif
         }
     }
-    if (node->opencl_scalar_array_output_sync.enable && 
-        node->paramList[node->opencl_scalar_array_output_sync.paramIndexScalar] && 
-        node->paramList[node->opencl_scalar_array_output_sync.paramIndexArray])
+    if (node->gpu_scalar_array_output_sync.enable &&
+        node->paramList[node->gpu_scalar_array_output_sync.paramIndexScalar] &&
+        node->paramList[node->gpu_scalar_array_output_sync.paramIndexArray])
     {
         // updated scalar with numitems of array
-        node->paramList[node->opencl_scalar_array_output_sync.paramIndexScalar]->u.scalar.u.s =
-            node->paramList[node->opencl_scalar_array_output_sync.paramIndexArray]->u.arr.numitems;
+        node->paramList[node->gpu_scalar_array_output_sync.paramIndexScalar]->u.scalar.u.s =
+            node->paramList[node->gpu_scalar_array_output_sync.paramIndexArray]->u.arr.numitems;
     }
 
     // The num items in an array should not exceed the capacity unless kernels need it for reporting number of items detected (ex. FAST corners)

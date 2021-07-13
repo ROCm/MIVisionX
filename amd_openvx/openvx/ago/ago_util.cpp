@@ -3245,9 +3245,9 @@ AgoNode::AgoNode()
     memset(&paramListForAgeDelay, 0, sizeof(paramListForAgeDelay));
     memset(&funcExchange, 0, sizeof(funcExchange));
     memset(&perf, 0, sizeof(perf));
+    memset(&gpu_scalar_array_output_sync, 0, sizeof(gpu_scalar_array_output_sync));
 #if ENABLE_OPENCL
     memset(&opencl_name, 0, sizeof(opencl_name));
-    memset(&opencl_scalar_array_output_sync, 0, sizeof(opencl_scalar_array_output_sync));
     memset(&opencl_global_work, 0, sizeof(opencl_global_work));
     memset(&opencl_local_work, 0, sizeof(opencl_local_work));
 #endif

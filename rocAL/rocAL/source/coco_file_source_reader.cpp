@@ -20,7 +20,7 @@ _shuffle_time("shuffle_time", DBG_TIMING)
     _loop = false;
     _file_id = 0;
     _shuffle = false;
-    _file_count_all_shards = 0;    
+    _file_count_all_shards = 0;  
 }
 
 unsigned COCOFileSourceReader::count()
@@ -217,14 +217,14 @@ Reader::Status COCOFileSourceReader::open_folder()
         if (_entity->d_type != DT_REG)
             continue;
 
+     if(_meta_data_reader->exists(_entity->d_name))
+        { 
         if (get_file_shard_id() != _shard_id)
         {
             _file_count_all_shards++;            
             incremenet_file_id();
             continue;
         }
-        if(_meta_data_reader->exists(_entity->d_name))
-        { 
           _in_batch_read_count++;
           _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
           std::string file_path = _folder_path;

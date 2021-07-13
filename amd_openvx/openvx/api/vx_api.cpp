@@ -407,6 +407,18 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
                 status = VX_SUCCESS;
             }
             break;
+#elif ENABLE_HIP
+        case VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE:
+            if (size == sizeof(hipDevice_t)) {
+                if (context->hip_device < 0 && agoGpuHipCreateContext(context, context->hip_device) != VX_SUCCESS) {
+                    status = VX_FAILURE;
+                }
+                else {
+                    *(int *)ptr = context->hip_device_id;
+                    status = VX_SUCCESS;
+                }
+            }
+            break;
 #endif
         default:
             status = VX_ERROR_NOT_SUPPORTED;
@@ -2740,7 +2752,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     }
                 }
                 break;
-            case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_ACCESS_ENABLE:
+            case VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE:
                 if (size == sizeof(vx_bool)) {
                     if (!kernel->finalized && !kernel->gpu_buffer_update_callback_f) {
                         kernel->opencl_buffer_access_enable = *(vx_bool *)ptr;
@@ -3360,6 +3372,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
                     status = VX_SUCCESS;
                 }
                 break;
+#elif ENABLE_HIP
+            case VX_NODE_ATTRIBUTE_AMD_HIP_STREAM:
+                if (size == sizeof(hipStream_t)){
+                    AgoGraph * graph = (AgoGraph *)node->ref.scope;
+                    *(hipStream_t *)ptr = graph->hip_stream0;
+                    status = VX_SUCCESS;
+            }
+            break;
 #endif
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
@@ -5688,7 +5708,7 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context conte
                     agoGenerateDataName(context, "thr", data->name);
                     agoAddData(&context->dataList, data);
 
-                    switch (output_format)
+                    switch (input_format)
                     {
                         case VX_DF_IMAGE_RGB:
                         {

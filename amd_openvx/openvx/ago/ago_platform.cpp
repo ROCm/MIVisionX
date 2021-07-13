@@ -85,6 +85,15 @@ bool agoGetEnvironmentVariable(const char * name, char * value, size_t valueSize
 #endif
 }
 
+bool agoSetEnvironmentVariable(const char * name, const char * value)
+{
+#if _WIN32
+    return SetEnvironmentVariableA(name, value);
+#else
+    return !(setenv(name, value, 1));
+#endif
+}
+
 ago_module agoOpenModule(const char * libFileName)
 {
 #if _WIN32

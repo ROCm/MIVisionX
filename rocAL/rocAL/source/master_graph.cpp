@@ -428,8 +428,7 @@ MasterGraph::reset()
     // clearing meta ring buffer
     // if random_bbox meta reader is used: read again to get different crops
     if (_randombboxcrop_meta_data_reader != nullptr)
-        _randombboxcrop_meta_data_reader->read_all();
-
+        _randombboxcrop_meta_data_reader->release();
     // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
     _loader_module->reset();
     // restart processing of the images
@@ -637,7 +636,8 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                             for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                                 for(unsigned i = 0; i < channel_size; i++)
                                     output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
-                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)]) : (float)(in_buffer[dest_buf_offset + (c*i+channel_idx)]));
+                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)]) 
+                                                                                                            : (float)(in_buffer[dest_buf_offset + (c*i+channel_idx)]));
 
                             dest_buf_offset += (w * c * h);
                         }
@@ -728,7 +728,6 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                                                                                 : (half) (in_buffer[dest_buf_offset + (c * i + channel_idx)]));
                         }
                         dest_buf_offset += (w * c * h);
-                        in_buffer += (w * c * h);
                     }
                 }
 
@@ -856,9 +855,9 @@ void MasterGraph::output_routine()
 
                 if (!_processing)
                     break;
-
                 auto this_cycle_names =  _loader_module->get_id();
-                auto decode_image_info = _loader_module->get_decode_image_info();
+                auto decode_image_info = _loader_module->get_decode_image_info();  
+                auto crop_image_info = _loader_module->get_crop_image_info();              
 
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -902,8 +901,7 @@ void MasterGraph::output_routine()
                     {
                         if(_is_random_bbox_crop)
                         {
-                            _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
-                            _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
+                            _meta_data_graph->update_random_bbox_meta_data(_augmented_meta_data, decode_image_info, crop_image_info);
                         }
                         else
                         {
@@ -1022,7 +1020,6 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
     RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts, seed);
     _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
     _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
-    _randombboxcrop_meta_data_reader->read_all();
     if (_random_bbox_crop_cords_data)
         THROW("Metadata can only have a single output")
     else

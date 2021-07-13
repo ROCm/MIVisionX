@@ -203,7 +203,7 @@ vx_status GaussianFilterbatchPS_Register(vx_context context)
 	// enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
 	vx_bool enableBufferAccess = vx_true_e;
 	if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-		STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
+		STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
 #else
 	vx_bool enableBufferAccess = vx_false_e;
 #endif

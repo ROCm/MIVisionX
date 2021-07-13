@@ -242,10 +242,15 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
 	vx_context context = vxGetContext((vx_reference)graph);
 	AgoTargetAffinityInfo affinity;
 	vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-	if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-    supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
-  else
+    if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+    else
+        supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+
+// hardcode the affinity to  CPU for OpenCL backend to avoid VerifyGraph failure since there is no codegen callback for amd_rpp nodes
+#if ENABLE_OPENCL
     supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+#endif
   return VX_SUCCESS;
 }
 

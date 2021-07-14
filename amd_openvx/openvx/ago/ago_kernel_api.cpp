@@ -15493,7 +15493,7 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size)) {
             status = VX_FAILURE;
         }
     }

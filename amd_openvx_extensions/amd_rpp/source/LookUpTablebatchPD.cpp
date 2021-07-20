@@ -48,7 +48,7 @@ static vx_status VX_CALLBACK refreshLookUpTablebatchPD(vx_node node, const vx_re
 {
     vx_status status = VX_SUCCESS;
     vx_status copy_status;
-    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(Rpp8u),data->lutPtr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, data->arr_size, sizeof(Rpp8u),data->lutPtr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
     data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
@@ -168,9 +168,9 @@ static vx_status VX_CALLBACK initializeLookUpTablebatchPD(vx_node node, const vx
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    arr_size = 256 * data->nbatchSize;
+    data->arr_size = 256 * data->nbatchSize;
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[5], &data->nbatchSize));
-    data->lutPtr = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
+    data->lutPtr = (Rpp8u *)malloc(sizeof(Rpp8u) * data->arr_size);
     data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
     data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);

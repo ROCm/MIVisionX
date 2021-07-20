@@ -32,6 +32,8 @@ struct MeanStddevLocalData {
     Rpp32f stdDev;
 #if ENABLE_OPENCL
     cl_mem cl_pSrc;
+#elif ENABLE_HIP
+    void *hip_pSrc;
 #endif
 };
 
@@ -45,6 +47,8 @@ static vx_status VX_CALLBACK refreshMeanStddev(vx_node node, const vx_reference 
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
+#elif ENABLE_HIP
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
 #endif
     }
     if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -101,6 +105,17 @@ static vx_status VX_CALLBACK processMeanStddev(vx_node node, const vx_reference 
         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[1], &data->mean));
         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[2], &data->stdDev));
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#elif ENABLE_HIP
+        refreshMeanStddev(node, parameters, num, data);
+        if (df_image == VX_DF_IMAGE_U8 ){
+            rpp_status = rppi_mean_stddev_u8_pln1_gpu((void *)data->hip_pSrc,data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
+        }
+        else if(df_image == VX_DF_IMAGE_RGB) {
+            rpp_status = rppi_mean_stddev_u8_pkd3_gpu((void *)data->hip_pSrc,data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
+        }
+        STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[1], &data->mean));
+        STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[2], &data->stdDev));
+        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
     if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -124,12 +139,17 @@ static vx_status VX_CALLBACK initializeMeanStddev(vx_node node, const vx_referen
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+#elif ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshMeanStddev(node, parameters, num, data);
 #if ENABLE_OPENCL
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppCreateWithStream(&data->rppHandle, data->handle.cmdq);
+#elif ENABLE_HIP
+    if(data->device_type == AGO_TARGET_AFFINITY_GPU)
+        rppCreateWithStream(&data->rppHandle, data->handle.hipstream);
 #endif
     if(data->device_type == AGO_TARGET_AFFINITY_CPU)
     rppCreateWithBatchSize(&data->rppHandle, 1);
@@ -141,7 +161,7 @@ static vx_status VX_CALLBACK uninitializeMeanStddev(vx_node node, const vx_refer
 {
     MeanStddevLocalData * data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppDestroyGPU(data->rppHandle);
 #endif
@@ -188,7 +208,7 @@ vx_status MeanStddev_Register(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)

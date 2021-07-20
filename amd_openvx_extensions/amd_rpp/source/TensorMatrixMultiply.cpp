@@ -35,6 +35,10 @@ struct TensorMatrixMultiplyLocalData {
     cl_mem cl_pSrc1;
     cl_mem cl_pSrc2;
     cl_mem cl_pDst;
+#elif ENABLE_HIP
+    void *hip_pSrc1;
+    void *hip_pSrc2;
+    void *hip_pDst;
 #endif
 };
 
@@ -75,6 +79,16 @@ static vx_status VX_CALLBACK refreshTensorMatrixMultiply(vx_node node, const vx_
     bytes = arr_size * sizeof(Rpp8u);
     err = clEnqueueWriteBuffer(theQueue, data->cl_pSrc2, CL_TRUE, 0,
                                    bytes, data->pSrc2, 0, NULL, NULL);
+#elif ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+    size_t bytes = arr_size * sizeof(Rpp8u);
+    hipError_t err;
+    err = hipMemcpy(data->hip_pSrc1, data->pSrc1, bytes, hipMemcpyHostToDevice);
+    if (err != hipSuccess)
+        return VX_FAILURE;
+    err = hipMemcpy(data->hip_pSrc2, data->pSrc2, bytes, hipMemcpyHostToDevice);
+    if (err != hipSuccess)
+        return VX_FAILURE;
 #endif
     }
 
@@ -109,6 +123,16 @@ static vx_status VX_CALLBACK processTensorMatrixMultiply(vx_node node, const vx_
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);
         clEnqueueReadBuffer(theQueue, data->cl_pDst, CL_TRUE, 0, bytes, data->pDst, 0, NULL, NULL );
+        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#elif ENABLE_HIP
+        refreshTensorMatrixMultiply(node, parameters, num, data);
+        rpp_status = rppi_tensor_matrix_multiply_u8_gpu((void *)data->hip_pSrc1, (void *)data->hip_pSrc2, (void *)data->hip_pDst,  data->tensorDimensionsValue1, data->tensorDimensionsValue2,data->rppHandle);
+        hipError_t err;
+        STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+        size_t bytes = arr_size * sizeof(Rpp8u);
+        err = hipMemcpy(data->pDst, data->hip_pDst, bytes, hipMemcpyDeviceToHost);
+        if (err != hipSuccess)
+            return VX_FAILURE;
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
@@ -145,12 +169,30 @@ static vx_status VX_CALLBACK initializeTensorMatrixMultiply(vx_node node, const 
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     bytes = arr_size * sizeof(Rpp8u);
     data->cl_pDst = clCreateBuffer(theContext, CL_MEM_WRITE_ONLY, bytes, NULL, NULL);
+#elif ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
+    size_t arr_size;
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+    size_t bytes = arr_size * sizeof(Rpp8u);
+    hipError_t status;
+    status = hipMalloc( &data->hip_pSrc1, bytes);
+    if (status != hipSuccess)
+        return VX_FAILURE;
+    status = hipMalloc( &data->hip_pSrc2, bytes);
+    if (status != hipSuccess)
+        return VX_FAILURE;
+    status = hipMalloc( &data->hip_pDst, bytes);
+    if (status != hipSuccess)
+        return VX_FAILURE;
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshTensorMatrixMultiply(node, parameters, num, data);
 #if ENABLE_OPENCL
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppCreateWithStream(&data->rppHandle, data->handle.cmdq);
+#elif ENABLE_HIP
+    if(data->device_type == AGO_TARGET_AFFINITY_GPU)
+        rppCreateWithStream(&data->rppHandle, data->handle.hipstream);
 #endif
     if(data->device_type == AGO_TARGET_AFFINITY_CPU)
         rppCreateWithBatchSize(&data->rppHandle, 1);
@@ -164,7 +206,7 @@ static vx_status VX_CALLBACK uninitializeTensorMatrixMultiply(vx_node node, cons
 {
     TensorMatrixMultiplyLocalData * data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppDestroyGPU(data->rppHandle);
 #endif
@@ -211,7 +253,7 @@ vx_status TensorMatrixMultiply_Register(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)

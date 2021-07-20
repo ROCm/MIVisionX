@@ -164,7 +164,7 @@ static vx_status VX_CALLBACK initializeCannyEdgeDetector(vx_node node, const vx_
         rppCreateWithStream(&data->rppHandle, data->handle.cmdq);
 #elif ENABLE_HIP
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
+        rppCreateWithStream(&data->rppHandle, data->handle.hipstream);
 #endif
     if(data->device_type == AGO_TARGET_AFFINITY_CPU)
     rppCreateWithBatchSize(&data->rppHandle, 1);

@@ -98,11 +98,11 @@ static vx_status VX_CALLBACK validateCropMirrorNormalizebatchPD(vx_node node, co
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[11], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #11 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #11 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[12], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #12 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #12 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[13], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #13 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #13 type=%d (must be size)\n", scalar_type);
     // Check for input parameters
     vx_parameter input_param;
     vx_image input;
@@ -148,7 +148,7 @@ static vx_status VX_CALLBACK processCropMirrorNormalizebatchPD(vx_node node, con
         cl_command_queue handle = data->handle.cmdq;
         refreshCropMirrorNormalizebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
-             rpp_status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift ,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift ,data->nbatchSize,data->rppHandle);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
             rpp_status = rppi_crop_mirror_normalize_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift ,data->nbatchSize,data->rppHandle);
@@ -157,7 +157,7 @@ static vx_status VX_CALLBACK processCropMirrorNormalizebatchPD(vx_node node, con
 #elif ENABLE_HIP
         refreshCropMirrorNormalizebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
-             rpp_status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift ,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift ,data->nbatchSize,data->rppHandle);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
             rpp_status = rppi_crop_mirror_normalize_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift ,data->nbatchSize,data->rppHandle);
@@ -251,7 +251,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-         supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 
@@ -260,7 +260,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 #endif
 
-  return VX_SUCCESS;
+    return VX_SUCCESS;
 }
 
 vx_status CropMirrorNormalizePD_Register(vx_context context)
@@ -307,7 +307,7 @@ vx_status CropMirrorNormalizePD_Register(vx_context context)
     }
     if (status != VX_SUCCESS)
     {
-    exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
-     }
+        exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
+    }
     return status;
 }

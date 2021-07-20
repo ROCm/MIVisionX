@@ -81,7 +81,7 @@ static vx_status VX_CALLBACK validateTensorMultiply(vx_node node, const vx_refer
     vx_enum scalar_type;
     size_t arr_size;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[3], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #3 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #3 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ITEMTYPE, &scalar_type, sizeof(scalar_type)));
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_ARRAY_ITEMTYPE, &scalar_type, sizeof(scalar_type)));
     return status;
@@ -175,7 +175,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-         supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 
@@ -184,7 +184,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 #endif
 
-  return VX_SUCCESS;
+    return VX_SUCCESS;
 }
 
 vx_status TensorMultiply_Register(vx_context context)
@@ -223,7 +223,7 @@ vx_status TensorMultiply_Register(vx_context context)
     }
     if (status != VX_SUCCESS)
     {
-    exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
-     }
+        exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
+    }
     return status;
 }

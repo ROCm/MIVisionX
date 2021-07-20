@@ -34,13 +34,16 @@ struct CannyEdgeDetectorLocalData {
 #if ENABLE_OPENCL
     cl_mem cl_pSrc;
     cl_mem cl_pDst;
+#elif ENABLE_HIP
+    void *hip_pSrc;
+    void *hip_pDst;
 #endif
 };
 
 static vx_status VX_CALLBACK refreshCannyEdgeDetector(vx_node node, const vx_reference *parameters, vx_uint32 num, CannyEdgeDetectorLocalData *data)
 {
     vx_status status = VX_SUCCESS;
-     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->srcDimensions.height, sizeof(data->srcDimensions.height)));
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->srcDimensions.height, sizeof(data->srcDimensions.height)));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->srcDimensions.width, sizeof(data->srcDimensions.width)));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[2], &data->max));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[3], &data->min));
@@ -48,6 +51,9 @@ static vx_status VX_CALLBACK refreshCannyEdgeDetector(vx_node node, const vx_ref
 #if ENABLE_OPENCL
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
+#elif ENABLE_HIP
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
 #endif
     }
     if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -62,11 +68,11 @@ static vx_status VX_CALLBACK validateCannyEdgeDetector(vx_node node, const vx_re
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[2], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT8) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #2 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT8) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #2 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[3], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT8) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #3 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT8) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #3 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[4], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #4 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #4 type=%d (must be size)\n", scalar_type);
     // Check for input parameters
     vx_parameter input_param;
     vx_image input;
@@ -111,13 +117,21 @@ static vx_status VX_CALLBACK processCannyEdgeDetector(vx_node node, const vx_ref
         cl_command_queue handle = data->handle.cmdq;
         refreshCannyEdgeDetector(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
-             rpp_status = rppi_canny_edge_detector_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->max,data->min,data->rppHandle);
+            rpp_status = rppi_canny_edge_detector_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->max,data->min,data->rppHandle);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
             rpp_status = rppi_canny_edge_detector_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->max,data->min,data->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-
+#elif ENABLE_HIP
+        refreshCannyEdgeDetector(node, parameters, num, data);
+        if (df_image == VX_DF_IMAGE_U8 ){
+            rpp_status = rppi_canny_edge_detector_u8_pln1_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->max,data->min,data->rppHandle);
+        }
+        else if(df_image == VX_DF_IMAGE_RGB) {
+            rpp_status = rppi_canny_edge_detector_u8_pkd3_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->max,data->min,data->rppHandle);
+        }
+        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
     if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -140,12 +154,17 @@ static vx_status VX_CALLBACK initializeCannyEdgeDetector(vx_node node, const vx_
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+#elif ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshCannyEdgeDetector(node, parameters, num, data);
 #if ENABLE_OPENCL
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppCreateWithStream(&data->rppHandle, data->handle.cmdq);
+#elif ENABLE_HIP
+    if(data->device_type == AGO_TARGET_AFFINITY_GPU)
+        rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
 #endif
     if(data->device_type == AGO_TARGET_AFFINITY_CPU)
     rppCreateWithBatchSize(&data->rppHandle, 1);
@@ -157,7 +176,7 @@ static vx_status VX_CALLBACK uninitializeCannyEdgeDetector(vx_node node, const v
 {
     CannyEdgeDetectorLocalData * data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppDestroyGPU(data->rppHandle);
 #endif
@@ -178,7 +197,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-         supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 
@@ -187,7 +206,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 #endif
 
-  return VX_SUCCESS;
+    return VX_SUCCESS;
 }
 
 vx_status CannyEdgeDetector_Register(vx_context context)
@@ -204,7 +223,7 @@ vx_status CannyEdgeDetector_Register(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
@@ -224,7 +243,7 @@ vx_status CannyEdgeDetector_Register(vx_context context)
     }
     if (status != VX_SUCCESS)
     {
-    exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
-     }
+        exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
+    }
     return status;
 }

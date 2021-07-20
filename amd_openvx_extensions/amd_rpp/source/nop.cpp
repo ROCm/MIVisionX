@@ -112,7 +112,7 @@ static vx_status VX_CALLBACK initializeNop(vx_node node, const vx_reference *par
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
 #else
-    //STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, data->pSrc, sizeof(data->pSrc)));
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, data->pSrc, sizeof(data->pSrc)));
 #endif
 
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -136,7 +136,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-         supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 
@@ -145,7 +145,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 #endif
 
-  return VX_SUCCESS;
+    return VX_SUCCESS;
 }
 
 vx_status Nop_Register(vx_context context)
@@ -178,7 +178,6 @@ vx_status Nop_Register(vx_context context)
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
 

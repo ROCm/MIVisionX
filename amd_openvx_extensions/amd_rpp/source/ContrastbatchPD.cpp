@@ -45,12 +45,12 @@ struct ContrastbatchPDLocalData {
 static vx_status VX_CALLBACK refreshContrastbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, ContrastbatchPDLocalData *data)
 {
     vx_status status = VX_SUCCESS;
-     size_t arr_size;
+    size_t arr_size;
     vx_status copy_status;
-        STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[4], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[4], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->min = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
     copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(vx_uint32),data->min, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-        STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[5], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[5], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->max = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
     copy_status = vxCopyArrayRange((vx_array)parameters[5], 0, arr_size, sizeof(vx_uint32),data->max, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &data->nbatchSize));
@@ -87,9 +87,9 @@ static vx_status VX_CALLBACK validateContrastbatchPD(vx_node node, const vx_refe
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #6 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #6 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #7 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #7 type=%d (must be size)\n", scalar_type);
     // Check for input parameters
     vx_parameter input_param;
     vx_image input;
@@ -134,7 +134,7 @@ static vx_status VX_CALLBACK processContrastbatchPD(vx_node node, const vx_refer
         cl_command_queue handle = data->handle.cmdq;
         refreshContrastbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
-             rpp_status = rppi_contrast_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_contrast_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
             rpp_status = rppi_contrast_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
@@ -143,7 +143,7 @@ static vx_status VX_CALLBACK processContrastbatchPD(vx_node node, const vx_refer
 #elif ENABLE_HIP
         refreshContrastbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
-             rpp_status = rppi_contrast_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_contrast_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
             rpp_status = rppi_contrast_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
@@ -215,7 +215,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-         supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 
@@ -224,7 +224,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 #endif
 
-  return VX_SUCCESS;
+    return VX_SUCCESS;
 }
 
 vx_status ContrastbatchPD_Register(vx_context context)
@@ -265,7 +265,7 @@ vx_status ContrastbatchPD_Register(vx_context context)
     }
     if (status != VX_SUCCESS)
     {
-    exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
-     }
+        exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
+    }
     return status;
 }

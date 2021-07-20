@@ -43,7 +43,7 @@ struct HistogramEqualizebatchPDLocalData {
 static vx_status VX_CALLBACK refreshHistogramEqualizebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, HistogramEqualizebatchPDLocalData *data)
 {
     vx_status status = VX_SUCCESS;
-     size_t arr_size;
+    size_t arr_size;
     vx_status copy_status;
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->nbatchSize));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
@@ -79,9 +79,9 @@ static vx_status VX_CALLBACK validateHistogramEqualizebatchPD(vx_node node, cons
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[4], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #4 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #4 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[5], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-     if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #5 type=%d (must be size)\n", scalar_type);
+    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #5 type=%d (must be size)\n", scalar_type);
     // Check for input parameters
     vx_parameter input_param;
     vx_image input;
@@ -126,19 +126,19 @@ static vx_status VX_CALLBACK processHistogramEqualizebatchPD(vx_node node, const
         cl_command_queue handle = data->handle.cmdq;
         refreshHistogramEqualizebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
-             // rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
-            // rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
         refreshHistogramEqualizebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
-             // rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
-            // rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 
@@ -147,10 +147,10 @@ static vx_status VX_CALLBACK processHistogramEqualizebatchPD(vx_node node, const
     if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
         refreshHistogramEqualizebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
-            // rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->nbatchSize,data->rppHandle);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
-            // rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->nbatchSize,data->rppHandle);
+            rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->nbatchSize,data->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 
@@ -208,7 +208,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
     if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-         supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 
@@ -217,7 +217,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 #endif
 
-  return VX_SUCCESS;
+    return VX_SUCCESS;
 }
 
 vx_status HistogramEqualizebatchPD_Register(vx_context context)
@@ -256,7 +256,7 @@ vx_status HistogramEqualizebatchPD_Register(vx_context context)
     }
     if (status != VX_SUCCESS)
     {
-    exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
-     }
+        exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
+    }
     return status;
 }

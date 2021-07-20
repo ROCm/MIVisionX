@@ -34,5 +34,5 @@ set_source_files_properties(${RALIHIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FO
 set(HIP_HCC_FLAGS -std=c++14)
 hip_add_library(${PROJECT_NAME} ${RALIHIP_SOURCES} HIPCC_OPTIONS "${HIP_HCC_FLAGS}"  SHARED)
 target_compile_definitions(${PROJECT_NAME} PRIVATE)
-message("Cmake CXX compiler " ${CMAKE_CXX_COMPILER})
+message("-- CMake CXX Compiler " ${CMAKE_CXX_COMPILER})
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)

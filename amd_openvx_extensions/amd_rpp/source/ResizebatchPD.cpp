@@ -173,7 +173,6 @@ static vx_status VX_CALLBACK processResizebatchPD(vx_node node, const vx_referen
             rpp_status = rppi_resize_u8_pkd3_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->dstDimensions, data->maxDstDimensions, output_format_toggle, data->nbatchSize, data->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-
     }
     return return_status;
 }
@@ -200,7 +199,7 @@ static vx_status VX_CALLBACK initializeResizebatchPD(vx_node node, const vx_refe
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.cmdq, data->nbatchSize);
 #elif ENABLE_HIP
-    if(data->device_type == AGO_TARGET_AFFINITY_GPU)
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
 #endif
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
@@ -234,19 +233,19 @@ static vx_status VX_CALLBACK uninitializeResizebatchPD(vx_node node, const vx_re
 // TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
 
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
-    vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
-    vx_uint32& supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
-    )
+                                                  vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
+                                                  vx_uint32 &supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+)
 {
     vx_context context = vxGetContext((vx_reference)graph);
     AgoTargetAffinityInfo affinity;
-    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-    if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
+    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
         supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 
-    // hardcode the affinity to  CPU for OpenCL backend to avoid VerifyGraph failure since there is no codegen callback for amd_rpp nodes
+        // hardcode the affinity to  CPU for OpenCL backend to avoid VerifyGraph failure since there is no codegen callback for amd_rpp nodes
 #if ENABLE_OPENCL
     supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 #endif
@@ -275,11 +274,11 @@ vx_status ResizebatchPD_Register(vx_context context)
 #else
     vx_bool enableBufferAccess = vx_false_e;
 #endif
-  amd_kernel_query_target_support_f query_target_support_f = query_target_support;
+    amd_kernel_query_target_support_f query_target_support_f = query_target_support;
 
     if (kernel)
     {
-      STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
+        STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
@@ -292,9 +291,9 @@ vx_status ResizebatchPD_Register(vx_context context)
     }
     if (status != VX_SUCCESS)
     {
-        exit:
-            vxRemoveKernel(kernel);
-            return VX_FAILURE;
+    exit:
+        vxRemoveKernel(kernel);
+        return VX_FAILURE;
     }
     return status;
 }

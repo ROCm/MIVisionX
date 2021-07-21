@@ -22,7 +22,8 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-struct TensorAddLocalData {
+struct TensorAddLocalData
+{
     RPPCommonHandle handle;
     rppHandle_t rppHandle;
     Rpp32u device_type;
@@ -49,44 +50,45 @@ static vx_status VX_CALLBACK refreshTensorAdd(vx_node node, const vx_reference *
     vx_status copy_status;
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->pSrc1 = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[0], 0, arr_size, sizeof(Rpp8u),data->pSrc1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[0], 0, arr_size, sizeof(Rpp8u), data->pSrc1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->pSrc2 = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
     data->pDst = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp8u),data->pSrc2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp8u), data->pSrc2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[3], &data->tensorDimensions));
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[4], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->tensorDimensionsValue = (Rpp32u *)malloc(sizeof(Rpp32u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(Rpp32u),data->tensorDimensionsValue, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
+    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(Rpp32u), data->tensorDimensionsValue, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
+    {
 #if ENABLE_OPENCL
-    cl_context theContext;
-    cl_command_queue theQueue;
-    theQueue = data->handle.cmdq;
-    clGetCommandQueueInfo(  theQueue,
-                            CL_QUEUE_CONTEXT,
-                            sizeof(cl_context), &theContext, NULL);
-    cl_int err;
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    size_t bytes = arr_size * sizeof(Rpp8u);
-    err = clEnqueueWriteBuffer(theQueue, data->cl_pSrc1, CL_TRUE, 0,
+        cl_context theContext;
+        cl_command_queue theQueue;
+        theQueue = data->handle.cmdq;
+        clGetCommandQueueInfo(theQueue,
+                              CL_QUEUE_CONTEXT,
+                              sizeof(cl_context), &theContext, NULL);
+        cl_int err;
+        STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+        size_t bytes = arr_size * sizeof(Rpp8u);
+        err = clEnqueueWriteBuffer(theQueue, data->cl_pSrc1, CL_TRUE, 0,
                                    bytes, data->pSrc1, 0, NULL, NULL);
-    if(err)
-        return VX_FAILURE;
-    err = clEnqueueWriteBuffer(theQueue, data->cl_pSrc2, CL_TRUE, 0,
+        if (err)
+            return VX_FAILURE;
+        err = clEnqueueWriteBuffer(theQueue, data->cl_pSrc2, CL_TRUE, 0,
                                    bytes, data->pSrc2, 0, NULL, NULL);
-    if(err)
-        return VX_FAILURE;
+        if (err)
+            return VX_FAILURE;
 #elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    size_t bytes = arr_size * sizeof(Rpp8u);
-    hipError_t err;
-    err = hipMemcpy(data->hip_pSrc1, data->pSrc1, bytes, hipMemcpyHostToDevice);
-    if (err != hipSuccess)
-        return VX_FAILURE;
-    err = hipMemcpy(data->hip_pSrc2, data->pSrc2, bytes, hipMemcpyHostToDevice);
-    if (err != hipSuccess)
-        return VX_FAILURE;
+        STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+        size_t bytes = arr_size * sizeof(Rpp8u);
+        hipError_t err;
+        err = hipMemcpy(data->hip_pSrc1, data->pSrc1, bytes, hipMemcpyHostToDevice);
+        if (err != hipSuccess)
+            return VX_FAILURE;
+        err = hipMemcpy(data->hip_pSrc2, data->pSrc2, bytes, hipMemcpyHostToDevice);
+        if (err != hipSuccess)
+            return VX_FAILURE;
 #endif
     }
 
@@ -99,33 +101,35 @@ static vx_status VX_CALLBACK validateTensorAdd(vx_node node, const vx_reference 
     vx_enum scalar_type;
     size_t arr_size;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[3], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #3 type=%d (must be size)\n", scalar_type);
+    if (scalar_type != VX_TYPE_UINT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #3 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ITEMTYPE, &scalar_type, sizeof(scalar_type)));
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_ARRAY_ITEMTYPE, &scalar_type, sizeof(scalar_type)));
     return status;
 }
 
-static vx_status VX_CALLBACK processTensorAdd(vx_node node, const vx_reference * parameters, vx_uint32 num)
+static vx_status VX_CALLBACK processTensorAdd(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
-    TensorAddLocalData * data = NULL;
+    TensorAddLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     size_t arr_size;
-    if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
+    {
 #if ENABLE_OPENCL
         refreshTensorAdd(node, parameters, num, data);
-        rpp_status = rppi_tensor_add_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->rppHandle);
+        rpp_status = rppi_tensor_add_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue, data->rppHandle);
         cl_command_queue theQueue;
         theQueue = data->handle.cmdq;
         cl_int err;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);
-        clEnqueueReadBuffer(theQueue, data->cl_pDst, CL_TRUE, 0, bytes, data->pDst, 0, NULL, NULL );
+        clEnqueueReadBuffer(theQueue, data->cl_pDst, CL_TRUE, 0, bytes, data->pDst, 0, NULL, NULL);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
         refreshTensorAdd(node, parameters, num, data);
-        rpp_status = rppi_tensor_add_u8_gpu((void *)data->hip_pSrc1, (void *)data->hip_pSrc2, (void *)data->hip_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->rppHandle);
+        rpp_status = rppi_tensor_add_u8_gpu((void *)data->hip_pSrc1, (void *)data->hip_pSrc2, (void *)data->hip_pDst, data->tensorDimensions, data->tensorDimensionsValue, data->rppHandle);
         hipError_t err;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);
@@ -135,28 +139,29 @@ static vx_status VX_CALLBACK processTensorAdd(vx_node node, const vx_reference *
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
-    if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
+    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
+    {
         refreshTensorAdd(node, parameters, num, data);
         rpp_status = rppi_tensor_add_u8_host(data->pSrc1, data->pSrc2, data->pDst, data->tensorDimensions, data->tensorDimensionsValue, data->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    vx_status copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp8u),data->pDst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    vx_status copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp8u), data->pDst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     return return_status;
 }
 
 static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    TensorAddLocalData * data = new TensorAddLocalData;
+    TensorAddLocalData *data = new TensorAddLocalData;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
-    cl_context theContext;               // theContext
-    cl_command_queue theQueue;           // command theQueue
+    cl_context theContext;     // theContext
+    cl_command_queue theQueue; // command theQueue
     theQueue = data->handle.cmdq;
-    clGetCommandQueueInfo(  theQueue,
-                            CL_QUEUE_CONTEXT,
-                            sizeof(cl_context), &theContext, NULL);
+    clGetCommandQueueInfo(theQueue,
+                          CL_QUEUE_CONTEXT,
+                          sizeof(cl_context), &theContext, NULL);
     size_t arr_size;
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     size_t bytes = arr_size * sizeof(Rpp8u);
@@ -169,28 +174,27 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     size_t bytes = arr_size * sizeof(Rpp8u);
     hipError_t status;
-    status = hipMalloc( &data->hip_pSrc1, bytes);
+    status = hipMalloc(&data->hip_pSrc1, bytes);
     if (status != hipSuccess)
         return VX_FAILURE;
-    status = hipMalloc( &data->hip_pSrc2, bytes);
+    status = hipMalloc(&data->hip_pSrc2, bytes);
     if (status != hipSuccess)
         return VX_FAILURE;
-    status = hipMalloc( &data->hip_pDst, bytes);
+    status = hipMalloc(&data->hip_pDst, bytes);
     if (status != hipSuccess)
         return VX_FAILURE;
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshTensorAdd(node, parameters, num, data);
 #if ENABLE_OPENCL
-    if(data->device_type == AGO_TARGET_AFFINITY_GPU)
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppCreateWithStream(&data->rppHandle, data->handle.cmdq);
 #elif ENABLE_HIP
-    if(data->device_type == AGO_TARGET_AFFINITY_GPU)
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppCreateWithStream(&data->rppHandle, data->handle.hipstream);
 #endif
-    if(data->device_type == AGO_TARGET_AFFINITY_CPU)
+    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
         rppCreateWithBatchSize(&data->rppHandle, 1);
-
 
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
@@ -198,29 +202,29 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
 
 static vx_status VX_CALLBACK uninitializeTensorAdd(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    TensorAddLocalData * data;
+    TensorAddLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_OPENCL || ENABLE_HIP
-    if(data->device_type == AGO_TARGET_AFFINITY_GPU)
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppDestroyGPU(data->rppHandle);
 #endif
-    if(data->device_type == AGO_TARGET_AFFINITY_CPU)
+    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
         rppDestroyHost(data->rppHandle);
-    delete(data);
+    delete (data);
     return VX_SUCCESS;
 }
 
 //! \brief The kernel target support callback.
 // TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
-    vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
-    vx_uint32& supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
-    )
+                                                  vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
+                                                  vx_uint32 &supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+)
 {
     vx_context context = vxGetContext((vx_reference)graph);
     AgoTargetAffinityInfo affinity;
-    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-    if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
+    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
         supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
@@ -238,19 +242,19 @@ vx_status TensorAdd_Register(vx_context context)
     vx_status status = VX_SUCCESS;
     // Add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.TensorAdd",
-        VX_KERNEL_RPP_TENSORADD,
-        processTensorAdd,
-        6,
-        validateTensorAdd,
-        initializeTensorAdd,
-        uninitializeTensorAdd);
+                                       VX_KERNEL_RPP_TENSORADD,
+                                       processTensorAdd,
+                                       6,
+                                       validateTensorAdd,
+                                       initializeTensorAdd,
+                                       uninitializeTensorAdd);
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
-    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
+    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
 #if ENABLE_OPENCL || ENABLE_HIP
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
-    if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
 #else
     vx_bool enableBufferAccess = vx_false_e;
@@ -260,7 +264,7 @@ vx_status TensorAdd_Register(vx_context context)
     {
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT , VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_BIDIRECTIONAL, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
@@ -269,7 +273,9 @@ vx_status TensorAdd_Register(vx_context context)
     }
     if (status != VX_SUCCESS)
     {
-        exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
+    exit:
+        vxRemoveKernel(kernel);
+        return VX_FAILURE;
     }
     return status;
 }

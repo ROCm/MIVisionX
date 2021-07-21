@@ -30,14 +30,14 @@ struct CropPDLocalData
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
     RppiSize maxSrcDimensions;
+    Rpp32u *srcBatch_width;
+    Rpp32u *srcBatch_height;
     RppiSize *dstDimensions;
     RppiSize maxDstDimensions;
     RppPtr_t pSrc;
     RppPtr_t pDst;
     vx_uint32 *start_x;
     vx_uint32 *start_y;
-    Rpp32u *srcBatch_width;
-    Rpp32u *srcBatch_height;
     Rpp32u *dstBatch_width;
     Rpp32u *dstBatch_height;
 #if ENABLE_OPENCL
@@ -144,7 +144,6 @@ static vx_status VX_CALLBACK processCropPD(vx_node node, const vx_reference *par
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshCropPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {

@@ -116,7 +116,6 @@ static vx_status VX_CALLBACK processremap(vx_node node, const vx_reference * par
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshremap(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
              rpp_status = rppi_remap_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->rowRemap,data->colRemap,data->rppHandle);

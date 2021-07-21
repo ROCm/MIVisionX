@@ -67,7 +67,6 @@ list(APPEND SOURCES
         source/ColorTemperaturebatchPD.cpp
         source/ColorTwistbatchPD.cpp
         source/ContrastbatchPD.cpp
-        source/ControlFlowbatchPD.cpp
         source/copy.cpp
         source/CropMirrorNormalizePD.cpp
         source/CropPD.cpp

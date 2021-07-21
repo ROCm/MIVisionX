@@ -29,8 +29,12 @@ struct RandomCropLetterBoxbatchPDLocalData {
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
     RppiSize maxSrcDimensions;
+    Rpp32u *srcBatch_width;
+    Rpp32u *srcBatch_height;
     RppiSize *dstDimensions;
     RppiSize maxDstDimensions;
+    Rpp32u *dstBatch_width;
+    Rpp32u *dstBatch_height;
     RppPtr_t pSrc;
     RppPtr_t pDst;
     vx_uint32 *x1;
@@ -49,42 +53,26 @@ struct RandomCropLetterBoxbatchPDLocalData {
 static vx_status VX_CALLBACK refreshRandomCropLetterBoxbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, RandomCropLetterBoxbatchPDLocalData *data)
 {
     vx_status status = VX_SUCCESS;
-    size_t arr_size;
     vx_status copy_status;
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[6], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    data->x1 = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[6], 0, arr_size, sizeof(vx_uint32),data->x1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[7], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    data->y1 = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[7], 0, arr_size, sizeof(vx_uint32),data->y1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[8], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    data->x2 = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[8], 0, arr_size, sizeof(vx_uint32),data->x2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[9], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    data->y2 = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[9], 0, arr_size, sizeof(vx_uint32),data->y2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &data->nbatchSize));
+    copy_status = vxCopyArrayRange((vx_array)parameters[6], 0, data->nbatchSize, sizeof(vx_uint32),data->x1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[7], 0, data->nbatchSize, sizeof(vx_uint32),data->y1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[8], 0, data->nbatchSize, sizeof(vx_uint32),data->x2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[9], 0, data->nbatchSize, sizeof(vx_uint32),data->y2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
     data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_HEIGHT, &data->maxDstDimensions.height, sizeof(data->maxDstDimensions.height)));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_WIDTH, &data->maxDstDimensions.width, sizeof(data->maxDstDimensions.width)));
     data->maxDstDimensions.height = data->maxDstDimensions.height / data->nbatchSize;
-    data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
-    data->dstDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
-    Rpp32u *srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-    Rpp32u *srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-    Rpp32u *dstBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-    Rpp32u *dstBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, data->nbatchSize, sizeof(Rpp32u),dstBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    copy_status = vxCopyArrayRange((vx_array)parameters[5], 0, data->nbatchSize, sizeof(Rpp32u),dstBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, data->nbatchSize, sizeof(Rpp32u),data->dstBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[5], 0, data->nbatchSize, sizeof(Rpp32u),data->dstBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     for(int i = 0; i < data->nbatchSize; i++){
-        data->srcDimensions[i].width = srcBatch_width[i];
-        data->srcDimensions[i].height = srcBatch_height[i];
-        data->dstDimensions[i].width = dstBatch_width[i];
-        data->dstDimensions[i].height = dstBatch_height[i];
+        data->srcDimensions[i].width = data->srcBatch_width[i];
+        data->srcDimensions[i].height = data->srcBatch_height[i];
+        data->dstDimensions[i].width = data->dstBatch_width[i];
+        data->dstDimensions[i].height = data->dstBatch_height[i];
     }
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -151,7 +139,6 @@ static vx_status VX_CALLBACK processRandomCropLetterBoxbatchPD(vx_node node, con
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshRandomCropLetterBoxbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
             rpp_status = rppi_random_crop_letterbox_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->x1,data->y1,data->x2,data->y2,data->nbatchSize,data->rppHandle);
@@ -196,6 +183,17 @@ static vx_status VX_CALLBACK initializeRandomCropLetterBoxbatchPD(vx_node node, 
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[11], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &data->nbatchSize));
+    data->x1 = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->nbatchSize);
+    data->y1 = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->nbatchSize);
+    data->x2 = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->nbatchSize);
+    data->y2 = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->nbatchSize);
+    data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
+    data->dstDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
+    data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+    data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+    data->dstBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+    data->dstBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     refreshRandomCropLetterBoxbatchPD(node, parameters, num, data);
 #if ENABLE_OPENCL
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
@@ -221,6 +219,16 @@ static vx_status VX_CALLBACK uninitializeRandomCropLetterBoxbatchPD(vx_node node
 #endif
     if(data->device_type == AGO_TARGET_AFFINITY_CPU)
         rppDestroyHost(data->rppHandle);
+    free(data->srcDimensions);
+    free(data->dstDimensions);
+    free(data->srcBatch_width);
+    free(data->srcBatch_height);
+    free(data->dstBatch_width);
+    free(data->dstBatch_height);
+    free(data->x1);
+    free(data->x2);
+    free(data->y1);
+    free(data->y2);
     delete(data);
     return VX_SUCCESS;
 }

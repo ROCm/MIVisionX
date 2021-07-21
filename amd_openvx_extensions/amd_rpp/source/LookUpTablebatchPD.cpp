@@ -29,11 +29,11 @@ struct LookUpTablebatchPDLocalData {
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
     RppiSize maxSrcDimensions;
+    Rpp32u *srcBatch_width;
+    Rpp32u *srcBatch_height;
     RppPtr_t pSrc;
     RppPtr_t pDst;
     Rpp8u *lutPtr;
-    Rpp32u *srcBatch_width;
-    Rpp32u *srcBatch_height;
     size_t arr_size;
 #if ENABLE_OPENCL
     cl_mem cl_pSrc;
@@ -123,7 +123,6 @@ static vx_status VX_CALLBACK processLookUpTablebatchPD(vx_node node, const vx_re
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshLookUpTablebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
             rpp_status = rppi_look_up_table_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->lutPtr,data->nbatchSize,data->rppHandle);

@@ -30,14 +30,14 @@ struct ColorTwistbatchPDLocalData
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
     RppiSize maxSrcDimensions;
+    Rpp32u *srcBatch_width;
+    Rpp32u *srcBatch_height;
     RppPtr_t pSrc;
     RppPtr_t pDst;
     vx_float32 *alpha;
     vx_float32 *beta;
     vx_float32 *hue;
     vx_float32 *sat;
-    Rpp32u *srcBatch_width;
-    Rpp32u *srcBatch_height;
 #if ENABLE_OPENCL
     cl_mem cl_pSrc;
     cl_mem cl_pDst;
@@ -136,7 +136,6 @@ static vx_status VX_CALLBACK processColorTwistbatchPD(vx_node node, const vx_ref
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshColorTwistbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_RGB)
         {

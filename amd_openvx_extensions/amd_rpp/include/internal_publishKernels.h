@@ -53,7 +53,6 @@ vx_status ChannelExtractbatchPD_Register(vx_context);
 vx_status ColorTemperaturebatchPD_Register(vx_context);
 vx_status ColorTwistbatchPD_Register(vx_context);
 vx_status ContrastbatchPD_Register(vx_context);
-vx_status ControlFlowbatchPD_Register(vx_context);
 vx_status Copy_Register(vx_context);
 vx_status CropMirrorNormalizePD_Register(vx_context);
 vx_status CropPD_Register(vx_context);
@@ -188,7 +187,6 @@ vx_status WarpPerspectivebatchPD_Register(vx_context);
 #define VX_KERNEL_RPP_CANNYEDGEDETECTOR_NAME      				"org.rpp.CannyEdgeDetector"
 #define VX_KERNEL_RPP_HARRISCORNERDETECTOR_NAME      			"org.rpp.HarrisCornerDetector"
 #define VX_KERNEL_RPP_FASTCORNERDETECTOR_NAME      				"org.rpp.FastCornerDetector"
-#define VX_KERNEL_RPP_CONTROLFLOWBATCHPD_NAME      				"org.rpp.ControlFlowbatchPD"
 #define VX_KERNEL_RPP_REMAP_NAME      							"org.rpp.remap"
 #define VX_KERNEL_RPP_TENSORADD_NAME      						"org.rpp.TensorAdd"
 #define VX_KERNEL_RPP_TENSORSUBTRACT_NAME      					"org.rpp.TensorSubtract"

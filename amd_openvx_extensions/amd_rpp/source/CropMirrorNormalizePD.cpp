@@ -29,6 +29,8 @@ struct CropMirrorNormalizebatchPDLocalData {
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
     RppiSize maxSrcDimensions;
+    Rpp32u *srcBatch_width;
+    Rpp32u *srcBatch_height;
     RppiSize *dstDimensions;
     RppiSize maxDstDimensions;
     RppPtr_t pSrc;
@@ -39,8 +41,6 @@ struct CropMirrorNormalizebatchPDLocalData {
     vx_float32 *std_dev;
     vx_uint32 *mirror;
     vx_uint32 chnShift; //NHWC to NCHW
-    Rpp32u *srcBatch_width;
-    Rpp32u *srcBatch_height;
     Rpp32u *dstBatch_width;
     Rpp32u *dstBatch_height;
 #if ENABLE_OPENCL
@@ -145,7 +145,6 @@ static vx_status VX_CALLBACK processCropMirrorNormalizebatchPD(vx_node node, con
 
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshCropMirrorNormalizebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
             rpp_status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift ,data->nbatchSize,data->rppHandle);

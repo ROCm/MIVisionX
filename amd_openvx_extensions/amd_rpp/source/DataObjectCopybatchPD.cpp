@@ -29,6 +29,8 @@ struct DataObjectCopybatchPDLocalData {
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
     RppiSize maxSrcDimensions;
+    Rpp32u *srcBatch_width;
+    Rpp32u *srcBatch_height;
     RppPtr_t pSrc;
     RppPtr_t pDst;
 #if ENABLE_OPENCL
@@ -45,18 +47,14 @@ static vx_status VX_CALLBACK refreshDataObjectCopybatchPD(vx_node node, const vx
     vx_status status = VX_SUCCESS;
     size_t arr_size;
     vx_status copy_status;
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->nbatchSize));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
     data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
-    data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
-    Rpp32u *srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-    Rpp32u *srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     for(int i = 0; i < data->nbatchSize; i++){
-        data->srcDimensions[i].width = srcBatch_width[i];
-        data->srcDimensions[i].height = srcBatch_height[i];
+        data->srcDimensions[i].width = data->srcBatch_width[i];
+        data->srcDimensions[i].height = data->srcBatch_height[i];
     }
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -123,7 +121,6 @@ static vx_status VX_CALLBACK processDataObjectCopybatchPD(vx_node node, const vx
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshDataObjectCopybatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
             rpp_status = rppi_data_object_copy_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
@@ -168,6 +165,10 @@ static vx_status VX_CALLBACK initializeDataObjectCopybatchPD(vx_node node, const
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->nbatchSize));
+    data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
+    data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+    data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     refreshDataObjectCopybatchPD(node, parameters, num, data);
 #if ENABLE_OPENCL
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
@@ -193,6 +194,9 @@ static vx_status VX_CALLBACK uninitializeDataObjectCopybatchPD(vx_node node, con
 #endif
     if(data->device_type == AGO_TARGET_AFFINITY_CPU)
         rppDestroyHost(data->rppHandle);
+    free(data->srcDimensions);
+    free(data->srcBatch_width);
+    free(data->srcBatch_height);
     delete(data);
     return VX_SUCCESS;
 }

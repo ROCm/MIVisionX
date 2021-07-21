@@ -114,7 +114,6 @@ static vx_status VX_CALLBACK processTensorAdd(vx_node node, const vx_reference *
     size_t arr_size;
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshTensorAdd(node, parameters, num, data);
         rpp_status = rppi_tensor_add_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->rppHandle);
         cl_command_queue theQueue;

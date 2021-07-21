@@ -29,6 +29,8 @@ struct ThresholdingbatchPDLocalData {
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
     RppiSize maxSrcDimensions;
+    Rpp32u *srcBatch_width;
+    Rpp32u *srcBatch_height;
     RppPtr_t pSrc;
     RppPtr_t pDst;
     vx_uint8 *min;
@@ -45,26 +47,17 @@ struct ThresholdingbatchPDLocalData {
 static vx_status VX_CALLBACK refreshThresholdingbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, ThresholdingbatchPDLocalData *data)
 {
     vx_status status = VX_SUCCESS;
-    size_t arr_size;
     vx_status copy_status;
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[4], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    data->min = (vx_uint8 *)malloc(sizeof(vx_uint8) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(vx_uint8),data->min, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[5], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    data->max = (vx_uint8 *)malloc(sizeof(vx_uint8) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[5], 0, arr_size, sizeof(vx_uint8),data->max, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &data->nbatchSize));
+    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, data->nbatchSize, sizeof(vx_uint8),data->min, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[5], 0, data->nbatchSize, sizeof(vx_uint8),data->max, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
     data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
-    data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
-    Rpp32u *srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-    Rpp32u *srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     for(int i = 0; i < data->nbatchSize; i++){
-        data->srcDimensions[i].width = srcBatch_width[i];
-        data->srcDimensions[i].height = srcBatch_height[i];
+        data->srcDimensions[i].width = data->srcBatch_width[i];
+        data->srcDimensions[i].height = data->srcBatch_height[i];
     }
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -131,7 +124,6 @@ static vx_status VX_CALLBACK processThresholdingbatchPD(vx_node node, const vx_r
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshThresholdingbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
             rpp_status = rppi_thresholding_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
@@ -176,6 +168,12 @@ static vx_status VX_CALLBACK initializeThresholdingbatchPD(vx_node node, const v
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &data->nbatchSize));
+    data->min = (vx_uint8 *)malloc(sizeof(vx_uint8) * data->nbatchSize);
+    data->max = (vx_uint8 *)malloc(sizeof(vx_uint8) * data->nbatchSize);
+    data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
+   data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+    data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     refreshThresholdingbatchPD(node, parameters, num, data);
 #if ENABLE_OPENCL
     if(data->device_type == AGO_TARGET_AFFINITY_GPU)
@@ -201,6 +199,11 @@ static vx_status VX_CALLBACK uninitializeThresholdingbatchPD(vx_node node, const
 #endif
     if(data->device_type == AGO_TARGET_AFFINITY_CPU)
         rppDestroyHost(data->rppHandle);
+    free(data->srcDimensions);
+    free(data->srcBatch_width);
+    free(data->srcBatch_height);
+    free(data->min);
+    free(data->max);
     delete(data);
     return VX_SUCCESS;
 }

@@ -96,7 +96,6 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshHistogram(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8 ){
             rpp_status = rppi_histogram_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,data->outputHistogram,data->bins,data->rppHandle);

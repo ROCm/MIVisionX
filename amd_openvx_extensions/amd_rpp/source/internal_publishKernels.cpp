@@ -112,7 +112,6 @@ vx_status get_kernels_to_publish()
 	STATUS_ERROR_CHECK(ADD_KERENEL(CannyEdgeDetector_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(HarrisCornerDetector_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(FastCornerDetector_Register));
-	STATUS_ERROR_CHECK(ADD_KERENEL(ControlFlowbatchPD_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(remap_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(TensorAdd_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(TensorSubtract_Register));

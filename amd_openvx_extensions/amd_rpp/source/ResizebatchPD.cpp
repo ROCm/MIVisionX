@@ -138,7 +138,6 @@ static vx_status VX_CALLBACK processResizebatchPD(vx_node node, const vx_referen
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         refreshResizebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {

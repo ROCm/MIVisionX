@@ -379,12 +379,14 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                   << "raliExposure" << std::endl;
         image1 = raliExposure(handle, image0, true);
     }
+    break;
     case 21:
     {
         std::cout << ">>>>>>> Running "
                   << "raliHue" << std::endl;
         image1 = raliHue(handle, image0, true);
     }
+    break;
     case 22:
     {
         std::cout << ">>>>>>> Running "

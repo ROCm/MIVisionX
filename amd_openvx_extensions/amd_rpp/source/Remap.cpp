@@ -115,25 +115,26 @@ static vx_status VX_CALLBACK processremap(vx_node node, const vx_reference * par
     vx_df_image df_image = VX_DF_IMAGE_VIRT;
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        refreshremap(node, parameters, num, data);
-        if (df_image == VX_DF_IMAGE_U8 ){
-             rpp_status = rppi_remap_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->rowRemap,data->colRemap,data->rppHandle);
-        }
-        else if(df_image == VX_DF_IMAGE_RGB) {
-            rpp_status = rppi_remap_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->rowRemap,data->colRemap,data->rppHandle);
-        }
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#elif ENABLE_HIP
-        refreshremap(node, parameters, num, data);
-        if (df_image == VX_DF_IMAGE_U8 ){
-             rpp_status = rppi_remap_u8_pln1_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->rowRemap,data->colRemap,data->rppHandle);
-        }
-        else if(df_image == VX_DF_IMAGE_RGB) {
-            rpp_status = rppi_remap_u8_pkd3_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->rowRemap,data->colRemap,data->rppHandle);
-        }
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#endif
+// #if ENABLE_OPENCL
+//         refreshremap(node, parameters, num, data);
+//         if (df_image == VX_DF_IMAGE_U8 ){
+//              rpp_status = rppi_remap_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->rowRemap,data->colRemap,data->rppHandle);
+//         }
+//         else if(df_image == VX_DF_IMAGE_RGB) {
+//             rpp_status = rppi_remap_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->rowRemap,data->colRemap,data->rppHandle);
+//         }
+//         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+// #elif ENABLE_HIP
+//         refreshremap(node, parameters, num, data);
+//         if (df_image == VX_DF_IMAGE_U8 ){
+//              rpp_status = rppi_remap_u8_pln1_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->rowRemap,data->colRemap,data->rppHandle);
+//         }
+//         else if(df_image == VX_DF_IMAGE_RGB) {
+//             rpp_status = rppi_remap_u8_pkd3_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->rowRemap,data->colRemap,data->rppHandle);
+//         }
+//         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+// #endif
+        return VX_ERROR_NOT_IMPLEMENTED;
     }
     if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
         refreshremap(node, parameters, num, data);

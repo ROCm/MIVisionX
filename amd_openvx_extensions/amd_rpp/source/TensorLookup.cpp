@@ -96,7 +96,7 @@ static vx_status VX_CALLBACK processTensorLookup(vx_node node, const vx_referenc
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     size_t arr_size;
     if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
+// #if ENABLE_OPENCL
         // cl_command_queue handle = data->handle.cmdq;
         // refreshTensorLookup(node, parameters, num, data);
         // rpp_status = rppi_tensor_look_up_table_u8_gpu((void *)data->cl_pSrc,(void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->luPtr,data->rppHandle);
@@ -106,7 +106,8 @@ static vx_status VX_CALLBACK processTensorLookup(vx_node node, const vx_referenc
         // STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         // size_t bytes = arr_size * sizeof(Rpp8u);
         // clEnqueueReadBuffer(theQueue, data->cl_pDst, CL_TRUE, 0, bytes, data->pDst, 0, NULL, NULL );
-#endif
+// #endif
+        return VX_ERROR_NOT_IMPLEMENTED;
     }
     if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
         refreshTensorLookup(node, parameters, num, data);

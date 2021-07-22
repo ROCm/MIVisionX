@@ -47,7 +47,7 @@ static vx_status VX_CALLBACK refreshHistogram(vx_node node, const vx_reference *
     vx_status copy_status;
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->outputHistogram = (Rpp32u *)malloc(sizeof(Rpp32u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u), data->outputHistogram, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u), data->outputHistogram, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[2], &data->bins));
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
@@ -113,7 +113,7 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
         }
         size_t arr_size;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-        vx_status copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u), data->outputHistogram, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u), data->outputHistogram, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
         refreshHistogram(node, parameters, num, data);
@@ -127,7 +127,7 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
         }
         size_t arr_size;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-        vx_status copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u), data->outputHistogram, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u), data->outputHistogram, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
@@ -144,7 +144,7 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
         }
         size_t arr_size;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-        vx_status copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u), data->outputHistogram, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u), data->outputHistogram, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;

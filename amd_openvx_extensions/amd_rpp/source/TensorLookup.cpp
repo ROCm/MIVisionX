@@ -46,18 +46,18 @@ static vx_status VX_CALLBACK refreshTensorLookup(vx_node node, const vx_referenc
     // Input
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->pSrc = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[0], 0, arr_size, sizeof(Rpp8u), data->pSrc, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[0], 0, arr_size, sizeof(Rpp8u), data->pSrc, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     //Output
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->pDst = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->luPtr = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp8u), data->luPtr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp8u), data->luPtr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[3], &data->tensorDimensions));
     // tensor dim values
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[4], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->tensorDimensionsValue = (Rpp32u *)malloc(sizeof(Rpp32u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(Rpp32u), data->tensorDimensionsValue, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(Rpp32u), data->tensorDimensionsValue, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
 #if ENABLE_OPENCL
@@ -119,7 +119,7 @@ static vx_status VX_CALLBACK processTensorLookup(vx_node node, const vx_referenc
         rpp_status = rppi_tensor_look_up_table_u8_host(data->pSrc, data->pDst, data->luPtr, data->tensorDimensions, data->tensorDimensionsValue);
     }
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    vx_status copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp8u), data->pDst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp8u), data->pDst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
     return return_status;
 }
 

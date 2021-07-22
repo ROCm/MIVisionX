@@ -50,10 +50,10 @@ static vx_status VX_CALLBACK refreshremap(vx_node node, const vx_reference *para
     vx_status copy_status;
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->rowRemap = (Rpp32u *)malloc(sizeof(Rpp32u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp32u), data->rowRemap, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp32u), data->rowRemap, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[3], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->colRemap = (Rpp32u *)malloc(sizeof(Rpp32u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[3], 0, arr_size, sizeof(Rpp32u), data->colRemap, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, arr_size, sizeof(Rpp32u), data->colRemap, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
 #if ENABLE_OPENCL

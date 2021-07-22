@@ -50,15 +50,15 @@ static vx_status VX_CALLBACK refreshTensorMultiply(vx_node node, const vx_refere
     vx_status copy_status;
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->pSrc1 = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[0], 0, arr_size, sizeof(Rpp8u), data->pSrc1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[0], 0, arr_size, sizeof(Rpp8u), data->pSrc1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->pSrc2 = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
     data->pDst = (Rpp8u *)malloc(sizeof(Rpp8u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp8u), data->pSrc2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp8u), data->pSrc2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[3], &data->tensorDimensions));
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[4], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     data->tensorDimensionsValue = (Rpp32u *)malloc(sizeof(Rpp32u) * arr_size);
-    copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(Rpp32u), data->tensorDimensionsValue, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(Rpp32u), data->tensorDimensionsValue, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
 #if ENABLE_OPENCL
@@ -142,7 +142,7 @@ static vx_status VX_CALLBACK processTensorMultiply(vx_node node, const vx_refere
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-    vx_status copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp8u), data->pDst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp8u), data->pDst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
     return return_status;
 }
 

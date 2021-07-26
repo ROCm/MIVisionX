@@ -1,6 +1,7 @@
 #include <cassert>
 #include <algorithm>
 #include <commons.h>
+#include "coco_meta_data_reader.h"
 #include "coco_file_source_reader.h"
 #include <boost/filesystem.hpp>
 #include "meta_data_reader_factory.h"

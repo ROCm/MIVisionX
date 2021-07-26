@@ -22,7 +22,8 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-struct NopLocalData {
+struct NopLocalData
+{
 
 #if ENABLE_OPENCL
     RPPCommonHandle handle;
@@ -41,7 +42,6 @@ struct NopLocalData {
     void *hip_pSrc;
     void *hip_pDst;
 #endif
-
 };
 
 static vx_status VX_CALLBACK validateNop(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -59,7 +59,7 @@ static vx_status VX_CALLBACK validateNop(vx_node node, const vx_reference parame
 
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_FORMAT, &df_image, sizeof(df_image)));
 
-    vx_uint32  height, width;
+    vx_uint32 height, width;
     STATUS_ERROR_CHECK(vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_HEIGHT, &height, sizeof(height)));
 
@@ -70,35 +70,37 @@ static vx_status VX_CALLBACK validateNop(vx_node node, const vx_reference parame
     return status;
 }
 
-static vx_status VX_CALLBACK processNop(vx_node node, const vx_reference * parameters, vx_uint32 num)
+static vx_status VX_CALLBACK processNop(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    NopLocalData * data = NULL;
+    NopLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     vx_df_image df_image = VX_DF_IMAGE_VIRT;
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
 
-    if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
+    {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
-        unsigned size = data->dimensions.height* data->dimensions.width;
+        unsigned size = data->dimensions.height * data->dimensions.width;
 #endif
-    } else if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
+    }
+    else if (data->device_type == AGO_TARGET_AFFINITY_CPU)
+    {
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc, sizeof(vx_uint8)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pDst, sizeof(vx_uint8)));
-        unsigned size = data->dimensions.height* data->dimensions.width;
+        unsigned size = data->dimensions.height * data->dimensions.width;
     }
     return VX_SUCCESS;
 }
 
 static vx_status VX_CALLBACK initializeNop(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    NopLocalData * data = new NopLocalData;
+    NopLocalData *data = new NopLocalData;
     memset(data, 0, sizeof(*data));
 
 #if ENABLE_OPENCL
@@ -112,7 +114,7 @@ static vx_status VX_CALLBACK initializeNop(vx_node node, const vx_reference *par
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
 #else
-    //STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, data->pSrc, sizeof(data->pSrc)));
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, data->pSrc, sizeof(data->pSrc)));
 #endif
 
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -125,10 +127,33 @@ static vx_status VX_CALLBACK uninitializeNop(vx_node node, const vx_reference *p
     return VX_SUCCESS;
 }
 
+//! \brief The kernel target support callback.
+// TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
+static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
+                                                  vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
+                                                  vx_uint32 &supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+)
+{
+    vx_context context = vxGetContext((vx_reference)graph);
+    AgoTargetAffinityInfo affinity;
+    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
+    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+    else
+        supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+
+// hardcode the affinity to  CPU for OpenCL backend to avoid VerifyGraph failure since there is no codegen callback for amd_rpp nodes
+#if ENABLE_OPENCL
+    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+#endif
+
+    return VX_SUCCESS;
+}
+
 vx_status Nop_Register(vx_context context)
 {
     vx_status status = VX_SUCCESS;
-// add kernel to the context with callbacks
+    // add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Nop",
                                        VX_KERNEL_RPP_NOP,
                                        processNop,
@@ -139,27 +164,30 @@ vx_status Nop_Register(vx_context context)
 
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
-    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
+    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
 #if ENABLE_OPENCL
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
-    if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-    STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
+    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+        STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
 #else
     vx_bool enableBufferAccess = vx_false_e;
 #endif
+    amd_kernel_query_target_support_f query_target_support_f = query_target_support;
     if (kernel)
     {
+        STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
 
     if (status != VX_SUCCESS)
     {
-        exit:	vxRemoveKernel(kernel); return VX_FAILURE;
+    exit:
+        vxRemoveKernel(kernel);
+        return VX_FAILURE;
     }
 
     return status;

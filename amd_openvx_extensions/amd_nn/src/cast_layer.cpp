@@ -22,7 +22,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if (num_dims != 4 && num_dims != 2) return VX_ERROR_INVALID_DIMENSION;
-    if ((type != VX_TYPE_INT64) && (type!= VX_TYPE_INT32)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: cast: #3 output tensor data type=%d not supprted yet\n", type);
+    if ((type != VX_TYPE_INT64) && (type!= VX_TYPE_INT32) && (type!= VX_TYPE_FLOAT32)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: cast: #3 output tensor data type=%d not supprted yet\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
     // output tensor configuration

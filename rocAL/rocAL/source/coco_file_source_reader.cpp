@@ -51,14 +51,9 @@ Reader::Status COCOFileSourceReader::initialize(ReaderConfig desc)
         std::cout<<"\n _json_path has to be set manually";
         exit(0);
     }
-    if (_meta_data_reader && !std::is_same_v<decltype(_meta_data_reader), std::shared_ptr<COCOMetaDataReader>>)
-        THROW("Metadata reader has to be COCO");
+    if (!_meta_data_reader )
+        std::cout<<"Metadata reader not initialized for COCO file source\n";
 
-    //MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, _json_path);
-    //_meta_data_graph = create_meta_data_graph(config);
-    //_meta_data_reader = create_meta_data_reader(config);
-    //_meta_data_reader->init(config);
-    //_meta_data_reader->read_all(_json_path);
     ret = subfolder_reading();
     // the following code is required to make every shard the same size:: required for multi-gpu training
     if (_shard_count > 1 && _batch_count > 1) {

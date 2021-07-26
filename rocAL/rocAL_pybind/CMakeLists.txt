@@ -58,7 +58,7 @@ endif()
 if(${BUILD_RALI_PYBIND})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
-    link_directories(${ROCM_PATH}/rpp/lib ${CMAKE_INSTALL_PREFIX}/lib)
+    link_directories(${ROCM_PATH}/rpp/lib ${ROCM_PATH}/mivisionx/lib)
 
     include_directories(../rocAL/include/
                         third_party_lib/

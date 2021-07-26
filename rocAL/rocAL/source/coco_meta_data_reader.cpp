@@ -30,7 +30,8 @@ THE SOFTWARE.
 
 using namespace std;
 
-void COCOMetaDataReader::init(const MetaDataConfig &cfg) {
+void COCOMetaDataReader::init(const MetaDataConfig &cfg)
+{
     _path = cfg.path();
     _output = new BoundingBoxBatch();
 }
@@ -96,6 +97,7 @@ void COCOMetaDataReader::print_map_contents()
 
 void COCOMetaDataReader::read_all(const std::string &path) {
 
+    _coco_metadata_read_time.start();// Debug timing
 	std::string annotation_file = path;
 	std::ifstream fin;
 	fin.open(annotation_file, std::ios::in);
@@ -160,7 +162,9 @@ void COCOMetaDataReader::read_all(const std::string &path) {
         bb_labels.clear();
     } 
     fin.close();
+    _coco_metadata_read_time.end();// Debug timing
     //print_map_contents();
+    std::cout<<"coco read time: " << _coco_metadata_read_time.get_timing()/1000 << std::endl;
 }
 
 void COCOMetaDataReader::release(std::string image_name) {
@@ -177,6 +181,7 @@ void COCOMetaDataReader::release() {
     _map_img_sizes.clear();
 }
 
-COCOMetaDataReader::COCOMetaDataReader()
+COCOMetaDataReader::COCOMetaDataReader():
+        _coco_metadata_read_time("coco meta read time", DBG_TIMING)
 {
 }

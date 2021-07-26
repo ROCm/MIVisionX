@@ -46,7 +46,6 @@ public:
 
 private:
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
-    std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;
     //! opens the folder containnig the images
     Reader::Status open_folder();
     Reader::Status subfolder_reading();

@@ -1,5 +1,8 @@
 FROM centos:centos7
 
+ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+WORKDIR $MIVISIONX_DEPS_ROOT
+
 # install mivisionx base dependencies - Level 1
 RUN yum -y update && yum -y install http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm && \
         yum -y install gcc gcc-c++ kernel-devel make && yum -y install cmake3 && yum -y install git
@@ -24,3 +27,5 @@ RUN yum -y install autoconf automake bzip2 bzip2-devel cmake freetype-devel gcc 
         git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git && cd ffmpeg && \
         ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree && \
         make -j8 && make install
+
+WORKDIR /workspace

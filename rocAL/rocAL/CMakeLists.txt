@@ -191,5 +191,5 @@ if(${BUILD_RALI})
 
     install(TARGETS rali DESTINATION lib)
 else()
-    message("-- ${Yellow}WARNING: rocAL module excluded ${ColourReset}")
+    message("-- ${Red}WARNING: rocAL module excluded ${ColourReset}")
 endif()

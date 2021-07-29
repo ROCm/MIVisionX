@@ -9,3 +9,5 @@ RUN yum-config-manager --enable rhel-server-rhscl-7-rpms && yum -y install cento
         /etc/yum.repos.d/rocm.repo && yum -y install rocm-dev
 # Enable Developer Toolset 7
 SHELL [ "/usr/bin/scl", "enable", "devtoolset-7" ]
+
+WORKDIR /workspace

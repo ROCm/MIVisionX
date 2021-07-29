@@ -1,5 +1,8 @@
 FROM centos:centos8
 
+ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+WORKDIR $MIVISIONX_DEPS_ROOT
+
 # install mivisionx base dependencies - Level 1
 RUN yum -y update && yum -y install gcc gcc-c++ kernel-devel make cmake git
 # install ROCm for mivisionx OpenCL dependency - Level 2
@@ -29,3 +32,5 @@ RUN yum -y install libsqlite3x-devel bzip2-devel openssl-devel python3-devel aut
         make -j8 && make MIOpenDriver && make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && make install
+
+WORKDIR /workspace

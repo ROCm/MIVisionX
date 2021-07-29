@@ -114,10 +114,17 @@ void COCOMetaDataReader::read_all(const std::string &path) {
 
     Json::Value annotation = root["annotations"];
     Json::Value image = root["images"];
+    Json::Value category = root["categories"];
+    int continuous_idx = 0, category_id;
+    for (auto iterator = category.begin(); iterator != category.end(); iterator++)
+    {
+        category_id = (*iterator)["id"].asInt();
+        continuous_idx = continuous_idx + 1;
+        _label_info.insert(pair<int, int>(category_id, continuous_idx));
+    }
 
     BoundingBoxCord box;
     ImgSize img_size;
-    
     for (auto iterator = image.begin(); iterator != image.end(); iterator++)
     {
         // std::map<int, int,int> id_img_sizes;
@@ -145,7 +152,11 @@ void COCOMetaDataReader::read_all(const std::string &path) {
         std::string file_name = str + ".jpg";
 
         auto it = _map_img_sizes.find(file_name);
-        ImgSizes image_size = it->second;        
+        ImgSizes image_size = it->second;
+
+        //Pick the continous index of the corresponding category id
+        auto _it_label = _label_info.find(label);
+        int cnt_idx = _it_label->second;
 
         //Normalizing the co-ordinates & convert to "ltrb" format
         box.l = box_x/ image_size[0].w;
@@ -154,8 +165,8 @@ void COCOMetaDataReader::read_all(const std::string &path) {
         box.b = (box_y + box_h) / image_size[0].h;
         
         bb_coords.push_back(box);
-        bb_labels.push_back(label);
-        add(file_name, bb_coords, bb_labels,image_size);
+        bb_labels.push_back(cnt_idx);
+        add(file_name, bb_coords, bb_labels, image_size);
         bb_coords.clear();
         bb_labels.clear();
     } 

@@ -1,5 +1,8 @@
 FROM rocm/pytorch:latest
 
+ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+WORKDIR $MIVISIONX_DEPS_ROOT
+
 RUN apt-get update -y
 # install mivisionx base dependencies 
 RUN apt-get -y install gcc g++ cmake git
@@ -34,6 +37,9 @@ RUN apt-get -y install libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm li
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd && \
         git clone -b 0.7  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=OCL ../ && make -j4 && sudo make install && cd
+
+WORKDIR /workspace
+
 # install MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
         cmake ../MIVisionX && make -j8 && sudo make install && cd

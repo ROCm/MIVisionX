@@ -1,5 +1,8 @@
 FROM ubuntu:20.04
 
+ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+WORKDIR $MIVISIONX_DEPS_ROOT
+
 RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
@@ -41,3 +44,5 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install sqlite3 libsqlite3-dev lib
         cmake -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && make -j8 && make MIOpenDriver && sudo make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
+
+WORKDIR /workspace

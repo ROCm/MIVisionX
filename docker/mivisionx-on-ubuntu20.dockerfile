@@ -1,5 +1,8 @@
 FROM ubuntu:20.04
 
+ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+WORKDIR $MIVISIONX_DEPS_ROOT
+
 RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
@@ -48,6 +51,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libgflags-dev libgoogle-gl
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd && \
         git clone -b 0.7  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=OCL ../ && make -j4 && sudo make install && cd
+
+WORKDIR /workspace
+
 # install MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
-        cmake ../MIVisionX && make -j8 && sudo make install && cd
+        cmake ../MIVisionX && make -j8 && sudo make install

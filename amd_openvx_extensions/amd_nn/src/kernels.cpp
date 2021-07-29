@@ -219,9 +219,6 @@ SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
 #endif
 
     // register kernels
-#if ENABLE_OPENCL || ENABLE_HIP
-    ERROR_CHECK_STATUS(publishGatherLayer(context));
-#elif ENABLE_OPENCL
     ERROR_CHECK_STATUS(publishConvolutionLayer(context));
     ERROR_CHECK_STATUS(publishFullyConnectedLayer(context));
     ERROR_CHECK_STATUS(publishPoolingLayer(context));
@@ -256,10 +253,11 @@ SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
     ERROR_CHECK_STATUS(publishTensorExp(context));
     ERROR_CHECK_STATUS(publishTensorLog(context));
     ERROR_CHECK_STATUS(publishNMSLayer(context));
+    ERROR_CHECK_STATUS(publishGatherLayer(context));
     ERROR_CHECK_STATUS(publishTopKLayer(context));
     ERROR_CHECK_STATUS(publishReduceMinLayer(context));
     ERROR_CHECK_STATUS(publishTileLayer(context));
-#endif
+
     // register drama rules
     AgoNodeMergeRule softmax_rule = {
         {

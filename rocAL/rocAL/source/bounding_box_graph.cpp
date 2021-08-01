@@ -118,7 +118,7 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
         crop_box.t = crop_cords[i][1];
         crop_box.r = crop_box.l + crop_cords[i][2];
         crop_box.b = crop_box.t + crop_cords[i][3];
-        std::cout << "\n BB count" << bb_count;
+        // std::cout << "\n BB count" << bb_count;
         for (uint j = 0; j < bb_count; j++)
         {
             int m = j * 4; // change if required
@@ -207,7 +207,7 @@ inline int find_best_box_for_anchor(unsigned anchor_idx, const std::vector<float
 
 void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, pMetaDataBatch full_batch_meta_data, float criteria, bool offset, float scale)
 {
-    std::cout << "anchor size" << anchors.size()/4;
+    // std::cout << "anchor size" << anchors.size()/4;
     std::vector<float> anchor_copy = anchors;
     // for (auto anchor : anchors)
     // {

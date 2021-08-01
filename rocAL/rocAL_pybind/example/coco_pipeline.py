@@ -89,10 +89,9 @@ class COCOPipeline(Pipeline):
         images = self.res(images)
         images = self.twist(images, saturation=saturation,
                             contrast=contrast, brightness=brightness, hue=hue)
+        output = self.cmnp(images, mirror=coin)
         encoded_bboxes, encoded_labels = self.boxEncoder(bboxes, labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
         encoded_labels = self.cast(encoded_labels)
-        output = self.cmnp(images, mirror=coin)
-        
         return [output, encoded_bboxes, encoded_labels] #Encoded Bbox and labels output in "ltrb" format
         # return [output,  self.bb, self.labels]
         

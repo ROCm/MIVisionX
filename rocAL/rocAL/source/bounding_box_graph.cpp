@@ -260,11 +260,21 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
             if (ious[best_idx * (anchors_size) + anchor_idx] > criteria)
             {
                 matches.push_back({best_idx, anchor_idx});
+                //YTD: Need to add a new structure for xc,yc,w,h similar to l,t,r,b as a part of metadata
+                bb_coords.at(best_idx).l = 0.5 * (bb_coords.at(best_idx).l + bb_coords.at(best_idx).r);//xc
+                bb_coords.at(best_idx).t = 0.5 * (bb_coords.at(best_idx).t + bb_coords.at(best_idx).r);//yc
+                bb_coords.at(best_idx).r = (-bb_coords.at(best_idx).l + bb_coords.at(best_idx).r);//w
+                bb_coords.at(best_idx).b = (-bb_coords.at(best_idx).t + bb_coords.at(best_idx).r);//h
                 encoded_bb.push_back(bb_coords.at(best_idx));
                 encoded_labels.push_back(bb_labels.at(best_idx));
             }
             else
             {
+                //YTD: Need to add a new structure for xc,yc,w,h similar to l,t,r,b as a part of metadata
+                _anchor.l = 0.5 * (_anchor.l + _anchor.r);//xc
+                _anchor.t = 0.5 * (_anchor.t + _anchor.r);//yc
+                _anchor.r = (-_anchor.l + _anchor.r);//w
+                _anchor.b = (-_anchor.t + _anchor.r);//h
                 encoded_bb.push_back(_anchor);
                 encoded_labels.push_back(0);
             }

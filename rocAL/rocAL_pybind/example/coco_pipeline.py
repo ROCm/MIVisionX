@@ -236,8 +236,8 @@ class RALICOCOIterator(object):
             print(f'\nencodded_labels_tensor {encodded_labels_tensor}')
             print(f'\nexiting ....')
             # exit(0)
-            self.lis_lab.append(encoded_bboxes_tensor)
-            self.lis.append(encodded_labels_tensor)
+            self.lis_lab.append(encodded_labels_tensor)
+            self.lis.append(encoded_bboxes_tensor)
             sum_count = sum_count + count
 
         if (self.loader._BoxEncoder != True):

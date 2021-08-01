@@ -78,13 +78,19 @@ inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const B
     float yA = std::max(box1.t, box2.t);
     float xB = std::min(box1.r, box2.r);
     float yB = std::min(box1.b, box2.b);
-
+    // std::cout << "\tl:" << xA << "\t t:" << yA << "\tr:" << xB << "\t b:" << yB;
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
+    // std::cout << "\n intersection area: " << intersection_area;
     float box1_area = (box1.b - box1.t) * (box1.r - box1.l);
     float box2_area = (box2.b - box2.t) * (box2.r - box2.l);
+    // std::cout << "\n box1_area:" << box1_area;
+    // std::cout << "\n box2_area:" << box2_area;
 
     if (is_iou)
+    {
         iou = intersection_area / float(box1_area + box2_area - intersection_area);
+        // std::cout << "\niou inside iou:" << iou;
+    }
     else
         iou = intersection_area / float(box1_area);
 
@@ -112,6 +118,7 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
         crop_box.t = crop_cords[i][1];
         crop_box.r = crop_box.l + crop_cords[i][2];
         crop_box.b = crop_box.t + crop_cords[i][3];
+        std::cout << "\n BB count" << bb_count;
         for (uint j = 0; j < bb_count; j++)
         {
             int m = j * 4; // change if required
@@ -121,7 +128,7 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
             box.t = coords_buf[m + 1];
             box.r = coords_buf[m + 2];
             box.b = coords_buf[m + 3];
-
+            // std::cout << "\nbox_l:" << box.l << "\tbox_t:" << box.t << "\tbox_r:" << box.r << "\tbox_b:" << box.b;
             auto x_c = 0.5 * (box.l + box.r);
             auto y_c = 0.5 * (box.t + box.b);
             if ((x_c > crop_box.l) && (x_c < crop_box.r) && (y_c > crop_box.t) && (y_c < crop_box.b))
@@ -145,5 +152,127 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;
+    }
+}
+
+inline void calculate_ious_for_box(float *ious, BoundingBoxCord box, std::vector<float> anchors)
+{
+    BoundingBoxCord _anchor;
+    _anchor.l = anchors[0];
+    _anchor.t = anchors[1];
+    _anchor.r = anchors[2];
+    _anchor.b = anchors[3];
+    ious[0] = ssd_BBoxIntersectionOverUnion(box, _anchor,true);
+    int best_idx = 0;
+    float best_iou = ious[0];
+
+    for (unsigned int anchor_idx = 1; anchor_idx < (anchors.size() / 4); anchor_idx++)
+    {
+        int m = anchor_idx * 4;
+        BoundingBoxCord _anchor;
+        _anchor.l = anchors[m];
+        _anchor.t = anchors[m + 1];
+        _anchor.r = anchors[m + 2];
+        _anchor.b = anchors[m + 3];
+        float x = ssd_BBoxIntersectionOverUnion(box, _anchor, true);
+        // std::cout << "\niou :: " << x;
+        ious[anchor_idx] = x;
+        if (ious[anchor_idx] > best_iou)
+        {
+            best_iou = ious[anchor_idx];
+            best_idx = anchor_idx;
+        }
+    }
+    // For best default box matched with current object let iou = 2, to make sure there is a match,
+    // as this object will be the best (highest IoU), for this default box
+    ious[best_idx] = 2.;
+}
+
+inline int find_best_box_for_anchor(unsigned anchor_idx, const std::vector<float> &ious, unsigned num_boxes, unsigned anchors_size)
+{
+    unsigned best_idx = 0;
+    float best_iou = ious[anchor_idx];
+
+    for (unsigned bbox_idx = 1; bbox_idx < num_boxes; ++bbox_idx)
+    {
+        if (ious[bbox_idx * anchors_size + anchor_idx] >= best_iou)
+        {
+            best_iou = ious[bbox_idx * anchors_size + anchor_idx];
+            best_idx = bbox_idx;
+        }
+    }
+
+    return best_idx;
+}
+
+void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, pMetaDataBatch full_batch_meta_data, float criteria, bool offset, float scale)
+{
+    std::cout << "anchor size" << anchors.size()/4;
+    std::vector<float> anchor_copy = anchors;
+    // for (auto anchor : anchors)
+    // {
+    //     std::cout << "anchor:" << anchor << std::endl;
+    // }
+    // std::cout << "BATCH SIZE :" << full_batch_meta_data->size();
+    for (int i = 0; i < full_batch_meta_data->size(); i++)
+    {
+        auto bb_count = full_batch_meta_data->get_bb_labels_batch()[i].size();
+        int labels_buf[bb_count];
+        float coords_buf[bb_count * 4];
+        memcpy(labels_buf, full_batch_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
+        memcpy(coords_buf, full_batch_meta_data->get_bb_cords_batch()[i].data(), full_batch_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        BoundingBoxCords encoded_bb;
+        BoundingBoxLabels encoded_labels;
+        BoundingBoxCords bb_coords;
+        BoundingBoxLabels bb_labels;
+        unsigned anchors_size = anchors.size() / 4; // divide the anchors_size by 4 to get the total number of anchors
+        //Calculate Ious
+        //ious size - bboxes count x anchors count
+        std::vector<float> ious(bb_count * anchors_size);
+        // std::cout << "BB COUNT" << bb_count;
+        for (uint bb_idx = 0; bb_idx < bb_count; bb_idx++)
+        {
+            int m = bb_idx * 4;
+            BoundingBoxCord box;
+            box.l = coords_buf[m];
+            box.t = coords_buf[m + 1];
+            box.r = coords_buf[m + 2];
+            box.b = coords_buf[m + 3];
+            auto iou_rows = ious.data() + (bb_idx * (anchors_size));
+            // std::cout << "\n IOU ROWS:" << iou_rows;
+            calculate_ious_for_box(iou_rows, box, anchors);
+            bb_coords.push_back(box);
+            bb_labels.push_back(labels_buf[bb_idx]);
+        }
+
+        // Depending on the matches ->place the best bbox instead of the corresponding anchor_idx
+        std::vector<std::pair<unsigned, unsigned>> matches; //<best_idx, anchor_idx>
+        for (unsigned anchor_idx = 0; anchor_idx < anchors.size() / 4; ++anchor_idx)
+        {
+            int m = anchor_idx * 4;
+            BoundingBoxCord _anchor;
+            _anchor.l = anchors[m];
+            _anchor.t = anchors[m + 1];
+            _anchor.r = anchors[m + 2];
+            _anchor.b = anchors[m + 3];
+            const auto best_idx = find_best_box_for_anchor(anchor_idx, ious, bb_count, anchors_size);
+            // Filter matches by criteria
+            if (ious[best_idx * (anchors_size) + anchor_idx] > criteria)
+            {
+                matches.push_back({best_idx, anchor_idx});
+                encoded_bb.push_back(bb_coords.at(best_idx));
+                encoded_labels.push_back(bb_labels.at(best_idx));
+            }
+            else
+            {
+                encoded_bb.push_back(_anchor);
+                encoded_labels.push_back(0);
+            }
+        }
+
+        bb_coords.clear();
+        bb_labels.clear();
+        full_batch_meta_data->get_bb_cords_batch()[i] = encoded_bb;
+        full_batch_meta_data->get_bb_labels_batch()[i] = encoded_labels;
     }
 }

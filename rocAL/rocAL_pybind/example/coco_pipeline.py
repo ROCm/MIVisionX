@@ -89,9 +89,10 @@ class COCOPipeline(Pipeline):
         images = self.res(images)
         images = self.twist(images, saturation=saturation,
                             contrast=contrast, brightness=brightness, hue=hue)
-        output = self.cmnp(images, mirror=coin)
         encoded_bboxes, encoded_labels = self.boxEncoder(bboxes, labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
         encoded_labels = self.cast(encoded_labels)
+        output = self.cmnp(images, mirror=coin)
+        
         return [output, encoded_bboxes, encoded_labels] #Encoded Bbox and labels output in "ltrb" format
         # return [output,  self.bb, self.labels]
         
@@ -206,31 +207,38 @@ class RALICOCOIterator(object):
             if self.display:
                img = torch.from_numpy(self.out)
                draw_patches(img[i], self.img_name, self.bb_2d_numpy)
-            if(self.loader._BoxEncoder == True):
+            # if(self.loader._BoxEncoder == True):
                 
-                # Converting from "xywh" to "ltrb" format ,
-                # where the values of l, t, r, b always lie between 0 & 1
-                # Box Encoder input & output:
-                # input : N x 4 , "xywh" format
-                # output : 8732 x 4 , "xywh" format and normalized
-                htot, wtot = 1, 1
-                bbox_sizes = []
-                i=0
-                for (l,t,r,b) in self.bb_2d_numpy:
+            #     # Converting from "xywh" to "ltrb" format ,
+            #     # where the values of l, t, r, b always lie between 0 & 1
+            #     # Box Encoder input & output:
+            #     # input : N x 4 , "xywh" format
+            #     # output : 8732 x 4 , "xywh" format and normalized
+            #     htot, wtot = 1, 1
+            #     bbox_sizes = []
+            #     i=0
+            #     for (l,t,r,b) in self.bb_2d_numpy:
                     
 
-                    bbox_size = (l/wtot, t/htot, r/wtot, b/htot)
-                    bbox_sizes.append(bbox_size)
-                    i=i+1
+            #         bbox_size = (l/wtot, t/htot, r/wtot, b/htot)
+            #         bbox_sizes.append(bbox_size)
+            #         i=i+1
 
-                encoded_bboxes, encodded_labels = self.loader.encode(bboxes_in=bbox_sizes, labels_in=self.label_2d_numpy)
-                if(self.loader._castLabels == True):
-                    encodded_labels = encodded_labels.type(torch.FloatTensor)
-                self.lis.append(encoded_bboxes)
-                self.lis_lab.append(encodded_labels)
-            else:
-                self.lis_lab.append(self.label_2d_numpy)
-                self.lis.append(self.bb_2d_numpy)
+            #     encoded_bboxes, encodded_labels = self.loader.encode(bboxes_in=bbox_sizes, labels_in=self.label_2d_numpy)
+            #     if(self.loader._castLabels == True):
+            #         encodded_labels = encodded_labels.type(torch.FloatTensor)
+            #     self.lis.append(encoded_bboxes)
+            #     self.lis_lab.append(encodded_labels)
+            # else:
+            encoded_bboxes_tensor = torch.tensor(self.bb_2d_numpy).float()
+            encodded_labels_tensor=  torch.tensor(self.label_2d_numpy).long()
+            print(f'size of encoded bbox {encoded_bboxes_tensor.size()}')
+            print(f'\nencoded_bboxes_tensor {encoded_bboxes_tensor}')
+            print(f'\nencodded_labels_tensor {encodded_labels_tensor}')
+            print(f'\nexiting ....')
+            # exit(0)
+            self.lis_lab.append(encoded_bboxes_tensor)
+            self.lis.append(encodded_labels_tensor)
             sum_count = sum_count + count
 
         if (self.loader._BoxEncoder != True):
@@ -340,9 +348,9 @@ def main():
         dboxes_ltrb[:, 3] = dboxes[:, 1] + 0.5 * dboxes[:, 3]
         
         return dboxes_ltrb
-
-    dboxes = coco_anchors()
-
+    dboxes = coco_anchors().numpy().flatten().tolist()
+    # print("dboxes ::list",dboxes)
+    # print("dboxes ::tensor",coco_anchors())
     pipe = COCOPipeline(batch_size=bs, num_threads=nt, device_id=di,seed = random_seed,
                         data_dir=image_path, ann_dir=ann_path, crop=crop_size, rali_cpu=_rali_cpu, default_boxes=dboxes, display=display)
     pipe.build()

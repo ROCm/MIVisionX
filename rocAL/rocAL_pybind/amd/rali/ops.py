@@ -902,72 +902,10 @@ class BoxEncoder(Node):
         self.output.data = self._anchors
         return self.output, self.output
 
-    def rali_c_func_call(self, handle, bboxes_tensor, labels_tensor, criteria=0.5):
-        
-        
-        def calc_iou_tensor(box1, box2):
-                    """ Calculation of IoU based on two boxes tensor,
-                        Reference to https://github.com/kuangliu/pytorch-src
-                        input:
-                            box1 (N, 4)
-                            box2 (M, 4)
-                        output:
-                            IoU (N, M)
-                    """
-                    N = box1.size(0)
-                    M = box2.size(0)
-                   
-                    be1 = box1.unsqueeze(1).expand(-1, M, -1)
-                    be2 = box2.unsqueeze(0).expand(N, -1, -1)
-                   
-                    # Left Top & Right Bottom
-                    lt = torch.max(be1[:,:,:2], be2[:,:,:2])
-                    rb = torch.min(be1[:,:,2:], be2[:,:,2:])
-
-                    delta = rb - lt
-                    delta[delta < 0] = 0
-                    intersect = delta[:,:,0]*delta[:,:,1]
-
-                    delta1 = be1[:,:,2:] - be1[:,:,:2]
-                    area1 = delta1[:,:,0]*delta1[:,:,1]
-                    delta2 = be2[:,:,2:] - be2[:,:,:2]
-                    area2 = delta2[:,:,0]*delta2[:,:,1]
-
-                    iou = intersect/(area1 + area2 - intersect)
-                    return iou
-        #Pass the bbox and labels for Encoding
-        def encode(bboxes_in , labels_in, criteria = self._criteria):
-
-                    self.dboxes = self._anchors
-                    self.nboxes = self.dboxes.size(0)
-                    
-                    ious = calc_iou_tensor(bboxes_in, self.dboxes)
-                    best_dbox_ious, best_dbox_idx = ious.max(dim=0)
-                    _ , best_bbox_idx = ious.max(dim=1)
-
-                    # set best ious 2.0
-                    best_dbox_ious.index_fill_(0, best_bbox_idx, 2.0)
-
-                    idx = torch.arange(0, best_bbox_idx.size(0), dtype=torch.int64)
-                    best_dbox_idx[best_bbox_idx[idx]] = idx
-
-                    # filter IoU > 0.5
-                    masks = best_dbox_ious > criteria
-                    labels_out = torch.zeros(self.nboxes, dtype=torch.long)
-                    labels_out[masks] = labels_in[best_dbox_idx[masks]]
-                    bboxes_out = self.dboxes.clone()
-                    bboxes_out[masks, :] = bboxes_in[best_dbox_idx[masks], :]
-                    # Transform format to xywh format
-                    x, y, w, h = 0.5*(bboxes_out[:, 0] + bboxes_out[:, 2]), \
-                                0.5*(bboxes_out[:, 1] + bboxes_out[:, 3]), \
-                                -bboxes_out[:, 0] + bboxes_out[:, 2], \
-                                -bboxes_out[:, 1] + bboxes_out[:, 3]
-                    bboxes_out[:, 0] = x
-                    bboxes_out[:, 1] = y
-                    bboxes_out[:, 2] = w
-                    bboxes_out[:, 3] = h
-                    return bboxes_out, labels_out
-        return encode(bboxes_in=bboxes_tensor ,labels_in = labels_tensor)
+    def rali_c_func_call(self, handle, criteria=0.5):
+        print("IN BOX ENCODER RALI C FUNC CALL")
+        b.BoxEncoder(handle, self._anchors, self._criteria, self._means, self._stds, self._offset,self._scale)
+        return 0,0
         
 
 

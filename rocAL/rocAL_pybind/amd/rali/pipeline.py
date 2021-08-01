@@ -190,6 +190,7 @@ class Pipeline(object):
                                 self._BoxEncoder = True
                                 self._anchors = outputs[2].prev.prev.data
                                 self._encode_tensor = outputs[2].prev.prev
+                                self._encode_tensor.prev.rali_c_func_call(self._handle )
         #Checks for Box Encoding as the Last Node
         if(len(outputs)==3):
             if(isinstance(outputs[1],list)== False):
@@ -199,6 +200,7 @@ class Pipeline(object):
                             self._BoxEncoder = True
                             self._anchors = outputs[2].data
                             self._encode_tensor = outputs[2]
+                            self._encode_tensor.prev.rali_c_func_call(self._handle )
 
         #Checks for One Hot Encoding as the last Node
         if(isinstance(outputs[1],list)== False):

@@ -249,6 +249,7 @@ namespace rali{
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
         m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy );
         m.def("isEmpty",&raliIsEmpty);
+        m.def("BoxEncoder",&raliBoxEncoder);
         m.def("getTimingInfo",raliGetTimingInfo);
         // rali_api_parameter.h
         m.def("setSeed",&raliSetSeed);

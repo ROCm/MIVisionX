@@ -918,10 +918,12 @@ void MasterGraph::output_routine()
                 _graph->process();
                 _process_time.end();
             }
-
+            if(is_box_encoder )
+            {
+                _meta_data_graph->update_box_encoder_meta_data(_anchors, full_batch_meta_data, _criteria, _offset, _scale);
+            }
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
             _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
-
         }
     }
     catch (const std::exception &e)
@@ -1024,6 +1026,16 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
         THROW("Metadata can only have a single output")
     else
         _random_bbox_crop_cords_data = _randombboxcrop_meta_data_reader->get_output();
+}
+
+void MasterGraph::box_encoder(std::vector<float> anchors, float criteria,std::vector<float> means, std::vector<float> stds, bool offset, float scale)
+{
+    std::cout<<"Comes here to box encoder function";
+    is_box_encoder = true;
+    _offset = offset;
+    _scale = scale;
+    _anchors = anchors;
+
 }
 
 MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)

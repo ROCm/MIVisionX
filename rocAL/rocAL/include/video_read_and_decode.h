@@ -52,7 +52,8 @@ public:
     {
         _video_process_count = (video_count <= _max_video_count) ? video_count : _max_video_count;
     }
-    float convert_framenum_to_timestamp(size_t frame_number, int video_index);
+    float convert_framenum_to_timestamp(size_t frame_number);
+    void decode_sequence(size_t sequence_index);
 
     //! Loads a decompressed batch of images into the buffer indicated by buff
     /// \param buff User's buffer provided to be filled with decoded image samples
@@ -100,6 +101,9 @@ private:
     std::vector<size_t> _actual_decoded_height;
     std::vector<size_t> _original_width;
     std::vector<size_t> _original_height;
+    std::vector<size_t> _start_frame;
+    std::vector<std::string> _video_path;
+    std::vector<int> _sequence_video_idx;
     static const size_t MAX_COMPRESSED_SIZE = 1 * 1024 * 1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
@@ -108,5 +112,9 @@ private:
     size_t _stride;
     size_t _video_count;
     size_t _frame_rate;
+    size_t _max_decoded_width;
+    size_t _max_decoded_height;
+    size_t _max_decoded_stride;
+    AVPixelFormat _out_pix_fmt;
     VideoDecoderConfig _video_decoder_config;
 };

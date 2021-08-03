@@ -63,7 +63,6 @@ list(APPEND SOURCES
     api/vx_nodes.cpp
 )
 
-
 # Backend Specific Settings
 if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(OpenCL QUIET)

@@ -60,11 +60,51 @@ THE SOFTWARE.
 #include "meta_node_rotate.h"
 #include "meta_node_ssd_random_crop.h"
 #include "meta_node_flip.h"
+#include "node_sequence_rearrange.h"
 
 #include "commons.h"
 #include "context.h"
 #include "rali_api.h"
 
+RaliImage  RALI_API_CALL
+raliSequenceRearrange(
+            RaliContext p_context,
+            RaliImage p_input,
+            unsigned int* new_order,
+            unsigned int  new_sequence_length,
+            unsigned int sequence_length,
+            bool is_output )
+{
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+#ifdef RALI_VIDEO
+        auto input = static_cast<Image*>(p_input);
+        unsigned sequence_count = context->internal_batch_size() / sequence_length;
+        context->master_graph->set_sequence_rearrange_batch_decrementer(context->master_graph->user_batch_size());
+        context->master_graph->set_user_batch_size((size_t)(new_sequence_length * sequence_count));
+        auto info = ImageInfo(input->info().width(), input->info().height_single(),
+                              new_sequence_length * sequence_count,
+                              input->info().color_plane_count(),
+                              context->master_graph->mem_type(),
+                              input->info().color_format() );
+        output = context->master_graph->create_image(info, is_output);
+        std::shared_ptr<SequenceRearrangeNode> sequence_rearrange_node =  context->master_graph->add_node<SequenceRearrangeNode>({input}, {output});
+        sequence_rearrange_node->init(new_order, new_sequence_length, sequence_length, sequence_count);
+#else
+        THROW("Video decoder is not enabled since ffmpeg is not present")
+#endif
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
 
 
 RaliImage  RALI_API_CALL

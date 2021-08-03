@@ -71,6 +71,16 @@ enum class RaliMemType
     HIP
 };
 
+/*! \brief Decoder mode for Video decoding
+ * 
+ *  Currently supports Software decoding, will support Hardware decoding in future
+ */
+enum class DecodeMode
+{
+    USE_HW = 0,
+    USE_SW = 1
+};
+
 struct Timing
 {
     // The following timings are accumulated timing not just the most recent activity

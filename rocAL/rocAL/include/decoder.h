@@ -33,6 +33,7 @@ enum class DecoderType
     OPENCV_DEC = 2, //!< for back_up decoding
     SKIP_DECODE  = 3, //!< For skipping decoding in case of uncompressed data from reader
     OVX_FFMPEG,//!< Uses FFMPEG to decode video streams, can decode up to 4 video streams simultaneously
+    FFMPEG_VIDEO
 };
 
 

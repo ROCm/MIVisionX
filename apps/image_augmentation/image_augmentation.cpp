@@ -58,6 +58,9 @@ int main(int argc, const char ** argv)
     bool processing_device = 1;
     size_t shard_count = 2;
     int shuffle = 0;
+    unsigned sequence_length = 3;
+    unsigned frame_step = 3;
+    unsigned frame_stride = 1;
     int dec_mode = 0;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
@@ -128,8 +131,7 @@ int main(int argc, const char ** argv)
             std::cout << "Output width and height is needed for video decode\n";
             return -1;
         }
-        input1 = raliVideoFileSource(handle, folderPath1, color_format, ((video_mode == 1) ? RaliDecodeDevice::RALI_HW_DECODE:RaliDecodeDevice::RALI_SW_DECODE)
-                , true, decode_width, decode_height, false);
+        input1 = raliVideoFileSource(handle, folderPath1, color_format, ((video_mode == 1) ? RaliDecodeDevice::RALI_HW_DECODE:RaliDecodeDevice::RALI_SW_DECODE), shard_count, sequence_length, frame_step, frame_stride, shuffle, true, false);
     }
     else
     {

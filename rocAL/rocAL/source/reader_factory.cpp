@@ -24,17 +24,27 @@ THE SOFTWARE.
 #include <memory>
 #include "reader_factory.h"
 #include "file_source_reader.h"
+#include "sequence_file_source_reader.h"
 #include "coco_file_source_reader.h"
 #include "cifar10_data_reader.h"
 #include "tf_record_reader.h"
 #include "caffe_lmdb_record_reader.h"
 #include "caffe2_lmdb_record_reader.h"
+#include "video_reader.h"
 
 std::shared_ptr<Reader> create_reader(ReaderConfig config) {
     switch(config.type()) {
         case StorageType ::FILE_SYSTEM:
         {
             auto ret = std::make_shared<FileSourceReader>();
+            if(ret->initialize(config) != Reader::Status::OK)
+                throw std::runtime_error("File reader cannot access the storage");
+            return ret;
+        }
+        break;
+        case StorageType ::SEQUENCE_FILE_SYSTEM:
+        {
+            auto ret = std::make_shared<SequenceFileSourceReader>();
             if(ret->initialize(config) != Reader::Status::OK)
                 throw std::runtime_error("File reader cannot access the storage");
             return ret;
@@ -79,6 +89,16 @@ std::shared_ptr<Reader> create_reader(ReaderConfig config) {
                 throw std::runtime_error("Caffe2LMDBRecordReader cannot access the storage");
             return ret;
         }
+#ifdef RALI_VIDEO
+        case StorageType::VIDEO_FILE_SYSTEM:
+        {
+            auto ret = std::make_shared<VideoReader>();
+            if(ret->initialize(config) != Reader::Status::OK)
+                throw std::runtime_error("VideoReader cannot access the storage");
+            return ret;
+        }
+        break;
+#endif 
         break;
         default:
             throw std::runtime_error ("Reader type is unsupported");

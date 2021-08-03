@@ -37,7 +37,8 @@ enum class MetaDataReaderType
     CAFFE_DETECTION_META_DATA_READER,
     CAFFE2_META_DATA_READER,
     CAFFE2_DETECTION_META_DATA_READER,
-    TF_DETECTION_META_DATA_READER
+    TF_DETECTION_META_DATA_READER,
+    VIDEO_LABEL_READER
 };
 enum class MetaDataType
 {
@@ -79,5 +80,6 @@ public:
     virtual void release() = 0; // Deletes the loaded information
     virtual MetaDataBatch * get_output()= 0;
     virtual bool exists(const std::string &image_name) = 0;
+    virtual void set_timestamps_bool() = 0;
 };
 

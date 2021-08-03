@@ -31,6 +31,14 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateLabelReader(RaliContext rali_con
 
 ///
 /// \param rali_context
+/// \param source_path path to the folder that contains the dataset or metadata file
+/// \param file_list_frame_num True : when the inputs from text file is to be considered as frame numbers.
+/// False : when the inputs from text file is to considered as timestamps.
+/// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
+extern "C" RaliMetaData RALI_API_CALL raliCreateVideoLabelReader(RaliContext rali_context, const char* source_path, bool file_list_frame_num = true);
+
+///
+/// \param rali_context
 /// \param source_path path to the coco json file
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
 extern "C" RaliMetaData RALI_API_CALL raliCreateTFReader(RaliContext rali_context, const char* source_path, bool is_output,
@@ -124,7 +132,17 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateTextCifar10LabelReader(RaliConte
 /// \param numOfClasses the number of classes for a image dataset
 /// \param buf user's buffer that will be filled with labels. Its needs to be at least of size batch_size.
 extern "C" void RALI_API_CALL raliGetOneHotImageLabels(RaliContext rali_context,int *buf, int numOfClasses);
+
 extern "C" void RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, bool no_crop, RaliFloatParam aspect_ratio = NULL, bool has_shape = false, int crop_width = 0, int crop_height = 0, int num_attempts = 1, RaliFloatParam scaling = NULL, int total_num_attempts = 0, int64_t seed = 0);
 
+///
+/// \param rali_context
+/// \param buf The user's buffer that will be filled with starting frame numbers of the output batch sequences.
+extern "C" void RALI_API_CALL raliGetSequenceStartFrameNumber(RaliContext rali_context, unsigned int* buf);
+
+///
+/// \param rali_context
+/// \param buf The user's buffer that will be filled with frame timestamps of each of the frames in output batch sequences.
+extern "C" void RALI_API_CALL raliGetSequenceFrameTimestamps(RaliContext rali_context, float* buf);
 
 #endif //MIVISIONX_RALI_API_META_DATA_H

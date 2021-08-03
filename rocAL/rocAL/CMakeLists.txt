@@ -127,7 +127,19 @@ if(${BUILD_RALI})
         include/rali_api_meta_data.h
         DESTINATION ./include
         )
+    if(FFMPEG_FOUND)
+        find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)
+        find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
+        find_path(SWSCALE_INCLUDE_DIR libswscale/swscale.h)
+        find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
+    endif()
     include_directories(
+                ${OpenCL_INCLUDE_DIRS}
+                ${OpenCL_INCLUDE_DIRS}/Headers
+                ${AVUTIL_INCLUDE_DIR} 
+                ${AVCODEC_INCLUDE_DIR} 
+                ${SWSCALE_INCLUDE_DIR} 
+                ${AVFORMAT_INCLUDE_DIR}
                 ${CMAKE_CURRENT_BINARY_DIR}
                 ${TurboJpeg_INCLUDE_DIRS}
                 ${PROTOBUF_INCLUDE_DIRS}
@@ -173,7 +185,7 @@ if(${BUILD_RALI})
     else()
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp -fPIC -pg -pthread -std=c++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp -fPIC -pg -pthread -std=c++14 -Wno-deprecated-declarations")
     add_definitions(-ljsoncpp)
     message("-- ${Green}rocAL - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 
@@ -181,10 +193,15 @@ if(${BUILD_RALI})
         message("-- ${Yellow}rocAL library is going to be built without video decode functionality ${ColourReset}")
         target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb boost_system boost_filesystem turbojpeg openvx vx_rpp jsoncpp)
     else()
-        message("-- ${Green}rocAL library is going to be built with video decode functionality ${ColourReset}")
-        target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp  jsoncpp)
+        if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")  # rocAL Video module yet to be supported with HIP BACKEND
+            message("-- ${Green}rocAL library is going to be built with video decode functionality ${ColourReset}")
+            target_compile_definitions(${PROJECT_NAME} PUBLIC -DRALI_VIDEO)
+            target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} ${FFMPEG_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
+        else()
+            message("-- ${Red}rocAL library is going to be built without video decode functionality ${ColourReset}")
+            target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} ${FFMPEG_LIBRARIES} lmdb turbojpeg openvx vx_rpp  jsoncpp)
+        endif()
     endif()
-
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
         target_link_libraries(${PROJECT_NAME} openvx_hip rocAL_hip)
     endif()

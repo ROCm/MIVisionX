@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "commons.h"
 #include "meta_data.h"
 #include "meta_data_reader.h"
+#include "reader.h"
 
 class Caffe2MetaDataReaderDetection: public MetaDataReader
 {

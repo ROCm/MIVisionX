@@ -872,7 +872,7 @@ int ovxKernel_Threshold(AgoNode * node, AgoKernelCommand cmd)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
-        if (node->paramList[1]->u.thr.data_type != VX_TYPE_UINT8)
+        if (node->paramList[1]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[1]->u.thr.data_type != VX_TYPE_INT16)
             return VX_ERROR_INVALID_TYPE;
         // set output image sizes are same as input image size
         vx_meta_format meta;
@@ -1867,6 +1867,8 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
     // INFO: use VX_KERNEL_AMD_HARRIS_SOBEL_* kernels to compute Gx^2, Gx*Gy, Gy^2
     //       use VX_KERNEL_AMD_HARRIS_SCORE_* kernels to compute Vc
     //       use VX_KERNEL_AMD_HARRIS_MERGE_SORT_AND_PICK_XY_HVC kernel for final step
+    //       disable buffer merging for HarrisCorners
+    agoSetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS", "1");
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
         // TBD: not implemented yet
@@ -3727,7 +3729,7 @@ int agoKernel_Threshold_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
-            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || (node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[2]->u.thr.data_type != VX_TYPE_INT16))
                 return VX_ERROR_INVALID_TYPE;
         }
     }
@@ -3801,7 +3803,7 @@ int agoKernel_Threshold_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
-            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || (node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[2]->u.thr.data_type != VX_TYPE_INT16))
                 return VX_ERROR_INVALID_TYPE;
         }
     }
@@ -5286,7 +5288,7 @@ int agoKernel_And_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
             status = VX_FAILURE;
         }
     }
-#endif
+	#endif
     return status;
 }
 
@@ -15491,7 +15493,7 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size)) {
             status = VX_FAILURE;
         }
     }
@@ -16642,6 +16644,11 @@ int agoKernel_FastCorners_XY_U8_Supression(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oNumCorners = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+        if (oNumCorners) {
+            node->gpu_scalar_array_output_sync.enable = true;
+            node->gpu_scalar_array_output_sync.paramIndexArray = 0;
+            node->gpu_scalar_array_output_sync.paramIndexScalar = 1;
+        }
         if (HipExec_FastCorners_XY_U8_Supression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, oXY->hip_memory, oXY->gpu_buffer_offset,
             iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, strength_threshold)) {
             status = VX_FAILURE;
@@ -16714,6 +16721,11 @@ int agoKernel_FastCorners_XY_U8_NoSupression(AgoNode * node, AgoKernelCommand cm
         AgoData * oNumCorners = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+        if (oNumCorners) {
+            node->gpu_scalar_array_output_sync.enable = true;
+            node->gpu_scalar_array_output_sync.paramIndexArray = 0;
+            node->gpu_scalar_array_output_sync.paramIndexScalar = 1;
+        }
         if (HipExec_FastCorners_XY_U8_NoSupression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, oXY->hip_memory, oXY->gpu_buffer_offset,
             iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, strength_threshold)) {
             status = VX_FAILURE;
@@ -18070,7 +18082,7 @@ int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand c
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
             (vx_uint16 *) (iImg->hip_memory + iImg->gpu_buffer_offset), iImg->u.img.stride_in_bytes,
             oStack->hip_memory, oStack->gpu_buffer_offset, oStack->u.cannystack.count,
-            iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
+            iThr->u.thr.threshold_lower.U1 / 4, iThr->u.thr.threshold_upper.U1 / 4)) {
             status = VX_FAILURE;
         }
     }
@@ -18133,7 +18145,7 @@ int agoKernel_NonMaxSupp_XY_ANY_3x3(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oList = node->paramList[0];
         AgoData * iImg = node->paramList[1];
         if (HipExec_NonMaxSupp_XY_ANY_3x3(
-            node->hip_stream0, (vx_uint32)oList->u.arr.capacity, (ago_keypoint_xys_t *)(oList->hip_memory + oList->gpu_buffer_offset),
+            node->hip_stream0, (vx_uint32)oList->u.arr.capacity, oList->hip_memory, oList->gpu_buffer_offset,
             iImg->u.img.width, iImg->u.img.height, (vx_float32 *)(iImg->hip_memory + iImg->gpu_buffer_offset), iImg->u.img.stride_in_bytes)) {
 
             status = VX_FAILURE;

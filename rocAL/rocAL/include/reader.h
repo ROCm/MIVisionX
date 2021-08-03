@@ -25,6 +25,8 @@ THE SOFTWARE.
 #include <map>
 #include <vector>
 #include<tuple>
+#include "meta_data_reader.h"
+
 enum class StorageType
 {
     FILE_SYSTEM = 0,
@@ -39,14 +41,14 @@ enum class StorageType
 
 struct ReaderConfig
 {
-    explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "",
+    explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "", 
                           const std::map<std::string, std::string> feature_key_map = std::map<std::string, std::string>(),
-                          bool shuffle = false, bool loop = false) : _type(type), _path(path), _json_path(json_path), _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop) {}
+                          bool shuffle = false, bool loop = false):_type(type), _path(path), _json_path(json_path), _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop) {}
     virtual StorageType type() { return _type; };
-    void set_path(const std::string &path) { _path = path; }
+    void set_path(const std::string& path) { _path = path; }
     void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
     void set_shard_count(size_t shard_count) { _shard_count = shard_count; }
-    void set_json_path(const std::string &json_path) { _json_path = json_path; }
+    void set_json_path(const std::string& json_path) { _json_path = json_path; }
     /// \param read_batch_count Tells the reader it needs to read the images in multiples of load_batch_count. If available images not divisible to load_batch_count,
     /// the reader will repeat images to make available images an even multiple of this load_batch_count
     void set_batch_count(size_t read_batch_count) { _batch_count = read_batch_count; }
@@ -55,6 +57,7 @@ struct ReaderConfig
     bool loop() { return _loop; }
     void set_shuffle(bool shuffle) { _shuffle = shuffle; }
     void set_loop(bool loop) { _loop = loop; }
+    void set_meta_data_reader(std::shared_ptr<MetaDataReader> meta_data_reader) { _meta_data_reader = meta_data_reader; }
     void set_sequence_length(unsigned sequence_length) { _sequence_length = sequence_length; }
     void set_frame_step(unsigned step) { _video_frame_step = step; }
     void set_frame_stride(unsigned stride) { _video_frame_stride = stride; }
@@ -81,7 +84,7 @@ struct ReaderConfig
     std::map<std::string, std::string> feature_key_map() { return _feature_key_map; }
     void set_file_prefix(const std::string &prefix) { _file_prefix = prefix; }
     std::string file_prefix() { return _file_prefix; }
-
+    std::shared_ptr<MetaDataReader> meta_data_reader() {return _meta_data_reader;}
 private:
     StorageType _type = StorageType::FILE_SYSTEM;
     std::string _path = "";
@@ -89,7 +92,7 @@ private:
     std::map<std::string, std::string> _feature_key_map;
     size_t _shard_count = 1;
     size_t _shard_id = 0;
-    size_t _batch_count = 1;     //!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
+    size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
     size_t _sequence_length = 1; // Video reader module sequence length
     size_t _video_frame_step;
     size_t _video_frame_stride = 1;
@@ -102,6 +105,7 @@ private:
     bool _shuffle = false;
     bool _loop = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader and tf_record_reader
+    std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
 };
 
 class Reader {
@@ -133,7 +137,7 @@ public:
     virtual size_t open() = 0;
 
     //! Copies the data of the opened item to the buf
-    virtual size_t read(unsigned char *buf, size_t read_size) = 0;
+    virtual size_t read(unsigned char* buf, size_t read_size) = 0;
 
     //! Closes the opened item
     virtual int close() = 0;

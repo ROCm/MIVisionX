@@ -3970,9 +3970,9 @@ Hip_ColorConvert_IYUV_RGB(uint dstWidth, uint dstHeight,
         f.z = hip_dot3(cU, make_float3(hip_unpack3(pRGB1.data[3]), hip_unpack0(pRGB1.data[4]), hip_unpack1(pRGB1.data[4])));
         f.w = hip_dot3(cU, make_float3(hip_unpack1(pRGB1.data[5]), hip_unpack2(pRGB1.data[5]), hip_unpack3(pRGB1.data[5])));
         pU1.y = hip_pack(f + (float4)(128));
-        pU0.x = hip_lerp(pU0.x, pU0.y, 0x01010101u);
-        pU1.x = hip_lerp(pU1.x, pU1.y, 0x01010101u);
-        pU0.x = hip_lerp(pU0.x, pU1.x, 0x01010101u);
+        pU0.x = hip_lerp(pU0.x, pU0.y, 0);
+        pU1.x = hip_lerp(pU1.x, pU1.y, 0);
+        pU0.x = hip_lerp(pU0.x, pU1.x, 0);
 
         float3 cV = make_float3(0.5f, -0.4542f, -0.0458f);
         uint2 pV0, pV1;
@@ -3996,9 +3996,9 @@ Hip_ColorConvert_IYUV_RGB(uint dstWidth, uint dstHeight,
         f.z = hip_dot3(cV, make_float3(hip_unpack3(pRGB1.data[3]), hip_unpack0(pRGB1.data[4]), hip_unpack1(pRGB1.data[4])));
         f.w = hip_dot3(cV, make_float3(hip_unpack1(pRGB1.data[5]), hip_unpack2(pRGB1.data[5]), hip_unpack3(pRGB1.data[5])));
         pV1.y = hip_pack(f + (float4)(128));
-        pV0.x = hip_lerp(pV0.x, pV0.y, 0x01010101u);
-        pV1.x = hip_lerp(pV1.x, pV1.y, 0x01010101u);
-        pV0.x = hip_lerp(pV0.x, pV1.x, 0x01010101u);
+        pV0.x = hip_lerp(pV0.x, pV0.y, 0);
+        pV1.x = hip_lerp(pV1.x, pV1.y, 0);
+        pV0.x = hip_lerp(pV0.x, pV1.x, 0);
 
         *((uint2 *)(&pDstYImage[dstY0Idx])) = pY0;
         *((uint2 *)(&pDstYImage[dstY1Idx])) = pY1;
@@ -4182,10 +4182,10 @@ Hip_FormatConvert_IYUV_UYVY(uint dstWidth, uint dstHeight,
         pY0.y = hip_pack(make_float4(hip_unpack1(L0.z), hip_unpack3(L0.z), hip_unpack1(L0.w), hip_unpack3(L0.w)));
         pY1.x = hip_pack(make_float4(hip_unpack1(L1.x), hip_unpack3(L1.x), hip_unpack1(L1.y), hip_unpack3(L1.y)));
         pY1.y = hip_pack(make_float4(hip_unpack1(L1.z), hip_unpack3(L1.z), hip_unpack1(L1.w), hip_unpack3(L1.w)));
-        L0.x  = hip_lerp(L0.x, L1.x, 0x01010101);
-        L0.y  = hip_lerp(L0.y, L1.y, 0x01010101);
-        L0.z  = hip_lerp(L0.z, L1.z, 0x01010101);
-        L0.w  = hip_lerp(L0.w, L1.w, 0x01010101);
+        L0.x  = hip_lerp(L0.x, L1.x, 0);
+        L0.y  = hip_lerp(L0.y, L1.y, 0);
+        L0.z  = hip_lerp(L0.z, L1.z, 0);
+        L0.w  = hip_lerp(L0.w, L1.w, 0);
         pU = hip_pack(make_float4(hip_unpack0(L0.x), hip_unpack0(L0.y), hip_unpack0(L0.z), hip_unpack0(L0.w)));
         pV = hip_pack(make_float4(hip_unpack2(L0.x), hip_unpack2(L0.y), hip_unpack2(L0.z), hip_unpack2(L0.w)));
 
@@ -4244,10 +4244,10 @@ Hip_FormatConvert_IYUV_YUYV(uint dstWidth, uint dstHeight,
         pY0.y = hip_pack(make_float4(hip_unpack0(L0.z), hip_unpack2(L0.z), hip_unpack0(L0.w), hip_unpack2(L0.w)));
         pY1.x = hip_pack(make_float4(hip_unpack0(L1.x), hip_unpack2(L1.x), hip_unpack0(L1.y), hip_unpack2(L1.y)));
         pY1.y = hip_pack(make_float4(hip_unpack0(L1.z), hip_unpack2(L1.z), hip_unpack0(L1.w), hip_unpack2(L1.w)));
-        L0.x  = hip_lerp(L0.x, L1.x, 0x01010101);
-        L0.y  = hip_lerp(L0.y, L1.y, 0x01010101);
-        L0.z  = hip_lerp(L0.z, L1.z, 0x01010101);
-        L0.w  = hip_lerp(L0.w, L1.w, 0x01010101);
+        L0.x  = hip_lerp(L0.x, L1.x, 0);
+        L0.y  = hip_lerp(L0.y, L1.y, 0);
+        L0.z  = hip_lerp(L0.z, L1.z, 0);
+        L0.w  = hip_lerp(L0.w, L1.w, 0);
         pU = hip_pack(make_float4(hip_unpack1(L0.x), hip_unpack1(L0.y), hip_unpack1(L0.z), hip_unpack1(L0.w)));
         pV = hip_pack(make_float4(hip_unpack3(L0.x), hip_unpack3(L0.y), hip_unpack3(L0.z), hip_unpack3(L0.w)));
 
@@ -4353,9 +4353,9 @@ Hip_ColorConvert_NV12_RGB(uint dstWidth, uint dstHeight,
         f.z = hip_dot3(cU, make_float3(hip_unpack3(pRGB1.data[3]), hip_unpack0(pRGB1.data[4]), hip_unpack1(pRGB1.data[4])));
         f.w = hip_dot3(cU, make_float3(hip_unpack1(pRGB1.data[5]), hip_unpack2(pRGB1.data[5]), hip_unpack3(pRGB1.data[5])));
         pU1.y = hip_pack(f + (float4)(128));
-        pU0.x = hip_lerp(pU0.x, pU0.y, 0x01010101u);
-        pU1.x = hip_lerp(pU1.x, pU1.y, 0x01010101u);
-        pU0.x = hip_lerp(pU0.x, pU1.x, 0x01010101u);
+        pU0.x = hip_lerp(pU0.x, pU0.y, 0);
+        pU1.x = hip_lerp(pU1.x, pU1.y, 0);
+        pU0.x = hip_lerp(pU0.x, pU1.x, 0);
 
         float3 cV = make_float3(0.5f, -0.4542f, -0.0458f);
         uint2 pV0, pV1;
@@ -4379,9 +4379,9 @@ Hip_ColorConvert_NV12_RGB(uint dstWidth, uint dstHeight,
         f.z = hip_dot3(cV, make_float3(hip_unpack3(pRGB1.data[3]), hip_unpack0(pRGB1.data[4]), hip_unpack1(pRGB1.data[4])));
         f.w = hip_dot3(cV, make_float3(hip_unpack1(pRGB1.data[5]), hip_unpack2(pRGB1.data[5]), hip_unpack3(pRGB1.data[5])));
         pV1.y = hip_pack(f + (float4)(128));
-        pV0.x = hip_lerp(pV0.x, pV0.y, 0x01010101u);
-        pV1.x = hip_lerp(pV1.x, pV1.y, 0x01010101u);
-        pV0.x = hip_lerp(pV0.x, pV1.x, 0x01010101u);
+        pV0.x = hip_lerp(pV0.x, pV0.y, 0);
+        pV1.x = hip_lerp(pV1.x, pV1.y, 0);
+        pV0.x = hip_lerp(pV0.x, pV1.x, 0);
 
         uint2 pUV;
         f.x = hip_unpack0(pU0.x);
@@ -4582,10 +4582,10 @@ Hip_FormatConvert_NV12_UYVY(uint dstWidth, uint dstHeight,
         pY0.y = hip_pack(make_float4(hip_unpack1(L0.z), hip_unpack3(L0.z), hip_unpack1(L0.w), hip_unpack3(L0.w)));
         pY1.x = hip_pack(make_float4(hip_unpack1(L1.x), hip_unpack3(L1.x), hip_unpack1(L1.y), hip_unpack3(L1.y)));
         pY1.y = hip_pack(make_float4(hip_unpack1(L1.z), hip_unpack3(L1.z), hip_unpack1(L1.w), hip_unpack3(L1.w)));
-        L0.x  = hip_lerp(L0.x, L1.x, 0x01010101);
-        L0.y  = hip_lerp(L0.y, L1.y, 0x01010101);
-        L0.z  = hip_lerp(L0.z, L1.z, 0x01010101);
-        L0.w  = hip_lerp(L0.w, L1.w, 0x01010101);
+        L0.x  = hip_lerp(L0.x, L1.x, 0);
+        L0.y  = hip_lerp(L0.y, L1.y, 0);
+        L0.z  = hip_lerp(L0.z, L1.z, 0);
+        L0.w  = hip_lerp(L0.w, L1.w, 0);
         pUV.x = hip_pack(make_float4(hip_unpack0(L0.x), hip_unpack2(L0.x), hip_unpack0(L0.y), hip_unpack2(L0.y)));
         pUV.y = hip_pack(make_float4(hip_unpack0(L0.z), hip_unpack2(L0.z), hip_unpack0(L0.w), hip_unpack2(L0.w)));
 
@@ -4640,10 +4640,10 @@ Hip_FormatConvert_NV12_YUYV(uint dstWidth, uint dstHeight,
         pY0.y = hip_pack(make_float4(hip_unpack0(L0.z), hip_unpack2(L0.z), hip_unpack0(L0.w), hip_unpack2(L0.w)));
         pY1.x = hip_pack(make_float4(hip_unpack0(L1.x), hip_unpack2(L1.x), hip_unpack0(L1.y), hip_unpack2(L1.y)));
         pY1.y = hip_pack(make_float4(hip_unpack0(L1.z), hip_unpack2(L1.z), hip_unpack0(L1.w), hip_unpack2(L1.w)));
-        L0.x  = hip_lerp(L0.x, L1.x, 0x01010101);
-        L0.y  = hip_lerp(L0.y, L1.y, 0x01010101);
-        L0.z  = hip_lerp(L0.z, L1.z, 0x01010101);
-        L0.w  = hip_lerp(L0.w, L1.w, 0x01010101);
+        L0.x  = hip_lerp(L0.x, L1.x, 0);
+        L0.y  = hip_lerp(L0.y, L1.y, 0);
+        L0.z  = hip_lerp(L0.z, L1.z, 0);
+        L0.w  = hip_lerp(L0.w, L1.w, 0);
         pUV.x = hip_pack(make_float4(hip_unpack1(L0.x), hip_unpack3(L0.x), hip_unpack1(L0.y), hip_unpack3(L0.y)));
         pUV.y = hip_pack(make_float4(hip_unpack1(L0.z), hip_unpack3(L0.z), hip_unpack1(L0.w), hip_unpack3(L0.w)));
 

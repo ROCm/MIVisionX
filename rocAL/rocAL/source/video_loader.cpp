@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 #ifdef RALI_VIDEO
 
-VideoLoader::VideoLoader(DeviceResources dev_resources) : _circ_buff(dev_resources, CIRC_BUFFER_DEPTH),
+VideoLoader::VideoLoader(DeviceResources dev_resources) : _circ_buff(dev_resources),
                                                           _swap_handle_time("Swap_handle_time", DBG_TIMING)
 {
     _output_image = nullptr;
@@ -43,6 +43,14 @@ VideoLoader::VideoLoader(DeviceResources dev_resources) : _circ_buff(dev_resourc
 VideoLoader::~VideoLoader()
 {
     de_init();
+}
+
+void 
+VideoLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
+{
+    if(prefetch_queue_depth <= 0)
+        THROW("Prefetch quque depth value cannot be zero or negative");
+    _prefetch_queue_depth = prefetch_queue_depth;
 }
 
 size_t
@@ -133,7 +141,7 @@ void VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder
     _decoded_img_info._roi_width.resize(_batch_size);
     _decoded_img_info._original_height.resize(_batch_size);
     _decoded_img_info._original_width.resize(_batch_size);
-    _circ_buff.init(_mem_type, _output_mem_size);
+    _circ_buff.init(_mem_type, _output_mem_size, _prefetch_queue_depth);
     _is_initialized = true;
     LOG("Loader module initialized");
 }

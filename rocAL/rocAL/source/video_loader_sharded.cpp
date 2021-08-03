@@ -29,6 +29,14 @@ VideoLoaderSharded::VideoLoaderSharded(DeviceResources dev_resources):
     _loader_idx = 0;
 }
 
+void 
+VideoLoaderSharded::set_prefetch_queue_depth(size_t prefetch_queue_depth)
+{
+    if(prefetch_queue_depth <= 0)
+        THROW("Prefetch quque depth value cannot be zero or negative");
+    _prefetch_queue_depth = prefetch_queue_depth;
+}
+
 std::vector<std::string> VideoLoaderSharded::get_id()
 {
     if(!_initialized)
@@ -83,6 +91,7 @@ VideoLoaderSharded::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decod
     for(size_t i = 0; i < _shard_count; i++)
     {
         auto loader = std::make_shared<VideoLoader>(_dev_resources);
+        loader->set_prefetch_queue_depth(_prefetch_queue_depth);
         _loaders.push_back(loader);
     }
 

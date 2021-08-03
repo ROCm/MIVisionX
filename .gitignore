@@ -1,14 +1,7 @@
-.vscode
 build*
-sample_ovx/
-warp_affine_old.cpp
-build.sh
-rali/pybind_python/amd_rali.egg-info/
-rali/pybind_python/dist/
-rali/pybind_python/example/1.2.3/
-utilities/rali_unittests/*.sh
-utilities/rali_unittests/1.2.3/*.o
-temp/
+docker_build*
+hip_build*
+.vscode*
 opencv-3.4.0/*
 openvx_test_results*
 openvx_node_results*

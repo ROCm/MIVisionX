@@ -23,15 +23,19 @@ THE SOFTWARE.
 #include "node_image_loader.h"
 #include "exception.h"
 
-
+#if ENABLE_HIP
+ImageLoaderNode::ImageLoaderNode(Image *output, DeviceResourcesHip device_resources):
+#else
 ImageLoaderNode::ImageLoaderNode(Image *output, DeviceResources device_resources):
+#endif
         Node({}, {output})
 {
     _loader_module = std::make_shared<ImageLoaderSharded>(device_resources);
 }
 
+
 void ImageLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, unsigned sequence_length, unsigned step, unsigned stride, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-                           DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig, const char* file_prefix)
+                           DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::shared_ptr<MetaDataReader> meta_data_reader, bool decoder_keep_orig, const char* file_prefix)
 {
     if(!_loader_module)
         THROW("ERROR: loader module is not set for ImageLoaderNode, cannot initialize")
@@ -43,6 +47,7 @@ void ImageLoaderNode::init(unsigned internal_shard_count, const std::string &sou
     reader_cfg.set_shard_count(internal_shard_count);
     reader_cfg.set_batch_count(load_batch_count);
     reader_cfg.set_file_prefix(file_prefix);
+    reader_cfg.set_meta_data_reader(meta_data_reader);
     //  sequence_length, step and stride parameters used only for SequenceReader
     reader_cfg.set_sequence_length(sequence_length);
     step > 0 ? reader_cfg.set_frame_step(step) : reader_cfg.set_frame_step(1);

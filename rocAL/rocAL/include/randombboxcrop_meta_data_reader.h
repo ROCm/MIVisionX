@@ -85,6 +85,7 @@ public:
     virtual void init(const RandomBBoxCrop_MetaDataConfig& cfg) = 0;
     virtual void read_all() = 0;// Reads all the meta data information
     virtual void lookup(const std::vector<std::string>& image_names) = 0;// finds meta_data info associated with given names and fills the output
+    virtual std::vector<std::vector <float>>  get_batch_crop_coords(const std::vector<std::string>& image_names) = 0; // returns the crop coords for a batch
     virtual void release() = 0; // Deletes the loaded information
     virtual void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader) = 0;
     virtual CropCordBatch * get_output() = 0;

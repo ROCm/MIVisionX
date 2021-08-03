@@ -110,7 +110,7 @@ auto convert_decoder_mode= [](RaliDecodeDevice decode_mode)
             return DecodeMode::USE_SW;
         default:
 
-        THROW("Unsupported decoder mode" + TOSTR(decode_mode))
+            THROW("Unsupported decoder mode" + TOSTR(decode_mode))
     }
 };
 
@@ -171,7 +171,10 @@ raliJpegFileSourceSingleShard(
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(), decoder_keep_original);
+                                                                                        context->master_graph->mem_type(),
+                                                                                        context->master_graph->meta_data_reader(),
+                                                                                        decoder_keep_original
+                                                                                        );
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -246,7 +249,9 @@ raliJpegFileSource(
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),
-                                                                          context->master_graph->mem_type(), decoder_keep_original);
+                                                                          context->master_graph->mem_type(),
+                                                                          context->master_graph->meta_data_reader(),
+                                                                          decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -329,7 +334,9 @@ raliSequenceReader(
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),
-                                                                          context->master_graph->mem_type(), decoder_keep_original);
+                                                                          context->master_graph->mem_type(),
+                                                                          context->master_graph->meta_data_reader(),
+                                                                          decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -416,7 +423,9 @@ raliSequenceReaderSingleShard(
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(), decoder_keep_original);
+                                                                                        context->master_graph->mem_type(),
+                                                                                        context->master_graph->meta_data_reader(),
+                                                                                        decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -488,7 +497,9 @@ raliJpegCaffe2LMDBRecordSource(
                                                                              shuffle,
                                                                              loop,
                                                                              context->user_batch_size(),
-                                                                             context->master_graph->mem_type(), decoder_keep_original);
+                                                                             context->master_graph->mem_type(),
+                                                                             context->master_graph->meta_data_reader(),
+                                                                             decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -563,7 +574,9 @@ raliJpegCaffe2LMDBRecordSourceSingleShard(
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(), decoder_keep_original);
+                                                                                        context->master_graph->mem_type(),
+                                                                                        context->master_graph->meta_data_reader(),
+                                                                                        decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -635,7 +648,9 @@ raliJpegCaffeLMDBRecordSource(
                                                                              shuffle,
                                                                              loop,
                                                                              context->user_batch_size(),
-                                                                             context->master_graph->mem_type(), decoder_keep_original);
+                                                                             context->master_graph->mem_type(),
+                                                                             context->master_graph->meta_data_reader(),
+                                                                             decoder_keep_original);
 
         context->master_graph->set_loop(loop);
 
@@ -711,7 +726,9 @@ raliJpegCaffeLMDBRecordSourceSingleShard(
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(), decoder_keep_original);
+                                                                                        context->master_graph->mem_type(),
+                                                                                        context->master_graph->meta_data_reader(),
+                                                                                        decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -784,7 +801,9 @@ raliJpegCOCOFileSource(
                                                                             shuffle,
                                                                             loop,
                                                                             context->user_batch_size(),
-                                                                            context->master_graph->mem_type(), decoder_keep_original);
+                                                                            context->master_graph->mem_type(),
+                                                                            context->master_graph->meta_data_reader(),
+                                                                            decoder_keep_original);
 
         context->master_graph->set_loop(loop);
 
@@ -861,7 +880,9 @@ raliJpegCOCOFileSourceSingleShard(
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(), decoder_keep_original);
+                                                                                        context->master_graph->mem_type(),
+                                                                                        context->master_graph->meta_data_reader(),
+                                                                                        decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -940,6 +961,7 @@ raliFusedJpegCrop(
                                                                           loop,
                                                                           context->user_batch_size(),
                                                                           context->master_graph->mem_type(),
+                                                                          context->master_graph->meta_data_reader(),
                                                                           area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
         context->master_graph->set_loop(loop);
 
@@ -1020,7 +1042,9 @@ raliJpegCOCOFileSourcePartial(
                                                                             shuffle,
                                                                             loop,
                                                                             context->user_batch_size(),
-                                                                            context->master_graph->mem_type(), area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            context->master_graph->mem_type(),
+                                                                            context->master_graph->meta_data_reader(),
+                                                                            area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
 
         context->master_graph->set_loop(loop);
 
@@ -1106,7 +1130,9 @@ raliJpegCOCOFileSourcePartialSingleShard(
                                                                             shuffle,
                                                                             loop,
                                                                             context->user_batch_size(),
-                                                                            context->master_graph->mem_type(), area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            context->master_graph->mem_type(),
+                                                                            context->master_graph->meta_data_reader(),
+                                                                            area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
 
         context->master_graph->set_loop(loop);
 
@@ -1189,7 +1215,8 @@ raliJpegTFRecordSource(
                                                                              shuffle,
                                                                              loop,
                                                                              context->user_batch_size(),
-                                                                             context->master_graph->mem_type());
+                                                                             context->master_graph->mem_type(),
+                                                                             context->master_graph->meta_data_reader());
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1263,7 +1290,8 @@ raliJpegTFRecordSourceSingleShard(
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type());
+                                                                                        context->master_graph->mem_type(),
+                                                                                        context->master_graph->meta_data_reader());
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1333,7 +1361,9 @@ raliRawTFRecordSource(
                                                                              shuffle,
                                                                              loop,
                                                                              context->user_batch_size(),
-                                                                             context->master_graph->mem_type(), false, record_name_prefix);
+                                                                             context->master_graph->mem_type(),
+                                                                             context->master_graph->meta_data_reader(),
+                                                                             false, record_name_prefix);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1402,7 +1432,8 @@ raliRawTFRecordSourceSingleShard(
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type());
+                                                                                        context->master_graph->mem_type(),
+                                                                                        context->master_graph->meta_data_reader());
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1485,6 +1516,7 @@ raliFusedJpegCropSingleShard(
                                                                           loop,
                                                                           context->user_batch_size(),
                                                                           context->master_graph->mem_type(),
+                                                                          context->master_graph->meta_data_reader(),
                                                                           area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
         context->master_graph->set_loop(loop);
 

@@ -145,5 +145,4 @@ extern "C" void RALI_API_CALL raliGetSequenceStartFrameNumber(RaliContext rali_c
 /// \param buf The user's buffer that will be filled with frame timestamps of each of the frames in output batch sequences.
 extern "C" void RALI_API_CALL raliGetSequenceFrameTimestamps(RaliContext rali_context, float* buf);
 
-
 #endif //MIVISIONX_RALI_API_META_DATA_H

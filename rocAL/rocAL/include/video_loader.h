@@ -50,6 +50,7 @@ public:
     VideoLoaderModuleStatus set_cpu_sched_policy(struct sched_param sched_policy);
     std::vector<std::string> get_id() override;
     decoded_image_info get_decode_image_info() override;
+    void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
     std::vector<size_t> get_sequence_start_frame_number();
     std::vector<std::vector<float>> get_sequence_frame_timestamps();
 private:
@@ -74,7 +75,7 @@ private:
     bool _is_initialized;
     bool _stopped = false;
     bool _loop;//<! If true the reader will wrap around at the end of the media (files/images/...) and wouldn't stop
-    const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
+    size_t _prefetch_queue_depth; // Used for circular buffer's internal buffer
     size_t _image_counter = 0;//!< How many images have been loaded already
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
     bool _decoder_keep_original = false;

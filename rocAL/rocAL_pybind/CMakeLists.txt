@@ -58,15 +58,11 @@ endif()
 if(${BUILD_RALI_PYBIND})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
-    link_directories(${ROCM_PATH}/mivisionx/lib/
-                 ${ROCM_PATH}/rpp/lib
-                )
+    link_directories(${ROCM_PATH}/rpp/lib ${ROCM_PATH}/mivisionx/lib)
 
     include_directories(../rocAL/include/
-                    third_party_lib/
-                    ../../amd_openvx/openvx/include/
-                    ${ROCM_PATH}/mivisionx/include/
-                   )
+                        third_party_lib/
+                        ../../amd_openvx/openvx/include/)
 
     add_subdirectory(third_party_lib/pybind11)
 

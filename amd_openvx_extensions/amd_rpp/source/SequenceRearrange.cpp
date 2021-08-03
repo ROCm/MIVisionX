@@ -130,8 +130,8 @@ static vx_status VX_CALLBACK processSequenceRearrange(vx_node node, const vx_ref
                 {
                     unsigned src_index = data->new_order[dst_index];
                     if(src_index > data->sequence_length) ERRMSG(VX_ERROR_INVALID_VALUE, "invalid new order value=%d (must be between 0-%d)\n", src_index, data->sequence_length - 1);
-                    RppPtr_t dst_address = data->pDst + dst_sequence_start_address + (dst_index * elem_size);
-                    RppPtr_t src_address = data->pSrc + src_sequence_start_address + (src_index * elem_size);
+                    auto dst_address = (unsigned char*)data->pDst + dst_sequence_start_address + (dst_index * elem_size);
+                    auto src_address = (unsigned char*)data->pSrc + src_sequence_start_address + (src_index * elem_size);
                     memcpy(dst_address, src_address, elem_size);
                 }
             }
@@ -147,8 +147,8 @@ static vx_status VX_CALLBACK processSequenceRearrange(vx_node node, const vx_ref
                 {
                     unsigned src_index = data->new_order[dst_index];
                     if(src_index > data->sequence_length) ERRMSG(VX_ERROR_INVALID_VALUE, "invalid new order value=%d (must be between 0-%d)\n", src_index, data->sequence_length - 1);
-                    RppPtr_t dst_address = data->pDst + dst_sequence_start_address + (dst_index * elem_size);
-                    RppPtr_t src_address = data->pSrc + src_sequence_start_address + (src_index * elem_size);
+                    auto dst_address = (unsigned char*)data->pDst + dst_sequence_start_address + (dst_index * elem_size);
+                    auto src_address = (unsigned char*)data->pSrc + src_sequence_start_address + (src_index * elem_size);
                     memcpy(dst_address, src_address, elem_size);
                 }
             }

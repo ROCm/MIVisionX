@@ -186,7 +186,7 @@ void VideoLabelReader::read_all(const std::string &_path)
     filesys::path pathObj(_folder_path);
 
     if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
-    { // Single file as input
+    {
         if (pathObj.has_extension() && pathObj.extension().string() == ".txt")
         {
             read_text_file(_path);

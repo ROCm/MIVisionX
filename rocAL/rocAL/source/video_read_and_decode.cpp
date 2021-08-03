@@ -209,7 +209,7 @@ VideoReadAndDecode::load(unsigned char *buff,
         _reader->close();
         _decompressed_buff_ptrs[i] = buff + (i * image_size * _sequence_length);
         
-        /* Check if the video file is already initialized otherwise you an existing decoder instance to initialize the video */
+        /* Check if the video file is already initialized otherwise use an existing decoder instance to initialize the video */
         // std::cerr << "\nThe source video is " << _video_path[i] << " MAP : "<<_video_file_name_map.find(_video_path[i])->second._video_map_idx << "\tThe start index is : " << _start_frame[i] << "\n";
         std::map<std::string, video_map>::iterator itr = _video_file_name_map.find(_video_path[i]);
         if (itr->second._is_decoder_instance == false)

@@ -34,12 +34,13 @@ public:
     void init(int crop_h, int crop_w, float start_x, float start_y, float mean, float std_dev, IntParam *mirror);
     vx_array return_mirror(){ return _mirror.default_array();  }
     std::shared_ptr<RaliCropParam> return_crop_param() { return _crop_param; }
+    vx_array get_src_width() { return _src_roi_width; }
+    vx_array get_src_height() { return _src_roi_height; }
 protected:
     void create_node() override ;
     void update_node() override;
 private:
     std::shared_ptr<RaliCropParam> _crop_param;
-    vx_array _src_width_array, _src_height_array;
     std::vector<vx_float32> _mean_vx, _std_dev_vx;
     vx_array _mean_array, _std_dev_array;
     float _mean; 

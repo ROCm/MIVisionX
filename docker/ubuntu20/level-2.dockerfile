@@ -8,4 +8,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libnuma-dev wget sudo gnup
         wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add - && \
         echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list && \
         sudo apt-get update -y && \
-        sudo apt-get -y install rocm-devFROM ubuntu:20.04
+        sudo apt-get -y install rocm-dev
+
+WORKDIR /workspace

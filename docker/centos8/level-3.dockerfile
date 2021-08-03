@@ -1,5 +1,8 @@
 FROM centos:centos8
 
+ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+WORKDIR $MIVISIONX_DEPS_ROOT
+
 # install mivisionx base dependencies - Level 1
 RUN yum -y update && yum -y install gcc gcc-c++ kernel-devel make cmake git
 # install ROCm for mivisionx OpenCL dependency - Level 2
@@ -15,3 +18,5 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.n
         yum -y install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm && \
         yum -y install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm && \
         yum -y install ffmpeg ffmpeg-devel
+
+WORKDIR /workspace

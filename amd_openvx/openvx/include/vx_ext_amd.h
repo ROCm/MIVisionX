@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -47,7 +47,7 @@ THE SOFTWARE.
 #define AGO_TARGET_AFFINITY_GPU_INFO_SVM_AS_CLMEM      0x20
 #define AGO_TARGET_AFFINITY_GPU_INFO_SVM_NO_FGS        0x40
 
-/*! \brief Maximum size of scalar string buffer. The local buffers used for accessing scalar strings 
+/*! \brief Maximum size of scalar string buffer. The local buffers used for accessing scalar strings
 * should be of size VX_MAX_STRING_BUFFER_SIZE_AMD and the maximum allowed string length is
 * VX_MAX_STRING_BUFFER_SIZE_AMD-1.
 * \ingroup group_scalar
@@ -123,7 +123,7 @@ enum vx_kernel_attribute_amd_e {
     /*! \brief kernel callback for OpenCL global work[]. Use a <tt>\ref amd_kernel_opencl_global_work_update_callback_f</tt> parameter.*/
     VX_KERNEL_ATTRIBUTE_AMD_OPENCL_GLOBAL_WORK_UPDATE_CALLBACK = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x04,
     /*! \brief kernel flag to enable OpenCL buffer access (default OFF). Use a <tt>\ref vx_bool</tt> parameter.*/
-    VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_ACCESS_ENABLE        = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x05,
+    VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE        = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x05,
     /*! \brief kernel callback for OpenCL buffer update. Use a <tt>\ref AgoKernelOpenclBufferUpdateInfo</tt> parameter.*/
     VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x06,
 };
@@ -156,6 +156,7 @@ enum vx_node_attribute_amd_e {
     VX_NODE_ATTRIBUTE_AMD_AFFINITY                      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x01,
     /*! \brief OpenCL command queue. Use a <tt>\ref cl_command_queue</tt> parameter.*/
     VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE          = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x02,
+    VX_NODE_ATTRIBUTE_AMD_HIP_STREAM           = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x03
 };
 
 /*! \brief The AMD image attributes list.

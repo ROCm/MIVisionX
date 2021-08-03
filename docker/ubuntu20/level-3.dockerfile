@@ -1,5 +1,8 @@
 FROM ubuntu:20.04
 
+ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+WORKDIR $MIVISIONX_DEPS_ROOT
+
 RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
@@ -21,3 +24,5 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
         export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/" && \
         ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree && \
         make -j8 && sudo make install && cd
+
+WORKDIR /workspace

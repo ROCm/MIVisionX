@@ -1,15 +1,15 @@
 # Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-#  
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-#  
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -63,23 +63,35 @@ else()
   endif()
 ENDIF()
 
-option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
-option(ROCAL      "Build MIVisionX with ROCAL Support"       ON)
-option(LOOM       "Build MIVisionX with LOOM Support"         ON)
+option(NEURAL_NET  "Build MIVisionX with Neural Net Support"  ON)
+option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
+option(LOOM        "Build MIVisionX with LOOM Support"        ON)
+option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
 
-if (NOT DEFINED BACKEND)
-    SET(BACKEND "OPENCL")   # set default backend to OPENCL
-    message("-- ${BoldBlue}MIVisionX Backend set to OPENCL")
+if(NOT DEFINED BACKEND)
+  set(BACKEND "OPENCL")   # set default backend to OPENCL
+else()
+  if("${BACKEND}" STREQUAL "OPENCL" OR "${BACKEND}" STREQUAL "OCL" OR "${BACKEND}" STREQUAL "OpenCL")
+    set(BACKEND "OPENCL")
+  elseif("${BACKEND}" STREQUAL "HIP" OR "${BACKEND}" STREQUAL "hip")
+    set(BACKEND "HIP")
+  elseif("${BACKEND}" STREQUAL "CPU" OR "${BACKEND}" STREQUAL "cpu")
+    set(BACKEND "CPU")
+    set(GPU_SUPPORT OFF)
+  else()
+    message("-- ${Red} Warning: MIVisionX backend option unknown -- ${BACKEND}${ColourReset}")
+    message("-- ${Red} Warning: MIVisionX default backend will enforced${ColourReset}")
+    set(BACKEND "OPENCL")
+  endif()
 endif()
-
-option(GPU_SUPPORT "Build MIVisionX with GPU Support"   ON)
+message("-- ${BoldBlue}MIVisionX Backend set to -- ${BACKEND}${ColourReset}")
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D BACKEND=HIP/OPENCL [select backend for GPU support (HIP or OPENCL) (default:OPENCL)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=HIP [select HIP for GPU backend [options:CPU/OPENCL/HIP](default:OPENCL)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)

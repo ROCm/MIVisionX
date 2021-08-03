@@ -1,5 +1,8 @@
 FROM centos:centos7
 
+ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+WORKDIR $MIVISIONX_DEPS_ROOT
+
 # install mivisionx base dependencies - Level 1
 RUN yum -y update && yum -y install http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm && \
         yum -y install gcc gcc-c++ kernel-devel make && yum -y install cmake3 && yum -y install git
@@ -28,16 +31,19 @@ RUN yum -y install autoconf automake bzip2 bzip2-devel cmake freetype-devel gcc 
 RUN yum -y install libsqlite3x-devel bzip2-devel openssl-devel python-devel python3-devel autoconf automake libtool curl make g++ unzip && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && cp half-files/include/half.hpp /usr/local/include/ && \
-        git clone https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \
+        git clone -b rocm-4.2.0 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \
         cmake3 ../ && make -j8 && make install && cd ../../ && \
         wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/1.1.5.zip && unzip 1.1.5.zip && \
         cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake3 ../ && make -j8 && make install && cd ../../ && \
-        wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.9.0.zip && unzip 2.9.0.zip && \
-        cd MIOpen-2.9.0 && cmake3 -P install_deps.cmake --minimum && mkdir build && cd build && \
+        wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.11.0.zip && unzip 2.11.0.zip && \
+        cd MIOpen-2.11.0 && cmake3 -P install_deps.cmake --minimum && mkdir build && cd build && \
         cmake3 -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && \
         make -j8 && make MIOpenDriver && make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && make install
+
+WORKDIR /workspace
+
 # install MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
         cmake3 ../MIVisionX && make -j8 && make install

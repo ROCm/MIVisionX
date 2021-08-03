@@ -27,8 +27,6 @@ THE SOFTWARE.
 #include <algorithm>
 #include <fstream>
 
-//using namespace std;
-
 void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg)
 {
     _all_boxes_overlap = cfg.all_boxes_overlap();
@@ -43,6 +41,8 @@ void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg)
         _total_num_of_attempts = cfg.total_num_attempts();
     }
     _output = new CropCordBatch();
+    _user_batch_size = 128;   // todo:: get it from master graph
+    _seed = cfg.seed();
 }
 
 void RandomBBoxCropReader::set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader)
@@ -58,15 +58,14 @@ bool RandomBBoxCropReader::exists(const std::string &image_name)
 inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false)
 {
     double iou;
-    float xA = std::max(box1.x, box2.x);
-    float yA = std::max(box1.y, box2.y);
-    float xB = std::min(box1.x + box1.w, box2.x + box2.w);
-    float yB = std::min(box1.y + box1.h, box2.y + box2.h);
+    float xA = std::max(box1.l, box2.l);
+    float yA = std::max(box1.t, box2.t);
+    float xB = std::min(box1.r, box2.r);
+    float yB = std::min(box1.b, box2.b);
 
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
-
-    float box1_area = box1.h * box1.w;
-    float box2_area = box2.h * box2.w;
+    float box1_area = (box1.b - box1.t) * (box1.r - box1.l);
+    float box2_area = (box2.b - box2.t) * (box2.r - box2.l);
 
     if (is_iou)
         iou = intersection_area / float(box1_area + box2_area - intersection_area);
@@ -101,6 +100,7 @@ void RandomBBoxCropReader::lookup(const std::vector<std::string> &image_names)
 
 pCropCord RandomBBoxCropReader::get_crop_cord(const std::string &image_name)
 {
+    // print_map_contents();
     if (image_name.empty())
     {
         WRN("No image names passed")
@@ -114,10 +114,10 @@ pCropCord RandomBBoxCropReader::get_crop_cord(const std::string &image_name)
 
 void RandomBBoxCropReader::add(std::string image_name, BoundingBoxCord crop_box)
 {
-    pCropCord random_bbox_cords = std::make_shared<CropCord>(crop_box.x, crop_box.y, crop_box.w, crop_box.h);
+
+    pCropCord random_bbox_cords = std::make_shared<CropCord>(crop_box.l, crop_box.t, crop_box.r, crop_box.b);
     if (exists(image_name))
     {
-        // auto it = _map_content.find(image_name);
         return;
     }
     _map_content.insert(std::pair<std::string, std::shared_ptr<CropCord>>(image_name, random_bbox_cords));
@@ -132,162 +132,246 @@ void RandomBBoxCropReader::print_map_contents()
     {
         std::cerr << "\n Name :\t " << elem.first;
         random_bbox_cords = elem.second;
-        std::cerr << "\n Crop values:: crop_x:: " << random_bbox_cords->crop_x << "\t crop_y:: " << random_bbox_cords->crop_y << "\t crop_width:: " << random_bbox_cords->crop_width << "\t crop_height:: " << random_bbox_cords->crop_height;
+        std::cerr << "\n Crop values:: crop_left:: " << random_bbox_cords->crop_left << "\t crop_top:: " << random_bbox_cords->crop_top << "\t crop_right:: " << random_bbox_cords->crop_right << "\t crop_bottom:: " << random_bbox_cords->crop_bottom;
     }
 }
 
 void RandomBBoxCropReader::read_all()
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, 7);
 
-    const std::vector<float> sample_options = {0.0f, 0.1f, 0.3f, 0.5f, 0.7f, 0.9f, -1.0f};
+    release();
+    const std::vector<float> sample_options = {-1.0f, 0.1f, 0.3f, 0.5f, 0.7f, 0.9f, 0.0f};
     int sample_option;
     std::pair<bool, float> option;
-    float min_iou; // max_iou;
+    float min_iou;
     bool invalid_bboxes;
     bool crop_success;
-    BoundingBoxCord crop_box, jth_box;
+    BoundingBoxCord crop_box;
     uint bb_count;
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
-    Parameter<float> *width_factor_param, *height_factor_param;
-    // srand here
-    width_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0.3, 1.0)->core;
-    height_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0.3, 1.0)->core;
+    std::uniform_int_distribution<> option_dis(0, 6);
+    std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
 
+    size_t sample = 0;
     for (auto &elem : _meta_bbox_map_content)
     {
+
         std::string image_name = elem.first;
         BoundingBoxCords bb_coords = elem.second->get_bb_cords();
         ImgSizes img_sizes = elem.second->get_img_sizes();
-        uint32_t in_width, in_height;
-        in_width = img_sizes[0].w;
-        in_height = img_sizes[0].h;
         bb_count = bb_coords.size();
-        std::vector<float> coords_buf(bb_count * 4);
-        for (unsigned int j = 0, m = 0; j < bb_count; j++, m += 4)
-        {
-            coords_buf[m] = bb_coords[j].x;
-            coords_buf[m + 1] = bb_coords[j].y;
-            coords_buf[m + 2] = bb_coords[j].w;
-            coords_buf[m + 3] = bb_coords[j].h;
-        }
-
         while (true)
         {
             crop_success = false;
-            sample_option = dis(gen);
+            sample_option = option_dis(_rngs[sample]);
             min_iou = sample_options[sample_option];
-            Parameter<float> *x_factor_param, *y_factor_param;
             invalid_bboxes = false;
 
             //Condition for Original Image
-            if (sample_option == 0)
+            if (sample_option == 6 || _has_shape)
             {
-                crop_box.x = 0;
-                crop_box.y = 0;
-                crop_box.w = in_width;
-                crop_box.h = in_height;
+                crop_box.l = 0;
+                crop_box.t = 0;
+                crop_box.r = 1;
+                crop_box.b = 1;
                 break;
             }
 
-            if (_has_shape)
+            // If it has no shape, then area and aspect ratio thing should be provided
+            for (int j = 0; j < 1; j++)
             {
-                crop_box.x = 0;
-                crop_box.y = 0;
-                crop_box.w = in_width;
-                crop_box.h = in_height;
-                break;
-            }
-            else // If it has no shape, then area and aspect ratio thing should be provided
-            {
-                for (int j = 0; j < 1; j++)
+                // Setting width and height factor btw 0.3 and 1.0";
+                float width_factor = _float_dis(_rngs[sample]);
+                float height_factor = _float_dis(_rngs[sample]);
+                if ((width_factor / height_factor < 0.5) || (width_factor / height_factor > 2.))
                 {
-                    // Setting width factor btw 0.3 and 1.0";
-                    width_factor_param->renew();
-                    float width_factor = width_factor_param->get();
-                    // Setting height factor btw 0.3 and 1.0";
-                    height_factor_param->renew();
-                    float height_factor = height_factor_param->get();
-                    if ((width_factor / height_factor < 0.5) || (width_factor / height_factor > 2.))
-                    {
-                        continue;
-                    }
-                    // Setting width factor btw 0 and 1 - width_factor
-                    x_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1 - width_factor)->core;
-                    x_factor_param->renew();
-                    float x_factor = x_factor_param->get();
-                    // Setting height factor btw 0 and 1 - width_factor
-                    y_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1 - height_factor)->core;
-                    y_factor_param->renew();
-                    float y_factor = y_factor_param->get();
-                    crop_box.x = x_factor * in_width;
-                    crop_box.y = y_factor * in_height;
-                    crop_box.w = width_factor * in_width;
-                    crop_box.h = height_factor * in_height;
-                    // All boxes should satisfy IOU criteria
-                    if (_all_boxes_overlap)
-                    {
-                        for (uint j = 0; j < bb_count; j++)
-                        {
-                            int m = j * 4;
-                            jth_box.x = coords_buf[m];
-                            jth_box.y = coords_buf[m + 1];
-                            jth_box.w = coords_buf[m + 2];
-                            jth_box.h = coords_buf[m + 3];
-
-                            float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, true);
-                            if (bb_iou < min_iou)
-                            {
-                                invalid_bboxes = true;
-                                break;
-                            }
-                        }
-                        if (invalid_bboxes)
-                        {
-                            continue; // Goes to for loop
-                        }
-                    }
-
-                    // Mask Condition
-                    int valid_bbox_count = 0;
-                    auto left = int(crop_box.x);
-                    auto top = crop_box.y;
-                    auto right = int(crop_box.x) + int(crop_box.w);
-                    auto bottom = crop_box.y + crop_box.h;
-                    valid_bbox_count = 0;
+                    continue;
+                }
+                // Setting width factor btw 0 and 1 - width_factor and height factor btw 0 and 1 - height_factor
+                std::uniform_real_distribution<float> l_dis(0.0, 1.0 - width_factor), t_dis(0.0, 1.0-height_factor);
+                float x_factor = l_dis(_rngs[sample]);
+                float y_factor = t_dis(_rngs[sample]);
+                crop_box.l = x_factor;
+                crop_box.t = y_factor;
+                crop_box.r = crop_box.l + width_factor;
+                crop_box.b = crop_box.t + height_factor;
+                //std::cout << "random crop params < option, xfactor, yfactor, wf, hf>: " << sample_option << " " << x_factor << " " << y_factor << " " << width_factor << " " << height_factor << std::endl;
+                // All boxes should satisfy IOU criteria
+                if (_all_boxes_overlap)
+                {
                     for (uint j = 0; j < bb_count; j++)
                     {
-                        int m = j * 4;
-                        auto x_c = 0.5f * (2 * coords_buf[m] + coords_buf[m + 2]);
-                        auto y_c = 0.5f * (2 * coords_buf[m + 1] + coords_buf[m + 3]);
-                        if ((x_c > left) && (x_c < right) && (y_c > top) && (y_c < bottom))
+                        float bb_iou = ssd_BBoxIntersectionOverUnion(bb_coords[j], crop_box, true);
+                        if (bb_iou < min_iou)
                         {
-                            valid_bbox_count++;
+                            invalid_bboxes = true;
+                            break;
                         }
                     }
-                    if (valid_bbox_count == 0)
-                        break;
-
-                    crop_success = true;
-                    break;
+                    if (invalid_bboxes)
+                    {
+                        continue; // Goes to for loop
+                    }
                 }
+
+                // Mask Condition
+                int valid_bbox_count = 0;
+                valid_bbox_count = 0;
+                for (uint j = 0; j < bb_count; j++)
+                {
+                    auto x_c = 0.5 * (bb_coords[j].l + bb_coords[j].r);
+                    auto y_c = 0.5 * (bb_coords[j].t + bb_coords[j].b);
+                    if ((x_c > crop_box.l) && (x_c < crop_box.r) && (y_c > crop_box.t) && (y_c < crop_box.b))
+                    {
+                        valid_bbox_count++;
+                    }
+                }
+                if (valid_bbox_count == 0)
+                    break;
+
+                crop_success = true;
+                break;
             }
 
             if (crop_success == true)
                 break;
         } // while loop
 
+        // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
         add(image_name, crop_box);
+        
+        sample++;
     }
+}
+
+std::vector<std::vector<float>>
+RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &image_names)
+{
+
+    if (image_names.empty())
+    {
+        std::cerr << "\n No images passed";
+        THROW("No image names passed")
+    }
+    if (image_names.size() != (unsigned)_output->size())
+    {
+        _output->resize(image_names.size());
+    }
+    const std::vector<float> sample_options = {-1.0f, 0.1f, 0.3f, 0.5f, 0.7f, 0.9f, 0.0f};
+    int sample_option;
+    std::vector<float> coords_buf(4);
+    std::pair<bool, float> option;
+    float min_iou;
+    bool invalid_bboxes;
+    bool crop_success;
+    BoundingBoxCord crop_box;
+    uint bb_count;
+    _meta_bbox_map_content = _meta_data_reader->get_map_content();
+    std::uniform_int_distribution<> option_dis(0, 6);
+    std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
+    _crop_coords.clear();
+    for (unsigned int i = 0; i < image_names.size(); i++)
+    {
+        auto image_name = image_names[i]; 
+        auto elem = _meta_bbox_map_content.find(image_name);
+        if (_meta_bbox_map_content.end() == elem)
+            THROW("ERROR: Given name not present in the map" + image_name)
+        image_name = elem->first;
+        BoundingBoxCords bb_coords = elem->second->get_bb_cords();
+        ImgSizes img_sizes = elem->second->get_img_sizes();
+        bb_count = bb_coords.size();
+        while (true)
+        {
+            crop_success = false;
+            sample_option = option_dis(_rngs[_sample_cnt]);
+            min_iou = sample_options[sample_option];
+            invalid_bboxes = false;
+            //Condition for Original Image
+            if (sample_option == 6 || _has_shape)
+            {
+                crop_box.l = crop_box.t = 0;
+                crop_box.r = crop_box.b = 1;
+                break;
+            }
+            // If it has no shape, then area and aspect ratio thing should be provided
+            for (int j = 0; j < 1; j++)
+            {
+                // Setting width and height factor btw 0.3 and 1.0";
+                float width_factor = _float_dis(_rngs[_sample_cnt]);
+                float height_factor = _float_dis(_rngs[_sample_cnt]);
+                if ((width_factor / height_factor < 0.5) || (width_factor / height_factor > 2.))
+                {
+                    continue;
+                }
+                // Setting width factor btw 0 and 1 - width_factor and height factor btw 0 and 1 - height_factor
+                std::uniform_real_distribution<float> l_dis(0.0, 1.0 - width_factor), t_dis(0.0, 1.0 - height_factor);
+                float x_factor = l_dis(_rngs[_sample_cnt]);
+                float y_factor = t_dis(_rngs[_sample_cnt]);
+                crop_box.l = x_factor;
+                crop_box.t = y_factor;
+                crop_box.r = crop_box.l + width_factor;
+                crop_box.b = crop_box.t + height_factor;
+                //std::cout << "random crop params < option, xfactor, yfactor, wf, hf>: " << sample_option << " " << x_factor << " " << y_factor << " " << width_factor << " " << height_factor << std::endl;
+                // All boxes should satisfy IOU criteria
+                if (_all_boxes_overlap)
+                {
+                    for (uint j = 0; j < bb_count; j++)
+                    {
+                        float bb_iou = ssd_BBoxIntersectionOverUnion(bb_coords[j], crop_box, true);
+                        if (bb_iou < min_iou)
+                        {
+                            invalid_bboxes = true;
+                            break;
+                        }
+                    }
+                    if (invalid_bboxes)
+                    {
+                        continue; // Goes to for loop
+                    }
+                }
+
+                // Mask Condition
+                int valid_bbox_count = 0;
+                valid_bbox_count = 0;
+                for (uint j = 0; j < bb_count; j++)
+                {
+                    auto x_c = 0.5 * (bb_coords[j].l + bb_coords[j].r);
+                    auto y_c = 0.5 * (bb_coords[j].t + bb_coords[j].b);
+                    if ((x_c > crop_box.l) && (x_c < crop_box.r) && (y_c > crop_box.t) && (y_c < crop_box.b))
+                    {
+                        valid_bbox_count++;
+                    }
+                }
+                if (valid_bbox_count == 0)
+                    break;
+
+                crop_success = true;
+                break;
+            }
+
+            if (crop_success == true)
+                break;
+        } // while loop
+        //Crop coordinates expected in "xywh" format
+        coords_buf[0] = crop_box.l;
+        coords_buf[1] = crop_box.t;
+        coords_buf[2] = crop_box.r - crop_box.l;
+        coords_buf[3] = crop_box.b - crop_box.t;
+
+        _crop_coords.push_back(coords_buf);
+        
+        _sample_cnt++;
+    }
+    return _crop_coords;
 }
 
 void RandomBBoxCropReader::release()
 {
     _map_content.clear();
+    _sample_cnt = 0;
 }
 
-RandomBBoxCropReader::RandomBBoxCropReader()
+RandomBBoxCropReader::RandomBBoxCropReader() :
+      _rngs(128), _sample_cnt(0)
 {
 }

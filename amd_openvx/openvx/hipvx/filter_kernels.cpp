@@ -7060,7 +7060,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     uint srcWidth, uint srcHeight,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    uint dstWidthComp) {
+    int srcImageBufferSize, uint dstWidthComp) {
 
     __shared__ uchar lbuf[4760]; // 136x35 bytes
     int lx = hipThreadIdx_x;
@@ -7079,23 +7079,28 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
         loffset += 16 * 136;
         goffset += 16 * srcStride;
-        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+        int sidx = srcIdx + goffset;
+        if (sidx < srcImageBufferSize)
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[sidx]));
         if (ly < 3) {
             loffset += 16 * 136;
             goffset += 16 * srcStride;
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+            sidx = srcIdx + goffset;
+            if (sidx < srcImageBufferSize)
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[sidx]));
         }
-        __shared__ uchar *lbufptr;
+        uchar *lbufptr;
         lbufptr = lbuf + 128;
         goffset = -2 * srcStride + 124;
         int id = ly * 16 + lx;
-        if (id < 35) {
-            *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[srcIdx + goffset + id * srcStride]));
+        sidx = srcIdx + goffset + id * srcStride;
+        if (id < 35 && sidx < srcImageBufferSize) {
+            *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[sidx]));
         }
         __syncthreads();
     }
 
-    __shared__ uchar *lbuf_ptr;
+    uchar *lbuf_ptr;
     lbuf_ptr = lbuf + ly * 136 + (lx << 3);
     float4 sum;
     float v;
@@ -7250,7 +7255,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
     lbuf_ptr += ly * 136;
     uint2 L0_01;
 
-    L0_01 = *((uint2 *)(&lbuf_ptr));
+    L0_01 = *((uint2 *)(&lbuf_ptr[0]));
     sum.x = (float)(L0_01.x & 0xffff);
     sum.y = (float)(L0_01.x >> 16);
     sum.z = (float)(L0_01.y & 0xffff);
@@ -7288,7 +7293,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
 int HipExec_ScaleGaussianHalf_U8_U8_5x5(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize) {
     int localThreads_x = 16;
     int localThreads_y = 16;
     int globalThreads_x = (dstWidth + 3) >> 2;
@@ -7298,7 +7303,7 @@ int HipExec_ScaleGaussianHalf_U8_U8_5x5(hipStream_t stream, vx_uint32 dstWidth, 
 
     hipLaunchKernelGGL(Hip_ScaleGaussianHalf_U8_U8_5x5, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                         dstWidthComp);
 
     return VX_SUCCESS;

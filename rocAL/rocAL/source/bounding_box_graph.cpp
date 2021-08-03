@@ -29,6 +29,7 @@ void BoundingBoxGraph::process(MetaDataBatch *meta_data)
     }
 }
 
+//not required since the bbox are normalized in the very beggining -> remove the call in master graph also
 void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info)
 {
     std::vector<uint32_t> original_height = decode_image_info._original_height;
@@ -46,21 +47,20 @@ void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_
         memcpy(coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxCord temp_box;
-        temp_box.x = temp_box.y = temp_box.w = temp_box.h = 0;
+        temp_box.l = temp_box.t = temp_box.r = temp_box.b = 0;
         BoundingBoxLabels bb_labels;
         int m = 0;
         for (uint j = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
-            float temp_x, temp_y;
-            temp_x = (coords_buf[m++] * _dst_to_src_width_ratio);
-            temp_y = (coords_buf[m++] * _dst_to_src_height_ratio);
-            box.x = (temp_x > 0) ? temp_x : 0;
-            box.y = (temp_y > 0) ? temp_y : 0;
-            box.w = (coords_buf[m++] * _dst_to_src_width_ratio);
-            box.h = (coords_buf[m++] * _dst_to_src_height_ratio);
+            float temp_l, temp_t;
+            temp_l = (coords_buf[m++] * _dst_to_src_width_ratio);
+            temp_t = (coords_buf[m++] * _dst_to_src_height_ratio);
+            box.l = std::max(temp_l,0.0f);
+            box.t = std::max(temp_t,0.0f);
+            box.r = (coords_buf[m++] * _dst_to_src_width_ratio);
+            box.b = (coords_buf[m++] * _dst_to_src_height_ratio);
             bb_coords.push_back(box);
-            bb_labels.push_back(labels_buf[j]);
         }
         if (bb_coords.size() == 0)
         {
@@ -68,22 +68,20 @@ void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_
             bb_labels.push_back(0);
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
-        input_meta_data->get_bb_labels_batch()[i] = bb_labels;
     }
 }
 
-inline double BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false)
+inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false)
 {
     double iou;
-    float xA = std::max(box1.x, box2.x);
-    float yA = std::max(box1.y, box2.y);
-    float xB = std::min(box1.x + box1.w, box2.x + box2.w);
-    float yB = std::min(box1.y + box1.h, box2.y + box2.h);
+    float xA = std::max(box1.l, box2.l);
+    float yA = std::max(box1.t, box2.t);
+    float xB = std::min(box1.r, box2.r);
+    float yB = std::min(box1.b, box2.b);
 
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
-
-    float box1_area = box1.h * box1.w;
-    float box2_area = box2.h * box2.w;
+    float box1_area = (box1.b - box1.t) * (box1.r - box1.l);
+    float box2_area = (box2.b - box2.t) * (box2.r - box2.l);
 
     if (is_iou)
         iou = intersection_area / float(box1_area + box2_area - intersection_area);
@@ -93,13 +91,13 @@ inline double BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const Bound
     return iou;
 }
 
-void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_crop_cords_data, MetaDataBatch *input_meta_data, decoded_image_info decode_image_info)
+void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info, crop_image_info crop_image_info)
 {
     std::vector<uint32_t> original_height = decode_image_info._original_height;
     std::vector<uint32_t> original_width = decode_image_info._original_width;
     std::vector<uint32_t> roi_width = decode_image_info._roi_width;
     std::vector<uint32_t> roi_height = decode_image_info._roi_height;
-    auto crop_cords = _random_bbox_crop_cords_data->get_bb_cords_batch();
+    auto crop_cords = crop_image_info._crop_image_coords;
     for (int i = 0; i < input_meta_data->size(); i++)
     {
         auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
@@ -110,45 +108,40 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
-        crop_box.x = crop_cords[i]->crop_x;
-        crop_box.y = crop_cords[i]->crop_y;
-        crop_box.w = crop_cords[i]->crop_width;
-        crop_box.h = crop_cords[i]->crop_height;
+        crop_box.l = crop_cords[i][0];
+        crop_box.t = crop_cords[i][1];
+        crop_box.r = crop_box.l + crop_cords[i][2];
+        crop_box.b = crop_box.t + crop_cords[i][3];
         for (uint j = 0; j < bb_count; j++)
         {
             int m = j * 4; // change if required
-
             //Mask Criteria
-            auto left = int(crop_box.x);
-            auto top = crop_box.y;
-            auto right = int(crop_box.x) + int(crop_box.w);
-            auto bottom = crop_box.y + crop_box.h;
-
             BoundingBoxCord box;
-            box.x = coords_buf[m];
-            box.y = coords_buf[m + 1];
-            box.w = coords_buf[m + 2];
-            box.h = coords_buf[m + 3];
-            auto x_c = 0.5f * (2 * box.x + box.w);
-            auto y_c = 0.5f * (2 * box.y + box.h);
-            if ((x_c > left) && (x_c < right) && (y_c > top) && (y_c < bottom))
-            {
-                float xA = std::max(crop_box.x, box.x);
-                float yA = std::max(crop_box.y, box.y);
-                float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
-                float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
-                box.x = xA - crop_box.x;
-                box.y = yA - crop_box.y;
-                box.w = xB - xA;
-                box.h = yB - yA;
+            box.l = coords_buf[m];
+            box.t = coords_buf[m + 1];
+            box.r = coords_buf[m + 2];
+            box.b = coords_buf[m + 3];
 
+            auto x_c = 0.5 * (box.l + box.r);
+            auto y_c = 0.5 * (box.t + box.b);
+            if ((x_c > crop_box.l) && (x_c < crop_box.r) && (y_c > crop_box.t) && (y_c < crop_box.b))
+            {
+                float xA = std::max(crop_box.l, box.l);
+                float yA = std::max(crop_box.t, box.t);
+                float xB = std::min(crop_box.r, box.r);
+                float yB = std::min(crop_box.b, box.b);
+                box.l = (xA - crop_box.l) / (crop_box.r - crop_box.l);
+                box.t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
+                box.r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
+                box.b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
                 bb_coords.push_back(box);
-                bb_labels.push_back(labels_buf[j]);                
+                bb_labels.push_back(labels_buf[j]);
             }
         }
         if (bb_coords.size() == 0)
         {
             std::cerr << "Bounding box co-ordinates not found in the image";
+            exit(0);
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;

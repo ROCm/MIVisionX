@@ -22,10 +22,21 @@ THE SOFTWARE.
 
 #include "image_loader_sharded.h"
 
+#if ENABLE_HIP
+ImageLoaderSharded::ImageLoaderSharded(DeviceResourcesHip dev_resources):
+#else
 ImageLoaderSharded::ImageLoaderSharded(DeviceResources dev_resources):
+#endif
         _dev_resources(dev_resources)
 {
     _loader_idx = 0;
+}
+
+void ImageLoaderSharded::set_prefetch_queue_depth(size_t prefetch_queue_depth)
+{
+    if(prefetch_queue_depth <= 0)
+        THROW("Prefetch quque depth value cannot be zero or negative");
+    _prefetch_queue_depth = prefetch_queue_depth;
 }
 
 std::vector<std::string> ImageLoaderSharded::get_id()
@@ -38,6 +49,11 @@ std::vector<std::string> ImageLoaderSharded::get_id()
 decoded_image_info ImageLoaderSharded::get_decode_image_info()
 {
     return _loaders[_loader_idx]->get_decode_image_info();
+}
+
+crop_image_info ImageLoaderSharded::get_crop_image_info()
+{
+    return _loaders[_loader_idx]->get_crop_image_info();
 }
 
 ImageLoaderSharded::~ImageLoaderSharded()
@@ -79,7 +95,8 @@ ImageLoaderSharded::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cf
     // Create loader modules
     for(size_t i = 0; i < _shard_count; i++)
     {
-        auto loader = std::make_shared<ImageLoader>(_dev_resources);
+        std::shared_ptr loader = std::make_shared<ImageLoader>(_dev_resources);
+        loader->set_prefetch_queue_depth(_prefetch_queue_depth);
         _loaders.push_back(loader);
     }
     // Initialize loader modules

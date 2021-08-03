@@ -30,7 +30,8 @@ THE SOFTWARE.
 
 using namespace std;
 
-void COCOMetaDataReader::init(const MetaDataConfig &cfg) {
+void COCOMetaDataReader::init(const MetaDataConfig &cfg)
+{
     _path = cfg.path();
     _output = new BoundingBoxBatch();
 }
@@ -81,39 +82,37 @@ void COCOMetaDataReader::print_map_contents()
     BoundingBoxLabels bb_labels;
     ImgSizes img_sizes;
 
-    std::cerr << "\nMap contents: \n";
+    std::cout << "\nBBox Annotations List: \n";
     for (auto& elem : _map_content) {
-        std::cerr << "Name :\t " << elem.first;
+        std::cout << "\nName :\t " << elem.first;
         bb_coords = elem.second->get_bb_cords() ;
         bb_labels = elem.second->get_bb_labels();
         img_sizes = elem.second->get_img_sizes();
-
-        std::cerr << "\nsize of the element  : "<< bb_coords.size() << std::endl;
-        std::cerr << "\nImage original width::\t<<    : "<<img_sizes[0].w<< "\nImage original height::\t<<    : "<<img_sizes[0].h;
+        std::cout << "<wxh, num of bboxes>: "<< img_sizes[0].w << " X " << img_sizes[0].h << " , "  << bb_coords.size() << std::endl;
         for(unsigned int i = 0; i < bb_coords.size(); i++){
-            std::cerr << " x : " << bb_coords[i].x << " y: :" << bb_coords[i].y << " width : " << bb_coords[i].w << " height: :" << bb_coords[i].h << std::endl;
-            std::cerr  << "Label Id : " << bb_labels[i] << std::endl;
+            std::cout << " l : " << bb_coords[i].l << " t: :" << bb_coords[i].t << " r : " << bb_coords[i].r << " b: :" << bb_coords[i].b << "Label Id : " << bb_labels[i] << std::endl;
         }
     }
 }
 
 void COCOMetaDataReader::read_all(const std::string &path) {
 
-	std::string annotation_file = path;
-	std::ifstream fin;
-	fin.open(annotation_file, std::ios::in);
+    _coco_metadata_read_time.start();// Debug timing
+    std::string annotation_file = path;
+    std::ifstream fin;
+    fin.open(annotation_file, std::ios::in);
 
-	std::string str;
-	str.assign(std::istreambuf_iterator<char>(fin), std::istreambuf_iterator<char>());
-	BoundingBoxCords bb_coords;
-    BoundingBoxLabels bb_labels;
-    ImgSizes img_sizes;
+    std::string str;
+    str.assign(std::istreambuf_iterator<char>(fin), std::istreambuf_iterator<char>());
+    BoundingBoxCords bb_coords;
+      BoundingBoxLabels bb_labels;
+      ImgSizes img_sizes;
 
-	Json::Reader reader;
-	Json::Value root;
-	if (reader.parse(str, root) == false) {
-        WRN("Failed to parse Json: " + reader.getFormattedErrorMessages());
-	}
+    Json::Reader reader;
+    Json::Value root;
+    if (reader.parse(str, root) == false) {
+          WRN("Failed to parse Json: " + reader.getFormattedErrorMessages());
+    }
 
     Json::Value annotation = root["annotations"];
     Json::Value image = root["images"];
@@ -136,10 +135,10 @@ void COCOMetaDataReader::read_all(const std::string &path) {
     
     for (auto iterator = annotation.begin(); iterator != annotation.end(); iterator++)
     {
-        box.x = (*iterator)["bbox"][0].asFloat();
-        box.y = (*iterator)["bbox"][1].asFloat();
-        box.w = (*iterator)["bbox"][2].asFloat();
-        box.h = (*iterator)["bbox"][3].asFloat();
+        float box_x = (*iterator)["bbox"][0].asFloat();
+        float box_y = (*iterator)["bbox"][1].asFloat();
+        float box_w = (*iterator)["bbox"][2].asFloat();
+        float box_h = (*iterator)["bbox"][3].asFloat();
         int label = (*iterator)["category_id"].asInt();
         int id = (*iterator)["image_id"].asInt();
         char buffer[13];
@@ -150,6 +149,12 @@ void COCOMetaDataReader::read_all(const std::string &path) {
         auto it = _map_img_sizes.find(file_name);
         ImgSizes image_size = it->second;        
 
+        //Normalizing the co-ordinates & convert to "ltrb" format
+        box.l = box_x/ image_size[0].w;
+        box.t = box_y/ image_size[0].h;
+        box.r = (box_x + box_w) / image_size[0].w;
+        box.b = (box_y + box_h) / image_size[0].h;
+        
         bb_coords.push_back(box);
         bb_labels.push_back(label);
         add(file_name, bb_coords, bb_labels,image_size);
@@ -157,7 +162,9 @@ void COCOMetaDataReader::read_all(const std::string &path) {
         bb_labels.clear();
     } 
     fin.close();
+    _coco_metadata_read_time.end();// Debug timing
     //print_map_contents();
+    //std::cout<<"coco read time in sec: " << _coco_metadata_read_time.get_timing()/1000 << std::endl;
 }
 
 void COCOMetaDataReader::release(std::string image_name) {
@@ -174,6 +181,7 @@ void COCOMetaDataReader::release() {
     _map_img_sizes.clear();
 }
 
-COCOMetaDataReader::COCOMetaDataReader()
+COCOMetaDataReader::COCOMetaDataReader():
+        _coco_metadata_read_time("coco meta read time", DBG_TIMING)
 {
 }

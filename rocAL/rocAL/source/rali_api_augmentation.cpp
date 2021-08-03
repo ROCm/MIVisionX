@@ -476,7 +476,7 @@ raliBrightness(
         RaliImage p_input,
         bool is_output,
         RaliFloatParam p_alpha,
-        RaliIntParam p_beta)
+        RaliFloatParam p_beta)
 {
     Image* output = nullptr;
     if(!p_input || !p_context)
@@ -484,7 +484,7 @@ raliBrightness(
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto alpha = static_cast<FloatParam*>(p_alpha);
-    auto beta = static_cast<IntParam*>(p_beta);
+    auto beta = static_cast<FloatParam*>(p_beta);
     try
     {
 
@@ -505,7 +505,7 @@ raliBrightnessFixed(
         RaliContext p_context,
         RaliImage p_input,
         float alpha,
-        int beta,
+        float beta,
         bool is_output)
 {
     Image* output = nullptr;
@@ -1671,7 +1671,7 @@ raliResizeCropMirrorFixed(
 extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext p_context, RaliImage p_input,
                                                            unsigned dest_width, unsigned dest_height,
                                                             bool is_output, RaliFloatParam p_crop_height,
-                                                            RaliFloatParam p_crop_width, RaliIntParam p_mirror 
+                                                            RaliFloatParam p_crop_width, RaliIntParam p_mirror
                                                             )
 {
     if(!p_context || !p_input)
@@ -1788,50 +1788,50 @@ raliSSDRandomCrop(
     return output;
 }
 
-RaliImage  RALI_API_CALL	
-raliCopy(	
-        RaliContext p_context,	
-        RaliImage p_input,	
-        bool is_output)	
+RaliImage  RALI_API_CALL
+raliCopy(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output)
 {
     if(!p_context || !p_input)
         THROW("Null values passed as input")
     Image* output = nullptr;
-    auto context = static_cast<Context*>(p_context);	
-    auto input = static_cast<Image*>(p_input);	
-    try	
-    {	
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
         output = context->master_graph->create_image(input->info(), is_output);
         context->master_graph->add_node<CopyNode>({input}, {output});
-    }	
-    catch(const std::exception& e)	
-    {	
-        context->capture_error(e.what());	
-        ERR(e.what())	
-    }	
-    return output;	
-}	
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
 
-RaliImage  RALI_API_CALL	
-raliNop(	
-        RaliContext p_context,	
-        RaliImage p_input,	
-        bool is_output)	
+RaliImage  RALI_API_CALL
+raliNop(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output)
 {
     if(!p_context || !p_input)
         THROW("Null values passed as input")
     Image* output = nullptr;
-    auto context = static_cast<Context*>(p_context);	
-    auto input = static_cast<Image*>(p_input);	
-    try	
-    {	
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
         output = context->master_graph->create_image(input->info(), is_output);
         context->master_graph->add_node<NopNode>({input}, {output});
-    }	
-    catch(const std::exception& e)	
-    {	
-        context->capture_error(e.what());	
-        ERR(e.what())	
-    }	
-    return output;	
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
 }

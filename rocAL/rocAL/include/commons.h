@@ -67,7 +67,8 @@ enum class RaliColorFormat
 enum class RaliMemType 
 {
     HOST = 0,
-    OCL
+    OCL,
+    HIP
 };
 
 struct Timing

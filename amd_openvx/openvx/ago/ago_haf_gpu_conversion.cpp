@@ -1068,9 +1068,9 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    f.s2 = dot(cU, (float3)(amd_unpack0(pRGBX1.s5), amd_unpack1(pRGBX1.s5), amd_unpack2(pRGBX1.s5)));\n"
 					"    f.s3 = dot(cU, (float3)(amd_unpack0(pRGBX1.s7), amd_unpack1(pRGBX1.s7), amd_unpack2(pRGBX1.s7)));\n"
 					"    pU1.s1 = amd_pack(f + (float4)(128));\n"
-					"    pU0.s0 = amd_lerp(pU0.s0, pU0.s1, 0x01010101u);\n"
-					"    pU1.s0 = amd_lerp(pU1.s0, pU1.s1, 0x01010101u);\n"
-					"    pU0.s0 = amd_lerp(pU1.s0, pU1.s0, 0x01010101u);\n"
+					"    pU0.s0 = amd_lerp(pU0.s0, pU0.s1, 0);\n"
+					"    pU1.s0 = amd_lerp(pU1.s0, pU1.s1, 0);\n"
+					"    pU0.s0 = amd_lerp(pU0.s0, pU1.s0, 0x01010101u);\n"
 					);
 			}
 			if (!destinationNoV) {
@@ -1127,7 +1127,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    pV1.s1 = amd_pack(f + (float4)(128));\n"
 					"    pV0.s0 = amd_lerp(pV0.s0, pV0.s1, 0);\n"
 					"    pV1.s0 = amd_lerp(pV1.s0, pV1.s1, 0);\n"
-					"    pV0.s0 = amd_lerp(pV1.s0, pV1.s0, 0);\n"
+					"    pV0.s0 = amd_lerp(pV0.s0, pV1.s0, 0);\n"
 					);
 			}
 		}

@@ -13,7 +13,7 @@ RUN yum-config-manager --enable rhel-server-rhscl-7-rpms && yum -y install cento
 # Enable Developer Toolset 7
 SHELL [ "/usr/bin/scl", "enable", "devtoolset-7" ]
 # install OpenCV & FFMPEG - Level 3
-RUN yum -y groupinstall 'Development Tools' && yum -y install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip && \
+RUN yum -y groupinstall 'Development Tools'  --nogpgcheck && yum -y install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip && \
         mkdir opencv && cd opencv && wget https://github.com/opencv/opencv/archive/3.4.0.zip && unzip 3.4.0.zip && \
         mkdir build && cd build && \
         cmake3 -DWITH_OPENCL=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_VA_INTEL=OFF -DWITH_OPENCL_SVM=OFF ../opencv-3.4.0 && \

@@ -32,7 +32,7 @@ RUN yum -y install --nogpgcheck libsqlite3x-devel bzip2-devel openssl-devel pyth
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && cp half-files/include/half.hpp /usr/local/include/ && \
         wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 && tar xjvf boost_1_72_0.tar.bz2 && \
-        cd boost_1_72_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3.6 && \
+        cd boost_1_72_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3.6.8 && \
         ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11" && \
         ./b2 install threading=multi link=shared --with-system --with-filesystem && \
         ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
@@ -43,9 +43,10 @@ RUN yum -y install --nogpgcheck libsqlite3x-devel bzip2-devel openssl-devel pyth
         cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake3 ../ && make -j8 && make install && cd ../../ && \
         wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.11.0.zip && unzip 2.11.0.zip && \
         #cd MIOpen-2.11.0 && cmake3 -P install_deps.cmake --minimum && mkdir build && cd build && \
-        cd MIOpen-2.11.0 && mkdir build && cd build && \
-        cmake3 -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && \
-        make -j8 && make MIOpenDriver && make install && cd ../../ && \
+        #cd MIOpen-2.11.0 && mkdir build && cd build && \
+        #cmake3 -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && \
+        #make -j8 && make MIOpenDriver && make install && cd ../../ && \
+        yum -y install --nogpgcheck miopen-opencl && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && make install
 

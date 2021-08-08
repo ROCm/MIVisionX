@@ -197,15 +197,10 @@ class RALICOCOIterator(object):
             self.img_name = np.char.lstrip(self.img_name, chars='0')
             print("Image names:", self.img_name)
             self.label_2d_numpy = (self.labels[sum_count: sum_count+count])
-            if(self.loader._BoxEncoder != True):
-                self.label_2d_numpy = np.reshape(
-                    self.label_2d_numpy, (-1, 1)).tolist()
             self.bb_2d_numpy = (self.bboxes[sum_count*4: (sum_count+count)*4])
             self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
             # Draw images: make sure to revert the mean and std to 0 and 1 for displaying original images without normalization
-            if self.display:
-               img = torch.from_numpy(self.out)
-               draw_patches(img[i], self.img_name, self.bb_2d_numpy)
+            
             # if(self.loader._BoxEncoder == True):
                 
             #     # Converting from "xywh" to "ltrb" format ,
@@ -231,11 +226,24 @@ class RALICOCOIterator(object):
             # else:
             encoded_bboxes_tensor = torch.tensor(self.bb_2d_numpy).float()
             encodded_labels_tensor=  torch.tensor(self.label_2d_numpy).long()
+            index_list =[ ]
+            actual_bboxes=[]
+            actual_labels =[]
+            for idx, x in enumerate(encodded_labels_tensor):
+                if x!=0:
+                    index_list.append(idx)
+                    actual_bboxes.append(encoded_bboxes_tensor[idx].tolist())
+                    actual_labels.append(encodded_labels_tensor[idx].tolist()) 
+              
+
+            if self.display:
+               img = torch.from_numpy(self.out)
+               draw_patches(img[i], self.img_name, actual_bboxes)
             print(f'size of encoded bbox {encoded_bboxes_tensor.size()}')
             print(f'\nencoded_bboxes_tensor {encoded_bboxes_tensor}')
             print(f'\nencodded_labels_tensor {encodded_labels_tensor}')
             print(f'\nexiting ....')
-            # exit(0)
+
             self.lis_lab.append(encodded_labels_tensor)
             self.lis.append(encoded_bboxes_tensor)
             sum_count = sum_count + count
@@ -284,9 +292,13 @@ def draw_patches(img,idx, bboxes):
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
  
     _,htot ,wtot = img.shape
-    
-    for (l, t ,r,b) in bboxes:
-        
+    # print("here")
+    # print(bboxes)
+    for (xc, yc ,w,h) in bboxes:
+        l = xc - 0.5*(w)
+        t = yc - 0.5*(h)
+        r = xc + 0.5*(w)
+        b = yc + 0.5*(h)
         loc_ = [l, t ,r, b]
         color = (255, 0, 0)
         thickness = 2
@@ -355,7 +367,7 @@ def main():
     pipe.build()
     data_loader = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display)
-    epochs = 5
+    epochs = 1
     for epoch in range(int(epochs)):
         print("EPOCH:::::",epoch)
         for i, it in enumerate(data_loader, 0):

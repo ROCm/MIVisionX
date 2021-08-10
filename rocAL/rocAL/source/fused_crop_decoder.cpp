@@ -158,31 +158,25 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         return Status::CONTENT_DECODE_FAILED;
     }
 
-    unsigned char *src_ptr_temp, *dst_ptr_temp;
 
-    unsigned int elements_in_row = max_decoded_width * planes;
-    unsigned int elements_in_crop_row = crop_width * planes;
-    unsigned int remainingElements =  elements_in_row - elements_in_crop_row;
-    unsigned int xoffs = (x1-x1_diff) * planes;   // in case x1 gets adjusted by tjpeg decoder
-
-    src_ptr_temp = output_buffer + (y1 *  elements_in_row);
-    dst_ptr_temp = output_buffer;
-
-    unsigned int i = 0;
-    for (; i < crop_height; i++)
-    {
-        memcpy(dst_ptr_temp, src_ptr_temp + xoffs, elements_in_crop_row * sizeof(unsigned char));
-        memset(dst_ptr_temp + elements_in_crop_row, 0, remainingElements * sizeof(unsigned char));
-        src_ptr_temp +=  elements_in_row;
-        dst_ptr_temp +=  elements_in_row;
+    if (x1 != x1_diff) {
+      unsigned char *src_ptr_temp, *dst_ptr_temp;
+      unsigned int elements_in_row = max_decoded_width * planes;
+      unsigned int elements_in_crop_row = crop_width * planes;
+      //unsigned int remainingElements =  elements_in_row - elements_in_crop_row;
+      unsigned int xoffs = (x1-x1_diff) * planes;   // in case x1 gets adjusted by tjpeg decoder
+      src_ptr_temp = output_buffer + xoffs;
+      dst_ptr_temp = output_buffer;
+      for (unsigned int i = 0; i < crop_height; i++)
+      {
+          memcpy(dst_ptr_temp, src_ptr_temp + xoffs, elements_in_crop_row * sizeof(unsigned char));
+          //memset(dst_ptr_temp + elements_in_crop_row, 0, remainingElements * sizeof(unsigned char));
+          src_ptr_temp +=  elements_in_row;
+          dst_ptr_temp +=  elements_in_row;
+      }
     }
-    
-    //if(_bbox_coord.size() != 0)
-    //    actual_decoded_width = crop_width_diff;
-    //else
     actual_decoded_width = crop_width;
     actual_decoded_height = crop_height;
-
     return Status::OK;
 }
 

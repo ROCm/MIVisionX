@@ -30,7 +30,8 @@ THE SOFTWARE.
 #include "timing_debug.h"
 
 #ifdef RALI_VIDEO
-class VideoReader : public Reader {
+class VideoReader : public Reader
+{
 public:
     //! Looks up the folder which contains the files, amd loads the image names
     /*!
@@ -42,7 +43,7 @@ public:
      \param buf User's provided buffer to receive the loaded images
      \return Size of the loaded resource
     */
-    size_t read(unsigned char* buf, size_t max_size) override;
+    size_t read(unsigned char *buf, size_t max_size) override;
     //! Opens the next file in the folder
     /*!
      \return The size of the next file, 0 if couldn't access it
@@ -63,7 +64,6 @@ public:
     unsigned long long get_shuffle_time() { return _shuffle_time.get_timing(); }
 
     VideoReader();
-
 private:
     std::string _folder_path;
     std::vector<std::string> _video_file_names;
@@ -76,10 +76,10 @@ private:
     size_t _sequence_length;
     size_t _step;
     size_t _stride;
-    unsigned  _curr_sequence_idx;
+    unsigned _curr_sequence_idx;
     std::string _last_id;
     size_t _shard_id = 0;
-    size_t _shard_count = 1;// equivalent of batch size
+    size_t _shard_count = 1; // equivalent of batch size
     //!< _batch_count Defines the quantum count of the sequences to be read. It's usually equal to the user's batch size.
     /// The loader will repeat sequences if necessary to be able to have the sequences available in multiples of the load_batch_count,
     /// for instance if there are 10 sequences in the dataset and _batch_count is 3, the loader repeats 2 sequences as if there are 12 sequences available.
@@ -91,7 +91,7 @@ private:
     bool _shuffle;
     int _read_counter = 0;
     //!< _sequence_count_all_shards total_number of sequences to figure out the max_batch_size (usually needed for distributed training).
-    size_t  _sequence_count_all_shards;
+    size_t _sequence_count_all_shards;
     void incremenet_read_ptr();
     size_t get_sequence_shard_id();
     void incremenet_sequence_id() { _sequence_id++; }

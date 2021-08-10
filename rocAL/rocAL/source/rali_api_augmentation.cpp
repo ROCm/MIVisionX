@@ -81,7 +81,6 @@ raliSequenceRearrange(
     auto context = static_cast<Context*>(p_context);
     try
     {
-#ifdef RALI_VIDEO
         auto input = static_cast<Image*>(p_input);
         unsigned sequence_count = context->internal_batch_size() / sequence_length;
         context->master_graph->set_sequence_rearrange_batch_decrementer(context->master_graph->user_batch_size());
@@ -94,9 +93,6 @@ raliSequenceRearrange(
         output = context->master_graph->create_image(info, is_output);
         std::shared_ptr<SequenceRearrangeNode> sequence_rearrange_node =  context->master_graph->add_node<SequenceRearrangeNode>({input}, {output});
         sequence_rearrange_node->init(new_order, new_sequence_length, sequence_length, sequence_count);
-#else
-        THROW("Video decoder is not enabled since ffmpeg is not present")
-#endif
     }
     catch(const std::exception& e)
     {

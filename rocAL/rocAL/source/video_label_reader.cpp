@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#include "video_label_reader.h"
 #include <string.h>
 #include <iostream>
 #include <utility>
@@ -27,7 +28,6 @@ THE SOFTWARE.
 #include <boost/filesystem.hpp>
 #include "commons.h"
 #include "exception.h"
-#include "video_label_reader.h"
 
 using namespace std;
 
@@ -52,7 +52,6 @@ bool VideoLabelReader::exists(const std::string &image_name)
 
 void VideoLabelReader::add(std::string image_name, int label, unsigned int video_frame_count, unsigned int start_frame)
 {
-
     std::vector<unsigned> video_prop;
     video_prop = open_video_context(image_name.c_str());
     unsigned frame_count = video_frame_count ? video_frame_count : video_prop[2];
@@ -71,7 +70,7 @@ void VideoLabelReader::add(std::string image_name, int label, unsigned int video
             WRN("Entity with the same name exists")
             return;
         }
-        _map_content.insert(pair<std::string, std::shared_ptr<Label> >(frame_name, info));
+        _map_content.insert(pair<std::string, std::shared_ptr<Label>>(frame_name, info));
     }
     _video_idx++;
 }
@@ -174,17 +173,13 @@ void VideoLabelReader::read_text_file(const std::string &_path)
         }
     }
     else
-    {
         THROW("Can't open the metadata file at " + std::string(_path))
-    }
 }
 
 void VideoLabelReader::read_all(const std::string &_path)
 {
     std::string _folder_path = _path;
-
     filesys::path pathObj(_folder_path);
-
     if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
     {
         if (pathObj.has_extension() && pathObj.extension().string() == ".txt")
@@ -200,10 +195,8 @@ void VideoLabelReader::read_all(const std::string &_path)
     {
         if ((_sub_dir = opendir(_folder_path.c_str())) == nullptr)
             THROW("ERROR: Failed opening the directory at " + _folder_path);
-
         std::vector<std::string> entry_name_list;
         std::string _full_path = _folder_path;
-
         while ((_entity = readdir(_sub_dir)) != nullptr)
         {
             std::string entry_name(_entity->d_name);
@@ -213,7 +206,6 @@ void VideoLabelReader::read_all(const std::string &_path)
         }
         std::sort(entry_name_list.begin(), entry_name_list.end());
         closedir(_sub_dir);
-
         for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count)
         {
             std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
@@ -258,12 +250,10 @@ void VideoLabelReader::read_files(const std::string &_path)
 {
     if ((_src_dir = opendir(_path.c_str())) == nullptr)
         THROW("ERROR: Failed opening the directory at " + _path);
-
     while ((_entity = readdir(_src_dir)) != nullptr)
     {
         if (_entity->d_type != DT_REG)
             continue;
-
         std::string file_path = _path;
         file_path.append("/");
         file_path.append(_entity->d_name);

@@ -1114,7 +1114,7 @@ MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, 
     _meta_data_reader->init(config);
     if(!file_list_frame_num)
     {
-        _meta_data_reader->set_timestamps_bool();
+        _meta_data_reader->set_timestamp_mode();
     }
     _meta_data_reader->read_all(source_path);
     if (_augmented_meta_data)

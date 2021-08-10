@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include <string>
 #include <map>
 #include <vector>
-#include<tuple>
+#include <tuple>
 #include "meta_data_reader.h"
 
 enum class StorageType
@@ -41,14 +41,14 @@ enum class StorageType
 
 struct ReaderConfig
 {
-    explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "", 
+    explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "",
                           const std::map<std::string, std::string> feature_key_map = std::map<std::string, std::string>(),
-                          bool shuffle = false, bool loop = false):_type(type), _path(path), _json_path(json_path), _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop) {}
+                          bool shuffle = false, bool loop = false) : _type(type), _path(path), _json_path(json_path), _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop) {}
     virtual StorageType type() { return _type; };
-    void set_path(const std::string& path) { _path = path; }
+    void set_path(const std::string &path) { _path = path; }
     void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
     void set_shard_count(size_t shard_count) { _shard_count = shard_count; }
-    void set_json_path(const std::string& json_path) { _json_path = json_path; }
+    void set_json_path(const std::string &json_path) { _json_path = json_path; }
     /// \param read_batch_count Tells the reader it needs to read the images in multiples of load_batch_count. If available images not divisible to load_batch_count,
     /// the reader will repeat images to make available images an even multiple of this load_batch_count
     void set_batch_count(size_t read_batch_count) { _batch_count = read_batch_count; }
@@ -66,7 +66,7 @@ struct ReaderConfig
     void set_video_frame_rate(unsigned frame_rate) { _frame_rate = frame_rate; }
     void set_total_frames_count(size_t total) { _total_frames_count = total; }
     void set_video_file_names(std::vector<std::string> video_file_names) { _video_file_names = video_file_names; }
-    void set_start_end_frame_vector(std::vector<std::tuple<int, int>> start_end_frame) {_start_end_frame_vector = start_end_frame;}
+    void set_start_end_frame_vector(std::vector<std::tuple<int, int>> start_end_frame) { _start_end_frame_vector = start_end_frame; }
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
@@ -84,7 +84,7 @@ struct ReaderConfig
     std::map<std::string, std::string> feature_key_map() { return _feature_key_map; }
     void set_file_prefix(const std::string &prefix) { _file_prefix = prefix; }
     std::string file_prefix() { return _file_prefix; }
-    std::shared_ptr<MetaDataReader> meta_data_reader() {return _meta_data_reader;}
+    std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
 private:
     StorageType _type = StorageType::FILE_SYSTEM;
     std::string _path = "";
@@ -92,7 +92,7 @@ private:
     std::map<std::string, std::string> _feature_key_map;
     size_t _shard_count = 1;
     size_t _shard_id = 0;
-    size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
+    size_t _batch_count = 1;     //!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
     size_t _sequence_length = 1; // Video reader module sequence length
     size_t _video_frame_step;
     size_t _video_frame_stride = 1;
@@ -108,7 +108,8 @@ private:
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
 };
 
-class Reader {
+class Reader
+{
 public:
     enum class Status
     {
@@ -116,7 +117,6 @@ public:
     };
 
     // TODO: change method names to open_next, read_next , ...
-
 
     //! Initializes the resource which it's spec is defined by the desc argument
     /*!
@@ -137,7 +137,7 @@ public:
     virtual size_t open() = 0;
 
     //! Copies the data of the opened item to the buf
-    virtual size_t read(unsigned char* buf, size_t read_size) = 0;
+    virtual size_t read(unsigned char *buf, size_t read_size) = 0;
 
     //! Closes the opened item
     virtual int close() = 0;
@@ -154,8 +154,8 @@ public:
 
     virtual ~Reader() = default;
 
-    #define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
-    #define CHECK_CAFFE(test, msg); ((test) ? (void)0 : ((void)fprintf(stderr, \
-    "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
+#define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
+#define CHECK_CAFFE(test, msg) \
+    ;                          \
+    ((test) ? (void)0 : ((void)fprintf(stderr, "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
 };
-

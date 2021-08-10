@@ -1,3 +1,25 @@
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #include "video_properties.h"
 #include <cmath>
 
@@ -5,7 +27,6 @@ void substring_extraction(std::string const &str, const char delim, std::vector<
 {
     size_t start;
     size_t end = 0;
-
     while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
     {
         end = str.find(delim, start);
@@ -20,6 +41,7 @@ std::vector<unsigned> open_video_context(const char *video_file_path)
     AVCodecContext *pCodecCtx = NULL;
     int videoStream = -1;
     unsigned int i = 0;
+    
     // open video file
     int ret = avformat_open_input(&pFormatCtx, video_file_path, NULL, NULL);
     if (ret != 0)
@@ -31,7 +53,6 @@ std::vector<unsigned> open_video_context(const char *video_file_path)
     // Retrieve stream information
     ret = avformat_find_stream_info(pFormatCtx, NULL);
     assert(ret >= 0);
-
     for (i = 0; i < pFormatCtx->nb_streams; i++)
     {
         if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && videoStream < 0)
@@ -102,7 +123,7 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
                             continue;
                         }
                         start = static_cast<unsigned int>(std::ceil(start_time * (props[3] / (double)props[4])));
-                        end = static_cast<unsigned int>(std::floor(end_time * (props[3] / (double)props[4])));;
+                        end = static_cast<unsigned int>(std::floor(end_time * (props[3] / (double)props[4])));
                     }
                 }
                 video_props.start_end_timestamps.push_back(std::make_tuple(start_time, end_time));
@@ -124,14 +145,13 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
             end = end != 0 ? end : props[2];
             if (end > props[2])
                 THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + video_file_name)
-
             video_file_name = std::to_string(video_count) + "#" + video_file_name;
             video_props.video_file_names.push_back(video_file_name);
             video_props.labels.push_back(label);
             video_props.start_end_frame_num.push_back(std::make_tuple(start, end));
             video_props.frames_count.push_back(end - start);
             unsigned video_frame_rate = props[3] / props[4];
-            if(video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
+            if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
                 THROW("Variable frame rate videos cannot be processed")
             video_props.frame_rate = video_frame_rate;
             video_count++;
@@ -142,9 +162,7 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
         return video_props;
     }
     else
-    {
         THROW("Can't open the metadata file at " + std::string(file_path))
-    }
 }
 
 video_properties find_video_properties(const char *source_path, bool file_list_frame_num)
@@ -158,8 +176,7 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
     unsigned int max_height = 0;
     std::string _full_path = source_path;
     filesys::path pathObj(_full_path);
-
-    if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) // Single file as input
+    if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj))  // Single file as input
     {
         if (pathObj.has_extension() && pathObj.extension().string() == ".txt")
         {
@@ -173,7 +190,7 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
             video_props.videos_count = 1;
             video_props.frames_count.push_back(props[2]);
             unsigned video_frame_rate = props[3] / props[4];
-            if(video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
+            if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
                 THROW("Variable frame rate videos cannot be processed")
             video_props.frame_rate = video_frame_rate;
             video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
@@ -190,7 +207,6 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
         std::string _folder_path = source_path;
         if ((_sub_dir = opendir(_folder_path.c_str())) == nullptr)
             THROW("ERROR: Failed opening the directory at " + _folder_path);
-
         while ((_entity = readdir(_sub_dir)) != nullptr)
         {
             std::string entry_name(_entity->d_name);
@@ -222,7 +238,7 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                 }
                 video_props.frames_count.push_back(props[2]);
                 unsigned video_frame_rate = props[3] / props[4];
-                if(video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
+                if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
                     THROW("Variable frame rate videos cannot be processed")
                 video_props.frame_rate = video_frame_rate;
                 video_file_path = std::to_string(video_count) + "#" + subfolder_path;
@@ -235,7 +251,6 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                 std::string _full_path = subfolder_path;
                 if ((_sub_dir = opendir(_full_path.c_str())) == nullptr)
                     THROW("VideoReader ERROR: Failed opening the directory at " + source_path);
-
                 while ((_entity = readdir(_sub_dir)) != nullptr)
                 {
                     std::string entry_name(_entity->d_name);
@@ -269,7 +284,7 @@ video_properties find_video_properties(const char *source_path, bool file_list_f
                     video_props.video_file_names.push_back(video_file_path);
                     video_props.frames_count.push_back(props[2]);
                     unsigned video_frame_rate = props[3] / props[4];
-                    if(video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
+                    if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
                         THROW("Variable frame rate videos cannot be processed")
                     video_props.frame_rate = video_frame_rate;
                     video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));

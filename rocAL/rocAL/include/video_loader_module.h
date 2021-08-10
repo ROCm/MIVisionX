@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#pragma  once
+#pragma once
 #include <memory>
 #include "reader.h"
 #include "video_decoder.h"
@@ -42,18 +42,18 @@ enum class VideoLoaderModuleStatus
 };
 
 /*! \class VideoLoaderModule The interface defining the API and requirements of loader modules*/
-class VideoLoaderModule 
+class VideoLoaderModule
 {
 public:
     virtual void initialize(ReaderConfig reader_config, VideoDecoderConfig decoder_config, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size) = 0;
-    virtual void set_output_image(Image* output_image) = 0;
+    virtual void set_output_image(Image *output_image) = 0;
     virtual VideoLoaderModuleStatus load_next() = 0; // Loads the next image data into the Image's buffer set by calling into the set_output_image
-    virtual void reset() = 0; // Resets the loader to load from the beginning of the media
-    virtual size_t remaining_count() = 0; // Returns the number of available images to be loaded
-    virtual ~VideoLoaderModule()= default;
-    virtual Timing timing() = 0;// Returns timing info
+    virtual void reset() = 0;                        // Resets the loader to load from the beginning of the media
+    virtual size_t remaining_count() = 0;            // Returns the number of available images to be loaded
+    virtual ~VideoLoaderModule() = default;
+    virtual Timing timing() = 0;                   // Returns timing info
     virtual std::vector<std::string> get_id() = 0; // returns the id of the last batch of images/frames loaded
-    virtual void start_loading() = 0; // starts internal loading thread
+    virtual void start_loading() = 0;              // starts internal loading thread
     virtual decoded_image_info get_decode_image_info() = 0;
     virtual void set_prefetch_queue_depth(size_t prefetch_queue_depth) = 0;
     virtual std::vector<size_t> get_sequence_start_frame_number() = 0;

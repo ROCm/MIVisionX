@@ -40,7 +40,7 @@ public :
     void release(std::string image_name);
     void release() override;
     void print_map_contents();
-    void set_timestamps_bool() override { return; }
+    void set_timestamp_mode() override { return; }
     MetaDataBatch * get_output() override { return _output; }
     TFMetaDataReaderDetection();
     ~TFMetaDataReaderDetection() override { delete _output; }

@@ -34,14 +34,14 @@ public:
     explicit VideoLoaderSharded(DeviceResources dev_resources);
     ~VideoLoaderSharded() override;
     VideoLoaderModuleStatus load_next() override;
-    void initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
-    void set_output_image (Image* output_image) override;
+    void initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size = false) override;
+    void set_output_image(Image *output_image) override;
     size_t remaining_count() override;
     void reset() override;
     void start_loading() override;
     std::vector<std::string> get_id() override;
     decoded_image_info get_decode_image_info() override;
-    void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
+    void set_prefetch_queue_depth(size_t prefetch_queue_depth) override;
     std::vector<size_t> get_sequence_start_frame_number() override;
     std::vector<std::vector<float>> get_sequence_frame_timestamps() override;
     Timing timing() override;

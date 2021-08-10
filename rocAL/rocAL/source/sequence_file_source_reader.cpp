@@ -46,7 +46,6 @@ unsigned SequenceFileSourceReader::count()
 {
     if (_loop)
         return _frame_names.size();
-
     int ret = ((int)_frame_names.size() - _read_counter);
     return ((ret < 0) ? 0 : ret);
 }
@@ -65,8 +64,9 @@ Reader::Status SequenceFileSourceReader::initialize(ReaderConfig desc)
     _step = desc.get_frame_step();
     _stride = desc.get_frame_stride();
     _batch_count = _user_batch_count / _sequence_length;
-
     ret = subfolder_reading();
+    if (ret != Reader::Status::OK)
+        return ret;
     ret = get_sequences();
 
     // the following code is required to make every shard the same size:: required for multi-gpu training
@@ -80,12 +80,12 @@ Reader::Status SequenceFileSourceReader::initialize(ReaderConfig desc)
             replicate_last_batch_to_pad_partial_shard();
         }
     }
+
     //shuffle dataset if set
     _shuffle_time.start();
     if (ret == Reader::Status::OK && _shuffle)
         std::random_shuffle(_sequence_frame_names.begin(), _sequence_frame_names.end());
     _shuffle_time.end();
-
     for (unsigned i = 0; i < _sequence_frame_names.size(); i++)
     {
         for (unsigned j = 0; j < _sequence_frame_names[i].size(); j++)
@@ -112,25 +112,19 @@ size_t SequenceFileSourceReader::open()
     {
         _last_id.erase(0, last_slash_idx + 1);
     }
-
     _current_fPtr = fopen(file_path.c_str(), "rb"); // Open the file,
-
-    if (!_current_fPtr) // Check if it is ready for reading
+    if (!_current_fPtr)                             // Check if it is ready for reading
         return 0;
-
-    fseek(_current_fPtr, 0, SEEK_END); // Take the file read pointer to the end
-
+    fseek(_current_fPtr, 0, SEEK_END);         // Take the file read pointer to the end
     _current_file_size = ftell(_current_fPtr); // Check how many bytes are there between and the current read pointer position (end of the file)
-
     if (_current_file_size == 0)
-    { // If file is empty continue
+    { 
+        // If file is empty continue
         fclose(_current_fPtr);
         _current_fPtr = nullptr;
         return 0;
     }
-
     fseek(_current_fPtr, 0, SEEK_SET); // Take the file pointer back to the start
-
     return _current_file_size;
 }
 
@@ -138,10 +132,9 @@ size_t SequenceFileSourceReader::read(unsigned char *buf, size_t read_size)
 {
     if (!_current_fPtr)
         return 0;
-
+    
     // Requested read size bigger than the file size? just read as many bytes as the file size
     read_size = (read_size > _current_file_size) ? _current_file_size : read_size;
-
     size_t actual_read_size = fread(buf, sizeof(unsigned char), read_size, _current_fPtr);
     return actual_read_size;
 }
@@ -179,7 +172,7 @@ Reader::Status SequenceFileSourceReader::get_sequences()
 {
     for (unsigned folder_idx = 0; folder_idx < _folder_file_names.size(); folder_idx++)
     {
-        if(_folder_file_names[folder_idx].size() == 0)
+        if (_folder_file_names[folder_idx].size() == 0)
         {
             WRN("\nFolder #" + TOSTR(folder_idx) + "does not have any files")
             continue;
@@ -188,7 +181,7 @@ Reader::Status SequenceFileSourceReader::get_sequences()
         {
             THROW("Sequence length is not valid");
         }
-        for (unsigned file_idx = 0; (file_idx + (_stride * (_sequence_length - 1))) < _folder_file_names[folder_idx].size(); file_idx+=_step)
+        for (unsigned file_idx = 0; (file_idx + (_stride * (_sequence_length - 1))) < _folder_file_names[folder_idx].size(); file_idx += _step)
         {
             if (get_sequence_shard_id() != _shard_id)
             {
@@ -198,9 +191,8 @@ Reader::Status SequenceFileSourceReader::get_sequences()
             }
             _in_batch_read_count++;
             _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
-
             std::vector<std::string> temp;
-            for (unsigned frame_count = 0, frame_idx = file_idx; (frame_count < _sequence_length) ; frame_count++, frame_idx+=_stride)
+            for (unsigned frame_count = 0, frame_idx = file_idx; (frame_count < _sequence_length); frame_count++, frame_idx += _stride)
             {
                 temp.push_back(_folder_file_names[folder_idx][frame_idx]);
             }
@@ -217,7 +209,6 @@ Reader::Status SequenceFileSourceReader::get_sequences()
         replicate_last_sequence_to_fill_last_shard();
         LOG("SequenceReader ShardID [" + TOSTR(_shard_id) + "] Replicated last sequence " + TOSTR((_batch_count - _in_batch_read_count)) + " times to fill the last batch")
     }
-
     return Reader::Status::OK;
 }
 
@@ -225,10 +216,8 @@ Reader::Status SequenceFileSourceReader::subfolder_reading()
 {
     if ((_sub_dir = opendir(_folder_path.c_str())) == nullptr)
         THROW("SequenceReader ShardID [" + TOSTR(_shard_id) + "] ERROR: Failed opening the directory at " + _folder_path);
-
     std::vector<std::string> entry_name_list;
     std::string _full_path = _folder_path;
-
     while ((_entity = readdir(_sub_dir)) != nullptr)
     {
         std::string entry_name(_entity->d_name);
@@ -238,7 +227,6 @@ Reader::Status SequenceFileSourceReader::subfolder_reading()
     }
     closedir(_sub_dir);
     std::sort(entry_name_list.begin(), entry_name_list.end());
-
     auto ret = Reader::Status::OK;
     for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count)
     {
@@ -280,7 +268,6 @@ Reader::Status SequenceFileSourceReader::open_folder()
 {
     if ((_src_dir = opendir(_folder_path.c_str())) == nullptr)
         THROW("SequenceReader ShardID [" + TOSTR(_shard_id) + "] ERROR: Failed opening the directory at " + _folder_path);
-
     while ((_entity = readdir(_src_dir)) != nullptr)
     {
         if (_entity->d_type != DT_REG)
@@ -291,8 +278,7 @@ Reader::Status SequenceFileSourceReader::open_folder()
         file_path.append(_entity->d_name);
         _file_names.push_back(file_path);
     }
-
-    std::sort(_file_names.begin() , _file_names.end());
+    std::sort(_file_names.begin(), _file_names.end());
     closedir(_src_dir);
     return Reader::Status::OK;
 }

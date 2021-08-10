@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <tuple>
 
 #ifdef RALI_VIDEO
-class VideoLoaderNode: public Node
+class VideoLoaderNode : public Node
 {
 public:
     //VideoLoaderNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
@@ -40,18 +40,16 @@ public:
     /// \param load_batch_count Defines the quantum count of the images to be loaded. It's usually equal to the user's batch size.
     /// The loader will repeat images if necessary to be able to have images in multiples of the load_batch_count,
     /// for example if there are 10 images in the dataset and load_batch_count is 3, the loader repeats 2 images as if there are 12 images available.
-    void init(unsigned internal_shard_count, const std::string &source_path,const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
+    void init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
               VideoDecoderType decoder_type, DecodeMode decoder_mode, unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frames_count, unsigned frame_rate,
               std::vector<std::tuple<int, int>> start_end_frame_num, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names);
-
     std::shared_ptr<VideoLoaderModule> get_loader_module();
-
 protected:
-    void create_node() override {};
-    void update_node() override {};
+    void create_node() override{};
+    void update_node() override{};
 private:
     const static unsigned MAXIMUM_VIDEO_CONCURRENT_DECODE = 4;
-    DecodeMode _decode_mode  = DecodeMode::USE_SW;
+    DecodeMode _decode_mode = DecodeMode::USE_SW;
     unsigned _video_stream_count;
     std::vector<std::string> _path_to_videos;
     unsigned _sequence_length;

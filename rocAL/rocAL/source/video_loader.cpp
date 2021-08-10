@@ -45,10 +45,9 @@ VideoLoader::~VideoLoader()
     de_init();
 }
 
-void 
-VideoLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
+void VideoLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
 {
-    if(prefetch_queue_depth <= 0)
+    if (prefetch_queue_depth <= 0)
         THROW("Prefetch quque depth value cannot be zero or negative");
     _prefetch_queue_depth = prefetch_queue_depth;
 }
@@ -64,15 +63,16 @@ void VideoLoader::reset()
     // stop the writer thread and empty the internal circular buffer
     _internal_thread_running = false;
     _circ_buff.unblock_writer();
-
     if (_load_thread.joinable())
         _load_thread.join();
 
     // Emptying the internal circular buffer
     _circ_buff.reset();
+
     // Clearing the frame_num and timestamp vectors
     _sequence_start_framenum_vec.clear();
     _sequence_frame_timestamps_vec.clear();
+
     // resetting the reader thread to the start of the media
     _image_counter = 0;
     _video_loader->reset();
@@ -117,10 +117,8 @@ void VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder
 {
     if (_is_initialized)
         WRN("initialize() function is already called and loader module is initialized")
-
     if (_output_mem_size == 0)
         THROW("output image size is 0, set_output_image() should be called before initialize for loader modules")
-
     _mem_type = mem_type;
     _batch_size = batch_size;
     _loop = reader_cfg.loop();
@@ -150,7 +148,6 @@ void VideoLoader::start_loading()
 {
     if (!_is_initialized)
         THROW("start_loading() should be called after initialize() function is called")
-
     _remaining_image_count = _video_loader->count();
     _internal_thread_running = true;
     _load_thread = std::thread(&VideoLoader::load_routine, this);
@@ -161,8 +158,8 @@ VideoLoader::load_routine()
 {
     LOG("Started the internal loader thread");
     VideoLoaderModuleStatus last_load_status = VideoLoaderModuleStatus::OK;
-    // Initially record number of all the images that are going to be loaded, this is used to know how many still there
 
+    // Initially record number of all the images that are going to be loaded, this is used to know how many still there
     while (_internal_thread_running)
     {
         auto data = _circ_buff.get_write_buffer();
@@ -228,7 +225,6 @@ VideoLoaderModuleStatus
 VideoLoader::update_output_image()
 {
     VideoLoaderModuleStatus status = VideoLoaderModuleStatus::OK;
-
     if (is_out_of_data())
         return VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
     if (_stopped)
@@ -253,15 +249,12 @@ VideoLoader::update_output_image()
     }
     if (_stopped)
         return VideoLoaderModuleStatus::OK;
-
     _output_decoded_img_info = _circ_buff.get_image_info();
     _output_names = _output_decoded_img_info._image_names;
     _output_image->update_image_roi(_output_decoded_img_info._roi_width, _output_decoded_img_info._roi_height);
-
     _circ_buff.pop();
     if (!_loop)
         _remaining_image_count -= _batch_size;
-
     return status;
 }
 
@@ -317,20 +310,11 @@ std::vector<size_t> VideoLoader::get_sequence_start_frame_number()
     return sequence_start_framenum;
 }
 
-std::vector<std::vector<float> > VideoLoader::get_sequence_frame_timestamps()
+std::vector<std::vector<float>> VideoLoader::get_sequence_frame_timestamps()
 {
-    std::vector<std::vector<float> > sequence_frame_timestamp;
+    std::vector<std::vector<float>> sequence_frame_timestamp;
     sequence_frame_timestamp = _sequence_frame_timestamps_vec.back();
     _sequence_frame_timestamps_vec.pop_back();
     return sequence_frame_timestamp;
 }
-
-/*size_t VideoLoader::count()
-{
-    // TODO: use FFMPEG to find the total number of frames and keep counting
-    // how many times laod_next() is called successfully, subtract them and
-    // that would be the count of frames remained to be decoded
-    return 9999999;
-}*/
-
 #endif

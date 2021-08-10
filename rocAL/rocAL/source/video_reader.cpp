@@ -42,7 +42,6 @@ unsigned VideoReader::count()
 {
     if (_loop)
         return _total_video_frames_count;
-
     int ret = (int)(_total_video_frames_count - _read_counter);
     return ((ret <= 0) ? 0 : ret);
 }
@@ -79,7 +78,6 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
             replicate_last_batch_to_pad_partial_shard();
         }
     }
-
     if (ret == Reader::Status::OK && _shuffle)
         std::random_shuffle(_frame_sequences.begin(), _frame_sequences.end());
     return ret;
@@ -148,7 +146,6 @@ Reader::Status VideoReader::get_sequences()
             incremenet_sequence_id();
         }
     }
-
     if(_in_batch_read_count > 0 && _in_batch_read_count < _batch_count)
     {
         replicate_last_sequence_to_fill_last_shard();

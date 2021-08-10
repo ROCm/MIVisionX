@@ -289,7 +289,7 @@ raliSequenceReader(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        /* The internal batch size and user batch size are modified here in master graph */
+        // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
@@ -375,7 +375,7 @@ raliSequenceReaderSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        /* The internal batch size and user batch size are modified here in master graph */
+        // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
         context->master_graph->set_user_internal_batch_ratio();
@@ -1555,7 +1555,7 @@ raliVideoFileSource(
     try
     {
 #ifdef RALI_VIDEO
-        /* The internal batch size and user batch size are modified here in master graph */
+        // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_video_loader_flag();
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
@@ -1592,23 +1592,23 @@ raliVideoFileSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path, "",
-									                                      std::map<std::string, std::string>(),
-                                                                          StorageType::VIDEO_FILE_SYSTEM,
-                                                                          VideoDecoderType::FFMPEG_VIDEO,
-                                                                          decoder_mode,
-                                                                          sequence_length,
-                                                                          step,
-                                                                          stride,
-                                                                          number_of_video_files,
-                                                                          frames_count,
-                                                                          frame_rate,
-                                                                          start_end_frame_num,
-                                                                          shuffle,
-                                                                          loop,
-                                                                          context->user_batch_size(),
-                                                                          context->master_graph->mem_type(),
-                                                                          video_file_names);
+                                                                            source_path, "",
+                                                                            std::map<std::string, std::string>(),
+                                                                            StorageType::VIDEO_FILE_SYSTEM,
+                                                                            VideoDecoderType::FFMPEG_VIDEO,
+                                                                            decoder_mode,
+                                                                            sequence_length,
+                                                                            step,
+                                                                            stride,
+                                                                            number_of_video_files,
+                                                                            frames_count,
+                                                                            frame_rate,
+                                                                            start_end_frame_num,
+                                                                            shuffle,
+                                                                            loop,
+                                                                            context->user_batch_size(),
+                                                                            context->master_graph->mem_type(),
+                                                                            video_file_names);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1650,7 +1650,7 @@ raliVideoFileSourceSingleShard(
     try
     {
 #ifdef RALI_VIDEO
-        /* The internal batch size and user batch size are modified here in master graph */
+        // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_video_loader_flag();
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
@@ -1693,23 +1693,23 @@ raliVideoFileSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                          source_path, "",
-									                                      std::map<std::string, std::string>(),
-                                                                          StorageType::VIDEO_FILE_SYSTEM,
-                                                                          VideoDecoderType::FFMPEG_VIDEO,
-                                                                          decoder_mode,
-                                                                          sequence_length,
-                                                                          step,
-                                                                          stride,
-                                                                          number_of_video_files,
-                                                                          frames_count,
-                                                                          frame_rate,
-                                                                          start_end_frame_num,
-                                                                          shuffle,
-                                                                          loop,
-                                                                          context->user_batch_size(),
-                                                                          context->master_graph->mem_type(),
-                                                                          video_file_names);
+                                                                                        source_path, "",
+                                                                                        std::map<std::string, std::string>(),
+                                                                                        StorageType::VIDEO_FILE_SYSTEM,
+                                                                                        VideoDecoderType::FFMPEG_VIDEO,
+                                                                                        decoder_mode,
+                                                                                        sequence_length,
+                                                                                        step,
+                                                                                        stride,
+                                                                                        number_of_video_files,
+                                                                                        frames_count,
+                                                                                        frame_rate,
+                                                                                        start_end_frame_num,
+                                                                                        shuffle,
+                                                                                        loop,
+                                                                                        context->user_batch_size(),
+                                                                                        context->master_graph->mem_type(),
+                                                                                        video_file_names);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1756,7 +1756,7 @@ raliVideoFileResize(
     try
     {
 #ifdef RALI_VIDEO
-        /* The internal batch size and user batch size are modified here in master graph */
+        // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_video_loader_flag();
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
@@ -1799,23 +1799,23 @@ raliVideoFileResize(
         resize_output = context->master_graph->create_image(output_info, false);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path, "",
-									                                      std::map<std::string, std::string>(),
-                                                                          StorageType::VIDEO_FILE_SYSTEM,
-                                                                          VideoDecoderType::FFMPEG_VIDEO,
-                                                                          decoder_mode,
-                                                                          sequence_length,
-                                                                          step,
-                                                                          stride,
-                                                                          number_of_video_files,
-                                                                          frames_count,
-                                                                          frame_rate,
-                                                                          start_end_frame_num,
-                                                                          shuffle,
-                                                                          loop,
-                                                                          context->user_batch_size(),
-                                                                          context->master_graph->mem_type(),
-                                                                          video_file_names);
+                                                                            source_path, "",
+                                                                            std::map<std::string, std::string>(),
+                                                                            StorageType::VIDEO_FILE_SYSTEM,
+                                                                            VideoDecoderType::FFMPEG_VIDEO,
+                                                                            decoder_mode,
+                                                                            sequence_length,
+                                                                            step,
+                                                                            stride,
+                                                                            number_of_video_files,
+                                                                            frames_count,
+                                                                            frame_rate,
+                                                                            start_end_frame_num,
+                                                                            shuffle,
+                                                                            loop,
+                                                                            context->user_batch_size(),
+                                                                            context->master_graph->mem_type(),
+                                                                            video_file_names);
         context->master_graph->set_loop(loop);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
@@ -1869,7 +1869,7 @@ raliVideoFileResizeSingleShard(
     try
     {
 #ifdef RALI_VIDEO
-        /* The internal batch size and user batch size are modified here in master graph */
+        // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_video_loader_flag();
         context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
@@ -1918,23 +1918,23 @@ raliVideoFileResizeSingleShard(
         resize_output = context->master_graph->create_image(output_info, false);
 
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                          source_path, "",
-									                                      std::map<std::string, std::string>(),
-                                                                          StorageType::VIDEO_FILE_SYSTEM,
-                                                                          VideoDecoderType::FFMPEG_VIDEO,
-                                                                          decoder_mode,
-                                                                          sequence_length,
-                                                                          step,
-                                                                          stride,
-                                                                          number_of_video_files,
-                                                                          frames_count,
-                                                                          frame_rate,
-                                                                          start_end_frame_num,
-                                                                          shuffle,
-                                                                          loop,
-                                                                          context->user_batch_size(),
-                                                                          context->master_graph->mem_type(),
-                                                                          video_file_names);
+                                                                                        source_path, "",
+                                                                                        std::map<std::string, std::string>(),
+                                                                                        StorageType::VIDEO_FILE_SYSTEM,
+                                                                                        VideoDecoderType::FFMPEG_VIDEO,
+                                                                                        decoder_mode,
+                                                                                        sequence_length,
+                                                                                        step,
+                                                                                        stride,
+                                                                                        number_of_video_files,
+                                                                                        frames_count,
+                                                                                        frame_rate,
+                                                                                        start_end_frame_num,
+                                                                                        shuffle,
+                                                                                        loop,
+                                                                                        context->user_batch_size(),
+                                                                                        context->master_graph->mem_type(),
+                                                                                        video_file_names);
         context->master_graph->set_loop(loop);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size

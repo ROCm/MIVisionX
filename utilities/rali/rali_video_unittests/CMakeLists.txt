@@ -44,6 +44,4 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
 target_link_libraries(${PROJECT_NAME} rali ${OpenCV_LIBRARIES})
 
-
-
 install (TARGETS ${PROJECT_NAME} DESTINATION bin)

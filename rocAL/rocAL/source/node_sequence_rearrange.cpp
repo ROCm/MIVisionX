@@ -38,9 +38,10 @@ void SequenceRearrangeNode::create_node()
 
     vx_status status;
     _sequence_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _new_sequence_length);
-    status = vxAddArrayItems(_sequence_array,_new_sequence_length, _new_order.data(), sizeof(vx_uint32));
+    status = vxAddArrayItems(_sequence_array, _new_sequence_length, _new_order.data(), sizeof(vx_uint32));
+    if(status != VX_SUCCESS)
+        THROW("Adding array items failed: "+ TOSTR(status))
     _node = vxExtrppNode_SequenceRearrange(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _sequence_array, _new_sequence_length, _sequence_length, _sequence_count);
-
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the sequence rearrange (vxExtrppNode_SequenceRearrange) node failed: "+ TOSTR(status))
 }

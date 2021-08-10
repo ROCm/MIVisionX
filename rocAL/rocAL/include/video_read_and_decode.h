@@ -74,24 +74,23 @@ public:
         std::vector<uint32_t> &roi_height,
         std::vector<uint32_t> &actual_width,
         std::vector<uint32_t> &actual_height,
-        std::vector<std::vector<size_t> > &sequence_start_framenum_vec,
-        std::vector<std::vector<std::vector<float> > > &sequence_frame_timestamps_vec,
+        std::vector<std::vector<size_t>> &sequence_start_framenum_vec,
+        std::vector<std::vector<std::vector<float>>> &sequence_frame_timestamps_vec,
         RaliColorFormat output_color_format);
 
     //! returns timing info or other status information
     Timing timing();
-
 private:
     struct video_map
     {
         int _video_map_idx;
         bool _is_decoder_instance;
     };
-    std::vector<std::shared_ptr<VideoDecoder> > _video_decoder;
+    std::vector<std::shared_ptr<VideoDecoder>> _video_decoder;
     std::shared_ptr<Reader> _reader;
     size_t _max_video_count = 50;
     size_t _video_process_count;
-    std::vector<std::vector<unsigned char> > _compressed_buff;
+    std::vector<std::vector<unsigned char>> _compressed_buff;
     std::vector<std::string> _video_names;
     std::map<std::string, video_map> _video_file_name_map;
     size_t _compressed_image_size;

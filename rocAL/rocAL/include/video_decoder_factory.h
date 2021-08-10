@@ -24,4 +24,3 @@ THE SOFTWARE.
 #include <memory>
 #include "video_decoder.h"
 std::shared_ptr<VideoDecoder> create_video_decoder(VideoDecoderConfig config);
-

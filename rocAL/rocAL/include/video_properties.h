@@ -1,3 +1,25 @@
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #pragma once
 #include <boost/filesystem.hpp>
 #include <dirent.h>
@@ -12,7 +34,6 @@ extern "C"
 #include <tuple>
 #include "commons.h"
 
-
 namespace filesys = boost::filesystem;
 
 typedef struct video_properties
@@ -26,7 +47,7 @@ typedef struct video_properties
     std::vector<int> labels;
 } video_properties;
 
-void substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out);
+void substring_extraction(std::string const &str, const char delim, std::vector<std::string> &out);
 std::vector<unsigned> open_video_context(const char *video_file_path);
 video_properties get_video_properties_from_txt_file(const char *file_path, bool file_list_frame_num);
 video_properties find_video_properties(const char *source_path, bool file_list_frame_num);

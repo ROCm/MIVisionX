@@ -24,24 +24,22 @@ THE SOFTWARE.
 
 #include "video_decoder.h"
 
-class FFMPEG_VIDEO_DECODER : public VideoDecoder {
+class FFmpegVideoDecoder : public VideoDecoder
+{
 public:
     //! Default constructor
-    FFMPEG_VIDEO_DECODER();
-
+    FFmpegVideoDecoder();
     VideoDecoder::Status Initialize(const char *src_filename) override;
-    VideoDecoder::Status Decode(unsigned char* output_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_format) override;
-	int seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number) override;
-
+    VideoDecoder::Status Decode(unsigned char *output_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_format) override;
+    int seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number) override;
     void release() override;
-
-    ~FFMPEG_VIDEO_DECODER() override;
+    ~FFmpegVideoDecoder() override;
 private:
-    const char * _src_filename = NULL;
-    AVFormatContext * _fmt_ctx = NULL;
-    AVCodecContext * _video_dec_ctx = NULL;
-    AVCodec * _decoder = NULL;
-    AVStream * _video_stream = NULL;
+    const char *_src_filename = NULL;
+    AVFormatContext *_fmt_ctx = NULL;
+    AVCodecContext *_video_dec_ctx = NULL;
+    AVCodec *_decoder = NULL;
+    AVStream *_video_stream = NULL;
     int _video_stream_idx = -1;
     AVPixelFormat _dec_pix_fmt;
     int _codec_width, _codec_height;

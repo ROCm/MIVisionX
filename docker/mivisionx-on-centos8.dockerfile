@@ -19,7 +19,7 @@ RUN yum -y install --nogpgcheck https://dl.fedoraproject.org/pub/epel/epel-relea
         yum -y install --nogpgcheck http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm && \
         yum -y install --nogpgcheck ffmpeg ffmpeg-devel
 # install MIVisionX neural net dependency - Level 4
-RUN yum -y install l--nogpgcheck ibsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip && \
+RUN yum -y install --nogpgcheck libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && cp half-files/include/half.hpp /usr/local/include/ && \
         git clone -b rocm-4.2.0 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \

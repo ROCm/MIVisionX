@@ -42,7 +42,7 @@ typedef struct video_properties
     unsigned frame_rate = 0;
     std::vector<size_t> frames_count;
     std::vector<std::string> video_file_names;
-    std::vector<std::tuple<int, int>> start_end_frame_num;
+    std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
     std::vector<std::tuple<float, float>> start_end_timestamps;
     std::vector<int> labels;
 } video_properties;

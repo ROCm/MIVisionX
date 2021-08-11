@@ -42,14 +42,13 @@ public:
     /// for example if there are 10 images in the dataset and load_batch_count is 3, the loader repeats 2 images as if there are 12 images available.
     void init(unsigned shard_id, unsigned shard_count, const std::string &source_path,const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
               VideoDecoderType decoder_type, DecodeMode decoder_mode, unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frames_count, unsigned frame_rate,
-              std::vector<std::tuple<int, int>> start_end_frame_num, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names);
+              std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names);
 
     std::shared_ptr<VideoLoaderModule> get_loader_module();
 protected:
     void create_node() override {};
     void update_node() override {};
 private:
-    const static unsigned MAXIMUM_VIDEO_CONCURRENT_DECODE = 4;
     DecodeMode _decode_mode  = DecodeMode::USE_SW;
     unsigned _video_stream_count;
     std::vector<std::string> _path_to_videos;

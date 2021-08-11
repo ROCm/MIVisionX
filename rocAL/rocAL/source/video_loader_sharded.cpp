@@ -112,9 +112,7 @@ void VideoLoaderSharded::start_loading()
         struct sched_param params;
         params.sched_priority = sched_get_priority_max(SCHED_FIFO);
         _loaders[i]->set_cpu_sched_policy(params);
-#endif
         // Setting cpu affinity for threads works and can be activated below for experimentation
-#if 0
         // Set thread affinity thread 0 to core 0 , 1 toc core 1 , ...
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);

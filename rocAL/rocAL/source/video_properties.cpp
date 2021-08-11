@@ -81,20 +81,20 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
 
     if (text_file.good())
     {
-        //_text_file.open(path.c_str(), std::ifstream::in);
         video_properties video_props;
         std::vector<unsigned> props;
         std::string line;
-        int label;
         unsigned int max_width = 0;
         unsigned int max_height = 0;
-        unsigned int start, end;
-        float start_time, end_time;
         int video_count = 0;
-        std::string video_file_name;
         while (std::getline(text_file, line))
         {
+            unsigned start, end; 
+            int label;
+            float start_time, end_time;
+            std::string video_file_name;
             start = end = 0;
+            start_time = end_time = 0.0;
             std::istringstream line_ss(line);
             if (!(line_ss >> video_file_name >> label))
                 continue;
@@ -113,42 +113,25 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
             }
             if (!file_list_frame_num)
             {
-                if (line_ss >> start_time)
-                {
-                    if (line_ss >> end_time)
-                    {
-                        if (start_time >= end_time)
-                        {
-                            WRN("Start and end time/frame are not satisfying the condition, skipping the file" + video_file_name)
-                            continue;
-                        }
-                        start = static_cast<unsigned int>(std::ceil(start_time * (props[3] / (double)props[4])));
-                        end = static_cast<unsigned int>(std::floor(end_time * (props[3] / (double)props[4])));
-                    }
-                }
-                video_props.start_end_timestamps.push_back(std::make_tuple(start_time, end_time));
+                line_ss >> start_time >> end_time;
+                start = static_cast<unsigned int>(std::ceil(start_time * (props[3] / (double)props[4])));
+                end = static_cast<unsigned int>(std::floor(end_time * (props[3] / (double)props[4])));
             }
             else
             {
-                if (line_ss >> start)
-                {
-                    if (line_ss >> end)
-                    {
-                        if (start >= end)
-                        {
-                            WRN("Start and end time/frame are not satisfying the condition, skipping the file " + video_file_name)
-                            continue;
-                        }
-                    }
-                }
+                line_ss >> start >> end;
             }
             end = end != 0 ? end : props[2];
-            if (end > props[2])
-                THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + video_file_name)
+            if ((end > props[2]) || (start >= end))
+            {
+                INFO("Invalid start or end time/frame passed, skipping the file" + video_file_name)
+                continue;
+            }
             video_file_name = std::to_string(video_count) + "#" + video_file_name;
             video_props.video_file_names.push_back(video_file_name);
             video_props.labels.push_back(label);
             video_props.start_end_frame_num.push_back(std::make_tuple(start, end));
+            video_props.start_end_timestamps.push_back(std::make_tuple(start_time, end_time));
             video_props.frames_count.push_back(end - start);
             unsigned video_frame_rate = props[3] / props[4];
             if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)

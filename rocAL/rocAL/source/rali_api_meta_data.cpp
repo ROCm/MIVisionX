@@ -353,7 +353,10 @@ RALI_API_CALL raliGetSequenceFrameTimestamps(RaliContext p_context,  float* buf)
         THROW("Invalid rali context passed to raliGetSequenceFrameTimestamps")
     auto context = static_cast<Context*>(p_context);
     std::vector<std::vector<float>> sequence_frame_timestamps = context->master_graph->sequence_frame_timestamps();
+    auto sequence_length = sequence_frame_timestamps[0].size();
     for (unsigned int i = 0; i < sequence_frame_timestamps.size(); i++)
-        for (unsigned int j = 0; j < sequence_frame_timestamps[i].size(); j++)
-            buf[(i * sequence_frame_timestamps[i].size())  + j] = sequence_frame_timestamps[i][j];
+    {
+        std::copy(sequence_frame_timestamps[i].begin(), sequence_frame_timestamps[i].end(), buf);
+        buf = buf + sequence_length;
+    }
 }

@@ -1567,7 +1567,7 @@ raliVideoFileSource(
         unsigned width , height, number_of_video_files, frame_rate;
         std::vector<size_t> frames_count;
         std::vector<std::string> video_file_names;
-        std::vector<std::tuple<int, int>> start_end_frame_num;
+        std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
 
         video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
         width = video_prop.width;
@@ -1668,7 +1668,7 @@ raliVideoFileSourceSingleShard(
         unsigned width , height, number_of_video_files, frame_rate;
         std::vector<size_t> frames_count;
         std::vector<std::string> video_file_names;
-        std::vector<std::tuple<int, int>> start_end_frame_num;
+        std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
 
         video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
         width = video_prop.width;
@@ -1768,7 +1768,7 @@ raliVideoFileResize(
         unsigned width , height, number_of_video_files, frame_rate;
         std::vector<size_t> frames_count;
         std::vector<std::string> video_file_names;
-        std::vector<std::tuple<int, int>> start_end_frame_num;
+        std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
 
         video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
         width = video_prop.width;
@@ -1887,7 +1887,7 @@ raliVideoFileResizeSingleShard(
         unsigned width , height, number_of_video_files, frame_rate;
         std::vector<size_t> frames_count;
         std::vector<std::string> video_file_names;
-        std::vector<std::tuple<int, int>> start_end_frame_num;
+        std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
 
         video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
         width = video_prop.width;

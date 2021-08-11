@@ -122,52 +122,37 @@ void VideoLabelReader::lookup(const std::vector<std::string> &image_names)
 void VideoLabelReader::read_text_file(const std::string &_path)
 {
     std::ifstream text_file(_path);
-
     if (text_file.good())
     {
         std::string line;
-        int label, start, end;
-        float start_time, end_time;
-        std::string video_file_name;
         std::vector<unsigned> props;
         while (std::getline(text_file, line))
         {
+            unsigned start, end;
+            int label;
+            float start_time, end_time;
+            std::string video_file_name;
             start = end = 0;
+            start_time = end_time = 0.0;
             std::istringstream line_ss(line);
             if (!(line_ss >> video_file_name >> label))
                 continue;
             props = open_video_context(video_file_name.c_str());
             if (!_file_list_frame_num)
             {
-                if (line_ss >> start_time)
-                {
-                    if (line_ss >> end_time)
-                    {
-                        if (start_time >= end_time)
-                        {
-                            WRN("Start and end time/frame are not satisfying the condition, skipping the file" + video_file_name)
-                            continue;
-                        }
-                        start = static_cast<int>(std::ceil(start_time * (props[3] / (double)props[4])));
-                        end = static_cast<int>(std::floor(end_time * (props[3] / (double)props[4])));
-                    }
-                }
-                end = end != 0 ? end : props[2];
+                line_ss >> start_time >> end_time;
+                start = static_cast<unsigned int>(std::ceil(start_time * (props[3] / (double)props[4])));
+                end = static_cast<unsigned int>(std::floor(end_time * (props[3] / (double)props[4])));
             }
             else
             {
-                if (line_ss >> start)
-                {
-                    if (line_ss >> end)
-                    {
-                        if (start >= end)
-                        {
-                            WRN("Start and end time/frame are not satisfying the condition, skipping the file" + video_file_name)
-                            continue;
-                        }
-                        end = end ? end : props[2];
-                    }
-                }
+                line_ss >> start >> end;
+            }
+            end = end != 0 ? end : props[2];
+            if ((end > props[2]) || (start >= end))
+            {
+                INFO("Invalid start or end time/frame passed, skipping the file" + video_file_name)
+                continue;
             }
             add(video_file_name, label, (end - start), start);
         }

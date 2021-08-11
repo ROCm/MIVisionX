@@ -58,9 +58,6 @@ int main(int argc, const char ** argv)
     bool processing_device = 1;
     size_t shard_count = 2;
     int shuffle = 0;
-    unsigned sequence_length = 3;
-    unsigned frame_step = 3;
-    unsigned frame_stride = 1;
     int dec_mode = 0;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
@@ -126,6 +123,9 @@ int main(int argc, const char ** argv)
 
     if(video_mode != 0)
     {
+        unsigned sequence_length = 3;
+        unsigned frame_step = 3;
+        unsigned frame_stride = 1;
         if (decode_height <= 0 || decode_width <= 0)
         {
             std::cout << "Output width and height is needed for video decode\n";

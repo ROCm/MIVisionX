@@ -126,8 +126,8 @@ Reader::Status VideoReader::get_sequences()
     Reader::Status status = Reader::Status::OK;
     for (size_t i = 0; i < _video_count; i++)
     {
-        int start = std::get<0>(_start_end_frame[i]);
-        // int end = std::get<1>(_start_end_frame[i]);
+        unsigned start = std::get<0>(_start_end_frame[i]);
+        // unsigned end = std::get<1>(_start_end_frame[i]);
         size_t max_sequence_frames = (_sequence_length - 1) * _stride;
         for(size_t sequence_start = start; (sequence_start + max_sequence_frames) <  (start + _video_frame_count[i]); sequence_start += _step)
         {

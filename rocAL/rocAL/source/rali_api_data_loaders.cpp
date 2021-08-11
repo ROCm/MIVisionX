@@ -165,7 +165,7 @@ raliJpegFileSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0, 0, 0,
+                                                                                        source_path, "",
                                                                                         StorageType::FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -242,7 +242,7 @@ raliJpegFileSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path, "", 0, 0, 0,
+                                                                          source_path, "",
                                                                           std::map<std::string, std::string>(),
                                                                           StorageType::FILE_SYSTEM,
                                                                           decType,
@@ -326,17 +326,18 @@ raliSequenceReader(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path, "", sequence_length,
-                                                                          step, stride,
-                                                                          std::map<std::string, std::string>(),
-                                                                          StorageType::SEQUENCE_FILE_SYSTEM,
-                                                                          DecoderType::TURBO_JPEG,
-                                                                          shuffle,
-                                                                          loop,
-                                                                          context->user_batch_size(),
-                                                                          context->master_graph->mem_type(),
-                                                                          context->master_graph->meta_data_reader(),
-                                                                          decoder_keep_original);
+                                                                            source_path, "",
+                                                                            std::map<std::string, std::string>(),
+                                                                            StorageType::SEQUENCE_FILE_SYSTEM,
+                                                                            DecoderType::TURBO_JPEG,
+                                                                            shuffle,
+                                                                            loop,
+                                                                            context->user_batch_size(),
+                                                                            context->master_graph->mem_type(),
+                                                                            context->master_graph->meta_data_reader(),
+                                                                            decoder_keep_original, "", 
+                                                                            sequence_length,
+                                                                            step, stride);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -416,8 +417,6 @@ raliSequenceReaderSingleShard(
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "", 
-                                                                                        sequence_length,
-                                                                                        step, stride,
                                                                                         StorageType::SEQUENCE_FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -425,7 +424,10 @@ raliSequenceReaderSingleShard(
                                                                                         context->user_batch_size(),
                                                                                         context->master_graph->mem_type(),
                                                                                         context->master_graph->meta_data_reader(),
-                                                                                        decoder_keep_original);
+                                                                                        decoder_keep_original,
+                                                                                        std::map<std::string, std::string>(),
+                                                                                        sequence_length,
+                                                                                        step, stride);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -490,7 +492,7 @@ raliJpegCaffe2LMDBRecordSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                             source_path, "", 0, 0, 0,
+                                                                             source_path, "",
                                                                              std::map<std::string, std::string>(),
                                                                              StorageType::CAFFE2_LMDB_RECORD,
                                                                              DecoderType::TURBO_JPEG,
@@ -568,7 +570,7 @@ raliJpegCaffe2LMDBRecordSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0, 0, 0,
+                                                                                        source_path, "",
                                                                                         StorageType::CAFFE2_LMDB_RECORD,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -641,7 +643,7 @@ raliJpegCaffeLMDBRecordSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                             source_path, "", 0, 0, 0,
+                                                                             source_path, "",
                                                                              std::map<std::string, std::string>(),
                                                                              StorageType::CAFFE_LMDB_RECORD,
                                                                              DecoderType::TURBO_JPEG,
@@ -720,7 +722,7 @@ raliJpegCaffeLMDBRecordSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0, 0, 0,
+                                                                                        source_path, "",
                                                                                         StorageType::CAFFE_LMDB_RECORD,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -794,7 +796,7 @@ raliJpegCOCOFileSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                            source_path, json_path, 0, 0, 0,
+                                                                            source_path, json_path,
                                                                             std::map<std::string, std::string>(),
                                                                             StorageType::COCO_FILE_SYSTEM,
                                                                             DecoderType::TURBO_JPEG,
@@ -874,7 +876,7 @@ raliJpegCOCOFileSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, json_path, 0, 0, 0,
+                                                                                        source_path, json_path,
                                                                                         StorageType::COCO_FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -1208,7 +1210,7 @@ raliJpegTFRecordSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                             source_path, "", 0, 0, 0,
+                                                                             source_path, "",
                                                                              feature_key_map,
                                                                              StorageType::TF_RECORD,
                                                                              DecoderType::TURBO_JPEG,
@@ -1284,7 +1286,7 @@ raliJpegTFRecordSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0, 0, 0,
+                                                                                        source_path, "",
                                                                                         StorageType::TF_RECORD,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -1354,7 +1356,7 @@ raliRawTFRecordSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                             source_path, "", 0, 0, 0,
+                                                                             source_path, "",
                                                                              feature_key_map,
                                                                              StorageType::TF_RECORD,
                                                                              DecoderType::SKIP_DECODE,
@@ -1426,7 +1428,7 @@ raliRawTFRecordSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 0, 0, 0,
+                                                                                        source_path, "",
                                                                                         StorageType::TF_RECORD,
                                                                                         DecoderType::SKIP_DECODE,
                                                                                         shuffle,

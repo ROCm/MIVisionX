@@ -175,7 +175,6 @@ inline void calculate_ious_for_box(float *ious, BoundingBoxCord box, std::vector
         _anchor.r = anchors[m + 2];
         _anchor.b = anchors[m + 3];
         float x = ssd_BBoxIntersectionOverUnion(box, _anchor, true);
-        // std::cout << "\niou :: " << x;
         ious[anchor_idx] = x;
         if (ious[anchor_idx] > best_iou)
         {
@@ -220,19 +219,16 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         //Calculate Ious
         //ious size - bboxes count x anchors count
         std::vector<float> ious(bb_count * anchors_size);
-        int m;
-        uint bb_idx;
-        BoundingBoxCord box;
-        std::cerr << "Numer of bb count:" << bb_count << std::endl;
         bb_coords.resize(bb_count);
         bb_labels.resize(bb_count);
         encoded_bb.resize(anchors_size);
         encoded_labels.resize(anchors_size);
 
-#pragma omp parallel for num_threads(bb_count) shared(coords_buf, bb_coords, bb_labels, labels_buf, anchors)
-        for (bb_idx = 0; bb_idx < bb_count; bb_idx++)
+#pragma omp parallel for 
+        for (uint bb_idx = 0; bb_idx < bb_count; bb_idx++)
         {
-            m = bb_idx * 4;
+            int m = bb_idx * 4;
+            BoundingBoxCord box;
             box.l = coords_buf[m];
             box.t = coords_buf[m + 1];
             box.r = coords_buf[m + 2];
@@ -242,13 +238,13 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
             bb_coords[bb_idx] = box;
             bb_labels[bb_idx] = labels_buf[bb_idx];
         }
-        BoundingBoxCord box_bestidx;
-        BoundingBoxCord _anchor, _anchor_xcyxwh;
+        
         // Depending on the matches ->place the best bbox instead of the corresponding anchor_idx in anchor
-#pragma omp parallel for num_threads(anchors_size) shared(encoded_bb, encoded_labels, anchors, ious, bb_count)
-        for (unsigned anchor_idx = 0; anchor_idx < anchors_size; ++anchor_idx)
+#pragma omp parallel for  
+        for (unsigned anchor_idx = 0; anchor_idx < anchors_size; anchor_idx++)
         {
             int m = anchor_idx * 4;
+            BoundingBoxCord box_bestidx, _anchor, _anchor_xcyxwh;
             _anchor.l = anchors[m];
             _anchor.t = anchors[m + 1];
             _anchor.r = anchors[m + 2];
@@ -278,8 +274,6 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         }
         bb_coords.clear();
         bb_labels.clear();
-        std::cerr << "anchor bbox size:" << encoded_bb.size();
-        std::cerr << "anchor labels size:" << encoded_labels.size();
         full_batch_meta_data->get_bb_cords_batch()[i] = encoded_bb;
         full_batch_meta_data->get_bb_labels_batch()[i] = encoded_labels;
         encoded_bb.clear();

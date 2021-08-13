@@ -28,7 +28,7 @@ RUN apt-get -y install autoconf automake build-essential cmake git-core libass-d
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
-RUN apt-get -y install wget sqlite3 libsqlite3-dev libbz2-dev libssl-dev python-dev python3-dev autoconf automake libtool curl make g++ unzip && \
+RUN apt-get -y install wget sqlite3 libsqlite3-dev libbz2-dev libssl-dev python-dev python3-dev  python3-venv autoconf automake libtool curl make g++ unzip && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         # unzip half-1.12.0.zip -d half-files && sudo cp half-files/include/half.hpp /usr/local/include/ && \ 
         # wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 && tar xjvf boost_1_72_0.tar.bz2 && \

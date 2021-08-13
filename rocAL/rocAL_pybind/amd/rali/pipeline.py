@@ -287,7 +287,9 @@ class Pipeline(object):
     def getImageLabels(self, array):
         b.getImageLabels(self._handle, array)
 
-
+    def copyEncodedBoxesAndLables(self, bbox_array, label_array):
+        b.raliCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)
+        
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
 

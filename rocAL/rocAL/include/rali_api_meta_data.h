@@ -135,4 +135,9 @@ extern "C" void RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all
 /// \param scale Rescales the box and anchor values before the offset is calculated (for example, to return to the absolute values).
 extern "C" void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<float> anchors, float criteria,
                                              std::vector<float>  means , std::vector<float>  stds ,  bool offset = false, float scale = 1.0);
+
+/// \param boxes_buf  user's buffer that will be filled with encoded bounding boxes . Its needs to be at least of size batch_size.
+/// \param labels_buf  user's buffer that will be filled with encoded labels . Its needs to be at least of size batch_size.
+extern "C" void RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_buf, int* labels_buf);
+
 #endif //MIVISIONX_RALI_API_META_DATA_H

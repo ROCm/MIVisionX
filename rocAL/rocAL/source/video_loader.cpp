@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include "vx_ext_amd.h"
 
 #ifdef RALI_VIDEO
-
 VideoLoader::VideoLoader(DeviceResources dev_resources) : _circ_buff(dev_resources),
                                                           _swap_handle_time("Swap_handle_time", DBG_TIMING)
 {

@@ -23,4 +23,7 @@ THE SOFTWARE.
 #pragma once
 #include <memory>
 #include "video_decoder.h"
+
+#ifdef RALI_VIDEO
 std::shared_ptr<VideoDecoder> create_video_decoder(VideoDecoderConfig config);
+#endif

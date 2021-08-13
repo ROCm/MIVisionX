@@ -23,19 +23,22 @@ THE SOFTWARE.
 #pragma once
 #include <boost/filesystem.hpp>
 #include <dirent.h>
+#include <sstream>
+#include <iostream>
+#include <fstream>
+#include <tuple>
+#ifdef RALI_VIDEO
 extern "C"
 {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 }
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <tuple>
+#endif
 #include "commons.h"
 
 namespace filesys = boost::filesystem;
 
+#ifdef RALI_VIDEO
 typedef struct video_properties
 {
     unsigned width, height, videos_count;
@@ -51,3 +54,4 @@ void substring_extraction(std::string const &str, const char delim, std::vector<
 std::vector<unsigned> open_video_context(const char *video_file_path);
 video_properties get_video_properties_from_txt_file(const char *file_path, bool file_list_frame_num);
 video_properties find_video_properties(const char *source_path, bool file_list_frame_num);
+#endif

@@ -33,6 +33,7 @@ using namespace std;
 
 namespace filesys = boost::filesystem;
 
+#ifdef RALI_VIDEO
 VideoLabelReader::VideoLabelReader()
 {
     _src_dir = nullptr;
@@ -250,3 +251,4 @@ void VideoLabelReader::read_files(const std::string &_path)
     closedir(_src_dir);
     std::sort(_subfolder_video_file_names.begin(), _subfolder_video_file_names.end());
 }
+#endif

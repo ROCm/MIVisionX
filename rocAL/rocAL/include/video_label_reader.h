@@ -26,13 +26,9 @@ THE SOFTWARE.
 #include "commons.h"
 #include "meta_data.h"
 #include "meta_data_reader.h"
-extern "C"
-{
-#include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-}
 #include "video_properties.h"
 
+#ifdef RALI_VIDEO
 class VideoLabelReader : public MetaDataReader
 {
 public:
@@ -62,3 +58,4 @@ private:
     int _video_idx = 0;
     bool _file_list_frame_num = true;
 };
+#endif

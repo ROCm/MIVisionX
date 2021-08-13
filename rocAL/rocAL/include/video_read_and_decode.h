@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include "timing_debug.h"
 #include "video_loader_module.h"
 #include "video_properties.h"
+#ifdef RALI_VIDEO
 extern "C"
 {
 #include <libavutil/pixdesc.h>
@@ -117,3 +118,4 @@ private:
     AVPixelFormat _out_pix_fmt;
     VideoDecoderConfig _video_decoder_config;
 };
+#endif

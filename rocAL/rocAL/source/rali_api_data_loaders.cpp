@@ -1753,7 +1753,6 @@ raliVideoFileResize(
     if(!p_context || dest_width == 0 || dest_height == 0)
         THROW("Null values passed as input")
 
-    Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -1791,7 +1790,7 @@ raliVideoFileResize(
                               context->master_graph->mem_type(),
                               color_format );
 
-        output = context->master_graph->create_loader_output_image(info);
+        Image* output = context->master_graph->create_loader_output_image(info);
 
         // For the resize node, user can create an image with a different width and height
         ImageInfo output_info = info;
@@ -1866,7 +1865,6 @@ raliVideoFileResizeSingleShard(
     if(!p_context || dest_width == 0 || dest_height == 0)
         THROW("Null values passed as input")
 
-    Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -1910,7 +1908,7 @@ raliVideoFileResizeSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
 
-        output = context->master_graph->create_loader_output_image(info);
+        Image* output = context->master_graph->create_loader_output_image(info);
 
         // For the resize node, user can create an image with a different width and height
         ImageInfo output_info = info;

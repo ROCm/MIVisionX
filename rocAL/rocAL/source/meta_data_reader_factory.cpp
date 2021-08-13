@@ -47,6 +47,7 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             return ret;
         }
             break;
+#ifdef RALI_VIDEO
         case MetaDataReaderType::VIDEO_LABEL_READER:
         {
             if(config.type() != MetaDataType::Label)
@@ -56,6 +57,7 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             return ret;
         }
             break;
+#endif
         case MetaDataReaderType::TEXT_FILE_META_DATA_READER:
         {
             if(config.type() != MetaDataType::Label)

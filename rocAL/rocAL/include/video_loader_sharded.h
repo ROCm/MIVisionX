@@ -56,5 +56,4 @@ private:
     size_t _prefetch_queue_depth; // Used for circular buffer's internal buffer
     Image *_output_image;
 };
-
 #endif

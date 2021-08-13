@@ -25,22 +25,23 @@ THE SOFTWARE.
 
 namespace filesys = boost::filesystem;
 
+#ifdef RALI_VIDEO
 std::tuple<VideoDecoder::ColorFormat, unsigned, AVPixelFormat>
 video_interpret_color_format(RaliColorFormat color_format)
 {
     switch (color_format)
     {
-    case RaliColorFormat::RGB24:
-        return std::make_tuple(VideoDecoder::ColorFormat::RGB, 3, AV_PIX_FMT_RGB24);
+        case RaliColorFormat::RGB24:
+            return std::make_tuple(VideoDecoder::ColorFormat::RGB, 3, AV_PIX_FMT_RGB24);
 
-    case RaliColorFormat::BGR24:
-        return std::make_tuple(VideoDecoder::ColorFormat::BGR, 3, AV_PIX_FMT_BGR24);
+        case RaliColorFormat::BGR24:
+            return std::make_tuple(VideoDecoder::ColorFormat::BGR, 3, AV_PIX_FMT_BGR24);
 
-    case RaliColorFormat::U8:
-        return std::make_tuple(VideoDecoder::ColorFormat::GRAY, 1, AV_PIX_FMT_GRAY8);
+        case RaliColorFormat::U8:
+            return std::make_tuple(VideoDecoder::ColorFormat::GRAY, 1, AV_PIX_FMT_GRAY8);
 
-    default:
-        throw std::invalid_argument("Invalid color format\n");
+        default:
+            throw std::invalid_argument("Invalid color format\n");
     }
 }
 
@@ -184,9 +185,6 @@ VideoReadAndDecode::load(unsigned char *buff,
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start(); // Debug timing
     size_t fsize = 1280 * 720 * 3;
-    if (fsize == 0)
-        WRN("Opened file " + _reader->id() + " of size 0");
-
     std::vector<size_t> sequential_decode_sequences;
     std::vector<size_t> parallel_decode_sequences;
     std::vector<int> video_index;
@@ -291,3 +289,4 @@ VideoReadAndDecode::load(unsigned char *buff,
     _sequence_video_idx.clear();
     return VideoLoaderModuleStatus::OK;
 }
+#endif

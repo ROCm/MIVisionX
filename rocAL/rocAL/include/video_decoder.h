@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <cstddef>
 #include <iostream>
 #include <vector>
+#ifdef RALI_VIDEO
 extern "C"
 {
 #include <libavutil/imgutils.h>
@@ -36,7 +37,9 @@ extern "C"
 #include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
 }
+#endif
 #include "parameter_factory.h"
+
 enum class VideoDecoderType
 {
     FFMPEG_VIDEO = 0, //!< Can decode video stream
@@ -51,6 +54,7 @@ public:
     VideoDecoderType _type = VideoDecoderType::FFMPEG_VIDEO;
 };
 
+#ifdef RALI_VIDEO
 class VideoDecoder
 {
 public:
@@ -75,3 +79,4 @@ public:
     virtual void release() = 0;
     virtual ~VideoDecoder() = default;
 };
+#endif

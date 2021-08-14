@@ -204,6 +204,7 @@ inline int find_best_box_for_anchor(unsigned anchor_idx, const std::vector<float
 
 void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, pMetaDataBatch full_batch_meta_data, float criteria, bool offset, float scale)
 {
+    #pragma omp parallel for 
     for (int i = 0; i < full_batch_meta_data->size(); i++)
     {
         auto bb_count = full_batch_meta_data->get_bb_labels_batch()[i].size();
@@ -224,7 +225,7 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         encoded_bb.resize(anchors_size);
         encoded_labels.resize(anchors_size);
 
-#pragma omp parallel for 
+// #pragma omp parallel for 
         for (uint bb_idx = 0; bb_idx < bb_count; bb_idx++)
         {
             int m = bb_idx * 4;
@@ -240,7 +241,7 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         }
         
         // Depending on the matches ->place the best bbox instead of the corresponding anchor_idx in anchor
-#pragma omp parallel for  
+// #pragma omp parallel for  
         for (unsigned anchor_idx = 0; anchor_idx < anchors_size; anchor_idx++)
         {
             int m = anchor_idx * 4;

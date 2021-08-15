@@ -31,13 +31,11 @@ VideoLoaderSingleShardNode::VideoLoaderSingleShardNode(Image *output, DeviceReso
 }
 
 void
-VideoLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-                           VideoDecoderType decoder_type, DecodeMode decoder_mode, unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frames_count, unsigned frame_rate,
+VideoLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, VideoStorageType storage_type, VideoDecoderType decoder_type, DecodeMode decoder_mode, 
+                           unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frames_count, unsigned frame_rate,
                            std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names)
 {
     //_decode_mode = decoder_mode;
-    _source_path = source_path;
-    _loop = loop;
     if(!_loader_module)
         THROW("ERROR: loader module is not set for ImageLoaderNode, cannot initialize")
     if(shard_count < 1)
@@ -46,7 +44,7 @@ VideoLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const 
         THROW("Shard is should be smaller than shard count")
     _loader_module->set_output_image(_outputs[0]);
     // Set reader and decoder config accordingly for the ImageLoaderNode
-    auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, std::map<std::string, std::string>(), shuffle, loop);
+    auto reader_cfg = VideoReaderConfig(storage_type, source_path, shuffle, loop);
     reader_cfg.set_shard_count(shard_count);
     reader_cfg.set_shard_id(shard_id);
     reader_cfg.set_batch_count(load_batch_count);

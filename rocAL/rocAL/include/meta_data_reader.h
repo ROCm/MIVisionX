@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include <string>
 #include <memory>
+#include <map>
 #include "meta_data.h"
 
 enum class MetaDataReaderType

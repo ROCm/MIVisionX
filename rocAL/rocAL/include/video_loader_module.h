@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #pragma once
 #include <memory>
-#include "reader.h"
+#include "video_reader.h"
 #include "video_decoder.h"
 #include "commons.h"
 #include "image.h"
@@ -45,7 +45,7 @@ enum class VideoLoaderModuleStatus
 class VideoLoaderModule
 {
 public:
-    virtual void initialize(ReaderConfig reader_config, VideoDecoderConfig decoder_config, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size) = 0;
+    virtual void initialize(VideoReaderConfig reader_config, VideoDecoderConfig decoder_config, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size) = 0;
     virtual void set_output_image(Image *output_image) = 0;
     virtual VideoLoaderModuleStatus load_next() = 0; // Loads the next image data into the Image's buffer set by calling into the set_output_image
     virtual void reset() = 0;                        // Resets the loader to load from the beginning of the media

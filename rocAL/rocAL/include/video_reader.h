@@ -25,79 +25,103 @@ THE SOFTWARE.
 #include <tuple>
 #include <string>
 #include <memory>
-#include "reader.h"
 #include "commons.h"
-#include "timing_debug.h"
+#include "meta_data_reader.h"
+
+enum class VideoStorageType
+{
+    VIDEO_FILE_SYSTEM = 0
+};
+
+struct VideoReaderConfig
+{
+    explicit VideoReaderConfig(VideoStorageType type, std::string path = "", bool shuffle = false, bool loop = false) : 
+                            _type(type), _path(path), _shuffle(shuffle), _loop(loop) {}
+    virtual VideoStorageType type() { return _type; };
+    void set_path(const std::string &path) { _path = path; }
+    void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
+    void set_shard_count(size_t shard_count) { _shard_count = shard_count; }
+    /// \param read_batch_count Tells the reader it needs to read the video sequences of load_batch_count. If available video sequences not divisible to load_batch_count,
+    /// the reader will repeat video sequences to make available sequences an even multiple of this load_batch_count
+    void set_batch_count(size_t read_batch_count) { _batch_count = read_batch_count; }
+    /// \param loop if True the reader's available video sequences still the same no matter how many sequences have been read
+    bool shuffle() { return _shuffle; }
+    bool loop() { return _loop; }
+    void set_shuffle(bool shuffle) { _shuffle = shuffle; }
+    void set_loop(bool loop) { _loop = loop; }
+    void set_meta_data_reader(std::shared_ptr<MetaDataReader> meta_data_reader) { _meta_data_reader = meta_data_reader; }
+    void set_sequence_length(unsigned sequence_length) { _sequence_length = sequence_length; }
+    void set_frame_step(unsigned step) { _video_frame_step = step; }
+    void set_frame_stride(unsigned stride) { _video_frame_stride = stride; }
+    void set_video_count(unsigned video_count) { _video_count = video_count; }
+    void set_video_frames_count(std::vector<size_t> frame_count) { _video_frame_count = frame_count; }
+    void set_video_frame_rate(unsigned frame_rate) { _video_frame_rate = frame_rate; }
+    void set_total_frames_count(size_t total) { _total_frames_count = total; }
+    void set_video_file_names(std::vector<std::string> video_file_names) { _video_file_names = video_file_names; }
+    void set_start_end_frame_vector(std::vector<std::tuple<unsigned, unsigned>> start_end_frame) { _start_end_frame_vector = start_end_frame; }
+    size_t get_shard_count() { return _shard_count; }
+    size_t get_shard_id() { return _shard_id; }
+    size_t get_batch_size() { return _batch_count; }
+    size_t get_sequence_length() { return _sequence_length; }
+    size_t get_frame_step() { return _video_frame_step; }
+    size_t get_frame_stride() { return _video_frame_stride; }
+    size_t get_video_count() { return _video_count; }
+    size_t get_video_frame_rate() { return _video_frame_rate; }
+    std::vector<size_t> get_video_frames_count() { return _video_frame_count; }
+    size_t get_total_frames_count() { return _total_frames_count; }
+    std::vector<std::string> get_video_file_names() { return _video_file_names; }
+    std::vector<std::tuple<unsigned, unsigned>> get_start_end_frame_vector() { return _start_end_frame_vector; }
+    std::string path() { return _path; }
+    std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
+private:
+    VideoStorageType _type = VideoStorageType::VIDEO_FILE_SYSTEM;
+    std::string _path = "";
+    size_t _shard_count = 1;
+    size_t _shard_id = 0;
+    size_t _batch_count = 1;     //!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
+    size_t _sequence_length = 1; // Video reader module sequence length
+    size_t _video_frame_step;
+    size_t _video_frame_stride = 1;
+    unsigned _video_count;
+    std::vector<size_t> _video_frame_count;
+    size_t _video_frame_rate;
+    size_t _total_frames_count;
+    std::vector<std::string> _video_file_names;
+    std::vector<std::tuple<unsigned, unsigned>> _start_end_frame_vector;
+    bool _shuffle = false;
+    bool _loop = false;
+    std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
+};
 
 #ifdef RALI_VIDEO
-class VideoReader : public Reader
+class VideoReader
 {
 public:
-    //! Looks up the folder which contains the files, amd loads the image names
+    enum class Status
+    {
+        OK = 0
+    };
+    //! Looks up the folder which contains the files, amd loads the video sequences
     /*!
      \param desc  User provided descriptor containing the files' path.
     */
-    Reader::Status initialize(ReaderConfig desc) override;
+    virtual Status initialize(VideoReaderConfig desc) = 0;
+    
     //! Reads the next resource item
-    /*!
-     \param buf User's provided buffer to receive the loaded images
-     \return Size of the loaded resource
-    */
-    size_t read(unsigned char *buf, size_t max_size) override;
-    //! Opens the next file in the folder
-    /*!
-     \return The size of the next file, 0 if couldn't access it
-    */
-    size_t open() override;
+    virtual size_t get_sequence_info() = 0;
 
     //! Resets the object's state to read from the first file in the folder
-    void reset() override;
+    virtual void reset() = 0;
 
     //! Returns the name of the latest file opened
-    std::string id() override { return _last_id; }
+    virtual std::string id() = 0;
 
-    unsigned count() override;
+    //! Returns the number of items remained in this resource
+    virtual unsigned count() = 0;
 
-    ~VideoReader() override;
+    //! return shuffle_time if applicable
+    virtual unsigned long long get_shuffle_time() = 0;
 
-    int close() override;
-    unsigned long long get_shuffle_time() { return _shuffle_time.get_timing(); }
-
-    VideoReader();
-private:
-    std::string _folder_path;
-    std::vector<std::string> _video_file_names;
-    size_t _video_count;
-    size_t _total_video_frames_count;
-    std::vector<size_t> _video_frame_count;
-    std::vector<std::tuple<size_t, size_t>> _frame_sequences;
-    std::vector<std::tuple<unsigned, unsigned>> _start_end_frame;
-    std::tuple<size_t, size_t> _last_sequence;
-    size_t _sequence_length;
-    size_t _step;
-    size_t _stride;
-    unsigned _curr_sequence_idx;
-    std::string _last_id;
-    size_t _shard_id = 0;
-    size_t _shard_count = 1; // equivalent of batch size
-    //!< _batch_count Defines the quantum count of the sequences to be read. It's usually equal to the user's batch size.
-    /// The loader will repeat sequences if necessary to be able to have the sequences available in multiples of the load_batch_count,
-    /// for instance if there are 10 sequences in the dataset and _batch_count is 3, the loader repeats 2 sequences as if there are 12 sequences available.
-    size_t _batch_count = 1;
-    size_t _user_batch_count = 1;
-    size_t _sequence_id = 0;
-    size_t _in_batch_read_count = 0;
-    bool _loop;
-    bool _shuffle;
-    int _read_counter = 0;
-    //!< _sequence_count_all_shards total_number of sequences to figure out the max_batch_size (usually needed for distributed training).
-    size_t _sequence_count_all_shards;
-    void incremenet_read_ptr();
-    size_t get_sequence_shard_id();
-    void incremenet_sequence_id() { _sequence_id++; }
-    void replicate_last_sequence_to_fill_last_shard();
-    void replicate_last_batch_to_pad_partial_shard();
-    Reader::Status get_sequences();
-    TimingDBG _shuffle_time;
+    virtual ~VideoReader() = default;
 };
 #endif

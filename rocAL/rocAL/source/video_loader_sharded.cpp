@@ -74,7 +74,7 @@ VideoLoaderModuleStatus VideoLoaderSharded::load_next()
     return ret;
 }
 
-void VideoLoaderSharded::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type,
+void VideoLoaderSharded::initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type,
                                     unsigned batch_size, bool keep_orig_size)
 {
     if (_initialized)

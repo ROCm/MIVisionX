@@ -35,8 +35,7 @@ enum class StorageType
     CAFFE_LMDB_RECORD = 3,
     CAFFE2_LMDB_RECORD = 4,
     COCO_FILE_SYSTEM = 5,
-    VIDEO_FILE_SYSTEM = 6,
-    SEQUENCE_FILE_SYSTEM = 7
+    SEQUENCE_FILE_SYSTEM = 6
 };
 
 struct ReaderConfig
@@ -59,26 +58,14 @@ struct ReaderConfig
     void set_loop(bool loop) { _loop = loop; }
     void set_meta_data_reader(std::shared_ptr<MetaDataReader> meta_data_reader) { _meta_data_reader = meta_data_reader; }
     void set_sequence_length(unsigned sequence_length) { _sequence_length = sequence_length; }
-    void set_frame_step(unsigned step) { _video_frame_step = step; }
-    void set_frame_stride(unsigned stride) { _video_frame_stride = stride; }
-    void set_video_count(unsigned video_count) { _video_count = video_count; }
-    void set_video_frames_count(std::vector<size_t> frame_count) { _frame_count = frame_count; }
-    void set_video_frame_rate(unsigned frame_rate) { _frame_rate = frame_rate; }
-    void set_total_frames_count(size_t total) { _total_frames_count = total; }
-    void set_video_file_names(std::vector<std::string> video_file_names) { _video_file_names = video_file_names; }
-    void set_start_end_frame_vector(std::vector<std::tuple<unsigned, unsigned>> start_end_frame) { _start_end_frame_vector = start_end_frame; }
+    void set_frame_step(unsigned step) { _step = step; }
+    void set_frame_stride(unsigned stride) { _stride = stride; }
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
     size_t get_sequence_length() { return _sequence_length; }
-    size_t get_frame_step() { return _video_frame_step; }
-    size_t get_frame_stride() { return _video_frame_stride; }
-    size_t get_video_count() { return _video_count; }
-    size_t get_video_frame_rate() { return _frame_rate; }
-    std::vector<size_t> get_video_frames_count() { return _frame_count; }
-    size_t get_total_frames_count() { return _total_frames_count; }
-    std::vector<std::string> get_video_file_names() { return _video_file_names; }
-    std::vector<std::tuple<unsigned, unsigned>> get_start_end_frame_vector() { return _start_end_frame_vector; }
+    size_t get_frame_step() { return _step; }
+    size_t get_frame_stride() { return _stride; }
     std::string path() { return _path; }
     std::string json_path() { return _json_path; }
     std::map<std::string, std::string> feature_key_map() { return _feature_key_map; }
@@ -94,14 +81,8 @@ private:
     size_t _shard_id = 0;
     size_t _batch_count = 1;     //!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
     size_t _sequence_length = 1; // Video reader module sequence length
-    size_t _video_frame_step;
-    size_t _video_frame_stride = 1;
-    unsigned _video_count;
-    std::vector<size_t> _frame_count;
-    size_t _frame_rate;
-    size_t _total_frames_count;
-    std::vector<std::string> _video_file_names;
-    std::vector<std::tuple<unsigned, unsigned>> _start_end_frame_vector;
+    size_t _step;
+    size_t _stride = 1;
     bool _shuffle = false;
     bool _loop = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader and tf_record_reader

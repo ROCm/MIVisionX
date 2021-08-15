@@ -31,7 +31,7 @@ THE SOFTWARE.
 #include <boost/filesystem.hpp>
 #include "commons.h"
 #include "ffmpeg_video_decoder.h"
-#include "reader_factory.h"
+#include "video_reader_factory.h"
 #include "timing_debug.h"
 #include "video_loader_module.h"
 #include "video_properties.h"
@@ -48,7 +48,7 @@ public:
     ~VideoReadAndDecode();
     size_t count();
     void reset();
-    void create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size);
+    void create(VideoReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size);
     void set_video_process_count(size_t video_count)
     {
         _video_process_count = (video_count <= _max_video_count) ? video_count : _max_video_count;
@@ -88,23 +88,19 @@ private:
         bool _is_decoder_instance;
     };
     std::vector<std::shared_ptr<VideoDecoder>> _video_decoder;
-    std::shared_ptr<Reader> _reader;
+    std::shared_ptr<VideoReader> _video_reader;
     size_t _max_video_count = 50;
     size_t _video_process_count;
-    std::vector<std::vector<unsigned char>> _compressed_buff;
     std::vector<std::string> _video_names;
     std::map<std::string, video_map> _video_file_name_map;
-    size_t _compressed_image_size;
-    size_t _actual_read_size;
     std::vector<unsigned char *> _decompressed_buff_ptrs;
     std::vector<size_t> _actual_decoded_width;
     std::vector<size_t> _actual_decoded_height;
     std::vector<size_t> _original_width;
     std::vector<size_t> _original_height;
-    std::vector<size_t> _start_frame;
+    std::vector<size_t> _sequence_start_frame;
     std::vector<std::string> _video_path;
     std::vector<int> _sequence_video_idx;
-    static const size_t MAX_COMPRESSED_SIZE = 1 * 1024 * 1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
     size_t _sequence_count;

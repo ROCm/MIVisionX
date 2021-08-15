@@ -23,13 +23,13 @@ THE SOFTWARE.
 #include <cassert>
 #include <algorithm>
 #include <commons.h>
-#include "video_reader.h"
+#include "video_file_source_reader.h"
 #include <boost/filesystem.hpp>
 namespace filesys = boost::filesystem;
 
-#ifdef RALI_VIDEO
 
-VideoReader::VideoReader() : _shuffle_time("shuffle_time", DBG_TIMING)
+#ifdef RALI_VIDEO
+VideoFileSourceReader::VideoFileSourceReader() : _shuffle_time("shuffle_time", DBG_TIMING)
 {
     _curr_sequence_idx = 0;
     _loop = false;
@@ -38,7 +38,7 @@ VideoReader::VideoReader() : _shuffle_time("shuffle_time", DBG_TIMING)
     _sequence_count_all_shards = 0;
 }
 
-unsigned VideoReader::count()
+unsigned VideoFileSourceReader::count()
 {
     if (_loop)
         return _total_video_frames_count;
@@ -46,9 +46,9 @@ unsigned VideoReader::count()
     return ((ret <= 0) ? 0 : ret);
 }
 
-Reader::Status VideoReader::initialize(ReaderConfig desc)
+VideoReader::Status VideoFileSourceReader::initialize(VideoReaderConfig desc)
 {
-    auto ret = Reader::Status::OK;
+    auto ret = VideoReader::Status::OK;
     _sequence_id = 0;
     _folder_path = desc.path();
     _shard_id = desc.get_shard_id();
@@ -67,7 +67,7 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     _user_batch_count = desc.get_batch_size();
     _batch_count = _user_batch_count / _sequence_length;
     _total_video_frames_count = 0;
-    ret = get_sequences();
+    ret = create_sequence_info();
 
     // the following code is required to make every shard the same size:: required for multi-gpu training
     if (_shard_count > 1 && _batch_count > 1) {
@@ -78,24 +78,18 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
             replicate_last_batch_to_pad_partial_shard();
         }
     }
-    if (ret == Reader::Status::OK && _shuffle)
+    if (ret == VideoReader::Status::OK && _shuffle)
         std::random_shuffle(_frame_sequences.begin(), _frame_sequences.end());
     return ret;
 }
 
-void VideoReader::incremenet_read_ptr()
+void VideoFileSourceReader::incremenet_read_ptr()
 {
     _read_counter += _sequence_length;
     _curr_sequence_idx = (_curr_sequence_idx + 1) % _frame_sequences.size();
 }
 
-size_t VideoReader::open()
-{
-    // opening file is not needed for decoding video, since the low level decoder directly handles it
-    return 0;
-}
-
-size_t VideoReader::read(unsigned char *buf, size_t read_size)
+size_t VideoFileSourceReader::get_sequence_info()
 {
     auto file_path = _video_file_names[std::get<0>(_frame_sequences[_curr_sequence_idx])]; // Get next file name
     _last_id = file_path;
@@ -104,16 +98,11 @@ size_t VideoReader::read(unsigned char *buf, size_t read_size)
     return start_frame;
 }
 
-int VideoReader::close()
-{
-    return 0;
-}
-
-VideoReader::~VideoReader()
+VideoFileSourceReader::~VideoFileSourceReader()
 {
 }
 
-void VideoReader::reset()
+void VideoFileSourceReader::reset()
 {
     if (_shuffle)
         std::random_shuffle(_frame_sequences.begin(), _frame_sequences.end());
@@ -121,9 +110,9 @@ void VideoReader::reset()
     _curr_sequence_idx = 0;
 }
 
-Reader::Status VideoReader::get_sequences()
+VideoReader::Status VideoFileSourceReader::create_sequence_info()
 {
-    Reader::Status status = Reader::Status::OK;
+    VideoReader::Status status = VideoReader::Status::OK;
     for (size_t i = 0; i < _video_count; i++)
     {
         unsigned start = std::get<0>(_start_end_frame[i]);
@@ -149,14 +138,14 @@ Reader::Status VideoReader::get_sequences()
     if(_in_batch_read_count > 0 && _in_batch_read_count < _batch_count)
     {
         replicate_last_sequence_to_fill_last_shard();
-        LOG("VideoReader ShardID [" + TOSTR(_shard_id) + "] Replicated the last sequence " + TOSTR((_batch_count - _in_batch_read_count) ) + " times to fill the last batch")
+        LOG("VideoFileSourceReader ShardID [" + TOSTR(_shard_id) + "] Replicated the last sequence " + TOSTR((_batch_count - _in_batch_read_count) ) + " times to fill the last batch")
     }
     if(_frame_sequences.empty())
-        WRN("VideoReader ShardID ["+ TOSTR(_shard_id)+ "] Did not load any sequences from " + _folder_path)
+        WRN("VideoFileSourceReader ShardID ["+ TOSTR(_shard_id)+ "] Did not load any sequences from " + _folder_path)
     return status;
 }
 
-void VideoReader::replicate_last_sequence_to_fill_last_shard()
+void VideoFileSourceReader::replicate_last_sequence_to_fill_last_shard()
 {
     for (size_t i = _in_batch_read_count; i < _batch_count; i++)
     {
@@ -165,7 +154,7 @@ void VideoReader::replicate_last_sequence_to_fill_last_shard()
     }
 }
 
-void VideoReader::replicate_last_batch_to_pad_partial_shard()
+void VideoFileSourceReader::replicate_last_batch_to_pad_partial_shard()
 {
     if (_frame_sequences.size() >= _batch_count)
     {
@@ -177,7 +166,7 @@ void VideoReader::replicate_last_batch_to_pad_partial_shard()
     }
 }
 
-size_t VideoReader::get_sequence_shard_id()
+size_t VideoFileSourceReader::get_sequence_shard_id()
 {
     if (_batch_count == 0 || _shard_count == 0)
         THROW("Shard (Batch) size cannot be set to 0")

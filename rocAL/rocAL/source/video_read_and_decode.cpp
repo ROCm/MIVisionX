@@ -51,7 +51,7 @@ VideoReadAndDecode::timing()
     Timing t;
     t.image_decode_time = _decode_time.get_timing();
     t.image_read_time = _file_load_time.get_timing();
-    t.shuffle_time = _reader->get_shuffle_time();
+    t.shuffle_time = _video_reader->get_shuffle_time();
     return t;
 }
 
@@ -62,11 +62,11 @@ VideoReadAndDecode::VideoReadAndDecode() : _file_load_time("FileLoadTime", DBG_T
 
 VideoReadAndDecode::~VideoReadAndDecode()
 {
-    _reader = nullptr;
+    _video_reader = nullptr;
     _video_decoder.clear();
 }
 
-void VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
+void VideoReadAndDecode::create(VideoReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
 {
 
     _sequence_length = reader_config.get_sequence_length();
@@ -83,8 +83,6 @@ void VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig d
     _original_height.resize(_batch_size);
     _original_width.resize(_batch_size);
     _sequence_count = _batch_size / _sequence_length;
-    _compressed_buff.resize(_sequence_count);
-    // _compressed_buff.resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
     _decompressed_buff_ptrs.resize(_sequence_count);
     _video_decoder_config = decoder_config;
     size_t i = 0;
@@ -115,18 +113,18 @@ void VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig d
             i++;
         }
     }
-    _reader = create_reader(reader_config);
+    _video_reader = create_video_reader(reader_config);
 }
 
 void VideoReadAndDecode::reset()
 {
-    _reader->reset();
+    _video_reader->reset();
 }
 
 size_t
 VideoReadAndDecode::count()
 {
-    return _reader->count();
+    return _video_reader->count();
 }
 
 float VideoReadAndDecode::convert_framenum_to_timestamp(size_t frame_number)
@@ -138,7 +136,7 @@ float VideoReadAndDecode::convert_framenum_to_timestamp(size_t frame_number)
 
 void VideoReadAndDecode::decode_sequence(size_t sequence_index)
 {
-    if (_video_decoder[_sequence_video_idx[sequence_index]]->Decode(_decompressed_buff_ptrs[sequence_index], _start_frame[sequence_index], _sequence_length, _stride, _max_decoded_width, _max_decoded_height,
+    if (_video_decoder[_sequence_video_idx[sequence_index]]->Decode(_decompressed_buff_ptrs[sequence_index], _sequence_start_frame[sequence_index], _sequence_length, _stride, _max_decoded_width, _max_decoded_height,
                                                                     _max_decoded_stride, _out_pix_fmt) == VideoDecoder::Status::OK)
     {
         for (size_t s = 0; s < _sequence_length; s++)
@@ -166,7 +164,7 @@ VideoReadAndDecode::load(unsigned char *buff,
         THROW("Zero image dimension is not valid")
     if (!buff)
         THROW("Null pointer passed as output buffer")
-    if (_reader->count() < _batch_size)
+    if (_video_reader->count() < _batch_size)
         return VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
     std::vector<size_t> sequence_start_framenum;
     std::vector<std::vector<float>> sequence_frame_timestamps;
@@ -184,23 +182,21 @@ VideoReadAndDecode::load(unsigned char *buff,
 
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start(); // Debug timing
-    size_t fsize = 1280 * 720 * 3;
+
     std::vector<size_t> sequential_decode_sequences;
     std::vector<size_t> parallel_decode_sequences;
     std::vector<int> video_index;
     size_t parallel_sequence_count = 0;
-    _start_frame.resize(_sequence_count);
+    _sequence_start_frame.resize(_sequence_count);
     _video_path.resize(_sequence_count);
     for (size_t i = 0; i < _sequence_count; i++)
     {
-        _compressed_buff[i].resize(MAX_COMPRESSED_SIZE);
-        _start_frame[i] = _reader->read(_compressed_buff[i].data(), fsize);
-        _video_path[i] = _reader->id();
-        _reader->close();
+        _sequence_start_frame[i] = _video_reader->get_sequence_info();
+        _video_path[i] = _video_reader->id();
         _decompressed_buff_ptrs[i] = buff + (i * image_size * _sequence_length);
 
         // Check if the video file is already initialized otherwise use an existing decoder instance to initialize the video 
-        // std::cerr << "\nThe source video is " << _video_path[i] << " MAP : "<<_video_file_name_map.find(_video_path[i])->second._video_map_idx << "\tThe start index is : " << _start_frame[i] << "\n";
+        // std::cerr << "\nThe source video is " << _video_path[i] << " MAP : "<<_video_file_name_map.find(_video_path[i])->second._video_map_idx << "\tThe start index is : " << _sequence_start_frame[i] << "\n";
         std::map<std::string, video_map>::iterator itr = _video_file_name_map.find(_video_path[i]);
         if (itr->second._is_decoder_instance == false)
         {
@@ -273,18 +269,18 @@ VideoReadAndDecode::load(unsigned char *buff,
         delim = '#';
         substring_extraction(_video_path[i], delim, substrings2);
         std::string video_idx = substrings2[0];
-        sequence_start_framenum[i] = _start_frame[i];
+        sequence_start_framenum[i] = _sequence_start_frame[i];
         for (size_t s = 0; s < _sequence_length; s++)
         {
-            sequence_frame_timestamps[i][s] = convert_framenum_to_timestamp(_start_frame[i] + (s * _stride));
-            names[(i * _sequence_length) + s] = video_idx + "#" + file_name + "_" + std::to_string(_start_frame[i] + (s * _stride));
+            sequence_frame_timestamps[i][s] = convert_framenum_to_timestamp(_sequence_start_frame[i] + (s * _stride));
+            names[(i * _sequence_length) + s] = video_idx + "#" + file_name + "_" + std::to_string(_sequence_start_frame[i] + (s * _stride));
             roi_width[(i * _sequence_length) + s] = _actual_decoded_width[s];
             roi_height[(i * _sequence_length) + s] = _actual_decoded_height[s];
         }
     }
     sequence_start_framenum_vec.insert(sequence_start_framenum_vec.begin(), sequence_start_framenum);
     sequence_frame_timestamps_vec.insert(sequence_frame_timestamps_vec.begin(), sequence_frame_timestamps);
-    _start_frame.clear();
+    _sequence_start_frame.clear();
     _video_path.clear();
     _sequence_video_idx.clear();
     return VideoLoaderModuleStatus::OK;

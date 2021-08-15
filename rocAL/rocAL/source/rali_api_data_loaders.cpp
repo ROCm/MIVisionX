@@ -1594,9 +1594,8 @@ raliVideoFileSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                            source_path, "",
-                                                                            std::map<std::string, std::string>(),
-                                                                            StorageType::VIDEO_FILE_SYSTEM,
+                                                                            source_path,
+                                                                            VideoStorageType::VIDEO_FILE_SYSTEM,
                                                                             VideoDecoderType::FFMPEG_VIDEO,
                                                                             decoder_mode,
                                                                             sequence_length,
@@ -1695,9 +1694,8 @@ raliVideoFileSourceSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "",
-                                                                                        std::map<std::string, std::string>(),
-                                                                                        StorageType::VIDEO_FILE_SYSTEM,
+                                                                                        source_path,
+                                                                                        VideoStorageType::VIDEO_FILE_SYSTEM,
                                                                                         VideoDecoderType::FFMPEG_VIDEO,
                                                                                         decoder_mode,
                                                                                         sequence_length,
@@ -1800,9 +1798,8 @@ raliVideoFileResize(
         resize_output = context->master_graph->create_image(output_info, false);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                            source_path, "",
-                                                                            std::map<std::string, std::string>(),
-                                                                            StorageType::VIDEO_FILE_SYSTEM,
+                                                                            source_path,
+                                                                            VideoStorageType::VIDEO_FILE_SYSTEM,
                                                                             VideoDecoderType::FFMPEG_VIDEO,
                                                                             decoder_mode,
                                                                             sequence_length,
@@ -1918,9 +1915,8 @@ raliVideoFileResizeSingleShard(
         resize_output = context->master_graph->create_image(output_info, false);
 
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "",
-                                                                                        std::map<std::string, std::string>(),
-                                                                                        StorageType::VIDEO_FILE_SYSTEM,
+                                                                                        source_path,
+                                                                                        VideoStorageType::VIDEO_FILE_SYSTEM,
                                                                                         VideoDecoderType::FFMPEG_VIDEO,
                                                                                         decoder_mode,
                                                                                         sequence_length,

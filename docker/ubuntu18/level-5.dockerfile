@@ -52,9 +52,7 @@ RUN apt-get -y install python-dev python3-dev libgflags-dev libgoogle-glog-dev l
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd ../../ && \
         wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 && tar xjvf boost_1_72_0.tar.bz2 && \
-        cd boost_1_72_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
-        ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
-        sudo ./b2 install threading=multi link=static --with-system --with-filesystem && cd ../ && \
+        cd boost_1_72_0 && ./bootstrap.sh && sudo ./b2 install && \
         git clone -b 0.7  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=OCL ../ && make -j4 && sudo make install && cd
 

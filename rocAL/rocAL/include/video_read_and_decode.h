@@ -98,8 +98,8 @@ private:
     std::vector<size_t> _actual_decoded_height;
     std::vector<size_t> _original_width;
     std::vector<size_t> _original_height;
-    std::vector<size_t> _sequence_start_frame;
-    std::vector<std::string> _video_path;
+    std::vector<size_t> _sequence_start_frame_num;
+    std::vector<std::string> _sequence_video_path;
     std::vector<int> _sequence_video_idx;
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;

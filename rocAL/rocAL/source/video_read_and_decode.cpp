@@ -136,8 +136,8 @@ float VideoReadAndDecode::convert_framenum_to_timestamp(size_t frame_number)
 
 void VideoReadAndDecode::decode_sequence(size_t sequence_index)
 {
-    if (_video_decoder[_sequence_video_idx[sequence_index]]->Decode(_decompressed_buff_ptrs[sequence_index], _sequence_start_frame[sequence_index], _sequence_length, _stride, _max_decoded_width, _max_decoded_height,
-                                                                    _max_decoded_stride, _out_pix_fmt) == VideoDecoder::Status::OK)
+    if (_video_decoder[_sequence_video_idx[sequence_index]]->Decode(_decompressed_buff_ptrs[sequence_index], _sequence_start_frame_num[sequence_index], _sequence_length, _stride,
+                                                                    _max_decoded_width, _max_decoded_height, _max_decoded_stride, _out_pix_fmt) == VideoDecoder::Status::OK)
     {
         for (size_t s = 0; s < _sequence_length; s++)
         {
@@ -180,24 +180,24 @@ VideoReadAndDecode::load(unsigned char *buff,
     _max_decoded_height = max_decoded_height;
     _max_decoded_stride = max_decoded_width * output_planes;
 
-    // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start(); // Debug timing
 
     std::vector<size_t> sequential_decode_sequences;
     std::vector<size_t> parallel_decode_sequences;
     std::vector<int> video_index;
     size_t parallel_sequence_count = 0;
-    _sequence_start_frame.resize(_sequence_count);
-    _video_path.resize(_sequence_count);
+    _sequence_start_frame_num.resize(_sequence_count);
+    _sequence_video_path.resize(_sequence_count);
     for (size_t i = 0; i < _sequence_count; i++)
     {
-        _sequence_start_frame[i] = _video_reader->get_sequence_info();
-        _video_path[i] = _video_reader->id();
+        auto sequence_info = _video_reader->get_sequence_info();
+        _sequence_start_frame_num[i] = sequence_info.start_frame_number;
+        _sequence_video_path[i] = sequence_info.video_file_name;
         _decompressed_buff_ptrs[i] = buff + (i * image_size * _sequence_length);
 
         // Check if the video file is already initialized otherwise use an existing decoder instance to initialize the video 
-        // std::cerr << "\nThe source video is " << _video_path[i] << " MAP : "<<_video_file_name_map.find(_video_path[i])->second._video_map_idx << "\tThe start index is : " << _sequence_start_frame[i] << "\n";
-        std::map<std::string, video_map>::iterator itr = _video_file_name_map.find(_video_path[i]);
+        // std::cerr << "\nThe source video is " << _sequence_video_path[i] << " MAP : "<<_video_file_name_map.find(_sequence_video_path[i])->second._video_map_idx << "\tThe start index is : " << _sequence_start_frame_num[i] << "\n";
+        std::map<std::string, video_map>::iterator itr = _video_file_name_map.find(_sequence_video_path[i]);
         if (itr->second._is_decoder_instance == false)
         {
             std::map<std::string, video_map>::iterator temp_itr;
@@ -226,7 +226,7 @@ VideoReadAndDecode::load(unsigned char *buff,
         _sequence_video_idx.push_back(itr->second._video_map_idx);
 
         // Check if the sequences are from same or different video file 
-        video_index.push_back(_video_file_name_map[_video_path[i]]._video_map_idx);
+        video_index.push_back(_video_file_name_map[_sequence_video_path[i]]._video_map_idx);
         if (std::count(video_index.begin(), video_index.end(), video_index[i]) > 1)
         {
             sequential_decode_sequences.push_back(i);
@@ -264,24 +264,24 @@ VideoReadAndDecode::load(unsigned char *buff,
     {
         std::vector<std::string> substrings1, substrings2;
         char delim = '/';
-        substring_extraction(_video_path[i], delim, substrings1);
+        substring_extraction(_sequence_video_path[i], delim, substrings1);
         std::string file_name = substrings1[substrings1.size() - 1];
         delim = '#';
-        substring_extraction(_video_path[i], delim, substrings2);
+        substring_extraction(_sequence_video_path[i], delim, substrings2);
         std::string video_idx = substrings2[0];
-        sequence_start_framenum[i] = _sequence_start_frame[i];
+        sequence_start_framenum[i] = _sequence_start_frame_num[i];
         for (size_t s = 0; s < _sequence_length; s++)
         {
-            sequence_frame_timestamps[i][s] = convert_framenum_to_timestamp(_sequence_start_frame[i] + (s * _stride));
-            names[(i * _sequence_length) + s] = video_idx + "#" + file_name + "_" + std::to_string(_sequence_start_frame[i] + (s * _stride));
+            sequence_frame_timestamps[i][s] = convert_framenum_to_timestamp(_sequence_start_frame_num[i] + (s * _stride));
+            names[(i * _sequence_length) + s] = video_idx + "#" + file_name + "_" + std::to_string(_sequence_start_frame_num[i] + (s * _stride));
             roi_width[(i * _sequence_length) + s] = _actual_decoded_width[s];
             roi_height[(i * _sequence_length) + s] = _actual_decoded_height[s];
         }
     }
     sequence_start_framenum_vec.insert(sequence_start_framenum_vec.begin(), sequence_start_framenum);
     sequence_frame_timestamps_vec.insert(sequence_frame_timestamps_vec.begin(), sequence_frame_timestamps);
-    _sequence_start_frame.clear();
-    _video_path.clear();
+    _sequence_start_frame_num.clear();
+    _sequence_video_path.clear();
     _sequence_video_idx.clear();
     return VideoLoaderModuleStatus::OK;
 }

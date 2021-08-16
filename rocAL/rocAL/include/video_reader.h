@@ -94,6 +94,12 @@ private:
 };
 
 #ifdef RALI_VIDEO
+struct SequenceInfo 
+{
+    size_t start_frame_number;
+    std::string video_file_name;
+};
+
 class VideoReader
 {
 public:
@@ -108,7 +114,7 @@ public:
     virtual Status initialize(VideoReaderConfig desc) = 0;
     
     //! Reads the next resource item
-    virtual size_t get_sequence_info() = 0;
+    virtual SequenceInfo get_sequence_info() = 0;
 
     //! Resets the object's state to read from the first file in the folder
     virtual void reset() = 0;

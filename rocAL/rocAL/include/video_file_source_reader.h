@@ -39,7 +39,7 @@ public:
     */
     VideoReader::Status initialize(VideoReaderConfig desc) override;
     //! Reads the next resource item
-    size_t get_sequence_info() override;
+    SequenceInfo get_sequence_info() override;
 
     //! Resets the object's state to read from the first file in the folder
     void reset() override;
@@ -60,9 +60,9 @@ private:
     size_t _video_count;
     size_t _total_video_frames_count;
     std::vector<size_t> _video_frame_count;
-    std::vector<std::tuple<size_t, size_t>> _frame_sequences;
+    std::vector<SequenceInfo> _sequences;
     std::vector<std::tuple<unsigned, unsigned>> _start_end_frame;
-    std::tuple<size_t, size_t> _last_sequence;
+    SequenceInfo _last_sequence;
     size_t _sequence_length;
     size_t _step;
     size_t _stride;

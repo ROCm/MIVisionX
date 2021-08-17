@@ -29,7 +29,7 @@ before_script:
   # Run Vision Tests - CPU
   - mkdir build-openvx
   - cd build-openvx
-  - cmake -D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" -D GPU_SUPPORT=OFF ../
+  - cmake -D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" ../
   - make -j4
   - python ../tests/vision_tests/runVisionTests.py --runvx_directory bin --num_frames 10
   - cd ../

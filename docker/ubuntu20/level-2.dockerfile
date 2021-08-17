@@ -11,3 +11,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libnuma-dev wget sudo gnup
         sudo apt-get -y install rocm-dev
 
 WORKDIR /workspace
+
+# install MIVisionX
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+        cmake ../MIVisionX && make -j8 && sudo make install

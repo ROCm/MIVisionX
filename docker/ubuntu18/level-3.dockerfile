@@ -26,3 +26,7 @@ RUN apt-get -y install autoconf automake build-essential cmake git-core libass-d
         make -j8 && sudo make install && cd
 
 WORKDIR /workspace
+
+# install MIVisionX
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+        cmake ../MIVisionX && make -j8 && sudo make install

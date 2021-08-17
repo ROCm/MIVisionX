@@ -5,3 +5,7 @@ RUN apt-get update -y
 RUN apt-get -y install gcc g++ cmake git
 
 WORKDIR /workspace
+
+# install MIVisionX
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+        cmake ../MIVisionX && make -j8 && sudo make install

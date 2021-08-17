@@ -14,3 +14,7 @@ RUN yum-config-manager --enable rhel-server-rhscl-7-rpms && yum -y install --nog
 SHELL [ "/usr/bin/scl", "enable", "devtoolset-7" ]
 
 WORKDIR /workspace
+
+# install MIVisionX
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+        cmake ../MIVisionX && make -j8 && sudo make install

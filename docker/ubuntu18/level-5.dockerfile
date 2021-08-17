@@ -57,3 +57,7 @@ RUN apt-get -y install python-dev python3-dev libgflags-dev libgoogle-glog-dev l
         cmake -DBACKEND=OCL ../ && make -j4 && sudo make install && cd
 
 WORKDIR /workspace
+
+# install MIVisionX
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+        cmake ../MIVisionX && make -j8 && sudo make install

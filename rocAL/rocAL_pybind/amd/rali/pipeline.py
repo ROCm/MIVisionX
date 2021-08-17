@@ -273,6 +273,9 @@ class Pipeline(object):
     def GetImageName(self, array_len):
 
         return b.getImageName(self._handle,array_len)
+    
+    def GetImageId(self, array):
+        b.getImageId(self._handle, array)
 
     def GetBoundingBoxCount(self, array):
         return b.getBoundingBoxCount(self._handle, array)

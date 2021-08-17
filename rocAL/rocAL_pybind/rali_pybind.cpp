@@ -108,6 +108,14 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_image_id(RaliContext context, py::array_t<int> array)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliGetImageId(context,ptr);
+        return py::cast<py::none>(Py_None);
+    }
     py::object wrapper_labels_BB_count_copy(RaliContext context, py::array_t<int> array)
 
     {
@@ -241,6 +249,7 @@ namespace rali{
         m.def("getImageHeight",&raliGetImageHeight);
         m.def("getImagePlanes",&raliGetImagePlanes);
         m.def("getImageName",&wrapper_image_name);
+        m.def("getImageId", &wrapper_image_id);
         m.def("getImageNameLen",&wrapper_image_name_length);
         m.def("getStatus",&raliGetStatus);
         m.def("labelReader",&raliCreateLabelReader);

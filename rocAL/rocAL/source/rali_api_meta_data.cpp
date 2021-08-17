@@ -170,6 +170,23 @@ RALI_API_CALL raliGetImageNameLen(RaliContext p_context, int* buf)
 }
 
 void
+RALI_API_CALL raliGetImageId(RaliContext p_context,  int* buf)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliGetImageId")
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.first.size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    for(unsigned int i = 0; i < meta_data_batch_size; i++)
+    {
+        std::string str_id = meta_data.first[i].erase(0, meta_data.first[i].find_first_not_of('0'));
+        buf[i] = stoi(str_id);
+    }
+}
+
+void
 RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
 {
     

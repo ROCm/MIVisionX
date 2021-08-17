@@ -160,44 +160,33 @@ class RALICOCOIterator(object):
             self.loader.copyToTensorNHWC(
                 self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
 
-        self.img_names_length = np.empty(self.bs, dtype="int32")
-        self.img_names_size = self.loader.GetImageNameLen(
-            self.img_names_length)
-        print("Image name length:", self.img_names_size)
-# Images names of a batch
-        self.Img_name = self.loader.GetImageName(self.img_names_size)
-        print("Image names in a batch ", self.Img_name)
+#Image id of a batch of images
+        self.image_id = np.zeros(self.bs, dtype="int32")
+        self.loader.GetImageId(self.image_id)
 # Count of labels/ bboxes in a batch
         self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
         self.count_batch = self.loader.GetBoundingBoxCount(
             self.bboxes_label_count)
         print("Count Batch:", self.count_batch)
-# 1D labels & bboxes array 
+# 1D labels & bboxes array
         self.encoded_bboxes = np.zeros((self.count_batch*4), dtype="float32")
         self.encoded_labels = np.zeros(self.count_batch, dtype="int32")
         self.loader.copyEncodedBoxesAndLables(
             self.encoded_bboxes, self.encoded_labels)
-
 # Image sizes of a batch
         self.img_size = np.zeros((self.bs * 2), dtype="int32")
         self.loader.GetImgSizes(self.img_size)
         print("Image sizes:", self.img_size)
-        count = 0
-        sum_count = 0
-        for i in range(self.bs):
-            count = self.bboxes_label_count[i]
-            self.img_name = self.Img_name[i*16:(i*16)+12]
-            self.img_name = self.img_name.decode('utf_8')
-            self.img_name = np.char.lstrip(self.img_name, chars='0')
-            sum_count = sum_count + count
 
-        encoded_bboxes_tensor = torch.tensor(self.encoded_bboxes).float().view(self.bs, -1, 4).contiguous()
+        encoded_bboxes_tensor = torch.tensor(self.encoded_bboxes).view(self.bs, -1, 4).contiguous()
         encodded_labels_tensor=  torch.tensor(self.encoded_labels).long().view(self.bs, -1)
+        image_id_tensor = torch.tensor(self.image_id)
+        image_size_tensor = torch.tensor(self.img_size).view(-1, self.bs, 2)
 
         if self.tensor_dtype == types.FLOAT:
-            return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor
+            return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
         elif self.tensor_dtype == types.FLOAT16:
-            return torch.from_numpy(self.out.astype(np.float16)), encoded_bboxes_tensor, encodded_labels_tensor
+            return torch.from_numpy(self.out.astype(np.float16)), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
 
     def reset(self):
         self.loader.raliResetLoaders()
@@ -238,6 +227,10 @@ def main():
         _rali_cpu = False
     bs = int(sys.argv[4])
     display = sys.argv[5]
+
+    if display == "True":
+        print(f'\n Display support yet to be added \n Please use Display as False for time being\n ')
+        exit(0)
     nt = 1
     di = 0
     crop_size = 300
@@ -292,6 +285,8 @@ def main():
             print("**************starts*******************")
             print("\nBBOXES:\n", it[1])
             print("\nLABELS:\n", it[2])
+            print("\nIMAGE ID's:\n", it[3])
+            print("\nIMAGE SIZES:\n", it[4])
             print("**************ends*******************")
             print("**************", i, "*******************")
         data_loader.reset()

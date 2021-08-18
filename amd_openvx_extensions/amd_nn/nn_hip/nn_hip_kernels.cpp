@@ -208,7 +208,7 @@ Hip_Cast_layer_int64_int32(uchar* in, uint in_offset, uint4 in_stride, uchar* ou
 
 __global__ void __attribute__((visibility("default")))
 Hip_Cast_layer_int32_int64(uchar* in, uint in_offset, uint4 in_stride, uchar* out, uint out_offset, uint4 out_stride) {
-   uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+   uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
    in += in_offset + z * in_stride.z + y * in_stride.y + x * in_stride.x;

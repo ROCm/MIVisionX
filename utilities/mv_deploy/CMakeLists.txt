@@ -24,7 +24,7 @@ cmake_minimum_required(VERSION 3.0)
 project(mv_compile)
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(/opt/rocm/mivisionx/include 
+include_directories(${CMAKE_INSTALL_PREFIX}/include
                     ${PROJECT_SOURCE_DIR}
                    )
 

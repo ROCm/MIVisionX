@@ -1,6 +1,7 @@
 #include <cassert>
 #include <algorithm>
 #include <commons.h>
+#include "coco_meta_data_reader.h"
 #include "coco_file_source_reader.h"
 #include <boost/filesystem.hpp>
 #include "meta_data_reader_factory.h"
@@ -43,17 +44,16 @@ Reader::Status COCOFileSourceReader::initialize(ReaderConfig desc)
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
     _shuffle = desc.shuffle();
+    _meta_data_reader = desc.meta_data_reader();
 
     if(_json_path == "")
     {
         std::cout<<"\n _json_path has to be set manually";
         exit(0);
     }
-    MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, _json_path);
-    _meta_data_graph = create_meta_data_graph(config);
-    _meta_data_reader = create_meta_data_reader(config);
-    _meta_data_reader->init(config);
-    _meta_data_reader->read_all(_json_path);
+    if (!_meta_data_reader )
+        std::cout<<"Metadata reader not initialized for COCO file source\n";
+
     ret = subfolder_reading();
     // the following code is required to make every shard the same size:: required for multi-gpu training
     if (_shard_count > 1 && _batch_count > 1) {
@@ -216,24 +216,22 @@ Reader::Status COCOFileSourceReader::open_folder()
     {
         if (_entity->d_type != DT_REG)
             continue;
-
-     if(_meta_data_reader->exists(_entity->d_name))
-        { 
-        if (get_file_shard_id() != _shard_id)
-        {
-            _file_count_all_shards++;            
+        if(!_meta_data_reader || _meta_data_reader->exists(_entity->d_name)) {
+            if (get_file_shard_id() != _shard_id)
+            {
+                _file_count_all_shards++;
+                incremenet_file_id();
+                continue;
+            }
+            _in_batch_read_count++;
+            _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
+            std::string file_path = _folder_path;
+            file_path.append("/");
+            file_path.append(_entity->d_name);
+            _last_file_name = file_path;
+            _file_names.push_back(file_path);
+            _file_count_all_shards++;
             incremenet_file_id();
-            continue;
-        }
-          _in_batch_read_count++;
-          _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
-          std::string file_path = _folder_path;
-          file_path.append("/");
-          file_path.append(_entity->d_name);
-          _last_file_name = file_path;
-          _file_names.push_back(file_path);	  
-          _file_count_all_shards++;          
-          incremenet_file_id();
         }
     } 
     if (_file_names.empty())

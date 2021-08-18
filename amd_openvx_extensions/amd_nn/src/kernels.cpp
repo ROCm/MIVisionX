@@ -200,6 +200,7 @@ void nn_layer_test_dumpBuffer(const char * fileNameFormat, vx_tensor tensor)
 SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
 {
     PROFILER_INITIALIZE();
+#if ENABLE_OPENCL
     // set command-queue properties to be CL_QUEUE_PROFILING_ENABLE needed by MIOpen (default)
     const char * searchEnvName = "NN_MIOPEN_CL_QUEUE_PROPERTIES";
     cl_command_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
@@ -214,7 +215,8 @@ SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
         properties = atoi(text);
     }
 #endif
-    ERROR_CHECK_STATUS(vxSetContextAttribute(context, VX_CONTEXT_CL_QUEUE_PROPERTIES, &properties, sizeof(properties)));
+     ERROR_CHECK_STATUS(vxSetContextAttribute(context, VX_CONTEXT_CL_QUEUE_PROPERTIES, &properties, sizeof(properties)));
+#endif
 
     // register kernels
     ERROR_CHECK_STATUS(publishConvolutionLayer(context));

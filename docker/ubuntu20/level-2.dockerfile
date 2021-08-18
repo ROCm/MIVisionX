@@ -9,3 +9,5 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libnuma-dev wget sudo gnup
         echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list && \
         sudo apt-get update -y && \
         sudo apt-get -y install rocm-dev
+
+WORKDIR /workspace

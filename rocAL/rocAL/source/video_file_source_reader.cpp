@@ -91,10 +91,11 @@ void VideoFileSourceReader::incremenet_read_ptr()
 
 SequenceInfo VideoFileSourceReader::get_sequence_info()
 {
-    auto file_path = _sequences[_curr_sequence_idx].video_file_name;
+    auto current_sequence = _sequences[_curr_sequence_idx];
+    auto file_path = current_sequence.video_file_name;
     _last_id = file_path;
     incremenet_read_ptr();
-    return _sequences[_curr_sequence_idx];
+    return current_sequence;
 }
 
 VideoFileSourceReader::~VideoFileSourceReader()

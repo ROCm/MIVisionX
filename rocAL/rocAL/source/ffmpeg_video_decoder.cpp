@@ -120,11 +120,9 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
         }
         ++frame_count;
         if (frame_count == sequence_length * stride)
-        {
-            avcodec_flush_buffers(_video_dec_ctx);
             break;
-        }
     } while (!end_of_stream || got_pic);
+    avcodec_flush_buffers(_video_dec_ctx);
     av_free_packet(&pkt);
     av_frame_free(&dec_frame);
     return status;

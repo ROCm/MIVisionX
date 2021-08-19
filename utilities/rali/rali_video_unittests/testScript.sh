@@ -2,7 +2,7 @@
 
 rm -rvf build*
 mkdir build
-cd build
+cd build || exit
 cmake ..
 make
 
@@ -11,16 +11,16 @@ make
 ##   CASE 2  : VideoReaderResize                ##
 ##   CASE 3  : SequenceReader                   ##
 ##################################################
-PATH=$1
+INPUT_PATH=$1
 CASE=$2
 
-if [ -z "$1" ]
+if [ -z "$INPUT_PATH" ]
   then
     echo "No input argument supplied"
     exit
 fi
 
-if [ -z "$2" ]
+if [ -z "$CASE" ]
   then
     CASE=1
 fi
@@ -43,11 +43,11 @@ ENABLE_FRAME_NUMBER=0           # outputs the starting frame numbers of the sequ
 ENABLE_TIMESTAMPS=0             # outputs timestamps of the frames in the batch
 ENABLE_SEQUENCE_REARRANGE=0     # rearranges the frames in the sequence NOTE: The order needs to be set in the rali_video_unittests.cpp
 
-echo "$PATH"
-echo "./rali_video_unittests $PATH $CASE $DEVICE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
+echo "$INPUT_PATH"
+echo ./rali_video_unittests "$INPUT_PATH" $CASE $DEVICE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
 $RGB $DISPLAY $SHUFFLE $DECODE_WIDTH $DECODE_HEIGHT $FILELIST_FRAMENUM \
-$ENABLE_METADATA $ENABLE_FRAME_NUMBER $ENABLE_TIMESTAMPS $ENABLE_SEQUENCE_REARRANGE"
+$ENABLE_METADATA $ENABLE_FRAME_NUMBER $ENABLE_TIMESTAMPS $ENABLE_SEQUENCE_REARRANGE
 
-./rali_video_unittests $PATH $CASE $DEVICE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
+./rali_video_unittests "$INPUT_PATH" $CASE $DEVICE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
 $RGB $DISPLAY $SHUFFLE $DECODE_WIDTH $DECODE_HEIGHT $FILELIST_FRAMENUM \
 $ENABLE_METADATA $ENABLE_FRAME_NUMBER $ENABLE_TIMESTAMPS $ENABLE_SEQUENCE_REARRANGE

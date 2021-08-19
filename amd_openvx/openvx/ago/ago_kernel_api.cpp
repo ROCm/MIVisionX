@@ -1868,9 +1868,7 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
     //       use VX_KERNEL_AMD_HARRIS_SCORE_* kernels to compute Vc
     //       use VX_KERNEL_AMD_HARRIS_MERGE_SORT_AND_PICK_XY_HVC kernel for final step
     //       disable buffer merging for HarrisCorners
-    if(node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU){
-        agoSetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS", "1");
-    }
+    agoSetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS", "1");
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
         // TBD: not implemented yet

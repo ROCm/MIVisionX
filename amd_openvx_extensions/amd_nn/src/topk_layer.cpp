@@ -211,7 +211,6 @@ static vx_status VX_CALLBACK uninitializeTopK(vx_node node, const vx_reference *
 	ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	if(data)
 	{
-		free(data->x_tensor_buffer);
 		delete data;
 	}
 

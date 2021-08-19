@@ -30,8 +30,8 @@ THE SOFTWARE.
 
 template <typename T>
 __global__ void __attribute__((visibility("default")))
-Hip_Gather_layer(uchar * in, uint in_offset, uint4 in_stride, uchar * ind, uint ind_offset, uint4 ind_stride,
- uchar *out, uint out_offset, uint4 out_stride, uint axis) {
+Hip_Gather_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* ind, uint ind_offset, uint4 ind_stride,
+ uchar* out, uint out_offset, uint4 out_stride, uint axis) {
 
    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -54,17 +54,58 @@ Hip_Gather_layer(uchar * in, uint in_offset, uint4 in_stride, uchar * ind, uint 
    *(T *)&out[0] = value;
 }
 
-int HipExec_Gather_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in, uint in_offset, uint4 in_stride, uchar* ind, uint ind_offset,
- uint4 ind_stride, uchar* out, uint out_offset, uint4 out_stride, uint axis) {
+int HipExec_Gather_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,
+    uint in_offset, uint4 in_stride, uchar* ind, uint ind_offset, uint4 ind_stride, uchar* out, uint out_offset,
+    uint4 out_stride, uint axis) {
 
     if (type == VX_TYPE_FLOAT32) {
-        hipLaunchKernelGGL(Hip_Gather_layer<float>,
-            dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
-            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride, ind, ind_offset, ind_stride, out, out_offset, out_stride, axis);
+        hipLaunchKernelGGL(Hip_Gather_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x),
+            ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
+            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+            ind, ind_offset, ind_stride, out, out_offset, out_stride, axis);
     } else {
-        hipLaunchKernelGGL(Hip_Gather_layer<__half>,
-            dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
-            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride, ind, ind_offset, ind_stride, out, out_offset, out_stride, axis);
+        hipLaunchKernelGGL(Hip_Gather_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x),
+            ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
+            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+            ind, ind_offset, ind_stride, out, out_offset, out_stride, axis);
+    }
+
+    return VX_SUCCESS;
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Tile_layer(uchar* in, uint in_offset, uint4 in_stride, uint4 in_dims, uchar* rep, uint rep_offset,
+    uint4 rep_stride, uchar* out, uint out_offset, uint4 out_stride) {
+
+   uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+   uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+   uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+   uint nx = x % in_dims.x;
+   uint ny = y % in_dims.y;
+   uint nz = z % in_dims.z;
+
+   T value = *(T*)&in[in_offset + nx * in_stride.x + ny * in_stride.y + nz * in_stride.z];
+   uint offset = out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+   out += offset;
+   *(T *)&out[0] = value;
+}
+
+int HipExec_Tile_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,
+    uint in_offset, uint4 in_stride, uint4 in_dims, uchar* rep, uint rep_offset, uint4 rep_stride, uchar* out,
+    uint out_offset, uint4 out_stride) {
+
+    if (type == VX_TYPE_FLOAT32) {
+        hipLaunchKernelGGL(Hip_Tile_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x),
+            ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
+            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+            in_dims, rep, rep_offset, rep_stride, out, out_offset, out_stride);
+    } else {
+        hipLaunchKernelGGL(Hip_Tile_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x),
+            ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
+            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+            in_dims, rep, rep_offset, rep_stride, out, out_offset, out_stride);
     }
 
     return VX_SUCCESS;

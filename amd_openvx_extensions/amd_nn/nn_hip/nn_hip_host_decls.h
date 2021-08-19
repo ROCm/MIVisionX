@@ -29,4 +29,9 @@ int HipExec_Gather_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
     uint4 in_stride, unsigned char* ind, uint ind_offset, uint4 ind_stride, unsigned char* out, uint out_offset,
     uint4 out_stride, uint axis);
 
+int HipExec_Tile_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, unsigned char* in,
+    uint in_offset, uint4 in_stride, uint4 in_dims, unsigned char* rep, uint rep_offset, uint4 rep_stride, unsigned char* out,
+    uint out_offset, uint4 out_stride);
+
+
 #endif //NN_HIP_HOST_DECLS_H

@@ -56,26 +56,26 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
             return Status::FAILED;
         }
     }
-    AVFrame *dec_frame = av_frame_alloc();
-    if (!dec_frame)
-    {
-        ERR("Could not allocate dec_frame");
-        return Status::NO_MEMORY;
-    }
     int select_frame_pts = seek_frame(_video_stream->avg_frame_rate, _video_stream->time_base, seek_frame_number);
     if (select_frame_pts < 0)
     {
         ERR("Error in seeking frame..Unable to seek the given frame in a video");
         return Status::FAILED;
     }
-    AVPacket pkt;
-    unsigned skipped_frames = 0;
     unsigned frame_count = 0;
     bool end_of_stream = false;
-    int ret, got_pic = 0;
+    bool sequence_filled = false;
+    int ret;
     uint8_t *dst_data[4] = {0};
     int dst_linesize[4] = {0};
     int image_size = out_height * out_stride * sizeof(unsigned char);
+    AVPacket pkt;
+    AVFrame *dec_frame = av_frame_alloc();
+    if (!dec_frame)
+    {
+        ERR("Could not allocate dec_frame");
+        return Status::NO_MEMORY;
+    }
     do
     {
         if (!end_of_stream)
@@ -85,46 +85,61 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
             if (ret < 0 && ret != AVERROR_EOF)
             {
                 ERR("Fail to av_read_frame: ret=" + TOSTR(ret));
-                return Status::FAILED;
+                status = Status::FAILED;
+                break;
             }
-            if (ret == 0 && pkt.stream_index != _video_stream_idx)
-                continue;
+            if (ret == 0 && pkt.stream_index != _video_stream_idx) continue;
             end_of_stream = (ret == AVERROR_EOF);
         }
         if (end_of_stream)
         {
             // null packet for bumping process
-            av_init_packet(&pkt);
             pkt.data = nullptr;
             pkt.size = 0;
         }
-        avcodec_decode_video2(_video_dec_ctx, dec_frame, &got_pic, &pkt); // decode video frame
-        if ((dec_frame->pkt_pts < select_frame_pts) || !got_pic)
+
+        // submit the packet to the decoder
+        ret = avcodec_send_packet(_video_dec_ctx, &pkt);
+        if (ret < 0)
         {
-            if (got_pic)
-                ++skipped_frames;
-            continue;
-        }
-        if (frame_count % stride == 0)
-        {
-            dst_data[0] = out_buffer;
-            dst_linesize[0] = out_stride;
-            if (swsctx)
-                sws_scale(swsctx, dec_frame->data, dec_frame->linesize, 0, dec_frame->height, dst_data, dst_linesize);
-            else
-            {
-                // copy from frame to out_buffer
-                memcpy(out_buffer, dec_frame->data[0], dec_frame->linesize[0]*out_height);
-            }
-            out_buffer = out_buffer + image_size;
-        }
-        ++frame_count;
-        if (frame_count == sequence_length * stride)
+            ERR("Error while sending packet to the decoder\n");
+            status = Status::FAILED;
             break;
-    } while (!end_of_stream || got_pic);
+        }
+
+        // get all the available frames from the decoder
+        while (ret >= 0)
+        {
+            ret = avcodec_receive_frame(_video_dec_ctx, dec_frame);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) break;
+            if ((dec_frame->pts < select_frame_pts) || (ret < 0)) continue;
+            if (frame_count % stride == 0)
+            {
+                dst_data[0] = out_buffer;
+                dst_linesize[0] = out_stride;
+                if (swsctx)
+                    sws_scale(swsctx, dec_frame->data, dec_frame->linesize, 0, dec_frame->height, dst_data, dst_linesize);
+                else
+                {
+                    // copy from frame to out_buffer
+                    memcpy(out_buffer, dec_frame->data[0], dec_frame->linesize[0] * out_height);
+                }
+                out_buffer = out_buffer + image_size;
+            }
+            ++frame_count;
+            av_frame_unref(dec_frame);
+            if (frame_count == sequence_length * stride)  
+            {
+                sequence_filled = true;
+                break;
+            }
+        }
+        av_packet_unref(&pkt);
+        if (sequence_filled)  break;
+    } while (!end_of_stream);
     avcodec_flush_buffers(_video_dec_ctx);
-    av_free_packet(&pkt);
     av_frame_free(&dec_frame);
+    sws_freeContext(swsctx);
     return status;
 }
 
@@ -157,12 +172,9 @@ VideoDecoder::Status FFmpegVideoDecoder::Initialize(const char *src_filename)
     }
     _video_stream_idx = ret;
     _video_stream = _fmt_ctx->streams[_video_stream_idx];
-    _video_dec_ctx = _video_stream->codec;
-    _dec_pix_fmt = _video_dec_ctx->pix_fmt;
     if (!_video_stream)
     {
         ERR("Could not find video stream in the input, aborting");
-        release();
         return Status::FAILED;
     }
 
@@ -199,17 +211,18 @@ VideoDecoder::Status FFmpegVideoDecoder::Initialize(const char *src_filename)
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " codec");
         return Status::FAILED;
     }
-    _codec_width = _video_stream->codec->width;
-    _codec_height = _video_stream->codec->height;
+    _dec_pix_fmt = _video_dec_ctx->pix_fmt;
+    _codec_width = _video_stream->codecpar->width;
+    _codec_height = _video_stream->codecpar->height;
     return status;
 }
 
 void FFmpegVideoDecoder::release()
 {
     if (_video_dec_ctx)
-        av_free(_video_dec_ctx);
+        avcodec_free_context(&_video_dec_ctx);
     if (_fmt_ctx)
-        av_free(_fmt_ctx);
+        avformat_close_input(&_fmt_ctx);
 }
 
 FFmpegVideoDecoder::~FFmpegVideoDecoder()

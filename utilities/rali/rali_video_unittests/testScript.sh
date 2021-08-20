@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm -rvf build*
+sudo rm -rvf build*
 mkdir build
 cd build || exit
 cmake ..
@@ -29,14 +29,12 @@ DISPLAY=1     # (diplay:on/off)
 RGB=1         # (rgb:1/gray:0)
 DEVICE=0      # (cpu:0/gpu:1)
 SHUFFLE=0     # (shuffle:on/off) 
-
 BATCH_SIZE=1
 SEQUENCE_LENGTH=3
 STEP=3
 STRIDE=1
 DECODE_WIDTH=1280
 DECODE_HEIGHT=720
-
 FILELIST_FRAMENUM=1             # enables file number or timestamps parsing for text file input
 ENABLE_METADATA=0               # outputs labels and names of the associated frames
 ENABLE_FRAME_NUMBER=0           # outputs the starting frame numbers of the sequences in the batch

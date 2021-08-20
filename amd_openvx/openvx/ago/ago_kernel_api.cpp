@@ -1867,13 +1867,15 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
     // INFO: use VX_KERNEL_AMD_HARRIS_SOBEL_* kernels to compute Gx^2, Gx*Gy, Gy^2
     //       use VX_KERNEL_AMD_HARRIS_SCORE_* kernels to compute Vc
     //       use VX_KERNEL_AMD_HARRIS_MERGE_SORT_AND_PICK_XY_HVC kernel for final step
-    //       disable buffer merging for HarrisCorners
+    //       disable buffer merging for HarrisCorners temporarily as a workaround
+#if ENABLE_OPENCL || ENABLE_HIP
     char textBuffer[1024];
     if (agoGetEnvironmentVariable("AGO_DEFAULT_TARGET", textBuffer, sizeof(textBuffer))) {
         if (!strcmp(textBuffer, "GPU")) {
             agoSetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS", "1");
         }
     }
+#endif
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
         // TBD: not implemented yet

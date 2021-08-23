@@ -187,7 +187,7 @@ int main(int argc, const char **argv)
         {
             std::cout << "\n>>>> SEQUENCE READER\n";
             enable_framenumbers = enable_timestamps = 0;
-            input1 = raliSequenceReader(handle, source_path, color_format, shard_count, sequence_length, frame_step, frame_stride, is_output, shuffle, false, RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
+            input1 = raliSequenceReader(handle, source_path, color_format, shard_count, sequence_length, frame_step, frame_stride, is_output, shuffle, false);
             break;
         }
     }

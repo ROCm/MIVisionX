@@ -96,9 +96,7 @@ extern "C"  RaliImage  RALI_API_CALL raliSequenceReader(RaliContext context,
                                                         unsigned stride,
                                                         bool is_output,
                                                         bool shuffle = false,
-                                                        bool loop = false,
-                                                        RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
-                                                        unsigned max_width = 0, unsigned max_height = 0);
+                                                        bool loop = false);
 
 /// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems and creates sequences. It accepts external sharding information to load a singe shard. only
 /// \param context Rali context
@@ -126,9 +124,7 @@ extern "C"  RaliImage  RALI_API_CALL raliSequenceReaderSingleShard(RaliContext c
                                                                    unsigned stride,
                                                                    bool is_output ,
                                                                    bool shuffle = false,
-                                                                   bool loop = false,
-                                                                   RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
-                                                                   unsigned max_width = 0, unsigned max_height = 0);
+                                                                   bool loop = false);
 
 /// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode COCO Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.

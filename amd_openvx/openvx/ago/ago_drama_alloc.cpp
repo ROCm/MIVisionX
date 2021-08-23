@@ -334,6 +334,19 @@ int agoGpuAllocBuffers(AgoGraph * graph)
             }
         }
     }
+
+// TBD -- The AGO_BUFFER_MERGE_FLAGS is set for HarrisCorner as buffer merging is not working for this node.
+// At the end of the GPU buffer allocation routine, unset the AGO_BUFFER_MERGE_FLAGS environment variable
+// if the HarrisCorner is present in the graph - for OpenCL Work Flow.
+#if ENABLE_OPENCL
+    for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+        if (strstr(node->akernel->name, "Harris") != NULL) {
+            agoUnsetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS");
+            break;
+        }
+    }
+#endif
+
     return 0;
 }
 
@@ -569,6 +582,16 @@ static int agoOptimizeDramaAllocSetDefaultTargets(AgoGraph * agraph)
         else if (!strcmp(textBuffer, "CPU")) {
             default_target = AGO_KERNEL_FLAG_DEVICE_CPU;
         }
+// TBD -- As HarrisCorners work around - set envr variable if not set
+#if ENABLE_OPENCL || ENABLE_HIP
+        else{
+            agoSetEnvironmentVariable("AGO_DEFAULT_TARGET", "GPU");
+        }
+#else
+        else{
+            agoSetEnvironmentVariable("AGO_DEFAULT_TARGET", "CPU");
+        }
+#endif
     }
 
     for (AgoNode * node = agraph->nodeList.head; node; node = node->next) {

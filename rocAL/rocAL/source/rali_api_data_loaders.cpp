@@ -280,10 +280,7 @@ raliSequenceReader(
         unsigned stride,
         bool is_output,
         bool shuffle,
-        bool loop,
-        RaliImageSizeEvaluationPolicy decode_size_policy,
-        unsigned max_width,
-        unsigned max_height)
+        bool loop)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -296,24 +293,16 @@ raliSequenceReader(
         context->set_internal_batch_size(context->master_graph->internal_batch_size());
         context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
-        bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
+        bool decoder_keep_original = true;
+
+        // This has been introduced to support variable width and height video frames in future.
+        RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MAX_SIZE_RESTRICTED;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
 
-        if(use_input_dimension && (max_width == 0 || max_height == 0))
-        {
-            THROW("Invalid input max width and height");
-        }
-        else
-        {
-            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
-        }
-
-        auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               evaluate_image_data_set(decode_size_policy, StorageType::SEQUENCE_FILE_SYSTEM, DecoderType::TURBO_JPEG, source_path, "");
-
+        // FILE_SYSTEM is used here only to evaluate the width and height of the frames.
+        auto [width, height] = evaluate_image_data_set(decode_size_policy, StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG, source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
@@ -367,10 +356,7 @@ raliSequenceReaderSingleShard(
         unsigned stride,
         bool is_output,
         bool shuffle,
-        bool loop,
-        RaliImageSizeEvaluationPolicy decode_size_policy,
-        unsigned max_width,
-        unsigned max_height)
+        bool loop)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -383,8 +369,10 @@ raliSequenceReaderSingleShard(
         context->set_internal_batch_size(context->master_graph->internal_batch_size());
         context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
-        bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
+        bool decoder_keep_original = true;
+
+        // This has been introduced to support variable width and height video frames in future.
+        RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MAX_SIZE_RESTRICTED;
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -392,18 +380,8 @@ raliSequenceReaderSingleShard(
         if(shard_id >= shard_count)
             THROW("Shard id should be smaller than shard count")
 
-        if(use_input_dimension && (max_width == 0 || max_height == 0))
-        {
-            THROW("Invalid input max width and height");
-        }
-        else
-        {
-            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
-        }
-
-        auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               evaluate_image_data_set(decode_size_policy, StorageType::SEQUENCE_FILE_SYSTEM, DecoderType::TURBO_JPEG,
-                                                       source_path, "");
+        // FILE_SYSTEM is used here only to evaluate the width and height of the frames.
+        auto [width, height] = evaluate_image_data_set(decode_size_policy, StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG, source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))

@@ -334,6 +334,17 @@ int agoGpuAllocBuffers(AgoGraph * graph)
             }
         }
     }
+
+   // The AGO_BUFFER_MERGE_FLAGS is set for HarrisCorner as buffer merging is not working for this node.
+   // At the end of the GPU buffer allocation routine, unset the AGO_BUFFER_MERGE_FLAGS environment variable
+   // if the HarrisCorner is present in the graph.
+    for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+        if (strstr(node->akernel->name, "Harris") != NULL) {
+            agoUnsetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS");
+            break;
+        }
+    }
+
     return 0;
 }
 

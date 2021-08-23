@@ -274,6 +274,8 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
         return VX_FAILURE;
     }
 
+    return VX_SUCCESS;
+
 #elif ENABLE_OPENCL
     return VX_ERROR_NOT_IMPLEMENTED;
 #endif

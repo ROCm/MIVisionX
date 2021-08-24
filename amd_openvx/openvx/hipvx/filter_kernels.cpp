@@ -62,7 +62,7 @@ Hip_Box_U8_U8_3x3(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -1160,7 +1160,7 @@ Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -2789,7 +2789,7 @@ Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];

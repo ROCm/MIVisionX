@@ -23,7 +23,6 @@ project(amd_openvx_extensions)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 find_package(OpenCV QUIET)
-find_package(FFmpeg QUIET)
 find_package(AMDRPP QUIET)
 
 if(GPU_SUPPORT)
@@ -58,6 +57,7 @@ endif()
 
 if(GPU_SUPPORT)
     if (OpenCL_FOUND AND BUILD_OPENCL)
+        find_package(FFmpeg QUIET)
         if(LOOM)
             add_subdirectory(amd_loomsl)
             message("-- ${Green}AMD OpenVX Loom Stich Library Extension -- amd_loomsl module added${ColourReset}")

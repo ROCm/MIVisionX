@@ -50,7 +50,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 cd ../
                 echo Build MIVisionX HIP - ${buildTypeDir}
                 mkdir -p ${buildTypeDir}-hip && cd ${buildTypeDir}-hip
-                ${cmake} ${buildTypeArg} -DBACKEND=HIP  -DCMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/hip ../..
+                ${cmake} ${buildTypeArg} -DBACKEND=HIP -DCMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/hip ../..
                 make -j\$(nproc)
                 sudo make package
                 sudo make install

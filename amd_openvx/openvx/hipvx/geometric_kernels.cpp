@@ -246,8 +246,6 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(uint dstWidth, uint dstHeight,
 
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
     } else {
-        float fxlimit = (float)(srcWidth - 1);
-        float fylimit = (float)(srcHeight - 1);
         float fy0, fy1;
         fy0 = floorf(fy);
         fy1 = fy - fy0;
@@ -1067,7 +1065,6 @@ Hip_WarpAffine_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     uint2 dst;
     float4 f;
     float sx, sy;
-    uint mask, v;
     float dx = (float)x;
     float dy = (float)y;
     sx = fmaf(dy, affineMatrix->m[1][0], affineMatrix->m[2][0]);
@@ -1480,7 +1477,6 @@ Hip_WarpPerspective_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     uint2 dst;
     float4 f;
     float sx, sy, sz, isz;
-    uint mask, v;
     float dx = (float)x;
     float dy = (float)y;
     sx = fmaf(dy, perspectiveMatrix->m[1][0], perspectiveMatrix->m[2][0]);

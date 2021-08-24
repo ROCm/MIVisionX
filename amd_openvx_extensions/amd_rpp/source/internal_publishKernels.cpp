@@ -97,7 +97,6 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERENEL(ChannelExtractbatchPD_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(ChannelCombinebatchPD_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(LookUpTablebatchPD_Register));
-    STATUS_ERROR_CHECK(ADD_KERENEL(BilateralFilterbatchPD_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(BoxFilterbatchPD_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(SobelbatchPD_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(MedianFilterbatchPD_Register));

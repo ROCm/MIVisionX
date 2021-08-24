@@ -40,7 +40,6 @@ vx_status AccumulatebatchPD_Register(vx_context);
 vx_status AccumulateSquaredbatchPD_Register(vx_context);
 vx_status AccumulateWeightedbatchPD_Register(vx_context);
 vx_status AddbatchPD_Register(vx_context);
-vx_status BilateralFilterbatchPD_Register(vx_context);
 vx_status BitwiseANDbatchPD_Register(vx_context);
 vx_status BitwiseNOTbatchPD_Register(vx_context);
 vx_status BlendbatchPD_Register(vx_context);
@@ -172,7 +171,6 @@ vx_status WarpPerspectivebatchPD_Register(vx_context);
 #define VX_KERNEL_RPP_CHANNELEXTRACTBATCHPD_NAME      			"org.rpp.ChannelExtractbatchPD"
 #define VX_KERNEL_RPP_CHANNELCOMBINEBATCHPD_NAME      			"org.rpp.ChannelCombinebatchPD"
 #define VX_KERNEL_RPP_LOOKUPTABLEBATCHPD_NAME      				"org.rpp.LookUpTablebatchPD"
-#define VX_KERNEL_RPP_BILATERALFILTERBATCHPD_NAME      			"org.rpp.BilateralFilterbatchPD"
 #define VX_KERNEL_RPP_BOXFILTERBATCHPD_NAME      				"org.rpp.BoxFilterbatchPD"
 #define VX_KERNEL_RPP_SOBELBATCHPD_NAME      					"org.rpp.SobelbatchPD"
 #define VX_KERNEL_RPP_MEDIANFILTERBATCHPD_NAME      			"org.rpp.MedianFilterbatchPD"

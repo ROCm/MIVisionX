@@ -33,7 +33,7 @@ set(HIPVX_SOURCES
 
     set(hip_library_name amdhip64)
     set_source_files_properties(${HIPVX_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-    set(HIP_CXX_FLAGS -std=c++14)
+    set(HIP_CXX_FLAGS -std=c++14 -Wall)
 
     if(CMAKE_BUILD_TYPE MATCHES Debug)
         set(HIP_CXX_FLAGS ${HIP_CXX_FLAGS} -g)

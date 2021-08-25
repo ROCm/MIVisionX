@@ -65,8 +65,9 @@ def main():
 	imageIterator = RALIClassificationIterator(pipe)
 	for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
 		if(i % bs == 0):
-			print("Comes to images ---in a batch,IMAGE TENSOR:",image_batch)
-			print("Comes to images ---in a batch,LABEL TENSOR:",image_tensor)
+			print("IMAGE TENSOR:",image_batch)
+			print("LABEL TENSOR:",image_tensor)
+	imageIterator.reset()
 
 
 if __name__ == '__main__':

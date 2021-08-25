@@ -34,7 +34,7 @@ FusedJpegCropNode::FusedJpegCropNode(Image *output, DeviceResources device_resou
 }
 
 void FusedJpegCropNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, StorageType storage_type,
-                           DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type,
+                           DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::shared_ptr<MetaDataReader> meta_data_reader,
                            FloatParam *area_factor, FloatParam *aspect_ratio, FloatParam *x_drift, FloatParam *y_drift)
 {
     if(!_loader_module)
@@ -46,6 +46,7 @@ void FusedJpegCropNode::init(unsigned internal_shard_count, const std::string &s
     auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, std::map<std::string, std::string>(), shuffle, loop);
     reader_cfg.set_shard_count(internal_shard_count);
     reader_cfg.set_batch_count(load_batch_count);
+    reader_cfg.set_meta_data_reader(meta_data_reader);
     auto decoder_cfg = DecoderConfig(decoder_type);
 
     std::vector<Parameter<float>*> crop_param;

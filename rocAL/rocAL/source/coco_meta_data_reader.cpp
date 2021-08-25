@@ -30,7 +30,8 @@ THE SOFTWARE.
 
 using namespace std;
 
-void COCOMetaDataReader::init(const MetaDataConfig &cfg) {
+void COCOMetaDataReader::init(const MetaDataConfig &cfg)
+{
     _path = cfg.path();
     _output = new BoundingBoxBatch();
 }
@@ -96,21 +97,22 @@ void COCOMetaDataReader::print_map_contents()
 
 void COCOMetaDataReader::read_all(const std::string &path) {
 
-	std::string annotation_file = path;
-	std::ifstream fin;
-	fin.open(annotation_file, std::ios::in);
+    _coco_metadata_read_time.start();// Debug timing
+    std::string annotation_file = path;
+    std::ifstream fin;
+    fin.open(annotation_file, std::ios::in);
 
-	std::string str;
-	str.assign(std::istreambuf_iterator<char>(fin), std::istreambuf_iterator<char>());
-	BoundingBoxCords bb_coords;
-    BoundingBoxLabels bb_labels;
-    ImgSizes img_sizes;
+    std::string str;
+    str.assign(std::istreambuf_iterator<char>(fin), std::istreambuf_iterator<char>());
+    BoundingBoxCords bb_coords;
+      BoundingBoxLabels bb_labels;
+      ImgSizes img_sizes;
 
-	Json::Reader reader;
-	Json::Value root;
-	if (reader.parse(str, root) == false) {
-        WRN("Failed to parse Json: " + reader.getFormattedErrorMessages());
-	}
+    Json::Reader reader;
+    Json::Value root;
+    if (reader.parse(str, root) == false) {
+          WRN("Failed to parse Json: " + reader.getFormattedErrorMessages());
+    }
 
     Json::Value annotation = root["annotations"];
     Json::Value image = root["images"];
@@ -160,7 +162,9 @@ void COCOMetaDataReader::read_all(const std::string &path) {
         bb_labels.clear();
     } 
     fin.close();
+    _coco_metadata_read_time.end();// Debug timing
     //print_map_contents();
+    //std::cout<<"coco read time in sec: " << _coco_metadata_read_time.get_timing()/1000 << std::endl;
 }
 
 void COCOMetaDataReader::release(std::string image_name) {
@@ -177,6 +181,7 @@ void COCOMetaDataReader::release() {
     _map_img_sizes.clear();
 }
 
-COCOMetaDataReader::COCOMetaDataReader()
+COCOMetaDataReader::COCOMetaDataReader():
+        _coco_metadata_read_time("coco meta read time", DBG_TIMING)
 {
 }

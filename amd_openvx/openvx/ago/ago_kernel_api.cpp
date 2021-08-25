@@ -1867,8 +1867,6 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
     // INFO: use VX_KERNEL_AMD_HARRIS_SOBEL_* kernels to compute Gx^2, Gx*Gy, Gy^2
     //       use VX_KERNEL_AMD_HARRIS_SCORE_* kernels to compute Vc
     //       use VX_KERNEL_AMD_HARRIS_MERGE_SORT_AND_PICK_XY_HVC kernel for final step
-    //       disable buffer merging for HarrisCorners
-    agoSetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS", "1");
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
         // TBD: not implemented yet
@@ -1893,6 +1891,15 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
         node->metaList[6].data.u.arr.capacity = 0;
         node->metaList[7].data.u.scalar.type = VX_TYPE_SIZE;
         status = VX_SUCCESS;
+        //disable buffer merging for HarrisCorners on both OCL and HIP GPU backends temporarily as a workaround
+#if ENABLE_OPENCL || ENABLE_HIP
+    char textBuffer[1024];
+    if (agoGetEnvironmentVariable("AGO_DEFAULT_TARGET", textBuffer, sizeof(textBuffer))) {
+        if (!strcmp(textBuffer, "GPU")) {
+            agoSetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS", "1");
+        }
+    }
+#endif
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -15493,7 +15500,7 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size)) {
             status = VX_FAILURE;
         }
     }

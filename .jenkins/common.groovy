@@ -66,12 +66,27 @@ def runTestCommand (platform, project) {
     String conformaceOpenCL = 'echo OpenVX 1.3 Conformance - GPU OpenCL - NOT TESTED ON THIS PLATFORM'
     String conformaceHIP = 'echo OpenVX 1.3 Conformance - GPU HIP - NOT TESTED ON THIS PLATFORM'
     String moveFiles = ''
+    String platformOS = ''
+
+    if (platform.jenkinsLabel.contains('centos7')) {
+        platformOS = 'centos7'
+    }
+    else if (platform.jenkinsLabel.contains('centos8')) {
+        platformOS = 'centos8'
+    }
+    else if (platform.jenkinsLabel.contains('ubuntu18')) {
+        platformOS = 'ubuntu18'
+    }
+    else if (platform.jenkinsLabel.contains('ubuntu20')) {
+        platformOS = 'ubuntu20'
+    }
+
 
     if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
-        conformaceCPU_OCL = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log-OCL-Backend.md'
-        conformaceOpenCL = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance  | tee OpenVX-GPU-OPENCL-Conformance-log.md'
-        conformaceCPU_HIP = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log-HIP-Backend.md'
-        conformaceHIP = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-GPU-HIP-Conformance-log.md'
+        conformaceCPU_OCL = "AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-CTS-OCL-${platformOS}.md"
+        conformaceOpenCL = "AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance  | tee OpenVX-GPU-CTS-OCL-${platformOS}.md"
+        conformaceCPU_HIP = "AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-CTS-HIP-${platformOS}.md"
+        conformaceHIP = "AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-GPU-CTS-HIP-${platformOS}.md"
         moveFiles = 'mv *.md ../../'
     }
 

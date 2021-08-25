@@ -10449,6 +10449,7 @@ int agoKernel_ChannelCopy_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
+        printf("gaussian channel copy @ with %d %d %d %d\n", iImg->u.img.width, iImg->u.img.height, oImg->u.img.width, oImg->u.img.height);
         if (HafCpu_ChannelCopy_U8_U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
@@ -15419,6 +15420,7 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg = node->paramList[1];
         bool sampleFirstRow = (iImg->u.img.height & 1) ? true : false;
         bool sampleFirstColumn = (iImg->u.img.width & 1) ? true : false;
+        printf("gaussian 5 with %d %d\n", iImg->u.img.width, iImg->u.img.height);
         if (iImg->u.img.width < 5 || iImg->u.img.height < 5 || oImg->u.img.width < 3 || oImg->u.img.height < 3) {
             status = VX_ERROR_INVALID_DIMENSION;
         }
@@ -15426,6 +15428,7 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
             iImg->buffer + (2 * iImg->u.img.stride_in_bytes), iImg->u.img.stride_in_bytes, sampleFirstRow, sampleFirstColumn, node->localDataPtr)) {
             status = VX_FAILURE;
         }
+        printf("gaussian 5 dd\n");
     }
     else if (cmd == ago_kernel_cmd_validate) {
         // validate parameters
@@ -22500,7 +22503,10 @@ int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand c
         vx_image oImg = (vx_image)node->paramList[0];
         vx_image iImg = (vx_image)node->paramList[1];
         vx_pyramid laplacian = (vx_pyramid)node->paramList[2];
-        if (HafCpu_LaplacianPyramid_DATA_DATA_DATA((vx_node)node, iImg, laplacian, oImg))
+        vx_pyramid gaussian = (vx_pyramid)node->paramList[3];
+        // AgoData * data = node->paramList[3];
+        // printf("1--------------%d %f %d %d\n", data->u.pyr.levels, data->u.pyr.scale, data->u.pyr.width, data->u.pyr.height);
+        if (HafCpu_LaplacianPyramid_DATA_DATA_DATA((vx_node)node, iImg, laplacian, oImg, gaussian))
             status = VX_FAILURE;
     }
     else if (cmd == ago_kernel_cmd_validate) {

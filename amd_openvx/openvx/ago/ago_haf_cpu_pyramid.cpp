@@ -104,6 +104,7 @@ int HafCpu_ScaleGaussianHalf_U8_U8_5x5
 		vx_uint8	* pScratch
 	)
 {
+    printf("inside w h %d %d\n", dstWidth, dstHeight);
 	int alignedDstStride = (dstImageStrideInBytes + 15) & ~15;
 	alignedDstStride <<= 2;				// Each row stores two short values (Gx,Gy) for each pixel
 	unsigned short * r0 = (unsigned short *)pScratch;

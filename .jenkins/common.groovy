@@ -50,7 +50,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 cd ../
                 echo Build MIVisionX HIP - ${buildTypeDir}
                 mkdir -p ${buildTypeDir}-hip && cd ${buildTypeDir}-hip
-                ${cmake} ${buildTypeArg} -DBACKEND=HIP ../..
+                ${cmake} ${buildTypeArg} -DBACKEND=HIP -DCMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/hip ../..
                 make -j\$(nproc)
                 sudo make package
                 sudo make install
@@ -69,9 +69,9 @@ def runTestCommand (platform, project) {
 
     if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
         conformaceCPU_OCL = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log-OCL-Backend.md'
-        conformaceOpenCL = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-vxCanny.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.MapRandomRemap:-*.OnRandomAndNatural:*.* | tee OpenVX-GPU-OPENCL-Conformance-log.md'
+        conformaceOpenCL = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance  | tee OpenVX-GPU-OPENCL-Conformance-log.md'
         conformaceCPU_HIP = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log-HIP-Backend.md'
-        conformaceHIP = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-vxCanny.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.MapRandomRemap:-*.OnRandomAndNatural:*.* | tee OpenVX-GPU-HIP-Conformance-log.md'
+        conformaceHIP = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-GPU-HIP-Conformance-log.md'
         moveFiles = 'mv *.md ../../'
     }
 

@@ -33,5 +33,8 @@ int HipExec_Tile_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads
     uint in_offset, uint4 in_stride, uint4 in_dims, unsigned char* rep, uint rep_offset, uint4 rep_stride, unsigned char* out,
     uint out_offset, uint4 out_stride);
 
+int HipExec_Cast_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum input_type, vx_enum output_type, unsigned char* in,
+    uint in_offset, uint4 in_stride, unsigned char* out, uint out_offset, uint4 out_stride);
+
 
 #endif //NN_HIP_HOST_DECLS_H

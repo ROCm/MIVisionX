@@ -136,6 +136,7 @@ int64_t    agoGetClockCounter();
 int64_t    agoGetClockFrequency();
 bool       agoGetEnvironmentVariable(const char * name, char * value, size_t valueSize); // returns true if success
 bool       agoSetEnvironmentVariable(const char * name, const char * value); // returns true if success
+bool       agoUnsetEnvironmentVariable(const char * name); // returns true if success
 ago_module agoOpenModule(const char * libFileName);
 void *     agoGetFunctionAddress(ago_module module, const char * functionName);
 void       agoCloseModule(ago_module module);

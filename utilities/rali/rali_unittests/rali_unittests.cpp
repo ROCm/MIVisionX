@@ -379,12 +379,14 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                   << "raliExposure" << std::endl;
         image1 = raliExposure(handle, image0, true);
     }
+    break;
     case 21:
     {
         std::cout << ">>>>>>> Running "
                   << "raliHue" << std::endl;
         image1 = raliHue(handle, image0, true);
     }
+    break;
     case 22:
     {
         std::cout << ">>>>>>> Running "
@@ -712,7 +714,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         std::string out_filename = std::string(outName) + ".png";   // in case the user specifies non png filename
         if (display_all)
           out_filename = std::string(outName) + std::to_string(index) + ".png";   // in case the user specifies non png filename
-        
+
         if (color_format == RaliImageColor::RALI_COLOR_RGB24)
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);

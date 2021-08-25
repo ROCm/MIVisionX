@@ -58,6 +58,11 @@ THE SOFTWARE.
 #include <ctype.h>
 #endif
 
+#if ENABLE_HIP
+#include  "../../../amd_openvx/openvx/ago/ago_internal.h"
+#include "../nn_hip/nn_hip_host_decls.h"
+#endif
+
 // Visual Profiler (enabled by setting PROFILER_MODE=1 in profiler.h)
 #include "profiler.h"
 

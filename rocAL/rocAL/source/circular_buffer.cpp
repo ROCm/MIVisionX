@@ -53,6 +53,11 @@ void CircularBuffer::reset()
     _level = 0;
     while(!_circ_image_info.empty())
         _circ_image_info.pop();
+    if (random_bbox_crop_flag == true) 
+    {
+        while(!_circ_crop_image_info.empty())
+        _circ_crop_image_info.pop();
+    }
 }
 
 void CircularBuffer::unblock_reader()
@@ -154,6 +159,8 @@ void CircularBuffer::push()
     // Pushing to the _circ_buff and _circ_buff_names must happen all at the same time
     std::unique_lock<std::mutex> lock(_names_buff_lock);
     _circ_image_info.push(_last_image_info);
+    if (random_bbox_crop_flag == true)
+      _circ_crop_image_info.push(_last_crop_image_info);
     increment_write_ptr();
 }
 
@@ -165,6 +172,8 @@ void CircularBuffer::pop()
     std::unique_lock<std::mutex> lock(_names_buff_lock);
     increment_read_ptr();
     _circ_image_info.pop();
+    if (random_bbox_crop_flag == true) 
+        _circ_crop_image_info.pop();
 }
 void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, size_t buffer_depth)
 {
@@ -362,4 +371,11 @@ decoded_image_info &CircularBuffer::get_image_info()
     return  _circ_image_info.front();
 }
 
-
+crop_image_info &CircularBuffer::get_cropped_image_info()
+{
+    block_if_empty();
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
+    if(_level != _circ_crop_image_info.size())
+        THROW("CircularBuffer internals error, image and image info sizes not the same "+TOSTR(_level) + " != "+TOSTR(_circ_crop_image_info.size()))
+    return  _circ_crop_image_info.front();
+}

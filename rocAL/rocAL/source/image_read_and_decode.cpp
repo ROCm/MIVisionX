@@ -120,6 +120,18 @@ void ImageReadAndDecode::set_random_bbox_data_reader(std::shared_ptr<RandomBBoxC
     _randombboxcrop_meta_data_reader = randombboxcrop_meta_data_reader;
 }
 
+std::vector<std::vector<float>>
+ImageReadAndDecode::get_batch_random_bbox_crop_coords()
+{
+    // Return the crop co-ordinates for a batch of images
+    return _crop_coords_batch;
+}
+
+void
+ImageReadAndDecode::set_batch_random_bbox_crop_coords(std::vector<std::vector<float>> crop_coords)
+{
+    _crop_coords_batch = crop_coords;
+}
 
 LoaderModuleStatus 
 ImageReadAndDecode::load(unsigned char* buff,
@@ -178,6 +190,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         //return LoaderModuleStatus::OK;
     }else {
         while ((file_counter != _batch_size) && _reader->count() > 0) {
+
             size_t fsize = _reader->open();
             if (fsize == 0) {
                 WRN("Opened file " + _reader->id() + " of size 0");
@@ -185,24 +198,21 @@ ImageReadAndDecode::load(unsigned char* buff,
             }
 
             _compressed_buff[file_counter].reserve(fsize);
-
             _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
             _image_names[file_counter] = _reader->id();
-            if(_randombboxcrop_meta_data_reader)
-            {
-                _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[file_counter]);
-                std::vector<float> coords_buf(4);
-                coords_buf[0] = _CropCord->crop_left ;
-                coords_buf[1] = _CropCord->crop_top;
-                coords_buf[2] = _CropCord->crop_right- _CropCord->crop_left ;
-                coords_buf[3] = _CropCord->crop_bottom- _CropCord->crop_top;
-                _bbox_coords.push_back(coords_buf);
-                coords_buf.clear();
-            }
             _reader->close();
             _compressed_image_size[file_counter] = fsize;
             file_counter++;
         }
+        
+        if (_randombboxcrop_meta_data_reader)
+        {
+            //Fetch the crop co-ordinates for a batch of images
+            _bbox_coords = _randombboxcrop_meta_data_reader->get_batch_crop_coords(_image_names);
+            set_batch_random_bbox_crop_coords(_bbox_coords);
+        }
+        
+    
     }
 
     _file_load_time.end();// Debug timing

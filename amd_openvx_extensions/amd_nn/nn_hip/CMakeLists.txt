@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,20 +19,21 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.5)
-project(rocAL_hip CXX)
+project(nn_hip CXX)
 
-set(RALIHIP_SOURCES
-    rali_hip_kernels.cpp
+set(NN_HIP_SOURCES
+    nn_hip_kernels.cpp
     )
 
-if(HIP_COMPILER STREQUAL clang)
     set(hip_library_name amdhip64)
-endif()
-#message("HIP library name: ${hip_library_name}")
+    set_source_files_properties(${NN_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
+    set(HIP_CXX_FLAGS -std=c++14)
 
-set_source_files_properties(${RALIHIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-set(HIP_HCC_FLAGS -std=c++14)
-hip_add_library(${PROJECT_NAME} ${RALIHIP_SOURCES} HIPCC_OPTIONS "${HIP_HCC_FLAGS}"  SHARED)
-target_compile_definitions(${PROJECT_NAME} PRIVATE)
-message("-- CMake CXX Compiler " ${CMAKE_CXX_COMPILER})
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+    if(CMAKE_BUILD_TYPE MATCHES Debug)
+        set(HIP_CXX_FLAGS ${HIP_CXX_FLAGS} -g)
+    ENDIF()
+
+    hip_add_library(nn_hip ${NN_HIP_SOURCES} HIPCC_OPTIONS "${HIP_CXX_FLAGS}" SHARED)
+    target_compile_definitions(nn_hip PRIVATE __HIP_PLATFORM_HCC__)
+    install(TARGETS nn_hip DESTINATION lib)
+

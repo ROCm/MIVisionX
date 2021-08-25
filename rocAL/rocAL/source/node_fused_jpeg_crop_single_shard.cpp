@@ -13,7 +13,7 @@ FusedJpegCropSingleShardNode::FusedJpegCropSingleShardNode(Image *output, Device
 }
 
 void FusedJpegCropSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, const std::string &json_path, StorageType storage_type,
-                           DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type,
+                           DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::shared_ptr<MetaDataReader> meta_data_reader,
                            FloatParam *area_factor, FloatParam *aspect_ratio, FloatParam *x_drift, FloatParam *y_drift)
 {
     if(!_loader_module)
@@ -28,6 +28,8 @@ void FusedJpegCropSingleShardNode::init(unsigned shard_id, unsigned shard_count,
     reader_cfg.set_shard_count(shard_count);
     reader_cfg.set_shard_id(shard_id);
     reader_cfg.set_batch_count(load_batch_count);
+    reader_cfg.set_meta_data_reader(meta_data_reader);
+
     auto decoder_cfg = DecoderConfig(decoder_type);
 
     std::vector<Parameter<float>*> crop_param;

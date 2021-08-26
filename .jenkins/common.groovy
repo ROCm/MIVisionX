@@ -23,7 +23,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
-        update = 'sudo zypper --non-interactive ref && sudo zypper --non-interactive update && sudo zypper --non-interactive refresh && sudo zypper --non-interactive install lcov zip'
+        update = 'sudo zypper --non-interactive update && sudo zypper --non-interactive install lcov zip'
         installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --installer "zypper --non-interactive"'
         cmake = 'cmake'
     }
@@ -99,6 +99,8 @@ def runTestCommand (platform, project) {
                 cd ${project.paths.project_build_prefix}/build/release-opencl
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type OCL
+                export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/rocm/miopen/lib
+                export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/rocm/miopengemm/lib
                 python ../../tests/neural_network_tests/runNeuralNetworkTests.py
                 export OPENVX_DIR=\$(pwd)/.
                 export OPENVX_INC=\$(pwd)/../../amd_openvx/openvx

@@ -4,34 +4,33 @@
 def runCompileCommand(platform, project, jobName, boolean debug=false, boolean staticLibrary=false) {
     project.paths.construct_build_prefix()
 
-    String buildTypeArg = debug ? '-DCMAKE_BUILD_TYPE=Debug' : '-DCMAKE_BUILD_TYPE=Release'
+    String buildTypeArg = debug ? '-D CMAKE_BUILD_TYPE=Debug' : '-D CMAKE_BUILD_TYPE=Release'
     String buildTypeDir = debug ? 'debug' : 'release'
 
     String osInfo = ''
     String update = ''
-    String installPackage = ''
-    String cmake = ''
+    String installPackageDeps = ''
+    String cmake = 'cmake'
+    String codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
 
     if (platform.jenkinsLabel.contains('centos')) {
         osInfo = 'cat /etc/os-release && uname -r'
-        update = 'sudo yum -y update && sudo yum -y --nogpgcheck install lcov zip'
+        update = 'sudo yum -y --nogpgcheck install python lcov zip && sudo yum -y update'
         if (platform.jenkinsLabel.contains('centos7')) {
             update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y --nogpgcheck install lcov zip && sudo yum -y --nogpgcheck update'
+            cmake = 'cmake3'
         }
-        installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
-        cmake = 'cmake3'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
-        update = 'sudo zypper --non-interactive update && sudo zypper --non-interactive install lcov zip'
-        installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --installer "zypper --non-interactive"'
-        cmake = 'cmake'
+        update = 'sudo zypper --non-interactive install python lcov zip && sudo zypper --non-interactive update'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --installer "zypper --non-interactive"'
     }
-    else {
+    else if (platform.jenkinsLabel.contains('ubuntu')) {
         osInfo = 'cat /etc/lsb-release && uname -r'
-        update = 'sudo apt -y update && sudo apt -y --allow-unauthenticated install python lcov zip'
-        installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
-        cmake = 'cmake'
+        update = 'sudo apt-get -y --allow-unauthenticated install python lcov zip && sudo apt-get -y update'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
     }
 
     def command = """#!/usr/bin/env bash
@@ -40,17 +39,17 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 ${update}
                 echo Install MIVisionX Prerequisites
                 cd ${project.paths.project_build_prefix}
-                ${installPackage}
+                ${installPackageDeps}
                 echo Build MIVisionX OpenCL - ${buildTypeDir}
                 mkdir -p build/${buildTypeDir}-opencl && cd build/${buildTypeDir}-opencl
-                ${cmake} ${buildTypeArg} -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" ../..
+                ${cmake} ${buildTypeArg} ${codeCovFlags} ../..
                 make -j\$(nproc)
                 sudo make package
                 sudo make install
                 cd ../
                 echo Build MIVisionX HIP - ${buildTypeDir}
                 mkdir -p ${buildTypeDir}-hip && cd ${buildTypeDir}-hip
-                ${cmake} ${buildTypeArg} -DBACKEND=HIP -DCMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/hip -D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" ../..
+                ${cmake} ${buildTypeArg} ${codeCovFlags} -D BACKEND=HIP -D CMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/hip ../..
                 make -j\$(nproc)
                 sudo make package
                 sudo make install

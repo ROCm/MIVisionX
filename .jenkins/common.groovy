@@ -16,7 +16,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo yum -y update && sudo yum -y --nogpgcheck install lcov zip'
         if (platform.jenkinsLabel.contains('centos7')) {
-            update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y update && sudo yum -y --nogpgcheck install lcov zip'
+            update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y --nogpgcheck install lcov zip && sudo yum -y --nogpgcheck update'
         }
         installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
         cmake = 'cmake3'

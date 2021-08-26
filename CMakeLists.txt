@@ -101,12 +101,12 @@ endif()
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
-#add_subdirectory(utilities)
-#if(ROCAL)
-#  add_subdirectory(rocAL)
-#else()
-#  message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
-#endif()
+add_subdirectory(utilities)
+if(ROCAL)
+  add_subdirectory(rocAL)
+else()
+  message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
+endif()
 
 install(DIRECTORY docs DESTINATION .)
 

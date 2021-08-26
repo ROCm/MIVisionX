@@ -11,7 +11,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     String update = ''
     String installPackageDeps = ''
     String cmake = 'cmake'
-    String codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage -g -O0"'
+    String codeCovFlags = ''
 
     if (platform.jenkinsLabel.contains('centos')) {
         osInfo = 'cat /etc/os-release && uname -r'
@@ -19,6 +19,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         if (platform.jenkinsLabel.contains('centos7')) {
             update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y --nogpgcheck install lcov zip && sudo yum -y --nogpgcheck update'
             cmake = 'cmake3'
+            codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }
         installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
     }
@@ -31,6 +32,9 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         osInfo = 'cat /etc/lsb-release && uname -r'
         update = 'sudo apt-get -y --allow-unauthenticated install python lcov zip && sudo apt-get -y update'
         installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
+        if (platform.jenkinsLabel.contains('ubuntu18')) {
+            codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
+        }
     }
 
     def command = """#!/usr/bin/env bash
@@ -66,6 +70,14 @@ def runTestCommand (platform, project) {
     String conformaceHIP = 'echo OpenVX 1.3 Conformance - GPU HIP - NOT TESTED ON THIS PLATFORM'
     String moveFiles = ''
     String platformOS = ''
+    String captureCodeCovOCL = ''
+    String captureCodeCovHIP = ''
+    String codeCovExcludeOCL = ''
+    String codeCovExcludeHIP = ''
+    String codeCovListOCL = ''
+    String codeCovListHIP = ''
+    String codeCovPackageOCL = 'echo Code Coverage - NOT Supported ON THIS PLATFORM'
+    String codeCovPackageHIP = 'echo Code Coverage - NOT Supported ON THIS PLATFORM'
 
     if (platform.jenkinsLabel.contains('centos7')) {
         platformOS = 'centos7'
@@ -90,11 +102,21 @@ def runTestCommand (platform, project) {
         conformaceCPU_HIP = "AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-CTS-HIP-${platformOS}.md"
         conformaceHIP = "AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-GPU-CTS-HIP-${platformOS}.md"
         moveFiles = 'mv *.md ../../'
+        if (platform.jenkinsLabel.contains('centos7') || platform.jenkinsLabel.contains('ubuntu18')) {
+            captureCodeCovOCL = "lcov --directory . --capture --output-file ocl-coverage-${platformOS}.info"
+            captureCodeCovHIP = "lcov --directory . --capture --output-file hip-coverage-${platformOS}.info"
+            codeCovExcludeOCL = "lcov --remove ocl-coverage-${platformOS}.info '/usr/*' '*/runvx/*' --output-file ocl-coverage-${platformOS}.info"
+            codeCovExcludeHIP = "lcov --remove hip-coverage-${platformOS}.info '/usr/*' '*/runvx/*' --output-file hip-coverage-${platformOS}.info"
+            codeCovListOCL = "lcov --list ocl-coverage-${platformOS}.info | tee ocl-coverage-info-${platformOS}.md"
+            codeCovListHIP = "lcov --list hip-coverage-${platformOS}.info | tee hip-coverage-info-${platformOS}.md"
+            codeCovPackageOCL = "genhtml ocl-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r ocl-coverage-info-${platformOS}.zip coverage-${platformOS}"
+            codeCovPackageHIP = "genhtml hip-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r hip-coverage-info-${platformOS}.zip coverage-${platformOS}"
+        }
     }
 
     def command = """#!/usr/bin/env bash
                 set -x
-                echo MIVisionX - with OpenCL support Tests
+                echo MIVisionX - with OpenCL Tests
                 cd ${project.paths.project_build_prefix}/build/release-opencl
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type OCL
@@ -117,11 +139,12 @@ def runTestCommand (platform, project) {
                 ${conformaceOpenCL}
                 ${moveFiles}
                 echo MIVisionX OCL Backend - Code Coverage Info
-                cd ../../ && lcov --directory . --capture --output-file ocl-coverage-${platformOS}.info
-                lcov --remove ocl-coverage-${platformOS}.info '/usr/*' '*/runvx/*' --output-file ocl-coverage-${platformOS}.info
-                lcov --list ocl-coverage-${platformOS}.info | tee ocl-coverage-info-${platformOS}.md
-                genhtml ocl-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r ocl-coverage-info-${platformOS}.zip coverage-${platformOS}
-                echo MIVisionX - with HIP support Tests
+                cd ../../
+                ${captureCodeCovOCL}
+                ${codeCovExcludeOCL}
+                ${codeCovListOCL}
+                ${codeCovPackageOCL}
+                echo MIVisionX - with HIP Tests
                 cd ../release-hip
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type HIP
@@ -141,17 +164,20 @@ def runTestCommand (platform, project) {
                 ${conformaceHIP}
                 ${moveFiles}
                 echo MIVisionX HIP Backend - Code Coverage Info
-                cd ../../ && lcov --directory . --capture --output-file hip-coverage-${platformOS}.info
-                lcov --remove hip-coverage-${platformOS}.info '/usr/*' '*/runvx/*' --output-file hip-coverage-${platformOS}.info
-                lcov --list hip-coverage-${platformOS}.info | tee hip-coverage-info-${platformOS}.md
-                genhtml hip-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r hip-coverage-info-${platformOS}.zip coverage-${platformOS}
+                cd ../../
+                ${captureCodeCovHIP}
+                ${codeCovExcludeHIP}
+                ${codeCovListHIP}
+                ${codeCovPackageHIP}
                 """
 
     platform.runCommand(this, command)
     platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-opencl/*.md""")
     platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-hip/*.md""")
-    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-opencl/*.zip""")
-    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-hip/*.zip""")
+    if (platform.jenkinsLabel.contains('centos7') || platform.jenkinsLabel.contains('ubuntu18')) {
+        platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-opencl/*.zip""")
+        platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-hip/*.zip""")
+    }
 }
 
 def runPackageCommand(platform, project) {

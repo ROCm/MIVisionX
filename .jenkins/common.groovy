@@ -16,15 +16,15 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo yum -y update && sudo yum -y --nogpgcheck install lcov zip'
         if (platform.jenkinsLabel.contains('centos7')) {
-            update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y update'
+            update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y update && sudo yum -y --nogpgcheck install lcov zip'
         }
         installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
         cmake = 'cmake3'
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
-        update = 'sudo zypper --non-interactive ref && sudo zypper --non-interactive update && sudo zypper --non-interactive refresh'
-        installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --installer "zypper --non-interactive && sudo zypper --non-interactive install lcov zip"'
+        update = 'sudo zypper --non-interactive ref && sudo zypper --non-interactive update && sudo zypper --non-interactive refresh && sudo zypper --non-interactive install lcov zip'
+        installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --installer "zypper --non-interactive"'
         cmake = 'cmake'
     }
     else {
@@ -117,11 +117,11 @@ def runTestCommand (platform, project) {
                 ${moveFiles}
                 echo MIVisionX OCL Backend - Code Coverage Info
                 cd ../../ && lcov --directory . --capture --output-file ocl-coverage-${platformOS}.info
-                lcov --remove ocl-coverage-${platformOS}.info '/usr/*' --output-file ocl-coverage-${platformOS}.info
+                lcov --remove ocl-coverage-${platformOS}.info '/usr/*' '*/runvx/*' --output-file ocl-coverage-${platformOS}.info
                 lcov --list ocl-coverage-${platformOS}.info | tee ocl-coverage-info-${platformOS}.md
-                genhtml ocl-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r coverage-info-${platformOS}.zip coverage-${platformOS}
+                genhtml ocl-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r ocl-coverage-info-${platformOS}.zip coverage-${platformOS}
                 echo MIVisionX - with HIP support Tests
-                cd ../../../release-hip
+                cd ../release-hip
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type HIP
                 export OPENVX_DIR=\$(pwd)/.
@@ -141,9 +141,9 @@ def runTestCommand (platform, project) {
                 ${moveFiles}
                 echo MIVisionX HIP Backend - Code Coverage Info
                 cd ../../ && lcov --directory . --capture --output-file hip-coverage-${platformOS}.info
-                lcov --remove hip-coverage-${platformOS}.info '/usr/*' --output-file hip-coverage-${platformOS}.info
+                lcov --remove hip-coverage-${platformOS}.info '/usr/*' '*/runvx/*' --output-file hip-coverage-${platformOS}.info
                 lcov --list hip-coverage-${platformOS}.info | tee hip-coverage-info-${platformOS}.md
-                genhtml hip-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r coverage-info-${platformOS}.zip coverage-${platformOS}
+                genhtml hip-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r hip-coverage-info-${platformOS}.zip coverage-${platformOS}
                 """
 
     platform.runCommand(this, command)

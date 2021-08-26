@@ -126,7 +126,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(vx_nn openvx openvx_hip nn_hip MIOpen miopengemm ${HIP_LIBRARY})
 else()
-    message("-- ${Red}WARNING:OpenCL/HIP Not Found -- amd_nn module excluded{ColourReset}")
+    message("-- ${Red}WARNING:OpenCL/HIP Not Found -- amd_nn module excluded${ColourReset}")
 endif()
 
 

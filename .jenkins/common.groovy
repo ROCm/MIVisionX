@@ -107,10 +107,17 @@ def runTestCommand (platform, project) {
                 cd build-cts
                 cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;\$OPENVX_DIR/lib/libvxu.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
                 cmake --build .
+                errorstatus=
                 echo MIVisionX OpenVX 1.3 Conformance - CPU - OCL Backend Build
                 ${conformaceCPU_OCL}
+                if [ "$errorstatus" -o  "${PIPESTATUS[0]}" ]; then
+                    errorstatus=1
+                fi
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
                 ${conformaceOpenCL}
+                if [ "$errorstatus" -o  "${PIPESTATUS[0]}" ]; then
+                    errorstatus=1
+                fi
                 ${moveFiles}
                 echo MIVisionX - with HIP support Tests
                 cd ../../../release-hip
@@ -128,9 +135,16 @@ def runTestCommand (platform, project) {
                 cmake --build .
                 echo MIVisionX OpenVX 1.3 Conformance - CPU - HIP Backend Build
                 ${conformaceCPU_HIP}
+                if [ "$errorstatus" -o  "${PIPESTATUS[0]}" ]; then
+                    errorstatus=1
+                fi
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - HIP
                 ${conformaceHIP}
+                if [ "$errorstatus" -o  "${PIPESTATUS[0]}" ]; then
+                    errorstatus=1
+                fi
                 ${moveFiles}
+                exit errorstatus
                 """
 
     platform.runCommand(this, command)

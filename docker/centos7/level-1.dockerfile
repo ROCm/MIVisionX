@@ -6,7 +6,7 @@ WORKDIR $MIVISIONX_DEPS_ROOT
 # install mivisionx base dependencies - Level 1
 RUN yum -y update --nogpgcheck && yum-config-manager --enable rhel-server-rhscl-7-rpms && \
         yum -y install --nogpgcheck centos-release-scl && \
-        yum -y install --nogpgcheck devtoolset-7
+        yum -y install --nogpgcheck devtoolset-7 git
 
 # Enable Developer Toolset 7
 SHELL [ "/usr/bin/scl", "enable", "devtoolset-7" ]

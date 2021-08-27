@@ -7,7 +7,6 @@ WORKDIR $MIVISIONX_DEPS_ROOT
 RUN yum -y update --nogpgcheck && yum -y install --nogpgcheck http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm && \
         yum -y install --nogpgcheck gcc gcc-c++ kernel-devel make cmake3 git && yum-config-manager --enable rhel-server-rhscl-7-rpms && \
         yum -y install --nogpgcheck centos-release-scl && yum -y install --nogpgcheck devtoolset-7
-
 # Enable Developer Toolset 7
 SHELL [ "/usr/bin/scl", "enable", "devtoolset-7" ]
 

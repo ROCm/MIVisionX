@@ -46,3 +46,7 @@ RUN apt-get -y install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python-dev p
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 
 WORKDIR /workspace
+
+# install MIVisionX
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+        cmake3 ../MIVisionX && make -j8 && make install

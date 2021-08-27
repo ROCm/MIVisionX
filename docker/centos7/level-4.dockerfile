@@ -43,7 +43,7 @@ RUN git clone -b rocm-4.2.0 https://github.com/RadeonOpenCompute/rocm-cmake.git 
         cmake3 ../ && make -j8 && make install && cd ../../ && \
         wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/1.1.5.zip && unzip 1.1.5.zip && \
         cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake3 ../ && make -j8 && make install && cd ../../ && \
-        yum -y install --nogpgcheck miopen-opencl && \ 
+        yum -y install --nogpgcheck miopen-opencl
 
 WORKDIR /workspace
 

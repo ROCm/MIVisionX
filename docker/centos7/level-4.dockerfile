@@ -5,13 +5,13 @@ WORKDIR $MIVISIONX_DEPS_ROOT
 
 # install mivisionx base dependencies - Level 1
 RUN yum -y update --nogpgcheck && yum -y install --nogpgcheck http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm && \
-        yum -y install --nogpgcheck gcc gcc-c++ kernel-devel make && yum -y install --nogpgcheck cmake3 && yum -y install --nogpgcheck git
-# install ROCm for mivisionx OpenCL dependency - Level 2
-RUN yum-config-manager --enable rhel-server-rhscl-7-rpms && yum -y install --nogpgcheck centos-release-scl && yum -y install --nogpgcheck devtoolset-7 && \
-        echo -e "[ROCm]\nname=ROCm\nbaseurl=https://repo.radeon.com/rocm/yum/rpm\nenabled=1\ngpgcheck=1\ngpgkey=https://repo.radeon.com/rocm/rocm.gpg.key" > \
-        /etc/yum.repos.d/rocm.repo && yum -y install --nogpgcheck rocm-dev
+        yum -y install --nogpgcheck gcc gcc-c++ kernel-devel make cmake3 git && yum-config-manager --enable rhel-server-rhscl-7-rpms && \
+        yum -y install --nogpgcheck centos-release-scl && yum -y install --nogpgcheck devtoolset-7
 # Enable Developer Toolset 7
 SHELL [ "/usr/bin/scl", "enable", "devtoolset-7" ]
+# install ROCm for mivisionx OpenCL dependency - Level 2
+RUN echo -e "[ROCm]\nname=ROCm\nbaseurl=https://repo.radeon.com/rocm/yum/rpm\nenabled=1\ngpgcheck=1\ngpgkey=https://repo.radeon.com/rocm/rocm.gpg.key" > \
+        /etc/yum.repos.d/rocm.repo && yum -y install --nogpgcheck rocm-dev
 # install OpenCV & FFMPEG - Level 3
 RUN yum -y groupinstall 'Development Tools' --nogpgcheck && yum -y install --nogpgcheck gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip && \
         mkdir opencv && cd opencv && wget https://github.com/opencv/opencv/archive/3.4.0.zip && unzip 3.4.0.zip && \
@@ -37,16 +37,16 @@ RUN yum -y install --nogpgcheck libsqlite3x-devel bzip2-devel openssl-devel pyth
         ./b2 install threading=multi link=shared --with-system --with-filesystem && \
         ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
         ./b2 install threading=multi link=static --with-system --with-filesystem && cd ../ && \
-        git clone -b rocm-4.2.0 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \
+        git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
+        ./autogen.sh && ./configure && make -j8 && make check -j8 && make install
+RUN git clone -b rocm-4.2.0 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \
         cmake3 ../ && make -j8 && make install && cd ../../ && \
         wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/1.1.5.zip && unzip 1.1.5.zip && \
         cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake3 ../ && make -j8 && make install && cd ../../ && \
         wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.11.0.zip && unzip 2.11.0.zip && \
-        #cd MIOpen-2.11.0 && cmake3 -P install_deps.cmake --minimum && mkdir build && cd build && \
-        #cd MIOpen-2.11.0 && mkdir build && cd build && \
-        #cmake3 -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && \
-        #make -j8 && make MIOpenDriver && make install && cd ../../ && \
-        yum -y install --nogpgcheck miopen-opencl && \
+        cd MIOpen-2.11.0 && mkdir build && cd build && \
+        cmake3 -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && \
+        make -j8 && make MIOpenDriver && make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && make install
 

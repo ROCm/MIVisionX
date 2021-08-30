@@ -28,6 +28,10 @@ THE SOFTWARE.
 // Neural Network kernels for hip backend
 // ----------------------------------------------------------------------------
 
+typedef struct d_half4 {
+  __half data[4];
+} d_half4;
+
 template <typename T>
 __global__ void __attribute__((visibility("default")))
 Hip_Gather_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* ind, uint ind_offset, uint4 ind_stride,
@@ -261,6 +265,236 @@ int HipExec_Cast_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads
                 hipLaunchKernelGGL(Hip_Cast_layer_int32_int64, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             }
         }
+    }
+
+    return VX_SUCCESS;
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_RGBimage_to_tensor_layer(uint srcWidth, uint srcHeight, uchar* in, uint in_offset, uint in_stride, uchar* out,
+    uint out_offset, uint4 out_stride, float sc1, float sc2, uint reverse_channel_order) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if(x < srcWidth && y < srcHeight) {
+        uint ioffset = in_offset + (y + z * srcHeight) * in_stride + x * 3;
+        uint2 rgb2 = *(uint2 *)&in[ioffset & ~3];
+        uint rgb = hip_bytealign(rgb2.y, rgb2.x, ioffset & 3);
+        T r = (T)sc1 * (T)hip_unpack0(rgb) + (T)sc2;
+        T g = (T)sc1 * (T)hip_unpack1(rgb) + (T)sc2;
+        T b = (T)sc1 * (T)hip_unpack2(rgb) + (T)sc2;
+        out += out_offset + z * out_stride.w + y * out_stride.y + x * out_stride.x;
+        *(T *)&out[0] = reverse_channel_order ? b : r;
+        *(T *)&out[out_stride.z] = g;
+        *(T *)&out[2 * out_stride.z] = reverse_channel_order ? r : b;
+    }
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_U8floatImage_to_tensor_layer(uint srcWidth, uint srcHeight, uchar* in, uint in_offset, uint in_stride, uchar* out,
+    uint out_offset, uint4 out_stride, float sc1, float sc2) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+    if(x < srcWidth && y < srcHeight) {
+        uint u4 = *(uint *)&in[in_offset + (y + z * srcHeight) * in_stride + x];
+        float p0 = sc1 * hip_unpack0(u4) + sc2;
+        float p1 = sc1 * hip_unpack1(u4) + sc2;
+        float p2 = sc1 * hip_unpack2(u4) + sc2;
+        float p3 = sc1 * hip_unpack3(u4) + sc2;
+        *(float4 *)&out[out_offset + z * out_stride.z + y * out_stride.y + x * out_stride.x] = make_float4(p0, p1, p2, p3);
+    }
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_U8halfImage_to_tensor_layer(uint srcWidth, uint srcHeight, uchar* in, uint in_offset, uint in_stride, uchar* out,
+    uint out_offset, uint4 out_stride, float sc1, float sc2) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+    if(x < srcWidth && y < srcHeight) {
+        uint u4 = *(uint *)&in[in_offset + (y + z * srcHeight) * in_stride + x];
+
+        __half hsc1 = __float2half(sc1);
+        __half hsc2 = __float2half(sc2);
+
+        __half p0 = hsc1 * __float2half(hip_unpack0(u4)) + hsc2;
+        __half p1 = hsc1 * __float2half(hip_unpack1(u4)) + hsc2;
+        __half p2 = hsc1 * __float2half(hip_unpack2(u4)) + hsc2;
+        __half p3 = hsc1 * __float2half(hip_unpack3(u4)) + hsc2;
+
+        d_half4 p;
+        p.data[0] = p0;
+        p.data[1] = p1;
+        p.data[2] = p2;
+        p.data[3] = p3;
+        *(d_half4 *)&out[out_offset + z * out_stride.z + y * out_stride.y + x * out_stride.x] = p;
+    }
+}
+
+int HipExec_image_to_tensor_layer(hipStream_t stream, vx_df_image format, vx_enum type, uint width, uint height, uint N, uchar* in,
+    uint in_offset, uint in_stride, uchar* out, uint out_offset, uint4 out_stride, float sc1, float sc2, uint reverse_channel_order) {
+
+    dim3 blockDim(8, 8, 1);
+    uint newWidth = (format == VX_DF_IMAGE_RGB) ? width : (width + 3) / 4;
+    dim3 gridDim = dim3(ceil((float)newWidth / blockDim.x), ceil((float)height / blockDim.y), ceil((float)N / blockDim.z));
+
+    if (format == VX_DF_IMAGE_RGB) {
+        if (type == VX_TYPE_FLOAT32) {
+            hipLaunchKernelGGL(Hip_RGBimage_to_tensor_layer<float>, gridDim, blockDim, 0, stream, width, height, in, in_offset, in_stride,
+                out, out_offset, out_stride, sc1, sc2, reverse_channel_order);
+        } else {
+            hipLaunchKernelGGL(Hip_RGBimage_to_tensor_layer<__half>, gridDim, blockDim, 0, stream, width, height, in, in_offset, in_stride,
+                out, out_offset, out_stride, sc1, sc2, reverse_channel_order);
+        }
+    } else if (format == VX_DF_IMAGE_U8) {
+        if (type == VX_TYPE_FLOAT32) {
+            hipLaunchKernelGGL(Hip_U8floatImage_to_tensor_layer, gridDim, blockDim, 0, stream, width, height, in, in_offset, in_stride,
+                out, out_offset, out_stride, sc1, sc2);
+        } else {
+            hipLaunchKernelGGL(Hip_U8halfImage_to_tensor_layer, gridDim, blockDim, 0, stream, width, height, in, in_offset, in_stride,
+                out, out_offset, out_stride, sc1, sc2);
+        }
+    } else {
+        return VX_ERROR_NOT_SUPPORTED;
+    }
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_to_RGBfloatImage_layer(uchar* in, uint in_offset, uint4 in_stride, uint outWidth, uint outHeight, uchar* out, uint out_offset,
+    uint out_stride, float sc1, float sc2, uint reverse_channel_order) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if(x < outWidth && y < outHeight) {
+        in += in_offset + z * in_stride.w + y * in_stride.y + x * in_stride.x;
+        float4 r = *(float4 *)&in[reverse_channel_order ? 2 * in_stride.z : 0];
+        float4 g = *(float4 *)&in[in_stride.z];
+        float4 b = *(float4 *)&in[reverse_channel_order ? 0 : 2 * in_stride.z];
+        r = r * (float4)sc1 + (float4)sc2;
+        g = g * (float4)sc1 + (float4)sc2;
+        b = b * (float4)sc1 + (float4)sc2;
+        uint3 u3;
+        u3.x = hip_pack(make_float4(r.x, g.x, b.x, r.y));
+        u3.y = hip_pack(make_float4(g.y, b.y, r.z, g.z));
+        u3.z = hip_pack(make_float4(b.z, r.w, g.w, b.w));
+        *(uint3 *)&out[out_offset + (y + z * outHeight) * out_stride + x * 3] = u3;
+    }
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_to_RGBhalfImage_layer(uchar* in, uint in_offset, uint4 in_stride, uint outWidth, uint outHeight, uchar* out,
+    uint out_offset, uint out_stride, float sc1, float sc2, uint reverse_channel_order) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if(x < outWidth && y < outHeight) {
+        in += in_offset + z * in_stride.w + y * in_stride.y + x * in_stride.x;
+        d_half4 r = *(d_half4 *)&in[reverse_channel_order ? 2 * in_stride.z : 0];
+        d_half4 g = *(d_half4 *)&in[in_stride.z];
+        d_half4 b = *(d_half4 *)&in[reverse_channel_order ? 0 : 2 * in_stride.z];
+
+        __half hsc1 = __float2half(sc1);
+        __half hsc2 = __float2half(sc2);
+
+        r.data[0] = r.data[0] * hsc1 + hsc2;
+        r.data[1] = r.data[1] * hsc1 + hsc2;
+        r.data[2] = r.data[2] * hsc1 + hsc2;
+        r.data[3] = r.data[3] * hsc1 + hsc2;
+
+        g.data[0] = g.data[0] * hsc1 + hsc2;
+        g.data[1] = g.data[1] * hsc1 + hsc2;
+        g.data[2] = g.data[2] * hsc1 + hsc2;
+        g.data[3] = g.data[3] * hsc1 + hsc2;
+
+        b.data[0] = b.data[0] * hsc1 + hsc2;
+        b.data[1] = b.data[1] * hsc1 + hsc2;
+        b.data[2] = b.data[2] * hsc1 + hsc2;
+        b.data[3] = b.data[3] * hsc1 + hsc2;
+
+        uint3 u3;
+        u3.x = hip_pack(make_float4(__half2float(r.data[0]), __half2float(g.data[0]), __half2float(b.data[0]), __half2float(r.data[1])));
+        u3.y = hip_pack(make_float4(__half2float(g.data[1]), __half2float(b.data[1]), __half2float(r.data[2]), __half2float(g.data[2])));
+        u3.z = hip_pack(make_float4(__half2float(b.data[2]), __half2float(r.data[3]), __half2float(g.data[3]), __half2float(b.data[3])));
+        *(uint3 *)&out[out_offset + (y + z * outHeight) * out_stride + x * 3] = u3;
+    }
+}
+
+
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_to_U8floatImage_layer(uchar* in, uint in_offset, uint4 in_stride, uint outWidth, uint outHeight, uchar* out,
+    uint out_offset, uint out_stride, float sc1, float sc2, uint reverse_channel_order) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if(x < outWidth && y < outHeight) {
+        in += in_offset + z * in_stride.w + y * in_stride.y + x * in_stride.x;
+        float4 f = *(float4 *)in;
+        f = f * (float4)sc1 + (float4)sc2;
+        *(uint *)&out[out_offset + (y + z * outHeight) * out_stride + x] = hip_pack(f);
+    }
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_to_U8halfImage_layer(uchar* in, uint in_offset, uint4 in_stride, uint outWidth, uint outHeight, uchar* out,
+    uint out_offset, uint out_stride, float sc1, float sc2, uint reverse_channel_order) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if(x < outWidth && y < outHeight) {
+        in += in_offset + z * in_stride.w + y * in_stride.y + x * in_stride.x;
+        d_half4 h = *(d_half4 *)in;
+
+        float4 f;
+        f.x = __half2float(h.data[0]);
+        f.y = __half2float(h.data[1]);
+        f.z = __half2float(h.data[2]);
+        f.w = __half2float(h.data[3]);
+
+        f = f * (float4)sc1 + (float4)sc2;
+        *(uint *)&out[out_offset + (y + z * outHeight) * out_stride + x] = hip_pack(f);
+    }
+}
+
+int HipExec_tensor_to_image_layer(hipStream_t stream, vx_df_image format, vx_enum type, uint width, uint height, uint N, uchar* in,
+    uint in_offset, uint4 in_stride, uchar* out, uint out_offset, uint out_stride, float sc1, float sc2, uint reverse_channel_order) {
+
+    dim3 blockDim(8, 8, 1);
+    dim3 gridDim = dim3(ceil((float)((width + 3) / 4) / blockDim.x), ceil((float)height / blockDim.y), ceil((float)N / blockDim.z));
+
+    if (format == VX_DF_IMAGE_RGB) {
+        if (type == VX_TYPE_FLOAT32) {
+            hipLaunchKernelGGL(Hip_tensor_to_RGBfloatImage_layer, gridDim, blockDim, 0, stream, in, in_offset, in_stride,
+                width, height, out, out_offset, out_stride, sc1, sc2, reverse_channel_order);
+        } else {
+            hipLaunchKernelGGL(Hip_tensor_to_RGBhalfImage_layer, gridDim, blockDim, 0, stream, in, in_offset, in_stride,
+                width, height, out, out_offset, out_stride, sc1, sc2, reverse_channel_order);
+        }
+    } else if (format == VX_DF_IMAGE_U8) {
+        if (type == VX_TYPE_FLOAT32) {
+            hipLaunchKernelGGL(Hip_tensor_to_U8floatImage_layer, gridDim, blockDim, 0, stream, in, in_offset, in_stride,
+                width, height, out, out_offset, out_stride, sc1, sc2, reverse_channel_order);
+        } else {
+            hipLaunchKernelGGL(Hip_tensor_to_U8halfImage_layer, gridDim, blockDim, 0, stream, in, in_offset, in_stride,
+                width, height, out, out_offset, out_stride, sc1, sc2, reverse_channel_order);
+        }
+    } else {
+        return VX_ERROR_NOT_SUPPORTED;
     }
 
     return VX_SUCCESS;

@@ -6287,7 +6287,6 @@ Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint dstListOffset, uint capacityOfLis
     int ly = hipThreadIdx_y;
     int gx = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int gy = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    int gstride = srcImageStrideInBytes;
     __shared__ uchar lbuf[2448];
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);

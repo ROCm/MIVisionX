@@ -46,7 +46,6 @@ Hip_And_U8_U8U8(uint dstWidth, uint dstHeight,
 
     uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
-    uint2 dst;
 
     *((uint2 *)(&pDstImage[dstIdx])) = src1 & src2;
 }

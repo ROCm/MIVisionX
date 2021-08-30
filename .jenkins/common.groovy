@@ -15,7 +15,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 
     if (platform.jenkinsLabel.contains('centos')) {
         osInfo = 'cat /etc/os-release && uname -r'
-        update = 'sudo yum -y --nogpgcheck install python3-devel lcov zip && sudo yum -y update'
+        update = 'sudo yum -y update && sudo yum -y --nogpgcheck install lcov zip'
         if (platform.jenkinsLabel.contains('centos7')) {
             update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y --nogpgcheck install lcov zip && sudo yum -y --nogpgcheck update'
             cmake = 'cmake3'
@@ -25,12 +25,12 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
-        update = 'sudo zypper --non-interactive install python lcov zip && sudo zypper --non-interactive update'
-        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --installer "zypper --non-interactive"'
+        update = 'sudo zypper --non-interactive install lcov zip && sudo zypper --non-interactive update'
+        installPackageDeps = 'python3 MIVisionX-setup.py --reinstall yes --ffmpeg yes --installer "zypper --non-interactive"'
     }
     else if (platform.jenkinsLabel.contains('ubuntu')) {
         osInfo = 'cat /etc/lsb-release && uname -r'
-        update = 'sudo apt-get -y --allow-unauthenticated install python3-dev lcov zip && sudo apt-get -y update'
+        update = 'sudo apt-get -y update && sudo apt-get -y --allow-unauthenticated install lcov zip'
         installPackageDeps = 'python3 MIVisionX-setup.py --reinstall yes --ffmpeg yes'
         if (platform.jenkinsLabel.contains('ubuntu18')) {
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'

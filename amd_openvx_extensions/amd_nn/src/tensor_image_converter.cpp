@@ -63,6 +63,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
+#if ENABLE_OPENCL
 //! \brief The OpenCL code generator callback.
 static vx_status VX_CALLBACK opencl_codegen(
     vx_node node,                                  // [input] node
@@ -208,11 +209,43 @@ static vx_status VX_CALLBACK opencl_codegen(
 
     return VX_SUCCESS;
 }
+#endif
 
 //! \brief The kernel execution.
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+#if ENABLE_HIP
+    // get configuration
+    vx_df_image format;
+    vx_size num_dims, input_dims[4] = { 1, 1, 1, 1 };
+    vx_enum type;
+    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_FORMAT, &format, sizeof(format)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims[0])*num_dims));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    vx_uint32 width = (vx_uint32)input_dims[0];
+    vx_uint32 height = (vx_uint32)input_dims[1];
+    vx_uint32 N = (vx_uint32)input_dims[3];
+
+    AgoData *input  = reinterpret_cast<AgoData *>(parameters[0]);
+    AgoData *output = reinterpret_cast<AgoData *>(parameters[1]);
+    AgoData *sc1 = reinterpret_cast<AgoData *>(parameters[2]);
+    AgoData *sc2 = reinterpret_cast<AgoData *>(parameters[3]);
+    AgoData *reverse_channel_order = reinterpret_cast<AgoData *>(parameters[4]);
+
+    uint4 input_stride = make_uint4((uint)input->u.tensor.stride[0], (uint)input->u.tensor.stride[1],
+                                     (uint)input->u.tensor.stride[2], (uint)input->u.tensor.stride[3]);
+
+    if (HipExec_tensor_to_image_layer(node->hip_stream0, format, type, width, height, N, input->hip_memory, input->u.tensor.offset, input_stride,
+        output->hip_memory, output->gpu_buffer_offset, output->u.img.stride_in_bytes, sc1->u.scalar.u.f, sc2->u.scalar.u.f, reverse_channel_order->u.scalar.u.u)) {
+        return VX_FAILURE;
+    }
+
+    return VX_SUCCESS;
+
+#elif ENABLE_OPENCL
     return VX_ERROR_NOT_IMPLEMENTED;
+#endif
 }
 
 //! \brief The kernel publisher.
@@ -222,9 +255,12 @@ vx_status publishTensorToImageConvert(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
-    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
+
+#if ENABLE_OPENCL
+    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK, &opencl_codegen_callback_f, sizeof(opencl_codegen_callback_f)));
+#endif
 
     // set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));

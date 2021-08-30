@@ -136,12 +136,12 @@ def runTestCommand (platform, project) {
                 errorstatus=
                 echo MIVisionX OpenVX 1.3 Conformance - CPU - OCL Backend Build
                 ${conformaceCPU_OCL}
-                if [ "$errorstatus" -o  "${PIPESTATUS[0]}" ]; then
+                if [ "\$errorstatus" -o  "\${PIPESTATUS[0]}" ]; then
                     errorstatus=1
                 fi
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
                 ${conformaceOpenCL}
-                if [ "$errorstatus" -o  "${PIPESTATUS[0]}" ]; then
+                if [ "\$errorstatus" -o  "\${PIPESTATUS[0]}" ]; then
                     errorstatus=1
                 fi
                 ${moveFiles}
@@ -167,12 +167,12 @@ def runTestCommand (platform, project) {
                 cmake --build .
                 echo MIVisionX OpenVX 1.3 Conformance - CPU - HIP Backend Build
                 ${conformaceCPU_HIP}
-                if [ "$errorstatus" -o  "${PIPESTATUS[0]}" ]; then
+                if [ "\$errorstatus" -o  "\${PIPESTATUS[0]}" ]; then
                     errorstatus=1
                 fi
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - HIP
                 ${conformaceHIP}
-                if [ "$errorstatus" -o  "${PIPESTATUS[0]}" ]; then
+                if [ "\$errorstatus" -o  "\${PIPESTATUS[0]}" ]; then
                     errorstatus=1
                 fi
                 ${moveFiles}
@@ -182,7 +182,7 @@ def runTestCommand (platform, project) {
                 ${codeCovExcludeHIP}
                 ${codeCovListHIP}
                 ${codeCovPackageHIP}
-                exit errorstatus
+                exit \$errorstatus
                 """
 
     platform.runCommand(this, command)

@@ -22,26 +22,23 @@ import os
 import sys
 import argparse
 import platform
-
-__author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
-__license__ = "MIT"
-__version__ = "1.9.8"
-__maintainer__ = "Kiriti Nagesh Gowda"
-__email__ = "Kiriti.NageshGowda@amd.com"
-__status__ = "Shipping"
-
 if sys.version_info[0] < 3:
     import commands
 else:
     import subprocess
 
-# Import arguments
+__author__ = "Kiriti Nagesh Gowda"
+__copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
+__license__ = "MIT"
+__version__ = "1.9.9"
+__maintainer__ = "Kiriti Nagesh Gowda"
+__email__ = "Kiriti.NageshGowda@amd.com"
+__status__ = "Shipping"
+
+# Arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
                     help='Setup home directory - optional (default:~/)')
-parser.add_argument('--installer', 	type=str, default='apt-get',
-                    help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
 parser.add_argument('--opencv',    	type=str, default='3.4.0',
                     help='OpenCV Version - optional (default:3.4.0)')
 parser.add_argument('--miopen',    	type=str, default='2.11.0',
@@ -60,10 +57,13 @@ parser.add_argument('--rocal',	 	type=str, default='yes',
                     help='MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]')
 parser.add_argument('--reinstall', 	type=str, default='no',
                     help='Remove previous setup and reinstall - optional (default:no) [options:yes/no]')
+parser.add_argument('--backend', 	type=str, default='OCL',
+                    help='MIVisionX Dependency Backend - optional (default:OCL) [options:OCL/HIP]')
+parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
+                    help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
 args = parser.parse_args()
 
 setupDir = args.directory
-linuxSystemInstall = args.installer
 opencvVersion = args.opencv
 MIOpenVersion = args.miopen
 MIOpenGEMMVersion = args.miopengemm
@@ -73,6 +73,37 @@ ffmpegInstall = args.ffmpeg
 neuralNetInstall = args.neural_net
 raliInstall = args.rocal
 reinstall = args.reinstall
+backend = args.backend
+ROCM_PATH = args.rocm_path
+
+if ffmpegInstall not in ('no', 'yes'):
+    print("ERROR: FFMPEG Install options supported - [no or yes]")
+    exit()
+if neuralNetInstall not in ('no', 'yes'):
+    print("ERROR: Neural Net Install options supported - [no or yes]")
+    exit()
+if raliInstall not in ('no', 'yes'):
+    print("ERROR: Neural Net Install options supported - [no or yes]")
+    exit()
+if reinstall not in ('no', 'yes'):
+    print("ERROR: Re-Install options supported - [no or yes]")
+    exit()
+if backend not in ('OCL', 'HIP'):
+    print("ERROR: Backend options supported - [OCL or HIP]")
+    exit()
+
+# check ROCm installation
+if os.path.exists(ROCM_PATH):
+    print("ROCm Installation Found -- "+ROCM_PATH+"\n")
+    print("ROCm Info --\n")
+    os.system(ROCM_PATH+'/bin/rocminfo')
+else:
+    print("WARNING: ROCm Not Found at -- "+ROCM_PATH+"\n")
+    print("WARNING: Set ROCm Path with --rocm_path option for full installation [Default:/opt/rocm]\n")
+    print("WARNING: Only OpenCV will be installed\n")
+    ffmpegInstall = 'no'
+    neuralNetInstall = 'no'
+    raliInstall = 'no'
 
 platfromInfo = platform.platform()
 
@@ -94,10 +125,11 @@ if setupDir == '~/mivisionx-deps':
 else:
     setupDir_deps = setupDir+'/mivisionx-deps'
 
-# setup directory
+# setup directory path
 deps_dir = os.path.expanduser(setupDir_deps)
 
 # setup for Linux
+linuxSystemInstall = ''
 linuxCMake = 'cmake'
 linuxSystemInstall_check = ''
 linuxFlag = ''
@@ -115,52 +147,74 @@ elif os.path.exists('/usr/bin/zypper'):
     linuxSystemInstall = 'zypper -n'
     linuxSystemInstall_check = '--no-gpg-checks'
     platfromInfo = platfromInfo+'-SLES'
+else:
+    print("\nMIVisionX Setup on "+platfromInfo+" is unsupported\n")
+    print("\nMIVisionX Setup Supported on: Ubuntu 18/20; CentOS 7/8; RedHat 7/8; & SLES 15-SP2\n")
+    exit()
+
+# MIVisionX Setup
+print("\nMIVisionX Setup on: "+platfromInfo+"\n")
 
 if userName == 'root':
     os.system(linuxSystemInstall+' update')
     os.system(linuxSystemInstall+' install sudo')
 
 # Delete previous install
-if(os.path.exists(deps_dir) and reinstall == 'yes'):
+if os.path.exists(deps_dir) and reinstall == 'yes':
     os.system('sudo -v')
     os.system('sudo rm -rf '+deps_dir)
+    print("\nMIVisionX Setup: Removing Previous Install -- "+deps_dir+"\n")
 
-# MIVisionX setup
-print("\nMIVisionX Setup on "+platfromInfo+"\n")
-if(os.path.exists(deps_dir)):
+# Re-Install
+if os.path.exists(deps_dir):
+    print("\nMIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
     # opencv
-    os.system('sudo -v')
-    os.system('(cd '+deps_dir+'/build/OpenCV; sudo ' +
+    if os.path.exists(deps_dir+'/build/OpenCV'):
+        os.system('sudo -v')
+        os.system('(cd '+deps_dir+'/build/OpenCV; sudo ' +
               linuxFlag+' make install -j8)')
+
     if neuralNetInstall == 'yes':
         # rocm-cmake
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
+        if os.path.exists(deps_dir+'/build/rocm-cmake'):
+            os.system('sudo -v')
+            os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
                   linuxFlag+' make install -j8)')
         # MIOpenGEMM
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
+        if os.path.exists(deps_dir+'/build/MIOpenGEMM'):
+            os.system('sudo -v')
+            os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
                   linuxFlag+' make install -j8)')
         # MIOpen
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
+        if os.path.exists(deps_dir+'/build/MIOpen'):
+            os.system('sudo -v')
+            os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
                   linuxFlag+' make install -j8)')
+
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # ProtoBuf
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
+        if os.path.exists(deps_dir+'/protobuf-'+ProtoBufVersion):
+            os.system('sudo -v')
+            os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                   '; sudo '+linuxFlag+' make install -j8)')
+
     if raliInstall == 'yes':
         # RPP
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/rpp/build; sudo ' +
+        if os.path.exists(deps_dir+'/rpp/build'):
+            os.system('sudo -v')
+            os.system('(cd '+deps_dir+'/rpp/build; sudo ' +
                   linuxFlag+' make install -j8)')
+
     if ffmpegInstall == 'yes':
         # FFMPEG
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
+        if os.path.exists(deps_dir+'/ffmpeg'):
+            os.system('sudo -v')
+            os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
                   linuxFlag+' make install -j8)')
-    print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")
+
+    print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
+    exit()
+# Clean Install
 else:
     print("\nMIVisionX Dependencies Installation with MIVisionX-setup.py V-"+__version__+"\n")
     os.system('mkdir '+deps_dir)
@@ -170,6 +224,7 @@ else:
     os.system('sudo -v')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
               linuxSystemInstall_check+' install gcc cmake git wget unzip pkg-config inxi')
+
     # Get Installation Source
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
@@ -190,6 +245,7 @@ else:
     if ffmpegInstall == 'yes':
         os.system(
             '(cd '+deps_dir+'; git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git )')
+
     # Install
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # package dependencies
@@ -246,7 +302,19 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                   '; sudo '+linuxFlag+' ldconfig )')
+
     if neuralNetInstall == 'yes':
+        # Remove Previous Install - MIOpen
+        os.system('sudo -v')
+        if os.path.exists(ROCM_PATH+'/miopen'):
+                os.system('sudo rm -rf '+ROCM_PATH+'/miopen*')
+        if backend == 'OCL':
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                      linuxSystemInstall_check+' remove miopen-hip')
+        else:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                      linuxSystemInstall_check+' remove miopen-opencl')
+
         os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen)')
         # Install ROCm-CMake
         os.system('(cd '+deps_dir+'/build/rocm-cmake; ' +
@@ -254,20 +322,26 @@ else:
         os.system('(cd '+deps_dir+'/build/rocm-cmake; make -j8 )')
         os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
                   linuxFlag+' make install )')
-        # Install MIOpenGEMM
-        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; '+linuxCMake +
+        if backend == 'OCL':
+            # Install MIOpenGEMM
+            os.system('(cd '+deps_dir+'/build/MIOpenGEMM; '+linuxCMake +
                   ' ../../MIOpenGEMM-'+MIOpenGEMMVersion+' )')
-        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; make -j8 )')
-        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
+            os.system('(cd '+deps_dir+'/build/MIOpenGEMM; make -j8 )')
+            os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
                   linuxFlag+' make install )')
         # Install MIOpen
         os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo ' +
                   linuxFlag+' '+linuxCMake+' -P install_deps.cmake --minimum )')
-        os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
+        if backend == 'OCL':
+            os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
                   ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
+        else:
+            os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
+                  ' -DMIOPEN_BACKEND=HIP ../../MIOpen-'+MIOpenVersion+' )')
         os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
         os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
                   linuxFlag+' make install )')
+
         # Install Packages for NN Apps - Apps Requirement to be installed by Developer
         # os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')
         # os.system('sudo -v')
@@ -286,6 +360,7 @@ else:
         # os.system('sudo '+linuxFlag+' yes | pip install pytz')
         # os.system('sudo -v')
         # os.system('sudo '+linuxFlag+' yes | pip install numpy')
+
     # Install OpenCV
     os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')
     # Install pre-reqs
@@ -318,6 +393,7 @@ else:
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' make install )')
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
+
     if raliInstall == 'yes':
         # Install RPP
         if "Ubuntu" in platfromInfo:
@@ -337,14 +413,19 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install clang')
-            # turbo-JPEG
+            # turbo-JPEG - https://github.com/rrawther/libjpeg-turbo.git -- 2.0.6.1
             os.system(
                 '(cd '+deps_dir+'; git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git )')
             os.system('(cd '+deps_dir+'/libjpeg-turbo; mkdir build; cd build; '+linuxCMake +
                       ' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
             # RPP
+            # Remove Previous Install - RPP
+            os.system('sudo -v')
+            if os.path.exists(ROCM_PATH+'/rpp'):
+                os.system('sudo rm -rf '+ROCM_PATH+'/rpp')
             os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; ' +
-                      linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
+                      linuxCMake+' -DBACKEND='+backend+' ../; make -j4; sudo make install)')
+
         # Turn off for CentOS - TBD: TURN ON when RPP is supported on CentOS
         # else:
             # Nasm
@@ -371,6 +452,7 @@ else:
             # os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
             # RPP
             # os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
+
     # Install ffmpeg
     if ffmpegInstall == 'yes':
         if "Ubuntu" in platfromInfo:
@@ -428,47 +510,15 @@ else:
                 os.system('sudo zypper ar -cfp 90 \'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_$releasever/Essentials\' packman-essentials')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install ffmpeg-4')
-            else:
-                # Yasm
-                os.system(
-                    '(cd '+deps_dir+'; curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz )')
-                os.system('(cd '+deps_dir+'; tar xzvf yasm-1.3.0.tar.gz )')
-                os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
-                os.system('sudo -v')
-                os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo ' +
-                          linuxFlag+' make install )')
-                # libx264
-                os.system(
-                    '(cd '+deps_dir+'; git clone --depth 1 https://code.videolan.org/videolan/x264.git )')
-                os.system(
-                    '(cd '+deps_dir+'/x264; ./configure --enable-static --disable-opencl; make -j8 )')
-                os.system('sudo -v')
-                os.system('(cd '+deps_dir+'/x264; sudo ' +
-                          linuxFlag+' make install )')
-                # libx265
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                          linuxSystemInstall_check+' install hg ')
-                os.system(
-                    '(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')
-                os.system(
-                    '(cd '+deps_dir+'/x265/build/linux; '+linuxCMake+' -G "Unix Makefiles" ../../source; make -j8 )')
-                os.system('sudo -v')
-                os.system('(cd '+deps_dir+'/x265/build/linux; sudo ' +
-                          linuxFlag+' make install; sudo '+linuxFlag+' ldconfig )')
-                # libfdk_aac
-                os.system(
-                    '(cd '+deps_dir+'; git clone https://github.com/mstorsjo/fdk-aac.git )')
-                os.system(
-                    '(cd '+deps_dir+'/fdk-aac; autoreconf -fiv; ./configure --disable-shared; make -j8 )')
-                os.system('sudo -v')
-                os.system('(cd '+deps_dir+'/fdk-aac; sudo ' +
-                          linuxFlag+' make install )')
-        # FFMPEG 4
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
-        os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
-        os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
+
+        # FFMPEG 4 from source -- for Ubuntu, CentOS 7, & RedHat 7
+        if "Ubuntu" in platfromInfo or "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
+            os.system('sudo -v')
+            os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
+            os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
+            os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
+            os.system('sudo -v')
+            os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
                   linuxFlag+' make install )')
+
     print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")

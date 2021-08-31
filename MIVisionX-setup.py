@@ -111,6 +111,10 @@ elif "Ubuntu" in platfromInfo:
     linuxSystemInstall = 'apt-get -y'
     linuxSystemInstall_check = '--allow-unauthenticated'
     linuxFlag = '-S'
+elif os.path.exists('/usr/bin/zypper'):
+    linuxSystemInstall = 'zypper -n'
+    linuxSystemInstall_check = '--no-gpg-checks'
+    platfromInfo = platfromInfo+'-SLES'
 
 if userName == 'root':
     os.system(linuxSystemInstall+' update')
@@ -197,9 +201,12 @@ else:
             elif "centos-8" in platfromInfo or "redhat-8" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' + linuxSystemInstall_check +
                           ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
-        else:
+        elif "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool curl make g++ unzip')
+        elif "SLES" in platfromInfo:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                      linuxSystemInstall_check+' install sqlite3 sqlite3-devel libbz2-devel libopenssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
         # Boost V 1.72.0 from source
         os.system(
             '(cd '+deps_dir+'; wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
@@ -261,8 +268,8 @@ else:
         os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
         os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
                   linuxFlag+' make install )')
-        os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')
         # Install Packages for NN Apps - Apps Requirement to be installed by Developer
+        # os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')
         # os.system('sudo -v')
         # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check+' install inxi aha build-essential')
         # os.system('sudo -v')
@@ -290,11 +297,17 @@ else:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                   ' install libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip')
-    else:
+    elif "centos" in platfromInfo or "redhat" in platfromInfo:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                   ' groupinstall \'Development Tools\'')
         os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
+                  ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
+    elif "SLES" in platfromInfo:
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
+                  ' install -t pattern devel_basis')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                   ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
     # OpenCV 3.4.0
@@ -410,6 +423,11 @@ else:
                           ' install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install ffmpeg ffmpeg-devel')
+            elif "SLES" in platfromInfo:
+                # FFMPEG-4 packages
+                os.system('sudo zypper ar -cfp 90 \'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_$releasever/Essentials\' packman-essentials')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
+                          ' install ffmpeg-4')
             else:
                 # Yasm
                 os.system(

@@ -106,15 +106,15 @@ list(APPEND SOURCES
 
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
-    message("-- ${Green}AMD OpenVX Neural Network Extension -- BUILDING WITH OPENCL BACKEND${ColourReset}")
+    message("-- ${Green}amd_nn -- Building with OpenCL${ColourReset}")
     set(ENABLE_OPENCL 1)
     set(ENABLE_HIP 0)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP})
     include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
     add_library(vx_nn SHARED ${SOURCES})
-    target_link_libraries(vx_nn openvx MIOpen miopengemm)
+    target_link_libraries(vx_nn openvx MIOpen miopengemm ${OpenCL_LIBRARIES})
 elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-    message("-- ${Green}AMD OpenVX Neural Network Extension -- BUILDING WITH HIP BACKEND${ColourReset}")
+    message("-- ${Green}amd_nn -- Building with HIP${ColourReset}")
     set(ENABLE_OPENCL 0)
     set(ENABLE_HIP 1)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_HCC__)
@@ -126,8 +126,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(vx_nn openvx openvx_hip nn_hip MIOpen miopengemm ${HIP_LIBRARY})
 else()
-    message("-- ${Red}AMD OpenVX Neural Network Extension -- OPENCL/HIP NOT FOUND${ColourReset}")
-    message("-- ${Red}AMD OpenVX Neural Network Extension module excluded {ColourReset}")
+    message("-- ${Red}WARNING:OpenCL/HIP Not Found -- amd_nn module excluded${ColourReset}")
 endif()
 
 

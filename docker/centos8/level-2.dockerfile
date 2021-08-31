@@ -10,3 +10,7 @@ RUN echo -e "[ROCm]\nname=ROCm\nbaseurl=https://repo.radeon.com/rocm/centos8/rpm
         /etc/yum.repos.d/rocm.repo && yum -y update --nogpgcheck && yum -y install --nogpgcheck rocm-dev
 
 WORKDIR /workspace
+
+# install MIVisionX
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+        cmake ../MIVisionX && make -j8 && make install

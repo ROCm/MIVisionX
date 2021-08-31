@@ -99,7 +99,8 @@ if os.path.exists(ROCM_PATH):
     os.system(ROCM_PATH+'/bin/rocminfo')
 else:
     print("WARNING: ROCm Not Found at -- "+ROCM_PATH+"\n")
-    print("WARNING: Set ROCm Path with --rocm_path option for full installation [Default:/opt/rocm]\n")
+    print(
+        "WARNING: Set ROCm Path with --rocm_path option for full installation [Default:/opt/rocm]\n")
     print("WARNING: Only OpenCV will be installed\n")
     ffmpegInstall = 'no'
     neuralNetInstall = 'no'
@@ -172,45 +173,45 @@ if os.path.exists(deps_dir):
     if os.path.exists(deps_dir+'/build/OpenCV'):
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/build/OpenCV; sudo ' +
-              linuxFlag+' make install -j8)')
+                  linuxFlag+' make install -j8)')
 
     if neuralNetInstall == 'yes':
         # rocm-cmake
         if os.path.exists(deps_dir+'/build/rocm-cmake'):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
-                  linuxFlag+' make install -j8)')
+                      linuxFlag+' make install -j8)')
         # MIOpenGEMM
         if os.path.exists(deps_dir+'/build/MIOpenGEMM'):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
-                  linuxFlag+' make install -j8)')
+                      linuxFlag+' make install -j8)')
         # MIOpen
         if os.path.exists(deps_dir+'/build/MIOpen'):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
-                  linuxFlag+' make install -j8)')
+                      linuxFlag+' make install -j8)')
 
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # ProtoBuf
         if os.path.exists(deps_dir+'/protobuf-'+ProtoBufVersion):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
-                  '; sudo '+linuxFlag+' make install -j8)')
+                      '; sudo '+linuxFlag+' make install -j8)')
 
     if raliInstall == 'yes':
         # RPP
         if os.path.exists(deps_dir+'/rpp/build'):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/rpp/build; sudo ' +
-                  linuxFlag+' make install -j8)')
+                      linuxFlag+' make install -j8)')
 
     if ffmpegInstall == 'yes':
         # FFMPEG
         if os.path.exists(deps_dir+'/ffmpeg'):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
-                  linuxFlag+' make install -j8)')
+                      linuxFlag+' make install -j8)')
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
     exit()
@@ -307,7 +308,7 @@ else:
         # Remove Previous Install - MIOpen
         os.system('sudo -v')
         if os.path.exists(ROCM_PATH+'/miopen'):
-                os.system('sudo rm -rf '+ROCM_PATH+'/miopen*')
+            os.system('sudo rm -rf '+ROCM_PATH+'/miopen*')
         if backend == 'OCL':
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' remove miopen-hip')
@@ -325,19 +326,19 @@ else:
         if backend == 'OCL':
             # Install MIOpenGEMM
             os.system('(cd '+deps_dir+'/build/MIOpenGEMM; '+linuxCMake +
-                  ' ../../MIOpenGEMM-'+MIOpenGEMMVersion+' )')
+                      ' ../../MIOpenGEMM-'+MIOpenGEMMVersion+' )')
             os.system('(cd '+deps_dir+'/build/MIOpenGEMM; make -j8 )')
             os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
-                  linuxFlag+' make install )')
+                      linuxFlag+' make install )')
         # Install MIOpen
         os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo ' +
                   linuxFlag+' '+linuxCMake+' -P install_deps.cmake --minimum )')
         if backend == 'OCL':
             os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
-                  ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
+                      ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
         else:
             os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
-                  ' -DMIOPEN_BACKEND=HIP ../../MIOpen-'+MIOpenVersion+' )')
+                      ' -DMIOPEN_BACKEND=HIP ../../MIOpen-'+MIOpenVersion+' )')
         os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
         os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
                   linuxFlag+' make install )')
@@ -507,7 +508,8 @@ else:
                           ' install ffmpeg ffmpeg-devel')
             elif "SLES" in platfromInfo:
                 # FFMPEG-4 packages
-                os.system('sudo zypper ar -cfp 90 \'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_$releasever/Essentials\' packman-essentials')
+                os.system(
+                    'sudo zypper ar -cfp 90 \'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_$releasever/Essentials\' packman-essentials')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install ffmpeg-4')
 
@@ -519,6 +521,6 @@ else:
             os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
-                  linuxFlag+' make install )')
+                      linuxFlag+' make install )')
 
     print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")

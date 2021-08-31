@@ -241,12 +241,6 @@ ImageReadAndDecode::load(unsigned char* buff,
             }
             _original_height[i] = original_height;
             _original_width[i] = original_width;
-#if 0
-            if((unsigned)original_width != max_decoded_width || (unsigned)original_height != max_decoded_height)
-                // Seeting the whole buffer to zero in case resizing to exact output dimension is not possible.
-                memset(_decompressed_buff_ptrs[i],0 , image_size);
-#endif
-
             // decode the image and get the actual decoded image width and height
             size_t scaledw, scaledh;
             if(_decoder[i]->is_partial_decoder() && _randombboxcrop_meta_data_reader)

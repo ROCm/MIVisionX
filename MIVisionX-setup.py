@@ -1,4 +1,4 @@
-# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ else:
     import subprocess
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
+__copyright__ = "Copyright 2018 - 2021, AMD ROCm MIVisionX"
 __license__ = "MIT"
 __version__ = "1.9.9"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -77,26 +77,25 @@ backend = args.backend
 ROCM_PATH = args.rocm_path
 
 if ffmpegInstall not in ('no', 'yes'):
-    print("ERROR: FFMPEG Install options supported - [no or yes]")
+    print("ERROR: FFMPEG Install Option Not Supported - [Supported Options: no or yes]")
     exit()
 if neuralNetInstall not in ('no', 'yes'):
-    print("ERROR: Neural Net Install options supported - [no or yes]")
+    print("ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
     exit()
 if raliInstall not in ('no', 'yes'):
-    print("ERROR: Neural Net Install options supported - [no or yes]")
+    print("ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
     exit()
 if reinstall not in ('no', 'yes'):
-    print("ERROR: Re-Install options supported - [no or yes]")
+    print("ERROR: Re-Install Option Not Supported - [Supported Options: no or yes]")
     exit()
 if backend not in ('OCL', 'HIP'):
-    print("ERROR: Backend options supported - [OCL or HIP]")
+    print("ERROR: Backend Option Not Supported - [Supported Options: OCL or HIP]")
     exit()
 
 # check ROCm installation
 if os.path.exists(ROCM_PATH):
     print("ROCm Installation Found -- "+ROCM_PATH+"\n")
-    print("ROCm Info --\n")
-    os.system(ROCM_PATH+'/bin/rocminfo')
+    os.system('echo ROCm Info -- && '+ROCM_PATH+'/bin/rocminfo')
 else:
     print("WARNING: ROCm Not Found at -- "+ROCM_PATH+"\n")
     print(
@@ -107,6 +106,8 @@ else:
     raliInstall = 'no'
 
 platfromInfo = platform.platform()
+platformVersion = platform.version()
+platformInfo = platfromInfo+platformVersion
 
 # sudo requirement check
 sudoLocation = ''
@@ -187,9 +188,9 @@ if os.path.exists(deps_dir):
             os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
                       linuxFlag+' make install -j8)')
         # MIOpen
-        if os.path.exists(deps_dir+'/build/MIOpen'):
+        if os.path.exists(deps_dir+'/build/MIOpen*'):
             os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
+            os.system('(cd '+deps_dir+'/build/MIOpen*; sudo ' +
                       linuxFlag+' make install -j8)')
 
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
@@ -309,14 +310,16 @@ else:
         os.system('sudo -v')
         if os.path.exists(ROCM_PATH+'/miopen'):
             os.system('sudo rm -rf '+ROCM_PATH+'/miopen*')
+
         if backend == 'OCL':
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' remove miopen-hip')
+            os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen-OCL)')
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' remove miopen-opencl')
+            os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpen-HIP)')
 
-        os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen)')
         # Install ROCm-CMake
         os.system('(cd '+deps_dir+'/build/rocm-cmake; ' +
                   linuxCMake+' ../../rocm-cmake )')
@@ -334,10 +337,10 @@ else:
         os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo ' +
                   linuxFlag+' '+linuxCMake+' -P install_deps.cmake --minimum )')
         if backend == 'OCL':
-            os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
+            os.system('(cd '+deps_dir+'/build/MIOpen-OCL; '+linuxCMake +
                       ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
         else:
-            os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
+            os.system('(cd '+deps_dir+'/build/MIOpen-HIP; CXX=/opt/rocm/llvm/bin/clang++ '+linuxCMake +
                       ' -DMIOPEN_BACKEND=HIP ../../MIOpen-'+MIOpenVersion+' )')
         os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
         os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +

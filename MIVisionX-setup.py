@@ -106,7 +106,7 @@ else:
     raliInstall = 'no'
 
 # get platfrom info
-platfromInfo = platform.platform()+'_'+platform.version()
+platfromInfo = platform.platform()
 
 # sudo requirement check
 sudoLocation = ''

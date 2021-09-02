@@ -201,9 +201,9 @@ if os.path.exists(deps_dir):
 
     if raliInstall == 'yes':
         # RPP
-        if os.path.exists(deps_dir+'/rpp/build'):
+        if os.path.exists(deps_dir+'/rpp/build-'+backend):
             os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/rpp/build; sudo ' +
+            os.system('(cd '+deps_dir+'/rpp/build-'+backend+'; sudo ' +
                       linuxFlag+' make install -j8)')
 
     if ffmpegInstall == 'yes':
@@ -425,7 +425,7 @@ else:
             os.system('sudo -v')
             if os.path.exists(ROCM_PATH+'/rpp'):
                 os.system('sudo rm -rf '+ROCM_PATH+'/rpp')
-            os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; ' +
+            os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
                       linuxCMake+' -DBACKEND='+backend+' ../; make -j4; sudo make install)')
 
         # Turn off for CentOS - TBD: TURN ON when RPP is supported on CentOS

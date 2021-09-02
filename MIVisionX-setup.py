@@ -105,9 +105,8 @@ else:
     neuralNetInstall = 'no'
     raliInstall = 'no'
 
-platfromInfo = platform.platform()
-platformVersion = platform.version()
-platformInfo = platfromInfo+platformVersion
+# get platfrom info
+platfromInfo = platform.platform()+'_'+platform.version()
 
 # sudo requirement check
 sudoLocation = ''
@@ -314,12 +313,11 @@ else:
         if backend == 'OCL':
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' remove miopen-hip')
-            os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen-OCL)')
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' remove miopen-opencl')
-            os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpen-HIP)')
 
+        os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen-'+backend+')')
         # Install ROCm-CMake
         os.system('(cd '+deps_dir+'/build/rocm-cmake; ' +
                   linuxCMake+' ../../rocm-cmake )')
@@ -337,13 +335,13 @@ else:
         os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo ' +
                   linuxFlag+' '+linuxCMake+' -P install_deps.cmake --minimum )')
         if backend == 'OCL':
-            os.system('(cd '+deps_dir+'/build/MIOpen-OCL; '+linuxCMake +
+            os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; '+linuxCMake +
                       ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
         else:
-            os.system('(cd '+deps_dir+'/build/MIOpen-HIP; CXX=/opt/rocm/llvm/bin/clang++ '+linuxCMake +
+            os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; CXX=/opt/rocm/llvm/bin/clang++ '+linuxCMake +
                       ' -DMIOPEN_BACKEND=HIP ../../MIOpen-'+MIOpenVersion+' )')
-        os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
-        os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
+        os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; make -j8 )')
+        os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; sudo ' +
                   linuxFlag+' make install )')
 
         # Install Packages for NN Apps - Apps Requirement to be installed by Developer

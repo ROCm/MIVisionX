@@ -539,6 +539,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuGaussianPyramid(vx_context context, vx_ima
         }
         vxReleaseGraph(&graph);
     }
+    status = VX_SUCCESS;
     return status;
 }
 

@@ -21,17 +21,17 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
             cmake = 'cmake3'
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }
-        installPackageDeps = 'python3 MIVisionX-setup.py --reinstall yes --ffmpeg yes'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo zypper -n --no-gpg-checks install lcov zip && sudo zypper -n --no-gpg-checks update'
-        installPackageDeps = 'python3 MIVisionX-setup.py --reinstall yes --ffmpeg yes'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
     }
     else if (platform.jenkinsLabel.contains('ubuntu')) {
         osInfo = 'cat /etc/lsb-release && uname -r'
         update = 'sudo apt-get -y --allow-unauthenticated update && sudo apt-get -y --allow-unauthenticated install lcov zip'
-        installPackageDeps = 'python3 MIVisionX-setup.py --reinstall yes --ffmpeg yes'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
         if (platform.jenkinsLabel.contains('ubuntu18')) {
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }

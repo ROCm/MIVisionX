@@ -5,13 +5,13 @@ WORKDIR $MIVISIONX_DEPS_ROOT
 
 # install mivisionx base dependencies - Level 1
 RUN yum -y update --nogpgcheck && yum -y install --nogpgcheck http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm && \
-        yum -y install --nogpgcheck gcc gcc-c++ kernel-devel make && yum -y install --nogpgcheck cmake3 && yum -y install --nogpgcheck git
-# install ROCm for mivisionx OpenCL dependency - Level 2
-RUN yum-config-manager --enable rhel-server-rhscl-7-rpms && yum -y install --nogpgcheck centos-release-scl && yum -y install --nogpgcheck devtoolset-7 && \
-        echo -e "[ROCm]\nname=ROCm\nbaseurl=https://repo.radeon.com/rocm/yum/rpm\nenabled=1\ngpgcheck=1\ngpgkey=https://repo.radeon.com/rocm/rocm.gpg.key" > \
-        /etc/yum.repos.d/rocm.repo && yum -y install --nogpgcheck rocm-dev
+        yum -y install --nogpgcheck gcc gcc-c++ kernel-devel make cmake3 git && yum-config-manager --enable rhel-server-rhscl-7-rpms && \
+        yum -y install --nogpgcheck centos-release-scl && yum -y install --nogpgcheck devtoolset-7
 # Enable Developer Toolset 7
 SHELL [ "/usr/bin/scl", "enable", "devtoolset-7" ]
+# install ROCm for mivisionx OpenCL dependency - Level 2
+RUN echo -e "[ROCm]\nname=ROCm\nbaseurl=https://repo.radeon.com/rocm/yum/rpm\nenabled=1\ngpgcheck=1\ngpgkey=https://repo.radeon.com/rocm/rocm.gpg.key" > \
+        /etc/yum.repos.d/rocm.repo && yum -y install --nogpgcheck rocm-dev
 # install OpenCV & FFMPEG - Level 3
 RUN yum -y groupinstall 'Development Tools' --nogpgcheck && yum -y install --nogpgcheck gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip && \
         mkdir opencv && cd opencv && wget https://github.com/opencv/opencv/archive/3.4.0.zip && unzip 3.4.0.zip && \
@@ -29,3 +29,7 @@ RUN yum -y install --nogpgcheck autoconf automake bzip2 bzip2-devel cmake freety
         make -j8 && make install
 
 WORKDIR /workspace
+
+# install MIVisionX
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+        cmake3 ../MIVisionX && make -j8 && make install

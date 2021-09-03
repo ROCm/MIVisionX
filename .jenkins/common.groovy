@@ -15,23 +15,23 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 
     if (platform.jenkinsLabel.contains('centos')) {
         osInfo = 'cat /etc/os-release && uname -r'
-        update = 'sudo yum -y update && sudo yum -y --nogpgcheck install lcov zip'
+        update = 'sudo yum -y --nogpgcheck update && sudo yum -y --nogpgcheck install lcov zip'
         if (platform.jenkinsLabel.contains('centos7')) {
             update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y --nogpgcheck install lcov zip && sudo yum -y --nogpgcheck update'
             cmake = 'cmake3'
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }
-        installPackageDeps = 'python3 MIVisionX-setup.py --reinstall yes --ffmpeg yes'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
-        update = 'sudo zypper --non-interactive install lcov zip && sudo zypper --non-interactive update'
-        installPackageDeps = 'python3 MIVisionX-setup.py --reinstall yes --ffmpeg yes --installer "zypper --non-interactive"'
+        update = 'sudo zypper -n --no-gpg-checks install lcov zip && sudo zypper -n --no-gpg-checks update'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
     }
     else if (platform.jenkinsLabel.contains('ubuntu')) {
         osInfo = 'cat /etc/lsb-release && uname -r'
-        update = 'sudo apt-get -y update && sudo apt-get -y --allow-unauthenticated install lcov zip'
-        installPackageDeps = 'python3 MIVisionX-setup.py --reinstall yes --ffmpeg yes'
+        update = 'sudo apt-get -y --allow-unauthenticated update && sudo apt-get -y --allow-unauthenticated install lcov zip'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
         if (platform.jenkinsLabel.contains('ubuntu18')) {
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }
@@ -118,11 +118,11 @@ def runTestCommand (platform, project) {
                 set -x
                 echo MIVisionX - with OpenCL Tests
                 cd ${project.paths.project_build_prefix}/build/release-opencl
-                python3 ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
-                python3 ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type OCL
+                python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
+                python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type OCL
                 export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/rocm/miopen/lib
                 export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/rocm/miopengemm/lib
-                sudo python3 ../../tests/neural_network_tests/runNeuralNetworkTests.py
+                sudo python ../../tests/neural_network_tests/runNeuralNetworkTests.py
                 export OPENVX_DIR=\$(pwd)/.
                 export OPENVX_INC=\$(pwd)/../../amd_openvx/openvx
                 mkdir conformance_tests
@@ -146,8 +146,8 @@ def runTestCommand (platform, project) {
                 ${codeCovPackageOCL}
                 echo MIVisionX - with HIP Tests
                 cd ../release-hip
-                python3 ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
-                python3 ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type HIP
+                python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
+                python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type HIP
                 export OPENVX_DIR=\$(pwd)/.
                 export OPENVX_INC=\$(pwd)/../../amd_openvx/openvx
                 mkdir conformance_tests
@@ -203,7 +203,7 @@ def runPackageCommand(platform, project) {
                 sudo make package
                 mkdir -p package
                 mv *.${packageType} package/
-                python3 ../../tests/library_tests/runLibraryTests.py
+                python ../../tests/library_tests/runLibraryTests.py
                 mv *.md package/
                 ${packageInfo} package/*.${packageType}
                 echo Make MIVisionX Package - with HIP support

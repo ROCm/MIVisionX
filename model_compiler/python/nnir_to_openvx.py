@@ -114,6 +114,8 @@ project (annmodule)
 
 set(CMAKE_CXX_STANDARD 11)
 
+set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(OpenCL REQUIRED)
@@ -153,62 +155,104 @@ target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread)
         generateLicenseForScript(f)
         f.write( \
 """
-find_path(OPENCL_INCLUDE_DIRS
-    NAMES OpenCL/cl.h CL/cl.h
-    HINTS
-    ${OPENCL_ROOT}/include
-    $ENV{AMDAPPSDKROOT}/include
-    PATHS
-    /usr/include
-    /usr/local/include
-    /opt/rocm/opencl/include
-    DOC "OpenCL header file path"
-    )
-mark_as_advanced( OPENCL_INCLUDE_DIRS )
-if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-    find_library( OPENCL_LIBRARIES
-        NAMES OpenCL
-        HINTS
-        ${OPENCL_ROOT}/lib
-        $ENV{AMDAPPSDKROOT}/lib
-        DOC "OpenCL dynamic library path"
-        PATH_SUFFIXES x86_64 x64 x86_64/sdk
-        PATHS
-        /usr/lib
-        /opt/rocm/opencl/lib
-        )
-else( )
-    find_library( OPENCL_LIBRARIES
-        NAMES OpenCL
-        HINTS
-        ${OPENCL_ROOT}/lib
-        $ENV{AMDAPPSDKROOT}/lib
-        DOC "OpenCL dynamic library path"
-        PATH_SUFFIXES x86 Win32
-        PATHS
-        /usr/lib
-        )
-endif( )
-mark_as_advanced( OPENCL_LIBRARIES )
 include( FindPackageHandleStandardArgs )
-find_package_handle_standard_args( OpenCL DEFAULT_MSG OPENCL_LIBRARIES OPENCL_INCLUDE_DIRS )
-set(OpenCL_FOUND ${OPENCL_FOUND} CACHE INTERNAL "")
-set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
-set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
+find_package_handle_standard_args(
+    OpenCL
+    FOUND_VAR OpenCL_FOUND
+    REQUIRED_VARS
+        OpenCL_LIBRARIES
+        OpenCL_INCLUDE_DIRS
+        CL_TARGET_OPENCL_VERSION
+    VERSION_VAR OpenCL_VERSION
+)
 
-if(EXISTS "/opt/rocm/opencl/lib/libOpenCL.so")
-    if(NOT "${OPENCL_LIBRARIES}" STREQUAL "/opt/rocm/opencl/lib/libOpenCL.so")
-        message("-- ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL")
-        set(OpenCL_LIBRARIES /opt/rocm/opencl/lib/libOpenCL.so CACHE INTERNAL "")
-        set(OpenCL_INCLUDE_DIRS /opt/rocm/opencl/include CACHE INTERNAL "")
-    endif()
-    set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
+if(OpenCL_LIBRARIES AND OpenCL_INCLUDE_DIRS)
+    set(OpenCL_FOUND TRUE)
     add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
-    message("-- ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION}")
-endif()
+else()
+    find_path(OPENCL_INCLUDE_DIRS
+        NAMES OpenCL/cl.h CL/cl.h
+        HINTS
+        ${OPENCL_ROOT}/include
+        $ENV{AMDAPPSDKROOT}/include
+        $ENV{CUDA_PATH}/include
+        PATHS
+        ${ROCM_PATH}/opencl/include
+        /usr/include
+        /usr/local/include
+        /usr/local/cuda/include
+        /opt/cuda/include
+        DOC "OpenCL header file path"
+    )
+    mark_as_advanced( OPENCL_INCLUDE_DIRS )
 
-if( NOT OPENCL_FOUND )
-    message( "-- FindOpenCL failed to find: OpenCL" )
+    if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+        find_library( OPENCL_LIBRARIES
+            NAMES OpenCL
+            HINTS
+            ${OPENCL_ROOT}/lib
+            $ENV{AMDAPPSDKROOT}/lib
+            $ENV{CUDA_PATH}/lib
+            DOC "OpenCL dynamic library path"
+            PATH_SUFFIXES x86_64 x64 x86_64/sdk
+            PATHS
+            ${ROCM_PATH}/opencl/lib/
+            /usr/lib
+            /usr/local/cuda/lib
+            /opt/cuda/lib
+        )
+    else( )
+        find_library( OPENCL_LIBRARIES
+            NAMES OpenCL
+            HINTS
+            ${OPENCL_ROOT}/lib
+            $ENV{AMDAPPSDKROOT}/lib
+            $ENV{CUDA_PATH}/lib
+            DOC "OpenCL dynamic library path"
+            PATH_SUFFIXES x86 Win32
+            PATHS
+            ${ROCM_PATH}/opencl/lib/
+            /usr/lib
+            /usr/local/cuda/lib
+            /opt/cuda/lib
+        )
+    endif( )
+    mark_as_advanced( OPENCL_LIBRARIES )
+
+    if(OPENCL_LIBRARIES AND OPENCL_INCLUDE_DIRS)
+        set(OPENCL_FOUND TRUE)
+    endif( )
+
+    set(OpenCL_FOUND ${OPENCL_FOUND} CACHE INTERNAL "")
+    set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
+    set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
+
+    if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
+        if(NOT "${OPENCL_LIBRARIES}" STREQUAL "${ROCM_PATH}/opencl/lib/libOpenCL.so")
+            message("-- ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL${ColourReset}")
+            set(OpenCL_LIBRARIES ${ROCM_PATH}/opencl/lib/libOpenCL.so CACHE INTERNAL "")
+            set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")
+        endif()
+    endif()
+
+    if(OpenCL_FOUND)
+        execute_process(
+            COMMAND bash -c "nm -gDC ${OpenCL_LIBRARIES} | grep OPENCL_2.2"
+            OUTPUT_VARIABLE outVar
+        )
+        if(NOT ${outVar} STREQUAL "")
+            set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
+        else()
+            message( "-- FindOpenCL failed to find: OpenCL 2.2" )
+            set(CL_TARGET_OPENCL_VERSION 120 CACHE INTERNAL "")
+        endif()
+        add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
+        message("-- ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION}")
+    endif()
+
+    if( NOT OpenCL_FOUND )
+        message( "-- FindOpenCL failed to find: OpenCL" )
+    endif()
 endif()
 """)
 

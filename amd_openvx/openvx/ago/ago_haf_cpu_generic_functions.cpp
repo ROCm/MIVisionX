@@ -789,10 +789,10 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     {
         pyr_gauss_curr_level_filtered = vxCreateImage(context, level_width, level_height, VX_DF_IMAGE_S16);
         printf("h0\n");
-        upsampleImage(context, level_width, level_height, gauss_next, conv, pyr_gauss_curr_level_filtered, &border);
+        upsampleImage(context, level_width, level_height, gauss_next2, conv, pyr_gauss_curr_level_filtered, &border);
         printf("h1\n");
         pyr_laplacian_curr_level = vxGetPyramidLevel(laplacian, (vx_uint32)lev);
-        status |= vxuSubtract(context, gauss_cur, pyr_gauss_curr_level_filtered, policy, pyr_laplacian_curr_level);
+        status |= vxuSubtract(context, gauss_cur2, pyr_gauss_curr_level_filtered, policy, pyr_laplacian_curr_level);
         if (lev == levels - 1)
         {
             vx_image tmp = vxGetPyramidLevel(gaussian, (vx_uint32) levels);

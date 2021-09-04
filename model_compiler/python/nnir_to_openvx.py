@@ -122,15 +122,15 @@ find_package(OpenCL REQUIRED)
 find_package(OpenCV QUIET)
 
 include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
-include_directories(/opt/rocm/mivisionx/include)
+include_directories(${ROCM_PATH}/mivisionx/include)
 
-link_directories(/opt/rocm/mivisionx/lib)
+link_directories(${ROCM_PATH}/mivisionx/lib)
 
 list(APPEND SOURCES annmodule.cpp)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
 
-target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread)
+target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
 
 add_executable(anntest anntest.cpp)
 if(OpenCV_FOUND)
@@ -141,11 +141,11 @@ else(OpenCV_FOUND)
   target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=0)
 endif(OpenCV_FOUND)
 
-target_link_libraries(anntest openvx vx_nn pthread ${PROJECT_NAME})
+target_link_libraries(anntest ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
 
 add_library(annpython SHARED annpython.cpp)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
-target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread)
+target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
 """)
     if not os.path.isdir(outputFolder + '/cmake'):
         os.mkdir(outputFolder + '/cmake')

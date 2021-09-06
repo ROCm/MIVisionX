@@ -121,6 +121,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenCL REQUIRED)
 find_package(OpenCV QUIET)
 
+message("-- Using OpenCL Library -- ${OpenCL_LIBRARIES}")
 include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 include_directories(${ROCM_PATH}/mivisionx/include)
 
@@ -162,13 +163,13 @@ find_package_handle_standard_args(
     REQUIRED_VARS
         OpenCL_LIBRARIES
         OpenCL_INCLUDE_DIRS
-        CL_TARGET_OPENCL_VERSION
+        CL_TARGET_OpenCL_VERSION
     VERSION_VAR OpenCL_VERSION
 )
 
 if(OpenCL_LIBRARIES AND OpenCL_INCLUDE_DIRS)
     set(OpenCL_FOUND TRUE)
-    add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
+    add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION})
 else()
     find_path(OPENCL_INCLUDE_DIRS
         NAMES OpenCL/cl.h CL/cl.h
@@ -229,7 +230,7 @@ else()
 
     if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
         if(NOT "${OPENCL_LIBRARIES}" STREQUAL "${ROCM_PATH}/opencl/lib/libOpenCL.so")
-            message("-- ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL${ColourReset}")
+            message("-- ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL")
             set(OpenCL_LIBRARIES ${ROCM_PATH}/opencl/lib/libOpenCL.so CACHE INTERNAL "")
             set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")
         endif()
@@ -241,13 +242,13 @@ else()
             OUTPUT_VARIABLE outVar
         )
         if(NOT ${outVar} STREQUAL "")
-            set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
+            set(CL_TARGET_OpenCL_VERSION 220 CACHE INTERNAL "")
         else()
             message( "-- FindOpenCL failed to find: OpenCL 2.2" )
-            set(CL_TARGET_OPENCL_VERSION 120 CACHE INTERNAL "")
+            set(CL_TARGET_OpenCL_VERSION 120 CACHE INTERNAL "")
         endif()
-        add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
-        message("-- ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION}")
+        add_definitions(-DCL_TARGET_OpenCL_VERSION=${CL_TARGET_OpenCL_VERSION})
+        message("-- ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION}")
     endif()
 
     if( NOT OpenCL_FOUND )

@@ -152,6 +152,7 @@ private:
     float _criteria = 0.5;
     float _scale;
     bool _offset;
+    std::vector<float> _means, _stds;
 };
 
 template <typename T>

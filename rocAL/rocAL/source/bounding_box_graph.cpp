@@ -202,7 +202,7 @@ inline int find_best_box_for_anchor(unsigned anchor_idx, const std::vector<float
     return best_idx;
 }
 
-void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, pMetaDataBatch full_batch_meta_data, float criteria, bool offset, float scale)
+void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, pMetaDataBatch full_batch_meta_data, float criteria, bool offset, float scale, std::vector<float> means, std::vector<float> stds)
 {
     #pragma omp parallel for 
     for (int i = 0; i < full_batch_meta_data->size(); i++)
@@ -225,7 +225,6 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         encoded_bb.resize(anchors_size);
         encoded_labels.resize(anchors_size);
 
-// #pragma omp parallel for 
         for (uint bb_idx = 0; bb_idx < bb_count; bb_idx++)
         {
             int m = bb_idx * 4;
@@ -241,7 +240,6 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         }
         
         // Depending on the matches ->place the best bbox instead of the corresponding anchor_idx in anchor
-// #pragma omp parallel for  
         for (unsigned anchor_idx = 0; anchor_idx < anchors_size; anchor_idx++)
         {
             int m = anchor_idx * 4;
@@ -252,25 +250,57 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
             _anchor.b = anchors[m + 3];
             const auto best_idx = find_best_box_for_anchor(anchor_idx, ious, bb_count, anchors_size);
             // Filter matches by criteria
-            if (ious[(best_idx * anchors_size) + anchor_idx] > criteria)
+            if (ious[(best_idx * anchors_size) + anchor_idx] > criteria) //Its a match
             {
                 //YTD: Need to add a new structure for xc,yc,w,h similar to l,t,r,b as a part of metadata
-                box_bestidx.l = 0.5 * (bb_coords.at(best_idx).l + bb_coords.at(best_idx).r); //xc
-                box_bestidx.t = 0.5 * (bb_coords.at(best_idx).t + bb_coords.at(best_idx).b); //yc
-                box_bestidx.r = (-bb_coords.at(best_idx).l + bb_coords.at(best_idx).r);      //w
-                box_bestidx.b = (-bb_coords.at(best_idx).t + bb_coords.at(best_idx).b);      //h
-                encoded_bb[anchor_idx] = box_bestidx;
-                encoded_labels[anchor_idx] = bb_labels.at(best_idx);
+                    box_bestidx.l = 0.5 * (bb_coords.at(best_idx).l + bb_coords.at(best_idx).r); //xc
+                    box_bestidx.t = 0.5 * (bb_coords.at(best_idx).t + bb_coords.at(best_idx).b); //yc
+                    box_bestidx.r = (-bb_coords.at(best_idx).l + bb_coords.at(best_idx).r);      //w
+                    box_bestidx.b = (-bb_coords.at(best_idx).t + bb_coords.at(best_idx).b);      //h
+
+                if (offset)
+                {
+                    box_bestidx.l *= scale; //xc
+                    box_bestidx.t *= scale; //yc
+                    box_bestidx.r *= scale; //w
+                    box_bestidx.b *= scale; //h
+                    //YTD: Need to add a new structure for xc,yc,w,h similar to l,t,r,b as a part of metadata
+                    _anchor_xcyxwh.l = 0.5 * (_anchor.l + _anchor.r) * scale; //xc
+                    _anchor_xcyxwh.t = 0.5 * (_anchor.t + _anchor.b) * scale; //yc
+                    _anchor_xcyxwh.r = (-_anchor.l + _anchor.r) * scale;      //w
+                    _anchor_xcyxwh.b = (-_anchor.t + _anchor.b) * scale;      //h
+
+                    box_bestidx.l = ((box_bestidx.l - _anchor_xcyxwh.l) / _anchor_xcyxwh.r - means[0]) / stds[0];
+                    box_bestidx.t = ((box_bestidx.t - _anchor_xcyxwh.t) / _anchor_xcyxwh.b - means[1]) / stds[1];
+                    box_bestidx.r = (std::log(box_bestidx.r / _anchor_xcyxwh.r) - means[2]) / stds[2];
+                    box_bestidx.b = (std::log(box_bestidx.b / _anchor_xcyxwh.b) - means[3]) / stds[3];
+                    encoded_bb[anchor_idx] = box_bestidx;
+                    encoded_labels[anchor_idx] = bb_labels.at(best_idx);
+                }
+                else
+                {
+                    encoded_bb[anchor_idx] = box_bestidx;
+                    encoded_labels[anchor_idx] = bb_labels.at(best_idx);
+                }
             }
-            else
+            else // Not a match
             {
-                //YTD: Need to add a new structure for xc,yc,w,h similar to l,t,r,b as a part of metadata
-                _anchor_xcyxwh.l = 0.5 * (_anchor.l + _anchor.r); //xc
-                _anchor_xcyxwh.t = 0.5 * (_anchor.t + _anchor.b); //yc
-                _anchor_xcyxwh.r = (-_anchor.l + _anchor.r);      //w
-                _anchor_xcyxwh.b = (-_anchor.t + _anchor.b);      //h
-                encoded_bb[anchor_idx] = _anchor_xcyxwh;
-                encoded_labels[anchor_idx] = 0;
+                if (offset)
+                {
+                    _anchor_xcyxwh.l =_anchor_xcyxwh.t = _anchor_xcyxwh.r = _anchor_xcyxwh.b = 0;
+                    encoded_bb[anchor_idx] = _anchor_xcyxwh;
+                    encoded_labels[anchor_idx] = 0;
+                }
+                else
+                {
+                    //YTD: Need to add a new structure for xc,yc,w,h similar to l,t,r,b as a part of metadata
+                    _anchor_xcyxwh.l = 0.5 * (_anchor.l + _anchor.r); //xc
+                    _anchor_xcyxwh.t = 0.5 * (_anchor.t + _anchor.b); //yc
+                    _anchor_xcyxwh.r = (-_anchor.l + _anchor.r);      //w
+                    _anchor_xcyxwh.b = (-_anchor.t + _anchor.b);      //h
+                    encoded_bb[anchor_idx] = _anchor_xcyxwh;
+                    encoded_labels[anchor_idx] = 0;
+                }
             }
         }
         bb_coords.clear();

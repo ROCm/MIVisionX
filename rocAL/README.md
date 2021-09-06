@@ -41,10 +41,10 @@ rocAL can be currently used to perform the following operations either with rand
 *  Ubuntu `16.04`/`18.04`/`20.04`
 *  AMD [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)
 *  OpenVX (including RPP and Media extension)
-*  Boost lib 1.66 or higher 
+*  Boost lib 1.66 or higher
 *  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or higher
 *  Half float library
-*  jsoncpp library
+*  rapidJson library
 *  Google protobuf 3.11.1 or higher
 
 ## Build instructions
@@ -60,17 +60,17 @@ rocAL builds and installs as part of the MIVisonX toolkit. rocAL depends on the 
 Turbo JPEG library is a SIMD optimized library which currently rocAL uses to decode input JPEG images. It needs to be built from the source and installed in the default path for libraries and include headers. You can follow the instruction below to download the source, build and install it.
 Note: Make sure you have installed nasm Debian package before installation, it's the dependency required by libturbo-jpeg.
 
-``` 
+```
  sudo apt-get install nasm
 ```
 
 Note: You need wget package to download the tar file.
 
-``` 
+```
  sudo apt-get install wget
 ```
 
-``` 
+```
 git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git
 cd libjpeg-turbo
 mkdir build
@@ -82,18 +82,24 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr \
       -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib  \
       ..
 make -j$nproc
-sudo make install      
+sudo make install
 ```
 
 ### Jsoncpp installation
 
-``` 
-sudo apt-get install libjsoncpp-dev
+```
+git clone -b v1.1.0 https://github.com/Tencent/rapidjson.git
+cd rapidjson
+mkdir build
+cd build
+cmake ..
+make -j$nproc
+sudo make install
 ```
 
 ### LMDB installation
 
-``` 
+```
 sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
 
 ```

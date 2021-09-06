@@ -86,12 +86,9 @@ Reader::Status SequenceFileSourceReader::initialize(ReaderConfig desc)
     if (ret == Reader::Status::OK && _shuffle)
         std::random_shuffle(_sequence_frame_names.begin(), _sequence_frame_names.end());
     _shuffle_time.end();
-    for (unsigned i = 0; i < _sequence_frame_names.size(); i++)
+    for(auto && seq : _sequence_frame_names)
     {
-        for (unsigned j = 0; j < _sequence_frame_names[i].size(); j++)
-        {
-            _frame_names.push_back(_sequence_frame_names[i][j]);
-        }
+        _frame_names.insert(_frame_names.end(), seq.begin(), seq.end());
     }
     return ret;
 }
@@ -191,13 +188,13 @@ Reader::Status SequenceFileSourceReader::get_sequences()
             }
             _in_batch_read_count++;
             _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
-            std::vector<std::string> temp;
+            std::vector<std::string> temp_sequence;
             for (unsigned frame_count = 0, frame_idx = file_idx; (frame_count < _sequence_length); frame_count++, frame_idx += _stride)
             {
-                temp.push_back(_folder_file_names[folder_idx][frame_idx]);
+                temp_sequence.push_back(_folder_file_names[folder_idx][frame_idx]);
             }
-            _last_sequence = temp;
-            _sequence_frame_names.push_back(temp);
+            _last_sequence = temp_sequence;
+            _sequence_frame_names.push_back(temp_sequence);
             _sequence_count_all_shards++;
             incremenet_sequence_id();
         }

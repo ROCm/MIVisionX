@@ -40,6 +40,7 @@ int FFmpegVideoDecoder::seek_frame(AVRational avg_frame_rate, AVRational time_ba
     return select_frame_pts;
 }
 
+// Seeks to the frame_number in the video file and decodes each frame in the sequence.
 VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_pix_format)
 {
     VideoDecoder::Status status = Status::OK;

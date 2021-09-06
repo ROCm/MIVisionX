@@ -166,13 +166,6 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
             THROW("Cannot load vx_rpp extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
         else
             LOG("vx_rpp module loaded successfully")
-#ifdef RALI_VIDEO
-        // loading video decoder modules
-        if ((status = vxLoadKernels(_context, "vx_amd_media")) != VX_SUCCESS)
-            WRN("Cannot load vx_amd_media extension, video decode functionality will not be available")
-        else
-            LOG("vx_amd_media module loaded")
-#endif
         if(_affinity == RaliAffinity::GPU) {
 #if ENABLE_HIP
             _device.init_hip(_context);
@@ -224,7 +217,7 @@ void
 MasterGraph::decrease_image_count()
 {
     if(!_loop)
-        _remaining_images_count -= ((_sequence_rearrange_batch_decrementer > 0)? _sequence_rearrange_batch_decrementer:_user_batch_size);
+        _remaining_images_count -= ((_original_batch_size > 0)? _original_batch_size:_user_batch_size);
 }
 void
 MasterGraph::create_single_graph()
@@ -485,12 +478,13 @@ MasterGraph::timing()
     if(is_video_loader())
     {
         t = _video_loader_module->timing();
+        t.video_process_time += _process_time.get_timing();
     }
     else
     {
         t  = _loader_module->timing();
+        t.image_process_time += _process_time.get_timing();
     }
-    t.image_process_time += _process_time.get_timing();
     t.copy_to_output += _convert_time.get_timing();
     return t;
 }
@@ -888,7 +882,7 @@ void MasterGraph::output_routine()
             {
                 _count = _loader_module->remaining_count();
             }
-            if (_count < ((_sequence_rearrange_batch_decrementer > 0)? _sequence_rearrange_batch_decrementer : _user_batch_size))
+            if (_count < ((_original_batch_size > 0)? _original_batch_size : _user_batch_size))
             {
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
                 // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
@@ -908,6 +902,7 @@ void MasterGraph::output_routine()
             {
                 if(is_video_loader())
                 {
+                    // Swap handles on the input sequence, so that new sequence is loaded to be processed
                     auto load_ret = _video_loader_module->load_next();
                     if (load_ret != VideoLoaderModuleStatus::OK)
                         THROW("Video Loader module failed to load next batch of images, status " + TOSTR(load_ret))
@@ -927,16 +922,12 @@ void MasterGraph::output_routine()
                 decoded_image_info decode_image_info;
                 std::vector<std::string> this_cycle_names;
                 crop_image_info crop_image_info;
-                std::vector<size_t> sequence_start_framenum;
-                std::vector<std::vector<float>> sequence_frame_timestamp;
                 if(is_video_loader())
                 {
                     this_cycle_names = _video_loader_module->get_id();
                     decode_image_info = _video_loader_module->get_decode_image_info();
-                    sequence_start_framenum = _video_loader_module->get_sequence_start_frame_number();
-                    sequence_frame_timestamp = _video_loader_module->get_sequence_frame_timestamps();
-                    full_batch_sequence_start_frame_number += sequence_start_framenum;
-                    full_batch_sequence_frame_timestamps += sequence_frame_timestamp;
+                    full_batch_sequence_start_frame_number += _video_loader_module->get_sequence_start_frame_number();
+                    full_batch_sequence_frame_timestamps += _video_loader_module->get_sequence_frame_timestamps();
                 }
                 else
                 {

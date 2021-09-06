@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <tuple>
 
 #ifdef RALI_VIDEO
-class VideoLoaderSingleShardNode: public Node
+class VideoLoaderSingleShardNode : public Node
 {
 public:
     VideoLoaderSingleShardNode(Image *output, DeviceResources device_resources);
@@ -35,10 +35,10 @@ public:
 
     /// \param user_shard_count shard count from user
     /// \param  user_shard_id shard id from user
-    /// \param source_path Defines the path that includes the image dataset
-    /// \param load_batch_count Defines the quantum count of the images to be loaded. It's usually equal to the user's batch size.
-    /// The loader will repeat images if necessary to be able to have images in multiples of the load_batch_count,
-    /// for example if there are 10 images in the dataset and load_batch_count is 3, the loader repeats 2 images as if there are 12 images available.
+    /// \param source_path Defines the path that includes the video dataset
+    /// \param load_batch_count Defines the quantum count of the sequences to be loaded. It's usually equal to the user's batch size.
+    /// The loader will repeat sequences if necessary to be able to have sequences in multiples of the load_batch_count,
+    /// for example if there are 10 sequences in the dataset and load_batch_count is 3, the loader repeats 2 sequences as if there are 12 sequences available.
     void init(unsigned shard_id, unsigned shard_count, const std::string &source_path, VideoStorageType storage_type, VideoDecoderType decoder_type, DecodeMode decoder_mode, 
               unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frames_count, unsigned frame_rate,
               std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names);

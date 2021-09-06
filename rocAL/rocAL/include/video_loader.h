@@ -32,8 +32,8 @@ THE SOFTWARE.
 #ifdef RALI_VIDEO
 
 //
-// VideoLoader runs an internal thread for loading an decoding of images asynchronously
-// it uses a circular buffer to store decoded frames and images for the user
+// VideoLoader runs an internal thread for loading an decoding of sequences asynchronously
+// it uses a circular buffer to store decoded sequence of frames for the user
 class VideoLoader : public VideoLoaderModule
 {
 public:
@@ -43,7 +43,7 @@ public:
     void initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size = false) override;
     void set_output_image(Image *output_image) override;
     size_t remaining_count() override; // returns number of remaining items to be loaded
-    void reset() override;             // Resets the loader to load from the beginning of the media
+    void reset() override;             // Resets the loader to load from the beginning
     Timing timing() override;
     void start_loading() override;
     VideoLoaderModuleStatus set_cpu_affinity(cpu_set_t cpu_mask);
@@ -61,7 +61,7 @@ private:
     VideoLoaderModuleStatus update_output_image();
     VideoLoaderModuleStatus load_routine();
     Image *_output_image;
-    std::vector<std::string> _output_names; //!< image name/ids that are stores in the _output_image
+    std::vector<std::string> _output_names; //!< frame name/ids that are stored in the _output_image
     size_t _output_mem_size;
     bool _internal_thread_running;
     size_t _batch_size;
@@ -76,8 +76,8 @@ private:
     bool _stopped = false;
     bool _loop;                    //<! If true the reader will wrap around at the end of the media (files/images/...) and wouldn't stop
     size_t _prefetch_queue_depth;  // Used for circular buffer's internal buffer
-    size_t _image_counter = 0;     //!< How many images have been loaded already
-    size_t _remaining_image_count; //!< How many images are there yet to be loaded
+    size_t _image_counter = 0;     //!< How many frames have been loaded already
+    size_t _remaining_image_count; //!< How many frames are there yet to be loaded
     bool _decoder_keep_original = false;
     std::vector<std::vector<size_t>> _sequence_start_framenum_vec;
     std::vector<std::vector<std::vector<float>>> _sequence_frame_timestamps_vec;

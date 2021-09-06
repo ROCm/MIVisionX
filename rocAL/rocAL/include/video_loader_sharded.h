@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include "video_loader.h"
 //
 // VideoLoaderSharded Can be used to run load and decode in multiple shards, each shard by a single loader instance,
-// It improves load and decode performance since each loader loads the images in parallel using an internal thread
+// It improves load and decode performance since each loader loads the sequences in parallel using an internal thread
 //
 #ifdef RALI_VIDEO
 class VideoLoaderSharded : public VideoLoaderModule

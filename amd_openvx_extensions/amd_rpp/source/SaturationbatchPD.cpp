@@ -132,7 +132,7 @@ static vx_status VX_CALLBACK processSaturationbatchPD(vx_node node, const vx_ref
         refreshSaturationbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_saturationRGB_u8_pln1_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->saturationFactor, data->nbatchSize, data->rppHandle);
+            return VX_ERROR_NOT_SUPPORTED;
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
@@ -143,7 +143,7 @@ static vx_status VX_CALLBACK processSaturationbatchPD(vx_node node, const vx_ref
         refreshSaturationbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_saturationRGB_u8_pln1_batchPD_gpu((void *)data->hip_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->saturationFactor, data->nbatchSize, data->rppHandle);
+            return VX_ERROR_NOT_SUPPORTED;
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
@@ -157,7 +157,7 @@ static vx_status VX_CALLBACK processSaturationbatchPD(vx_node node, const vx_ref
         refreshSaturationbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_saturationRGB_u8_pln1_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->saturationFactor, data->nbatchSize, data->rppHandle);
+            return VX_ERROR_NOT_SUPPORTED;
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {

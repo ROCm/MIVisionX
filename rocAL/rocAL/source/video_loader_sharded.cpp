@@ -55,7 +55,7 @@ VideoLoaderSharded::~VideoLoaderSharded()
 void VideoLoaderSharded::fast_forward_through_empty_loaders()
 {
     int loaders_count = _loaders.size();
-    // reject empty loaders and get to a loader that still has images to play
+    // reject empty loaders and get to a loader that still has sequences to play
     while (_loaders[_loader_idx]->remaining_count() == 0 && loaders_count-- > 0)
         increment_loader_idx();
 }
@@ -67,7 +67,7 @@ VideoLoaderModuleStatus VideoLoaderSharded::load_next()
 
     increment_loader_idx();
 
-    // Since loaders may have different number of images loaded, some run out earlier than other.
+    // Since loaders may have different number of sequences loaded, some run out earlier than other.
     // Fast forward through loaders that are empty to get to a loader that is not empty.
     fast_forward_through_empty_loaders();
     auto ret = _loaders[_loader_idx]->load_next();
@@ -167,18 +167,18 @@ Timing VideoLoaderSharded::timing()
     long long unsigned max_read_time = 0;
     long long unsigned swap_handle_time = 0;
 
-    // image read and decode runs in parallel using multiple loaders, and the observable latency that the VideoLoaderSharded user
+    // video read and decode runs in parallel using multiple loaders, and the observable latency that the VideoLoaderSharded user
     // is experiences on the load_next() call due to read and decode time is the maximum of all
     for (auto &loader : _loaders)
     {
         auto info = loader->timing();
-        max_read_time = (info.image_read_time > max_read_time) ? info.image_read_time : max_read_time;
-        max_decode_time = (info.image_decode_time > max_decode_time) ? info.image_decode_time : max_decode_time;
-        swap_handle_time += info.image_process_time;
+        max_read_time = (info.video_read_time > max_read_time) ? info.video_read_time : max_read_time;
+        max_decode_time = (info.video_decode_time > max_decode_time) ? info.video_decode_time : max_decode_time;
+        swap_handle_time += info.video_process_time;
     }
-    t.image_decode_time = max_decode_time;
-    t.image_read_time = max_read_time;
-    t.image_process_time = swap_handle_time;
+    t.video_decode_time = max_decode_time;
+    t.video_read_time = max_read_time;
+    t.video_process_time = swap_handle_time;
     return t;
 }
 #endif

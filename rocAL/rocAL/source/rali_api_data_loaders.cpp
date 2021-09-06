@@ -24,14 +24,8 @@ THE SOFTWARE.
 #include <assert.h>
 #include <boost/filesystem.hpp>
 #ifdef RALI_VIDEO
-extern "C"
-{
-    #include <libavformat/avformat.h>
-    #include <libavcodec/avcodec.h>
-}
 #include "node_video_loader.h"
 #include "node_video_loader_single_shard.h"
-#include "video_properties.h"
 #endif
 #include "rali_api.h"
 #include "commons.h"
@@ -276,50 +270,45 @@ raliSequenceReader(
         RaliImageColor rali_color_format,
         unsigned internal_shard_count,
         unsigned sequence_length,
-        unsigned step,
-        unsigned stride,
         bool is_output,
         bool shuffle,
         bool loop,
-        RaliImageSizeEvaluationPolicy decode_size_policy,
-        unsigned max_width,
-        unsigned max_height)
+        unsigned step,
+        unsigned stride)
 {
     Image* output = nullptr;
+    if (!p_context)
+        THROW("Invalid context passed as input")
     auto context = static_cast<Context*>(p_context);
     try
     {
+        if(sequence_length == 0)
+            THROW("Sequence length passed should be bigger than 0")
         // The internal batch size and user batch size are modified here in master graph 
-        context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_internal_batch_ratio();
-        context->set_internal_batch_size(context->master_graph->internal_batch_size());
+        context->master_graph->set_user_to_internal_batch_ratio();
         context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
-        bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
+        bool decoder_keep_original = true;
+
+        // This has been introduced to support variable width and height video frames in future.
+        RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MAX_SIZE_RESTRICTED;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
+        
+        // Set default step and stride values if 0 is passed
+        step = (step == 0)? 1 : step;
+        stride = (stride == 0)? 1 : stride;
 
-        if(use_input_dimension && (max_width == 0 || max_height == 0))
-        {
-            THROW("Invalid input max width and height");
-        }
-        else
-        {
-            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
-        }
-
-        auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               evaluate_image_data_set(decode_size_policy, StorageType::SEQUENCE_FILE_SYSTEM, DecoderType::TURBO_JPEG, source_path, "");
-
+        // FILE_SYSTEM is used here only to evaluate the width and height of the frames.
+        auto [width, height] = evaluate_image_data_set(decode_size_policy, StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG, source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->master_graph->internal_batch_size(),
+                              context->internal_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -363,47 +352,42 @@ raliSequenceReaderSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         unsigned sequence_length,
-        unsigned step,
-        unsigned stride,
         bool is_output,
         bool shuffle,
         bool loop,
-        RaliImageSizeEvaluationPolicy decode_size_policy,
-        unsigned max_width,
-        unsigned max_height)
+        unsigned step,
+        unsigned stride)
 {
     Image* output = nullptr;
+    if (!p_context)
+        THROW("Invalid context passed as input")
     auto context = static_cast<Context*>(p_context);
     try
     {
+        if(sequence_length == 0)
+            THROW("Sequence length passed should be bigger than 0")
         // The internal batch size and user batch size are modified here in master graph 
-        context->master_graph->set_user_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_internal_batch_ratio();
-        context->set_internal_batch_size(context->master_graph->internal_batch_size());
+        context->master_graph->set_user_to_internal_batch_ratio();
         context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
-        bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
+        bool decoder_keep_original = true;
+
+        // This has been introduced to support variable width and height video frames in future.
+        RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MAX_SIZE_RESTRICTED;
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
 
         if(shard_id >= shard_count)
             THROW("Shard id should be smaller than shard count")
+        
+        // Set default step and stride values if 0 is passed
+        step = (step == 0)? 1 : step;
+        stride = (stride == 0)? 1 : stride;
 
-        if(use_input_dimension && (max_width == 0 || max_height == 0))
-        {
-            THROW("Invalid input max width and height");
-        }
-        else
-        {
-            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
-        }
-
-        auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               evaluate_image_data_set(decode_size_policy, StorageType::SEQUENCE_FILE_SYSTEM, DecoderType::TURBO_JPEG,
-                                                       source_path, "");
+        // FILE_SYSTEM is used here only to evaluate the width and height of the frames.
+        auto [width, height] = evaluate_image_data_set(decode_size_policy, StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG, source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
@@ -1545,47 +1529,39 @@ raliVideoFileSource(
         RaliDecodeDevice rali_decode_device,
         unsigned internal_shard_count,
         unsigned sequence_length,
-        unsigned step,
-        unsigned stride,
         bool shuffle,
         bool is_output,
         bool loop,
+        unsigned step,
+        unsigned stride,
         bool file_list_frame_num)
 {
     Image* output = nullptr;
+    if (!p_context)
+        THROW("Invalid context passed as input")
     auto context = static_cast<Context*>(p_context);
     try
     {
 #ifdef RALI_VIDEO
+        if(sequence_length == 0)
+            THROW("Sequence length passed should be bigger than 0")
         // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_internal_batch_ratio();
+        context->master_graph->set_user_to_internal_batch_ratio();
         context->set_internal_batch_size(context->master_graph->internal_batch_size());
         context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
-        unsigned width , height, number_of_video_files, frame_rate;
-        std::vector<size_t> frames_count;
-        std::vector<std::string> video_file_names;
-        std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
+        // Set default step and stride values if 0 is passed
+        step = (step == 0)? sequence_length : step;
+        stride = (stride == 0)? 1 : stride;
 
-        video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
-        width = video_prop.width;
-        height = video_prop.height;
-        number_of_video_files = video_prop.videos_count;
-        frames_count.resize(number_of_video_files);
-        video_file_names.resize(number_of_video_files);
-        start_end_frame_num.resize(number_of_video_files);
-        frames_count = video_prop.frames_count;
-        frame_rate = video_prop.frame_rate;
-        video_file_names = video_prop.video_file_names;
-        start_end_frame_num = video_prop.start_end_frame_num;
-
+        VideoProperties video_prop = find_video_properties(source_path, file_list_frame_num);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
-        auto info = ImageInfo(width, height,
+        auto info = ImageInfo(video_prop.width, video_prop.height,
                               context->master_graph->internal_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
@@ -1601,15 +1577,15 @@ raliVideoFileSource(
                                                                             sequence_length,
                                                                             step,
                                                                             stride,
-                                                                            number_of_video_files,
-                                                                            frames_count,
-                                                                            frame_rate,
-                                                                            start_end_frame_num,
+                                                                            video_prop.videos_count,
+                                                                            video_prop.frames_count,
+                                                                            video_prop.frame_rate,
+                                                                            video_prop.start_end_frame_num,
                                                                             shuffle,
                                                                             loop,
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
-                                                                            video_file_names);
+                                                                            video_prop.video_file_names);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1639,23 +1615,27 @@ raliVideoFileSourceSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         unsigned sequence_length,
-        unsigned step,
-        unsigned stride,
         bool shuffle,
         bool is_output,
         bool loop,
+        unsigned step,
+        unsigned stride,
         bool file_list_frame_num)
 {
     Image* output = nullptr;
+    if (!p_context)
+        THROW("Invalid context passed as input")
     auto context = static_cast<Context*>(p_context);
     try
     {
 #ifdef RALI_VIDEO
+        if(sequence_length == 0)
+            THROW("Sequence length passed should be bigger than 0")
         // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_internal_batch_ratio();
+        context->master_graph->set_user_to_internal_batch_ratio();
         context->set_internal_batch_size(context->master_graph->internal_batch_size());
         context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
@@ -1665,27 +1645,15 @@ raliVideoFileSourceSingleShard(
 
         if(shard_id >= shard_count)
             THROW("Shard id should be smaller than shard count")
-        
-        unsigned width , height, number_of_video_files, frame_rate;
-        std::vector<size_t> frames_count;
-        std::vector<std::string> video_file_names;
-        std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
 
-        video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
-        width = video_prop.width;
-        height = video_prop.height;
-        number_of_video_files = video_prop.videos_count;
-        frames_count.resize(number_of_video_files);
-        video_file_names.resize(number_of_video_files);
-        start_end_frame_num.resize(number_of_video_files);
-        frames_count = video_prop.frames_count;
-        frame_rate = video_prop.frame_rate;
-        video_file_names = video_prop.video_file_names;
-        start_end_frame_num = video_prop.start_end_frame_num;
+        // Set default step and stride values if 0 is passed
+        step = (step == 0)? sequence_length : step;
+        stride = (stride == 0)? 1 : stride;
 
+        VideoProperties video_prop = find_video_properties(source_path, file_list_frame_num);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
-        auto info = ImageInfo(width, height,
+        auto info = ImageInfo(video_prop.width, video_prop.height,
                               context->master_graph->internal_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
@@ -1701,15 +1669,15 @@ raliVideoFileSourceSingleShard(
                                                                                         sequence_length,
                                                                                         step,
                                                                                         stride,
-                                                                                        number_of_video_files,
-                                                                                        frames_count,
-                                                                                        frame_rate,
-                                                                                        start_end_frame_num,
+                                                                                        video_prop.videos_count,
+                                                                                        video_prop.frames_count,
+                                                                                        video_prop.frame_rate,
+                                                                                        video_prop.start_end_frame_num,
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
                                                                                         context->master_graph->mem_type(),
-                                                                                        video_file_names);
+                                                                                        video_prop.video_file_names);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1738,51 +1706,45 @@ raliVideoFileResize(
         RaliDecodeDevice rali_decode_device,
         unsigned internal_shard_count,
         unsigned sequence_length,
-        unsigned step,
-        unsigned stride,
         unsigned dest_width,
         unsigned dest_height,
         bool shuffle,
         bool is_output,
         bool loop,
+        unsigned step,
+        unsigned stride,
         bool file_list_frame_num)
 {
     Image* resize_output = nullptr;
-    if(!p_context || dest_width == 0 || dest_height == 0)
-        THROW("Null values passed as input")
+    if (!p_context)
+        THROW("Invalid context passed as input")
 
     auto context = static_cast<Context*>(p_context);
     try
     {
 #ifdef RALI_VIDEO
+        if(sequence_length == 0)
+            THROW("Sequence length passed should be bigger than 0")
         // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_internal_batch_ratio();
+        context->master_graph->set_user_to_internal_batch_ratio();
         context->set_internal_batch_size(context->master_graph->internal_batch_size());
         context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
-        unsigned width , height, number_of_video_files, frame_rate;
-        std::vector<size_t> frames_count;
-        std::vector<std::string> video_file_names;
-        std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
+        if(dest_width == 0 || dest_height == 0)
+            THROW("Invalid dest_width/dest_height values passed as input")
 
-        video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
-        width = video_prop.width;
-        height = video_prop.height;
-        number_of_video_files = video_prop.videos_count;
-        frames_count.resize(number_of_video_files);
-        video_file_names.resize(number_of_video_files);
-        start_end_frame_num.resize(number_of_video_files);
-        frames_count = video_prop.frames_count;
-        frame_rate = video_prop.frame_rate;
-        video_file_names = video_prop.video_file_names;
-        start_end_frame_num = video_prop.start_end_frame_num;
+        // Set default step and stride values if 0 is passed
+        step = (step == 0)? sequence_length : step;
+        stride = (stride == 0)? 1 : stride;
+
+        VideoProperties video_prop = find_video_properties(source_path, file_list_frame_num);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
-        auto info = ImageInfo(width, height,
+        auto info = ImageInfo(video_prop.width, video_prop.height,
                               context->master_graph->internal_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
@@ -1805,15 +1767,15 @@ raliVideoFileResize(
                                                                             sequence_length,
                                                                             step,
                                                                             stride,
-                                                                            number_of_video_files,
-                                                                            frames_count,
-                                                                            frame_rate,
-                                                                            start_end_frame_num,
+                                                                            video_prop.videos_count,
+                                                                            video_prop.frames_count,
+                                                                            video_prop.frame_rate,
+                                                                            video_prop.start_end_frame_num,
                                                                             shuffle,
                                                                             loop,
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
-                                                                            video_file_names);
+                                                                            video_prop.video_file_names);
         context->master_graph->set_loop(loop);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
@@ -1849,28 +1811,30 @@ raliVideoFileResizeSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         unsigned sequence_length,
-        unsigned step,
-        unsigned stride,
         unsigned dest_width,
         unsigned dest_height,
         bool shuffle,
         bool is_output,
         bool loop,
+        unsigned step,
+        unsigned stride,
         bool file_list_frame_num)
 {
     Image* resize_output = nullptr;
-    if(!p_context || dest_width == 0 || dest_height == 0)
-        THROW("Null values passed as input")
+    if(!p_context)
+        THROW("Invalid context passed as input")
 
     auto context = static_cast<Context*>(p_context);
     try
     {
 #ifdef RALI_VIDEO
+        if(sequence_length == 0)
+            THROW("Sequence length passed should be bigger than 0")
         // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_user_internal_batch_size(sequence_length);
+        context->master_graph->set_internal_batch_size(sequence_length);
         context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_internal_batch_ratio();
+        context->master_graph->set_user_to_internal_batch_ratio();
         context->set_internal_batch_size(context->master_graph->internal_batch_size());
         context->set_user_batch_size(context->master_graph->user_batch_size());
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
@@ -1881,25 +1845,17 @@ raliVideoFileResizeSingleShard(
         if(shard_id >= shard_count)
             THROW("Shard id should be smaller than shard count")
 
-        unsigned width , height, number_of_video_files, frame_rate;
-        std::vector<size_t> frames_count;
-        std::vector<std::string> video_file_names;
-        std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
+        if(dest_width == 0 || dest_height == 0)
+            THROW("Invalid dest_width/dest_height values passed as input")
 
-        video_properties video_prop = find_video_properties(source_path, file_list_frame_num);
-        width = video_prop.width;
-        height = video_prop.height;
-        number_of_video_files = video_prop.videos_count;
-        frames_count.resize(number_of_video_files);
-        video_file_names.resize(number_of_video_files);
-        start_end_frame_num.resize(number_of_video_files);
-        frames_count = video_prop.frames_count;
-        frame_rate = video_prop.frame_rate;
-        video_file_names = video_prop.video_file_names;
-        start_end_frame_num = video_prop.start_end_frame_num;
+        // Set default step and stride values if 0 is passed
+        step = (step == 0)? sequence_length : step;
+        stride = (stride == 0)? 1 : stride;
+
+        VideoProperties video_prop = find_video_properties(source_path, file_list_frame_num);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
-        auto info = ImageInfo(width, height,
+        auto info = ImageInfo(video_prop.width, video_prop.height,
                               context->master_graph->internal_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
@@ -1922,15 +1878,15 @@ raliVideoFileResizeSingleShard(
                                                                                         sequence_length,
                                                                                         step,
                                                                                         stride,
-                                                                                        number_of_video_files,
-                                                                                        frames_count,
-                                                                                        frame_rate,
-                                                                                        start_end_frame_num,
+                                                                                        video_prop.videos_count,
+                                                                                        video_prop.frames_count,
+                                                                                        video_prop.frame_rate,
+                                                                                        video_prop.start_end_frame_num,
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
                                                                                         context->master_graph->mem_type(),
-                                                                                        video_file_names);
+                                                                                        video_prop.video_file_names);
         context->master_graph->set_loop(loop);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size

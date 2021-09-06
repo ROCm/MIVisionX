@@ -49,8 +49,8 @@ Timing
 VideoReadAndDecode::timing()
 {
     Timing t;
-    t.image_decode_time = _decode_time.get_timing();
-    t.image_read_time = _file_load_time.get_timing();
+    t.video_decode_time = _decode_time.get_timing();
+    t.video_read_time = _file_load_time.get_timing();
     t.shuffle_time = _video_reader->get_shuffle_time();
     return t;
 }
@@ -85,6 +85,8 @@ void VideoReadAndDecode::create(VideoReaderConfig reader_config, VideoDecoderCon
     _sequence_count = _batch_size / _sequence_length;
     _decompressed_buff_ptrs.resize(_sequence_count);
     _video_decoder_config = decoder_config;
+
+    // Initialize the ffmpeg context once for the video files.
     size_t i = 0;
     for (; i < _video_process_count; i++)
     {

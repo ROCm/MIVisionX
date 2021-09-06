@@ -39,7 +39,7 @@ extern "C"
 namespace filesys = boost::filesystem;
 
 #ifdef RALI_VIDEO
-typedef struct video_properties
+typedef struct VideoProperties
 {
     unsigned width, height, videos_count;
     unsigned frame_rate = 0;
@@ -48,10 +48,10 @@ typedef struct video_properties
     std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;
     std::vector<std::tuple<float, float>> start_end_timestamps;
     std::vector<int> labels;
-} video_properties;
+} VideoProperties;
 
 void substring_extraction(std::string const &str, const char delim, std::vector<std::string> &out);
 std::vector<unsigned> open_video_context(const char *video_file_path);
-video_properties get_video_properties_from_txt_file(const char *file_path, bool file_list_frame_num);
-video_properties find_video_properties(const char *source_path, bool file_list_frame_num);
+VideoProperties get_video_properties_from_txt_file(const char *file_path, bool file_list_frame_num);
+VideoProperties find_video_properties(const char *source_path, bool file_list_frame_num);
 #endif

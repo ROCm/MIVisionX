@@ -54,7 +54,6 @@ list(APPEND SOURCES
         source/AccumulateSquaredbatchPD.cpp
         source/AccumulateWeightedbatchPD.cpp
         source/AddbatchPD.cpp
-        source/BilateralFilterbatchPD.cpp
         source/BitwiseANDbatchPD.cpp
         source/BitwiseNOTbatchPD.cpp
         source/BlendbatchPD.cpp

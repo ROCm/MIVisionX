@@ -50,7 +50,7 @@ void ImageLoaderNode::init(unsigned internal_shard_count, const std::string &sou
     reader_cfg.set_meta_data_reader(meta_data_reader);
     //  sequence_length, step and stride parameters used only for SequenceReader
     reader_cfg.set_sequence_length(sequence_length);
-    step > 0 ? reader_cfg.set_frame_step(step) : reader_cfg.set_frame_step(1);
+    reader_cfg.set_frame_step(step);
     reader_cfg.set_frame_stride(stride);
     _loader_module->initialize(reader_cfg, DecoderConfig(decoder_type),
                               mem_type,

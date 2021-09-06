@@ -78,8 +78,11 @@ VideoReader::Status VideoFileSourceReader::initialize(VideoReaderConfig desc)
             replicate_last_batch_to_pad_partial_shard();
         }
     }
+    //shuffle dataset if set
+    _shuffle_time.start();
     if (ret == VideoReader::Status::OK && _shuffle)
         std::random_shuffle(_sequences.begin(), _sequences.end());
+    _shuffle_time.end();
     return ret;
 }
 
@@ -116,7 +119,6 @@ VideoReader::Status VideoFileSourceReader::create_sequence_info()
     for (size_t i = 0; i < _video_count; i++)
     {
         unsigned start = std::get<0>(_start_end_frame[i]);
-        // unsigned end = std::get<1>(_start_end_frame[i]);
         size_t max_sequence_frames = (_sequence_length - 1) * _stride;
         for(size_t sequence_start = start; (sequence_start + max_sequence_frames) <  (start + _video_frame_count[i]); sequence_start += _step)
         {

@@ -81,10 +81,13 @@ raliSequenceRearrange(
     auto context = static_cast<Context*>(p_context);
     try
     {
+        if(sequence_length == 0)
+            THROW("sequence_length passed should be bigger than 0")
         auto input = static_cast<Image*>(p_input);
         unsigned sequence_count = context->internal_batch_size() / sequence_length;
-        context->master_graph->set_sequence_rearrange_batch_decrementer(context->master_graph->user_batch_size());
-        context->master_graph->set_user_batch_size((size_t)(new_sequence_length * sequence_count));
+        unsigned number_of_sequences = context->user_batch_size() / sequence_length;
+        context->master_graph->set_original_batch_size_before_sequence_rearrange(context->master_graph->user_batch_size());
+        context->master_graph->set_user_batch_size((size_t)(new_sequence_length * number_of_sequences));
         auto info = ImageInfo(input->info().width(), input->info().height_single(),
                               new_sequence_length * sequence_count,
                               input->info().color_plane_count(),

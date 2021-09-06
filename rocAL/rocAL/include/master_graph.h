@@ -62,8 +62,8 @@ public:
     size_t output_height();
     size_t output_byte_size();
     size_t output_depth();
-    std::vector<size_t> sequence_start_frame_number();
-    std::vector<std::vector<float>> sequence_frame_timestamps();
+    std::vector<size_t> sequence_start_frame_number(); // Returns the starting frame number of the sequences
+    std::vector<std::vector<float>> sequence_frame_timestamps(); // Returns the timestamps of the frames in the sequences
     size_t augmentation_branch_count();
     size_t output_sample_size();
     RaliColorFormat output_color_format();
@@ -87,10 +87,10 @@ public:
     void create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts, int64_t seed=0);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
-    bool empty() { return (remaining_images_count() < ((_sequence_rearrange_batch_decrementer > 0)? _sequence_rearrange_batch_decrementer : _user_batch_size)); }
-    void set_user_internal_batch_size(size_t sequence_length) { _internal_batch_size = (_user_batch_size >= _internal_batch_size)? _internal_batch_size * sequence_length: sequence_length; }
+    bool empty() { return (remaining_images_count() < ((_original_batch_size > 0)? _original_batch_size : _user_batch_size)); }
+    void set_internal_batch_size(size_t sequence_length) { _internal_batch_size = (_user_batch_size >= _internal_batch_size)? _internal_batch_size * sequence_length: sequence_length; }
     void set_user_batch_size(size_t user_batch_size) {_user_batch_size = user_batch_size;}
-    void set_user_internal_batch_ratio() {_user_to_internal_batch_ratio = _user_batch_size/_internal_batch_size; }
+    void set_user_to_internal_batch_ratio() {_user_to_internal_batch_ratio = _user_batch_size/_internal_batch_size; }
     size_t user_batch_size() {return _user_batch_size;}
     size_t internal_batch_size() { return _internal_batch_size; }
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
@@ -98,7 +98,7 @@ public:
     bool is_random_bbox_crop() {return _is_random_bbox_crop; }
     void set_video_loader_flag() { _is_video_loader = true; }
     bool is_video_loader() {return _is_video_loader; }
-    void set_sequence_rearrange_batch_decrementer(size_t batch_size) {_sequence_rearrange_batch_decrementer = batch_size;}
+    void set_original_batch_size_before_sequence_rearrange(size_t batch_size) {_original_batch_size = batch_size;}
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -158,10 +158,10 @@ private:
     bool _output_routine_finished_processing = false;
     const RaliTensorDataType _out_data_type;
     bool _is_random_bbox_crop = false;
-    bool _is_video_loader = false;
-    size_t _sequence_rearrange_batch_decrementer = 0;
-    std::vector<std::vector<size_t>> _sequence_start_framenum_vec;
-    std::vector<std::vector<std::vector<float>>>_sequence_frame_timestamps_vec;
+    bool _is_video_loader = false; //!< Set to true if Video Loader is invoked.
+    size_t _original_batch_size = 0; //!< This value preserves the _user_batch_size before changing it with respext to new_sequence_length in sequence_rearrange. 
+    std::vector<std::vector<size_t>> _sequence_start_framenum_vec; //!< Stores the starting frame number of the sequences.
+    std::vector<std::vector<std::vector<float>>>_sequence_frame_timestamps_vec; //!< Stores the timestamps of the frames in a sequences.
 };
 
 template <typename T>
@@ -280,7 +280,7 @@ template<> inline std::shared_ptr<Cifar10LoaderNode> MasterGraph::add_node(const
 template<> inline std::shared_ptr<VideoLoaderNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
 {
     if(_video_loader_module)
-        THROW("A loader already exists, cannot have more than one loader")
+        THROW("A video loader already exists, cannot have more than one loader")
     auto node = std::make_shared<VideoLoaderNode>(outputs[0], _device.resources());
     _video_loader_module = node->get_loader_module();
     _video_loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
@@ -293,7 +293,7 @@ template<> inline std::shared_ptr<VideoLoaderNode> MasterGraph::add_node(const s
 template<> inline std::shared_ptr<VideoLoaderSingleShardNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
 {
     if(_video_loader_module)
-        THROW("A loader already exists, cannot have more than one loader")
+        THROW("A video loader already exists, cannot have more than one loader")
     auto node = std::make_shared<VideoLoaderSingleShardNode>(outputs[0], _device.resources());
     _video_loader_module = node->get_loader_module();
     _video_loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);

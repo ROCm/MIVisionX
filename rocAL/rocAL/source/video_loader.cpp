@@ -158,7 +158,7 @@ VideoLoader::load_routine()
     LOG("Started the internal loader thread");
     VideoLoaderModuleStatus last_load_status = VideoLoaderModuleStatus::OK;
 
-    // Initially record number of all the images that are going to be loaded, this is used to know how many still there
+    // Initially record number of all the frames that are going to be loaded, this is used to know how many still there
     while (_internal_thread_running)
     {
         auto data = _circ_buff.get_write_buffer();
@@ -260,7 +260,7 @@ VideoLoader::update_output_image()
 Timing VideoLoader::timing()
 {
     auto t = _video_loader->timing();
-    t.image_process_time = _swap_handle_time.get_timing();
+    t.video_process_time = _swap_handle_time.get_timing();
     return t;
 }
 

@@ -56,16 +56,16 @@ public:
     float convert_framenum_to_timestamp(size_t frame_number);
     void decode_sequence(size_t sequence_index);
 
-    //! Loads a decompressed batch of images into the buffer indicated by buff
-    /// \param buff User's buffer provided to be filled with decoded image samples
-    /// \param names User's buffer provided to be filled with name of the images decoded
-    /// \param max_decoded_width User's buffer maximum width per decoded image. User expects the decoder to downscale the image if image's original width is bigger than max_width
-    /// \param max_decoded_height user's buffer maximum height per decoded image. User expects the decoder to downscale the image if image's original height is bigger than max_height
-    /// \param roi_width is set by the load() function tp the width of the region that decoded image is located. It's less than max_width and is either equal to the original image width if original image width is smaller than max_width or downscaled if necessary to fit the max_width criterion.
-    /// \param roi_height  is set by the load() function tp the height of the region that decoded image is located.It's less than max_height and is either equal to the original image height if original image height is smaller than max_height or downscaled if necessary to fit the max_height criterion.
+    //! Loads a decompressed batch of sequence of frames into the buffer indicated by buff
+    /// \param buff User's buffer provided to be filled with decoded sequence samples
+    /// \param names User's buffer provided to be filled with name of the frames in a decoded sequence
+    /// \param max_decoded_width User's buffer maximum width per decoded sequence.
+    /// \param max_decoded_height user's buffer maximum height per decoded sequence.
+    /// \param roi_width is set by the load() function to the width of the region that decoded frames are located.
+    /// \param roi_height  is set by the load() function to the height of the region that decoded frames are located.
     /// \param sequence_start_framenum_vec is set by the load() function. The starting frame number of the sequences will be updated.
     /// \param sequence_frame_timestamps_vec is set by the load() function. The timestamps of each of the frames in the sequences will be updated.
-    /// \param output_color_format defines what color format user expects decoder to decode images into if capable of doing so supported is
+    /// \param output_color_format defines what color format user expects decoder to decode frames into if capable of doing so supported is
     VideoLoaderModuleStatus load(
         unsigned char *buff,
         std::vector<std::string> &names,

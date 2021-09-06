@@ -115,7 +115,7 @@ else()
             message( "-- ${Yellow}FindOpenCL failed to find: OpenCL 2.2${ColourReset}" )
             set(CL_TARGET_OpenCL_VERSION 120 CACHE INTERNAL "")
         endif()
-        add_definitions(-DCL_TARGET_OpenCL_VERSION=${CL_TARGET_OpenCL_VERSION})
+        add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION})
         message("-- ${Magenta}ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION}${ColourReset}")
     endif()
 

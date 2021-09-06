@@ -920,7 +920,7 @@ void MasterGraph::output_routine()
             }
             if(is_box_encoder )
             {
-                _meta_data_graph->update_box_encoder_meta_data(_anchors, full_batch_meta_data, _criteria, _offset, _scale);
+                _meta_data_graph->update_box_encoder_meta_data(_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);
             }
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
             _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
@@ -1035,6 +1035,8 @@ void MasterGraph::box_encoder(std::vector<float> anchors, float criteria,std::ve
     _offset = offset;
     _scale = scale;
     _anchors = anchors;
+    _means = means;
+    _stds = stds;
 
 }
 

@@ -64,7 +64,8 @@ class COCOPipeline(Pipeline):
 
         self.boxEncoder = ops.BoxEncoder(device=rali_device,
                                          criteria=0.5,
-                                         anchors=default_boxes)
+                                         anchors=default_boxes,
+                                         offset=True, stds=[0.1, 0.1, 0.2, 0.2], scale=300)
         self.cast = ops.Cast(device=rali_device, dtype=types.FLOAT)
         # Random variables
         self.rng1 = ops.Uniform(range=[0.5, 1.5])
@@ -182,6 +183,19 @@ class RALICOCOIterator(object):
         encodded_labels_tensor=  torch.tensor(self.encoded_labels).long().view(self.bs, -1)
         image_id_tensor = torch.tensor(self.image_id)
         image_size_tensor = torch.tensor(self.img_size).view(-1, self.bs, 2)
+        for i in range(self.bs):
+            index_list =[ ]
+            actual_bboxes=[]
+            actual_labels =[]
+            for idx, x in enumerate(encodded_labels_tensor[i]):
+                if x!=0:
+                    index_list.append(idx)
+                    actual_bboxes.append(encoded_bboxes_tensor[i][idx].tolist())
+                    actual_labels.append(encodded_labels_tensor[i][idx].tolist()) 
+              
+            if self.display:
+               img = torch.from_numpy(self.out)
+               draw_patches(img[i], i, actual_bboxes)
 
         if self.tensor_dtype == types.FLOAT:
             return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
@@ -228,9 +242,9 @@ def main():
     bs = int(sys.argv[4])
     display = sys.argv[5]
 
-    if display == "True":
-        print(f'\n Display support yet to be added \n Please use Display as False for time being\n ')
-        exit(0)
+    # if display == "True":
+    #     print(f'\n Display support yet to be added \n Please use Display as False for time being\n ')
+    #     exit(0)
     nt = 1
     di = 0
     crop_size = 300

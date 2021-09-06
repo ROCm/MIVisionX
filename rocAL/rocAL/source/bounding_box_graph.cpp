@@ -260,7 +260,6 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
 
                 if (offset)
                 {
-                    std::cout<<"\n PRINT USES OFFSET";
                     box_bestidx.l *= scale; //xc
                     box_bestidx.t *= scale; //yc
                     box_bestidx.r *= scale; //w

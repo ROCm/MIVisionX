@@ -118,10 +118,15 @@ set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-find_package(OpenCL REQUIRED)
+find_package(OpenCL QUIET)
 find_package(OpenCV QUIET)
 
-message("-- Using OpenCL Library -- ${OpenCL_LIBRARIES}")
+if(OpenCL_FOUND)
+    message("-- Using OpenCL Library -- ${OpenCL_LIBRARIES}")
+else()
+    message(FATAL_ERROR "OpenCL Required for NN Flow")
+endif()
+
 include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 include_directories(${ROCM_PATH}/mivisionx/include)
 

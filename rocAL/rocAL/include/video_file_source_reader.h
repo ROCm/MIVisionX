@@ -57,6 +57,7 @@ public:
 private:
     std::string _folder_path;
     std::vector<std::string> _video_file_names;
+    VideoProperties _video_prop;
     size_t _video_count;
     size_t _total_video_frames_count;
     std::vector<size_t> _video_frame_count;

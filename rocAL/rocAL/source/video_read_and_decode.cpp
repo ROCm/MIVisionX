@@ -68,16 +68,16 @@ VideoReadAndDecode::~VideoReadAndDecode()
 
 void VideoReadAndDecode::create(VideoReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
 {
-
     _sequence_length = reader_config.get_sequence_length();
     _stride = reader_config.get_frame_stride();
-    _video_count = reader_config.get_video_count();
-    _video_names = reader_config.get_video_file_names();
-    _frame_rate = reader_config.get_video_frame_rate();
+    _video_prop = reader_config.get_video_properties();
+    _video_count = _video_prop.videos_count;
+    _frame_rate = _video_prop.frame_rate;
     _batch_size = batch_size;
     set_video_process_count(_video_count);
     _video_decoder.resize(_video_process_count);
     _video_names.resize(_video_count);
+    _video_names = _video_prop.video_file_names;
     _actual_decoded_width.resize(_batch_size);
     _actual_decoded_height.resize(_batch_size);
     _original_height.resize(_batch_size);

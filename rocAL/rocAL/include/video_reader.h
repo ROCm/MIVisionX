@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <memory>
 #include "commons.h"
 #include "meta_data_reader.h"
+#include "video_properties.h"
 
 enum class VideoStorageType
 {
@@ -53,24 +54,16 @@ struct VideoReaderConfig
     void set_sequence_length(unsigned sequence_length) { _sequence_length = sequence_length; }
     void set_frame_step(unsigned step) { _video_frame_step = step; }
     void set_frame_stride(unsigned stride) { _video_frame_stride = stride; }
-    void set_video_count(unsigned video_count) { _video_count = video_count; }
-    void set_video_frames_count(std::vector<size_t> frame_count) { _video_frame_count = frame_count; }
-    void set_video_frame_rate(unsigned frame_rate) { _video_frame_rate = frame_rate; }
     void set_total_frames_count(size_t total) { _total_frames_count = total; }
-    void set_video_file_names(std::vector<std::string> video_file_names) { _video_file_names = video_file_names; }
-    void set_start_end_frame_vector(std::vector<std::tuple<unsigned, unsigned>> start_end_frame) { _start_end_frame_vector = start_end_frame; }
+    void set_video_properties(VideoProperties video_prop) { _video_prop = video_prop;}
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
     size_t get_sequence_length() { return _sequence_length; }
     size_t get_frame_step() { return _video_frame_step; }
     size_t get_frame_stride() { return _video_frame_stride; }
-    size_t get_video_count() { return _video_count; }
-    size_t get_video_frame_rate() { return _video_frame_rate; }
-    std::vector<size_t> get_video_frames_count() { return _video_frame_count; }
     size_t get_total_frames_count() { return _total_frames_count; }
-    std::vector<std::string> get_video_file_names() { return _video_file_names; }
-    std::vector<std::tuple<unsigned, unsigned>> get_start_end_frame_vector() { return _start_end_frame_vector; }
+    VideoProperties get_video_properties() { return _video_prop; }
     std::string path() { return _path; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
 private:
@@ -82,12 +75,8 @@ private:
     size_t _sequence_length = 1; // Video reader module sequence length
     size_t _video_frame_step;
     size_t _video_frame_stride = 1;
-    unsigned _video_count;
-    std::vector<size_t> _video_frame_count;
-    size_t _video_frame_rate;
+    VideoProperties _video_prop;
     size_t _total_frames_count;
-    std::vector<std::string> _video_file_names;
-    std::vector<std::tuple<unsigned, unsigned>> _start_end_frame_vector;
     bool _shuffle = false;
     bool _loop = false;
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;

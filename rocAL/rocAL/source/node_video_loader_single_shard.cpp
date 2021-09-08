@@ -30,8 +30,7 @@ VideoLoaderSingleShardNode::VideoLoaderSingleShardNode(Image *output, DeviceReso
 }
 
 void VideoLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, VideoStorageType storage_type, VideoDecoderType decoder_type, DecodeMode decoder_mode,
-                                      unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frames_count, unsigned frame_rate,
-                                      std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names)
+                                      unsigned sequence_length, unsigned step, unsigned stride, VideoProperties &video_prop, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type)
 {
     _decode_mode = decoder_mode; // for future use
     if (!_loader_module)
@@ -49,11 +48,7 @@ void VideoLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, c
     reader_cfg.set_sequence_length(sequence_length);
     reader_cfg.set_frame_step(step);
     reader_cfg.set_frame_stride(stride);
-    reader_cfg.set_video_count(video_count);
-    reader_cfg.set_video_frames_count(frames_count);
-    reader_cfg.set_video_frame_rate(frame_rate);
-    reader_cfg.set_video_file_names(video_file_names);
-    reader_cfg.set_start_end_frame_vector(start_end_frame_num);
+    reader_cfg.set_video_properties(video_prop);
     _loader_module->initialize(reader_cfg, VideoDecoderConfig(decoder_type),
                                mem_type,
                                _batch_size);

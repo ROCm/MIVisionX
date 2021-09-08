@@ -77,13 +77,12 @@ std::vector<unsigned> open_video_context(const char *video_file_path)
     return props;
 }
 
-VideoProperties get_video_properties_from_txt_file(const char *file_path, bool file_list_frame_num)
+void get_video_properties_from_txt_file(VideoProperties &video_props, const char *file_path, bool file_list_frame_num)
 {
     std::ifstream text_file(file_path);
 
     if (text_file.good())
     {
-        VideoProperties video_props;
         std::vector<unsigned> props;
         std::string line;
         unsigned max_width = 0;
@@ -140,18 +139,16 @@ VideoProperties get_video_properties_from_txt_file(const char *file_path, bool f
         video_props.width = max_width;
         video_props.height = max_height;
         video_props.videos_count = video_count;
-        return video_props;
     }
     else
         THROW("Can't open the metadata file at " + std::string(file_path))
 }
 
-VideoProperties find_video_properties(const char *source_path, bool file_list_frame_num)
+void find_video_properties(VideoProperties &video_props, const char *source_path, bool file_list_frame_num)
 {
     DIR *_sub_dir;
     struct dirent *_entity;
     std::string video_file_path;
-    VideoProperties video_props;
     std::vector<unsigned> props;
     unsigned max_width = 0;
     unsigned max_height = 0;
@@ -161,7 +158,7 @@ VideoProperties find_video_properties(const char *source_path, bool file_list_fr
     {
         if (pathObj.has_extension() && pathObj.extension().string() == ".txt")
         {
-            video_props = get_video_properties_from_txt_file(source_path, file_list_frame_num);
+            get_video_properties_from_txt_file(video_props, source_path, file_list_frame_num);
         }
         else
         {
@@ -271,6 +268,5 @@ VideoProperties find_video_properties(const char *source_path, bool file_list_fr
         video_props.width = max_width;
         video_props.height = max_height;
     }
-    return video_props;
 }
 #endif

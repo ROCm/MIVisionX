@@ -1558,7 +1558,8 @@ raliVideoFileSource(
         step = (step == 0)? sequence_length : step;
         stride = (stride == 0)? 1 : stride;
 
-        VideoProperties video_prop = find_video_properties(source_path, file_list_frame_num);
+        VideoProperties video_prop;
+        find_video_properties(video_prop, source_path, file_list_frame_num);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1577,15 +1578,11 @@ raliVideoFileSource(
                                                                             sequence_length,
                                                                             step,
                                                                             stride,
-                                                                            video_prop.videos_count,
-                                                                            video_prop.frames_count,
-                                                                            video_prop.frame_rate,
-                                                                            video_prop.start_end_frame_num,
+                                                                            video_prop,
                                                                             shuffle,
                                                                             loop,
                                                                             context->user_batch_size(),
-                                                                            context->master_graph->mem_type(),
-                                                                            video_prop.video_file_names);
+                                                                            context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1650,7 +1647,8 @@ raliVideoFileSourceSingleShard(
         step = (step == 0)? sequence_length : step;
         stride = (stride == 0)? 1 : stride;
 
-        VideoProperties video_prop = find_video_properties(source_path, file_list_frame_num);
+        VideoProperties video_prop;
+        find_video_properties(video_prop, source_path, file_list_frame_num);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1669,15 +1667,11 @@ raliVideoFileSourceSingleShard(
                                                                                         sequence_length,
                                                                                         step,
                                                                                         stride,
-                                                                                        video_prop.videos_count,
-                                                                                        video_prop.frames_count,
-                                                                                        video_prop.frame_rate,
-                                                                                        video_prop.start_end_frame_num,
+                                                                                        video_prop,
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(),
-                                                                                        video_prop.video_file_names);
+                                                                                        context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1741,7 +1735,8 @@ raliVideoFileResize(
         step = (step == 0)? sequence_length : step;
         stride = (stride == 0)? 1 : stride;
 
-        VideoProperties video_prop = find_video_properties(source_path, file_list_frame_num);
+        VideoProperties video_prop;
+        find_video_properties(video_prop, source_path, file_list_frame_num);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1767,15 +1762,11 @@ raliVideoFileResize(
                                                                             sequence_length,
                                                                             step,
                                                                             stride,
-                                                                            video_prop.videos_count,
-                                                                            video_prop.frames_count,
-                                                                            video_prop.frame_rate,
-                                                                            video_prop.start_end_frame_num,
+                                                                            video_prop,
                                                                             shuffle,
                                                                             loop,
                                                                             context->user_batch_size(),
-                                                                            context->master_graph->mem_type(),
-                                                                            video_prop.video_file_names);
+                                                                            context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
@@ -1852,7 +1843,8 @@ raliVideoFileResizeSingleShard(
         step = (step == 0)? sequence_length : step;
         stride = (stride == 0)? 1 : stride;
 
-        VideoProperties video_prop = find_video_properties(source_path, file_list_frame_num);
+        VideoProperties video_prop;
+        find_video_properties(video_prop, source_path, file_list_frame_num);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1878,15 +1870,11 @@ raliVideoFileResizeSingleShard(
                                                                                         sequence_length,
                                                                                         step,
                                                                                         stride,
-                                                                                        video_prop.videos_count,
-                                                                                        video_prop.frames_count,
-                                                                                        video_prop.frame_rate,
-                                                                                        video_prop.start_end_frame_num,
+                                                                                        video_prop,
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(),
-                                                                                        video_prop.video_file_names);
+                                                                                        context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size

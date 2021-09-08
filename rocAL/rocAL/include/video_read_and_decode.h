@@ -91,6 +91,7 @@ private:
     std::shared_ptr<VideoReader> _video_reader;
     size_t _max_video_count = 50;
     size_t _video_process_count;
+    VideoProperties _video_prop;
     std::vector<std::string> _video_names;
     std::map<std::string, video_map> _video_file_name_map;
     std::vector<unsigned char *> _decompressed_buff_ptrs;

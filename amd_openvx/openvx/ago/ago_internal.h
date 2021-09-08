@@ -609,7 +609,7 @@ struct AgoNode {
     struct { bool enable; int paramIndexScalar; int paramIndexArray; } gpu_scalar_array_output_sync;
 #if ENABLE_OPENCL
     vx_uint32 opencl_type;
-    char opencl_name[VX_MAX_KERNEL_NAME];
+    char opencl_name[VX_MAX_KERNEL_NAME+8];
     std::string opencl_code;
     std::string opencl_build_options;
     vx_uint32 opencl_param_mem2reg_mask;

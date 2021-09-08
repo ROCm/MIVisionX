@@ -162,20 +162,20 @@ For the convenience of the developer, we here provide the setup script which wil
   **usage:**
 
   ``` 
-  python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                            --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                            --opencv    [OpenCV Version - optional (default:3.4.0)]
-                            --miopen    [MIOpen Version - optional (default:2.11.0)]
-                            --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
-                            --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
-                            --rpp       [RPP Version - optional (default:0.7)]
-                            --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
-                            --rocal     [MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]]
-                            --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
-                            --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
+  python3 MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
+                             --opencv    [OpenCV Version - optional (default:3.4.0)]
+                             --miopen    [MIOpen Version - optional (default:2.11.0)]
+                             --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
+                             --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
+                             --rpp       [RPP Version - optional (default:0.7)]
+                             --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
+                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]]
+                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
+                             --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
+                             --backend   [MIVisionX Dependency Backend - optional (default:OCL) [options:OCL/HIP]]
+                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
   ```
     **Note:**
-    * use `--installer yum` for **CentOS**
     * **ROCm upgrade** with `sudo apt upgrade` requires the setup script **rerun**.
     * use `X Window` / `X11` for [remote GUI app control](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/X-Window-forwarding) 
 
@@ -235,7 +235,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   ```
 
   ``` 
-  python MIVisionX-setup.py
+  python3 MIVisionX-setup.py
   ```
 
   **Note:** MIVisionX has support for two GPU backends: **OPENCL** and **HIP**:
@@ -395,6 +395,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
+  + SLES - `15-SP2`
 * ROCm: rocm-dkms - `4.2.0.40200-21`
 * rocm-cmake - [rocm-4.2.0](https://github.com/RadeonOpenCompute/rocm-cmake/releases/tag/rocm-4.2.0)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
@@ -403,7 +404,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.7](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.7)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.9.8`
+* MIVisionX Setup Script - `V1.9.91`
 
 ### Latest Release
 

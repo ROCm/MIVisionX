@@ -85,7 +85,7 @@ make -j$nproc
 sudo make install
 ```
 
-### Jsoncpp installation
+### RapidJson installation
 
 ```
 git clone -b v1.1.0 https://github.com/Tencent/rapidjson.git

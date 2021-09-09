@@ -78,18 +78,13 @@ inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const B
     float yA = std::max(box1.t, box2.t);
     float xB = std::min(box1.r, box2.r);
     float yB = std::min(box1.b, box2.b);
-    // std::cout << "\tl:" << xA << "\t t:" << yA << "\tr:" << xB << "\t b:" << yB;
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
-    // std::cout << "\n intersection area: " << intersection_area;
     float box1_area = (box1.b - box1.t) * (box1.r - box1.l);
     float box2_area = (box2.b - box2.t) * (box2.r - box2.l);
-    // std::cout << "\n box1_area:" << box1_area;
-    // std::cout << "\n box2_area:" << box2_area;
 
     if (is_iou)
     {
         iou = intersection_area / float(box1_area + box2_area - intersection_area);
-        // std::cout << "\niou inside iou:" << iou;
     }
     else
         iou = intersection_area / float(box1_area);
@@ -118,7 +113,6 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
         crop_box.t = crop_cords[i][1];
         crop_box.r = crop_box.l + crop_cords[i][2];
         crop_box.b = crop_box.t + crop_cords[i][3];
-        // std::cout << "\n BB count" << bb_count;
         for (uint j = 0; j < bb_count; j++)
         {
             int m = j * 4; // change if required
@@ -128,7 +122,6 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
             box.t = coords_buf[m + 1];
             box.r = coords_buf[m + 2];
             box.b = coords_buf[m + 3];
-            // std::cout << "\nbox_l:" << box.l << "\tbox_t:" << box.t << "\tbox_r:" << box.r << "\tbox_b:" << box.b;
             auto x_c = 0.5 * (box.l + box.r);
             auto y_c = 0.5 * (box.t + box.b);
             if ((x_c > crop_box.l) && (x_c < crop_box.r) && (y_c > crop_box.t) && (y_c < crop_box.b))

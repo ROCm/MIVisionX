@@ -44,7 +44,6 @@ rocAL can be currently used to perform the following operations either with rand
 *  Boost lib 1.66 or higher
 *  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or higher
 *  Half float library
-*  rapidJson library
 *  Google protobuf 3.11.1 or higher
 
 ## Build instructions
@@ -81,18 +80,6 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr \
       -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
       -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib  \
       ..
-make -j$nproc
-sudo make install
-```
-
-### Jsoncpp installation
-
-```
-git clone -b v1.1.0 https://github.com/Tencent/rapidjson.git
-cd rapidjson
-mkdir build
-cd build
-cmake ..
 make -j$nproc
 sudo make install
 ```

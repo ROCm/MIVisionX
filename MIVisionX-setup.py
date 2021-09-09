@@ -316,11 +316,6 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install nasm yasm')
-            # rapidJson
-            os.system(
-                '(cd '+deps_dir+'; git clone -b v1.1.0 https://github.com/Tencent/rapidjson.git )')
-            os.system('(cd '+deps_dir+'/rapidjson; mkdir build; cd build; '+linuxCMake +
-                      ' ..; make -j 4; sudo make install )')
             # clang
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +

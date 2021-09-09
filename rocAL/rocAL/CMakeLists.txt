@@ -36,7 +36,6 @@ if(GPU_SUPPORT)
     # If FFMPEG is found, vx_amd_media is expected to be built as well
     find_package(FFmpeg QUIET)
     find_package(OpenCV QUIET)
-    find_package(RapidJSON)
 else()
     SET(BUILD_RALI false)
     message("-- ${Yellow}rocAL library requires GPU_SUPPORT=ON and BACKEND=OPENCL/HIP ${ColourReset}")
@@ -136,6 +135,7 @@ if(${BUILD_RALI})
                 ../../amd_openvx/openvx/include/
                 ../../amd_openvx_extensions/amd_rpp/include/
                 ../../amd_openvx_extensions/amd_media/include/
+                ../third_party/rapidjson/include/
                 include
                 )
     protobuf_generate_cpp(TF_PROTO_SRCS TF_PROTO_HEADERS proto/example.proto proto/feature.proto)

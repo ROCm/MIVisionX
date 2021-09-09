@@ -224,7 +224,6 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         bb_labels.resize(bb_count);
         encoded_bb.resize(anchors_size);
         encoded_labels.resize(anchors_size);
-
         for (uint bb_idx = 0; bb_idx < bb_count; bb_idx++)
         {
             int m = bb_idx * 4;

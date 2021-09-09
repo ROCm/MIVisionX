@@ -55,6 +55,10 @@ class COCOPipeline(Pipeline):
                                                 #std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
                                                 mean=[0, 0, 0],
                                                 std=[1, 1, 1])
+            #offset = False
+            self.boxEncoder = ops.BoxEncoder(device=rali_device,
+                                             criteria=0.5,
+                                             anchors=default_boxes)
         else:
             self.cmnp = ops.CropMirrorNormalize(device="gpu",
                                                 output_dtype=types.FLOAT,
@@ -64,11 +68,11 @@ class COCOPipeline(Pipeline):
                                                 mean=[0.485 * 255,
                                                       0.456 * 255, 0.406 * 255],
                                                 std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
-
-        self.boxEncoder = ops.BoxEncoder(device=rali_device,
-                                         criteria=0.5,
-                                         anchors=default_boxes,
-                                         offset=True, stds=[0.1, 0.1, 0.2, 0.2], scale=300)
+            #offset = True
+            self.boxEncoder = ops.BoxEncoder(device=rali_device,
+                                             criteria=0.5,
+                                             anchors=default_boxes,
+                                             offset=True, stds=[0.1, 0.1, 0.2, 0.2], scale=300)
         self.cast = ops.Cast(device=rali_device, dtype=types.FLOAT)
         # Random variables
         self.rng1 = ops.Uniform(range=[0.5, 1.5])
@@ -205,7 +209,7 @@ class RALICOCOIterator(object):
 
             if self.display:
                img = torch.from_numpy(self.out)
-               draw_patches(img[i], i, actual_bboxes)
+               draw_patches(img[i], self.image_id[i], actual_bboxes)
 
         if self.tensor_dtype == types.FLOAT:
             return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
@@ -296,7 +300,7 @@ def main():
     pipe.build()
     data_loader = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display)
-    epochs = 2
+    epochs = 3
     for epoch in range(int(epochs)):
         print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):

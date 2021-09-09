@@ -25,10 +25,10 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 if(GPU_SUPPORT)
     find_package(OpenCV QUIET)
-    find_package(miopengemm PATHS ${ROCM_PATH} QUIET)
     find_package(miopen     PATHS ${ROCM_PATH} QUIET)
 
     if("${BACKEND}" STREQUAL "OPENCL")
+        find_package(miopengemm PATHS ${ROCM_PATH} QUIET)
         find_package(OpenCL QUIET)
         if (OpenCL_FOUND)
             set(BUILD_OPENCL True)

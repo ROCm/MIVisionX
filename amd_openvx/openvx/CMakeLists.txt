@@ -150,10 +150,16 @@ install (FILES
             include/VX/vx_compatibility.h
             include/VX/vx_import.h
             include/VX/vx_kernels.h
+            include/VX/vx_khr_buffer_aliasing.h
+            include/VX/vx_khr_class.h
             include/VX/vx_khr_icd.h
+            include/VX/vx_khr_import_kernel.h
             include/VX/vx_khr_ix.h
             include/VX/vx_khr_nn.h
+            include/VX/vx_khr_opencl_interop.h
+            include/VX/vx_khr_pipelining.h
             include/VX/vx_khr_tiling.h
+            include/VX/vx_khr_user_data_object.h
             include/VX/vx_khr_xml.h
             include/VX/vx_nodes.h
             include/VX/vx_types.h

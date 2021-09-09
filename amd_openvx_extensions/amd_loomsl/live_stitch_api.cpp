@@ -3573,7 +3573,10 @@ LIVE_STITCH_API_ENTRY vx_status VX_API_CALL lsExportConfiguration(ls_context sti
 			ls_printf("ERROR: lsExportConfiguration: gdf: requires fileName extension to be .gdf\n");
 			return VX_ERROR_INVALID_PARAMETERS;
 		}
-		char fileNamePrefixForTables[1024] = { 0 }; strncpy(fileNamePrefixForTables, fileName, strlen(fileName) - 4);
+		char fileNamePrefixForTables[1024] = { 0 };
+		std::string tableName = fileName;
+		tableName.erase(tableName.find_last_of("."), std::string::npos);
+		strncpy(fileNamePrefixForTables, tableName.c_str(), strlen(fileNamePrefixForTables));
 		FILE * fp = fopen(fileName, "w");
 		if (!fp) {
 			ls_printf("ERROR: lsExportConfiguration: unable to create: %s\n", fileName);

@@ -31,13 +31,13 @@ find_package_handle_standard_args(
     REQUIRED_VARS
         OpenCL_LIBRARIES
         OpenCL_INCLUDE_DIRS
-        CL_TARGET_OPENCL_VERSION
+        CL_TARGET_OpenCL_VERSION
     VERSION_VAR OpenCL_VERSION
 )
 
 if(OpenCL_LIBRARIES AND OpenCL_INCLUDE_DIRS)
     set(OpenCL_FOUND TRUE)
-    add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
+    add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION})
 else()
     find_path(OPENCL_INCLUDE_DIRS
         NAMES OpenCL/cl.h CL/cl.h
@@ -98,10 +98,13 @@ else()
 
     if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
         if(NOT "${OPENCL_LIBRARIES}" STREQUAL "${ROCM_PATH}/opencl/lib/libOpenCL.so")
+            message("-- ${Magenta}OpenCL Found - ${OPENCL_LIBRARIES}${ColourReset}")
             message("-- ${Magenta}ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL${ColourReset}")
             set(OpenCL_LIBRARIES ${ROCM_PATH}/opencl/lib/libOpenCL.so CACHE INTERNAL "")
             set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")
         endif()
+    else()
+        message("-- ${Magenta}ROCm OpenCL Not Found${ColourReset}")
     endif()
 
     if(OpenCL_FOUND)
@@ -110,13 +113,13 @@ else()
             OUTPUT_VARIABLE outVar
         )
         if(NOT ${outVar} STREQUAL "")
-            set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
+            set(CL_TARGET_OpenCL_VERSION 220 CACHE INTERNAL "")
         else()
             message( "-- ${Yellow}FindOpenCL failed to find: OpenCL 2.2${ColourReset}" )
-            set(CL_TARGET_OPENCL_VERSION 120 CACHE INTERNAL "")
+            set(CL_TARGET_OpenCL_VERSION 120 CACHE INTERNAL "")
         endif()
-        add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
-        message("-- ${Magenta}ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION}${ColourReset}")
+        add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION})
+        message("-- ${Magenta}OpenCL - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION}${ColourReset}")
     endif()
 
     if( NOT OpenCL_FOUND )

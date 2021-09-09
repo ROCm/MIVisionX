@@ -2905,6 +2905,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
             agoWriteGraph(graph, NULL, 0, stdout, "*INPUT*");
         }
 
+        // set the AGO_DEFAULT_TARGET if it is not set by the user
+        if (!agoGetEnvironmentVariable("AGO_DEFAULT_TARGET", textBuffer, sizeof(textBuffer))) {
+#if ENABLE_OPENCL || ENABLE_HIP
+            agoSetEnvironmentVariable("AGO_DEFAULT_TARGET", "GPU");
+#else
+            agoSetEnvironmentVariable("AGO_DEFAULT_TARGET", "CPU");
+#endif
+    }
+
         // verify graph per OpenVX specification
         status = agoVerifyGraph(graph);
         if (status == VX_SUCCESS) {

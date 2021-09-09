@@ -1588,7 +1588,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_Remap_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    uchar *remap_, uint remapStrideInBytes) {
+    uint srcImageBufferSize, uchar *remap_, uint remapStrideInBytes) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -1600,64 +1600,79 @@ Hip_Remap_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     int *remap = (int *) (remap_ + y * remapStrideInBytes + (x << 2));
-    uint2 dst;
+    uint2 dst = (uint2)0;
     int map;
     uint v;
 
     map = remap[0];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    uint srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     dst.x = v;
 
     map = remap[1];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     dst.x |= v << 8;
 
     map = remap[2];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     dst.x |= v << 16;
 
     map = remap[3];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     dst.x |= v << 24;
 
     map = remap[4];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     dst.y  = v;
 
     map = remap[5];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     dst.y |= v << 8;
 
     map = remap[6];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     dst.y |= v << 16;
 
     map = remap[7];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     dst.y |= v << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
 int HipExec_Remap_U8_U8_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes, vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
     ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 16;
@@ -1666,7 +1681,7 @@ int HipExec_Remap_U8_U8_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint3
 
     hipLaunchKernelGGL(Hip_Remap_U8_U8_Nearest, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                         (uchar *) remap, remapStrideInBytes);
 
     return VX_SUCCESS;
@@ -1676,7 +1691,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes,
-    uchar *remap_, uint remapStrideInBytes, uint borderValue) {
+    uint srcImageBufferSize, uchar *remap_, uint remapStrideInBytes, uint borderValue) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -1688,7 +1703,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     int *remap = (int *) (remap_ + y * remapStrideInBytes + (x << 2));
-    uint2 dst;
+    uint2 dst = (uint2)0;
     int map;
     uint mask, v;
     srcWidth -= 1;
@@ -1701,7 +1716,9 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     mask = ~mask;
     x &= mask;
     y &= mask;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    uint srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     v = HIPSELECT(borderValue, v, mask);
     dst.x  = v;
 
@@ -1712,7 +1729,9 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     mask = ~mask;
     x &= mask;
     y &= mask;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     v = HIPSELECT(borderValue, v, mask);
     dst.x |= v << 8;
 
@@ -1723,7 +1742,9 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     mask = ~mask;
     x &= mask;
     y &= mask;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     v = HIPSELECT(borderValue, v, mask);
     dst.x |= v << 16;
 
@@ -1734,7 +1755,9 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     mask = ~mask;
     x &= mask;
     y &= mask;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     v = HIPSELECT(borderValue, v, mask);
     dst.x |= v << 24;
 
@@ -1745,7 +1768,9 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     mask = ~mask;
     x &= mask;
     y &= mask;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     v = HIPSELECT(borderValue, v, mask);
     dst.y  = v;
 
@@ -1756,7 +1781,9 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     mask = ~mask;
     x &= mask;
     y &= mask;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     v = HIPSELECT(borderValue, v, mask);
     dst.y |= v << 8;
 
@@ -1767,7 +1794,9 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     mask = ~mask;
     x &= mask;
     y &= mask;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     v = HIPSELECT(borderValue, v, mask);
     dst.y |= v << 16;
 
@@ -1778,16 +1807,17 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     mask = ~mask;
     x &= mask;
     y &= mask;
-    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    srcIdx = hip_mad24(srcImageStrideInBytes, y, x);
+    if (srcIdx < srcImageBufferSize)
+        v = pSrcImage[srcIdx];
     v = HIPSELECT(borderValue, v, mask);
     dst.y |= v << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
 int HipExec_Remap_U8_U8_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes, vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
     ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes, const vx_uint8 borderValue) {
     int localThreads_x = 16;
     int localThreads_y = 16;
@@ -1796,7 +1826,7 @@ int HipExec_Remap_U8_U8_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth,
 
     hipLaunchKernelGGL(Hip_Remap_U8_U8_Nearest_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                         (uchar *) remap, remapStrideInBytes, (uint) borderValue);
 
     return VX_SUCCESS;

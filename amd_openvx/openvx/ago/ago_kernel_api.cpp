@@ -18243,7 +18243,7 @@ int agoKernel_Remap_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iImg->size, (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
             status = VX_FAILURE;
         }
@@ -18336,7 +18336,7 @@ int agoKernel_Remap_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iImg->size, (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t),
             node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;

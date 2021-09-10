@@ -36,6 +36,7 @@ set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "mivisionx default ROCm installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
@@ -158,9 +159,7 @@ endif()
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
-#set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl") # Remove Explict requirements
 set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
-#set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl") # Remove Explict requirements
 set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
 
 if(APPLE)

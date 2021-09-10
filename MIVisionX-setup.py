@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "1.9.9"
+__version__ = "1.9.91"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -268,7 +268,7 @@ else:
         os.system(
             '(cd '+deps_dir+'; wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
         os.system('(cd '+deps_dir+'; tar xjvf boost_1_72_0.tar.bz2 )')
-        if "centos-8" in platfromInfo or "redhat-8" in platfromInfo:
+        if "centos-8" in platfromInfo or "redhat-8" in platfromInfo or "SLES" in platfromInfo:
             os.system(
                 '(cd '+deps_dir+'/boost_1_72_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python36 )')
         else:

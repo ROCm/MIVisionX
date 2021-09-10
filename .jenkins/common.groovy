@@ -120,8 +120,6 @@ def runTestCommand (platform, project) {
                 cd ${project.paths.project_build_prefix}/build/release-opencl
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type OCL
-                export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/rocm/miopen/lib
-                export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/opt/rocm/miopengemm/lib
                 sudo python ../../tests/neural_network_tests/runNeuralNetworkTests.py
                 export OPENVX_DIR=\$(pwd)/.
                 export OPENVX_INC=\$(pwd)/../../amd_openvx/openvx

@@ -208,11 +208,6 @@ static vx_status VX_CALLBACK initializeBatchNormalizationLayer(vx_node node, con
             return VX_FAILURE;
         }
         hipError_t errcode_ret = hipSuccess;
-        errcode_ret = hipSetDevice(hip_device);
-        if (errcode_ret != hipSuccess) {
-            return VX_FAILURE;
-        }
-
         errcode_ret = hipMalloc(&data->bnBias, sizeof(float)*input_dims[2]);
         if (errcode_ret != hipSuccess) {
             return VX_FAILURE;

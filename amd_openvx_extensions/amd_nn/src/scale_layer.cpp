@@ -192,10 +192,6 @@ static vx_status VX_CALLBACK initializeScaleLayer(vx_node node, const vx_referen
             return VX_FAILURE;
         }
         hipError_t errcode_ret = hipSuccess;
-        errcode_ret = hipSetDevice(hip_device);
-        if (errcode_ret != hipSuccess) {
-            return VX_FAILURE;
-        }
         if (data_type == miopenFloat) {
             errcode_ret = hipMalloc(&data->bnBias, sizeof(float) * input_dims[2]);
             if (errcode_ret != hipSuccess) {

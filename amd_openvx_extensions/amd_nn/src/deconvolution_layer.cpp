@@ -248,11 +248,6 @@ static vx_status VX_CALLBACK initializeDeconvolutionLayer(vx_node node, const vx
                 return VX_FAILURE;
             }
             hipError_t errcode_ret = hipSuccess;
-            errcode_ret = hipSetDevice(hip_device);
-            if (errcode_ret != hipSuccess) {
-                return VX_FAILURE;
-            }
-
             data->workspace_size = (data->workspace_size + 3) & ~3;
             errcode_ret = hipMalloc(&data->workspace, data->workspace_size);
             if (errcode_ret != hipSuccess) {

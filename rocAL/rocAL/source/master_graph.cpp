@@ -217,8 +217,9 @@ void
 MasterGraph::decrease_image_count()
 {
     if(!_loop)
-        _remaining_images_count -= ((_original_batch_size > 0)? _original_batch_size:_user_batch_size);
+        _remaining_images_or_sequences_count -= _user_batch_size;
 }
+
 void
 MasterGraph::create_single_graph()
 {
@@ -462,7 +463,7 @@ MasterGraph::reset()
 size_t
 MasterGraph::remaining_images_count()
 {
-    return (_remaining_images_count >= 0) ? _remaining_images_count:0;
+    return (_remaining_images_or_sequences_count >= 0) ? _remaining_images_or_sequences_count:0;
 }
 
 RaliMemType
@@ -855,7 +856,7 @@ std::vector<std::vector<float>>& operator+=(std::vector<std::vector<float>>& des
 
 void MasterGraph::output_routine()
 {
-    INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
+    INFO("Output routine started with "+TOSTR(_remaining_images_or_sequences_count) + " to load");
 #if !ENABLE_HIP
     if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
@@ -1015,11 +1016,11 @@ void MasterGraph::start_processing()
     _processing = true;
     if(is_video_loader())
     {
-        _remaining_images_count = _video_loader_module->remaining_count();
+        _remaining_images_or_sequences_count = _video_loader_module->remaining_count();
     }
     else
     {
-        _remaining_images_count = _loader_module->remaining_count();
+        _remaining_images_or_sequences_count = _loader_module->remaining_count();
     }
     _output_thread = std::thread(&MasterGraph::output_routine, this);
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
@@ -1096,11 +1097,11 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     return _meta_data_reader->get_output();
 }
 
-MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, MetaDataReaderType reader_type, bool file_list_frame_num)
+MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, MetaDataReaderType reader_type, unsigned sequence_length, unsigned frame_step, unsigned frame_stride, bool file_list_frame_num)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
+    MetaDataConfig config(MetaDataType::Label, reader_type, source_path, std::map<std::string, std::string>(), std::string(), sequence_length, frame_step, frame_stride);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     if(!file_list_frame_num)

@@ -24,9 +24,9 @@ int check_extension(std::string file_name)
     int position = file_name.find_last_of(".");
     // store the characters after the '.' from the file_name string
     std::string result = file_name.substr(position + 1);
-    if ((result.compare("txt") != 0) || (result.size() == 0) || (result.compare("mp4") != 0))
-        return 0;
-    return -1;
+    if ((result.compare("txt") == 0) || (result.size() == 0) || (result.compare("mp4") == 0))
+        return -1;
+    return 0;
 }
 
 int main(int argc, const char **argv)
@@ -51,7 +51,7 @@ int main(int argc, const char **argv)
     bool shuffle = false;
     unsigned input_batch_size = 1;
     unsigned sequence_length = 1;
-    unsigned ouput_frames_per_sequence;
+    unsigned ouput_frames_per_sequence = 1;
     unsigned frame_step = 1;
     unsigned frame_stride = 1;
     bool file_list_frame_num = true;
@@ -144,7 +144,7 @@ int main(int argc, const char **argv)
     else if (enable_metadata)
     {
         std::cout << "\n>>>> META DATA READER\n";
-        RaliMetaData meta_data = raliCreateVideoLabelReader(handle, source_path, file_list_frame_num);
+        RaliMetaData meta_data = raliCreateVideoLabelReader(handle, source_path, sequence_length, frame_step, frame_stride, file_list_frame_num);
     }
 
     RaliImage input1;
@@ -255,8 +255,8 @@ int main(int argc, const char **argv)
         }
         if (enable_metadata)
         {
-            int label_id[input_batch_size * sequence_length];
-            int image_name_length[input_batch_size * sequence_length];
+            int label_id[input_batch_size];
+            int image_name_length[input_batch_size];
             raliGetImageLabels(handle, label_id);
             int img_size = raliGetImageNameLen(handle, image_name_length);
             char img_name[img_size];
@@ -264,7 +264,7 @@ int main(int argc, const char **argv)
 
             std::cout << "\nPrinting image names of batch: " << img_name << "\n";
             std::cout << "\t Printing label_id : ";
-            for (unsigned i = 0; i < input_batch_size * sequence_length; i += sequence_length)
+            for (unsigned i = 0; i < input_batch_size; i++)
             {
                 std::cout << label_id[i] << "\t";
             }

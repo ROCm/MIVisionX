@@ -59,7 +59,7 @@ private:
     std::vector<std::string> _video_file_names;
     VideoProperties _video_prop;
     size_t _video_count;
-    size_t _total_video_frames_count;
+    size_t _total_sequences_count;
     std::vector<size_t> _video_frame_count;
     std::vector<SequenceInfo> _sequences;
     std::vector<std::tuple<unsigned, unsigned>> _start_end_frame;
@@ -75,7 +75,6 @@ private:
     /// The loader will repeat sequences if necessary to be able to have the sequences available in multiples of the load_batch_count,
     /// for instance if there are 10 sequences in the dataset and _batch_count is 3, the loader repeats 2 sequences as if there are 12 sequences available.
     size_t _batch_count = 1;
-    size_t _user_batch_count = 1;
     size_t _sequence_id = 0;
     size_t _in_batch_read_count = 0;
     bool _loop;

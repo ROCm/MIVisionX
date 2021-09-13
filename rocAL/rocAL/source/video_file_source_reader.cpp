@@ -41,8 +41,8 @@ VideoFileSourceReader::VideoFileSourceReader() : _shuffle_time("shuffle_time", D
 unsigned VideoFileSourceReader::count()
 {
     if (_loop)
-        return _total_video_frames_count;
-    int ret = (int)(_total_video_frames_count - _read_counter);
+        return _total_sequences_count;
+    int ret = (int)(_total_sequences_count - _read_counter);
     return ((ret <= 0) ? 0 : ret);
 }
 
@@ -65,9 +65,8 @@ VideoReader::Status VideoFileSourceReader::initialize(VideoReaderConfig desc)
     _stride = desc.get_frame_stride();
     _video_frame_count = _video_prop.frames_count;
     _start_end_frame = _video_prop.start_end_frame_num;
-    _user_batch_count = desc.get_batch_size();
-    _batch_count = _user_batch_count / _sequence_length;
-    _total_video_frames_count = 0;
+    _batch_count = desc.get_batch_size();
+    _total_sequences_count = 0;
     ret = create_sequence_info();
 
     // the following code is required to make every shard the same size:: required for multi-gpu training
@@ -89,7 +88,7 @@ VideoReader::Status VideoFileSourceReader::initialize(VideoReaderConfig desc)
 
 void VideoFileSourceReader::incremenet_read_ptr()
 {
-    _read_counter += _sequence_length;
+    _read_counter ++;
     _curr_sequence_idx = (_curr_sequence_idx + 1) % _sequences.size();
 }
 
@@ -133,7 +132,7 @@ VideoReader::Status VideoFileSourceReader::create_sequence_info()
             _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
             _sequences.push_back({sequence_start, _video_file_names[i]});
             _last_sequence = _sequences.back();
-            _total_video_frames_count += _sequence_length;
+            _total_sequences_count ++;
             _sequence_count_all_shards++;
             incremenet_sequence_id();
         }
@@ -153,7 +152,7 @@ void VideoFileSourceReader::replicate_last_sequence_to_fill_last_shard()
     for (size_t i = _in_batch_read_count; i < _batch_count; i++)
     {
         _sequences.push_back(_last_sequence);
-        _total_video_frames_count += _sequence_length;
+        _total_sequences_count ++;
     }
 }
 
@@ -164,7 +163,7 @@ void VideoFileSourceReader::replicate_last_batch_to_pad_partial_shard()
         for (size_t i = 0; i < _batch_count; i++)
         {
             _sequences.push_back(_sequences[i - _batch_count]);
-            _total_video_frames_count += _sequence_length;
+            _total_sequences_count ++;
         }
     }
 }

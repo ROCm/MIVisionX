@@ -78,7 +78,7 @@ public:
     Image *create_image(const ImageInfo &info, bool is_output);
     Image *create_loader_output_image(const ImageInfo &info);
     MetaDataBatch *create_label_reader(const char *source_path, MetaDataReaderType reader_type);
-    MetaDataBatch *create_video_label_reader(const char *source_path, MetaDataReaderType reader_type, bool file_list_frame_num = true);
+    MetaDataBatch *create_video_label_reader(const char *source_path, MetaDataReaderType reader_type, unsigned sequence_length, unsigned frame_step, unsigned frame_stride, bool file_list_frame_num = true);
     MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output);
     MetaDataBatch *create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type, const std::map<std::string, std::string> feature_key_map);
     MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
@@ -93,12 +93,17 @@ public:
     void set_user_to_internal_batch_ratio() {_user_to_internal_batch_ratio = _user_batch_size/_internal_batch_size; }
     size_t user_batch_size() {return _user_batch_size;}
     size_t internal_batch_size() { return _internal_batch_size; }
+    size_t sequence_user_batch_size() { return _sequence_user_batch_size; }
+    size_t sequence_internal_batch_size() { return _sequence_internal_batch_size; }
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
     bool is_random_bbox_crop() {return _is_random_bbox_crop; }
     void set_video_loader_flag() { _is_video_loader = true; }
     bool is_video_loader() {return _is_video_loader; }
     void set_original_batch_size_before_sequence_rearrange(size_t batch_size) {_original_batch_size = batch_size;}
+    void set_sequence_user_batch_size(size_t sequence_length) { _sequence_user_batch_size = _user_batch_size * sequence_length; }
+    void set_sequence_internal_batch_size(size_t sequence_length) { _sequence_internal_batch_size = _internal_batch_size * sequence_length; }
+    void set_sequence_user_to_internal_batch_ratio(size_t sequence_length) { _sequence_user_to_internal_batch_ratio = _sequence_user_batch_size / _sequence_internal_batch_size; }
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -149,7 +154,7 @@ private:
     bool _first_run = true;
     bool _processing;//!< Indicates if internal processing thread should keep processing or not
     const static unsigned SAMPLE_SIZE = sizeof(unsigned char);
-    int _remaining_images_count;//!< Keeps the count of remaining images yet to be processed for the user,
+    int _remaining_images_or_sequences_count;//!< Keeps the count of remaining images yet to be processed for the user,
     bool _loop;//!< Indicates if user wants to indefinitely loops through images or not
     static size_t compute_optimum_internal_batch_size(size_t user_batch_size, RaliAffinity affinity);
     size_t _internal_batch_size;//!< In the host processing case , internal batch size can be different than _user_batch_size. This batch size used internally throughout.
@@ -162,6 +167,9 @@ private:
     size_t _original_batch_size = 0; //!< This value preserves the _user_batch_size before changing it with respext to new_sequence_length in sequence_rearrange. 
     std::vector<std::vector<size_t>> _sequence_start_framenum_vec; //!< Stores the starting frame number of the sequences.
     std::vector<std::vector<std::vector<float>>>_sequence_frame_timestamps_vec; //!< Stores the timestamps of the frames in a sequences.
+    size_t _sequence_user_batch_size = 0;
+    size_t _sequence_internal_batch_size = 0;
+    size_t _sequence_user_to_internal_batch_ratio;
 };
 
 template <typename T>

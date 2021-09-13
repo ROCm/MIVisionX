@@ -1547,11 +1547,8 @@ raliVideoFileSource(
             THROW("Sequence length passed should be bigger than 0")
         // The internal batch size and user batch size are modified here in master graph 
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_internal_batch_size(sequence_length);
-        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_to_internal_batch_ratio();
-        context->set_internal_batch_size(context->master_graph->internal_batch_size());
-        context->set_user_batch_size(context->master_graph->user_batch_size());
+        context->master_graph->set_sequence_internal_batch_size(sequence_length);
+        context->master_graph->set_sequence_user_batch_size(sequence_length);
         INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
         // Set default step and stride values if 0 is passed
@@ -1563,7 +1560,7 @@ raliVideoFileSource(
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->master_graph->internal_batch_size(),
+                              context->master_graph->sequence_internal_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );

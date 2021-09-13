@@ -65,6 +65,7 @@ private:
     size_t _output_mem_size;
     bool _internal_thread_running;
     size_t _batch_size;
+    size_t _sequence_count;
     size_t _sequence_length;
     std::thread _load_thread;
     RaliMemType _mem_type;
@@ -77,7 +78,7 @@ private:
     bool _loop;                    //<! If true the reader will wrap around at the end of the media (files/images/...) and wouldn't stop
     size_t _prefetch_queue_depth;  // Used for circular buffer's internal buffer
     size_t _image_counter = 0;     //!< How many frames have been loaded already
-    size_t _remaining_image_count; //!< How many frames are there yet to be loaded
+    size_t _remaining_sequences_count; //!< How many frames are there yet to be loaded
     bool _decoder_keep_original = false;
     std::vector<std::vector<size_t>> _sequence_start_framenum_vec;
     std::vector<std::vector<std::vector<float>>> _sequence_frame_timestamps_vec;

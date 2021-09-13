@@ -57,5 +57,8 @@ private:
     std::vector<std::string> _subfolder_video_file_names;
     int _video_idx = 0;
     bool _file_list_frame_num = true;
+    unsigned _sequence_length;
+    unsigned _step;
+    unsigned _stride;
 };
 #endif

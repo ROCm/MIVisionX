@@ -44,6 +44,9 @@ VideoLabelReader::VideoLabelReader()
 void VideoLabelReader::init(const MetaDataConfig &cfg)
 {
     _path = cfg.path();
+    _sequence_length = cfg.sequence_length();
+    _step = cfg.frame_step();
+    _stride = cfg.frame_stride();
     _output = new LabelBatch();
 }
 
@@ -63,10 +66,11 @@ void VideoLabelReader::add(std::string image_name, int label, unsigned int video
     char delim = '/';
     substring_extraction(image_name, delim, substrings);
     std::string file_name = substrings[substrings.size() - 1];
-    for (unsigned i = start_frame; i < (start_frame + frame_count); i++)
+    size_t max_sequence_frames = (_sequence_length - 1) * _stride;
+    for(size_t sequence_start = start_frame; (sequence_start + max_sequence_frames) <  (start_frame + frame_count); sequence_start += _step)
     {
         pMetaData info = std::make_shared<Label>(label);
-        std::string frame_name = std::to_string(_video_idx) + "#" + file_name + "_" + std::to_string(i);
+        std::string frame_name = std::to_string(_video_idx) + "#" + file_name + "_" + std::to_string(sequence_start);
         if (exists(frame_name))
         {
             WRN("Entity with the same name exists")

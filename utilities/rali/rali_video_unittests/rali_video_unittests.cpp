@@ -144,7 +144,7 @@ int main(int argc, const char **argv)
     else if (enable_metadata)
     {
         std::cout << "\n>>>> META DATA READER\n";
-        RaliMetaData meta_data = raliCreateVideoLabelReader(handle, source_path, file_list_frame_num);
+        RaliMetaData meta_data = raliCreateVideoLabelReader(handle, source_path, sequence_length, frame_step, frame_stride, file_list_frame_num);
     }
 
     RaliImage input1;
@@ -255,8 +255,8 @@ int main(int argc, const char **argv)
         }
         if (enable_metadata)
         {
-            int label_id[input_batch_size * sequence_length];
-            int image_name_length[input_batch_size * sequence_length];
+            /*int label_id[input_batch_size];
+            int image_name_length[input_batch_size ];
             raliGetImageLabels(handle, label_id);
             int img_size = raliGetImageNameLen(handle, image_name_length);
             char img_name[img_size];
@@ -268,7 +268,7 @@ int main(int argc, const char **argv)
             {
                 std::cout << label_id[i] << "\t";
             }
-            std::cout << std::endl;
+            std::cout << std::endl;*/
         }
         if (enable_framenumbers || enable_timestamps)
         {

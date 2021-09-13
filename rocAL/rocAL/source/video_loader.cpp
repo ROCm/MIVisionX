@@ -133,7 +133,8 @@ void VideoLoader::initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig de
         de_init();
         throw;
     }
-    _decoded_img_info._image_names.resize(_batch_size);
+    _sequence_count = _batch_size / _sequence_length;
+    _decoded_img_info._image_names.resize(_sequence_count);
     _decoded_img_info._roi_height.resize(_batch_size);
     _decoded_img_info._roi_width.resize(_batch_size);
     _decoded_img_info._original_height.resize(_batch_size);

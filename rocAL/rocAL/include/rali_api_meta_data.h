@@ -32,10 +32,13 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateLabelReader(RaliContext rali_con
 ///
 /// \param rali_context
 /// \param source_path path to the folder that contains the dataset or metadata file
+/// \param sequence_length The number of frames in a sequence.
+/// \param frame_step Frame interval between each sequence.
+/// \param frame_stride Frame interval between frames in a sequence.
 /// \param file_list_frame_num True : when the inputs from text file is to be considered as frame numbers.
 /// False : when the inputs from text file is to considered as timestamps.
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
-extern "C" RaliMetaData RALI_API_CALL raliCreateVideoLabelReader(RaliContext rali_context, const char* source_path, bool file_list_frame_num = true);
+extern "C" RaliMetaData RALI_API_CALL raliCreateVideoLabelReader(RaliContext rali_context, const char* source_path, unsigned sequence_length, unsigned frame_step, unsigned frame_stride, bool file_list_frame_num = true);
 
 ///
 /// \param rali_context

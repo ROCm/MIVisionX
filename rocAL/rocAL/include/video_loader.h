@@ -65,6 +65,7 @@ private:
     size_t _output_mem_size;
     bool _internal_thread_running;
     size_t _batch_size;
+    size_t _sequence_count;
     size_t _sequence_length;
     std::thread _load_thread;
     RaliMemType _mem_type;

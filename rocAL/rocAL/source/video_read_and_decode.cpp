@@ -275,10 +275,10 @@ VideoReadAndDecode::load(unsigned char *buff,
         for (size_t s = 0; s < _sequence_length; s++)
         {
             sequence_frame_timestamps[i][s] = convert_framenum_to_timestamp(_sequence_start_frame_num[i] + (s * _stride));
-            names[(i * _sequence_length) + s] = video_idx + "#" + file_name + "_" + std::to_string(_sequence_start_frame_num[i] + (s * _stride));
             roi_width[(i * _sequence_length) + s] = _actual_decoded_width[s];
             roi_height[(i * _sequence_length) + s] = _actual_decoded_height[s];
         }
+        names[i] = video_idx + "#" + file_name + "_" + std::to_string(_sequence_start_frame_num[i]);
     }
     sequence_start_framenum_vec.insert(sequence_start_framenum_vec.begin(), sequence_start_framenum);
     sequence_frame_timestamps_vec.insert(sequence_frame_timestamps_vec.begin(), sequence_frame_timestamps);

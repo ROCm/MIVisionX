@@ -78,12 +78,10 @@ void VideoReadAndDecode::create(VideoReaderConfig reader_config, VideoDecoderCon
     set_video_process_count(_video_count);
     _video_decoder.resize(_video_process_count);
     _video_names.resize(_video_count);
-    _actual_decoded_width.resize(_batch_size);
-    _actual_decoded_height.resize(_batch_size);
-    _original_height.resize(_batch_size);
-    _original_width.resize(_batch_size);
     _sequence_count = _batch_size / _sequence_length;
     _decompressed_buff_ptrs.resize(_sequence_count);
+    _actual_decoded_width.resize(_sequence_count);
+    _actual_decoded_height.resize(_sequence_count);
     _video_decoder_config = decoder_config;
 
     // Initialize the ffmpeg context once for the video files.
@@ -141,11 +139,8 @@ void VideoReadAndDecode::decode_sequence(size_t sequence_index)
     if (_video_decoder[_sequence_video_idx[sequence_index]]->Decode(_decompressed_buff_ptrs[sequence_index], _sequence_start_frame_num[sequence_index], _sequence_length, _stride,
                                                                     _max_decoded_width, _max_decoded_height, _max_decoded_stride, _out_pix_fmt) == VideoDecoder::Status::OK)
     {
-        for (size_t s = 0; s < _sequence_length; s++)
-        {
-            _actual_decoded_width[(sequence_index * _sequence_length) + s] = _max_decoded_width;
-            _actual_decoded_height[(sequence_index * _sequence_length) + s] = _max_decoded_height;
-        }
+        _actual_decoded_width[sequence_index] = _max_decoded_width;
+        _actual_decoded_height[sequence_index] = _max_decoded_height;
     }
 }
 
@@ -166,7 +161,7 @@ VideoReadAndDecode::load(unsigned char *buff,
         THROW("Zero image dimension is not valid")
     if (!buff)
         THROW("Null pointer passed as output buffer")
-    if (_video_reader->count() < _batch_size)
+    if (_video_reader->count() < _sequence_count)
         return VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
     std::vector<size_t> sequence_start_framenum;
     std::vector<std::vector<float>> sequence_frame_timestamps;
@@ -275,8 +270,8 @@ VideoReadAndDecode::load(unsigned char *buff,
         for (size_t s = 0; s < _sequence_length; s++)
         {
             sequence_frame_timestamps[i][s] = convert_framenum_to_timestamp(_sequence_start_frame_num[i] + (s * _stride));
-            roi_width[(i * _sequence_length) + s] = _actual_decoded_width[s];
-            roi_height[(i * _sequence_length) + s] = _actual_decoded_height[s];
+            roi_width[(i * _sequence_length) + s] = _actual_decoded_width[i];
+            roi_height[(i * _sequence_length) + s] = _actual_decoded_height[i];
         }
         names[i] = video_idx + "#" + file_name + "_" + std::to_string(_sequence_start_frame_num[i]);
     }

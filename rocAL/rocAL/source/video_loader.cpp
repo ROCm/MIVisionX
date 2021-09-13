@@ -36,7 +36,7 @@ VideoLoader::VideoLoader(DeviceResources dev_resources) : _circ_buff(dev_resourc
     _output_mem_size = 0;
     _batch_size = 1;
     _is_initialized = false;
-    _remaining_image_count = 0;
+    _remaining_sequences_count = 0;
 }
 
 VideoLoader::~VideoLoader()
@@ -54,7 +54,7 @@ void VideoLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
 size_t
 VideoLoader::remaining_count()
 {
-    return _remaining_image_count;
+    return _remaining_sequences_count;
 }
 
 void VideoLoader::reset()
@@ -122,6 +122,7 @@ void VideoLoader::initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig de
     _batch_size = batch_size;
     _loop = reader_cfg.loop();
     _sequence_length = reader_cfg.get_sequence_length();
+    _sequence_count = _batch_size / _sequence_length;
     _decoder_keep_original = decoder_keep_original;
     _video_loader = std::make_shared<VideoReadAndDecode>();
     try
@@ -148,7 +149,7 @@ void VideoLoader::start_loading()
 {
     if (!_is_initialized)
         THROW("start_loading() should be called after initialize() function is called")
-    _remaining_image_count = _video_loader->count();
+    _remaining_sequences_count = _video_loader->count();
     _internal_thread_running = true;
     _load_thread = std::thread(&VideoLoader::load_routine, this);
 }
@@ -218,7 +219,7 @@ VideoLoader::load_routine()
 
 bool VideoLoader::is_out_of_data()
 {
-    return (remaining_count() < _batch_size);
+    return (remaining_count() < _sequence_count);
 }
 
 VideoLoaderModuleStatus
@@ -254,7 +255,7 @@ VideoLoader::update_output_image()
     _output_image->update_image_roi(_output_decoded_img_info._roi_width, _output_decoded_img_info._roi_height);
     _circ_buff.pop();
     if (!_loop)
-        _remaining_image_count -= _batch_size;
+        _remaining_sequences_count -= _sequence_count;
     return status;
 }
 

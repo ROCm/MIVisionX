@@ -24,9 +24,9 @@ int check_extension(std::string file_name)
     int position = file_name.find_last_of(".");
     // store the characters after the '.' from the file_name string
     std::string result = file_name.substr(position + 1);
-    if ((result.compare("txt") != 0) || (result.size() == 0) || (result.compare("mp4") != 0))
-        return 0;
-    return -1;
+    if ((result.compare("txt") == 0) || (result.size() == 0) || (result.compare("mp4") == 0))
+        return -1;
+    return 0;
 }
 
 int main(int argc, const char **argv)
@@ -51,7 +51,7 @@ int main(int argc, const char **argv)
     bool shuffle = false;
     unsigned input_batch_size = 1;
     unsigned sequence_length = 1;
-    unsigned ouput_frames_per_sequence;
+    unsigned ouput_frames_per_sequence = 1;
     unsigned frame_step = 1;
     unsigned frame_stride = 1;
     bool file_list_frame_num = true;

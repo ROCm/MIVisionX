@@ -96,8 +96,6 @@ private:
     std::vector<unsigned char *> _decompressed_buff_ptrs;
     std::vector<size_t> _actual_decoded_width;
     std::vector<size_t> _actual_decoded_height;
-    std::vector<size_t> _original_width;
-    std::vector<size_t> _original_height;
     std::vector<size_t> _sequence_start_frame_num;
     std::vector<std::string> _sequence_video_path;
     std::vector<int> _sequence_video_idx;

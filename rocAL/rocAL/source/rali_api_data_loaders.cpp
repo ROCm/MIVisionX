@@ -284,11 +284,10 @@ raliSequenceReader(
     {
         if(sequence_length == 0)
             THROW("Sequence length passed should be bigger than 0")
-        // The internal batch size and user batch size are modified here in master graph 
-        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_to_internal_batch_ratio();
-        context->set_user_batch_size(context->master_graph->user_batch_size());
-        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
+        // Set sequence batch size and batch ratio in master graph as it varies according to sequence length
+        context->master_graph->set_sequence_reader_output();
+        context->master_graph->set_sequence_batch_size(sequence_length);
+        context->master_graph->set_sequence_batch_ratio();
         bool decoder_keep_original = true;
 
         // This has been introduced to support variable width and height video frames in future.
@@ -321,7 +320,7 @@ raliSequenceReader(
                                                                             DecoderType::TURBO_JPEG,
                                                                             shuffle,
                                                                             loop,
-                                                                            context->user_batch_size(),
+                                                                            context->master_graph->sequence_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
                                                                             decoder_keep_original, "", 
@@ -366,11 +365,10 @@ raliSequenceReaderSingleShard(
     {
         if(sequence_length == 0)
             THROW("Sequence length passed should be bigger than 0")
-        // The internal batch size and user batch size are modified here in master graph 
-        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_to_internal_batch_ratio();
-        context->set_user_batch_size(context->master_graph->user_batch_size());
-        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
+        // Set sequence batch size and batch ratio in master graph as it varies according to sequence length
+        context->master_graph->set_sequence_reader_output();
+        context->master_graph->set_sequence_batch_size(sequence_length);
+        context->master_graph->set_sequence_batch_ratio();
         bool decoder_keep_original = true;
 
         // This has been introduced to support variable width and height video frames in future.
@@ -405,7 +403,7 @@ raliSequenceReaderSingleShard(
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
                                                                                         loop,
-                                                                                        context->user_batch_size(),
+                                                                                        context->master_graph->sequence_batch_size(),
                                                                                         context->master_graph->mem_type(),
                                                                                         context->master_graph->meta_data_reader(),
                                                                                         decoder_keep_original,
@@ -1545,11 +1543,8 @@ raliVideoFileSource(
 #ifdef RALI_VIDEO
         if(sequence_length == 0)
             THROW("Sequence length passed should be bigger than 0")
-        // The internal batch size and user batch size are modified here in master graph 
+        // Set video loader flag in master_graph
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_sequence_internal_batch_size(sequence_length);
-        context->master_graph->set_sequence_user_batch_size(sequence_length);
-        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
         // Set default step and stride values if 0 is passed
         step = (step == 0)? sequence_length : step;
@@ -1560,7 +1555,7 @@ raliVideoFileSource(
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->master_graph->sequence_internal_batch_size(),
+                              context->internal_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1625,14 +1620,8 @@ raliVideoFileSourceSingleShard(
 #ifdef RALI_VIDEO
         if(sequence_length == 0)
             THROW("Sequence length passed should be bigger than 0")
-        // The internal batch size and user batch size are modified here in master graph 
+        // Set video loader flag in master_graph
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_internal_batch_size(sequence_length);
-        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_to_internal_batch_ratio();
-        context->set_internal_batch_size(context->master_graph->internal_batch_size());
-        context->set_user_batch_size(context->master_graph->user_batch_size());
-        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
         
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -1649,7 +1638,7 @@ raliVideoFileSourceSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->master_graph->internal_batch_size(),
+                              context->internal_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1716,14 +1705,8 @@ raliVideoFileResize(
 #ifdef RALI_VIDEO
         if(sequence_length == 0)
             THROW("Sequence length passed should be bigger than 0")
-        // The internal batch size and user batch size are modified here in master graph 
+        // Set video loader flag in master_graph
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_internal_batch_size(sequence_length);
-        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_to_internal_batch_ratio();
-        context->set_internal_batch_size(context->master_graph->internal_batch_size());
-        context->set_user_batch_size(context->master_graph->user_batch_size());
-        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
         if(dest_width == 0 || dest_height == 0)
             THROW("Invalid dest_width/dest_height values passed as input")
@@ -1737,7 +1720,7 @@ raliVideoFileResize(
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->master_graph->internal_batch_size(),
+                              context->internal_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1818,14 +1801,8 @@ raliVideoFileResizeSingleShard(
 #ifdef RALI_VIDEO
         if(sequence_length == 0)
             THROW("Sequence length passed should be bigger than 0")
-        // The internal batch size and user batch size are modified here in master graph 
+        // Set video loader flag in master_graph
         context->master_graph->set_video_loader_flag();
-        context->master_graph->set_internal_batch_size(sequence_length);
-        context->master_graph->set_user_batch_size(sequence_length * context->user_batch_size());
-        context->master_graph->set_user_to_internal_batch_ratio();
-        context->set_internal_batch_size(context->master_graph->internal_batch_size());
-        context->set_user_batch_size(context->master_graph->user_batch_size());
-        INFO("Internal batch size has been set to "+ TOSTR(context->master_graph->internal_batch_size()))
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -1845,7 +1822,7 @@ raliVideoFileResizeSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->master_graph->internal_batch_size(),
+                              context->internal_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );

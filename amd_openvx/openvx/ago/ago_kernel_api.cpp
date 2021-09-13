@@ -18243,7 +18243,7 @@ int agoKernel_Remap_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iImg->size, (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
             status = VX_FAILURE;
         }
@@ -18336,7 +18336,7 @@ int agoKernel_Remap_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iImg->size, (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t),
             node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
@@ -18428,7 +18428,7 @@ int agoKernel_Remap_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size,
             (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
             status = VX_FAILURE;
@@ -19010,7 +19010,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
+            iImg->size, (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
             status = VX_FAILURE;
         }
     }
@@ -19224,7 +19224,7 @@ int agoKernel_WarpAffine_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
+            iImg->size, (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
             status = VX_FAILURE;
         }
     }
@@ -19421,7 +19421,7 @@ int agoKernel_WarpPerspective_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size,
             (ago_perspective_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
             status = VX_FAILURE;
         }
@@ -19636,7 +19636,7 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cm
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_perspective_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
+            iImg->size, (ago_perspective_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
             status = VX_FAILURE;
         }
     }

@@ -79,7 +79,6 @@ private:
     size_t _prefetch_queue_depth;  // Used for circular buffer's internal buffer
     size_t _image_counter = 0;     //!< How many frames have been loaded already
     size_t _remaining_sequences_count; //!< How many frames are there yet to be loaded
-    size_t _sequence_count;
     bool _decoder_keep_original = false;
     std::vector<std::vector<size_t>> _sequence_start_framenum_vec;
     std::vector<std::vector<std::vector<float>>> _sequence_frame_timestamps_vec;

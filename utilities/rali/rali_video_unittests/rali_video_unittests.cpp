@@ -255,8 +255,8 @@ int main(int argc, const char **argv)
         }
         if (enable_metadata)
         {
-            /*int label_id[input_batch_size];
-            int image_name_length[input_batch_size ];
+            int label_id[input_batch_size];
+            int image_name_length[input_batch_size];
             raliGetImageLabels(handle, label_id);
             int img_size = raliGetImageNameLen(handle, image_name_length);
             char img_name[img_size];
@@ -264,11 +264,11 @@ int main(int argc, const char **argv)
 
             std::cout << "\nPrinting image names of batch: " << img_name << "\n";
             std::cout << "\t Printing label_id : ";
-            for (unsigned i = 0; i < input_batch_size * sequence_length; i += sequence_length)
+            for (unsigned i = 0; i < input_batch_size; i++)
             {
                 std::cout << label_id[i] << "\t";
             }
-            std::cout << std::endl;*/
+            std::cout << std::endl;
         }
         if (enable_framenumbers || enable_timestamps)
         {

@@ -89,7 +89,7 @@ int getEnvironmentVariable(const char * name, char * value, size_t valueSize)
 #else
     const char * text = getenv(name);
     if (text) {
-        strncpy(value, text, strlen(text)+1);
+        strncpy(value, text, valueSize);
         value[strlen(text)+1] = '\0';
         if(isdigit(value[0]) != 0)
             return atoi(value);

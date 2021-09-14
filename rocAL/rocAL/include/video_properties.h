@@ -42,7 +42,7 @@ namespace filesys = boost::filesystem;
 typedef struct VideoProperties
 {
     unsigned width, height, videos_count;
-    unsigned frame_rate = 0;
+    float frame_rate = 0;
     std::vector<size_t> frames_count;
     std::vector<std::string> video_file_names;
     std::vector<std::tuple<unsigned, unsigned>> start_end_frame_num;

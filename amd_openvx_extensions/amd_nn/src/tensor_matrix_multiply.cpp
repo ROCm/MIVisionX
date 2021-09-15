@@ -392,11 +392,13 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
     data->height = input3_dims[1];
     // if input3 is available, launch HIP kernel for copy/transpose
     if(parameters[2]) {
-        if (HipExec_copy(node->hip_stream0, data->type, input3_mem, output_mem, data->width, data->height, data->ldi, data->i_offset,
+        hipStream_t hip_stream;
+        ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+        if (HipExec_copy(hip_stream, data->type, input3_mem, output_mem, data->width, data->height, data->ldi, data->i_offset,
             data->ldc, data->c_offset, data->tI)) {
             return VX_FAILURE;
         }
-        hipStreamSynchronize(node->hip_stream0);
+        hipStreamSynchronize(hip_stream);
 
         // TODO - call rocBLAS to do gemm
     }
@@ -444,7 +446,9 @@ static vx_status VX_CALLBACK process(vx_node node, const vx_reference * paramete
     if(parameters[2]) {
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &input3_mem, sizeof(vx_uint8)));
         // copy/transpose input3 to output
-        if (HipExec_copy(node->hip_stream0, data->type, input3_mem, output_mem, data->width, data->height, data->ldi, data->i_offset,
+        hipStream_t hip_stream;
+        ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+        if (HipExec_copy(hip_stream, data->type, input3_mem, output_mem, data->width, data->height, data->ldi, data->i_offset,
             data->ldc, data->c_offset, data->tI)) {
             return VX_FAILURE;
         }

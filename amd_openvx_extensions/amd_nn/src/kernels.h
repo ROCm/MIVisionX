@@ -51,7 +51,6 @@ THE SOFTWARE.
 #if ENABLE_OPENCL
 #include <CL/cl.h>
 #elif ENABLE_HIP
-#include  "../../../amd_openvx/openvx/ago/ago_internal.h"
 #include "../nn_hip/nn_hip_host_decls.h"
 #endif
 #endif

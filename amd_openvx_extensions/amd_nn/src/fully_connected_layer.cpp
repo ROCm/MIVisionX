@@ -248,7 +248,7 @@ static vx_status VX_CALLBACK uninitializeFullyConnectedLayer(vx_node node, const
     FullyConnectedLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_OPENCL
-    if(data->workspace && clReleaseMemObject(*(cl_mem *)data->workspace) != 0 ) return VX_FAILURE;
+    if(data && data->workspace && clReleaseMemObject(*(cl_mem *)data->workspace) != 0 ) return VX_FAILURE;
 #elif ENABLE_HIP
     if (data->workspace) {
         hipError_t errcode_ret = hipFree(data->workspace);

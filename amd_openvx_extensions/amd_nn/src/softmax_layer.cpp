@@ -28,18 +28,9 @@ struct SoftmaxLayerLocalData {
     float beta;
     miopenDataType_t data_type;          // data_type for the kernel
     miopenTensorDescriptor_t input_desc;
-#if ENABLE_OPENCL
-    cl_mem input_mem;
-#elif ENABLE_HIP
-    vx_uint8* input_mem;
-#endif
+    void *input_mem;
     miopenTensorDescriptor_t output_desc;
-#if ENABLE_OPENCL
-    cl_mem output_mem;
-#elif ENABLE_HIP
-    vx_uint8* output_mem;
-#endif
-
+    void *output_mem;
     int dim_in;
     int dim_out;
     vx_int32 axis;

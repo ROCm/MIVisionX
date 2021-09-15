@@ -29,23 +29,11 @@ struct TensorAddLocalData {
     float alpha2;
     float beta;
     miopenTensorDescriptor_t input1;
-#if ENABLE_OPENCL
-    cl_mem input1_mem;
-#elif ENABLE_HIP
-    vx_uint8* input1_mem;
-#endif
+    void *input1_mem;
     miopenTensorDescriptor_t input2;
-#if ENABLE_OPENCL
-    cl_mem input2_mem;
-#elif ENABLE_HIP
-    vx_uint8* input2_mem;
-#endif
+    void *input2_mem;
     miopenTensorDescriptor_t output;
-#if ENABLE_OPENCL
-    cl_mem output_mem;
-#elif ENABLE_HIP
-    vx_uint8* output_mem;
-#endif
+    void *output_mem;
 };
 
 static vx_status VX_CALLBACK validateTensorAddition(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])

@@ -30,15 +30,9 @@ struct PoolingLayerLocalData {
     miopenTensorDescriptor_t input_desc;
     miopenTensorDescriptor_t output_desc;
     miopenDataType_t data_type;          // data_type for the kernel
-#if ENABLE_OPENCL
-    cl_mem input_mem;
-    cl_mem output_mem;
-    cl_mem pooling_workspace;
-#elif ENABLE_HIP
-    vx_uint8* input_mem;
-    vx_uint8* output_mem;
-    vx_uint8* pooling_workspace;
-#endif
+    void *input_mem;
+    void *output_mem;
+    void *pooling_workspace;
     size_t pooling_workspace_size;
     miopenPoolingMode_t mode;
     vx_enum pad_border_mode;

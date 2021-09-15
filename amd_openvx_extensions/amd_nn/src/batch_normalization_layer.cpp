@@ -25,28 +25,15 @@ THE SOFTWARE.
 struct BatchNormLayerLocalData {
     NeuralNetworkCommonHandle * handle;
     miopenTensorDescriptor_t input_desc;
-#if ENABLE_OPENCL
-    cl_mem input_mem;
-#elif ENABLE_HIP
-    vx_uint8 *input_mem;
-#endif
+    void *input_mem;
     miopenTensorDescriptor_t output_desc;
     miopenDataType_t data_type;          // data_type for the kernel
-#if ENABLE_OPENCL
-    cl_mem output_mem;
-    cl_mem workspace;
-#elif ENABLE_HIP
-    vx_uint8 *output_mem;
-    vx_uint8 *workspace;
-#endif
+    void *output_mem;
+    void *workspace;
     size_t workspace_size;
     float alpha, beta, eps;
     miopenTensorDescriptor_t bnScaleBiasMeanVarDesc;
-#if ENABLE_OPENCL
-    cl_mem bnScale, bnBias, bnMean, bnVariance;
-#elif ENABLE_HIP
-    vx_uint8 *bnScale, *bnBias, *bnMean, *bnVariance;
-#endif
+    void *bnScale, *bnBias, *bnMean, *bnVariance;
 };
 
 static vx_status VX_CALLBACK validateBatchNormalizationLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -181,13 +168,13 @@ static vx_status VX_CALLBACK initializeBatchNormalizationLayer(vx_node node, con
         cl_context context;
         ERROR_CHECK_STATUS(vxQueryContext(vxContext, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
         cl_float pattern = 0; cl_int err = 0;
-        data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float)*input_dims[2], NULL, &err);
+        *(cl_mem *)data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float)*input_dims[2], NULL, &err);
 
         if (err) return VX_FAILURE;
         if (data->data_type == miopenFloat)
-            err = clEnqueueFillBuffer(data->handle->cmdq, data->bnBias, &pattern, sizeof(cl_float), 0, input_dims[2], 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->bnBias, &pattern, sizeof(cl_float), 0, input_dims[2], 0, NULL, NULL);
         else
-            err = clEnqueueFillBuffer(data->handle->cmdq, data->bnBias, &pattern, sizeof(cl_half), 0, input_dims[2], 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->bnBias, &pattern, sizeof(cl_half), 0, input_dims[2], 0, NULL, NULL);
 
         if (err) return VX_FAILURE;
     }
@@ -246,10 +233,10 @@ static vx_status VX_CALLBACK uninitializeBatchNormalizationLayer(vx_node node, c
         if(!parameters[4]){
             if(data->bnBias) {
 #if ENABLE_OPENCL
-                cl_int err = clReleaseMemObject(data->bnBias);
+                cl_int err = clReleaseMemObject(*(cl_mem *)data->bnBias);
                 if (err) return VX_FAILURE;
 #elif ENABLE_HIP
-            hipError_t errcode_ret = hipFree((void *)data->bnBias);
+            hipError_t errcode_ret = hipFree(data->bnBias);
             if (errcode_ret != hipSuccess) {
                 return VX_FAILURE;
             }

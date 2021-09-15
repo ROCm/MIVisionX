@@ -30,26 +30,15 @@ struct FullyConnectedLayerLocalData {
     miopenTensorDescriptor_t weight_desc;
     miopenTensorDescriptor_t bias_desc;
     miopenDataType_t data_type;          // data_type for the kernel
-#if ENABLE_OPENCL
-    cl_mem input_mem;
-    cl_mem output_mem;
-    cl_mem weight_mem;
-    cl_mem bias_mem;
-#elif ENABLE_HIP
-    vx_uint8* input_mem;
-    vx_uint8* output_mem;
-    vx_uint8* weight_mem;
-    vx_uint8* bias_mem;
-#endif
+    void *input_mem;
+    void *output_mem;
+    void *weight_mem;
+    void *bias_mem;
     miopenConvFwdAlgorithm_t algo;
     size_t workspace_size;
     float alpha;
     float beta;
-#if ENABLE_OPENCL
-    cl_mem workspace;
-#elif ENABLE_HIP
-    vx_uint8* workspace;
-#endif
+    void *workspace;
 
 };
 
@@ -209,13 +198,13 @@ static vx_status VX_CALLBACK initializeFullyConnectedLayer(vx_node node, const v
         cl_context context;
         ERROR_CHECK_STATUS(vxQueryContext(vxContext, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
         data->workspace_size = (data->workspace_size + 3) & ~3;
-        data->workspace = clCreateBuffer(context, CL_MEM_READ_WRITE, data->workspace_size, NULL, NULL);
+        *(cl_mem *)data->workspace = clCreateBuffer(context, CL_MEM_READ_WRITE, data->workspace_size, NULL, NULL);
         if (!data->workspace) {
             return VX_FAILURE;
         }
         cl_float pattern = 0;
         cl_int err = 0;
-        err = clEnqueueFillBuffer(data->handle->cmdq, data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
+        err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
         if(err) return VX_FAILURE;
 #elif ENABLE_HIP
         int hip_device = -1;
@@ -259,10 +248,10 @@ static vx_status VX_CALLBACK uninitializeFullyConnectedLayer(vx_node node, const
     FullyConnectedLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_OPENCL
-    if(data->workspace && clReleaseMemObject(data->workspace) != 0 ) return VX_FAILURE;
+    if(data->workspace && clReleaseMemObject(*(cl_mem *)data->workspace) != 0 ) return VX_FAILURE;
 #elif ENABLE_HIP
     if (data->workspace) {
-        hipError_t errcode_ret = hipFree((void *)data->workspace);
+        hipError_t errcode_ret = hipFree(data->workspace);
         if (errcode_ret != hipSuccess) {
             return VX_FAILURE;
         }

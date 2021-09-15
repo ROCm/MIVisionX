@@ -31,19 +31,10 @@ struct NormalizationLayerLocalData {
     double normBeta;
     double normBias;
     miopenTensorDescriptor_t input_desc;
-#if ENABLE_OPENCL
-    cl_mem input_mem;
-#elif ENABLE_HIP
-    vx_uint8* input_mem;
-#endif
+    void *input_mem;
     miopenTensorDescriptor_t output_desc;
-#if ENABLE_OPENCL
-    cl_mem output_mem;
-    cl_mem workspace;
-#elif ENABLE_HIP
-    vx_uint8* output_mem;
-    vx_uint8* workspace;
-#endif
+    void *output_mem;
+    void *workspace;
     size_t workspace_size;
 };
 

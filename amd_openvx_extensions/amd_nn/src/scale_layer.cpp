@@ -25,25 +25,12 @@ THE SOFTWARE.
 struct ScaleLayerLocalData {
     NeuralNetworkCommonHandle * handle;
     miopenTensorDescriptor_t input_desc;
-#if ENABLE_OPENCL
-    cl_mem input_mem;
-#elif ENABLE_HIP
-    vx_uint8* input_mem;
-#endif
+    void *input_mem;
     miopenTensorDescriptor_t output_desc;
-#if ENABLE_OPENCL
-    cl_mem output_mem;
-#elif ENABLE_HIP
-    vx_uint8* output_mem;
-#endif
+    void *output_mem;
     float alpha, beta;
     miopenTensorDescriptor_t bnScaleBiasMeanVarDesc;
-#if ENABLE_OPENCL
-    cl_mem bnScale, bnBias;
-#elif ENABLE_HIP
-    vx_uint8* bnScale;
-    vx_uint8* bnBias;
-#endif
+    void *bnScale, *bnBias;
 };
 
 static vx_status VX_CALLBACK validateScaleLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -176,13 +163,13 @@ static vx_status VX_CALLBACK initializeScaleLayer(vx_node node, const vx_referen
             cl_float pattern = 0;
             data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float)*input_dims[2], NULL, &err);
             if (err) return VX_FAILURE;
-            err = clEnqueueFillBuffer(data->handle->cmdq, data->bnBias, &pattern, sizeof(cl_float), 0, input_dims[2], 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->bnBias, &pattern, sizeof(cl_float), 0, input_dims[2], 0, NULL, NULL);
         }
         else {
             cl_half pattern = 0;
             data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(cl_half)*input_dims[2], NULL, &err);
             if (err) return VX_FAILURE;
-            err = clEnqueueFillBuffer(data->handle->cmdq, data->bnBias, &pattern, sizeof(cl_half), 0, input_dims[2], 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->bnBias, &pattern, sizeof(cl_half), 0, input_dims[2], 0, NULL, NULL);
         }
         if (err) return VX_FAILURE;
 #elif ENABLE_HIP
@@ -243,10 +230,10 @@ static vx_status VX_CALLBACK uninitializeScaleLayer(vx_node node, const vx_refer
         if(!parameters[2]){
             if(data->bnBias) {
 #if ENABLE_OPENCL
-                cl_int err = clReleaseMemObject(data->bnBias);
+                cl_int err = clReleaseMemObject(*(cl_mem *)data->bnBias);
                 if (err) return VX_FAILURE;
 #elif ENABLE_HIP
-                hipError_t errcode_ret = hipFree((void *)data->bnBias);
+                hipError_t errcode_ret = hipFree(data->bnBias);
                 if (errcode_ret != hipSuccess) {
                     return VX_FAILURE;
                 }

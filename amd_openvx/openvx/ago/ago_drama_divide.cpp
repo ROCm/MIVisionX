@@ -1966,54 +1966,53 @@ int agoDramaDivideLaplacianPyramidNode(AgoNodeList * nodeList, AgoNode * anode)
     // save parameters
 	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
 
-    anode->paramList[0] = paramList[2];
-	anode->paramList[1] = paramList[0];
-	anode->paramList[2] = paramList[1];
-	anode->paramCount = 3;
-	vx_enum new_kernel_id = VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA;
-	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
+    // anode->paramList[0] = paramList[2];
+	// anode->paramList[1] = paramList[0];
+	// anode->paramList[2] = paramList[1];
+	// anode->paramCount = 3;
+	// vx_enum new_kernel_id = VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA;
+	// return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 
-	// int status = 0;
-	// vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
-	// AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-	// char desc[512];	
-	// sprintf(desc, "pyramid-virtual:%4.4s,%d,%d," VX_FMT_SIZE ",HALF", FORMAT_STR(paramList[0]->u.img.format), paramList[0]->u.img.width, paramList[0]->u.img.height, paramList[1]->u.pyr.levels+1);
+	AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
+	char desc[512];	
+	sprintf(desc, "pyramid:%4.4s,%d,%d," VX_FMT_SIZE ",HALF", FORMAT_STR(paramList[0]->u.img.format), paramList[0]->u.img.width, paramList[0]->u.img.height, paramList[1]->u.pyr.levels+1);
     // printf(desc, "pyramid-virtual:%4.4s,%d,%d," VX_FMT_SIZE ",HALF", FORMAT_STR(paramList[0]->u.img.format), paramList[0]->u.img.width, paramList[0]->u.img.height, paramList[1]->u.pyr.levels+1);
-	// AgoData * data = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
-	// if (!data) return -1;
-	// else {
-	// 	agoGenerateVirtualDataName(agraph, "pyramid", data->name);
-	// 	agoAddData(&agraph->dataList, data);
-	// 	// add the children too
-	// 	for (vx_uint32 i = 0; i < data->numChildren; i++) {
-	// 		agoAddData(&agraph->dataList, data->children[i]);
-	// 		for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
-	// 			if (data->children[i]->children[j]) {
-	// 				agoAddData(&agraph->dataList, data->children[i]->children[j]);
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// AgoData * nextInput = paramList[0]->children ? paramList[0]->children[0] : paramList[0];
-	// for (vx_uint32 level = 0; level < data->numChildren; level++) {
-	// 	anode->paramList[0] = data->children[level];
-	// 	anode->paramList[1] = nextInput;
-	// 	anode->paramCount = 2;
-	// 	if (level == 0) new_kernel_id = VX_KERNEL_AMD_CHANNEL_COPY_U8_U8;
-	// 	else new_kernel_id = VX_KERNEL_AMD_SCALE_GAUSSIAN_HALF_U8_U8_5x5;
-	// 	status |= agoDramaDivideAppend(nodeList, anode, new_kernel_id);
-	// 	nextInput = data->children[level];
-	// }
-	// anode->paramList[0] = paramList[2]; //out image
-	// anode->paramList[1] = paramList[0]; //in image
-	// anode->paramList[2] = paramList[1]; //laplacian
-	// anode->paramList[3] = data;
-	// anode->paramCount = 4;
-	// new_kernel_id = VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA;
-	// printf("stauts 1is %d\n", status);
-	// status |= agoDramaDivideAppend(nodeList, anode, new_kernel_id);
-	// printf("stauts is %d\n", status);
-	// return status;
+	AgoData * data = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
+	if (!data) return -1;
+	else {
+		agoGenerateVirtualDataName(agraph, "pyramid", data->name);
+		agoAddData(&agraph->dataList, data);
+		// add the children too
+		for (vx_uint32 i = 0; i < data->numChildren; i++) {
+			agoAddData(&agraph->dataList, data->children[i]);
+			for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
+				if (data->children[i]->children[j]) {
+					agoAddData(&agraph->dataList, data->children[i]->children[j]);
+				}
+			}
+		}
+	}
+    int status = 0;
+	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
+	AgoData * nextInput = paramList[0]->children ? paramList[0]->children[0] : paramList[0];
+	for (vx_uint32 level = 0; level < data->numChildren; level++) {
+		anode->paramList[0] = data->children[level];
+		anode->paramList[1] = nextInput;
+		anode->paramCount = 2;
+		if (level == 0) new_kernel_id = VX_KERNEL_AMD_CHANNEL_COPY_U8_U8;
+		else new_kernel_id = VX_KERNEL_AMD_SCALE_GAUSSIAN_HALF_U8_U8_5x5;
+		status |= agoDramaDivideAppend(nodeList, anode, new_kernel_id);
+		nextInput = data->children[level];
+	}
+    
+	anode->paramList[0] = paramList[2]; //out image
+	anode->paramList[1] = paramList[0]; //in image
+	anode->paramList[2] = paramList[1]; //laplacian
+	anode->paramList[3] = data;
+	anode->paramCount = 4;
+	new_kernel_id = VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA;
+	status |= agoDramaDivideAppend(nodeList, anode, new_kernel_id);
+	return status;
 }
 
 int agoDramaDivideLaplacianReconstructNode(AgoNodeList * nodeList, AgoNode * anode)
@@ -2266,5 +2265,6 @@ int agoOptimizeDramaDivide(AgoGraph * agraph)
 			anode = anode->next;
 		}
 	}
+    
 	return astatus;
 }

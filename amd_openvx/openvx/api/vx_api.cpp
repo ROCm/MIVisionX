@@ -2921,7 +2921,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
             agoSetEnvironmentVariable("AGO_DEFAULT_TARGET", "CPU");
 #endif
     }
-
         // verify graph per OpenVX specification
         status = agoVerifyGraph(graph);
         if (status == VX_SUCCESS) {

@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include <VX/vx.h>
 #include <VX/vxu.h>
 #include "ago_internal.h"
+#include <iostream>
 
 /*! \brief The largest nonlinear filter matrix the specification requires support for is 9x9.
 */
@@ -610,6 +611,7 @@ static vx_status upsampleImage(vx_context context, vx_uint32 width, vx_uint32 he
     vx_map_id tmp_map_id, filling_map_id;
     void *tmp_base = NULL;
     void *filling_base = NULL;
+
     status = vxGetValidRegionImage(tmp, &tmp_rect);
     status |= vxMapImagePatch(tmp, &tmp_rect, 0, &tmp_map_id, &tmp_addr, (void **)&tmp_base, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST, 0);
     status = vxGetValidRegionImage(filling, &filling_rect);
@@ -704,7 +706,7 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         vx_image input, 
         vx_pyramid laplacian,
         vx_image output,
-        vx_pyramid gaussian
+        vx_pyramid gaussian2
     )
 {
     vx_status status = VX_SUCCESS;
@@ -723,7 +725,7 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     vx_convolution conv = 0;
     vx_image pyr_gauss_curr_level_filtered = 0;
     vx_image pyr_laplacian_curr_level = 0;
-    vx_pyramid gaussian2 = 0;
+    vx_pyramid gaussian = 0;
     vx_image gauss_cur = 0;
     vx_image gauss_next = 0;
 
@@ -738,68 +740,57 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     border.mode = VX_BORDER_REPLICATE;
 
     vxSetContextAttribute(context, VX_CONTEXT_IMMEDIATE_BORDER, &border, sizeof(border));
-    gaussian2 = vxCreatePyramid(context, levels + 1, VX_SCALE_PYRAMID_HALF, width, height, VX_DF_IMAGE_U8);
-    vxuGaussianPyramid(context, input, gaussian2);
 
-    vx_size levels1, levels2;
-    vx_float32 scale1, scale2;
-    vx_uint32 width1, height1, width2, height2;
-    vxQueryPyramid(gaussian, VX_PYRAMID_LEVELS, &levels1, sizeof(levels1));
-    vxQueryPyramid(gaussian, VX_PYRAMID_SCALE, &scale1, sizeof(scale1));
-    vxQueryPyramid(gaussian, VX_PYRAMID_WIDTH, &width1, sizeof(width1));
-    vxQueryPyramid(gaussian, VX_PYRAMID_HEIGHT, &height1, sizeof(height1));
+    gaussian = vxCreatePyramid(context, levels + 1, VX_SCALE_PYRAMID_HALF, width, height, VX_DF_IMAGE_U8);
+    vxuGaussianPyramid(context, input, gaussian);
+
+    // gaussian = gaussian2;
     
-    vxQueryPyramid(gaussian2, VX_PYRAMID_LEVELS, &levels2, sizeof(levels2));
-    vxQueryPyramid(gaussian2, VX_PYRAMID_SCALE, &scale2, sizeof(scale2));
-    vxQueryPyramid(gaussian2, VX_PYRAMID_WIDTH, &width2, sizeof(width2));
-    vxQueryPyramid(gaussian2, VX_PYRAMID_HEIGHT, &height2, sizeof(height2));
-
-    printf("l1 : %d l2 : %d\n", levels1, levels2);
-    printf("s1 : %f s2 : %f\n", scale1, scale2);
-    printf("w1 : %d w2 : %d\n", width1, width2);
-    printf("h1 : %d h2 : %d\n", height1, height2);
-
     conv = vxCreateGaussian5x5Convolution(context);
 
     level_width = width;
     level_height = height;
     gauss_cur = vxGetPyramidLevel(gaussian, 0);
     gauss_next = vxGetPyramidLevel(gaussian, 1);
-    vx_image gauss_cur2 = 0;
-    vx_image gauss_next2 = 0;
 
+    vx_image gauss_cur2 = 0, gauss_next2 = 0;
     gauss_cur2 = vxGetPyramidLevel(gaussian2, 0);
     gauss_next2 = vxGetPyramidLevel(gaussian2, 1);
 
-    vx_uint32 iwidth, iwidth2, iheight, iheight2;
-    vxQueryImage(gauss_next, VX_IMAGE_WIDTH, &iwidth, sizeof(iwidth));
-    vxQueryImage(gauss_next2, VX_IMAGE_WIDTH, &iwidth2, sizeof(iwidth2));
-    vxQueryImage(gauss_next, VX_IMAGE_HEIGHT, &iheight, sizeof(iheight));
-    vxQueryImage(gauss_next2, VX_IMAGE_HEIGHT, &iheight2, sizeof(iheight2));
-    printf("i1 : %d i2 : %d\n", iwidth, iwidth2);
-    printf("h1 : %d h2 : %d\n", iheight, iheight2);
-
-    // vxQueryImage(gauss_cur, VX_IMAGE_WIDTH, &iwidth, sizeof(iwidth));
-    // vxQueryImage(gauss_cur2, VX_IMAGE_WIDTH, &iwidth2, sizeof(iwidth2));
-    // vxQueryImage(gauss_cur, VX_IMAGE_HEIGHT, &iheight, sizeof(iheight));
-    // vxQueryImage(gauss_cur2, VX_IMAGE_HEIGHT, &iheight2, sizeof(iheight2));
-    // printf("i1 : %d i2 : %d\n", iwidth, iwidth2);
-    // printf("h1 : %d h2 : %d\n", iheight, iheight2);
+    // vx_imagepatch_addressing_t addr = VX_IMAGEPATCH_ADDR_INIT;
+    // vx_map_id map_id;
+    // vx_rectangle_t rect;
+    // void* p_vx_base = NULL;
+    // vxGetValidRegionImage(gauss_next, &rect);
+    // printf("%d %d %d %d\n", rect.start_x, rect.start_y, rect.end_x, rect.end_y);
+    // vxMapImagePatch(gauss_next, &rect, 0, &map_id, &addr, (void **)&p_vx_base, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST, 0);
+    // for (vx_uint32 y = 0; y < addr.dim_y; y += addr.step_y)
+    // {
+    //     for (vx_uint32 x = 0; x < addr.dim_x; x += addr.step_x)
+    //     {
+    //         vx_uint8* vx_ptr = (vx_uint8*)vxFormatImagePatchAddress2d(p_vx_base, x, y, &addr);
+    //         std::cout << (int)vx_ptr[0] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // vxUnmapImagePatch(gauss_next, map_id);
     for (lev = 0; lev < levels; lev++)
     {
         pyr_gauss_curr_level_filtered = vxCreateImage(context, level_width, level_height, VX_DF_IMAGE_S16);
-        printf("h0\n");
         upsampleImage(context, level_width, level_height, gauss_next2, conv, pyr_gauss_curr_level_filtered, &border);
-        printf("h1\n");
+
         pyr_laplacian_curr_level = vxGetPyramidLevel(laplacian, (vx_uint32)lev);
         status |= vxuSubtract(context, gauss_cur2, pyr_gauss_curr_level_filtered, policy, pyr_laplacian_curr_level);
+        printf("status is %d\n", status);
         if (lev == levels - 1)
         {
-            vx_image tmp = vxGetPyramidLevel(gaussian, (vx_uint32) levels);
+            vx_image tmp = vxGetPyramidLevel(gaussian2, (vx_uint32) levels);
             ownCopyImage(tmp, output);
             vxReleaseImage(&tmp);
             vxReleaseImage(&gauss_next);
             vxReleaseImage(&gauss_cur);
+            vxReleaseImage(&gauss_next2);
+            vxReleaseImage(&gauss_cur2);
         }
         else
         {
@@ -810,13 +801,15 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
             /* make the next level of gaussian pyramid the current level */
             vxReleaseImage(&gauss_next);
             vxReleaseImage(&gauss_cur);
-            gauss_cur = vxGetPyramidLevel(gaussian2, (vx_uint32)lev + 1);
-            gauss_next = vxGetPyramidLevel(gaussian2, (vx_uint32)lev + 2);
-
+            vxReleaseImage(&gauss_next2);
+            vxReleaseImage(&gauss_cur2);
+            gauss_cur = vxGetPyramidLevel(gaussian, (vx_uint32)lev + 1);
+            gauss_next = vxGetPyramidLevel(gaussian, (vx_uint32)lev + 2);
+            gauss_cur2 = vxGetPyramidLevel(gaussian2, (vx_uint32)lev + 1);
+            gauss_next2 = vxGetPyramidLevel(gaussian2, (vx_uint32)lev + 2);
         }
 
         /* decrements the references */
-
         status |= vxReleaseImage(&pyr_gauss_curr_level_filtered);
         status |= vxReleaseImage(&pyr_laplacian_curr_level);
     }

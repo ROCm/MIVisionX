@@ -9593,6 +9593,7 @@ int agoKernel_Sub_S16_U8S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         }
     }
 #endif
+    printf(" sub status %d\n", status);
     return status;
 }
 
@@ -15433,9 +15434,9 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         }
         else if (HafCpu_ScaleGaussianHalf_U8_U8_5x5(oImg->u.img.width, oImg->u.img.height - 2, oImg->buffer + oImg->u.img.stride_in_bytes, oImg->u.img.stride_in_bytes,
             iImg->buffer + (2 * iImg->u.img.stride_in_bytes), iImg->u.img.stride_in_bytes, sampleFirstRow, sampleFirstColumn, node->localDataPtr)) {
+            printf("failed\n");
             status = VX_FAILURE;
         }
-        printf("gaussian 5 dd\n");
     }
     else if (cmd == ago_kernel_cmd_validate) {
         // validate parameters

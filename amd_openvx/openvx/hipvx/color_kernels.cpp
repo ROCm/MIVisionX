@@ -4687,8 +4687,7 @@ Hip_ColorConvert_YUV4_RGB(uint dstWidth, uint dstHeight,
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if( x < dstWidth && y < dstHeight)
-    {
+    if( x < dstWidth && y < dstHeight) {
         uint srcIdx = y * srcImageStrideInBytes + (x * 3);
         d_uint6 pRGB = *((d_uint6 *)(&pSrcImage[srcIdx]));
 
@@ -4764,8 +4763,7 @@ Hip_ColorConvert_YUV4_RGBX(uint dstWidth, uint dstHeight,
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if( x < dstWidth && y < dstHeight)
-    {
+    if( x < dstWidth && y < dstHeight) {
         uint srcIdx = y * srcImageStrideInBytes + (x << 2);
         d_uint8 pRGB = *((d_uint8 *)(&pSrcImage[srcIdx]));
 

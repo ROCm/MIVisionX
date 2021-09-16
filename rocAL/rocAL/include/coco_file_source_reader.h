@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <fstream>
 #include <dirent.h>
 #include "reader.h"
 #include "meta_data_reader.h"
@@ -58,6 +59,7 @@ private:
     std::vector<std::string> _files;
     unsigned  _curr_file_idx;
     FILE* _current_fPtr;
+    std::ifstream _current_ifs;
     unsigned _current_file_size;
     std::string _last_id;
     std::string _last_file_name;

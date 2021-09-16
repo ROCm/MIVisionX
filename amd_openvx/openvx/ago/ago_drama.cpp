@@ -396,11 +396,9 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 	////////////////////////////////////////////////
 	vx_uint32 num_nodes_marked = 0;
 	vx_uint32 num_head_nodes = 0;
-    printf("checkign num heads\n");
 	for (AgoNode * node = graph->nodeList.head; node; node = node->next)
 	{
 		AgoKernel * kernel = node->akernel;
-        printf("kernel name is %s\n", kernel->name);
 		// a node is a head node if all its inputs have hierarchical_level == 1
 		bool is_head_node = true;
 		for (vx_uint32 arg = 0; arg < node->paramCount; arg++) {
@@ -425,7 +423,6 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 		}
 	}
 	if(num_head_nodes == 0){
-        printf("invalid graph\n");
 		vx_status status = VX_ERROR_INVALID_GRAPH;
 		vxAddLogEntry(&graph->ref, status, "ERROR: vxVerifyGraph: Cycle: Graph has no head nodes!");
 		return status;
@@ -536,6 +533,7 @@ int agoOptimizeDrama(AgoGraph * agraph)
 	if (agoOptimizeDramaComputeGraphHierarchy(agraph))
 		return -1;
 	agoOptimizeDramaSortGraphHierarchy(agraph);
+
 	// perform remove
 	if (agoOptimizeDramaCheckArgs(agraph))
 		return -1;

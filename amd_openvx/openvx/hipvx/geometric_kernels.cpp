@@ -1607,7 +1607,7 @@ Hip_Remap_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     int *remap = (int *) (remap_ + y * remapStrideInBytes + (x << 2));
     uint2 dst = (uint2)0;
     int map;
-    uint v;
+    uint v = 0;
 
     map = remap[0];
     x = ((map & 0xffff) + 4) >> 3;

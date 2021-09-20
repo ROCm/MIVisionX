@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "1.9.91"
+__version__ = "1.9.92"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -140,10 +140,12 @@ if "centos" in platfromInfo or "redhat" in platfromInfo:
     if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
         linuxCMake = 'cmake3'
         os.system(linuxSystemInstall+' install cmake3')
-elif "Ubuntu" in platfromInfo:
+elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
     linuxSystemInstall = 'apt-get -y'
     linuxSystemInstall_check = '--allow-unauthenticated'
     linuxFlag = '-S'
+    if not "Ubuntu" in platfromInfo:
+        platfromInfo = platfromInfo+'-Ubuntu'
 elif os.path.exists('/usr/bin/zypper'):
     linuxSystemInstall = 'zypper -n'
     linuxSystemInstall_check = '--no-gpg-checks'

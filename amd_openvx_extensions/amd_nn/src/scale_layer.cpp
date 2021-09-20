@@ -151,7 +151,11 @@ static vx_status VX_CALLBACK initializeScaleLayer(vx_node node, const vx_referen
 #endif
 
     if(parameters[2]){
+#if ENABLE_OPENCL
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_OPENCL, &data->bnBias, sizeof(data->bnBias)));
+#elif ENABLE_HIP
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->bnBias, sizeof(data->bnBias)));
+#endif
     }
     else{
         vx_context   vxContext = vxGetContext((vx_reference)node);

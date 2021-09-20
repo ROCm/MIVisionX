@@ -198,13 +198,13 @@ static vx_status VX_CALLBACK initializeFullyConnectedLayer(vx_node node, const v
         cl_context context;
         ERROR_CHECK_STATUS(vxQueryContext(vxContext, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
         data->workspace_size = (data->workspace_size + 3) & ~3;
-        *(cl_mem *)data->workspace = clCreateBuffer(context, CL_MEM_READ_WRITE, data->workspace_size, NULL, NULL);
+        data->workspace = clCreateBuffer(context, CL_MEM_READ_WRITE, data->workspace_size, NULL, NULL);
         if (!data->workspace) {
             return VX_FAILURE;
         }
         cl_float pattern = 0;
         cl_int err = 0;
-        err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
+        err = clEnqueueFillBuffer(data->handle->cmdq, (cl_mem)data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
         if(err) return VX_FAILURE;
 #elif ENABLE_HIP
         int hip_device = -1;
@@ -248,7 +248,7 @@ static vx_status VX_CALLBACK uninitializeFullyConnectedLayer(vx_node node, const
     FullyConnectedLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_OPENCL
-    if(data && data->workspace && clReleaseMemObject(*(cl_mem *)data->workspace) != 0 ) return VX_FAILURE;
+    if(data && data->workspace && clReleaseMemObject((cl_mem)data->workspace) != 0 ) return VX_FAILURE;
 #elif ENABLE_HIP
     if (data->workspace) {
         hipError_t errcode_ret = hipFree(data->workspace);

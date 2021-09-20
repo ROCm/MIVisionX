@@ -82,7 +82,7 @@ PROFILER_START(VX_NN, Reshape_Layer)
 
     if (data->aliased == vx_false_e) {
 #if ENABLE_OPENCL
-        ERROR_CHECK_STATUS(clEnqueueCopyBuffer(data->handle->cmdq, *(cl_mem *)data->input_mem, *(cl_mem *)data->output_mem, 0, 0, data->memsizeInBytes, 0, NULL, NULL));
+        ERROR_CHECK_STATUS(clEnqueueCopyBuffer(data->handle->cmdq, (cl_mem)data->input_mem, (cl_mem)data->output_mem, 0, 0, data->memsizeInBytes, 0, NULL, NULL));
 #elif ENABLE_HIP
         hipError_t errcode_ret = hipMemcpyDtoD(data->output_mem, data->input_mem, data->memsizeInBytes);
         if (errcode_ret != hipSuccess) {

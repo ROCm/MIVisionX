@@ -168,13 +168,13 @@ static vx_status VX_CALLBACK initializeBatchNormalizationLayer(vx_node node, con
         cl_context context;
         ERROR_CHECK_STATUS(vxQueryContext(vxContext, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
         cl_float pattern = 0; cl_int err = 0;
-        *(cl_mem *)data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float)*input_dims[2], NULL, &err);
+        data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float)*input_dims[2], NULL, &err);
 
         if (err) return VX_FAILURE;
         if (data->data_type == miopenFloat)
-            err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->bnBias, &pattern, sizeof(cl_float), 0, input_dims[2], 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, (cl_mem)data->bnBias, &pattern, sizeof(cl_float), 0, input_dims[2], 0, NULL, NULL);
         else
-            err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->bnBias, &pattern, sizeof(cl_half), 0, input_dims[2], 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, (cl_mem)data->bnBias, &pattern, sizeof(cl_half), 0, input_dims[2], 0, NULL, NULL);
 
         if (err) return VX_FAILURE;
     }
@@ -233,7 +233,7 @@ static vx_status VX_CALLBACK uninitializeBatchNormalizationLayer(vx_node node, c
         if(!parameters[4]){
             if(data->bnBias) {
 #if ENABLE_OPENCL
-                cl_int err = clReleaseMemObject(*(cl_mem *)data->bnBias);
+                cl_int err = clReleaseMemObject((cl_mem)data->bnBias);
                 if (err) return VX_FAILURE;
 #elif ENABLE_HIP
             hipError_t errcode_ret = hipFree(data->bnBias);

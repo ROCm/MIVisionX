@@ -214,15 +214,15 @@ static vx_status VX_CALLBACK initializeDeconvolutionLayer(vx_node node, const vx
         ERROR_CHECK_STATUS(vxQueryContext(vxContext, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
         cl_int err;
         data->workspace_size = (data->workspace_size + 3) & ~3;
-        *(cl_mem *)data->workspace = clCreateBuffer(context, CL_MEM_READ_WRITE, data->workspace_size, NULL, &err);
+        data->workspace = clCreateBuffer(context, CL_MEM_READ_WRITE, data->workspace_size, NULL, &err);
         if(err!=0) return VX_FAILURE;
         if (!data->workspace) return VX_FAILURE;
 
         cl_float pattern = 0;
         if (data->data_type == miopenFloat)
-            err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, (cl_mem)data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
         else
-            err = clEnqueueFillBuffer(data->handle->cmdq, *(cl_mem *)data->workspace, &pattern, sizeof(cl_half), 0, data->workspace_size, 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, (cl_mem)data->workspace, &pattern, sizeof(cl_half), 0, data->workspace_size, 0, NULL, NULL);
         if(err!=0) return VX_FAILURE;
 #elif ENABLE_HIP
             int hip_device = -1;
@@ -275,7 +275,7 @@ static vx_status VX_CALLBACK uninitializeDeconvolutionLayer(vx_node node, const 
     DeconvolutionLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_OPENCL
-    if(data && data->workspace && clReleaseMemObject(*(cl_mem *)data->workspace) != 0) return VX_FAILURE;
+    if(data && data->workspace && clReleaseMemObject((cl_mem)data->workspace) != 0) return VX_FAILURE;
 #elif ENABLE_HIP
     if (data->workspace) {
         hipError_t errcode_ret = hipFree(data->workspace);

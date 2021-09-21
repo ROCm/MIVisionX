@@ -228,7 +228,7 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         for (unsigned anchor_idx = 0; anchor_idx < anchors_size; anchor_idx++)
         {
             BoundingBoxCord anchor;
-            BoundingBoxCord_xcycwh _anchor_xcycwh, box_bestidx;
+            BoundingBoxCord_xcycwh anchor_xcycwh, box_bestidx;
             anchor = (*anchors_cast)[anchor_idx];
             const auto best_idx = find_best_box_for_anchor(anchor_idx, ious, bb_count, anchors_size);
             // Filter matches by criteria
@@ -247,17 +247,17 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
                     box_bestidx.w *= scale; 
                     box_bestidx.h *= scale; 
                     
-                    _anchor_xcycwh.xc = 0.5 * (anchor.l + anchor.r) * scale; 
-                    _anchor_xcycwh.yc = 0.5 * (anchor.t + anchor.b) * scale; 
-                    _anchor_xcycwh.w = (-anchor.l + anchor.r) * scale;      
-                    _anchor_xcycwh.h = (-anchor.t + anchor.b) * scale;      
+                    anchor_xcycwh.xc = 0.5 * (anchor.l + anchor.r) * scale; 
+                    anchor_xcycwh.yc = 0.5 * (anchor.t + anchor.b) * scale; 
+                    anchor_xcycwh.w = (-anchor.l + anchor.r) * scale;      
+                    anchor_xcycwh.h = (-anchor.t + anchor.b) * scale;      
 
                     // Reference for offset calculation using GT boxes & anchor boxes in <xc,yc,w,h> format
                     // https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Object-Detection#predictions-vis-%C3%A0-vis-priors
-                    box_bestidx.xc = ((box_bestidx.xc- _anchor_xcycwh.xc) / _anchor_xcycwh.w - means[0]) / stds[0];
-                    box_bestidx.yc = ((box_bestidx.yc - _anchor_xcycwh.yc) / _anchor_xcycwh.h - means[1]) / stds[1];
-                    box_bestidx.w = (std::log(box_bestidx.w / _anchor_xcycwh.w) - means[2]) / stds[2];
-                    box_bestidx.h = (std::log(box_bestidx.h / _anchor_xcycwh.h) - means[3]) / stds[3];
+                    box_bestidx.xc = ((box_bestidx.xc- anchor_xcycwh.xc) / anchor_xcycwh.w - means[0]) / stds[0];
+                    box_bestidx.yc = ((box_bestidx.yc - anchor_xcycwh.yc) / anchor_xcycwh.h - means[1]) / stds[1];
+                    box_bestidx.w = (std::log(box_bestidx.w / anchor_xcycwh.w) - means[2]) / stds[2];
+                    box_bestidx.h = (std::log(box_bestidx.h / anchor_xcycwh.h) - means[3]) / stds[3];
                     encoded_bb[anchor_idx] = box_bestidx;
                     encoded_labels[anchor_idx] = bb_labels.at(best_idx);
                 }
@@ -271,18 +271,18 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
             {
                 if (offset)
                 {
-                    _anchor_xcycwh.xc =_anchor_xcycwh.yc = _anchor_xcycwh.w = _anchor_xcycwh.h = 0;
-                    encoded_bb[anchor_idx] = _anchor_xcycwh;
+                    anchor_xcycwh.xc =anchor_xcycwh.yc = anchor_xcycwh.w = anchor_xcycwh.h = 0;
+                    encoded_bb[anchor_idx] = anchor_xcycwh;
                     encoded_labels[anchor_idx] = 0;
                 }
                 else
                 {
                     //Convert the "ltrb" format to "xcycwh"
-                    _anchor_xcycwh.xc = 0.5 * (anchor.l + anchor.r); //xc
-                    _anchor_xcycwh.yc = 0.5 * (anchor.t + anchor.b); //yc
-                    _anchor_xcycwh.w = (-anchor.l + anchor.r);      //w
-                    _anchor_xcycwh.h = (-anchor.t + anchor.b);      //h
-                    encoded_bb[anchor_idx] = _anchor_xcycwh;
+                    anchor_xcycwh.xc = 0.5 * (anchor.l + anchor.r); //xc
+                    anchor_xcycwh.yc = 0.5 * (anchor.t + anchor.b); //yc
+                    anchor_xcycwh.w = (-anchor.l + anchor.r);      //w
+                    anchor_xcycwh.h = (-anchor.t + anchor.b);      //h
+                    encoded_bb[anchor_idx] = anchor_xcycwh;
                     encoded_labels[anchor_idx] = 0;
                 }
             }

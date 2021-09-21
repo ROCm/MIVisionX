@@ -148,27 +148,19 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
     }
 }
 
-inline void calculate_ious_for_box(float *ious, BoundingBoxCord box, std::vector<float> anchors)
+inline void calculate_ious_for_box(float *ious, BoundingBoxCord box, BoundingBoxCords* anchors)
 {
-    BoundingBoxCord _anchor;
-    _anchor.l = anchors[0];
-    _anchor.t = anchors[1];
-    _anchor.r = anchors[2];
-    _anchor.b = anchors[3];
-    ious[0] = ssd_BBoxIntersectionOverUnion(box, _anchor,true);
+
+    BoundingBoxCord anchor;
+    anchor = (*anchors)[0];
+    ious[0] = ssd_BBoxIntersectionOverUnion(box, anchor,true);
     int best_idx = 0;
     float best_iou = ious[0];
 
-    for (unsigned int anchor_idx = 1; anchor_idx < (anchors.size() / 4); anchor_idx++)
+    for (unsigned int anchor_idx = 1; anchor_idx < ((*anchors).size()); anchor_idx++)
     {
-        int m = anchor_idx * 4;
-        BoundingBoxCord _anchor;
-        _anchor.l = anchors[m];
-        _anchor.t = anchors[m + 1];
-        _anchor.r = anchors[m + 2];
-        _anchor.b = anchors[m + 3];
-        float x = ssd_BBoxIntersectionOverUnion(box, _anchor, true);
-        ious[anchor_idx] = x;
+        anchor = (*anchors)[anchor_idx];
+        ious[anchor_idx] = ssd_BBoxIntersectionOverUnion(box, anchor, true);
         if (ious[anchor_idx] > best_iou)
         {
             best_iou = ious[anchor_idx];
@@ -209,7 +201,8 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         BoundingBoxLabels encoded_labels;
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
-        unsigned anchors_size = anchors.size() / 4; // divide the anchors_size by 4 to get the total number of anchors
+        BoundingBoxCords* anchors_cast = (BoundingBoxCords *)&anchors;
+        unsigned anchors_size = (*anchors_cast).size(); 
         //Calculate Ious
         //ious size - bboxes count x anchors count
         std::vector<float> ious(bb_count * anchors_size);
@@ -226,7 +219,7 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
             box.r = coords_buf[m + 2];
             box.b = coords_buf[m + 3];
             auto iou_rows = ious.data() + (bb_idx * (anchors_size));
-            calculate_ious_for_box(iou_rows, box, anchors);
+            calculate_ious_for_box(iou_rows, box, anchors_cast);
             bb_coords[bb_idx] = box;
             bb_labels[bb_idx] = labels_buf[bb_idx];
         }
@@ -234,13 +227,9 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         // Depending on the matches ->place the best bbox instead of the corresponding anchor_idx in anchor
         for (unsigned anchor_idx = 0; anchor_idx < anchors_size; anchor_idx++)
         {
-            int m = anchor_idx * 4;
-            BoundingBoxCord _anchor;
+            BoundingBoxCord anchor;
             BoundingBoxCord_xcycwh _anchor_xcycwh, box_bestidx;
-            _anchor.l = anchors[m];
-            _anchor.t = anchors[m + 1];
-            _anchor.r = anchors[m + 2];
-            _anchor.b = anchors[m + 3];
+            anchor = (*anchors_cast)[anchor_idx];
             const auto best_idx = find_best_box_for_anchor(anchor_idx, ious, bb_count, anchors_size);
             // Filter matches by criteria
             if (ious[(best_idx * anchors_size) + anchor_idx] > criteria) //Its a match
@@ -258,10 +247,10 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
                     box_bestidx.w *= scale; 
                     box_bestidx.h *= scale; 
                     
-                    _anchor_xcycwh.xc = 0.5 * (_anchor.l + _anchor.r) * scale; 
-                    _anchor_xcycwh.yc = 0.5 * (_anchor.t + _anchor.b) * scale; 
-                    _anchor_xcycwh.w = (-_anchor.l + _anchor.r) * scale;      
-                    _anchor_xcycwh.h = (-_anchor.t + _anchor.b) * scale;      
+                    _anchor_xcycwh.xc = 0.5 * (anchor.l + anchor.r) * scale; 
+                    _anchor_xcycwh.yc = 0.5 * (anchor.t + anchor.b) * scale; 
+                    _anchor_xcycwh.w = (-anchor.l + anchor.r) * scale;      
+                    _anchor_xcycwh.h = (-anchor.t + anchor.b) * scale;      
 
                     // Reference for offset calculation using GT boxes & anchor boxes in <xc,yc,w,h> format
                     // https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Object-Detection#predictions-vis-%C3%A0-vis-priors
@@ -289,10 +278,10 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
                 else
                 {
                     //Convert the "ltrb" format to "xcycwh"
-                    _anchor_xcycwh.xc = 0.5 * (_anchor.l + _anchor.r); //xc
-                    _anchor_xcycwh.yc = 0.5 * (_anchor.t + _anchor.b); //yc
-                    _anchor_xcycwh.w = (-_anchor.l + _anchor.r);      //w
-                    _anchor_xcycwh.h = (-_anchor.t + _anchor.b);      //h
+                    _anchor_xcycwh.xc = 0.5 * (anchor.l + anchor.r); //xc
+                    _anchor_xcycwh.yc = 0.5 * (anchor.t + anchor.b); //yc
+                    _anchor_xcycwh.w = (-anchor.l + anchor.r);      //w
+                    _anchor_xcycwh.h = (-anchor.t + anchor.b);      //h
                     encoded_bb[anchor_idx] = _anchor_xcycwh;
                     encoded_labels[anchor_idx] = 0;
                 }
@@ -304,7 +293,6 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
         full_batch_meta_data->get_bb_cords_batch()[i] = (*encoded_bb_ltrb);
         full_batch_meta_data->get_bb_labels_batch()[i] = encoded_labels;
         encoded_bb.clear();
-        (*encoded_bb_ltrb).clear();
         encoded_labels.clear();
     }
 }

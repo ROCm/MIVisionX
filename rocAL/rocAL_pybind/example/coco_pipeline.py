@@ -36,8 +36,7 @@ class COCOPipeline(Pipeline):
             device=decoder_device, output_type=types.RGB)
         self.random_bbox_crop = ops.RandomBBoxCrop(device="cpu",
                                                    aspect_ratio=[0.5, 2.0],
-                                                   thresholds=[
-                                                       0, 0.1, 0.3, 0.5, 0.7, 0.9],
+                                                   thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
                                                    scaling=[0.3, 1.0],
                                                    ltrb=True,
                                                    allow_no_crop=True,
@@ -65,8 +64,7 @@ class COCOPipeline(Pipeline):
                                                 output_layout=types.NCHW,
                                                 crop=(crop, crop),
                                                 image_type=types.RGB,
-                                                mean=[0.485 * 255,
-                                                      0.456 * 255, 0.406 * 255],
+                                                mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
                                                 std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
             #offset = True
             self.boxEncoder = ops.BoxEncoder(device=rali_device,
@@ -89,22 +87,16 @@ class COCOPipeline(Pipeline):
         hue = self.rng3()
 
         self.jpegs, self.bb, self.labels = self.input(name="Reader")
-        # images = self.decode(self.jpegs)
-        # images = self.crop(images)
-        crop_begin, crop_size, bboxes, labels = self.random_bbox_crop(
-            self.bb, self.labels)
+        crop_begin, crop_size, bboxes, labels = self.random_bbox_crop(self.bb, self.labels)
         bboxes = self.bbflip(bboxes, horizontal=self.coin_flip)
         images = self.decode_slice(self.jpegs, crop_begin, crop_size)
         images = self.res(images)
-        images = self.twist(images, saturation=saturation,
-                            contrast=contrast, brightness=brightness, hue=hue)
+        images = self.twist(images, saturation=saturation,contrast=contrast, brightness=brightness, hue=hue)
         output = self.cmnp(images, mirror=coin)
-        # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
         encoded_bboxes, encoded_labels = self.boxEncoder(bboxes, labels)
         encoded_labels = self.cast(encoded_labels)
-        # Encoded Bbox and labels output in "ltrb" format
+        # Encoded Bbox and labels output in "xcycwh" format
         return [output, encoded_bboxes, encoded_labels]
-        # return [output,  self.bb, self.labels]
 
 
 class RALICOCOIterator(object):
@@ -145,6 +137,15 @@ class RALICOCOIterator(object):
         elif self.tensor_dtype == types.FLOAT16:
             self.out = np.zeros(
                 (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype="float16")
+        #Image id of a batch of images
+        self.image_id = np.zeros(self.bs, dtype="int32")
+        # Count of labels/ bboxes in a batch
+        self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
+        # 1D labels & bboxes array
+        self.encoded_bboxes = np.zeros((self.count_batch*4), dtype="float32")
+        self.encoded_labels = np.zeros(self.count_batch, dtype="int32")
+        # Image sizes of a batch
+        self.img_size = np.zeros((self.bs * 2), dtype="int32")
 
     def next(self):
         return self.__next__()
@@ -172,27 +173,18 @@ class RALICOCOIterator(object):
                 self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
 
 #Image id of a batch of images
-        self.image_id = np.zeros(self.bs, dtype="int32")
         self.loader.GetImageId(self.image_id)
 # Count of labels/ bboxes in a batch
-        self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
-        self.count_batch = self.loader.GetBoundingBoxCount(
-            self.bboxes_label_count)
+        self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
         print("Count Batch:", self.count_batch)
 # 1D labels & bboxes array
-        self.encoded_bboxes = np.zeros((self.count_batch*4), dtype="float32")
-        self.encoded_labels = np.zeros(self.count_batch, dtype="int32")
-        self.loader.copyEncodedBoxesAndLables(
-            self.encoded_bboxes, self.encoded_labels)
+        self.loader.copyEncodedBoxesAndLables(self.encoded_bboxes, self.encoded_labels)
 # Image sizes of a batch
-        self.img_size = np.zeros((self.bs * 2), dtype="int32")
         self.loader.GetImgSizes(self.img_size)
         print("Image sizes:", self.img_size)
 
-        encoded_bboxes_tensor = torch.tensor(
-            self.encoded_bboxes).view(self.bs, -1, 4).contiguous()
-        encodded_labels_tensor = torch.tensor(
-            self.encoded_labels).long().view(self.bs, -1)
+        encoded_bboxes_tensor = torch.tensor(self.encoded_bboxes).view(self.bs, -1, 4).contiguous()
+        encodded_labels_tensor = torch.tensor(self.encoded_labels).long().view(self.bs, -1)
         image_id_tensor = torch.tensor(self.image_id)
         image_size_tensor = torch.tensor(self.img_size).view(-1, self.bs, 2)
         for i in range(self.bs):
@@ -202,10 +194,8 @@ class RALICOCOIterator(object):
             for idx, x in enumerate(encodded_labels_tensor[i]):
                 if x != 0:
                     index_list.append(idx)
-                    actual_bboxes.append(
-                        encoded_bboxes_tensor[i][idx].tolist())
-                    actual_labels.append(
-                        encodded_labels_tensor[i][idx].tolist())
+                    actual_bboxes.append(encoded_bboxes_tensor[i][idx].tolist())
+                    actual_labels.append(encodded_labels_tensor[i][idx].tolist())
 
             if self.display:
                img = torch.from_numpy(self.out)

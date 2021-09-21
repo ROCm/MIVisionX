@@ -268,7 +268,7 @@ void COCOMetaDataReader::read_all(const std::string &path)
     }
     _coco_metadata_read_time.end(); // Debug timing
     //print_map_contents();
-    std::cout << "coco read time in sec: " << _coco_metadata_read_time.get_timing() / 1000 << std::endl;
+    // std::cout << "coco read time in sec: " << _coco_metadata_read_time.get_timing() / 1000 << std::endl;
 }
 
 void COCOMetaDataReader::release(std::string image_name)

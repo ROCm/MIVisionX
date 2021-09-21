@@ -193,35 +193,25 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> anchors, 
     for (int i = 0; i < full_batch_meta_data->size(); i++)
     {
         auto bb_count = full_batch_meta_data->get_bb_labels_batch()[i].size();
-        int labels_buf[bb_count];
-        float coords_buf[bb_count * 4];
-        memcpy(labels_buf, full_batch_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
-        memcpy(coords_buf, full_batch_meta_data->get_bb_cords_batch()[i].data(), full_batch_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
-        BoundingBoxCords_xcycwh encoded_bb;
-        BoundingBoxLabels encoded_labels;
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
+        bb_coords.resize(bb_count);
+        bb_labels.resize(bb_count);
+        memcpy(bb_labels.data(), full_batch_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
+        memcpy(bb_coords.data(), full_batch_meta_data->get_bb_cords_batch()[i].data(), full_batch_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        BoundingBoxCords_xcycwh encoded_bb;
+        BoundingBoxLabels encoded_labels;
         BoundingBoxCords* anchors_cast = (BoundingBoxCords *)&anchors;
         unsigned anchors_size = (*anchors_cast).size(); 
         //Calculate Ious
         //ious size - bboxes count x anchors count
         std::vector<float> ious(bb_count * anchors_size);
-        bb_coords.resize(bb_count);
-        bb_labels.resize(bb_count);
         encoded_bb.resize(anchors_size);
         encoded_labels.resize(anchors_size);
         for (uint bb_idx = 0; bb_idx < bb_count; bb_idx++)
         {
-            int m = bb_idx * 4;
-            BoundingBoxCord box;
-            box.l = coords_buf[m];
-            box.t = coords_buf[m + 1];
-            box.r = coords_buf[m + 2];
-            box.b = coords_buf[m + 3];
             auto iou_rows = ious.data() + (bb_idx * (anchors_size));
-            calculate_ious_for_box(iou_rows, box, anchors_cast);
-            bb_coords[bb_idx] = box;
-            bb_labels[bb_idx] = labels_buf[bb_idx];
+            calculate_ious_for_box(iou_rows, bb_coords[bb_idx], anchors_cast);
         }
         
         // Depending on the matches ->place the best bbox instead of the corresponding anchor_idx in anchor

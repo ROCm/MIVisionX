@@ -38,6 +38,7 @@ struct TensorMaxLocalData {
 
 static vx_status VX_CALLBACK validateTensorMax(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {
+    vx_enum type, out_type;
     // check tensor dimensions
     vx_size num_dims;
     vx_size input1_dims[4],input2_dims[4] = { 1, 1, 0, 0 }, output_dims[4];
@@ -180,7 +181,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMaxNode(vx_graph graph, vx_tensor input
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
-    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS)
     {
         vx_reference params[] = {
             (vx_reference)input1,

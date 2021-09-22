@@ -35,6 +35,9 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         if (platform.jenkinsLabel.contains('ubuntu18')) {
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }
+        else {
+           installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --backend HIP'
+        }
     }
 
     def command = """#!/usr/bin/env bash

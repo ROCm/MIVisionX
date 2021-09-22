@@ -157,7 +157,7 @@ static vx_status VX_CALLBACK uninitializeTensorMax(vx_node node, const vx_refere
 vx_status publishTensorMax(vx_context context)
 {
     // add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.tensor_max", VX_KERNEL_TENSOR_MAX_AMD, processTensorMax, 4, validateTensorMax, initializeTensorMax, uninitializeTensorMax);
+    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.tensor_max", VX_KERNEL_TENSOR_MAX_AMD, processTensorMax, 3, validateTensorMax, initializeTensorMax, uninitializeTensorMax);
     ERROR_CHECK_OBJECT(kernel);
 
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
@@ -167,8 +167,7 @@ vx_status publishTensorMax(vx_context context)
     // set kernel parameters
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
 
     // finalize and release kernel object
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));

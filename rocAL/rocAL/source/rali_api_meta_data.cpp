@@ -343,8 +343,8 @@ RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext p_context, const char
 
 }
 
-void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<float> anchors, float criteria,
-                                  std::vector<float> means, std::vector<float> stds, bool offset, float scale)
+void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<float>& anchors, float criteria,
+                                  std::vector<float> &means, std::vector<float> &stds, bool offset, float scale)
 {
     if (!p_context)
         THROW("Invalid rali context passed to raliBoxEncoder")

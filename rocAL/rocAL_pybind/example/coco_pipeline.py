@@ -58,7 +58,8 @@ class COCOPipeline(Pipeline):
             #offset = False
             self.boxEncoder = ops.BoxEncoder(device=rali_device,
                                              criteria=0.5,
-                                             anchors=default_boxes)
+                                             anchors=default_boxes,
+                                             offset=True, stds=[0.1, 0.1, 0.2, 0.2], scale=300)
         else:
             self.cmnp = ops.CropMirrorNormalize(device="gpu",
                                                 output_dtype=types.FLOAT,
@@ -150,7 +151,6 @@ class RALICOCOIterator(object):
         return self.__next__()
 
     def __next__(self):
-        print("In the next routine of COCO Iterator")
         if(self.loader.isEmpty()):
             timing_info = self.loader.Timing_Info()
             print("Load     time ::", timing_info.load_time)
@@ -178,7 +178,6 @@ class RALICOCOIterator(object):
         self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
         self.count_batch = self.loader.GetBoundingBoxCount(
             self.bboxes_label_count)
-        print("Count Batch:", self.count_batch)
 # 1D labels & bboxes array
         self.encoded_bboxes = np.zeros((self.count_batch*4), dtype="float32")
         self.encoded_labels = np.zeros(self.count_batch, dtype="int32")

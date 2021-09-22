@@ -28,7 +28,14 @@ THE SOFTWARE.
 #include "commons.h"
 
 
-typedef  struct { float l; float t; float r; float b; } BoundingBoxCord;
+typedef struct BoundingBoxCord_
+{ 
+  float l; float t; float r; float b;
+  BoundingBoxCord_() {}
+  BoundingBoxCord_(float l_, float t_, float r_, float b_): l(l_), t(t_), r(r_), b(b_) {}   // constructor
+  BoundingBoxCord_(const BoundingBoxCord_& cord) : l(cord.l), t(cord.t), r(cord.r), b(cord.b) {}  //copy constructor
+} BoundingBoxCord;
+
 typedef  std::vector<BoundingBoxCord> BoundingBoxCords;
 typedef  std::vector<int> BoundingBoxLabels;
 typedef  struct { int w; int h; } ImgSize;

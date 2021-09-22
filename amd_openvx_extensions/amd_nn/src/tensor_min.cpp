@@ -38,11 +38,6 @@ struct TensorMinLocalData {
 
 static vx_status VX_CALLBACK validateTensorMin(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {
-    // check scalar type
-    vx_enum type, out_type;
-    ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[2], VX_SCALAR_TYPE, &type, sizeof(type)));
-    if (type != VX_TYPE_ENUM) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: min: #2 type=%d (must be enum)\n", type);
-
     // check tensor dimensions
     vx_size num_dims;
     vx_size input1_dims[4],input2_dims[4] = { 1, 1, 0, 0 }, output_dims[4];
@@ -182,24 +177,20 @@ vx_status publishTensorMin(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxTensorMinNode(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_enum policy, vx_tensor output)
+VX_API_ENTRY vx_node VX_API_CALL vxTensorMinNode(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_tensor output)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
-        vx_scalar s_policy = vxCreateScalarWithSize(context, VX_TYPE_ENUM, &policy, sizeof(policy));
-        if (vxGetStatus((vx_reference)s_policy) == VX_SUCCESS)
-        {
-            vx_reference params[] = {
-                (vx_reference)input1,
-                (vx_reference)input2,
-                (vx_reference)s_policy,
-                (vx_reference)output
-            };
-            node = createNode(graph, VX_KERNEL_TENSOR_MIN_AMD, params, sizeof(params) / sizeof(params[0]));
-            vxReleaseScalar(&s_policy);
-        }
+    {
+        vx_reference params[] = {
+            (vx_reference)input1,
+            (vx_reference)input2,
+            (vx_reference)output
+        };
+        node = createNode(graph, VX_KERNEL_TENSOR_MIN_AMD, params, sizeof(params) / sizeof(params[0]));
     }
+
     return node;
 }
 

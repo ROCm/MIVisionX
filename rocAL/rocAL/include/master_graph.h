@@ -146,13 +146,13 @@ private:
     bool _output_routine_finished_processing = false;
     const RaliTensorDataType _out_data_type;
     bool _is_random_bbox_crop = false;
-    //box encoder
-    bool is_box_encoder = false;
-    std::vector<float> _anchors;
-    float _criteria = 0.5;
-    float _scale;
-    bool _offset;
-    std::vector<float> _means, _stds;
+    // box encoder variables
+    bool _is_box_encoder = false; //bool variable to set the box encoder 
+    std::vector<float>_anchors; // Anchors to be used for encoding, as the array of floats is in the ltrb format of size 8732x4
+    float _criteria = 0.5; // Threshold IoU for matching bounding boxes with anchors. The value needs to be between 0 and 1.
+    float _scale; // Rescales the box and anchor values before the offset is calculated (for example, to return to the absolute values).
+    bool _offset; // Returns normalized offsets ((encoded_bboxes*scale - anchors*scale) - mean) / stds in EncodedBBoxes that use std and the mean and scale arguments if offset="True"
+    std::vector<float> _means, _stds; //_means:  [x y w h] mean values for normalization _stds: [x y w h] standard deviations for offset normalization.
 };
 
 template <typename T>

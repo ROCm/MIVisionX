@@ -196,54 +196,50 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
         bb_labels.resize(bb_count);
         memcpy(bb_labels.data(), full_batch_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         memcpy(bb_coords, full_batch_meta_data->get_bb_cords_batch()[i].data(), full_batch_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
-        BoundingBoxCords encoded_bb;
+        BoundingBoxCords_xcycwh encoded_bb;
         BoundingBoxLabels encoded_labels;
         unsigned anchors_size = anchors->size() / 4; // divide the anchors_size by 4 to get the total number of anchors
         //Calculate Ious
         //ious size - bboxes count x anchors count
         std::vector<float> ious(bb_count * anchors_size);
-        //bb_coords.resize(bb_count);
-        //bb_labels.resize(bb_count);
         encoded_bb.resize(anchors_size);
         encoded_labels.resize(anchors_size);
         for (uint bb_idx = 0; bb_idx < bb_count; bb_idx++)
         {
             auto iou_rows = ious.data() + (bb_idx * (anchors_size));
             calculate_ious_for_box(iou_rows, bb_coords[bb_idx], bbox_anchors, anchors_size);
-            //bb_coords[bb_idx] = coords_buf[bb_idx];
-            //bb_labels[bb_idx] = labels_buf[bb_idx];
         }
         
         // Depending on the matches ->place the best bbox instead of the corresponding anchor_idx in anchor
         for (unsigned anchor_idx = 0; anchor_idx < anchors_size; anchor_idx++)
         {
-            BoundingBoxCord box_bestidx, anchor_xcyxwh;
+            BoundingBoxCord_xcycwh box_bestidx, anchor_xcyxwh;
             BoundingBoxCord *p_anchor = &bbox_anchors[anchor_idx];
             const auto best_idx = find_best_box_for_anchor(anchor_idx, ious, bb_count, anchors_size);
             // Filter matches by criteria
             if (ious[(best_idx * anchors_size) + anchor_idx] > criteria) //Its a match
             {
-                //YTD: Need to add a new structure for xc,yc,w,h similar to l,t,r,b as a part of metadata
-                box_bestidx.l = 0.5 * (bb_coords[best_idx].l + bb_coords[best_idx].r); //xc
-                box_bestidx.t = 0.5 * (bb_coords[best_idx].t + bb_coords[best_idx].b); //yc
-                box_bestidx.r = bb_coords[best_idx].r - bb_coords[best_idx].l;      //w
-                box_bestidx.b = bb_coords[best_idx].b - bb_coords[best_idx].t;      //h
+                //Convert the "ltrb" format to "xcycwh"
+                box_bestidx.xc = 0.5 * (bb_coords[best_idx].l + bb_coords[best_idx].r); //xc
+                box_bestidx.yc = 0.5 * (bb_coords[best_idx].t + bb_coords[best_idx].b); //yc
+                box_bestidx.w = bb_coords[best_idx].r - bb_coords[best_idx].l;      //w
+                box_bestidx.h = bb_coords[best_idx].b - bb_coords[best_idx].t;      //h
 
                 if (offset)
                 {
-                    box_bestidx.l *= scale; //xc
-                    box_bestidx.t *= scale; //yc
-                    box_bestidx.r *= scale; //w
-                    box_bestidx.b *= scale; //h
-                    //YTD: Need to add a new structure for xc,yc,w,h similar to l,t,r,b as a part of metadata
-                    anchor_xcyxwh.l = 0.5 * (p_anchor->l + p_anchor->r) * scale; //xc
-                    anchor_xcyxwh.t = 0.5 * (p_anchor->t + p_anchor->b) * scale; //yc
-                    anchor_xcyxwh.r = (p_anchor->l + p_anchor->r) * scale;      //w
-                    anchor_xcyxwh.b = (p_anchor->t + p_anchor->b) * scale;      //h
-                    box_bestidx.l = ((box_bestidx.l - anchor_xcyxwh.l) / anchor_xcyxwh.r - means[0]) / stds[0];
-                    box_bestidx.t = ((box_bestidx.t - anchor_xcyxwh.t) / anchor_xcyxwh.b - means[1]) / stds[1];
-                    box_bestidx.r = (std::log(box_bestidx.r / anchor_xcyxwh.r) - means[2]) / stds[2];
-                    box_bestidx.b = (std::log(box_bestidx.b / anchor_xcyxwh.b) - means[3]) / stds[3];
+                    box_bestidx.xc *= scale; //xc
+                    box_bestidx.yc *= scale; //yc
+                    box_bestidx.w *= scale; //w
+                    box_bestidx.h *= scale; //h
+                    //Convert the "ltrb" format to "xcycwh"
+                    anchor_xcyxwh.xc = 0.5 * (p_anchor->l + p_anchor->r) * scale; //xc
+                    anchor_xcyxwh.yc = 0.5 * (p_anchor->t + p_anchor->b) * scale; //yc
+                    anchor_xcyxwh.w = (p_anchor->l + p_anchor->r) * scale;      //w
+                    anchor_xcyxwh.h = (p_anchor->t + p_anchor->b) * scale;      //h
+                    box_bestidx.xc = ((box_bestidx.xc - anchor_xcyxwh.xc) / anchor_xcyxwh.w - means[0]) / stds[0];
+                    box_bestidx.yc = ((box_bestidx.yc - anchor_xcyxwh.yc) / anchor_xcyxwh.h - means[1]) / stds[1];
+                    box_bestidx.w = (std::log(box_bestidx.w / anchor_xcyxwh.w) - means[2]) / stds[2];
+                    box_bestidx.h = (std::log(box_bestidx.h / anchor_xcyxwh.h) - means[3]) / stds[3];
                     encoded_bb[anchor_idx] = box_bestidx;
                     encoded_labels[anchor_idx] = bb_labels.at(best_idx);
                 }
@@ -262,20 +258,20 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
                 }
                 else
                 {
-                    //YTD: Need to add a new structure for xc,yc,w,h similar to l,t,r,b as a part of metadata
-                    encoded_bb[anchor_idx].l = 0.5 * (p_anchor->l + p_anchor->r); //xc
-                    encoded_bb[anchor_idx].t = 0.5 * (p_anchor->t + p_anchor->b); //yc
-                    encoded_bb[anchor_idx].r = (p_anchor->l + p_anchor->r);      //w
-                    encoded_bb[anchor_idx].b = (p_anchor->t + p_anchor->b);      //h
+                    //Convert the "ltrb" format to "xcycwh"
+                    encoded_bb[anchor_idx].xc = 0.5 * (p_anchor->l + p_anchor->r); //xc
+                    encoded_bb[anchor_idx].yc = 0.5 * (p_anchor->t + p_anchor->b); //yc
+                    encoded_bb[anchor_idx].w = (p_anchor->l + p_anchor->r);      //w
+                    encoded_bb[anchor_idx].h = (p_anchor->t + p_anchor->b);      //h
                     encoded_labels[anchor_idx] = 0;
                 }
             }
         }
-        //bb_coords.clear();
-        //bb_labels.clear();
-        full_batch_meta_data->get_bb_cords_batch()[i] = encoded_bb;
+        BoundingBoxCords * encoded_bb_ltrb = (BoundingBoxCords*)&encoded_bb;
+        full_batch_meta_data->get_bb_cords_batch()[i] = (*encoded_bb_ltrb);
         full_batch_meta_data->get_bb_labels_batch()[i] = encoded_labels;
         encoded_bb.clear();
         encoded_labels.clear();
     }
 }
+

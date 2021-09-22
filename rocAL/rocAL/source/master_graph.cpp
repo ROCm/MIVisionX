@@ -918,7 +918,7 @@ void MasterGraph::output_routine()
                 _graph->process();
                 _process_time.end();
             }
-            if(is_box_encoder )
+            if(_is_box_encoder )
             {
                 _meta_data_graph->update_box_encoder_meta_data(&_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);
             }
@@ -1030,7 +1030,8 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
 
 void MasterGraph::box_encoder(std::vector<float> &anchors, float criteria, const std::vector<float> &means, const std::vector<float> &stds, bool offset, float scale)
 {
-    is_box_encoder = true;
+    std::cout<<"Comes here to box encoder function";
+    _is_box_encoder = true;
     _offset = offset;
     _anchors = anchors;
     _scale = scale;

@@ -23,6 +23,7 @@ THE SOFTWARE.
 #ifndef NN_HIP_HOST_DECLS_H
 #define NN_HIP_HOST_DECLS_H
 #include "hip/hip_runtime.h"
+#include "hip/hip_fp16.h"
 #include <VX/vx.h>
 
 int HipExec_Gather_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, unsigned char* in, uint in_offset,
@@ -41,5 +42,8 @@ int HipExec_image_to_tensor_layer(hipStream_t stream, vx_df_image format, vx_enu
 
 int HipExec_tensor_to_image_layer(hipStream_t stream, vx_df_image format, vx_enum type, uint width, uint height, uint N, unsigned char* in,
     uint in_offset, uint4 in_stride, unsigned char* out, uint out_offset, uint out_stride, float sc1, float sc2, uint reverse_channel_order);
+
+int HipExec_copy(hipStream_t stream, vx_enum type, unsigned char* inp, unsigned char* out, uint width, uint height, uint ldi, uint i_offset,
+    uint ldc, uint c_offset, bool tI);
 
 #endif //NN_HIP_HOST_DECLS_H

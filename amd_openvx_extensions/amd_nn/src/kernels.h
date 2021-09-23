@@ -48,7 +48,11 @@ THE SOFTWARE.
 #if __APPLE__
 #include <opencl.h>
 #else
+#if ENABLE_OPENCL
 #include <CL/cl.h>
+#elif ENABLE_HIP
+#include "../nn_hip/nn_hip_host_decls.h"
+#endif
 #endif
 #if _WIN32
 #include <windows.h>
@@ -56,11 +60,6 @@ THE SOFTWARE.
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <ctype.h>
-#endif
-
-#if ENABLE_HIP
-#include  "../../../amd_openvx/openvx/ago/ago_internal.h"
-#include "../nn_hip/nn_hip_host_decls.h"
 #endif
 
 // Visual Profiler (enabled by setting PROFILER_MODE=1 in profiler.h)
@@ -129,7 +128,11 @@ enum user_kernel_e
 struct NeuralNetworkCommonHandle {
     int count;
     miopenHandle_t  miopen_handle;
+#if ENABLE_OPENCL
     cl_command_queue cmdq;
+#elif ENABLE_HIP
+    hipStream_t cmdq;
+#endif
     bool exhaustiveSearch;
 };
 

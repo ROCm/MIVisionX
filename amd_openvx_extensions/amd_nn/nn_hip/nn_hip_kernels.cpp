@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #include "../../../amd_openvx/openvx/hipvx/hip_common_funcs.h"
 #include "nn_hip_host_decls.h"
-#include "hip/hip_fp16.h"
 
 // ----------------------------------------------------------------------------
 // Neural Network kernels for hip backend
@@ -497,5 +496,64 @@ int HipExec_tensor_to_image_layer(hipStream_t stream, vx_df_image format, vx_enu
         return VX_ERROR_NOT_SUPPORTED;
     }
 
+    return VX_SUCCESS;
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+copy_v1(const T* inp, T* out, uint width, uint height, uint BLKW, uint ldi, uint i_offset, uint ldc, uint c_offset) {
+    __shared__ float lbuf[256];
+    uint gx = blockIdx.x;
+    uint gy = blockIdx.y;
+    uint lx = threadIdx.x;
+    uint ly = threadIdx.y;
+    uint ix = hip_mad24(gx, BLKW, lx);
+    uint iy = hip_mad24(gy, BLKW, ly);
+    if (ix < width && iy < height) {
+        uint iloc = iy * ldi + ix + i_offset;
+        lbuf[hip_mad24(ly, BLKW + 1, lx)] = inp[iloc];
+    }
+    __syncthreads();
+    uint ox = hip_mad24(gy, BLKW, lx);
+    uint oy = hip_mad24(gx, BLKW, ly);
+    if(oy < width && ox < height) {
+        uint oloc = oy * ldc + ox + c_offset;
+        out[oloc] = lbuf[hip_mad24(lx, BLKW + 1, ly)];
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+copy_v2(const T* inp, T* out, uint width, uint height, uint ldi, uint i_offset, uint ldc, uint c_offset) {
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if(x < width && y < height) {
+        uint i = y * ldi + x + i_offset;
+        uint o = y * ldc + x + c_offset;
+        out[o] = inp[i];
+    }
+}
+
+int HipExec_copy(hipStream_t stream, vx_enum type, uchar* inp, uchar* out, uint width, uint height, uint ldi, uint i_offset,
+    uint ldc, uint c_offset, bool tI) {
+    if(tI) {
+        dim3 blockDim(16, 16, 1);
+        dim3 gridDim = dim3(ceil((float)width / blockDim.x), ceil((float)height / blockDim.y), 1);
+        if (type == VX_TYPE_FLOAT32) {
+            hipLaunchKernelGGL(copy_v1<float>, gridDim, blockDim, 0, stream, (float*)inp, (float*)out, width, height, blockDim.x, ldi,
+                i_offset, ldc, c_offset);
+        } else {
+            hipLaunchKernelGGL(copy_v1<__half>, gridDim, blockDim, 0, stream, (__half*)inp, (__half*)out, width, height, blockDim.x, ldi,
+                i_offset, ldc, c_offset);
+        }
+    } else {
+        dim3 blockDim(64, 1, 1);
+        dim3 gridDim = dim3(ceil((float)width / blockDim.x), height, 1);
+        if (type == VX_TYPE_FLOAT32) {
+            hipLaunchKernelGGL(copy_v2<float>, gridDim, blockDim, 0, stream, (float*)inp, (float*)out, width, height, ldi, i_offset, ldc, c_offset);
+        } else {
+            hipLaunchKernelGGL(copy_v2<float>, gridDim, blockDim, 0, stream, (float*)inp, (float*)out, width, height, ldi, i_offset, ldc, c_offset);
+        }
+    }
     return VX_SUCCESS;
 }

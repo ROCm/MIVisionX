@@ -427,11 +427,8 @@ else:
             os.system('sudo -v')
             if os.path.exists(ROCM_PATH+'/rpp'):
                 os.system('sudo rm -rf '+ROCM_PATH+'/rpp')
-            rppCMakeArg = ''
-            if backend == 'HIP':
-                    rppCMakeArg = ' -DCOMPILE=HIPRTC'
             os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
-                      linuxCMake+' -DBACKEND='+backend+rppCMakeArg+' ../; make -j4; sudo make install)')
+                      linuxCMake+' -DBACKEND='+backend+' ../; make -j4; sudo make install)')
 
         # Turn off for CentOS - TBD: TURN ON when RPP is supported on CentOS
         # else:

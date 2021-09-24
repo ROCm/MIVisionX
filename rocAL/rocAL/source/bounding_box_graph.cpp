@@ -224,7 +224,6 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
                 box_bestidx.yc = 0.5 * (bb_coords[best_idx].t + bb_coords[best_idx].b); //yc
                 box_bestidx.w = bb_coords[best_idx].r - bb_coords[best_idx].l;      //w
                 box_bestidx.h = bb_coords[best_idx].b - bb_coords[best_idx].t;      //h
-
                 if (offset)
                 {
                     box_bestidx.xc *= scale; //xc
@@ -234,8 +233,8 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
                     //Convert the "ltrb" format to "xcycwh"
                     anchor_xcyxwh.xc = 0.5 * (p_anchor->l + p_anchor->r) * scale; //xc
                     anchor_xcyxwh.yc = 0.5 * (p_anchor->t + p_anchor->b) * scale; //yc
-                    anchor_xcyxwh.w = (p_anchor->l + p_anchor->r) * scale;      //w
-                    anchor_xcyxwh.h = (p_anchor->t + p_anchor->b) * scale;      //h
+                    anchor_xcyxwh.w = (-p_anchor->l + p_anchor->r) * scale;      //w
+                    anchor_xcyxwh.h = (-p_anchor->t + p_anchor->b) * scale;      //h
                     // GT Bboxes : <cx ,cy ,w ,h>  , Anchor boxes : <cx',cy',w',h'> , Offset : <gcx ,gcy ,gw ,gh>
                     // gcx = ((cx - cx') / (w' - mean[0])) / std[0]
                     // gcy = ((cy - cy') / (h' - mean[1])) / std[1]
@@ -268,8 +267,8 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
                     //Convert the "ltrb" format to "xcycwh"
                     encoded_bb[anchor_idx].xc = 0.5 * (p_anchor->l + p_anchor->r); //xc
                     encoded_bb[anchor_idx].yc = 0.5 * (p_anchor->t + p_anchor->b); //yc
-                    encoded_bb[anchor_idx].w = (p_anchor->l + p_anchor->r);      //w
-                    encoded_bb[anchor_idx].h = (p_anchor->t + p_anchor->b);      //h
+                    encoded_bb[anchor_idx].w = (-p_anchor->l + p_anchor->r);      //w
+                    encoded_bb[anchor_idx].h = (-p_anchor->t + p_anchor->b);      //h
                     encoded_labels[anchor_idx] = 0;
                 }
             }

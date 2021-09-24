@@ -100,10 +100,15 @@ void COCOMetaDataReader::print_map_contents()
 void COCOMetaDataReader::read_all(const std::string &path)
 {
     _coco_metadata_read_time.start(); // Debug timing
-    std::string annotations_file = path;
-    std::ifstream f(annotations_file);
-    f.seekg(0, std::ios::end);
+    std::ifstream f;
+    f.open (path, std::ifstream::in|std::ios::binary|ios::ate);
+    if (f.fail()) THROW("ERROR: Given annotations file not present " + path);
     size_t file_size = f.tellg();
+    if (file_size == 0)
+    { // If file is empty return
+        f.close();
+        THROW("ERROR: Given annotations file not valid " + path);
+    }
     std::unique_ptr<char, std::function<void(char *)>> buff(
         new char[file_size + 1],
         [](char *data)

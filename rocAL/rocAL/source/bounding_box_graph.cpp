@@ -117,7 +117,6 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
         crop_box.b = crop_box.t + crop_cords[i][3];
         for (uint j = 0; j < bb_count; j++)
         {
-            int m = j * 4; // change if required
             //Mask Criteria
             auto x_c = 0.5 * (coords_buf[j].l + coords_buf[j].r);
             auto y_c = 0.5 * (coords_buf[j].t + coords_buf[j].b);

@@ -101,9 +101,11 @@ void COCOMetaDataReader::read_all(const std::string &path)
 {
     _coco_metadata_read_time.start(); // Debug timing
     std::ifstream f;
-    f.open (path, std::ifstream::in|std::ios::binary|ios::ate);
+    f.open (path, std::ifstream::in|std::ios::binary);
     if (f.fail()) THROW("ERROR: Given annotations file not present " + path);
-    size_t file_size = f.tellg();
+    f.ignore( std::numeric_limits<std::streamsize>::max() );
+    auto file_size = f.gcount();
+    f.clear();   //  Since ignore will have set eof.
     if (file_size == 0)
     { // If file is empty return
         f.close();

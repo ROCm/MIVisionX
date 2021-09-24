@@ -340,6 +340,9 @@ else:
             os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; '+linuxCMake +
                       ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
         else:
+            os.system('sudo -v')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install rocblas')
             os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; CXX=/opt/rocm/llvm/bin/clang++ '+linuxCMake +
                       ' -DMIOPEN_BACKEND=HIP ../../MIOpen-'+MIOpenVersion+' )')
         os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; make -j8 )')

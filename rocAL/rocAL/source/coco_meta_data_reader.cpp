@@ -102,8 +102,9 @@ void COCOMetaDataReader::read_all(const std::string &path)
     _coco_metadata_read_time.start(); // Debug timing
     std::string annotations_file = path;
     std::ifstream f(annotations_file);
-    f.seekg(0, std::ios::end);
-    size_t file_size = f.tellg();
+    f.ignore( std::numeric_limits<std::streamsize>::max() );
+    auto file_size = f.gcount();
+    f.clear();   //  Since ignore will have set eof.
     std::unique_ptr<char, std::function<void(char *)>> buff(
         new char[file_size + 1],
         [](char *data)

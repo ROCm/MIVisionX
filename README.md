@@ -167,7 +167,7 @@ For the convenience of the developer, we here provide the setup script which wil
                             --miopen    [MIOpen Version - optional (default:2.11.0)]
                             --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
-                            --rpp       [RPP Version - optional (default:0.9)]
+                            --rpp       [RPP Version - optional (default:0.91)]
                             --ffmpeg    [FFMPEG V4.0.4 Installation - optional (default:no) [options:yes/no]]
                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
@@ -402,7 +402,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * MIOpen - [2.11.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.11.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
-* RPP - [0.9](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.9)
+* RPP - [0.91](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.91)
 * FFMPEG - [V4.0.4](https://git.ffmpeg.org/gitweb/ffmpeg.git/tag/aedb6250eafa141cd4823788f7381f33b2ff4da7)
 * Dependencies for all the above packages
 * MIVisionX Setup Script - `V1.9.93`

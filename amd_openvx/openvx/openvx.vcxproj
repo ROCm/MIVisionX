@@ -105,6 +105,7 @@
     <ClCompile Include="ago\ago_haf_cpu_fast_corners.cpp" />
     <ClCompile Include="ago\ago_haf_cpu_filter.cpp" />
     <ClCompile Include="ago\ago_haf_cpu_geometric.cpp" />
+	<ClCompile Include="ago\ago_haf_cpu_generic_functions.cpp" />
     <ClCompile Include="ago\ago_haf_cpu_harris.cpp" />
     <ClCompile Include="ago\ago_haf_cpu_histogram.cpp" />
     <ClCompile Include="ago\ago_haf_cpu_logical.cpp" />

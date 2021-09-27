@@ -122,6 +122,9 @@
     <ClCompile Include="ago\ago_platform.cpp">
       <Filter>Source Files\ago</Filter>
     </ClCompile>
+    <ClCompile Include="ago\ago_haf_cpu_generic_functions.cpp">
+      <Filter>Source Files\ago</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\VX\vx.h">

@@ -25,7 +25,12 @@ THE SOFTWARE.
 #include <numeric>
 #include "node_video_loader.h"
 #ifdef RALI_VIDEO
-VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources) : Node({}, {output})
+#if ENABLE_HIP
+VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResourcesHip device_resources):
+#else
+VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources):
+#endif
+	Node({}, {output})
 {
     _loader_module = std::make_shared<VideoLoaderSharded>(device_resources);
 }

@@ -30,7 +30,11 @@ THE SOFTWARE.
 class VideoLoaderNode : public Node
 {
 public:
+#if ENABLE_HIP
+    VideoLoaderNode(Image *output, DeviceResourcesHip device_resources);
+#else
     VideoLoaderNode(Image *output, DeviceResources device_resources);
+#endif
     ~VideoLoaderNode() override;
     VideoLoaderNode() = delete;
     ///

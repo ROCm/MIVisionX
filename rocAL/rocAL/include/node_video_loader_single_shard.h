@@ -30,7 +30,11 @@ THE SOFTWARE.
 class VideoLoaderSingleShardNode : public Node
 {
 public:
+#if ENABLE_HIP
+    VideoLoaderSingleShardNode(Image *output, DeviceResourcesHip device_resources);
+#else
     VideoLoaderSingleShardNode(Image *output, DeviceResources device_resources);
+#endif
     ~VideoLoaderSingleShardNode() override;
 
     /// \param user_shard_count shard count from user

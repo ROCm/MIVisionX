@@ -37,7 +37,11 @@ THE SOFTWARE.
 class VideoLoader : public VideoLoaderModule
 {
 public:
+#if ENABLE_HIP
+    explicit VideoLoader(DeviceResourcesHip dev_resources);
+#else
     explicit VideoLoader(DeviceResources dev_resources);
+#endif
     ~VideoLoader() override;
     VideoLoaderModuleStatus load_next() override;
     void initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size = false) override;

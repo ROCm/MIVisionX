@@ -23,8 +23,12 @@ THE SOFTWARE.
 #include "node_video_loader_single_shard.h"
 #include "exception.h"
 #ifdef RALI_VIDEO
-
-VideoLoaderSingleShardNode::VideoLoaderSingleShardNode(Image *output, DeviceResources device_resources) : Node({}, {output})
+#if ENABLE_HIP
+VideoLoaderSingleShardNode::VideoLoaderSingleShardNode(Image *output, DeviceResourcesHip device_resources):
+#else
+VideoLoaderSingleShardNode::VideoLoaderSingleShardNode(Image *output, DeviceResources device_resources):
+#endif
+	Node({}, {output})
 {
     _loader_module = std::make_shared<VideoLoader>(device_resources);
 }

@@ -50,9 +50,10 @@ void CropMetaNode::update_parameters(MetaDataBatch* input_meta_data)
     {
         auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
         int labels_buf[bb_count];
-        float coords_buf[bb_count*4];
+        BoundingBoxCords box_coords_buf;
+        box_coords_buf.resize(bb_count);
         memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
-        memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        memcpy(box_coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxCord temp_box;
         BoundingBoxLabels bb_labels;
@@ -61,24 +62,19 @@ void CropMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         crop_box.t = _y1_val[i];
         crop_box.r = _x1_val[i] + _crop_width_val[i];
         crop_box.b = _y1_val[i] + _crop_height_val[i];
-        for(uint j = 0, m = 0; j < bb_count; j++)
+        for(uint j = 0; j < bb_count; j++)
         {
-            BoundingBoxCord box;
-            box.l = coords_buf[m++];
-            box.t = coords_buf[m++];
-            box.r = coords_buf[m++];
-            box.b = coords_buf[m++];
-            if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
+            if (BBoxIntersectionOverUnion(box_coords_buf[j], crop_box) >= _iou_threshold)
             {
-                float xA = std::max(crop_box.l, box.l);
-                float yA = std::max(crop_box.t, box.t);
-                float xB = std::min(crop_box.r, box.r);
-                float yB = std::min(crop_box.b, box.b);
-                box.l = (xA - crop_box.l) / (crop_box.r - crop_box.l);
-                box.t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
-                box.r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
-                box.b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
-                bb_coords.push_back(box);
+                float xA = std::max(crop_box.l, box_coords_buf[j].l);
+                float yA = std::max(crop_box.t, box_coords_buf[j].t);
+                float xB = std::min(crop_box.r, box_coords_buf[j].r);
+                float yB = std::min(crop_box.b, box_coords_buf[j].b);
+                box_coords_buf[j].l = (xA - crop_box.l) / (crop_box.r - crop_box.l);
+                box_coords_buf[j].t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
+                box_coords_buf[j].r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
+                box_coords_buf[j].b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
+                bb_coords.push_back(box_coords_buf[j]);
                 bb_labels.push_back(labels_buf[j]);
             }
         }

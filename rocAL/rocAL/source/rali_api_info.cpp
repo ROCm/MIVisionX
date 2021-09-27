@@ -86,7 +86,7 @@ raliGetRemainingImages(RaliContext p_context)
     size_t count = 0;
     try
     {
-        count = context->master_graph->remaining_images_count();
+        count = context->master_graph->remaining_images_or_sequences_count();
     }
     catch(const std::exception& e)
     {

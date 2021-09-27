@@ -130,7 +130,7 @@ void get_video_properties_from_txt_file(VideoProperties &video_props, const char
             video_props.start_end_frame_num.push_back(std::make_tuple(start_frame_number, end_frame_number));
             video_props.start_end_timestamps.push_back(std::make_tuple(start_time, end_time));
             video_props.frames_count.push_back(end_frame_number - start_frame_number);
-            unsigned video_frame_rate = std::floor(props[3] / props[4]);
+            float video_frame_rate = std::floor(props[3] / props[4]);
             if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
                 THROW("Variable frame rate videos cannot be processed")
             video_props.frame_rate = video_frame_rate;
@@ -168,7 +168,7 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
             video_props.height = props[1];
             video_props.videos_count = 1;
             video_props.frames_count.push_back(props[2]);
-            unsigned video_frame_rate = std::floor(props[3] / props[4]);
+            float video_frame_rate = std::floor(props[3] / props[4]);
             if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
                 THROW("Variable frame rate videos cannot be processed")
             video_props.frame_rate = video_frame_rate;
@@ -211,7 +211,7 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
                 else
                     THROW("The given video files are of different resolution\n")
                 video_props.frames_count.push_back(props[2]);
-                unsigned video_frame_rate = std::floor(props[3] / props[4]);
+                float video_frame_rate = std::floor(props[3] / props[4]);
                 if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
                     THROW("Variable frame rate videos cannot be processed")
                 video_props.frame_rate = video_frame_rate;
@@ -253,7 +253,7 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
                     video_file_path = std::to_string(video_count) + "#" + _full_path; // Video index is added to each video file name to identify repeated videos files.
                     video_props.video_file_names.push_back(video_file_path);
                     video_props.frames_count.push_back(props[2]);
-                    unsigned video_frame_rate = std::floor(props[3] / props[4]);
+                    float video_frame_rate = std::floor(props[3] / props[4]);
                     if (video_props.frame_rate != 0 && video_frame_rate != video_props.frame_rate)
                         THROW("Variable frame rate videos cannot be processed")
                     video_props.frame_rate = video_frame_rate;

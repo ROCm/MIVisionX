@@ -217,7 +217,7 @@ void
 MasterGraph::decrease_image_count()
 {
     if(!_loop)
-        _remaining_images_or_sequences_count -= _user_batch_size;
+        _remaining_images_or_sequences_count -= (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size);
 }
 
 void
@@ -352,7 +352,7 @@ MasterGraph::output_width()
 size_t
 MasterGraph::output_height()
 {
-    return _output_image_info.height_batch()*_user_to_internal_batch_ratio;
+    return _output_image_info.height_batch() * (_is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio);
 }
 
 std::vector<size_t>
@@ -461,7 +461,7 @@ MasterGraph::reset()
 }
 
 size_t
-MasterGraph::remaining_images_count()
+MasterGraph::remaining_images_or_sequences_count()
 {
     return (_remaining_images_or_sequences_count >= 0) ? _remaining_images_or_sequences_count:0;
 }
@@ -857,17 +857,18 @@ std::vector<std::vector<float>>& operator+=(std::vector<std::vector<float>>& des
 void MasterGraph::output_routine()
 {
     INFO("Output routine started with "+TOSTR(_remaining_images_or_sequences_count) + " to load");
+    size_t batch_ratio = _is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio;
 #if !ENABLE_HIP
-    if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
+    if(processing_on_device_ocl() && batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 #else
-    if(processing_on_device_hip() && _user_to_internal_batch_ratio != 1)
+    if(processing_on_device_hip() && batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 #endif
     try {
         while (_processing)
         {
-            const size_t each_cycle_size = output_byte_size()/_user_to_internal_batch_ratio;
+            const size_t each_cycle_size = output_byte_size()/batch_ratio;
 
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
@@ -883,7 +884,7 @@ void MasterGraph::output_routine()
             {
                 _count = _loader_module->remaining_count();
             }
-            if (_count < ((_original_batch_size > 0)? _original_batch_size : _user_batch_size))
+            if (_count < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size))
             {
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
                 // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
@@ -899,7 +900,7 @@ void MasterGraph::output_routine()
             // When executing on CPU the internal batch count can be smaller than the user batch count
             // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
             // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
-            for(unsigned cycle_idx = 0; cycle_idx< _user_to_internal_batch_ratio; cycle_idx++)
+            for(unsigned cycle_idx = 0; cycle_idx< batch_ratio; cycle_idx++)
             {
                 if(is_video_loader())
                 {

@@ -106,7 +106,7 @@ private:
     size_t _sequence_length;
     size_t _stride;
     size_t _video_count;
-    size_t _frame_rate;
+    float _frame_rate;
     size_t _max_decoded_width;
     size_t _max_decoded_height;
     size_t _max_decoded_stride;

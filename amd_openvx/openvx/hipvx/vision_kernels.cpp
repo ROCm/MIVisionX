@@ -5904,7 +5904,7 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
     uchar *lbuf_ptr;
     float2 v2;
 
-    { // load 272x22 bytes into local memory using 16x16 workgroup
+    { // load 288x22 bytes into local memory using 16x16 workgroup
         int loffset = ly * 288 + (lx << 4);
         int goffset = (gy - 3) * gstride + (gx << 4) - 16;
         *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
@@ -5916,9 +5916,11 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
         }
         else {
             int id = (ly - 6) * 16 + lx;
-            loffset = id * 288 + 256;
-            goffset = (gy - ly + id - 3) * gstride + ((gx - lx) << 4) + 240;
-            doExtraLoad = (id < 22) ? true : false;
+            int ry = id >> 1;
+            int rx = id & 1;
+            loffset = ry * 288 + (rx << 4) + 256;
+            goffset = (gy - ly + ry - 3) * gstride + ((gx - lx + rx) << 4) + 240;
+            doExtraLoad = (ry < 22) ? true : false;
         }
         if (doExtraLoad) {
             *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
@@ -6014,7 +6016,7 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
 
     gbuf = pSrcGxy + dstWidthComp1;
 
-    { // load 272x22 bytes into local memory using 16x16 workgroup
+    { // load 288x22 bytes into local memory using 16x16 workgroup
         int loffset = ly * 288 + (lx << 4);
         int goffset = (gy - 3) * gstride + (gx << 4) - 16;
         *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
@@ -6026,9 +6028,11 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
         }
         else {
             int id = (ly - 6) * 16 + lx;
-            loffset = id * 288 + 256;
-            goffset = (gy - ly + id - 3) * gstride + ((gx - lx) << 4) + 240;
-            doExtraLoad = (id < 22) ? true : false;
+            int ry = id >> 1;
+            int rx = id & 1;
+            loffset = ry * 288 + (rx << 4) + 256;
+            goffset = (gy - ly + ry - 3) * gstride + ((gx - lx + rx) << 4) + 240;
+            doExtraLoad = (ry < 22) ? true : false;
         }
         if (doExtraLoad) {
             *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
@@ -6123,7 +6127,7 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
 
     gbuf = pSrcGxy + dstWidthComp2;
 
-    { // load 288x18 bytes into local memory using 16x16 workgroup
+    { // load 288x22 bytes into local memory using 16x16 workgroup
         int loffset = ly * 288 + (lx << 4);
         int goffset = (gy - 3) * gstride + (gx << 4) - 16;
         *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
@@ -6135,9 +6139,11 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
         }
         else {
             int id = (ly - 6) * 16 + lx;
-            loffset = id * 288 + 256;
-            goffset = (gy - ly + id - 3) * gstride + ((gx - lx) << 4) + 240;
-            doExtraLoad = (id < 22) ? true : false;
+            int ry = id >> 1;
+            int rx = id & 1;
+            loffset = ry * 288 + (rx << 4) + 256;
+            goffset = (gy - ly + ry - 3) * gstride + ((gx - lx + rx) << 4) + 240;
+            doExtraLoad = (ry < 22) ? true : false;
         }
         if (doExtraLoad) {
             *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));

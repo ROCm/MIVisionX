@@ -25,12 +25,12 @@ THE SOFTWARE.
 struct ScaleLayerLocalData {
     NeuralNetworkCommonHandle * handle;
     miopenTensorDescriptor_t input_desc;
-    cl_mem input_mem;
+    void *input_mem;
     miopenTensorDescriptor_t output_desc;
-    cl_mem output_mem;
+    void *output_mem;
     float alpha, beta;
     miopenTensorDescriptor_t bnScaleBiasMeanVarDesc;
-    cl_mem bnScale, bnBias;
+    void *bnScale, *bnBias;
 };
 
 static vx_status VX_CALLBACK validateScaleLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -91,8 +91,13 @@ PROFILER_START(VX_NN, Scale_Layer)
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
 
+#if ENABLE_OPENCL
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#elif ENABLE_HIP
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
 
     //miopen batch norm inference is combined for scale and  batchnorm. Scale is batchnorm withe null tensors for mean and variance.
     ERROR_CHECK_MIOPEN_STATUS(miopenBatchNormalizationForwardInference(miopenHandle, miopenBNSpatial, &data->alpha, &data->beta, data->input_desc, data->input_mem,
@@ -135,14 +140,26 @@ static vx_status VX_CALLBACK initializeScaleLayer(vx_node node, const vx_referen
 
     data->alpha = 1; data->beta = 0;
 
+#if ENABLE_OPENCL
     //input and output memory.
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->bnScale, sizeof(data->bnScale)));
+#elif ENABLE_HIP
+    //input and output memory.
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->bnScale, sizeof(data->bnScale)));
+#endif
+
     if(parameters[2]){
+#if ENABLE_OPENCL
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_OPENCL, &data->bnBias, sizeof(data->bnBias)));
+#elif ENABLE_HIP
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->bnBias, sizeof(data->bnBias)));
+#endif
     }
     else{
         vx_context   vxContext = vxGetContext((vx_reference)node);
+#if ENABLE_OPENCL
         cl_context context;
         ERROR_CHECK_STATUS(vxQueryContext(vxContext, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
         cl_int err = 0;
@@ -150,17 +167,51 @@ static vx_status VX_CALLBACK initializeScaleLayer(vx_node node, const vx_referen
             cl_float pattern = 0;
             data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float)*input_dims[2], NULL, &err);
             if (err) return VX_FAILURE;
-            err = clEnqueueFillBuffer(data->handle->cmdq, data->bnBias, &pattern, sizeof(cl_float), 0, input_dims[2], 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, (cl_mem)data->bnBias, &pattern, sizeof(cl_float), 0, input_dims[2], 0, NULL, NULL);
         }
         else {
             cl_half pattern = 0;
             data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(cl_half)*input_dims[2], NULL, &err);
             if (err) return VX_FAILURE;
-            err = clEnqueueFillBuffer(data->handle->cmdq, data->bnBias, &pattern, sizeof(cl_half), 0, input_dims[2], 0, NULL, NULL);
+            err = clEnqueueFillBuffer(data->handle->cmdq, (cl_mem)data->bnBias, &pattern, sizeof(cl_half), 0, input_dims[2], 0, NULL, NULL);
         }
         if (err) return VX_FAILURE;
+#elif ENABLE_HIP
+        int hip_device = -1;
+        ERROR_CHECK_STATUS(vxQueryContext(vxContext, VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &hip_device, sizeof(hip_device)));
+        if (hip_device < 0) {
+            return VX_FAILURE;
+        }
+        hipError_t errcode_ret = hipSuccess;
+        if (data_type == miopenFloat) {
+            errcode_ret = hipMalloc(&data->bnBias, sizeof(float) * input_dims[2]);
+            if (errcode_ret != hipSuccess) {
+                return VX_FAILURE;
+            }
+
+            errcode_ret = hipMemset(data->bnBias, 0, sizeof(float) * input_dims[2]);
+            if (errcode_ret != hipSuccess) {
+                return VX_FAILURE;
+            }
+        } else {
+            errcode_ret = hipMalloc(&data->bnBias, sizeof(__half) * input_dims[2]);
+            if (errcode_ret != hipSuccess) {
+                return VX_FAILURE;
+            }
+
+            errcode_ret = hipMemset(data->bnBias, 0, sizeof(__half) * input_dims[2]);
+            if (errcode_ret != hipSuccess) {
+                return VX_FAILURE;
+            }
+        }
+#endif
     }
+
+#if ENABLE_OPENCL
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#elif ENABLE_HIP
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
 
 #if ENABLE_DEBUG_PRINT_DIMS
     std::cout << "scale input " << input_dims[3] << " " << input_dims[2] << " " << input_dims[1] << " " << input_dims[0] << " ";
@@ -182,8 +233,16 @@ static vx_status VX_CALLBACK uninitializeScaleLayer(vx_node node, const vx_refer
         ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->bnScaleBiasMeanVarDesc));
         if(!parameters[2]){
             if(data->bnBias) {
-                cl_int err = clReleaseMemObject(data->bnBias);
+#if ENABLE_OPENCL
+                cl_int err = clReleaseMemObject((cl_mem)data->bnBias);
                 if (err) return VX_FAILURE;
+#elif ENABLE_HIP
+                hipError_t errcode_ret = hipFree(data->bnBias);
+                if (errcode_ret != hipSuccess) {
+                    return VX_FAILURE;
+                }
+#endif
+
             }
         }
         ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));

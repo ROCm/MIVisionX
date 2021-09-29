@@ -31,10 +31,10 @@ struct NormalizationLayerLocalData {
     double normBeta;
     double normBias;
     miopenTensorDescriptor_t input_desc;
-    cl_mem input_mem;
+    void *input_mem;
     miopenTensorDescriptor_t output_desc;
-    cl_mem output_mem;
-    cl_mem workspace;
+    void *output_mem;
+    void *workspace;
     size_t workspace_size;
 };
 
@@ -89,8 +89,13 @@ PROFILER_START(VX_NN, Normalization_Layer)
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
 
+#if ENABLE_OPENCL
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#elif ENABLE_HIP
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
 
     float alpha = 1.0f, beta = 0.0f;
     //Apply Normalization forward.
@@ -150,9 +155,16 @@ static vx_status VX_CALLBACK initializeNormalizationLayer(vx_node node, const vx
     ERROR_CHECK_MIOPEN_STATUS(miopenCreateLRNDescriptor(&data->lrnDesc));
     ERROR_CHECK_MIOPEN_STATUS(miopenSetLRNDescriptor(data->lrnDesc, data->mode, data->normN, data->normAlpha, data->normBeta, data->normBias));
 
+
+#if ENABLE_OPENCL
     //Input and output memory.
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#elif ENABLE_HIP
+    //Input and output memory.
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
 
 #if ENABLE_DEBUG_PRINT_DIMS
     std::cout << "lrn input " << input_dims[3] << " " << input_dims[2] << " " << input_dims[1] << " " << input_dims[0] << " ";

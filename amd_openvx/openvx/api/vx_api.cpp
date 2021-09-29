@@ -810,7 +810,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateUniformImage(vx_context context, vx_ui
     if (agoIsValidContext(context)) {
         CAgoLock lock(context->cs);
         char desc[128];
-        if (color == VX_DF_IMAGE_S16) {
+        if (color == VX_DF_IMAGE_U8) {
+            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->U8);
+        }
+        else if (color == VX_DF_IMAGE_S16) {
             sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S16);
         }
         else if (color == VX_DF_IMAGE_U16) {

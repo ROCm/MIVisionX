@@ -16,12 +16,15 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     if (platform.jenkinsLabel.contains('centos')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo yum -y --nogpgcheck update && sudo yum -y --nogpgcheck install lcov zip'
+        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
         if (platform.jenkinsLabel.contains('centos7')) {
             update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y --nogpgcheck install lcov zip && sudo yum -y --nogpgcheck update'
             cmake = 'cmake3'
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }
-        installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
+        else {
+            installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --backend HIP'
+        }
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
@@ -34,6 +37,9 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
         if (platform.jenkinsLabel.contains('ubuntu18')) {
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
+        }
+        else {
+           installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --backend HIP'
         }
     }
 

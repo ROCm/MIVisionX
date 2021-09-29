@@ -13,9 +13,9 @@ written primarily in C/C++ language can be used effectively in Python.
 * PIP3 - `sudo apt install python3-pip`
 
 ## Install 
-Install rali_pybind using the run.sh script (for all except conda environment)
+Install rocAL_pybind using the run.sh script
 ```
-sudo ./run.sh
+./run.sh
 ```
 NOTE: If using conda environment, use:
 ```

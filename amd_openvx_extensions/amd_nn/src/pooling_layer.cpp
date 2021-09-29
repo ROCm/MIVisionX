@@ -30,9 +30,9 @@ struct PoolingLayerLocalData {
     miopenTensorDescriptor_t input_desc;
     miopenTensorDescriptor_t output_desc;
     miopenDataType_t data_type;          // data_type for the kernel
-    cl_mem input_mem;
-    cl_mem output_mem;
-    cl_mem pooling_workspace;
+    void *input_mem;
+    void *output_mem;
+    void *pooling_workspace;
     size_t pooling_workspace_size;
     miopenPoolingMode_t mode;
     vx_enum pad_border_mode;
@@ -111,8 +111,13 @@ PROFILER_START(VX_NN, Pooling_Layer)
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
 
+#if ENABLE_OPENCL
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[7], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#elif ENABLE_HIP
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[7], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
 
     ERROR_CHECK_MIOPEN_STATUS(miopenPoolingForward(miopenHandle, data->pool_desc, &data->alpha, data->input_desc, data->input_mem, &data->beta, data->output_desc, data->output_mem, false, nullptr, 0));
 
@@ -184,9 +189,16 @@ static vx_status VX_CALLBACK initializePoolingLayer(vx_node node, const vx_refer
     ERROR_CHECK_MIOPEN_STATUS((miopenSet4dTensorDescriptor(data->input_desc, data->data_type, input_dims[3], input_dims[2], input_dims[1], input_dims[0])));
     ERROR_CHECK_MIOPEN_STATUS((miopenSet4dTensorDescriptor(data->output_desc, data->data_type, output_dims[3], output_dims[2], output_dims[1], output_dims[0])));
 
+#if ENABLE_OPENCL
     //Declare Memory.
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[7], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#elif ENABLE_HIP
+    //Declare Memory.
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[7], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
+
     data->alpha = 1;
     data->beta = 0;
 

@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "1.9.92"
+__version__ = "1.9.93"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -47,10 +47,10 @@ parser.add_argument('--miopengemm',	type=str, default='1.1.5',
                     help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',
                     help='ProtoBuf Version - optional (default:3.12.0)')
-parser.add_argument('--rpp',   		type=str, default='0.7',
-                    help='RPP Version - optional (default:0.7)')
+parser.add_argument('--rpp',   		type=str, default='0.91',
+                    help='RPP Version - optional (default:0.91)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
-                    help='FFMPEG Installation - optional (default:no) [options:yes/no]')
+                    help='FFMPEG V4.0.4 Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
                     help='MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]')
 parser.add_argument('--rocal',	 	type=str, default='yes',
@@ -340,6 +340,9 @@ else:
             os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; '+linuxCMake +
                       ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
         else:
+            os.system('sudo -v')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install rocblas')
             os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; CXX=/opt/rocm/llvm/bin/clang++ '+linuxCMake +
                       ' -DMIOPEN_BACKEND=HIP ../../MIOpen-'+MIOpenVersion+' )')
         os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; make -j8 )')

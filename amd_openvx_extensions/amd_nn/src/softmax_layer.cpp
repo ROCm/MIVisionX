@@ -28,9 +28,9 @@ struct SoftmaxLayerLocalData {
     float beta;
     miopenDataType_t data_type;          // data_type for the kernel
     miopenTensorDescriptor_t input_desc;
-    cl_mem input_mem;
+    void *input_mem;
     miopenTensorDescriptor_t output_desc;
-    cl_mem output_mem;
+    void *output_mem;
     int dim_in;
     int dim_out;
     vx_int32 axis;
@@ -81,11 +81,16 @@ PROFILER_START(VX_NN, Softmax_Layer)
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
 
+
+#if ENABLE_OPENCL
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#elif ENABLE_HIP
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
 
     ERROR_CHECK_STATUS(miopenSoftmaxForward(miopenHandle, &data->alpha, data->input_desc, data->input_mem, &data->beta, data->output_desc, data->output_mem));
-
 
 
     /*DUMP LAYER BUFFER*/
@@ -133,10 +138,15 @@ static vx_status VX_CALLBACK initializeSoftmaxLayer(vx_node node, const vx_refer
         ERROR_CHECK_MIOPEN_STATUS(miopenSet4dTensorDescriptor(data->input_desc, data->data_type, input_dims[3]*input_dims[2], input_dims[1], input_dims[0], 1));
         ERROR_CHECK_MIOPEN_STATUS(miopenSet4dTensorDescriptor(data->output_desc, data->data_type, output_dims[3]*output_dims[2], output_dims[1], output_dims[0],1));
     }
-    
+
+#if ENABLE_OPENCL
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
-    
+#elif ENABLE_HIP
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
+
     data->alpha = 1;
     data->beta = 0;
 

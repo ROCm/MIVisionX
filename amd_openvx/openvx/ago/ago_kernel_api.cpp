@@ -15479,7 +15479,6 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         AgoData * inp = node->paramList[1];
         vx_uint32 width = out->u.img.width;
         vx_uint32 height = out->u.img.height;
-
         out->u.img.rect_valid.start_x = min(((inp->u.img.rect_valid.start_x + 1) >> 1), width);
         out->u.img.rect_valid.start_y = min(((inp->u.img.rect_valid.start_y + 1) >> 1), height);
         out->u.img.rect_valid.end_x = max((int)((inp->u.img.rect_valid.end_x + 1) >> 1), 0);

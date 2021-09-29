@@ -147,10 +147,9 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
   set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
-#Set dependency to ROCm if set to TRUE, default to OFF
-set (ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
-
-if(ROCM_DEP_ROCMCORE )
+# set dependency to ROCm if set to TRUE, default to OFF
+set(ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
+if(ROCM_DEP_ROCMCORE)
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-core")
   set(CPACK_RPM_PACKAGE_REQUIRES   "rocm-core")
 endif()

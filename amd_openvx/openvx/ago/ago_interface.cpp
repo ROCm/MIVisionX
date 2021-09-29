@@ -2811,9 +2811,9 @@ int agoProcessGraph(AgoGraph * graph)
         CAgoLock lock(graph->cs);
         // make sure that graph is verified
         status = VX_SUCCESS;
-        for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
-            printf("process node : %s\n", node->akernel->name);
-        }
+        // for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+        //     printf("process node : %s\n", node->akernel->name);
+        // }
         if (!graph->verified) {
             status = vxVerifyGraph(graph);
         }

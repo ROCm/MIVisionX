@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include <VX/vx.h>
 #include <VX/vxu.h>
 #include "ago_internal.h"
+#include <iostream>
 
 /*! \brief The largest nonlinear filter matrix the specification requires support for is 9x9.
 */
@@ -704,8 +705,7 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         vx_node node,
         vx_image input, 
         vx_pyramid laplacian,
-        vx_image output,
-        vx_pyramid gaussian2
+        vx_image output
     )
 {
     vx_status status = VX_SUCCESS;
@@ -749,17 +749,74 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     level_height = height;
     gauss_cur = vxGetPyramidLevel(gaussian, 0);
     gauss_next = vxGetPyramidLevel(gaussian, 1);
+
+    // printf("---------------------------------------------------------tst-------------------------------------------------------------------\n");
+    // vx_imagepatch_addressing_t addr = VX_IMAGEPATCH_ADDR_INIT;
+    // vx_map_id map_id;
+    // vx_rectangle_t rect;
+    // void* p_vx_base = NULL;
+    // vxGetValidRegionImage(gauss_next, &rect);
+    // printf("%d %d %d %d\n", rect.start_x, rect.start_y, rect.end_x, rect.end_y);
+    // vxMapImagePatch(gauss_next, &rect, 0, &map_id, &addr, (void **)&p_vx_base, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST, 0);
+    // for (vx_uint32 y = 0; y < addr.dim_y; y += addr.step_y)
+    // {
+    //     for (vx_uint32 x = 0; x < addr.dim_x; x += addr.step_x)
+    //     {
+    //         vx_uint8* vx_ptr = (vx_uint8*)vxFormatImagePatchAddress2d(p_vx_base, x, y, &addr);
+    //         std::cout << (int)vx_ptr[0] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // vxUnmapImagePatch(gauss_next, map_id);
+    // printf("---------------------------------------------------------tst end-------------------------------------------------------------------\n");
     for (lev = 0; lev < levels; lev++)
     {
         pyr_gauss_curr_level_filtered = vxCreateImage(context, level_width, level_height, VX_DF_IMAGE_S16);
         upsampleImage(context, level_width, level_height, gauss_next, conv, pyr_gauss_curr_level_filtered, &border);
-
+    //     printf("---------------------------------------------------------tst-------------------------------------------------------------------\n");
+    //     vx_imagepatch_addressing_t addr = VX_IMAGEPATCH_ADDR_INIT;
+    //     vx_map_id map_id;
+    //     vx_rectangle_t rect;
+    //     void* p_vx_base = NULL;
+    //     vxGetValidRegionImage(gauss_next, &rect);
+    //     printf("%d %d %d %d\n", rect.start_x, rect.start_y, rect.end_x, rect.end_y);
+    //     vxMapImagePatch(gauss_next, &rect, 0, &map_id, &addr, (void **)&p_vx_base, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST, 0);
+    //     for (vx_uint32 y = 0; y < addr.dim_y; y += addr.step_y)
+    //     {
+    //         for (vx_uint32 x = 0; x < addr.dim_x; x += addr.step_x)
+    //         {
+    //             vx_uint8* vx_ptr = (vx_uint8*)vxFormatImagePatchAddress2d(p_vx_base, x, y, &addr);
+    //             std::cout << (int)vx_ptr[0] << " ";
+    //         }
+    //         std::cout << std::endl;
+    //     }
+    //     vxUnmapImagePatch(gauss_next, map_id);
+    // printf("---------------------------------------------------------tst end-------------------------------------------------------------------\n");
         pyr_laplacian_curr_level = vxGetPyramidLevel(laplacian, (vx_uint32)lev);
         status |= vxuSubtract(context, gauss_cur, pyr_gauss_curr_level_filtered, policy, pyr_laplacian_curr_level);
 
         if (lev == levels - 1)
         {
             vx_image tmp = vxGetPyramidLevel(gaussian, (vx_uint32) levels);
+            printf("---------------------------------------------------------tst-------------------------------------------------------------------\n");
+            vx_imagepatch_addressing_t addr = VX_IMAGEPATCH_ADDR_INIT;
+            vx_map_id map_id;
+            vx_rectangle_t rect;
+            void* p_vx_base = NULL;
+            vxGetValidRegionImage(tmp, &rect);
+            printf("%d %d %d %d\n", rect.start_x, rect.start_y, rect.end_x, rect.end_y);
+            vxMapImagePatch(tmp, &rect, 0, &map_id, &addr, (void **)&p_vx_base, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST, 0);
+            for (vx_uint32 y = 0; y < addr.dim_y; y += addr.step_y)
+            {
+                for (vx_uint32 x = 0; x < addr.dim_x; x += addr.step_x)
+                {
+                    vx_uint8* vx_ptr = (vx_uint8*)vxFormatImagePatchAddress2d(p_vx_base, x, y, &addr);
+                    std::cout << (int)vx_ptr[0] << " ";
+                }
+                std::cout << std::endl;
+            }
+            vxUnmapImagePatch(tmp, map_id);
+            printf("---------------------------------------------------------tst end-------------------------------------------------------------------\n");
             ownCopyImage(tmp, output);
             vxReleaseImage(&tmp);
             vxReleaseImage(&gauss_next);

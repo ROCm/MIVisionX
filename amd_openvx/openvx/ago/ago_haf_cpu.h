@@ -3107,8 +3107,7 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
 	vx_node node,
 	vx_image input, 
 	vx_pyramid laplacian,
-	vx_image output,
-    vx_pyramid gaussian
+	vx_image output
 );
 
 int HafCpu_LaplacianReconstruct_DATA_DATA_DATA

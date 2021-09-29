@@ -1432,6 +1432,7 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 		"void %s(uint p0_width, uint p0_height, __global uchar * p0_buf, uint p0_stride, uint p0_offset, uint p1_width, uint p1_height, __global uchar * p1_buf, uint p1_stride, uint p1_offset)\n"
 		"{\n"
 		"  __local uchar lbuf[%d];\n" // LMemSize
+        // "  printf(\"w %%d h %%d  s %%d o %%d  w %%d h %%d  s %%d o %%d  \\n\", p0_width, p0_height, p0_stride, p0_offset, p1_width, p1_height, p1_stride, p1_offset); \n"
 		"  int lx = get_local_id(0);\n"
 		"  int ly = get_local_id(1);\n"
 		"  int gx = get_global_id(0);\n"
@@ -1440,9 +1441,11 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 		"  int gstride = p1_stride;\n"
 		"  __global uchar * gbuf = p1_buf + p1_offset + (((gy - ly) << 1) + 1) * gstride + ((gx - lx) << 3);\n"
 		"  bool valid = ((gx < %d) && (gy < %d)) ? true : false;\n" // (width+3)/4, height
+        "  bool edge = ((0 < gy) && (gy < %d)) ? true : false;\n"
+        // "  float mask = ((int)((1) | (%d - 1) | (1) | (%d - 1))) >> 31; mask = ~mask;\n"
 		"  gx = lx; gy = ly;\n"
 		)
-		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, LMemSize, (width + 3) / 4, height);
+		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, LMemSize, (width + 3) / 4, height, height - 1);
 	node->opencl_code = item;
 	// load input image into local
 	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, work_group_height * 2 - 1 + LMemSideTB * 2, LMemSideLR, LMemSideTB, node->opencl_code) < 0) {
@@ -1539,9 +1542,19 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 			"  sum.s0 = mad((float)(L0.s0 & 0xffff), 4.0f, sum.s0); sum.s1 = mad((float)(L0.s0 >> 16), 4.0f, sum.s1); sum.s2 = mad((float)(L0.s1 & 0xffff), 4.0f, sum.s2); sum.s3 = mad((float)(L0.s1 >> 16), 4.0f, sum.s3);\n"
 			"  L0.s01 = vload2(0, (__local uint *)&lbuf_ptr[%d]);\n" // LMemStride * 4
 			"  sum.s0 += (float)(L0.s0 & 0xffff); sum.s1 += (float)(L0.s0 >> 16); sum.s2 += (float)(L0.s1 & 0xffff); sum.s3 += (float)(L0.s1 >> 16);\n"
+            // "  float4 tmpsum;\n"
+            // "  tmpsum = sum * (float4)0.00390625f;\n"
+            // "  printf(\"sum before: %%f %%f %%f %%f     - -------     after : %%f %%f %%f %%f  \\n\", sum.s0, sum.s1, sum.s2, sum.s3, tmpsum.s0, tmpsum.s1, tmpsum.s2, tmpsum.s3); \n"
 			"  sum = sum * (float4)0.00390625f;\n"
+            // "  sum &= (float4)mask;\n"
 			"  if (valid) {;\n"
-			"    *(__global uint *)p0_buf = amd_pack(sum);\n"
+            "    if (edge) {"
+            // "        printf(\"w %%f\\n\", sum.s3); \n"
+			"        *(__global uint *)p0_buf = amd_pack(sum);\n"
+            "    }\n"
+            "    else {\n"
+            "        *(__global uint *)p0_buf = 0;\n"
+            "    }\n"
 			"  }\n"
 			"}\n"
 			)

@@ -15479,7 +15479,7 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         AgoData * inp = node->paramList[1];
         vx_uint32 width = out->u.img.width;
         vx_uint32 height = out->u.img.height;
-        // printf("%d %d %d %d << %d %d\n", inp->u.img.rect_valid.start_x, inp->u.img.rect_valid.start_y, inp->u.img.rect_valid.end_x, inp->u.img.rect_valid.end_y, width, height);
+
         out->u.img.rect_valid.start_x = min(((inp->u.img.rect_valid.start_x + 1) >> 1), width);
         out->u.img.rect_valid.start_y = min(((inp->u.img.rect_valid.start_y + 1) >> 1), height);
         out->u.img.rect_valid.end_x = max((int)((inp->u.img.rect_valid.end_x + 1) >> 1), 0);
@@ -15488,7 +15488,6 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         // out->u.img.rect_valid.start_y = min(((inp->u.img.rect_valid.start_y + 1) >> 1) + 1, height);
         // out->u.img.rect_valid.end_x = max((int)((inp->u.img.rect_valid.end_x + 1) >> 1) - 1, 0);
         // out->u.img.rect_valid.end_y = max((int)((inp->u.img.rect_valid.end_y + 1) >> 1) - 1, 0);
-        // printf("becoming %d %d %d %d\n", out->u.img.rect_valid.start_x, out->u.img.rect_valid.start_y, out->u.img.rect_valid.end_x, out->u.img.rect_valid.end_y);
     }
 #if ENABLE_HIP
     else if (cmd == ago_kernel_cmd_hip_execute) {
@@ -22509,7 +22508,6 @@ int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand c
         vx_image oImg = (vx_image)node->paramList[0];
         vx_image iImg = (vx_image)node->paramList[1];
         vx_pyramid laplacian = (vx_pyramid)node->paramList[2];
-        vx_pyramid gaussian = (vx_pyramid)node->paramList[3];
         if (HafCpu_LaplacianPyramid_DATA_DATA_DATA((vx_node)node, iImg, laplacian, oImg))
             status = VX_FAILURE;
     }

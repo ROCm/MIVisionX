@@ -258,12 +258,12 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
     ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET, &input_offset, sizeof(input_offset)));
     ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE, &input_stride, sizeof(input_stride)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_OPENCL, &output_offset, sizeof(output_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_GPU, &output_offset, sizeof(output_offset)));
     ERROR_CHECK_STATUS(vxReadScalarValue((vx_scalar)parameters[2], &sc1));
     ERROR_CHECK_STATUS(vxReadScalarValue((vx_scalar)parameters[3], &sc2));
     ERROR_CHECK_STATUS(vxReadScalarValue((vx_scalar)parameters[4], &reverse_channel_order));
 
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_OPENCL, temp, sizeof(temp)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
     output_stride.x = temp[0];
     output_stride.y = temp[1];
     output_stride.z = temp[2];

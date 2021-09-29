@@ -9573,13 +9573,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryTensor(vx_tensor tensor, vx_enum attri
                 }
                 break;
 #if (ENABLE_OPENCL||ENABLE_HIP)
-            case VX_TENSOR_OFFSET_OPENCL:
+            case VX_TENSOR_OFFSET_GPU:
                 if (size == sizeof(vx_size)) {
                     *(vx_size *)ptr = data->u.tensor.offset;
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_TENSOR_STRIDE_OPENCL:
+            case VX_TENSOR_STRIDE_GPU:
                 if (size >= sizeof(vx_size)*data->u.tensor.num_dims) {
                     for (vx_size i = 0; i < data->u.tensor.num_dims; i++) {
                         ((vx_size *)ptr)[i] = data->u.tensor.stride[i];

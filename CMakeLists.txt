@@ -155,7 +155,6 @@ if(ROCM_DEP_ROCMCORE )
   set(CPACK_RPM_PACKAGE_REQUIRES   "rocm-core")
 endif()
 
-
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(COMMAND rpm --eval %{?dist}
                 RESULT_VARIABLE PROC_RESULT

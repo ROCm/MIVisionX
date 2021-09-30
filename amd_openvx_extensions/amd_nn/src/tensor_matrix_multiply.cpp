@@ -211,12 +211,12 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
 
     // get buffer offsets and stride
     vx_size a_stride[4], b_stride[4], c_stride[4];
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_OPENCL, a_stride, sizeof(a_stride)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_OPENCL, b_stride, sizeof(b_stride)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_STRIDE_OPENCL, c_stride, sizeof(c_stride)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_OPENCL, &data->a_offset, sizeof(vx_size)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_OPENCL, &data->b_offset, sizeof(vx_size)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_OFFSET_OPENCL, &data->c_offset, sizeof(vx_size)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_GPU, a_stride, sizeof(a_stride)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_GPU, b_stride, sizeof(b_stride)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_STRIDE_GPU, c_stride, sizeof(c_stride)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &data->a_offset, sizeof(vx_size)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_GPU, &data->b_offset, sizeof(vx_size)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_OFFSET_GPU, &data->c_offset, sizeof(vx_size)));
     data->a_offset >>= 2;
     data->b_offset >>= 2;
     data->c_offset >>= 2;
@@ -240,8 +240,8 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
     }
     if(parameters[2]) {
         vx_size i_stride[4];
-        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_OPENCL, i_stride, sizeof(c_stride)));
-        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_OFFSET_OPENCL, &data->i_offset, sizeof(vx_size)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_GPU, i_stride, sizeof(c_stride)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_OFFSET_GPU, &data->i_offset, sizeof(vx_size)));
         data->i_offset >>= 2;
         data->ldi = i_stride[data->tI ? 2 : 1] >> 2;
     }

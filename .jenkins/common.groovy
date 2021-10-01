@@ -12,6 +12,9 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     String installPackageDeps = ''
     String cmake = 'cmake'
     String codeCovFlags = ''
+    String installPrefixHIP = 'CMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/hip'
+    String installPrefixOCL = ''
+
 
     if (platform.jenkinsLabel.contains('centos')) {
         osInfo = 'cat /etc/os-release && uname -r'
@@ -24,6 +27,8 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         }
         else {
             installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --backend HIP'
+            installPrefixOCL = 'CMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/OCL'
+            installPrefixHIP = ''
         }
     }
     else if (platform.jenkinsLabel.contains('sles')) {
@@ -40,6 +45,8 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         }
         else {
            installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --backend HIP'
+           installPrefixOCL = 'CMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/OCL'
+           installPrefixHIP = ''
         }
     }
 
@@ -52,14 +59,14 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 ${installPackageDeps}
                 echo Build MIVisionX OpenCL - ${buildTypeDir}
                 mkdir -p build/${buildTypeDir}-opencl && cd build/${buildTypeDir}-opencl
-                ${cmake} ${buildTypeArg} ${codeCovFlags} ../..
+                ${cmake} ${buildTypeArg} ${codeCovFlags} ${installPrefixOCL} ../..
                 make -j\$(nproc)
                 sudo make package
                 sudo make install
                 cd ../
                 echo Build MIVisionX HIP - ${buildTypeDir}
                 mkdir -p ${buildTypeDir}-hip && cd ${buildTypeDir}-hip
-                ${cmake} ${buildTypeArg} ${codeCovFlags} -D BACKEND=HIP -D CMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/hip ../..
+                ${cmake} ${buildTypeArg} ${codeCovFlags} -D BACKEND=HIP -D ${installPrefixHIP} ../..
                 make -j\$(nproc)
                 sudo make package
                 sudo make install

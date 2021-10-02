@@ -214,7 +214,7 @@ def runPackageCommand(platform, project) {
                 sudo make package
                 mkdir -p package
                 mv *.${packageType} package/
-                python ../../tests/library_tests/runLibraryTests.py
+                python ../../tests/library_tests/runLibraryTests.py --install_directory ./ --backend_type OCL
                 mv *.md package/
                 ${packageInfo} package/*.${packageType}
                 echo Make MIVisionX Package - with HIP support
@@ -223,6 +223,8 @@ def runPackageCommand(platform, project) {
                 (for file in *.${packageType}; do mv "\$file" "HIP-\$file"; done;)
                 mkdir -p package
                 mv *.${packageType} package/
+                python ../../tests/library_tests/runLibraryTests.py --install_directory ./ --backend_type HIP
+                mv *.md package/
                 ${packageInfo} package/*.${packageType}
                 """
 

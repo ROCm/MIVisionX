@@ -231,6 +231,7 @@ def runPackageCommand(platform, project) {
     platform.runCommand(this, command)
     platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-opencl/package/*.md""")
     platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-opencl/package/*.${packageType}""")
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-hip/package/*.md""")
     platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-hip/package/*.${packageType}""")
 }
 

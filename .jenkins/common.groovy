@@ -15,7 +15,6 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     String installPrefixHIP = '-D CMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/hip'
     String installPrefixOCL = ''
 
-
     if (platform.jenkinsLabel.contains('centos')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo yum -y --nogpgcheck update && sudo yum -y --nogpgcheck install lcov zip'
@@ -26,7 +25,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }
         else {
-            installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --backend HIP'
+            installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --backend HIP'
             installPrefixOCL = '-D CMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/OCL'
             installPrefixHIP = ''
         }
@@ -44,7 +43,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }
         else {
-           installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --backend HIP'
+           installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --backend HIP'
            installPrefixOCL = '-D CMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/OCL'
            installPrefixHIP = ''
         }

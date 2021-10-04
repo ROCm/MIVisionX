@@ -90,6 +90,8 @@ def runTestCommand (platform, project) {
     String codeCovListHIP = ''
     String codeCovPackageOCL = 'echo Code Coverage - NOT Supported ON THIS PLATFORM'
     String codeCovPackageHIP = 'echo Code Coverage - NOT Supported ON THIS PLATFORM'
+    String nnTestsHIP = 'echo NN TESTS -  Backend set to OCL'
+    String nnTestsOCL = 'sudo python ../../tests/neural_network_tests/runNeuralNetworkTests.py --backend_type OCL'
 
     if (platform.jenkinsLabel.contains('centos7')) {
         platformOS = 'centos7'
@@ -107,7 +109,6 @@ def runTestCommand (platform, project) {
         platformOS = 'sles'
     }
 
-
     if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
         conformaceCPU_OCL = "AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-CTS-OCL-${platformOS}.md"
         conformaceOpenCL = "AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance  | tee OpenVX-GPU-CTS-OCL-${platformOS}.md"
@@ -124,6 +125,10 @@ def runTestCommand (platform, project) {
             codeCovPackageOCL = "genhtml ocl-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r ocl-coverage-info-${platformOS}.zip coverage-${platformOS}"
             codeCovPackageHIP = "genhtml hip-coverage-${platformOS}.info --output-directory coverage-${platformOS} && zip -r hip-coverage-info-${platformOS}.zip coverage-${platformOS}"
         }
+        else {
+            nnTestsHIP = 'sudo python ../../tests/neural_network_tests/runNeuralNetworkTests.py --backend_type HIP'
+            nnTestsOCL = 'echo NN TESTS -  Backend set to HIP'
+        }
     }
 
     def command = """#!/usr/bin/env bash
@@ -132,7 +137,7 @@ def runTestCommand (platform, project) {
                 cd ${project.paths.project_build_prefix}/build/release-opencl
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type OCL
-                sudo python ../../tests/neural_network_tests/runNeuralNetworkTests.py
+                ${nnTestsOCL}
                 export OPENVX_DIR=\$(pwd)/.
                 export OPENVX_INC=\$(pwd)/../../amd_openvx/openvx
                 mkdir conformance_tests
@@ -158,6 +163,7 @@ def runTestCommand (platform, project) {
                 cd ../release-hip
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type HIP
+                ${nnTestsHIP}
                 export OPENVX_DIR=\$(pwd)/.
                 export OPENVX_INC=\$(pwd)/../../amd_openvx/openvx
                 mkdir conformance_tests

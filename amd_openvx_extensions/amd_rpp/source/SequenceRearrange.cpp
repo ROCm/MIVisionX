@@ -24,9 +24,7 @@ THE SOFTWARE.
 
 struct SequenceRearrangeLocalData
 {
-#if ENABLE_OPENCL
     RPPCommonHandle handle;
-#endif
     RppiSize dimensions;
     RppPtr_t pSrc;
     RppPtr_t pDst;
@@ -38,6 +36,9 @@ struct SequenceRearrangeLocalData
 #if ENABLE_OPENCL
     cl_mem cl_pSrc;
     cl_mem cl_pDst;
+#elif ENABLE_HIP
+    void *hip_pSrc;
+    void *hip_pDst;
 #endif
 };
 
@@ -84,10 +85,10 @@ static vx_status VX_CALLBACK processSequenceRearrange(vx_node node, const vx_ref
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
-#if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
+#if ENABLE_OPENCL
+        cl_command_queue handle = data->handle.cmdq;
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
         unsigned size = data->dimensions.height * data->dimensions.width;
@@ -98,6 +99,51 @@ static vx_status VX_CALLBACK processSequenceRearrange(vx_node node, const vx_ref
         else if (df_image == VX_DF_IMAGE_RGB)
         {
             clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size * 3, 0, NULL, NULL);
+        }
+        return_status = VX_SUCCESS;
+#elif ENABLE_HIP
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
+        unsigned size = data->dimensions.height * data->dimensions.width;
+        if (df_image == VX_DF_IMAGE_U8)
+        {
+            unsigned elem_size = (size / (data->sequence_length * data->sequence_count));
+            for (int sequence_cnt = 0; sequence_cnt < data->sequence_count; sequence_cnt++)
+            {
+                unsigned src_sequence_start_address = sequence_cnt * elem_size * data->sequence_length;
+                unsigned dst_sequence_start_address = sequence_cnt * elem_size * data->new_sequence_length;
+                for (unsigned dst_index = 0; dst_index < (data->new_sequence_length); dst_index++)
+                {
+                    unsigned src_index = data->new_order[dst_index];
+                    if (src_index > data->sequence_length)
+                        ERRMSG(VX_ERROR_INVALID_VALUE, "invalid new order value=%d (must be between 0-%d)\n", src_index, data->sequence_length - 1);
+                    auto dst_address = (unsigned char *)data->hip_pDst + dst_sequence_start_address + (dst_index * elem_size);
+                    auto src_address = (unsigned char *)data->hip_pSrc + src_sequence_start_address + (src_index * elem_size);
+                    hipError_t status = hipMemcpyDtoD(dst_address, src_address, elem_size);
+                    if (status != hipSuccess)
+                        return VX_FAILURE;
+                }
+            }
+        }
+        else if (df_image == VX_DF_IMAGE_RGB)
+        {
+            unsigned elem_size = (size / (data->sequence_length * data->sequence_count)) * 3;
+            for (int sequence_cnt = 0; sequence_cnt < data->sequence_count; sequence_cnt++)
+            {
+                unsigned src_sequence_start_address = sequence_cnt * elem_size * data->sequence_length;
+                unsigned dst_sequence_start_address = sequence_cnt * elem_size * data->new_sequence_length;
+                for (unsigned dst_index = 0; dst_index < (data->new_sequence_length); dst_index++)
+                {
+                    unsigned src_index = data->new_order[dst_index];
+                    if (src_index > data->sequence_length)
+                        ERRMSG(VX_ERROR_INVALID_VALUE, "invalid new order value=%d (must be between 0-%d)\n", src_index, data->sequence_length - 1);
+                    auto dst_address = (unsigned char *)data->hip_pDst + dst_sequence_start_address + (dst_index * elem_size);
+                    auto src_address = (unsigned char *)data->hip_pSrc + src_sequence_start_address + (src_index * elem_size);
+                    hipError_t status = hipMemcpyDtoD(dst_address, src_address, elem_size);
+                    if (status != hipSuccess)
+                        return VX_FAILURE;
+                }
+            }
         }
         return_status = VX_SUCCESS;
 #endif
@@ -156,6 +202,8 @@ static vx_status VX_CALLBACK initializeSequenceRearrange(vx_node node, const vx_
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+#elif ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
@@ -167,6 +215,8 @@ static vx_status VX_CALLBACK initializeSequenceRearrange(vx_node node, const vx_
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, data->new_sequence_length, sizeof(vx_uint32), data->new_order, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
+#elif ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
 #else
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, data->pSrc, sizeof(data->pSrc)));
 #endif

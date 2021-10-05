@@ -236,41 +236,41 @@ int main(int argc, const char **argv)
             if (status) continue;
             for(unsigned b = 0; b < input_batch_size; b++) // Iterates over each sequence in the batch
             {
-		std::string seq_path = batch_path + "/seq_" + std::to_string(b);
+		        std::string seq_path = batch_path + "/seq_" + std::to_string(b);
                 std::string save_video_path = seq_path + "_output_video.avi" ;
 
-		int frame_width = static_cast<int>(w); //get the width of frames of the video
+		        int frame_width = static_cast<int>(w); //get the width of frames of the video
                 int frame_height = static_cast<int>(single_image_height); //get the height of frames of the video
                 Size frame_size(frame_width, frame_height);
                 int frames_per_second = 10;
 
                 //Create and initialize the VideoWriter object
-                VideoWriter oVideoWriter(save_video_path, VideoWriter::fourcc('M', 'J', 'P', 'G'),
+                VideoWriter video_writer(save_video_path, VideoWriter::fourcc('M', 'J', 'P', 'G'),
                                                                frames_per_second, frame_size, true);
-		//If the VideoWriter object is not initialized successfully, exit the program
-                if (oVideoWriter.isOpened() == false)
+		        //If the VideoWriter object is not initialized successfully, exit the program
+                if (video_writer.isOpened() == false)
                 {
-                        std::cout << "Cannot save the video to a file" << std::endl;
-			return -1;
+                    std::cout << "Cannot save the video to a file" << std::endl;
+			        return -1;
                 }
 
                 for(unsigned i = 0; i < ouput_frames_per_sequence; i++) // Iterates over the frames in each sequence
                 {
                     std::string save_image_path = seq_path + "_output_" + std::to_string(i) + ".png";
-		    mat_output=mat_input(cv::Rect(0, ((b * single_image_height * ouput_frames_per_sequence) + (i * single_image_height)), w, single_image_height));
+		            mat_output=mat_input(cv::Rect(0, ((b * single_image_height * ouput_frames_per_sequence) + (i * single_image_height)), w, single_image_height));
                     if (color_format == RaliImageColor::RALI_COLOR_RGB24)
                     {
                         cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
                         cv::imwrite(save_image_path, mat_color);
-			oVideoWriter.write(mat_color);
+			            video_writer.write(mat_color);
                     }
                     else
                     {
                         cv::imwrite(save_image_path, mat_output);
-			oVideoWriter.write(mat_output);
+			            video_writer.write(mat_output);
                     }
                 }
-		oVideoWriter.release();
+		        video_writer.release();
             }
         }
         if (enable_metadata)

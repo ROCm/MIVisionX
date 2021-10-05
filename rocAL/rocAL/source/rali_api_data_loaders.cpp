@@ -1726,14 +1726,6 @@ raliVideoFileResize(
                               color_format );
 
         Image* output = context->master_graph->create_loader_output_image(info);
-
-        // For the resize node, user can create an image with a different width and height
-        ImageInfo output_info = info;
-        output_info.width(dest_width);
-        output_info.height(dest_height);
-
-        resize_output = context->master_graph->create_image(output_info, false);
-
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                             source_path,
                                                                             VideoStorageType::VIDEO_FILE_SYSTEM,
@@ -1749,17 +1741,34 @@ raliVideoFileResize(
                                                                             context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
-        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-        resize_output->reset_image_roi();
-
-        std::shared_ptr<ResizeNode> resize_node =  context->master_graph->add_node<ResizeNode>({output}, {resize_output});
-        if (context->master_graph->meta_data_graph())
-            context->master_graph->meta_add_node<ResizeMetaNode,ResizeNode>(resize_node);
-
-        if(is_output)
+        if(dest_width != video_prop.width && dest_height != video_prop.height)
         {
-            auto actual_output = context->master_graph->create_image(output_info, is_output);
-            context->master_graph->add_node<CopyNode>({resize_output}, {actual_output});
+            // For the resize node, user can create an image with a different width and height
+            ImageInfo output_info = info;
+            output_info.width(dest_width);
+            output_info.height(dest_height);
+
+            resize_output = context->master_graph->create_image(output_info, false);
+
+            // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
+            resize_output->reset_image_roi();
+
+            std::shared_ptr<ResizeNode> resize_node =  context->master_graph->add_node<ResizeNode>({output}, {resize_output});
+            if (context->master_graph->meta_data_graph())
+                context->master_graph->meta_add_node<ResizeMetaNode,ResizeNode>(resize_node);
+
+            if(is_output)
+            {
+                auto actual_output = context->master_graph->create_image(output_info, is_output);
+                context->master_graph->add_node<CopyNode>({resize_output}, {actual_output});
+            }
+        }
+        else{
+            if(is_output)
+            {
+                auto actual_output = context->master_graph->create_image(info, is_output);
+                context->master_graph->add_node<CopyNode>({output}, {actual_output});
+            }
         }
 #else
         THROW("Video decoder is not enabled since ffmpeg is not present")
@@ -1828,14 +1837,6 @@ raliVideoFileResizeSingleShard(
                               color_format );
 
         Image* output = context->master_graph->create_loader_output_image(info);
-
-        // For the resize node, user can create an image with a different width and height
-        ImageInfo output_info = info;
-        output_info.width(dest_width);
-        output_info.height(dest_height);
-
-        resize_output = context->master_graph->create_image(output_info, false);
-
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path,
                                                                                         VideoStorageType::VIDEO_FILE_SYSTEM,
@@ -1851,17 +1852,33 @@ raliVideoFileResizeSingleShard(
                                                                                         context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
-        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-        resize_output->reset_image_roi();
-
-        std::shared_ptr<ResizeNode> resize_node =  context->master_graph->add_node<ResizeNode>({output}, {resize_output});
-        if (context->master_graph->meta_data_graph())
-            context->master_graph->meta_add_node<ResizeMetaNode,ResizeNode>(resize_node);
-
-        if(is_output)
+        if(dest_width != video_prop.width && dest_height != video_prop.height)
         {
-            auto actual_output = context->master_graph->create_image(output_info, is_output);
-            context->master_graph->add_node<CopyNode>({resize_output}, {actual_output});
+            // For the resize node, user can create an image with a different width and height
+            ImageInfo output_info = info;
+            output_info.width(dest_width);
+            output_info.height(dest_height);
+
+            resize_output = context->master_graph->create_image(output_info, false);
+            // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
+            resize_output->reset_image_roi();
+
+            std::shared_ptr<ResizeNode> resize_node =  context->master_graph->add_node<ResizeNode>({output}, {resize_output});
+            if (context->master_graph->meta_data_graph())
+                context->master_graph->meta_add_node<ResizeMetaNode,ResizeNode>(resize_node);
+
+            if(is_output)
+            {
+                auto actual_output = context->master_graph->create_image(output_info, is_output);
+                context->master_graph->add_node<CopyNode>({resize_output}, {actual_output});
+            }
+        }
+        else{
+            if(is_output)
+            {
+                auto actual_output = context->master_graph->create_image(info, is_output);
+                context->master_graph->add_node<CopyNode>({output}, {actual_output});
+            }
         }
 #else
         THROW("Video decoder is not enabled since ffmpeg is not present")

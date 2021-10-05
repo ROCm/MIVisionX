@@ -858,6 +858,8 @@ void MasterGraph::output_routine()
 {
     INFO("Output routine started with "+TOSTR(_remaining_images_or_sequences_count) + " to load");
     size_t batch_ratio = _is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio;
+if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_batch_ratio is different. Will be removed in TensorSupport.
+{
 #if !ENABLE_HIP
     if(processing_on_device_ocl() && batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
@@ -865,6 +867,7 @@ void MasterGraph::output_routine()
     if(processing_on_device_hip() && batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 #endif
+}
     try {
         while (_processing)
         {

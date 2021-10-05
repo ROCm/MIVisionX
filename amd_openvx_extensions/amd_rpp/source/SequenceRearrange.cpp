@@ -94,11 +94,41 @@ static vx_status VX_CALLBACK processSequenceRearrange(vx_node node, const vx_ref
         unsigned size = data->dimensions.height * data->dimensions.width;
         if (df_image == VX_DF_IMAGE_U8)
         {
-            clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size, 0, NULL, NULL);
+            unsigned elem_size = (size / (data->sequence_length * data->sequence_count));
+            for (int sequence_cnt = 0; sequence_cnt < data->sequence_count; sequence_cnt++)
+            {
+                unsigned src_sequence_start_address = sequence_cnt * elem_size * data->sequence_length;
+                unsigned dst_sequence_start_address = sequence_cnt * elem_size * data->new_sequence_length;
+                for (unsigned dst_index = 0; dst_index < (data->new_sequence_length); dst_index++)
+                {
+                    unsigned src_index = data->new_order[dst_index];
+                    if (src_index > data->sequence_length)
+                        ERRMSG(VX_ERROR_INVALID_VALUE, "invalid new order value=%d (must be between 0-%d)\n", src_index, data->sequence_length - 1);
+                    auto dst_offset = dst_sequence_start_address + (dst_index * elem_size);
+                    auto src_offset = src_sequence_start_address + (src_index * elem_size);
+                    if (clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, src_offset, dst_offset, elem_size, 0, NULL, NULL) != CL_SUCCESS)
+                        return VX_FAILURE;
+                }
+            }
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size * 3, 0, NULL, NULL);
+            unsigned elem_size = (size / (data->sequence_length * data->sequence_count)) * 3;
+            for (int sequence_cnt = 0; sequence_cnt < data->sequence_count; sequence_cnt++)
+            {
+                unsigned src_sequence_start_address = sequence_cnt * elem_size * data->sequence_length;
+                unsigned dst_sequence_start_address = sequence_cnt * elem_size * data->new_sequence_length;
+                for (unsigned dst_index = 0; dst_index < (data->new_sequence_length); dst_index++)
+                {
+                    unsigned src_index = data->new_order[dst_index];
+                    if (src_index > data->sequence_length)
+                        ERRMSG(VX_ERROR_INVALID_VALUE, "invalid new order value=%d (must be between 0-%d)\n", src_index, data->sequence_length - 1);
+                    auto dst_offset = dst_sequence_start_address + (dst_index * elem_size);
+                    auto src_offset = src_sequence_start_address + (src_index * elem_size);
+                    if (clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, src_offset, dst_offset, elem_size, 0, NULL, NULL) != CL_SUCCESS)
+                        return VX_FAILURE;
+                }
+            }
         }
         return_status = VX_SUCCESS;
 #elif ENABLE_HIP

@@ -810,7 +810,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateUniformImage(vx_context context, vx_ui
     if (agoIsValidContext(context)) {
         CAgoLock lock(context->cs);
         char desc[128];
-        if (color == VX_DF_IMAGE_S16) {
+        if (color == VX_DF_IMAGE_U8) {
+            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->U8);
+        }
+        else if (color == VX_DF_IMAGE_S16) {
             sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S16);
         }
         else if (color == VX_DF_IMAGE_U16) {
@@ -944,6 +947,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                         data->children[i]->buffer = (vx_uint8 *)(ptrs ? ptrs[i] : nullptr);
                         data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
                         data->children[i]->gpu_buffer_offset = 0;
+#if (ENABLE_OPENCL || ENABLE_HIP)
+                        data->children[i]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        data->children[i]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+#endif
                     }
                 }
                 else {
@@ -951,6 +958,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                     data->buffer = (vx_uint8 *)(ptrs ? ptrs[0] : nullptr);
                     data->u.img.stride_in_bytes = addrs[0].stride_y;
                     data->gpu_buffer_offset = 0;
+#if (ENABLE_OPENCL || ENABLE_HIP)
+                    data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+#endif
                 }
                 data->u.img.mem_handle = vx_false_e;
             }
@@ -2904,6 +2915,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
         if (ago_graph_dump) {
             agoWriteGraph(graph, NULL, 0, stdout, "*INPUT*");
         }
+
+        // set the AGO_DEFAULT_TARGET if it is not set by the user
+        if (!agoGetEnvironmentVariable("AGO_DEFAULT_TARGET", textBuffer, sizeof(textBuffer))) {
+#if ENABLE_OPENCL || ENABLE_HIP
+            agoSetEnvironmentVariable("AGO_DEFAULT_TARGET", "GPU");
+#else
+            agoSetEnvironmentVariable("AGO_DEFAULT_TARGET", "CPU");
+#endif
+    }
 
         // verify graph per OpenVX specification
         status = agoVerifyGraph(graph);
@@ -9553,13 +9573,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryTensor(vx_tensor tensor, vx_enum attri
                 }
                 break;
 #if (ENABLE_OPENCL||ENABLE_HIP)
-            case VX_TENSOR_OFFSET_OPENCL:
+            case VX_TENSOR_OFFSET_GPU:
                 if (size == sizeof(vx_size)) {
                     *(vx_size *)ptr = data->u.tensor.offset;
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_TENSOR_STRIDE_OPENCL:
+            case VX_TENSOR_STRIDE_GPU:
                 if (size >= sizeof(vx_size)*data->u.tensor.num_dims) {
                     for (vx_size i = 0; i < data->u.tensor.num_dims; i++) {
                         ((vx_size *)ptr)[i] = data->u.tensor.stride[i];

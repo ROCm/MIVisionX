@@ -1,4 +1,4 @@
-# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ def generateLicenseForCPP(f):
 """/*
 MIT License
 
-Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2018 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -76,7 +76,7 @@ def generateLicenseForScript(f):
 #
 # MIT License
 #
-# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc.
+# Copyright (c) 2018 - 2021 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -114,21 +114,29 @@ project (annmodule)
 
 set(CMAKE_CXX_STANDARD 11)
 
+set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-find_package(OpenCL REQUIRED)
+find_package(OpenCL QUIET)
 find_package(OpenCV QUIET)
 
-include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
-include_directories(/opt/rocm/mivisionx/include)
+if(OpenCL_FOUND)
+    message("-- Using OpenCL Library -- ${OpenCL_LIBRARIES}")
+else()
+    message(FATAL_ERROR "OpenCL Required for NN Flow")
+endif()
 
-link_directories(/opt/rocm/mivisionx/lib)
+include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
+include_directories(${ROCM_PATH}/mivisionx/include)
+
+link_directories(${ROCM_PATH}/mivisionx/lib)
 
 list(APPEND SOURCES annmodule.cpp)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
 
-target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread)
+target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
 
 add_executable(anntest anntest.cpp)
 if(OpenCV_FOUND)
@@ -139,11 +147,11 @@ else(OpenCV_FOUND)
   target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=0)
 endif(OpenCV_FOUND)
 
-target_link_libraries(anntest openvx vx_nn pthread ${PROJECT_NAME})
+target_link_libraries(anntest ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
 
 add_library(annpython SHARED annpython.cpp)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
-target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread)
+target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
 """)
     if not os.path.isdir(outputFolder + '/cmake'):
         os.mkdir(outputFolder + '/cmake')
@@ -153,62 +161,107 @@ target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread)
         generateLicenseForScript(f)
         f.write( \
 """
-find_path(OPENCL_INCLUDE_DIRS
-    NAMES OpenCL/cl.h CL/cl.h
-    HINTS
-    ${OPENCL_ROOT}/include
-    $ENV{AMDAPPSDKROOT}/include
-    PATHS
-    /usr/include
-    /usr/local/include
-    /opt/rocm/opencl/include
-    DOC "OpenCL header file path"
-    )
-mark_as_advanced( OPENCL_INCLUDE_DIRS )
-if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-    find_library( OPENCL_LIBRARIES
-        NAMES OpenCL
-        HINTS
-        ${OPENCL_ROOT}/lib
-        $ENV{AMDAPPSDKROOT}/lib
-        DOC "OpenCL dynamic library path"
-        PATH_SUFFIXES x86_64 x64 x86_64/sdk
-        PATHS
-        /usr/lib
-        /opt/rocm/opencl/lib
-        )
-else( )
-    find_library( OPENCL_LIBRARIES
-        NAMES OpenCL
-        HINTS
-        ${OPENCL_ROOT}/lib
-        $ENV{AMDAPPSDKROOT}/lib
-        DOC "OpenCL dynamic library path"
-        PATH_SUFFIXES x86 Win32
-        PATHS
-        /usr/lib
-        )
-endif( )
-mark_as_advanced( OPENCL_LIBRARIES )
 include( FindPackageHandleStandardArgs )
-find_package_handle_standard_args( OpenCL DEFAULT_MSG OPENCL_LIBRARIES OPENCL_INCLUDE_DIRS )
-set(OpenCL_FOUND ${OPENCL_FOUND} CACHE INTERNAL "")
-set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
-set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
+find_package_handle_standard_args(
+    OpenCL
+    FOUND_VAR OpenCL_FOUND
+    REQUIRED_VARS
+        OpenCL_LIBRARIES
+        OpenCL_INCLUDE_DIRS
+        CL_TARGET_OpenCL_VERSION
+    VERSION_VAR OpenCL_VERSION
+)
 
-if(EXISTS "/opt/rocm/opencl/lib/libOpenCL.so")
-    if(NOT "${OPENCL_LIBRARIES}" STREQUAL "/opt/rocm/opencl/lib/libOpenCL.so")
-        message("-- ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL")
-        set(OpenCL_LIBRARIES /opt/rocm/opencl/lib/libOpenCL.so CACHE INTERNAL "")
-        set(OpenCL_INCLUDE_DIRS /opt/rocm/opencl/include CACHE INTERNAL "")
+if(OpenCL_LIBRARIES AND OpenCL_INCLUDE_DIRS)
+    set(OpenCL_FOUND TRUE)
+    add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION})
+else()
+    find_path(OPENCL_INCLUDE_DIRS
+        NAMES OpenCL/cl.h CL/cl.h
+        HINTS
+        ${OPENCL_ROOT}/include
+        $ENV{AMDAPPSDKROOT}/include
+        $ENV{CUDA_PATH}/include
+        PATHS
+        ${ROCM_PATH}/opencl/include
+        /usr/include
+        /usr/local/include
+        /usr/local/cuda/include
+        /opt/cuda/include
+        DOC "OpenCL header file path"
+    )
+    mark_as_advanced( OPENCL_INCLUDE_DIRS )
+
+    if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+        find_library( OPENCL_LIBRARIES
+            NAMES OpenCL
+            HINTS
+            ${OPENCL_ROOT}/lib
+            $ENV{AMDAPPSDKROOT}/lib
+            $ENV{CUDA_PATH}/lib
+            DOC "OpenCL dynamic library path"
+            PATH_SUFFIXES x86_64 x64 x86_64/sdk
+            PATHS
+            ${ROCM_PATH}/opencl/lib/
+            /usr/lib
+            /usr/local/cuda/lib
+            /opt/cuda/lib
+        )
+    else( )
+        find_library( OPENCL_LIBRARIES
+            NAMES OpenCL
+            HINTS
+            ${OPENCL_ROOT}/lib
+            $ENV{AMDAPPSDKROOT}/lib
+            $ENV{CUDA_PATH}/lib
+            DOC "OpenCL dynamic library path"
+            PATH_SUFFIXES x86 Win32
+            PATHS
+            ${ROCM_PATH}/opencl/lib/
+            /usr/lib
+            /usr/local/cuda/lib
+            /opt/cuda/lib
+        )
+    endif( )
+    mark_as_advanced( OPENCL_LIBRARIES )
+
+    if(OPENCL_LIBRARIES AND OPENCL_INCLUDE_DIRS)
+        set(OPENCL_FOUND TRUE)
+    endif( )
+
+    set(OpenCL_FOUND ${OPENCL_FOUND} CACHE INTERNAL "")
+    set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
+    set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
+
+    if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
+        if(NOT "${OPENCL_LIBRARIES}" STREQUAL "${ROCM_PATH}/opencl/lib/libOpenCL.so")
+            message("-- OpenCL Found - ${OPENCL_LIBRARIES}")
+            message("-- ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL")
+            set(OpenCL_LIBRARIES ${ROCM_PATH}/opencl/lib/libOpenCL.so CACHE INTERNAL "")
+            set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")
+        endif()
+    else()
+        message("-- ROCm OpenCL Not Found}")
     endif()
-    set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
-    add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
-    message("-- ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION}")
-endif()
 
-if( NOT OPENCL_FOUND )
-    message( "-- FindOpenCL failed to find: OpenCL" )
+    if(OpenCL_FOUND)
+        execute_process(
+            COMMAND bash -c "nm -gDC ${OpenCL_LIBRARIES} | grep OPENCL_2.2"
+            OUTPUT_VARIABLE outVar
+        )
+        if(NOT ${outVar} STREQUAL "")
+            set(CL_TARGET_OpenCL_VERSION 220 CACHE INTERNAL "")
+        else()
+            message( "-- FindOpenCL failed to find: OpenCL 2.2" )
+            set(CL_TARGET_OpenCL_VERSION 120 CACHE INTERNAL "")
+        endif()
+        add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION})
+        message("-- OpenCL - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION}")
+    endif()
+
+    if( NOT OpenCL_FOUND )
+        message( "-- FindOpenCL failed to find: OpenCL" )
+    endif()
 endif()
 """)
 

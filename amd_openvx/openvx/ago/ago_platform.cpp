@@ -97,7 +97,7 @@ bool agoSetEnvironmentVariable(const char * name, const char * value)
 bool agoUnsetEnvironmentVariable(const char * name)
 {
 #if _WIN32
-    return SetEnvironmentVariableA(name, null);
+    return SetEnvironmentVariableA(name, NULL);
 #else
     return !(unsetenv(name));
 #endif

@@ -218,7 +218,7 @@ __device__ __forceinline__ float hip_bilinear_sample(const uchar *p, uint ystrid
     return f.x;
 }
 
-__device__ __forceinline__ float hip_bilinear_sample_FXY(const uchar *p, uint stride, float sx, float sy) {
+__device__ __forceinline__ float hip_bilinear_sample_FXY(const uchar *p, uint pSize, uint stride, float sx, float sy) {
     float fx0, fx1, fy0, fy1, ii;
     uint x, y;
     fx1 = hip_fract(sx, &ii);
@@ -227,7 +227,9 @@ __device__ __forceinline__ float hip_bilinear_sample_FXY(const uchar *p, uint st
     fy1 = hip_fract(sy, &ii);
     fy0 = 1.0f - fy1;
     y = (uint)ii;
-    p += hip_mad24(stride, y, x);
+    uint srcIdx = hip_mad24(stride, y, x);
+    if (srcIdx < pSize)
+        p += srcIdx;
     return hip_bilinear_sample(p, stride, 1, fy0, fy1, 0, fx0, fx1);
 }
 

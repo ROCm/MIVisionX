@@ -4687,56 +4687,57 @@ Hip_ColorConvert_YUV4_RGB(uint dstWidth, uint dstHeight,
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if( x < dstWidth && y < dstHeight) {
+        uint srcIdx = y * srcImageStrideInBytes + (x * 3);
+        d_uint6 pRGB = *((d_uint6 *)(&pSrcImage[srcIdx]));
 
-    uint srcIdx = y * srcImageStrideInBytes + (x * 3);
-    d_uint6 pRGB = *((d_uint6 *)(&pSrcImage[srcIdx]));
+        uint dstYIdx  = y * dstYImageStrideInBytes + x;
+        uint dstUIdx  = y * dstUImageStrideInBytes + x;
+        uint dstVIdx  = y * dstVImageStrideInBytes + x;
 
-    uint dstYIdx  = y * dstYImageStrideInBytes + x;
-    uint dstUIdx  = y * dstUImageStrideInBytes + x;
-    uint dstVIdx  = y * dstVImageStrideInBytes + x;
+        float4 f;
+        uint2 yChannel, uChannel, vChannel;
 
-    float4 f;
-    uint2 yChannel, uChannel, vChannel;
+        float3 cY = make_float3(0.2126f, 0.7152f, 0.0722f);
+        f.x = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0])));
+        f.y = hip_dot3(cY, make_float3(hip_unpack3(pRGB.data[0]), hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1])));
+        f.z = hip_dot3(cY, make_float3(hip_unpack2(pRGB.data[1]), hip_unpack3(pRGB.data[1]), hip_unpack0(pRGB.data[2])));
+        f.w = hip_dot3(cY, make_float3(hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]), hip_unpack3(pRGB.data[2])));
+        yChannel.x = hip_pack(f);
+        f.x = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3])));
+        f.y = hip_dot3(cY, make_float3(hip_unpack3(pRGB.data[3]), hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4])));
+        f.z = hip_dot3(cY, make_float3(hip_unpack2(pRGB.data[4]), hip_unpack3(pRGB.data[4]), hip_unpack0(pRGB.data[5])));
+        f.w = hip_dot3(cY, make_float3(hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]), hip_unpack3(pRGB.data[5])));
+        yChannel.y = hip_pack(f);
 
-    float3 cY = make_float3(0.2126f, 0.7152f, 0.0722f);
-    f.x = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0])));
-    f.y = hip_dot3(cY, make_float3(hip_unpack3(pRGB.data[0]), hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1])));
-    f.z = hip_dot3(cY, make_float3(hip_unpack2(pRGB.data[1]), hip_unpack3(pRGB.data[1]), hip_unpack0(pRGB.data[2])));
-    f.w = hip_dot3(cY, make_float3(hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]), hip_unpack3(pRGB.data[2])));
-    yChannel.x = hip_pack(f);
-    f.x = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3])));
-    f.y = hip_dot3(cY, make_float3(hip_unpack3(pRGB.data[3]), hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4])));
-    f.z = hip_dot3(cY, make_float3(hip_unpack2(pRGB.data[4]), hip_unpack3(pRGB.data[4]), hip_unpack0(pRGB.data[5])));
-    f.w = hip_dot3(cY, make_float3(hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]), hip_unpack3(pRGB.data[5])));
-    yChannel.y = hip_pack(f);
+        float3 cU = make_float3(-0.1146f, -0.3854f, 0.5f);
+        f.x = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0]))) + 128.0f;
+        f.y = hip_dot3(cU, make_float3(hip_unpack3(pRGB.data[0]), hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]))) + 128.0f;
+        f.z = hip_dot3(cU, make_float3(hip_unpack2(pRGB.data[1]), hip_unpack3(pRGB.data[1]), hip_unpack0(pRGB.data[2]))) + 128.0f;
+        f.w = hip_dot3(cU, make_float3(hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]), hip_unpack3(pRGB.data[2]))) + 128.0f;
+        uChannel.x = hip_pack(f);
+        f.x = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3]))) + 128.0f;
+        f.y = hip_dot3(cU, make_float3(hip_unpack3(pRGB.data[3]), hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]))) + 128.0f;
+        f.z = hip_dot3(cU, make_float3(hip_unpack2(pRGB.data[4]), hip_unpack3(pRGB.data[4]), hip_unpack0(pRGB.data[5]))) + 128.0f;
+        f.w = hip_dot3(cU, make_float3(hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]), hip_unpack3(pRGB.data[5]))) + 128.0f;
+        uChannel.y = hip_pack(f);
 
-    float3 cU = make_float3(-0.1146f, -0.3854f, 0.5f);
-    f.x = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0]))) + 128.0f;
-    f.y = hip_dot3(cU, make_float3(hip_unpack3(pRGB.data[0]), hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]))) + 128.0f;
-    f.z = hip_dot3(cU, make_float3(hip_unpack2(pRGB.data[1]), hip_unpack3(pRGB.data[1]), hip_unpack0(pRGB.data[2]))) + 128.0f;
-    f.w = hip_dot3(cU, make_float3(hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]), hip_unpack3(pRGB.data[2]))) + 128.0f;
-    uChannel.x = hip_pack(f);
-    f.x = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3]))) + 128.0f;
-    f.y = hip_dot3(cU, make_float3(hip_unpack3(pRGB.data[3]), hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]))) + 128.0f;
-    f.z = hip_dot3(cU, make_float3(hip_unpack2(pRGB.data[4]), hip_unpack3(pRGB.data[4]), hip_unpack0(pRGB.data[5]))) + 128.0f;
-    f.w = hip_dot3(cU, make_float3(hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]), hip_unpack3(pRGB.data[5]))) + 128.0f;
-    uChannel.y = hip_pack(f);
+        float3 cV = make_float3(0.5f, -0.4542f, -0.0458f);
+        f.x = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0]))) + 128.0f;
+        f.y = hip_dot3(cV, make_float3(hip_unpack3(pRGB.data[0]), hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]))) + 128.0f;
+        f.z = hip_dot3(cV, make_float3(hip_unpack2(pRGB.data[1]), hip_unpack3(pRGB.data[1]), hip_unpack0(pRGB.data[2]))) + 128.0f;
+        f.w = hip_dot3(cV, make_float3(hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]), hip_unpack3(pRGB.data[2]))) + 128.0f;
+        vChannel.x = hip_pack(f);
+        f.x = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3]))) + 128.0f;
+        f.y = hip_dot3(cV, make_float3(hip_unpack3(pRGB.data[3]), hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]))) + 128.0f;
+        f.z = hip_dot3(cV, make_float3(hip_unpack2(pRGB.data[4]), hip_unpack3(pRGB.data[4]), hip_unpack0(pRGB.data[5]))) + 128.0f;
+        f.w = hip_dot3(cV, make_float3(hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]), hip_unpack3(pRGB.data[5]))) + 128.0f;
+        vChannel.y = hip_pack(f);
 
-    float3 cV = make_float3(0.5f, -0.4542f, -0.0458f);
-    f.x = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0]))) + 128.0f;
-    f.y = hip_dot3(cV, make_float3(hip_unpack3(pRGB.data[0]), hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]))) + 128.0f;
-    f.z = hip_dot3(cV, make_float3(hip_unpack2(pRGB.data[1]), hip_unpack3(pRGB.data[1]), hip_unpack0(pRGB.data[2]))) + 128.0f;
-    f.w = hip_dot3(cV, make_float3(hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]), hip_unpack3(pRGB.data[2]))) + 128.0f;
-    vChannel.x = hip_pack(f);
-    f.x = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3]))) + 128.0f;
-    f.y = hip_dot3(cV, make_float3(hip_unpack3(pRGB.data[3]), hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]))) + 128.0f;
-    f.z = hip_dot3(cV, make_float3(hip_unpack2(pRGB.data[4]), hip_unpack3(pRGB.data[4]), hip_unpack0(pRGB.data[5]))) + 128.0f;
-    f.w = hip_dot3(cV, make_float3(hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]), hip_unpack3(pRGB.data[5]))) + 128.0f;
-    vChannel.y = hip_pack(f);
-
-    *((uint2 *)(&pDstYImage[dstYIdx])) = yChannel;
-    *((uint2 *)(&pDstUImage[dstUIdx])) = uChannel;
-    *((uint2 *)(&pDstVImage[dstVIdx])) = vChannel;
+        *((uint2 *)(&pDstYImage[dstYIdx])) = yChannel;
+        *((uint2 *)(&pDstUImage[dstUIdx])) = uChannel;
+        *((uint2 *)(&pDstVImage[dstVIdx])) = vChannel;
+    }
 }
 int HipExec_ColorConvert_YUV4_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
@@ -4762,56 +4763,57 @@ Hip_ColorConvert_YUV4_RGBX(uint dstWidth, uint dstHeight,
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if( x < dstWidth && y < dstHeight) {
+        uint srcIdx = y * srcImageStrideInBytes + (x << 2);
+        d_uint8 pRGB = *((d_uint8 *)(&pSrcImage[srcIdx]));
 
-    uint srcIdx = y * srcImageStrideInBytes + (x << 2);
-    d_uint8 pRGB = *((d_uint8 *)(&pSrcImage[srcIdx]));
+        uint dstYIdx  = y * dstYImageStrideInBytes + x;
+        uint dstUIdx  = y * dstUImageStrideInBytes + x;
+        uint dstVIdx  = y * dstVImageStrideInBytes + x;
 
-    uint dstYIdx  = y * dstYImageStrideInBytes + x;
-    uint dstUIdx  = y * dstUImageStrideInBytes + x;
-    uint dstVIdx  = y * dstVImageStrideInBytes + x;
+        float4 f;
+        uint2 yChannel, uChannel, vChannel;
 
-    float4 f;
-    uint2 yChannel, uChannel, vChannel;
+        float3 cY = make_float3(0.2126f, 0.7152f, 0.0722f);
+        f.x = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0])));
+        f.y = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]), hip_unpack2(pRGB.data[1])));
+        f.z = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[2]), hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2])));
+        f.w = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3])));
+        yChannel.x = hip_pack(f);
+        f.x = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]), hip_unpack2(pRGB.data[4])));
+        f.y = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[5]), hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5])));
+        f.z = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[6]), hip_unpack1(pRGB.data[6]), hip_unpack2(pRGB.data[6])));
+        f.w = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[7]), hip_unpack1(pRGB.data[7]), hip_unpack2(pRGB.data[7])));
+        yChannel.y = hip_pack(f);
 
-    float3 cY = make_float3(0.2126f, 0.7152f, 0.0722f);
-    f.x = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0])));
-    f.y = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]), hip_unpack2(pRGB.data[1])));
-    f.z = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[2]), hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2])));
-    f.w = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3])));
-    yChannel.x = hip_pack(f);
-    f.x = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]), hip_unpack2(pRGB.data[4])));
-    f.y = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[5]), hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5])));
-    f.z = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[6]), hip_unpack1(pRGB.data[6]), hip_unpack2(pRGB.data[6])));
-    f.w = hip_dot3(cY, make_float3(hip_unpack0(pRGB.data[7]), hip_unpack1(pRGB.data[7]), hip_unpack2(pRGB.data[7])));
-    yChannel.y = hip_pack(f);
+        float3 cU = make_float3(-0.1146f, -0.3854f, 0.5f);
+        f.x = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0]))) + 128.0f;
+        f.y = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]), hip_unpack2(pRGB.data[1]))) + 128.0f;
+        f.z = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[2]), hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]))) + 128.0f;
+        f.w = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3]))) + 128.0f;
+        uChannel.x = hip_pack(f);
+        f.x = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]), hip_unpack2(pRGB.data[4]))) + 128.0f;
+        f.y = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[5]), hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]))) + 128.0f;
+        f.z = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[6]), hip_unpack1(pRGB.data[6]), hip_unpack2(pRGB.data[6]))) + 128.0f;
+        f.w = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[7]), hip_unpack1(pRGB.data[7]), hip_unpack2(pRGB.data[7]))) + 128.0f;
+        uChannel.y = hip_pack(f);
 
-    float3 cU = make_float3(-0.1146f, -0.3854f, 0.5f);
-    f.x = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0]))) + 128.0f;
-    f.y = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]), hip_unpack2(pRGB.data[1]))) + 128.0f;
-    f.z = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[2]), hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]))) + 128.0f;
-    f.w = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3]))) + 128.0f;
-    uChannel.x = hip_pack(f);
-    f.x = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]), hip_unpack2(pRGB.data[4]))) + 128.0f;
-    f.y = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[5]), hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]))) + 128.0f;
-    f.z = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[6]), hip_unpack1(pRGB.data[6]), hip_unpack2(pRGB.data[6]))) + 128.0f;
-    f.w = hip_dot3(cU, make_float3(hip_unpack0(pRGB.data[7]), hip_unpack1(pRGB.data[7]), hip_unpack2(pRGB.data[7]))) + 128.0f;
-    uChannel.y = hip_pack(f);
+        float3 cV = make_float3(0.5f, -0.4542f, -0.0458f);
+        f.x = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0]))) + 128.0f;
+        f.y = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]), hip_unpack2(pRGB.data[1]))) + 128.0f;
+        f.z = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[2]), hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]))) + 128.0f;
+        f.w = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3]))) + 128.0f;
+        vChannel.x = hip_pack(f);
+        f.x = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]), hip_unpack2(pRGB.data[4]))) + 128.0f;
+        f.y = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[5]), hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]))) + 128.0f;
+        f.z = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[6]), hip_unpack1(pRGB.data[6]), hip_unpack2(pRGB.data[6]))) + 128.0f;
+        f.w = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[7]), hip_unpack1(pRGB.data[7]), hip_unpack2(pRGB.data[7]))) + 128.0f;
+        vChannel.y = hip_pack(f);
 
-    float3 cV = make_float3(0.5f, -0.4542f, -0.0458f);
-    f.x = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[0]), hip_unpack1(pRGB.data[0]), hip_unpack2(pRGB.data[0]))) + 128.0f;
-    f.y = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[1]), hip_unpack1(pRGB.data[1]), hip_unpack2(pRGB.data[1]))) + 128.0f;
-    f.z = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[2]), hip_unpack1(pRGB.data[2]), hip_unpack2(pRGB.data[2]))) + 128.0f;
-    f.w = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[3]), hip_unpack1(pRGB.data[3]), hip_unpack2(pRGB.data[3]))) + 128.0f;
-    vChannel.x = hip_pack(f);
-    f.x = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[4]), hip_unpack1(pRGB.data[4]), hip_unpack2(pRGB.data[4]))) + 128.0f;
-    f.y = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[5]), hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]))) + 128.0f;
-    f.z = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[6]), hip_unpack1(pRGB.data[6]), hip_unpack2(pRGB.data[6]))) + 128.0f;
-    f.w = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[7]), hip_unpack1(pRGB.data[7]), hip_unpack2(pRGB.data[7]))) + 128.0f;
-    vChannel.y = hip_pack(f);
-
-    *((uint2 *)(&pDstYImage[dstYIdx])) = yChannel;
-    *((uint2 *)(&pDstUImage[dstUIdx])) = uChannel;
-    *((uint2 *)(&pDstVImage[dstVIdx])) = vChannel;
+        *((uint2 *)(&pDstYImage[dstYIdx])) = yChannel;
+        *((uint2 *)(&pDstUImage[dstUIdx])) = uChannel;
+        *((uint2 *)(&pDstVImage[dstVIdx])) = vChannel;
+    }
 }
 int HipExec_ColorConvert_YUV4_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,

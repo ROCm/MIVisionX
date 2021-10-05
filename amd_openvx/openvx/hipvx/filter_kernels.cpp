@@ -62,7 +62,7 @@ Hip_Box_U8_U8_3x3(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -176,14 +176,14 @@ Hip_Box_U8_U8_3x3(uint dstWidth, uint dstHeight,
     fval = hip_unpack0(pix.y);
     sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     uint2 dst;
     dst.x = hip_pack(make_float4(sum.data[0], sum.data[1], sum.data[2], sum.data[3]));
@@ -251,7 +251,7 @@ Hip_Dilate_U8_U8_3x3(uint dstWidth, uint dstHeight,
     float4 val;
     uint2 *pixLoc0 = (uint2*)&pix.x;
     uint2 *pixLoc2 = (uint2*)&pix.z;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     *pixLoc0 = lbufptr[0];
     *pixLoc2 = lbufptr[1];
@@ -396,7 +396,7 @@ Hip_Erode_U8_U8_3x3(uint dstWidth, uint dstHeight,
     float4 val;
     uint2 *pixLoc0 = (uint2*)&pix.x;
     uint2 *pixLoc2 = (uint2*)&pix.z;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     *pixLoc0 = lbufptr[0];
     *pixLoc2 = lbufptr[1];
@@ -545,7 +545,7 @@ Hip_Median_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint2 *pix1Loc2 = (uint2*)&pix1.z;
     uint2 *pix2Loc0 = (uint2*)&pix2.x;
     uint2 *pix2Loc2 = (uint2*)&pix2.z;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     *pix0Loc0 = lbufptr[0];
     *pix0Loc2 = lbufptr[1];
@@ -802,7 +802,7 @@ Hip_Gaussian_U8_U8_3x3(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -990,7 +990,7 @@ Hip_Convolve_U8_U8_3x3(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -1160,7 +1160,7 @@ Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -1494,7 +1494,7 @@ Hip_Convolve_U8_U8_7x7(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -2064,7 +2064,7 @@ Hip_Convolve_U8_U8_3x9(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -2456,7 +2456,7 @@ Hip_Convolve_U8_U8_9x3(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
       pix = lbufptr[0];
@@ -2789,7 +2789,7 @@ Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -3641,34 +3641,33 @@ int HipExec_Convolve_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dst
     int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
+    dim3 gridDim = dim3(ceil((float)globalThreads_x/localThreads_x),
+                        ceil((float)globalThreads_y/localThreads_y));
+
+    dim3 blockDim = dim3(localThreads_x, localThreads_y);
+
     if (convolutionWidth == 3 && convolutionHeight == 3) {
-        hipLaunchKernelGGL(Hip_Convolve_U8_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_U8_U8_3x3, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                             srcImageBufferSize, conv);
     } else if (convolutionWidth == 5 && convolutionHeight == 5) {
-        hipLaunchKernelGGL(Hip_Convolve_U8_U8_5x5, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_U8_U8_5x5, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                             srcImageBufferSize, conv);
     } else if (convolutionWidth == 7 && convolutionHeight == 7) {
-        hipLaunchKernelGGL(Hip_Convolve_U8_U8_7x7, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_U8_U8_7x7, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                             srcImageBufferSize, conv);
     } else if (convolutionWidth == 9 && convolutionHeight == 9) {
-        hipLaunchKernelGGL(Hip_Convolve_U8_U8_9x9, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_U8_U8_9x9, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                             srcImageBufferSize, srcImageBufferOffset, conv);
     } else if (convolutionWidth == 3 && convolutionHeight == 9) {
-        hipLaunchKernelGGL(Hip_Convolve_U8_U8_3x9, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_U8_U8_3x9, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                             srcImageBufferSize, conv);
     } else if (convolutionWidth == 9 && convolutionHeight == 3) {
-        hipLaunchKernelGGL(Hip_Convolve_U8_U8_9x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_U8_U8_9x3, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                             srcImageBufferSize, conv);
     } else {
@@ -3714,7 +3713,7 @@ Hip_Convolve_S16_U8_3x3(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -3881,7 +3880,7 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -4221,7 +4220,7 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -4734,14 +4733,14 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
     sum.data[7] = fmaf(fval, conv[47], sum.data[7]);
     fval = hip_unpack2(pix.y);
     sum.data[7] = fmaf(fval, conv[48], sum.data[7]);
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
@@ -4796,7 +4795,7 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -5131,14 +5130,14 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
     sum.data[7] = fmaf(fval, conv[25], sum.data[7]);
     fval = hip_unpack0(pix.y);
     sum.data[7] = fmaf(fval, conv[26], sum.data[7]);
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
@@ -5193,7 +5192,7 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
       pix = lbufptr[0];
@@ -5469,14 +5468,14 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
     fval = hip_unpack3(pix.y);
     sum.data[7] = fmaf(fval, conv[26], sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
@@ -5532,7 +5531,7 @@ Hip_Convolve_S16_U8_9x9(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -6381,34 +6380,33 @@ int HipExec_Convolve_S16_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 ds
     int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
+    dim3 gridDim = dim3(ceil((float)globalThreads_x/localThreads_x),
+                        ceil((float)globalThreads_y/localThreads_y));
+
+    dim3 blockDim = dim3(localThreads_x, localThreads_y);
+
     if ((convolutionWidth == 3) && (convolutionHeight == 3)) {
-        hipLaunchKernelGGL(Hip_Convolve_S16_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_S16_U8_3x3, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else if (convolutionWidth == 5 && convolutionHeight == 5) {
-        hipLaunchKernelGGL(Hip_Convolve_S16_U8_5x5, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_S16_U8_5x5, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else if (convolutionWidth == 7 && convolutionHeight == 7) {
-        hipLaunchKernelGGL(Hip_Convolve_S16_U8_7x7, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_S16_U8_7x7, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else if (convolutionWidth == 9 && convolutionHeight == 9) {
-        hipLaunchKernelGGL(Hip_Convolve_S16_U8_9x9, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_S16_U8_9x9, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize, srcImageBufferOffset,
                             conv);
     } else if (convolutionWidth == 3 && convolutionHeight == 9) {
-        hipLaunchKernelGGL(Hip_Convolve_S16_U8_3x9, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_S16_U8_3x9, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else if (convolutionWidth == 9 && convolutionHeight == 3) {
-        hipLaunchKernelGGL(Hip_Convolve_S16_U8_9x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+        hipLaunchKernelGGL(Hip_Convolve_S16_U8_9x3, gridDim, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else {
@@ -6457,7 +6455,7 @@ Hip_Sobel_S16_U8_3x3_GX(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -6557,7 +6555,7 @@ Hip_Sobel_S16_U8_3x3_GX(uint dstWidth, uint dstHeight,
     dst.w = ((int)sum.data[6]) & 0xffff;
     dst.w |= ((int)sum.data[7]) << 16;
 
-    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
         *((int4 *)(&pDstImage[dstIdx])) = dst;
@@ -6613,7 +6611,7 @@ Hip_Sobel_S16_U8_3x3_GY(uint dstWidth, uint dstHeight,
     d_float8 sum = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -6759,7 +6757,7 @@ Hip_Sobel_S16S16_U8_3x3_GXY(uint dstWidth, uint dstHeight,
     d_float8 sum2 = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 *lbufptr;
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -6974,7 +6972,7 @@ Hip_ScaleGaussianHalf_U8_U8_3x3(uint dstWidth, uint dstHeight,
             goffset += 16 * srcImageStrideInBytes;
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
         }
-        __shared__ uchar *lbufptr;
+        uchar *lbufptr;
         lbufptr = lbuf + 128;
         goffset = -srcImageStrideInBytes + 124;
         int id = ly * 16 + lx;
@@ -6984,7 +6982,7 @@ Hip_ScaleGaussianHalf_U8_U8_3x3(uint dstWidth, uint dstHeight,
         __syncthreads();
     }
 
-    __shared__ uchar *lbuf_ptr;
+    uchar *lbuf_ptr;
     lbuf_ptr = lbuf + ly * 272 + (lx << 3);
     uint3 L0 = *((uint3 *)(&lbuf_ptr[4]));
     uint3 L1 = *((uint3 *)(&lbuf_ptr[140]));

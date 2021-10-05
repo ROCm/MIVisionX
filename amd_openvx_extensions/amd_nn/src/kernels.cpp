@@ -89,7 +89,7 @@ int getEnvironmentVariable(const char * name, char * value, size_t valueSize)
 #else
     const char * text = getenv(name);
     if (text) {
-        strncpy(value, text, strlen(text)+1);
+        strncpy(value, text, valueSize);
         value[strlen(text)+1] = '\0';
         if(isdigit(value[0]) != 0)
             return atoi(value);
@@ -116,10 +116,16 @@ vx_status createGraphHandle(vx_node node, NeuralNetworkCommonHandle ** pHandle)
             handle->exhaustiveSearch = true;
 
         handle->count = 1;
+
+#if ENABLE_OPENCL
         ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &handle->cmdq, sizeof(handle->cmdq)));
-        
+#elif ENABLE_HIP
+        ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &handle->cmdq, sizeof(handle->cmdq)));
+#endif
+
         //create miopen_handle from cmdq
         ERROR_CHECK_MIOPEN_STATUS(miopenCreateWithStream(&handle->miopen_handle, handle->cmdq));
+
         ERROR_CHECK_STATUS(vxSetModuleHandle(node, OPENVX_KHR_NN, handle));
     }
     *pHandle = handle;

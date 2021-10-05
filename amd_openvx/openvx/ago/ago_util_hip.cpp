@@ -64,6 +64,14 @@ int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
         return -1;
     }
 
+    //Force creation of the underlying HW queue associated with the HIP stream created above here;
+    // otherwise, the HW queue creation will be delayed until this stream is used in the graph
+    err = hipDeviceSynchronize();
+    if (err != hipSuccess) {
+        agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipDeviceSynchronize => %d (failed)\n", err);
+        return -1;
+    }
+
     err = hipGetDeviceProperties(&context->hip_dev_prop, deviceID);
     if (err != hipSuccess) {
         agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipGetDeviceProperties(%d) => %d (failed)\n", deviceID, err);

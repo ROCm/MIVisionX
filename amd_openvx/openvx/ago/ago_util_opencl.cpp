@@ -401,7 +401,7 @@ int agoGpuOclAllocBuffer(AgoData * data)
             // special handling for image ROI
             data->opencl_buffer = dataMaster->opencl_buffer;
             if((dataMaster->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE)) {
-                // copy the image into OpenCL buffer because commits aren't done to this buffer
+                // copy the image into OpenCL or HIP buffer because commits aren't done to this buffer
                 cl_int err = clEnqueueWriteBuffer(context->opencl_cmdq, dataMaster->opencl_buffer, CL_TRUE, dataMaster->gpu_buffer_offset, dataMaster->size, dataMaster->buffer, 0, NULL, NULL);
                 if (err) { 
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclAllocBuffer: clEnqueueWriteBuffer() => %d\n", err);

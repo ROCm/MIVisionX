@@ -7065,7 +7065,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
     int ly = hipThreadIdx_y;
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    
+
     int srcStride = srcImageStrideInBytes;
     uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
     int srcIdx =  (((y - ly) << 1) + 1) * srcStride + ((x - lx) << 3);

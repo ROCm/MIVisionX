@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include <VX/vx.h>
 #include <VX/vxu.h>
 #include "ago_internal.h"
-#include <iostream>
+
 /*! \brief The largest nonlinear filter matrix the specification requires support for is 9x9.
 */
 #define C_MAX_NONLINEAR_DIM (9)
@@ -752,7 +752,7 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     {
         pyr_gauss_curr_level_filtered = vxCreateImage(context, level_width, level_height, VX_DF_IMAGE_S16);
         upsampleImage(context, level_width, level_height, gauss_next, conv, pyr_gauss_curr_level_filtered, &border);
-    
+
         pyr_laplacian_curr_level = vxGetPyramidLevel(laplacian, (vx_uint32)lev);
         status |= vxuSubtract(context, gauss_cur, pyr_gauss_curr_level_filtered, policy, pyr_laplacian_curr_level);
 

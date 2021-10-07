@@ -147,6 +147,13 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
   set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
+# set dependency to ROCm if set to TRUE, default to OFF
+set(ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
+if(ROCM_DEP_ROCMCORE)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-core")
+  set(CPACK_RPM_PACKAGE_REQUIRES   "rocm-core")
+endif()
+
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(COMMAND rpm --eval %{?dist}
                 RESULT_VARIABLE PROC_RESULT

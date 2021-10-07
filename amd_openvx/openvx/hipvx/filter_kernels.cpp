@@ -7065,12 +7065,11 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
     int ly = hipThreadIdx_y;
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-
+    
     int srcStride = srcImageStrideInBytes;
     uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
     int srcIdx =  (((y - ly) << 1) + 1) * srcStride + ((x - lx) << 3);
     bool valid = ((x < dstWidthComp) && (y < dstHeight)) ? true : false;
-    bool validRow = ((0 < y) && (y < dstHeight - 1)) ? true : false;
 
     { // load 136x35 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
@@ -7286,12 +7285,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
 
     sum = sum * (float4)0.00390625f;
     if (valid) {
-        if (validRow) {
-            *((uint *)(&pDstImage[dstIdx])) = hip_pack(sum);
-        }
-        else {
-            *((uint *)(&pDstImage[dstIdx])) = 0;
-        }
+        *((uint *)(&pDstImage[dstIdx])) = hip_pack(sum);
     }
 }
 int HipExec_ScaleGaussianHalf_U8_U8_5x5(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,

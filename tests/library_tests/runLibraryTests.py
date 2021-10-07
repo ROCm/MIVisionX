@@ -108,7 +108,7 @@ rali_lib = shell('ldd '+MIVisionXAbsPath+'/lib/librali.so')
 runvx_exe = shell('ldd '+MIVisionXAbsPath+'/bin/runvx')
 runcl_exe = shell('ldd '+MIVisionXAbsPath+'/bin/runcl')
 loom_exe = shell('ldd '+MIVisionXAbsPath+'/bin/loom_shell')
-mv_compile_exe = shell('ldd '+MIVisionXAbsPath+'/mv_compile')
+mv_compile_exe = shell('ldd '+MIVisionXAbsPath+'/bin/mv_compile')
 
 warning = 0
 

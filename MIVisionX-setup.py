@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "1.9.93"
+__version__ = "1.9.94"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -210,9 +210,9 @@ if os.path.exists(deps_dir):
 
     if ffmpegInstall == 'yes':
         # FFMPEG
-        if os.path.exists(deps_dir+'/ffmpeg'):
+        if os.path.exists(deps_dir+'/FFmpeg-n4.0.4'):
             os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
+            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; sudo ' +
                       linuxFlag+' make install -j8)')
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
@@ -247,7 +247,7 @@ else:
         os.system('(cd '+deps_dir+'; unzip v'+ProtoBufVersion+'.zip )')
     if ffmpegInstall == 'yes':
         os.system(
-            '(cd '+deps_dir+'; git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git )')
+            '(cd '+deps_dir+'; wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.0.4.zip && unzip n4.0.4.zip )')
 
     # Install
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
@@ -522,11 +522,11 @@ else:
         # FFMPEG 4 from source -- for Ubuntu, CentOS 7, & RedHat 7
         if "Ubuntu" in platfromInfo or "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
             os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
-            os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
-            os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
+            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; sudo '+linuxFlag+' ldconfig )')
+            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
+            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; make -j8 )')
             os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
+            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; sudo ' +
                       linuxFlag+' make install )')
 
     print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")

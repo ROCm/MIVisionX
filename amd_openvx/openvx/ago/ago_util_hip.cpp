@@ -184,6 +184,13 @@ int agoGpuHipAllocBuffer(AgoData * data) {
         if (data != dataMaster) {
             // special handling for image ROI
             data->hip_memory = dataMaster->hip_memory;
+            if((dataMaster->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE)) {
+                // copy the image into HIP buffer because commits aren't done to this buffer
+                hipError_t err = hipMemcpyHtoD((void *)(dataMaster->hip_memory + dataMaster->gpu_buffer_offset), dataMaster->buffer, dataMaster->size);
+                if (err != hipSuccess) {
+                    agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer: hipMemcpyHtoD() => %d\n", err);
+                }
+            }
         }
     }
     else if (data->ref.type == VX_TYPE_ARRAY || data->ref.type == AGO_TYPE_CANNY_STACK) {

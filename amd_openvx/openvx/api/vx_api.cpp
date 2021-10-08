@@ -2126,6 +2126,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
                         }
                     }
                 }
+                else if (usage == VX_WRITE_ONLY)
+                {
+                    auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE;
+                }
 #elif ENABLE_HIP
                     auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
                     if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
@@ -2140,6 +2145,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
                             }
                             dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                         }
+                    }
+                    if (usage == VX_WRITE_ONLY)
+                    {
+                        auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
+                        dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE;
                     }
 #endif
                 // get map id and set returned pointer

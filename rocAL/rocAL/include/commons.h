@@ -77,8 +77,8 @@ enum class RaliMemType
  */
 enum class DecodeMode
 {
-    USE_HW = 0,
-    USE_SW = 1
+    HW_VAAPI = 0,
+    CPU = 1
 };
 
 struct Timing

@@ -98,10 +98,10 @@ auto convert_decoder_mode= [](RaliDecodeDevice decode_mode)
 {
     switch(decode_mode){
         case RALI_HW_DECODE:
-            return DecodeMode::USE_HW;
+            return DecodeMode::HW_VAAPI;
 
         case RALI_SW_DECODE:
-            return DecodeMode::USE_SW;
+            return DecodeMode::CPU;
         default:
 
             THROW("Unsupported decoder mode" + TOSTR(decode_mode))

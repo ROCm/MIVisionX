@@ -50,21 +50,21 @@ void VideoLabelReader::init(const MetaDataConfig &cfg)
     _output = new LabelBatch();
 }
 
-bool VideoLabelReader::exists(const std::string &image_name)
+bool VideoLabelReader::exists(const std::string &frame_name)
 {
-    return _map_content.find(image_name) != _map_content.end();
+    return _map_content.find(frame_name) != _map_content.end();
 }
 
-void VideoLabelReader::add(std::string image_name, int label, unsigned int video_frame_count, unsigned int start_frame)
+void VideoLabelReader::add(std::string frame_name, int label, unsigned int video_frame_count, unsigned int start_frame)
 {
     std::vector<unsigned> props;
-    props = open_video_context(image_name.c_str());
+    open_video_context(frame_name.c_str(), props);
     unsigned frame_count = video_frame_count ? video_frame_count : props[2];
     if ((video_frame_count + start_frame) > props[2])
-        THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + image_name)
+        THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + frame_name)
     std::vector<std::string> substrings;
     char delim = '/';
-    substring_extraction(image_name, delim, substrings);
+    substring_extraction(frame_name, delim, substrings);
     std::string file_name = substrings[substrings.size() - 1];
     size_t max_sequence_frames = (_sequence_length - 1) * _stride;
     for(size_t sequence_start = start_frame; (sequence_start + max_sequence_frames) <  (start_frame + frame_count); sequence_start += _step)
@@ -95,32 +95,32 @@ void VideoLabelReader::release()
     _map_content.clear();
 }
 
-void VideoLabelReader::release(std::string image_name)
+void VideoLabelReader::release(std::string frame_name)
 {
-    if (!exists(image_name))
+    if (!exists(frame_name))
     {
-        WRN("ERROR: Given not present in the map" + image_name);
+        WRN("ERROR: Given not present in the map" + frame_name);
         return;
     }
-    _map_content.erase(image_name);
+    _map_content.erase(frame_name);
 }
 
-void VideoLabelReader::lookup(const std::vector<std::string> &image_names)
+void VideoLabelReader::lookup(const std::vector<std::string> &frame_names)
 {
-    if (image_names.empty())
+    if (frame_names.empty())
     {
         WRN("No image names passed")
         return;
     }
-    if (image_names.size() != (unsigned)_output->size())
-        _output->resize(image_names.size());
+    if (frame_names.size() != (unsigned)_output->size())
+        _output->resize(frame_names.size());
 
-    for (unsigned i = 0; i < image_names.size(); i++)
+    for (unsigned i = 0; i < frame_names.size(); i++)
     {
-        auto image_name = image_names[i];
-        auto it = _map_content.find(image_name);
+        auto frame_name = frame_names[i];
+        auto it = _map_content.find(frame_name);
         if (_map_content.end() == it)
-            THROW("ERROR: Video label reader folders Given name not present in the map" + image_name)
+            THROW("ERROR: Video label reader folders Given name not present in the map" + frame_name)
         _output->get_label_batch()[i] = it->second->get_label();
     }
 }
@@ -143,7 +143,7 @@ void VideoLabelReader::read_text_file(const std::string &_path)
             std::istringstream line_ss(line);
             if (!(line_ss >> video_file_name >> label))
                 continue;
-            props = open_video_context(video_file_name.c_str());
+            open_video_context(video_file_name.c_str(), props);
             if (!_file_list_frame_num)
             {
                 line_ss >> start_time >> end_time;

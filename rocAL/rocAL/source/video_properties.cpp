@@ -36,9 +36,8 @@ void substring_extraction(std::string const &str, const char delim, std::vector<
 }
 
 // Opens the context of the Video file to obtain the width, heigh and frame rate info.
-std::vector<unsigned> open_video_context(const char *video_file_path)
+void open_video_context(const char *video_file_path, std::vector<unsigned> &props)
 {
-    std::vector<unsigned> props;
     AVFormatContext *pFormatCtx = NULL;
     AVCodecContext *pCodecCtx = NULL;
     int videoStream = -1;
@@ -74,7 +73,6 @@ std::vector<unsigned> open_video_context(const char *video_file_path)
     props.push_back(pFormatCtx->streams[videoStream]->avg_frame_rate.den);
     avcodec_close(pCodecCtx);
     avformat_close_input(&pFormatCtx);
-    return props;
 }
 
 void get_video_properties_from_txt_file(VideoProperties &video_props, const char *file_path, bool file_list_frame_num)
@@ -99,7 +97,7 @@ void get_video_properties_from_txt_file(VideoProperties &video_props, const char
             std::istringstream line_ss(line);
             if (!(line_ss >> video_file_name >> label))
                 continue;
-            props = open_video_context(video_file_name.c_str());
+            open_video_context(video_file_name.c_str(), props);
             if(max_width == props[0] || max_width == 0)
                 max_width = props[0];
             else
@@ -163,7 +161,7 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
         else
         {
             // Single Video File Input
-            props = open_video_context(source_path);
+            open_video_context(source_path, props);
             video_props.width = props[0];
             video_props.height = props[1];
             video_props.videos_count = 1;
@@ -201,7 +199,7 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
             filesys::path pathObj(subfolder_path);
             if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
             {
-                props = open_video_context(subfolder_path.c_str());
+                open_video_context(subfolder_path.c_str(), props);
                 if(max_width == props[0] || max_width == 0)
                     max_width = props[0];
                 else
@@ -241,7 +239,7 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
                     file_path.append(video_files[i]);
                     _full_path = file_path;
 
-                    props = open_video_context(_full_path.c_str());
+                    open_video_context(_full_path.c_str(), props);
                     if(max_width == props[0] || max_width == 0)
                         max_width = props[0];
                     else

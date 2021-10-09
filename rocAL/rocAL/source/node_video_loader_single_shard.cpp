@@ -53,9 +53,7 @@ void VideoLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, c
     reader_cfg.set_frame_step(step);
     reader_cfg.set_frame_stride(stride);
     reader_cfg.set_video_properties(video_prop);
-    _loader_module->initialize(reader_cfg, VideoDecoderConfig(decoder_type),
-                               mem_type,
-                               _batch_size);
+    _loader_module->initialize(reader_cfg, VideoDecoderConfig(decoder_type), mem_type, _batch_size);
     _loader_module->start_loading();
 }
 

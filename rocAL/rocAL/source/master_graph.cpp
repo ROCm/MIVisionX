@@ -217,7 +217,7 @@ void
 MasterGraph::decrease_image_count()
 {
     if(!_loop)
-        _remaining_images_or_sequences_count -= (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size);
+        _remaining_count -= (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size);
 }
 
 void
@@ -438,7 +438,7 @@ MasterGraph::reset()
         _output_thread.join();
     _ring_buffer.reset();
     // clearing meta ring buffer
-    if(is_video_loader())
+    if(_is_video_loader)
     {
         _video_loader_module->reset();
         _sequence_start_framenum_vec.clear();
@@ -461,9 +461,9 @@ MasterGraph::reset()
 }
 
 size_t
-MasterGraph::remaining_images_or_sequences_count()
+MasterGraph::remaining_count()
 {
-    return (_remaining_images_or_sequences_count >= 0) ? _remaining_images_or_sequences_count:0;
+    return (_remaining_count >= 0) ? _remaining_count:0;
 }
 
 RaliMemType
@@ -476,7 +476,7 @@ Timing
 MasterGraph::timing()
 {
     Timing t;
-    if(is_video_loader())
+    if(_is_video_loader)
     {
         t = _video_loader_module->timing();
         t.video_process_time += _process_time.get_timing();
@@ -856,10 +856,10 @@ std::vector<std::vector<float>>& operator+=(std::vector<std::vector<float>>& des
 
 void MasterGraph::output_routine()
 {
-    INFO("Output routine started with "+TOSTR(_remaining_images_or_sequences_count) + " to load");
+    INFO("Output routine started with "+TOSTR(_remaining_count) + " to load");
     size_t batch_ratio = _is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio;
-if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_batch_ratio is different. Will be removed in TensorSupport.
-{
+    if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_batch_ratio is different. Will be removed in TensorSupport.
+    {
 #if !ENABLE_HIP
     if(processing_on_device_ocl() && batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
@@ -867,7 +867,7 @@ if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_b
     if(processing_on_device_hip() && batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 #endif
-}
+    }
     try {
         while (_processing)
         {
@@ -879,7 +879,7 @@ if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_b
             std::vector<size_t> full_batch_sequence_start_frame_number = {};
             std::vector<std::vector<float>> full_batch_sequence_frame_timestamps = {};
             size_t _count ;
-            if(is_video_loader())
+            if(_is_video_loader)
             {
                 _count = _video_loader_module->remaining_count();
             }
@@ -905,7 +905,7 @@ if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_b
             // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
             for(unsigned cycle_idx = 0; cycle_idx< batch_ratio; cycle_idx++)
             {
-                if(is_video_loader())
+                if(_is_video_loader)
                 {
                     // Swap handles on the input sequence, so that new sequence is loaded to be processed
                     auto load_ret = _video_loader_module->load_next();
@@ -927,7 +927,7 @@ if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_b
                 decoded_image_info decode_image_info;
                 std::vector<std::string> this_cycle_names;
                 crop_image_info crop_image_info;
-                if(is_video_loader())
+                if(_is_video_loader)
                 {
                     this_cycle_names = _video_loader_module->get_id();
                     decode_image_info = _video_loader_module->get_decode_image_info();
@@ -999,9 +999,11 @@ if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_b
                 _graph->process();
                 _process_time.end();
             }
-
-            _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), full_batch_sequence_start_frame_number);
-            _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), full_batch_sequence_frame_timestamps);
+            if(_is_video_loader)
+            {
+                _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), full_batch_sequence_start_frame_number);
+                _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), full_batch_sequence_frame_timestamps);
+            }
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
             _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
 
@@ -1018,13 +1020,13 @@ if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_b
 void MasterGraph::start_processing()
 {
     _processing = true;
-    if(is_video_loader())
+    if(_is_video_loader)
     {
-        _remaining_images_or_sequences_count = _video_loader_module->remaining_count();
+        _remaining_count = _video_loader_module->remaining_count();
     }
     else
     {
-        _remaining_images_or_sequences_count = _loader_module->remaining_count();
+        _remaining_count = _loader_module->remaining_count();
     }
     _output_thread = std::thread(&MasterGraph::output_routine, this);
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)

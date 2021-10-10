@@ -231,11 +231,6 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
                     anchor_xcyxwh.yc = 0.5 * (p_anchor->t + p_anchor->b) * scale; //yc
                     anchor_xcyxwh.w = (-p_anchor->l + p_anchor->r) * scale;      //w
                     anchor_xcyxwh.h = (-p_anchor->t + p_anchor->b) * scale;      //h
-                    // GT Bboxes : <cx ,cy ,w ,h>  , Anchor boxes : <cx',cy',w',h'> , Offset : <gcx ,gcy ,gw ,gh>
-                    // gcx = ((cx - cx') / (w' - mean[0])) / std[0]
-                    // gcy = ((cy - cy') / (h' - mean[1])) / std[1]
-                    // gw = ((log(w / w')) - mean[2] )/ std[2]
-                    // gh = ((log(h / h')) - mean[2] )/ std[2]
                     // Reference for offset calculation between the Ground Truth bounding boxes & anchor boxes in <xc,yc,w,h> format
                     // https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Object-Detection#predictions-vis-%C3%A0-vis-priors
                     box_bestidx.xc = ((box_bestidx.xc - anchor_xcyxwh.xc) / anchor_xcyxwh.w - means[0]) / stds[0];

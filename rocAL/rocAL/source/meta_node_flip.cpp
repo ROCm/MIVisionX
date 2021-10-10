@@ -50,7 +50,6 @@ void FlipMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         memcpy(labels_buf.data(), input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
         memcpy(coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
-        BoundingBoxLabels bb_labels;
         
         for(uint j = 0; j < bb_count; j++)
         {
@@ -68,17 +67,8 @@ void FlipMetaNode::update_parameters(MetaDataBatch* input_meta_data)
             }
             
             bb_coords.push_back(coords_buf[j]);
-            bb_labels.push_back(labels_buf[j]);
-        }
-        if(bb_coords.size() == 0)
-        {
-            BoundingBoxCord temp_box;
-            temp_box.l = temp_box.t = 0;
-            temp_box.r = temp_box.b = 1;
-            bb_coords.push_back(temp_box);
-            bb_labels.push_back(0);
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
-        input_meta_data->get_bb_labels_batch()[i] = bb_labels;
+        input_meta_data->get_bb_labels_batch()[i] = labels_buf;
     }
 }

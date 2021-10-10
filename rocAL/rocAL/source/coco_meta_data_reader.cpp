@@ -172,9 +172,7 @@ void COCOMetaDataReader::read_all(const std::string &path)
         {
             RAPIDJSON_ASSERT(parser.PeekType() == kArrayType);
             parser.EnterArray();
-
             int id = 1, continuous_idx = 1;
-
             while (parser.NextArrayValue())
             {
                 if (parser.PeekType() != kObjectType)
@@ -247,7 +245,6 @@ void COCOMetaDataReader::read_all(const std::string &path)
                 box.t = bbox[1] / image_size[0].h;
                 box.r = (bbox[0] + bbox[2]) / image_size[0].w;
                 box.b = (bbox[1] + bbox[3]) / image_size[0].h;
-
                 bb_coords.push_back(box);
                 bb_labels.push_back(label);
                 add(file_name, bb_coords, bb_labels, image_size);

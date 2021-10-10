@@ -1,6 +1,5 @@
 import rali_pybind as b
 import amd.rali.types as types
-import torch
 
 class Node:
     def __init__(self):

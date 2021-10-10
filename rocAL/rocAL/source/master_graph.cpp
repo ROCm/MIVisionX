@@ -794,7 +794,6 @@ ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
 
 void MasterGraph::output_routine()
 {
-    std::cerr<<"DBG_INFO ::"<<DBG_INFO;
     if(DBG_INFO)
         INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
 #if !ENABLE_HIP

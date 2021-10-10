@@ -794,7 +794,9 @@ ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
 
 void MasterGraph::output_routine()
 {
-    INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
+    std::cerr<<"DBG_INFO ::"<<DBG_INFO;
+    if(DBG_INFO)
+        INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
 #if !ENABLE_HIP
     if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
@@ -1011,7 +1013,6 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
 
 void MasterGraph::box_encoder(std::vector<float> &anchors, float criteria, const std::vector<float> &means, const std::vector<float> &stds, bool offset, float scale)
 {
-    std::cout<<"Comes here to box encoder function";
     _is_box_encoder = true;
     _offset = offset;
     _anchors = anchors;
@@ -1087,7 +1088,10 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
 
     unsigned THREAD_COUNT = std::thread::hardware_concurrency();
     if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
-        INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")
+    {
+        if(DBG_INFO)
+            INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")
+    }
     else
     {
         THREAD_COUNT = MINIMUM_CPU_THREAD_COUNT;
@@ -1112,7 +1116,8 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
             ret = i;
             break;
         }
-    INFO("User batch size "+ TOSTR(user_batch_size)+" Internal batch size set to "+ TOSTR(ret))
+    if(DBG_INFO)
+        INFO("User batch size "+ TOSTR(user_batch_size)+" Internal batch size set to "+ TOSTR(ret))
     return ret;
 }
 

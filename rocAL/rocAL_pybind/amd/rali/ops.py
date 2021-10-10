@@ -903,7 +903,6 @@ class BoxEncoder(Node):
         return self.output, self.output
 
     def rali_c_func_call(self, handle, criteria=0.5):
-        print("IN BOX ENCODER RALI C FUNC CALL")
         b.BoxEncoder(handle, self._anchors, self._criteria, self._means, self._stds, self._offset,self._scale)
         return 0,0
         

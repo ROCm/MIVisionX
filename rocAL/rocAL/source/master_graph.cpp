@@ -794,6 +794,7 @@ ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
 
 void MasterGraph::output_routine()
 {
+    _process_time.start();
     if(DBG_INFO)
         INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
 #if !ENABLE_HIP
@@ -896,9 +897,7 @@ void MasterGraph::output_routine()
                     else
                         full_batch_meta_data = _augmented_meta_data->clone();
                 }
-                _process_time.start();
                 _graph->process();
-                _process_time.end();
             }
             if(_is_box_encoder )
             {
@@ -914,6 +913,7 @@ void MasterGraph::output_routine()
         _processing = false;
         _ring_buffer.release_all_blocked_calls();
     }
+        _process_time.end();
 }
 
 void MasterGraph::start_processing()

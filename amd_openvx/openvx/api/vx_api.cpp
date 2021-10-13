@@ -7452,6 +7452,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
                     dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                 }
             }
+#elif ENABLE_HIP
+            if (dataToSync->hip_memory  && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty HIP buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->gpu_buffer_offset), dataToSync->size);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyRemapPatch: hipMemcpyDtoH() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
 #endif
             if (usage == VX_READ_ONLY) {
                 vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
@@ -7640,6 +7656,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapRemapPatch: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
+#elif ENABLE_HIP
+                if (dataToSync->hip_memory  && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty HIP buffers are synched before giving access for read
+                    if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        if (dataToSync->size > 0) {
+                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->gpu_buffer_offset), dataToSync->size);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapRemapPatch: hipMemcpyDtoH() => %d\n", err);
                                 return status;
                             }
                         }

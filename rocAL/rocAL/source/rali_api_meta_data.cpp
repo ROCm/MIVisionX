@@ -367,13 +367,21 @@ RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_
         WRN("No encoded labels and bounding boxes has been loaded for this output image")
         return;
     }
-    // copy labels buffer & bboxes buffer
+    unsigned sum = 0;
+    unsigned sum_bb_count[meta_data_batch_size];
+    for (unsigned i = 0; i < meta_data_batch_size; i++)
+    {
+        sum_bb_count[i] = sum;
+        sum = sum + meta_data.second->get_bb_labels_batch()[i].size();
+    }
+    // copy labels buffer & bboxes buffer parallely
+    #pragma omp parallel for
     for (unsigned i = 0; i < meta_data_batch_size; i++)
     {
         unsigned bb_count = meta_data.second->get_bb_labels_batch()[i].size();
-        memcpy(labels_buf, meta_data.second->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
-        labels_buf += bb_count;
-        memcpy(boxes_buf, meta_data.second->get_bb_cords_batch()[i].data(), sizeof(BoundingBoxCord) * bb_count);
-        boxes_buf += (bb_count * 4);
+        int *temp_labels_buf = labels_buf + sum_bb_count[i];
+        float *temp_bbox_buf = boxes_buf + (sum_bb_count[i] * 4);
+        memcpy(temp_labels_buf, meta_data.second->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
+        memcpy(temp_bbox_buf, meta_data.second->get_bb_cords_batch()[i].data(), sizeof(BoundingBoxCord) * bb_count);
     }
 }

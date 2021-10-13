@@ -164,7 +164,7 @@ if(${BUILD_RALI})
 
     target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
     target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_INFO=0)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC DBGINFO=0)
     target_compile_definitions(${PROJECT_NAME} PUBLIC DBGLOG=0 WRNLOG=0)
     target_compile_definitions(${PROJECT_NAME} PUBLIC TFRECORD_ENABLE=0)
     message("-- ${Green}rocAL built with ENABLE_SIMD")

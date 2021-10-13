@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "master_graph.h"
 #include "parameter_factory.h"
 #include "ocl_setup.h"
+#include "log.h"
 #include "meta_data_reader_factory.h"
 #include "meta_data_graph_factory.h"
 #include "randombboxcrop_meta_data_reader_factory.h"
@@ -795,8 +796,7 @@ ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
 void MasterGraph::output_routine()
 {
     _process_time.start();
-    if(DBG_INFO)
-        INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
+    INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
 #if !ENABLE_HIP
     if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
@@ -1088,8 +1088,7 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
     unsigned THREAD_COUNT = std::thread::hardware_concurrency();
     if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
     {
-        if(DBG_INFO)
-            INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")
+        INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")
     }
     else
     {
@@ -1115,8 +1114,7 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
             ret = i;
             break;
         }
-    if(DBG_INFO)
-        INFO("User batch size "+ TOSTR(user_batch_size)+" Internal batch size set to "+ TOSTR(ret))
+    INFO("User batch size "+ TOSTR(user_batch_size)+" Internal batch size set to "+ TOSTR(ret))
     return ret;
 }
 

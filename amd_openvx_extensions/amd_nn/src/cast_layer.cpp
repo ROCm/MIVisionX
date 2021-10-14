@@ -22,7 +22,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if (num_dims != 4 && num_dims != 2) return VX_ERROR_INVALID_DIMENSION;
-    if ((type != VX_TYPE_INT64) && (type!= VX_TYPE_INT32)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: cast: #3 output tensor data type=%d not supprted yet\n", type);
+    if ((type != VX_TYPE_INT64) && (type!= VX_TYPE_INT32) && (type!= VX_TYPE_FLOAT32)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: cast: #3 output tensor data type=%d not supprted yet\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
     // output tensor configuration
@@ -44,6 +44,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
+#if ENABLE_OPENCL
 static vx_status VX_CALLBACK opencl_codegen(
     vx_node node,                                  // [input] node
     const vx_reference parameters[],               // [input] parameters
@@ -232,11 +233,68 @@ static vx_status VX_CALLBACK opencl_codegen(
 	}
 	return VX_SUCCESS;
 }
+#endif
 
 //! \brief The kernel execution.
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+#if ENABLE_HIP
+    vx_enum input_type, output_type;
+    vx_size num_dims;
+    vx_size input_dims[4] = {1, 1, 1, 1};
+    vx_size output_dims[4] = {1, 1, 1, 1};
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_type, sizeof(input_type)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
+
+    vx_int32 output_data_type;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[1], &output_data_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_type, sizeof(output_type)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+
+    dim3 globalThreads = dim3(1);
+    globalThreads.x = input_dims[0];
+    globalThreads.y = input_dims[1];
+    globalThreads.z = input_dims[2] * input_dims[3];
+
+    vx_size temp[4] = {0};
+    uint4 input_stride, output_stride;
+    vx_size in_offset, output_offset;
+    unsigned char *input_mem = NULL;
+    unsigned char *output_mem = NULL;
+    hipStream_t hip_stream;
+
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &in_offset, sizeof(in_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_OFFSET_GPU, &output_offset, sizeof(output_offset)));
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    input_stride.x = temp[0];
+    input_stride.y = temp[1];
+    input_stride.z = temp[2];
+    input_stride.w = temp[3];
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    output_stride.x = temp[0];
+    output_stride.y = temp[1];
+    output_stride.z = temp[2];
+    output_stride.w = temp[3];
+
+    if (HipExec_Cast_layer(hip_stream, globalThreads, dim3(1), input_type, output_type, input_mem, in_offset, input_stride,
+            output_mem, output_offset, output_stride)) {
+        return VX_FAILURE;
+    }
+
+    return VX_SUCCESS;
+
+#elif ENABLE_OPENCL
     return VX_ERROR_NOT_IMPLEMENTED;
+#endif
 }
 
 //! \brief The kernel publisher.
@@ -246,9 +304,12 @@ vx_status publishCastLayer(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
-    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
+
+#if ENABLE_OPENCL
+    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK, &opencl_codegen_callback_f, sizeof(opencl_codegen_callback_f)));
+#endif
 
     //set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));

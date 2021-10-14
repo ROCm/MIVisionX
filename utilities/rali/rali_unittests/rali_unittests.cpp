@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
 #include <vector>
+#include<string>
 
 #include "rali_api.h"
 
@@ -49,14 +50,14 @@ using namespace cv;
 
 using namespace std::chrono;
 
-int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes);
+int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes, int display_all);
 int main(int argc, const char **argv)
 {
     // check command-line usage
-    const size_t MIN_ARG_COUNT = 2;
+    const int MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT)
     {
-        printf("Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0 one_hot_labels=num_of_classes/0 \n");
+        printf("Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0 one_hot_labels=num_of_classes/0  display_all=0(display_last_only)1(display_all)\n");
         return -1;
     }
 
@@ -65,6 +66,7 @@ int main(int argc, const char **argv)
     const char *outName = argv[++argIdx];
     int width = atoi(argv[++argIdx]);
     int height = atoi(argv[++argIdx]);
+    int display_all = 0;
 
     int rgb = 1; // process color images
     bool gpu = 1;
@@ -83,15 +85,18 @@ int main(int argc, const char **argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
          num_of_classes = atoi(argv[++argIdx]);
 
-    test(test_case, path, outName, rgb, gpu, width, height, num_of_classes);
+    if (argc >= argIdx + MIN_ARG_COUNT)
+         display_all = atoi(argv[++argIdx]);
+
+    test(test_case, path, outName, rgb, gpu, width, height, num_of_classes, display_all);
 
     return 0;
 }
 
-int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes)
+int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all)
 {
     size_t num_threads = 1;
-    int inputBatchSize = 2;
+    unsigned int inputBatchSize = 2;
     int decode_max_width = width;
     int decode_max_height = height;
     std::cout << ">>> test case " << test_case << std::endl;
@@ -115,36 +120,27 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     raliSetSeed(0);
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
-    RaliFloatParam rand_crop_area = raliCreateFloatUniformRand(0.3, 0.5);
     RaliIntParam color_temp_adj = raliCreateIntParameter(-50);
 
-    // Creating a custom random object to set a limited number of values to randomize the rotation angle
-    const size_t num_values = 3;
-    float values[num_values] = {0, 10, 135};
-    double frequencies[num_values] = {1, 5, 5};
-    RaliFloatParam rand_angle = raliCreateFloatRand(values, frequencies,
-                                                    sizeof(values) / sizeof(values[0]));
-
-    //num_values = 2;
-    int new_values[2] = {0, 1};
-    double new_freq[2] = {40, 60};
-    RaliIntParam rand_mirror = raliCreateIntRand(new_values, new_freq, 2);
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
     RaliMetaData meta_data;
-    char key1[25] = "image/encoded";
+
 #ifdef TF_READER
+    char key1[25] = "image/encoded";
     char key2[25] = "image/class/label";
+    char key8[25] = "image/filename";
 #elif defined TF_READER_DETECTION
+    char key1[25] = "image/encoded";
     char key2[25] = "image/object/class/label";
-#endif
     char key3[25] = "image/object/class/text";
     char key4[25] = "image/object/bbox/xmin";
     char key5[25] = "image/object/bbox/ymin";
     char key6[25] = "image/object/bbox/xmax";
     char key7[25] = "image/object/bbox/ymax";
     char key8[25] = "image/filename";
+#endif
 
 #if defined RANDOMBBOXCROP
     bool all_boxes_overlap = true;
@@ -230,9 +226,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     int resize_w = width, resize_h = height; // height and width
 
     RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
-
-    RaliFlipAxis axis_h = RALI_FLIP_HORIZONTAL;
-    RaliFlipAxis axis_v = RALI_FLIP_VERTICAL;
 
     RaliImage image1;
 
@@ -386,12 +379,14 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                   << "raliExposure" << std::endl;
         image1 = raliExposure(handle, image0, true);
     }
+    break;
     case 21:
     {
         std::cout << ">>>>>>> Running "
                   << "raliHue" << std::endl;
         image1 = raliHue(handle, image0, true);
     }
+    break;
     case 22:
     {
         std::cout << ">>>>>>> Running "
@@ -627,7 +622,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         return -1;
     }
 
-    printf("\n\nAugmented copies count %d \n", raliGetAugmentationBranchCount(handle));
+    printf("\n\nAugmented copies count %lu \n", raliGetAugmentationBranchCount(handle));
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
     int h = raliGetAugmentationBranchCount(handle) * raliGetOutputHeight(handle);
@@ -641,11 +636,13 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     int col_counter = 0;
     //cv::namedWindow("output", CV_WINDOW_AUTOSIZE);
     printf("Going to process images\n");
-    printf("Remaining images %d \n", raliGetRemainingImages(handle));
+    printf("Remaining images %lu \n", raliGetRemainingImages(handle));
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    int index = 0;
 
     while (raliGetRemainingImages(handle) >= inputBatchSize)
     {
+        index++;
         if (raliRun(handle) != 0)
             break;
         int label_id[inputBatchSize];
@@ -684,8 +681,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
             raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
         }
         std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
-        for (int i = 0; i < inputBatchSize; i++)
-        {   
+        for (unsigned int i = 0; i < inputBatchSize; i++)
+        {
             std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
             if(num_of_classes != 0)
             {
@@ -714,14 +711,18 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         compression_params.push_back(9);
 
         mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));
+        std::string out_filename = std::string(outName) + ".png";   // in case the user specifies non png filename
+        if (display_all)
+          out_filename = std::string(outName) + std::to_string(index) + ".png";   // in case the user specifies non png filename
+
         if (color_format == RaliImageColor::RALI_COLOR_RGB24)
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imwrite(outName, mat_color, compression_params);
+            cv::imwrite(out_filename, mat_color, compression_params);
         }
         else
         {
-            cv::imwrite(outName, mat_output, compression_params);
+            cv::imwrite(out_filename, mat_output, compression_params);
         }
         col_counter = (col_counter + 1) % number_of_cols;
     }

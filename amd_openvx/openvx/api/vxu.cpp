@@ -27,9 +27,20 @@
 
 static void vxuSetGraphAffinityDefault(vx_graph graph)
 {
-	graph->attr_affinity.device_type = AGO_TARGET_AFFINITY_CPU;
-	graph->attr_affinity.device_info = 0;
+    vx_uint32 default_target = AGO_KERNEL_TARGET_DEFAULT;
+    char textBuffer[1024];
+    if (agoGetEnvironmentVariable("AGO_DEFAULT_TARGET", textBuffer, sizeof(textBuffer))) {
+        if (!strcmp(textBuffer, "GPU")) {
+            default_target = AGO_KERNEL_FLAG_DEVICE_GPU;
+        } else if (!strcmp(textBuffer, "CPU")) {
+            default_target = AGO_KERNEL_FLAG_DEVICE_CPU;
+        }
+    }
+    graph->attr_affinity.device_type = default_target;
+    graph->attr_affinity.device_info = 0;
 }
+
+ 
 
 VX_API_ENTRY vx_status VX_API_CALL vxuColorConvert(vx_context context, vx_image src, vx_image dst)
 {

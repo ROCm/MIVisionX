@@ -291,7 +291,7 @@ class modelInference(QtCore.QObject):
 		print('Image File Name,Ground Truth Label,Output Label 1,Output Label 2,Output Label 3,Output Label 4,Output Label 5,Prob 1,Prob 2,Prob 3,Prob 4,Prob 5')
 		sys.stdout = self.orig_stdout
 
-		# Setup Rali Data Loader. 
+		# Setup rocAL Data Loader. 
 		rali_batch_size = 1
 		self.raliEngine = DataLoader(self.inputImageDir, rali_batch_size, self.modelBatchSizeInt, ColorFormat.IMAGE_RGB24, Affinity.PROCESS_CPU, imageValidation, self.h_i, self.w_i, self.rali_mode, self.loop, 
 										TensorLayout.NCHW, False, self.Mx, self.Ax, self.tensor_dtype)
@@ -344,7 +344,7 @@ class modelInference(QtCore.QObject):
 				end = time.time()
 				msFrame += (end-start)*1000
 				if (self.verbosePrint):
-					print '%30s' % 'Get next image from RALI took', str((end - start)*1000), 'ms'
+					print '%30s' % 'Get next image from rocAL took', str((end - start)*1000), 'ms'
 	
 				if self.gui:
 					text_width, text_height = cv2.getTextSize(groundTruthLabel[1].split(',')[0], cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)[0]

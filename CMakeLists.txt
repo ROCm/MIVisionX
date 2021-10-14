@@ -1,15 +1,15 @@
 # Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-#  
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-#  
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -36,6 +36,7 @@ set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "mivisionx default ROCm installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
@@ -63,31 +64,50 @@ else()
   endif()
 ENDIF()
 
-option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
-option(RALI       "Build MIVisionX with RALI Support"         ON)
-option(LOOM       "Build MIVisionX with LOOM Support"         ON)
-option(OPENCL_SUPPORT "Build MIVisionX with OpenCL Support"   ON)
+option(NEURAL_NET  "Build MIVisionX with Neural Net Support"  ON)
+option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
+option(LOOM        "Build MIVisionX with LOOM Support"        ON)
+option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
+
+if(NOT DEFINED BACKEND)
+  set(BACKEND "OPENCL")   # set default backend to OPENCL
+else()
+  if("${BACKEND}" STREQUAL "OPENCL" OR "${BACKEND}" STREQUAL "OCL" OR "${BACKEND}" STREQUAL "OpenCL")
+    set(BACKEND "OPENCL")
+  elseif("${BACKEND}" STREQUAL "HIP" OR "${BACKEND}" STREQUAL "hip")
+    set(BACKEND "HIP")
+  elseif("${BACKEND}" STREQUAL "CPU" OR "${BACKEND}" STREQUAL "cpu")
+    set(BACKEND "CPU")
+    set(GPU_SUPPORT OFF)
+  else()
+    message("-- ${Red} Warning: MIVisionX backend option unknown -- ${BACKEND}${ColourReset}")
+    message("-- ${Red} Warning: MIVisionX default backend will enforced${ColourReset}")
+    set(BACKEND "OPENCL")
+  endif()
+endif()
+message("-- ${BoldBlue}MIVisionX Backend set to -- ${BACKEND}${ColourReset}")
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D RALI=OFF [Turn OFF RALI Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D OPENCL_SUPPORT=OFF [Turn OFF OpenCL Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=HIP [select HIP for GPU backend [options:CPU/OPENCL/HIP](default:OPENCL)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
-  set(OPENCL_SUPPORT OFF)
-  message("-- ${Magenta}Apple macOS Detected -- OpenCL Support turned OFF${ColourReset}")
+  set(GPU_SUPPORT OFF)
+  message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
 endif()
 
 add_subdirectory(apps)
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
 add_subdirectory(utilities)
-if(RALI)
-  add_subdirectory(rali)
+if(ROCAL)
+  add_subdirectory(rocAL)
 else()
-  message("-- ${Cyan}RALI Module turned OFF by user option -D RALI=OFF ${ColourReset}")
+  message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
 endif()
 
 install(DIRECTORY docs DESTINATION .)
@@ -128,6 +148,13 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
   set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
+# set dependency to ROCm if set to TRUE, default to OFF
+set(ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
+if(ROCM_DEP_ROCMCORE)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-core")
+  set(CPACK_RPM_PACKAGE_REQUIRES   "rocm-core")
+endif()
+
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(COMMAND rpm --eval %{?dist}
                 RESULT_VARIABLE PROC_RESULT
@@ -140,9 +167,7 @@ endif()
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
-#set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl") # Remove Explict requirements
 set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
-#set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl") # Remove Explict requirements
 set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
 
 if(APPLE)

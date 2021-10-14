@@ -21,6 +21,17 @@
 cmake_minimum_required(VERSION 3.0)
 project(amd_openvx)
 
+if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
+    if(NOT DEFINED HIP_PATH)
+        if(NOT DEFINED ENV{HIP_PATH})
+            set(HIP_PATH ${ROCM_PATH}/hip CACHE PATH "Path to which HIP has been installed")
+        else()
+            set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
+        endif()
+    endif()
+    list(APPEND CMAKE_MODULE_PATH ${HIP_PATH}/cmake)
+endif()
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 add_subdirectory(openvx)

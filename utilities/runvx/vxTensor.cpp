@@ -89,8 +89,19 @@ int CVxParamTensor::Shutdown(void)
 			m_memory_handle[active_handle] = nullptr;
 		}
 	}
+#elif ENABLE_HIP
+    else if (m_memory_type == VX_MEMORY_TYPE_HIP) {
+		for (vx_size active_handle = 0; active_handle < m_num_handles; active_handle++) {
+			if (m_memory_handle[active_handle]) {
+				if (m_memory_handle[active_handle]) {
+				    hipFree(m_memory_handle[active_handle]);
+				}
+				m_memory_handle[active_handle] = nullptr;
+			}
+		}
+	}
 #endif
-	return 0;
+    return 0;
 }
 
 int CVxParamTensor::Initialize(vx_context context, vx_graph graph, const char * desc)
@@ -156,6 +167,19 @@ int CVxParamTensor::Initialize(vx_context context, vx_graph graph, const char * 
 				m_memory_handle[active_handle] = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE, size, NULL, &err);
 				if (!m_memory_handle[active_handle] || err)
 					ReportError("ERROR: clCreateBuffer(*,CL_MEM_READ_WRITE,%d,NULL,*) failed (%d)\n", (int)size, err);
+			}
+		}
+#elif ENABLE_HIP
+        else if (m_memory_type == VX_MEMORY_TYPE_HIP) {
+            int hip_device = -1;
+            vx_status status = vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &hip_device, sizeof(hip_device));
+            if (status || hip_device<0 )
+                ReportError("ERROR: vxQueryContext(*,VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE,...) failed (%d, %d)\n", status, hip_device);
+			for (vx_size active_handle = 0; active_handle < m_num_handles; active_handle++) {
+				vx_size size = m_dims[m_num_of_dims-1] * m_stride[m_num_of_dims-1];
+				hipError_t err = hipMalloc(&m_memory_handle[active_handle], size);
+				if (!m_memory_handle[active_handle] || err != hipSuccess)
+					ReportError("ERROR: VxTensor hipMalloc(%d) failed (%d)\n", (int)size, err);
 			}
 		}
 #endif

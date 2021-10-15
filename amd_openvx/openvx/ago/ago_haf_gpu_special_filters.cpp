@@ -1403,7 +1403,7 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 	int work_group_width = 16;
 	int work_group_height = 16;
 	int width = node->paramList[0]->u.img.width;
-	int height = node->paramList[0]->u.img.height - 1;
+	int height = node->paramList[0]->u.img.height;
 	int N = 0;
 	if (node->akernel->id == VX_KERNEL_AMD_SCALE_GAUSSIAN_HALF_U8_U8_3x3) {
 		N = 3;
@@ -1437,13 +1437,13 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 		"  int gx = get_global_id(0);\n"
 		"  int gy = get_global_id(1);\n"
 		"  p0_buf += p0_offset + (gy * p0_stride) + (gx << 2);\n"
-        "  *(__global uint *)p0_buf = 0;\n"
 		"  int gstride = p1_stride;\n"
 		"  __global uchar * gbuf = p1_buf + p1_offset + (((gy - ly) << 1) + 1) * gstride + ((gx - lx) << 3);\n"
 		"  bool valid = ((gx < %d) && (gy < %d)) ? true : false;\n" // (width+3)/4, height
+        "  bool validRow = ((0 < gy) && (gy < %d)) ? true : false;\n" // for padding first & last rows
 		"  gx = lx; gy = ly;\n"
 		)
-		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, LMemSize, (width + 3) / 4, height);
+		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, LMemSize, (width + 3) / 4, height, height - 1);
 	node->opencl_code = item;
 	// load input image into local
 	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, work_group_height * 2 - 1 + LMemSideTB * 2, LMemSideLR, LMemSideTB, node->opencl_code) < 0) {
@@ -1542,7 +1542,12 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 			"  sum.s0 += (float)(L0.s0 & 0xffff); sum.s1 += (float)(L0.s0 >> 16); sum.s2 += (float)(L0.s1 & 0xffff); sum.s3 += (float)(L0.s1 >> 16);\n"
 			"  sum = sum * (float4)0.00390625f;\n"
 			"  if (valid) {\n"
-			"    *(__global uint *)p0_buf = amd_pack(sum);\n"
+            "    if (validRow) {\n"
+			"       *(__global uint *)p0_buf = amd_pack(sum);\n"
+            "    }\n"
+            "    else {\n"
+            "        *(__global uint *)p0_buf =  0;\n"
+            "    }\n"
 			"  }\n"
 			"}\n"
 			)

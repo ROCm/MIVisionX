@@ -158,7 +158,6 @@ void RandomBBoxCropReader::read_all()
 
         std::string image_name = elem.first;
         BoundingBoxCords bb_coords = elem.second->get_bb_cords();
-        ImgSizes img_sizes = elem.second->get_img_sizes();
         bb_count = bb_coords.size();
         while (true)
         {
@@ -258,10 +257,8 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
         _output->resize(image_names.size());
     }
     const std::vector<float> sample_options = {-1.0f, 0.1f, 0.3f, 0.5f, 0.7f, 0.9f, 0.0f};
-    int sample_option;
     std::vector<float> coords_buf(4);
     std::pair<bool, float> option;
-    float min_iou;
     bool invalid_bboxes;
     bool crop_success;
     BoundingBoxCord crop_box;
@@ -276,16 +273,13 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
         auto elem = _meta_bbox_map_content.find(image_name);
         if (_meta_bbox_map_content.end() == elem)
             THROW("ERROR: Given name not present in the map" + image_name)
-        image_name = elem->first;
         BoundingBoxCords bb_coords = elem->second->get_bb_cords();
-        ImgSizes img_sizes = elem->second->get_img_sizes();
         bb_count = bb_coords.size();
-        while (true)
+        crop_success = false;
+        while (!crop_success)
         {
-            crop_success = false;
-            sample_option = option_dis(_rngs[_sample_cnt]);
-            min_iou = sample_options[sample_option];
             invalid_bboxes = false;
+            int sample_option = option_dis(_rngs[_sample_cnt]);
             //Condition for Original Image
             if (sample_option == 6 || _has_shape)
             {
@@ -293,6 +287,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
                 crop_box.r = crop_box.b = 1;
                 break;
             }
+            float min_iou = sample_options[sample_option];
             // If it has no shape, then area and aspect ratio thing should be provided
             for (int j = 0; j < 1; j++)
             {
@@ -307,11 +302,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
                 std::uniform_real_distribution<float> l_dis(0.0, 1.0 - width_factor), t_dis(0.0, 1.0 - height_factor);
                 float x_factor = l_dis(_rngs[_sample_cnt]);
                 float y_factor = t_dis(_rngs[_sample_cnt]);
-                crop_box.l = x_factor;
-                crop_box.t = y_factor;
-                crop_box.r = crop_box.l + width_factor;
-                crop_box.b = crop_box.t + height_factor;
-                //std::cout << "random crop params < option, xfactor, yfactor, wf, hf>: " << sample_option << " " << x_factor << " " << y_factor << " " << width_factor << " " << height_factor << std::endl;
+                crop_box = {x_factor, y_factor, (x_factor + width_factor), (y_factor + height_factor)};
                 // All boxes should satisfy IOU criteria
                 if (_all_boxes_overlap)
                 {
@@ -348,9 +339,6 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
                 crop_success = true;
                 break;
             }
-
-            if (crop_success == true)
-                break;
         } // while loop
         //Crop coordinates expected in "xywh" format
         coords_buf[0] = crop_box.l;
@@ -359,7 +347,6 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
         coords_buf[3] = crop_box.b - crop_box.t;
 
         _crop_coords.push_back(coords_buf);
-        
         _sample_cnt++;
     }
     return _crop_coords;

@@ -117,6 +117,7 @@ THE SOFTWARE.
 #define AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE      0x00000002 // buffer dirty by node
 #define AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL   0x00000004 // OpenCL buffer dirty by node
 #define AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED      0x00000008 // OpenCL buffer has been synced
+#define AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE     0x00000010 // buffer dirty by write
 
 // AGO graph optimizer
 #define AGO_GRAPH_OPTIMIZER_FLAG_NO_DIVIDE                0x00000001 // don't run drama divide

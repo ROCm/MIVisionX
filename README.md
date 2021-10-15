@@ -403,9 +403,9 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.91](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.91)
-* FFMPEG - [V4.0.4](https://git.ffmpeg.org/gitweb/ffmpeg.git/tag/aedb6250eafa141cd4823788f7381f33b2ff4da7)
+* FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.9.93`
+* MIVisionX Setup Script - `V1.9.94`
 
 ### Latest Release
 

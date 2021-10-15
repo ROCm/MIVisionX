@@ -108,6 +108,14 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_image_id(RaliContext context, py::array_t<int> array)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliGetImageId(context,ptr);
+        return py::cast<py::none>(Py_None);
+    }
     py::object wrapper_labels_BB_count_copy(RaliContext context, py::array_t<int> array)
 
     {
@@ -126,6 +134,17 @@ namespace rali{
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
         raliGetBoundingBoxLabel(context,ptr);
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_encoded_bbox_label(RaliContext context, py::array_t<float>bboxes_array, py::array_t<int>labels_array)
+    {
+        auto bboxes_buf = bboxes_array.request();
+        float* bboxes_ptr = (float*) bboxes_buf.ptr;
+        auto labels_buf = labels_array.request();
+        int* labels_ptr = (int*) labels_buf.ptr;
+        // call pure C++ function
+        raliCopyEncodedBoxesAndLables(context, bboxes_ptr , labels_ptr);
         return py::cast<py::none>(Py_None);
     }
 
@@ -230,6 +249,7 @@ namespace rali{
         m.def("getImageHeight",&raliGetImageHeight);
         m.def("getImagePlanes",&raliGetImagePlanes);
         m.def("getImageName",&wrapper_image_name);
+        m.def("getImageId", &wrapper_image_id);
         m.def("getImageNameLen",&wrapper_image_name_length);
         m.def("getStatus",&raliGetStatus);
         m.def("labelReader",&raliCreateLabelReader);
@@ -245,10 +265,12 @@ namespace rali{
         m.def("getImageLabels",&wrapper_label_copy);
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
+        m.def("raliCopyEncodedBoxesAndLables",&wrapper_encoded_bbox_label);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
         m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy );
         m.def("isEmpty",&raliIsEmpty);
+        m.def("BoxEncoder",&raliBoxEncoder);
         m.def("getTimingInfo",raliGetTimingInfo);
         // rali_api_parameter.h
         m.def("setSeed",&raliSetSeed);

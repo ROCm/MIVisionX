@@ -113,8 +113,8 @@ void createLegendImage()
 {
 
     cv::Mat AMD_Epyc_Black_resize, AMD_ROCm_Black_resize;
-    AMD_Epyc_Black_resize = cv::imread("/home/svcbuild/work/amd-epyc-black-resize.png");
-    AMD_ROCm_Black_resize = cv::imread("/home/svcbuild/work/rocm-black-resize.png");
+    AMD_Epyc_Black_resize = cv::imread("../../../samples/images/amd-epyc-black-resize.png");
+    AMD_ROCm_Black_resize = cv::imread("../../../samples/images/rocm-black-resize.png");
 
     // create display legend image
     int fontFace = CV_FONT_HERSHEY_DUPLEX;
@@ -262,8 +262,8 @@ int main(int argc, const char ** argv)
 {
 
     cv::Mat AMD_Epyc_Black_resize, AMD_ROCm_Black_resize;
-    AMD_Epyc_Black_resize = cv::imread("/home/svcbuild/work/amd-epyc-black-resize.png");
-    AMD_ROCm_Black_resize = cv::imread("/home/svcbuild/work/rocm-black-resize.png");
+    AMD_Epyc_Black_resize = cv::imread("../../../samples/images/amd-epyc-black-resize.png");
+    AMD_ROCm_Black_resize = cv::imread("../../../samples/images/rocm-black-resize.png");
 
     // check command-line usage   
     std::string binaryFilename_inception_str = "empty";

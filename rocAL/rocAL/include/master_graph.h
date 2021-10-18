@@ -79,6 +79,7 @@ public:
     MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch *create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
+    void box_encoder(std::vector<float> &anchors, float criteria, const std::vector<float> &means, const std::vector<float> &stds, bool offset, float scale);
     void create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts, int64_t seed=0);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
@@ -145,6 +146,13 @@ private:
     bool _output_routine_finished_processing = false;
     const RaliTensorDataType _out_data_type;
     bool _is_random_bbox_crop = false;
+    // box encoder variables
+    bool _is_box_encoder = false; //bool variable to set the box encoder 
+    std::vector<float>_anchors; // Anchors to be used for encoding, as the array of floats is in the ltrb format of size 8732x4
+    float _criteria = 0.5; // Threshold IoU for matching bounding boxes with anchors. The value needs to be between 0 and 1.
+    float _scale; // Rescales the box and anchor values before the offset is calculated (for example, to return to the absolute values).
+    bool _offset; // Returns normalized offsets ((encoded_bboxes*scale - anchors*scale) - mean) / stds in EncodedBBoxes that use std and the mean and scale arguments if offset="True"
+    std::vector<float> _means, _stds; //_means:  [x y w h] mean values for normalization _stds: [x y w h] standard deviations for offset normalization.
 };
 
 template <typename T>

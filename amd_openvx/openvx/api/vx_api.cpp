@@ -7617,7 +7617,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
 
             vx_size stride = (end_x - start_x);
             vx_size size = (stride * (end_y - start_y)) * sizeof(vx_coordinates2df_t);
-            vx_uint8 * ptr_returned = data->buffer + size;
+            ago_coord2d_float_t* ptr_returned = (ago_coord2d_float_t *)data->reserved;
 
             // save the pointer and usage for use in vxUnmapRemapPatch
             status = VX_SUCCESS;
@@ -7651,6 +7651,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
                 data->mapped.push_back(item);
                 *map_id = item.map_id;
                 *ptr = ptr_returned;
+                *stride_y = stride * sizeof(vx_coordinates2df_t);
             }
         }
     }

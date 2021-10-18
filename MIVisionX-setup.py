@@ -412,10 +412,6 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install nasm yasm')
-            # json-cpp
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install libjsoncpp-dev')
             # clang
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +

@@ -43,46 +43,32 @@ void FlipMetaNode::update_parameters(MetaDataBatch* input_meta_data)
     for(int i = 0; i < _batch_size; i++)
     {
         auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
-        int labels_buf[bb_count];
-        float coords_buf[bb_count*4];
-        memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
-        memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        BoundingBoxLabels labels_buf;
+        BoundingBoxCords coords_buf;
+        coords_buf.resize(bb_count);
+        labels_buf.resize(bb_count);
+        memcpy(labels_buf.data(), input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
+        memcpy(coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
-        BoundingBoxLabels bb_labels;
         
-        for(uint j = 0, m = 0; j < bb_count; j++)
+        for(uint j = 0; j < bb_count; j++)
         {
-            BoundingBoxCord box;
-            box.l = coords_buf[m++];
-            box.t = coords_buf[m++];
-            box.r = coords_buf[m++];
-            box.b = coords_buf[m++];
-            
             if(_flip_axis_val[i] == 0)
             {
-                float l = 1 - box.r;
-                box.r = 1 - box.l;
-                box.l = l;     
+                float l = 1 - coords_buf[j].r;
+                coords_buf[j].r = 1 - coords_buf[j].l;
+                coords_buf[j].l = l;     
             }
             else if(_flip_axis_val[i] == 1)
             {
-                float t = 1 - box.b;
-                box.b = 1 - box.t;
-                box.t = t;
+                float t = 1 - coords_buf[j].b;
+                coords_buf[j].b = 1 - coords_buf[j].t;
+                coords_buf[j].t = t;
             }
             
-            bb_coords.push_back(box);
-            bb_labels.push_back(labels_buf[j]);
-        }
-        if(bb_coords.size() == 0)
-        {
-            BoundingBoxCord temp_box;
-            temp_box.l = temp_box.t = 0;
-            temp_box.r = temp_box.b = 1;
-            bb_coords.push_back(temp_box);
-            bb_labels.push_back(0);
+            bb_coords.push_back(coords_buf[j]);
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
-        input_meta_data->get_bb_labels_batch()[i] = bb_labels;
+        input_meta_data->get_bb_labels_batch()[i] = labels_buf;
     }
 }

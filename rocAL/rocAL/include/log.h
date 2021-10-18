@@ -26,7 +26,11 @@ THE SOFTWARE.
 #define STR(X) std::string(X)
 
 #include <iostream>
-#define INFO(X) std::clog << "[INF] "  << " {" << __func__ <<"} " << " " << X << std::endl;
+#if DBGINFO
+#define INFO(X) std::clog << "[INF] " << " {" << func <<"} " << " " << X << std::endl;
+#else
+#define INFO(X) ;
+#endif
 #if DBGLOG
 #define LOG(X) std::clog << "[LOG] "  << " {" << __func__ <<"} " << " " << X << std::endl;
 #else

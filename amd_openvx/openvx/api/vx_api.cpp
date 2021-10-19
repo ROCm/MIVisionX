@@ -6008,6 +6008,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdValue(vx_threshold thresh, vx_
                     dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                 }
             }
+#elif ENABLE_HIP
+            if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty HIP buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, dataToSync->hip_memory + dataToSync->gpu_buffer_offset, dataToSync->size);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: hipMemcpyDtoH() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
 #endif
                 if (usage == VX_READ_ONLY){
                     //*(vx_int32 *)value_ptr = data->u.thr.threshold_lower;
@@ -6077,6 +6093,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdRange(vx_threshold thresh, vx_
                     dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                 }
             }
+#elif ENABLE_HIP
+            if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty HIP buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, dataToSync->hip_memory + dataToSync->gpu_buffer_offset, dataToSync->size);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: hipMemcpyDtoH() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
 #endif
                 if (usage == VX_READ_ONLY){
                     memcpy(lower_value_ptr, &data->u.thr.threshold_lower, sizeof(vx_pixel_value_t));
@@ -6135,6 +6167,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdOutput(vx_threshold thresh, vx
                         if (err) {
                             status = VX_FAILURE;
                             agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
+#elif ENABLE_HIP
+            if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty HIP buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, dataToSync->hip_memory + dataToSync->gpu_buffer_offset, dataToSync->size);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: hipMemcpyDtoH() => %d\n", err);
                             return status;
                         }
                     }
@@ -7452,6 +7500,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
                     dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                 }
             }
+#elif ENABLE_HIP
+            if (dataToSync->hip_memory  && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty HIP buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, dataToSync->hip_memory + dataToSync->gpu_buffer_offset, dataToSync->size);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyRemapPatch: hipMemcpyDtoH() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
 #endif
             if (usage == VX_READ_ONLY) {
                 vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
@@ -7640,6 +7704,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapRemapPatch: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
+#elif ENABLE_HIP
+                if (dataToSync->hip_memory  && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty HIP buffers are synched before giving access for read
+                    if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        if (dataToSync->size > 0) {
+                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, dataToSync->hip_memory + dataToSync->gpu_buffer_offset, dataToSync->size);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapRemapPatch: hipMemcpyDtoH() => %d\n", err);
                                 return status;
                             }
                         }
@@ -8066,6 +8146,23 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddArrayItems(vx_array arr, vx_size count, 
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
+#elif ENABLE_HIP
+                if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty HIP buffers are synched before giving access for read
+                    if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
+                        if (size > 0) {
+                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, data->hip_memory + data->gpu_buffer_offset, data->size);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: hipMemcpyDtoH() => %d\n", err);
                                 return status;
                             }
                         }

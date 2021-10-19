@@ -243,18 +243,34 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
     height = (vx_uint32)output_dims[1];
     N = (vx_uint32)output_dims[3];
 
-    AgoData *input  = reinterpret_cast<AgoData *>(parameters[0]);
-    AgoData *output = reinterpret_cast<AgoData *>(parameters[1]);
-    AgoData *sc1 = reinterpret_cast<AgoData *>(parameters[2]);
-    AgoData *sc2 = reinterpret_cast<AgoData *>(parameters[3]);
-    AgoData *reverse_channel_order = reinterpret_cast<AgoData *>(parameters[4]);
+    vx_size temp[4] = {0};
+    uint4 output_stride;
+    vx_size output_offset;
+    vx_uint32 input_offset, input_stride;
+    unsigned char *input_mem = NULL;
+    unsigned char *output_mem = NULL;
+    float sc1, sc2;
+    uint reverse_channel_order;
+    hipStream_t hip_stream;
 
-    uint4 output_stride = make_uint4((uint)output->u.tensor.stride[0], (uint)output->u.tensor.stride[1],
-                                     (uint)output->u.tensor.stride[2], (uint)output->u.tensor.stride[3]);
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &input_mem, sizeof(input_mem)));
+    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET, &input_offset, sizeof(input_offset)));
+    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE, &input_stride, sizeof(input_stride)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_GPU, &output_offset, sizeof(output_offset)));
+    ERROR_CHECK_STATUS(vxReadScalarValue((vx_scalar)parameters[2], &sc1));
+    ERROR_CHECK_STATUS(vxReadScalarValue((vx_scalar)parameters[3], &sc2));
+    ERROR_CHECK_STATUS(vxReadScalarValue((vx_scalar)parameters[4], &reverse_channel_order));
 
-    if (HipExec_image_to_tensor_layer(node->hip_stream0, format, type, width, height, N, input->hip_memory, input->gpu_buffer_offset,
-        input->u.img.stride_in_bytes, output->hip_memory, output->u.tensor.offset, output_stride, sc1->u.scalar.u.f, sc2->u.scalar.u.f,
-        reverse_channel_order->u.scalar.u.u)) {
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    output_stride.x = temp[0];
+    output_stride.y = temp[1];
+    output_stride.z = temp[2];
+    output_stride.w = temp[3];
+
+    if (HipExec_image_to_tensor_layer(hip_stream, format, type, width, height, N, input_mem, input_offset,
+        input_stride, output_mem, output_offset, output_stride, sc1, sc2, reverse_channel_order)) {
         return VX_FAILURE;
     }
 

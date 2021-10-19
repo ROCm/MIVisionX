@@ -147,23 +147,43 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
     globalThreads.y = output_dims[1];
     globalThreads.z = output_dims[2] * output_dims[3];
 
-    AgoData *input  = reinterpret_cast<AgoData *>(parameters[0]);
-    AgoData *repeat = reinterpret_cast<AgoData *>(parameters[1]);
-    AgoData *output = reinterpret_cast<AgoData *>(parameters[2]);
-
-    uint4 input_stride = make_uint4((uint)input->u.tensor.stride[0], (uint)input->u.tensor.stride[1],
-                                    (uint)input->u.tensor.stride[2], (uint)input->u.tensor.stride[3]);
-
+    vx_size temp[4] = {0};
+    uint4 input_stride, repeat_stride, output_stride;
+    vx_size in_offset, repeat_offset, output_offset;
+    unsigned char *input_mem = NULL;
+    unsigned char *repeat_mem = NULL;
+    unsigned char *output_mem = NULL;
+    hipStream_t hip_stream;
     uint4 input_dimensions = make_uint4((uint)input_dims[0], (uint)input_dims[1], (uint)input_dims[2], (uint)input_dims[3]);
 
-    uint4 repeat_stride = make_uint4((uint)repeat->u.tensor.stride[0], (uint)repeat->u.tensor.stride[1],
-                                     (uint)repeat->u.tensor.stride[2], (uint)repeat->u.tensor.stride[3]);
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &in_offset, sizeof(in_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &repeat_mem, sizeof(repeat_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_GPU, &repeat_offset, sizeof(repeat_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_OFFSET_GPU, &output_offset, sizeof(output_offset)));
 
-    uint4 output_stride = make_uint4((uint)output->u.tensor.stride[0], (uint)output->u.tensor.stride[1],
-                                     (uint)output->u.tensor.stride[2], (uint)output->u.tensor.stride[3]);
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    input_stride.x = temp[0];
+    input_stride.y = temp[1];
+    input_stride.z = temp[2];
+    input_stride.w = temp[3];
 
-    if (HipExec_Tile_layer(node->hip_stream0, globalThreads, dim3(1), type, input->hip_memory, input->u.tensor.offset, input_stride,
-        input_dimensions, repeat->hip_memory, repeat->u.tensor.offset, repeat_stride, output->hip_memory, output->u.tensor.offset, output_stride)) {
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    repeat_stride.x = temp[0];
+    repeat_stride.y = temp[1];
+    repeat_stride.z = temp[2];
+    repeat_stride.w = temp[3];
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    output_stride.x = temp[0];
+    output_stride.y = temp[1];
+    output_stride.z = temp[2];
+    output_stride.w = temp[3];
+
+    if (HipExec_Tile_layer(hip_stream, globalThreads, dim3(1), type, input_mem, in_offset, input_stride,
+        input_dimensions, repeat_mem, repeat_offset, repeat_stride, output_mem, output_offset, output_stride)) {
         return VX_FAILURE;
     }
 
@@ -190,7 +210,7 @@ vx_status publishTileLayer(vx_context context) {
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-    
+
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
     ERROR_CHECK_STATUS(vxReleaseKernel(&kernel));
     return VX_SUCCESS; 

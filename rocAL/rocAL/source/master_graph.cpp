@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "master_graph.h"
 #include "parameter_factory.h"
 #include "ocl_setup.h"
+#include "log.h"
 #include "meta_data_reader_factory.h"
 #include "meta_data_graph_factory.h"
 #include "randombboxcrop_meta_data_reader_factory.h"
@@ -794,6 +795,7 @@ ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
 
 void MasterGraph::output_routine()
 {
+    _process_time.start();
     INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
 #if !ENABLE_HIP
     if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
@@ -895,14 +897,14 @@ void MasterGraph::output_routine()
                     else
                         full_batch_meta_data = _augmented_meta_data->clone();
                 }
-                _process_time.start();
                 _graph->process();
-                _process_time.end();
             }
-
+            if(_is_box_encoder )
+            {
+                _meta_data_graph->update_box_encoder_meta_data(&_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);
+            }
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
             _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
-
         }
     }
     catch (const std::exception &e)
@@ -911,6 +913,7 @@ void MasterGraph::output_routine()
         _processing = false;
         _ring_buffer.release_all_blocked_calls();
     }
+        _process_time.end();
 }
 
 void MasterGraph::start_processing()
@@ -1007,6 +1010,17 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
         _random_bbox_crop_cords_data = _randombboxcrop_meta_data_reader->get_output();
 }
 
+void MasterGraph::box_encoder(std::vector<float> &anchors, float criteria, const std::vector<float> &means, const std::vector<float> &stds, bool offset, float scale)
+{
+    _is_box_encoder = true;
+    _offset = offset;
+    _anchors = anchors;
+    _scale = scale;
+    _means = means;
+    _stds = stds;
+
+}
+
 MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)
 {
     if( _meta_data_reader)
@@ -1073,7 +1087,9 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
 
     unsigned THREAD_COUNT = std::thread::hardware_concurrency();
     if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
+    {
         INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")
+    }
     else
     {
         THREAD_COUNT = MINIMUM_CPU_THREAD_COUNT;

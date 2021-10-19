@@ -260,17 +260,33 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
     globalThreads.y = input_dims[1];
     globalThreads.z = input_dims[2] * input_dims[3];
 
-    AgoData *input  = reinterpret_cast<AgoData *>(parameters[0]);
-    AgoData *output = reinterpret_cast<AgoData *>(parameters[2]);
+    vx_size temp[4] = {0};
+    uint4 input_stride, output_stride;
+    vx_size in_offset, output_offset;
+    unsigned char *input_mem = NULL;
+    unsigned char *output_mem = NULL;
+    hipStream_t hip_stream;
 
-    uint4 input_stride = make_uint4((uint)input->u.tensor.stride[0], (uint)input->u.tensor.stride[1],
-                                    (uint)input->u.tensor.stride[2], (uint)input->u.tensor.stride[3]);
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &in_offset, sizeof(in_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_OFFSET_GPU, &output_offset, sizeof(output_offset)));
 
-    uint4 output_stride = make_uint4((uint)output->u.tensor.stride[0], (uint)output->u.tensor.stride[1],
-                                     (uint)output->u.tensor.stride[2], (uint)output->u.tensor.stride[3]);
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    input_stride.x = temp[0];
+    input_stride.y = temp[1];
+    input_stride.z = temp[2];
+    input_stride.w = temp[3];
 
-    if (HipExec_Cast_layer(node->hip_stream0, globalThreads, dim3(1), input_type, output_type, input->hip_memory, input->u.tensor.offset, input_stride,
-            output->hip_memory, output->u.tensor.offset, output_stride)) {
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    output_stride.x = temp[0];
+    output_stride.y = temp[1];
+    output_stride.z = temp[2];
+    output_stride.w = temp[3];
+
+    if (HipExec_Cast_layer(hip_stream, globalThreads, dim3(1), input_type, output_type, input_mem, in_offset, input_stride,
+            output_mem, output_offset, output_stride)) {
         return VX_FAILURE;
     }
 

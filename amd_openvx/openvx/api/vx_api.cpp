@@ -810,7 +810,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateUniformImage(vx_context context, vx_ui
     if (agoIsValidContext(context)) {
         CAgoLock lock(context->cs);
         char desc[128];
-        if (color == VX_DF_IMAGE_S16) {
+        if (color == VX_DF_IMAGE_U8) {
+            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->U8);
+        }
+        else if (color == VX_DF_IMAGE_S16) {
             sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S16);
         }
         else if (color == VX_DF_IMAGE_U16) {
@@ -944,6 +947,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                         data->children[i]->buffer = (vx_uint8 *)(ptrs ? ptrs[i] : nullptr);
                         data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
                         data->children[i]->gpu_buffer_offset = 0;
+#if (ENABLE_OPENCL || ENABLE_HIP)
+                        data->children[i]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        data->children[i]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+#endif
                     }
                 }
                 else {
@@ -951,6 +958,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                     data->buffer = (vx_uint8 *)(ptrs ? ptrs[0] : nullptr);
                     data->u.img.stride_in_bytes = addrs[0].stride_y;
                     data->gpu_buffer_offset = 0;
+#if (ENABLE_OPENCL || ENABLE_HIP)
+                    data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+#endif
                 }
                 data->u.img.mem_handle = vx_false_e;
             }
@@ -2115,6 +2126,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
                         }
                     }
                 }
+                else if (usage == VX_WRITE_ONLY)
+                {
+                    auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE;
+                }
 #elif ENABLE_HIP
                     auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
                     if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
@@ -2129,6 +2145,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
                             }
                             dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                         }
+                    }
+                    if (usage == VX_WRITE_ONLY)
+                    {
+                        auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
+                        dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE;
                     }
 #endif
                 // get map id and set returned pointer
@@ -7596,7 +7617,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
 
             vx_size stride = (end_x - start_x);
             vx_size size = (stride * (end_y - start_y)) * sizeof(vx_coordinates2df_t);
-            vx_uint8 * ptr_returned = data->buffer + size;
+            ago_coord2d_float_t* ptr_returned = (ago_coord2d_float_t *)data->reserved;
 
             // save the pointer and usage for use in vxUnmapRemapPatch
             status = VX_SUCCESS;
@@ -7630,6 +7651,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
                 data->mapped.push_back(item);
                 *map_id = item.map_id;
                 *ptr = ptr_returned;
+                *stride_y = stride * sizeof(vx_coordinates2df_t);
             }
         }
     }
@@ -9562,13 +9584,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryTensor(vx_tensor tensor, vx_enum attri
                 }
                 break;
 #if (ENABLE_OPENCL||ENABLE_HIP)
-            case VX_TENSOR_OFFSET_OPENCL:
+            case VX_TENSOR_OFFSET_GPU:
                 if (size == sizeof(vx_size)) {
                     *(vx_size *)ptr = data->u.tensor.offset;
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_TENSOR_STRIDE_OPENCL:
+            case VX_TENSOR_STRIDE_GPU:
                 if (size >= sizeof(vx_size)*data->u.tensor.num_dims) {
                     for (vx_size i = 0; i < data->u.tensor.num_dims; i++) {
                         ((vx_size *)ptr)[i] = data->u.tensor.stride[i];

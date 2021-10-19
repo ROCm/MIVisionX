@@ -34,8 +34,7 @@ static void clDumpBuffer(const char * fileNameFormat, cl_command_queue opencl_cm
     static int dumpBufferCount = 0; dumpBufferCount++;
     char fileName[1024]; sprintf(fileName, fileNameFormat, dumpBufferCount);
     cl_mem opencl_buffer = data->opencl_buffer;
-    cl_uint gpu_buffer_offset = data->gpu_buffer_offset
-    _buffer_offset;
+    cl_uint gpu_buffer_offset = data->gpu_buffer_offset;
     cl_uint size = (cl_uint)0;
     if (data->ref.type == VX_TYPE_IMAGE)
         size = (cl_uint)(data->u.img.stride_in_bytes*data->u.img.height);
@@ -401,6 +400,14 @@ int agoGpuOclAllocBuffer(AgoData * data)
         if (data != dataMaster) {
             // special handling for image ROI
             data->opencl_buffer = dataMaster->opencl_buffer;
+            if((dataMaster->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE)) {
+                // copy the image into OpenCL buffer because commits aren't done to this buffer
+                cl_int err = clEnqueueWriteBuffer(context->opencl_cmdq, dataMaster->opencl_buffer, CL_TRUE, dataMaster->gpu_buffer_offset, dataMaster->size, dataMaster->buffer, 0, NULL, NULL);
+                if (err) { 
+                    agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclAllocBuffer: clEnqueueWriteBuffer() => %d\n", err);
+                    return -1; 
+                }
+            }
 #if defined(CL_VERSION_2_0)
             data->opencl_svm_buffer = dataMaster->opencl_svm_buffer;
 #endif

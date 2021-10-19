@@ -404,4 +404,3 @@ int HafCpu_ScaleGaussianOrb_U8_U8_5x5
 	}
 	return AGO_SUCCESS;
 }
-

@@ -209,18 +209,37 @@ int main(int argc, const char ** argv)
     std::cout << "Augmented copies count " << raliGetAugmentationBranchCount(handle) << std::endl;
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
+    //initializations for logos and heading
+    cv::Mat AMD_Epyc_Black_resize, AMD_ROCm_Black_resize;
+    AMD_Epyc_Black_resize = cv::imread("../../../samples/images/amd-epyc-black-resize.png");
+    AMD_ROCm_Black_resize = cv::imread("../../../samples/images/rocm-black-resize.png");
+    int fontFace = CV_FONT_HERSHEY_DUPLEX;
+    int thickness = 1.3;
+    std::string bufferName = "MIVisionX Image Augmentation";
+
     int h = raliGetAugmentationBranchCount(handle) * raliGetOutputHeight(handle);
     int w = raliGetOutputWidth(handle);
     int p = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? 3 : 1);
     std::cout << "output width "<< w << " output height "<< h << " color planes "<< p << std::endl;
     const unsigned number_of_cols = video_mode ? 1 : 10;
     auto cv_color_format = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? CV_8UC3 : CV_8UC1);
-    cv::Mat mat_output(h, w*number_of_cols, cv_color_format);
+    cv::Mat mat_output(h+AMD_ROCm_Black_resize.rows, w*number_of_cols, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);
     cv::Mat mat_color;
     int col_counter = 0;
     if (display)
         cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
+
+    //adding heading to output display
+    cv::Rect roi = Rect(0,0,w*number_of_cols,AMD_Epyc_Black_resize.rows);
+    mat_output(roi).setTo(cv::Scalar(128,128,128));
+    putText(mat_output, bufferName, Point(250, 70), fontFace, 1.2, cv::Scalar(66,13,9), thickness,5);
+
+    //adding logos to output display
+    cv::Mat mat_output_ROI = mat_output(cv::Rect(w*number_of_cols - AMD_Epyc_Black_resize.cols,0, AMD_Epyc_Black_resize.cols, AMD_Epyc_Black_resize.rows));
+    cv::Mat mat_output_ROI_1 = mat_output(cv::Rect(0,0, AMD_ROCm_Black_resize.cols, AMD_ROCm_Black_resize.rows));
+    AMD_Epyc_Black_resize.copyTo(mat_output_ROI);
+    AMD_ROCm_Black_resize.copyTo(mat_output_ROI_1);
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
@@ -240,7 +259,7 @@ int main(int argc, const char ** argv)
         if(!display)
             continue;
 
-        mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
+        mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, AMD_ROCm_Black_resize.rows, w, h)));
         if(color_format ==  RaliImageColor::RALI_COLOR_RGB24 )
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);

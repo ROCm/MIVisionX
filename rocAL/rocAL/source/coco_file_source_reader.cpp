@@ -8,6 +8,7 @@
 #include "meta_data_graph_factory.h"
 
 namespace filesys = boost::filesystem;
+#define USE_STDIO_FILE 0
 
 COCOFileSourceReader::COCOFileSourceReader():
 _shuffle_time("shuffle_time", DBG_TIMING)
@@ -51,8 +52,8 @@ Reader::Status COCOFileSourceReader::initialize(ReaderConfig desc)
         std::cout<<"\n _json_path has to be set manually";
         exit(0);
     }
-    if (!_meta_data_reader )
-        std::cout<<"Metadata reader not initialized for COCO file source\n";
+    //if (!_meta_data_reader )
+    //    std::cout<<"Metadata reader not initialized for COCO file source\n";
 
     ret = subfolder_reading();
     // the following code is required to make every shard the same size:: required for multi-gpu training
@@ -88,36 +89,52 @@ size_t COCOFileSourceReader::open()
         _last_id.erase(0, last_slash_idx + 1);
     }
 
+#if USE_STDIO_FILE
     _current_fPtr = fopen(file_path.c_str(), "rb"); // Open the file,
-
     if (!_current_fPtr) // Check if it is ready for reading
         return 0;
-
     fseek(_current_fPtr, 0, SEEK_END); // Take the file read pointer to the end
-
     _current_file_size = ftell(_current_fPtr); // Check how many bytes are there between and the current read pointer position (end of the file)
-
     if (_current_file_size == 0)
     { // If file is empty continue
         fclose(_current_fPtr);
         _current_fPtr = nullptr;
         return 0;
     }
-
     fseek(_current_fPtr, 0, SEEK_SET); // Take the file pointer back to the start
-
+#else
+    _current_ifs.open (file_path, std::ifstream::in);
+    if (_current_ifs.fail()) return 0;
+    // Determine the file length
+    _current_ifs.seekg(0, std::ios_base::end);
+    _current_file_size = _current_ifs.tellg();
+    if (_current_file_size == 0)
+    { // If file is empty continue
+        _current_ifs.close();
+        return 0;
+    }
+    _current_ifs.seekg(0, std::ios_base::beg);
+#endif    
     return _current_file_size;
 }
 
 size_t COCOFileSourceReader::read(unsigned char *buf, size_t read_size)
 {
+#if USE_STDIO_FILE
     if (!_current_fPtr)
         return 0;
-
+#else
+    if (!_current_ifs)
+        return 0;
+#endif        
     // Requested read size bigger than the file size? just read as many bytes as the file size
     read_size = (read_size > _current_file_size) ? _current_file_size : read_size;
-
+#if USE_STDIO_FILE
     size_t actual_read_size = fread(buf, sizeof(unsigned char), read_size, _current_fPtr);
+#else
+    _current_ifs.read((char *)buf, (int)read_size);
+    size_t actual_read_size = _current_ifs.gcount();
+#endif    
     return actual_read_size;
 }
 
@@ -133,10 +150,16 @@ COCOFileSourceReader::~COCOFileSourceReader()
 
 int COCOFileSourceReader::release()
 {
+#if USE_STDIO_FILE
     if (!_current_fPtr)
         return 0;
     fclose(_current_fPtr);
     _current_fPtr = nullptr;
+#else
+    if (_current_ifs.bad())
+        return 0;
+    _current_ifs.close();
+#endif    
     return 0;
 }
 

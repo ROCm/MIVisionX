@@ -170,6 +170,23 @@ RALI_API_CALL raliGetImageNameLen(RaliContext p_context, int* buf)
 }
 
 void
+RALI_API_CALL raliGetImageId(RaliContext p_context,  int* buf)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliGetImageId")
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.first.size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    for(unsigned int i = 0; i < meta_data_batch_size; i++)
+    {
+        std::string str_id = meta_data.first[i].erase(0, meta_data.first[i].find_first_not_of('0'));
+        buf[i] = stoi(str_id);
+    }
+}
+
+void
 RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
 {
     
@@ -326,3 +343,45 @@ RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext p_context, const char
 
 }
 
+void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<float>& anchors, float criteria,
+                                  std::vector<float> &means, std::vector<float> &stds, bool offset, float scale)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliBoxEncoder")
+    auto context = static_cast<Context *>(p_context);
+    context->master_graph->box_encoder(anchors, criteria, means, stds, offset, scale);
+}
+
+void 
+RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_buf, int* labels_buf)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliCopyEncodedBoxesAndLables")
+    auto context = static_cast<Context *>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_bb_labels_batch().size();
+    if (context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != " + TOSTR(context->user_batch_size()))
+    if (!meta_data.second)
+    {
+        WRN("No encoded labels and bounding boxes has been loaded for this output image")
+        return;
+    }
+    unsigned sum = 0;
+    unsigned sum_bb_count[meta_data_batch_size];
+    for (unsigned i = 0; i < meta_data_batch_size; i++)
+    {
+        sum_bb_count[i] = sum;
+        sum = sum + meta_data.second->get_bb_labels_batch()[i].size();
+    }
+    // copy labels buffer & bboxes buffer parallely
+    #pragma omp parallel for
+    for (unsigned i = 0; i < meta_data_batch_size; i++)
+    {
+        unsigned bb_count = meta_data.second->get_bb_labels_batch()[i].size();
+        int *temp_labels_buf = labels_buf + sum_bb_count[i];
+        float *temp_bbox_buf = boxes_buf + (sum_bb_count[i] * 4);
+        memcpy(temp_labels_buf, meta_data.second->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
+        memcpy(temp_bbox_buf, meta_data.second->get_bb_cords_batch()[i].data(), sizeof(BoundingBoxCord) * bb_count);
+    }
+}

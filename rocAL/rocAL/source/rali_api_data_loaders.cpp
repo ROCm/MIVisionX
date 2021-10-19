@@ -140,6 +140,7 @@ raliJpegFileSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -217,6 +218,7 @@ raliJpegFileSource(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -291,6 +293,7 @@ raliJpegCaffe2LMDBRecordSource(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -369,6 +372,7 @@ raliJpegCaffe2LMDBRecordSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -442,6 +446,7 @@ raliJpegCaffeLMDBRecordSource(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -521,6 +526,7 @@ raliJpegCaffeLMDBRecordSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -595,6 +601,7 @@ raliJpegCOCOFileSource(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -675,6 +682,7 @@ raliJpegCOCOFileSourceSingleShard(
                                                        source_path, json_path);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -756,6 +764,7 @@ raliFusedJpegCrop(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -837,6 +846,7 @@ raliJpegCOCOFileSourcePartial(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -925,6 +935,7 @@ raliJpegCOCOFileSourcePartialSingleShard(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1009,6 +1020,7 @@ raliJpegTFRecordSource(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1085,6 +1097,7 @@ raliJpegTFRecordSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1227,6 +1240,7 @@ raliRawTFRecordSourceSingleShard(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(out_width)+ " height = "+ TOSTR(out_height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(out_width, out_height,
@@ -1311,6 +1325,7 @@ raliFusedJpegCropSingleShard(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1426,6 +1441,7 @@ raliRawCIFAR10Source(
         auto [width, height] = std::make_tuple(out_width, out_height);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,

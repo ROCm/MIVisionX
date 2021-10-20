@@ -231,7 +231,14 @@ Reader::Status SequenceFileSourceReader::subfolder_reading()
         filesys::path pathObj(subfolder_path);
         if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
         {
-            break; // assume directory has only files.
+            // ignore files with extensions .tar, .zip, .7z, .mp4
+            auto file_extension_idx = subfolder_path.find_last_of(".");
+            if (file_extension_idx  != std::string::npos) {
+                std::string file_extension = subfolder_path.substr(file_extension_idx+1);
+                if ((file_extension == "tar") || (file_extension == "zip") || (file_extension == "7z") || (file_extension == "rar") || (file_extension == "mp4"))
+                    continue;
+            }
+            _file_names.push_back(subfolder_path);
         }
         else if (filesys::exists(pathObj) && filesys::is_directory(pathObj))
         {
@@ -243,9 +250,13 @@ Reader::Status SequenceFileSourceReader::subfolder_reading()
         }
     }
     if (!_file_names.empty())
-        LOG("SequenceReader ShardID [" + TOSTR(_shard_id) + "] Total of " + TOSTR(_file_names.size()) + " images loaded from " + _full_path)
+    {
+        _folder_file_names.push_back(_file_names);
+        _file_names.clear();
+    }    
     return ret;
 }
+
 void SequenceFileSourceReader::replicate_last_sequence_to_fill_last_shard()
 {
     for (size_t i = _in_batch_read_count; i < _batch_count; i++)

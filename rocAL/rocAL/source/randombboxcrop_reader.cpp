@@ -274,6 +274,8 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
         if (_meta_bbox_map_content.end() == elem)
             THROW("ERROR: Given name not present in the map" + image_name)
         BoundingBoxCords bb_coords = elem->second->get_bb_cords();
+        ImgSizes img_sizes = elem->second->get_img_sizes();
+        int img_width = img_sizes[0].w;
         bb_count = bb_coords.size();
         crop_success = false;
         while (!crop_success)
@@ -302,6 +304,8 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
                 std::uniform_real_distribution<float> l_dis(0.0, 1.0 - width_factor), t_dis(0.0, 1.0 - height_factor);
                 float x_factor = l_dis(_rngs[_sample_cnt]);
                 float y_factor = t_dis(_rngs[_sample_cnt]);
+                // todo::adjust x_factor and y_factor so that x and y is a multiple of 4 (tjpg crop coordinates req)
+                x_factor = (float)(std::lround(x_factor*img_width) & ~7) /img_width;
                 crop_box = {x_factor, y_factor, (x_factor + width_factor), (y_factor + height_factor)};
                 // All boxes should satisfy IOU criteria
                 if (_all_boxes_overlap)

@@ -179,12 +179,6 @@ def runTestCommand (platform, project) {
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - HIP
                 ${conformaceHIP}
                 ${moveFiles}
-                echo MIVisionX HIP Backend - Code Coverage Info
-                cd ../../
-                ${captureCodeCovHIP}
-                ${codeCovExcludeHIP}
-                ${codeCovListHIP}
-                ${codeCovPackageHIP}
                 """
 
     platform.runCommand(this, command)

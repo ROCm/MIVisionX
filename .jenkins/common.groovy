@@ -65,7 +65,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 cd ../
                 echo Build MIVisionX HIP - ${buildTypeDir}
                 mkdir -p ${buildTypeDir}-hip && cd ${buildTypeDir}-hip
-                ${cmake} ${buildTypeArg} ${codeCovFlags} ${installPrefixHIP} -D BACKEND=HIP ../..
+                ${cmake} ${buildTypeArg} ${installPrefixHIP} -D BACKEND=HIP ../..
                 make -j\$(nproc)
                 sudo make package
                 sudo make install

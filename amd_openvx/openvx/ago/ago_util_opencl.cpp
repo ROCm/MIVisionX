@@ -376,6 +376,10 @@ int agoGpuOclAllocBuffer(AgoData * data)
             {
                 // allocate normal opencl_buffer
                 dataMaster->opencl_buffer = dataMaster->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, dataMaster->size + dataMaster->gpu_buffer_offset, NULL, &err);
+                cl_event ev = nullptr;
+                vx_uint32 zero = 0;
+                cl_int err = clEnqueueFillBuffer(context->opencl_cmdq, dataMaster->opencl_buffer, &zero, sizeof(zero), dataMaster->gpu_buffer_offset, dataMaster->size, 0, NULL, &ev);
+                if (!err) err = clWaitForEvents(1, &ev);
             }
             if (err) {
                 agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d\n", context->opencl_context, (int)dataMaster->size + dataMaster->gpu_buffer_offset, err);

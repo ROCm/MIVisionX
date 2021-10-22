@@ -385,7 +385,7 @@ int agoGpuOclAllocBuffer(AgoData * data)
                 vx_uint32 zero = 0;
                 err = clEnqueueFillBuffer(context->opencl_cmdq, dataMaster->opencl_buffer, &zero, sizeof(zero), 0, dataMaster->gpu_buffer_offset + dataMaster->size, 0, NULL, NULL);
                 if (err) {
-                    agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d\n", context->opencl_context, (int)dataMaster->size + dataMaster->gpu_buffer_offset, err);
+                    agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clEnqueueFillBuffer() => %d\n", err);
                     return -1;
                 }
             }

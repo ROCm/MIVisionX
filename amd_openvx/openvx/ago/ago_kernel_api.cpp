@@ -25,7 +25,6 @@ THE SOFTWARE.
 #include "ago_kernel_api.h"
 #include "ago_haf_gpu.h"
 
-
 #if ENABLE_HIP
 #include "../hipvx/hip_host_decls.h"
 #endif

@@ -65,7 +65,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 cd ../
                 echo Build MIVisionX HIP - ${buildTypeDir}
                 mkdir -p ${buildTypeDir}-hip && cd ${buildTypeDir}-hip
-                ${cmake} ${buildTypeArg} ${codeCovFlags} ${installPrefixHIP} -D BACKEND=HIP ../..
+                ${cmake} ${buildTypeArg} ${installPrefixHIP} -D BACKEND=HIP ../..
                 make -j\$(nproc)
                 sudo make package
                 sudo make install
@@ -172,19 +172,13 @@ def runTestCommand (platform, project) {
                 export VX_TEST_DATA_PATH=\$(pwd)/OpenVX-cts/test_data/
                 mkdir build-cts
                 cd build-cts
-                cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;\$OPENVX_DIR/lib/libopenvx_hip.so\\;/opt/rocm/hip/lib/libamdhip64.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
+                cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;/opt/rocm/hip/lib/libamdhip64.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
                 cmake --build .
                 echo MIVisionX OpenVX 1.3 Conformance - CPU - HIP Backend Build
                 ${conformaceCPU_HIP}
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - HIP
                 ${conformaceHIP}
                 ${moveFiles}
-                echo MIVisionX HIP Backend - Code Coverage Info
-                cd ../../
-                ${captureCodeCovHIP}
-                ${codeCovExcludeHIP}
-                ${codeCovListHIP}
-                ${codeCovPackageHIP}
                 """
 
     platform.runCommand(this, command)

@@ -24,7 +24,7 @@ RUN yum -y install --nogpgcheck autoconf automake bzip2 bzip2-devel cmake freety
         yum -y install --nogpgcheck https://forensics.cert.org/cert-forensics-tools-release-el7.rpm && yum -y --enablerepo=forensics install --nogpgcheck fdk-aac && \
         yum -y install --nogpgcheck libass-devel && \
         export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/" && \
-        git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git && cd ffmpeg && \
+        wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.0.4.zip && unzip n4.0.4.zip && cd FFmpeg-n4.0.4/ && \
         ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree && \
         make -j8 && make install
 

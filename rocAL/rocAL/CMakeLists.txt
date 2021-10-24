@@ -174,6 +174,7 @@ if(${BUILD_RALI})
                 ../../amd_openvx/openvx/include/
                 ../../amd_openvx_extensions/amd_rpp/include/
                 ../../amd_openvx_extensions/amd_media/include/
+                ../third_party/rapidjson/include/
                 include
                 )
     protobuf_generate_cpp(TF_PROTO_SRCS TF_PROTO_HEADERS proto/example.proto proto/feature.proto)
@@ -202,6 +203,7 @@ if(${BUILD_RALI})
 
     target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
     target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC DBGINFO=0)
     target_compile_definitions(${PROJECT_NAME} PUBLIC DBGLOG=0 WRNLOG=0)
     target_compile_definitions(${PROJECT_NAME} PUBLIC TFRECORD_ENABLE=0)
     message("-- ${Green}rocAL built with ENABLE_SIMD")
@@ -212,17 +214,16 @@ if(${BUILD_RALI})
     else()
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp -fPIC -pg -pthread -std=c++14 -Wno-deprecated-declarations")
-    add_definitions(-ljsoncpp)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall  -fPIC -pg -pthread -std=c++14")
     message("-- ${Green}rocAL - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 
     if(NOT FFMPEG_FOUND)
         message("-- ${Yellow}rocAL library is going to be built without video decode functionality ${ColourReset}")
-	target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb boost_system boost_filesystem turbojpeg openvx vx_rpp jsoncpp)
+        target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb boost_system boost_filesystem turbojpeg openvx vx_rpp)
     else()
         message("-- ${Green}rocAL library is going to be built with video decode functionality ${ColourReset}")
         target_compile_definitions(${PROJECT_NAME} PUBLIC -DRALI_VIDEO)
-        target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} ${FFMPEG_LIBRARIES} lmdb turbojpeg openvx vx_rpp jsoncpp)
+        target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} ${FFMPEG_LIBRARIES} lmdb turbojpeg openvx vx_rpp)
     endif()
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
         target_link_libraries(${PROJECT_NAME} openvx_hip rocAL_hip)

@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "master_graph.h"
 #include "parameter_factory.h"
 #include "ocl_setup.h"
+#include "log.h"
 #include "meta_data_reader_factory.h"
 #include "meta_data_graph_factory.h"
 #include "randombboxcrop_meta_data_reader_factory.h"
@@ -613,33 +614,34 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
     {
         float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
         float offset[3] = {offset0, offset1, offset2 };
-        size_t dest_buf_offset = 0;
+        size_t dest_buf_offset_start = 0;
 
         auto output_buffers =_ring_buffer.get_read_buffers();
         for( auto&& out_image: output_buffers)
         {
-            auto in_buffer = (unsigned char*)out_image;
-            if(format == RaliTensorFormat::NHWC)
+            unsigned int single_image_size = w * c * h; 
+            #pragma omp parallel for
+            for(unsigned int batchCount = 0; batchCount < n; batchCount ++)
             {
-                if(output_data_type == RaliTensorDataType::FP32)
+                size_t dest_buf_offset = dest_buf_offset_start + single_image_size*batchCount;
+                auto in_buffer = (unsigned char*)out_image + single_image_size*batchCount;
+
+                if(format == RaliTensorFormat::NHWC)
                 {
-                    for (unsigned int nCount = 0; nCount < n; nCount++) {
-                        float *output_tensor_32 = static_cast<float *>(out_ptr);
-                        auto channel_size = w * h;
-                        for (unsigned channel_idx = 0; channel_idx < c; channel_idx++) {
-                            for (unsigned i = 0; i < channel_size; i++)
-                                output_tensor_32[dest_buf_offset + channel_idx + i * c] =
-                                        offset[channel_idx] + multiplier[channel_idx] *
-                                                              (reverse_channels ? (float) (in_buffer[i * c + c - channel_idx - 1])
-                                                                                : (float) (in_buffer[i * c + channel_idx]));
-                        }
-                        in_buffer += (w * c * h);
-                        dest_buf_offset += (w * c * h);
+                    if(output_data_type == RaliTensorDataType::FP32)
+                    {
+                          float *output_tensor_32 = static_cast<float *>(out_ptr);
+                          auto channel_size = w * h;
+                          for (unsigned channel_idx = 0; channel_idx < c; channel_idx++) {
+                              for (unsigned i = 0; i < channel_size; i++)
+                                  output_tensor_32[dest_buf_offset + channel_idx + i * c] =
+                                          offset[channel_idx] + multiplier[channel_idx] *
+                                                                (reverse_channels ? (float) (in_buffer[i * c + c - channel_idx - 1])
+                                                                                  : (float) (in_buffer[i * c + channel_idx]));
+                          }
                     }
-                }
-                else if(output_data_type == RaliTensorDataType::FP16)
-                {
-                    for (unsigned int nCount = 0; nCount < n; nCount++) {
+                    else if(output_data_type == RaliTensorDataType::FP16)
+                    {
                         half *output_tensor_16 = static_cast<half *>(out_ptr);
                         auto channel_size = w * h;
                         for (unsigned channel_idx = 0; channel_idx < c; channel_idx++) {
@@ -649,33 +651,21 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                                                               (reverse_channels ? (half) (in_buffer[i * c + c - channel_idx - 1])
                                                                                 : (half) (in_buffer[i * c + channel_idx]));
                         }
-                        dest_buf_offset += (w * c * h);
-                        in_buffer += (w * c * h);
                     }
                 }
-            }
-            if(format == RaliTensorFormat::NCHW)
-            {
-                if(output_data_type == RaliTensorDataType::FP32)
+                if(format == RaliTensorFormat::NCHW)
                 {
-                    float *output_tensor_32 = static_cast<float *>(out_ptr);
-                    auto channel_size  = w * h;
-                    if(c != 3)
+                    if(output_data_type == RaliTensorDataType::FP32)
                     {
-                        for (unsigned int nCount = 0; nCount < n; nCount++)
+                        float *output_tensor_32 = static_cast<float *>(out_ptr);
+                        auto channel_size  = w * h;
+                        if(c != 3)
                         {
-                            for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
-                                for(unsigned i = 0; i < channel_size; i++)
-                                    output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
-                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)]) 
-                                                                                                            : (float)(in_buffer[dest_buf_offset + (c*i+channel_idx)]));
-
-                            dest_buf_offset += (w * c * h);
+                            for(unsigned i = 0; i < channel_size; i++)
+                                output_tensor_32[dest_buf_offset + i] = offset[0] + multiplier[0]*(float)in_buffer[c*i]; 
                         }
-                    }
-                    else {
-#if (ENABLE_SIMD && __AVX2__)
-                        for (unsigned int nCount = 0; nCount < n; nCount++) {
+                        else {
+    #if (ENABLE_SIMD && __AVX2__)
                             float *B_buf = output_tensor_32 + dest_buf_offset;
                             float *G_buf = B_buf + channel_size;
                             float *R_buf = G_buf + channel_size;
@@ -683,18 +673,18 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                             __m256i mask_B, mask_G, mask_R;
                             if (reverse_channels) {
                                 mask_B = _mm256_setr_epi32(0x80808000, 0x80808003, 0x80808006, 0x80808009, 0x80808000,
-                                                           0x80808003, 0x80808006, 0x80808009);
+                                                          0x80808003, 0x80808006, 0x80808009);
                                 mask_G = _mm256_setr_epi32(0x80808001, 0x80808004, 0x80808007, 0x8080800A, 0x80808001,
-                                                           0x80808004, 0x80808007, 0x8080800A);
+                                                          0x80808004, 0x80808007, 0x8080800A);
                                 mask_R = _mm256_setr_epi32(0x80808002, 0x80808005, 0x80808008, 0x8080800B, 0x80808002,
-                                                           0x80808005, 0x80808008, 0x8080800B);
+                                                          0x80808005, 0x80808008, 0x8080800B);
                             } else {
                                 mask_R = _mm256_setr_epi32(0x80808000, 0x80808003, 0x80808006, 0x80808009, 0x80808000,
-                                                           0x80808003, 0x80808006, 0x80808009);
+                                                          0x80808003, 0x80808006, 0x80808009);
                                 mask_G = _mm256_setr_epi32(0x80808001, 0x80808004, 0x80808007, 0x8080800A, 0x80808001,
-                                                           0x80808004, 0x80808007, 0x8080800A);
+                                                          0x80808004, 0x80808007, 0x8080800A);
                                 mask_B = _mm256_setr_epi32(0x80808002, 0x80808005, 0x80808008, 0x8080800B, 0x80808002,
-                                                           0x80808005, 0x80808008, 0x8080800B);
+                                                          0x80808005, 0x80808008, 0x8080800B);
                             }
                             __m256 pmul0 = _mm256_set1_ps(multiplier0);
                             __m256 pmul1 = _mm256_set1_ps(multiplier1);
@@ -731,39 +721,31 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                                 *G_buf++ = (in_buffer[1] * multiplier1) + offset1;
                                 *R_buf++ = (in_buffer[2] * multiplier2) + offset1;
                             }
-                            dest_buf_offset += (w * c * h);
-                        }
-#else
-                        for (unsigned int nCount = 0; nCount < n; nCount++)
-                        {
-                            for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+    #else
+                            for(unsigned channel_idx = 0; channel_idx < c; channel_idx++) {
                                 for(unsigned i = 0; i < channel_size; i++)
                                     output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
-                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)]) : (float)(in_buffer[dest_buf_offset + (c*i+channel_idx)]));
-
-                            dest_buf_offset += (w * c * h);
+                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[(c*i+c-channel_idx-1)]) : 
+                                            (float)(in_buffer[(c*i+channel_idx)]));
+                            }
+    #endif
                         }
-#endif
                     }
-                }
-                else if(output_data_type == RaliTensorDataType::FP16)
-                {
-                    for (unsigned int nCount = 0; nCount < n; nCount++) {
+                    else if(output_data_type == RaliTensorDataType::FP16) {
                         half *output_tensor_16 = static_cast<half *>(out_ptr);
                         auto channel_size = w * h;
                         for (unsigned channel_idx = 0; channel_idx < c; channel_idx++) {
                             for (unsigned i = 0; i < channel_size; i++)
                                 output_tensor_16[dest_buf_offset + channel_idx * channel_size + i] =
                                         offset[channel_idx] + multiplier[channel_idx] *
-                                                              (reverse_channels ? (half) (in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)])
-                                                                                : (half) (in_buffer[dest_buf_offset + (c * i + channel_idx)]));
+                                                              (reverse_channels ? (half) (in_buffer[(c*i+c-channel_idx-1)])
+                                                                                : (half) (in_buffer[(c * i + channel_idx)]));
                         }
-                        dest_buf_offset += (w * c * h);
                     }
-                }
+                }  // NCHW or NHWC
+            } // for loop batch
 
-            }
-            dest_buf_offset += single_output_image_size;
+            dest_buf_offset_start += single_output_image_size;
         }
     }
     _convert_time.end();
@@ -856,6 +838,7 @@ std::vector<std::vector<float>>& operator+=(std::vector<std::vector<float>>& des
 
 void MasterGraph::output_routine()
 {
+    _process_time.start();
     INFO("Output routine started with "+TOSTR(_remaining_count) + " to load");
     size_t batch_ratio = _is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio;
     if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_batch_ratio is different. Will be removed in TensorSupport.
@@ -995,18 +978,19 @@ void MasterGraph::output_routine()
                     else
                         full_batch_meta_data = _augmented_meta_data->clone();
                 }
-                _process_time.start();
                 _graph->process();
-                _process_time.end();
             }
             if(_is_video_loader)
             {
                 _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), full_batch_sequence_start_frame_number);
                 _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), full_batch_sequence_frame_timestamps);
             }
+            if(_is_box_encoder )
+            {
+                _meta_data_graph->update_box_encoder_meta_data(&_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);
+            }
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
             _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
-
         }
     }
     catch (const std::exception &e)
@@ -1015,6 +999,7 @@ void MasterGraph::output_routine()
         _processing = false;
         _ring_buffer.release_all_blocked_calls();
     }
+        _process_time.end();
 }
 
 void MasterGraph::start_processing()
@@ -1136,6 +1121,17 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
         _random_bbox_crop_cords_data = _randombboxcrop_meta_data_reader->get_output();
 }
 
+void MasterGraph::box_encoder(std::vector<float> &anchors, float criteria, const std::vector<float> &means, const std::vector<float> &stds, bool offset, float scale)
+{
+    _is_box_encoder = true;
+    _offset = offset;
+    _anchors = anchors;
+    _scale = scale;
+    _means = means;
+    _stds = stds;
+
+}
+
 MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)
 {
     if( _meta_data_reader)
@@ -1202,7 +1198,9 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
 
     unsigned THREAD_COUNT = std::thread::hardware_concurrency();
     if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
+    {
         INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")
+    }
     else
     {
         THREAD_COUNT = MINIMUM_CPU_THREAD_COUNT;

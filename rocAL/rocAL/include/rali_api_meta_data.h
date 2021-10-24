@@ -148,4 +148,23 @@ extern "C" void RALI_API_CALL raliGetSequenceStartFrameNumber(RaliContext rali_c
 /// \param buf The user's buffer that will be filled with frame timestamps of each of the frames in output batch sequences.
 extern "C" void RALI_API_CALL raliGetSequenceFrameTimestamps(RaliContext rali_context, float* buf);
 
+/// \param anchors  Anchors to be used for encoding, as the array of floats is in the ltrb format.
+/// \param criteria Threshold IoU for matching bounding boxes with anchors.
+/// The value needs to be between 0 and 1.
+/// \param offset Returns normalized offsets ((encoded_bboxes*scale - anchors*scale) - mean) / stds in EncodedBBoxes that use std and the mean and scale arguments
+/// \param means [x y w h] mean values for normalization.
+/// \param stds [x y w h] standard deviations for offset normalization.
+/// \param scale Rescales the box and anchor values before the offset is calculated (for example, to return to the absolute values).
+extern "C" void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<float> &anchors, float criteria,
+                                             std::vector<float>  &means , std::vector<float>  &stds ,  bool offset = false, float scale = 1.0);
+
+/// \param boxes_buf  user's buffer that will be filled with encoded bounding boxes . Its needs to be at least of size batch_size.
+/// \param labels_buf  user's buffer that will be filled with encoded labels . Its needs to be at least of size batch_size.
+extern "C" void RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_buf, int* labels_buf);
+
+///
+/// \param rali_context
+/// \param buf The user's buffer that will be filled with image id info for the images in the output batch. 
+extern "C" void RALI_API_CALL raliGetImageId(RaliContext p_context,  int* buf);
+
 #endif //MIVISIONX_RALI_API_META_DATA_H

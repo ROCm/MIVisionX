@@ -196,7 +196,6 @@ ImageReadAndDecode::load(unsigned char* buff,
                 WRN("Opened file " + _reader->id() + " of size 0");
                 continue;
             }
-
             _compressed_buff[file_counter].reserve(fsize);
             _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
             _image_names[file_counter] = _reader->id();
@@ -211,8 +210,6 @@ ImageReadAndDecode::load(unsigned char* buff,
             _bbox_coords = _randombboxcrop_meta_data_reader->get_batch_crop_coords(_image_names);
             set_batch_random_bbox_crop_coords(_bbox_coords);
         }
-        
-    
     }
 
     _file_load_time.end();// Debug timing
@@ -228,7 +225,6 @@ ImageReadAndDecode::load(unsigned char* buff,
             // initialize the actual decoded height and width with the maximum
             _actual_decoded_width[i] = max_decoded_width;
             _actual_decoded_height[i] = max_decoded_height;
-
             int original_width, original_height, jpeg_sub_samp;
             if (_decoder[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height,
                                          &jpeg_sub_samp) != Decoder::Status::OK) {
@@ -245,20 +241,12 @@ ImageReadAndDecode::load(unsigned char* buff,
             }
             _original_height[i] = original_height;
             _original_width[i] = original_width;
-#if 0
-            if((unsigned)original_width != max_decoded_width || (unsigned)original_height != max_decoded_height)
-                // Seeting the whole buffer to zero in case resizing to exact output dimension is not possible.
-                memset(_decompressed_buff_ptrs[i],0 , image_size);
-#endif
-
             // decode the image and get the actual decoded image width and height
             size_t scaledw, scaledh;
             if(_decoder[i]->is_partial_decoder() && _randombboxcrop_meta_data_reader)
             {
                 _decoder[i]->set_bbox_coords(_bbox_coords[i]);
             }
-            
-
             if (_decoder[i]->decode(_compressed_buff[i].data(), _compressed_image_size[i], _decompressed_buff_ptrs[i],
                                     max_decoded_width, max_decoded_height,
                                     original_width, original_height,
@@ -277,14 +265,12 @@ ImageReadAndDecode::load(unsigned char* buff,
 
                 }
 #endif
-
             }
             _actual_decoded_width[i] = scaledw;
             _actual_decoded_height[i] = scaledh;
         }
         for (size_t i = 0; i < _batch_size; i++) {
-            names[i] = _image_names[i];
-           
+            names[i] = _image_names[i];           
             roi_width[i] = _actual_decoded_width[i];
             roi_height[i] = _actual_decoded_height[i];
             actual_width[i] = _original_width[i];

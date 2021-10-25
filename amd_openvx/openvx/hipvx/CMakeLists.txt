@@ -31,15 +31,13 @@ set(HIPVX_SOURCES
     vision_kernels.cpp
     )
 
-    set(hip_library_name amdhip64)
     set_source_files_properties(${HIPVX_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-    set(HIP_CXX_FLAGS -std=c++14 -Wall)
-
-    if(CMAKE_BUILD_TYPE MATCHES Debug)
-        set(HIP_CXX_FLAGS ${HIP_CXX_FLAGS} -g)
-    ENDIF()
-
-    hip_add_library(openvx_hip ${HIPVX_SOURCES} HIPCC_OPTIONS "${HIP_CXX_FLAGS}" SHARED)
+    set(HIP_CXX_FLAGS -std=c++14)
+    set(COMPILER_FOR_HIP ${ROCM_PATH}/bin/hipcc)
+    set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")
+    add_library(openvx_hip OBJECT ${HIPVX_SOURCES})
+    set_target_properties(openvx_hip PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_compile_definitions(openvx_hip PRIVATE __HIP_PLATFORM_HCC__)
-    install(TARGETS openvx_hip DESTINATION lib)
+
 

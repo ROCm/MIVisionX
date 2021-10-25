@@ -226,7 +226,7 @@ if(${BUILD_RALI})
         target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} ${FFMPEG_LIBRARIES} lmdb turbojpeg openvx vx_rpp)
     endif()
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-        target_link_libraries(${PROJECT_NAME} openvx_hip rocAL_hip)
+        target_link_libraries(${PROJECT_NAME} rocAL_hip)
     endif()
 
     install(TARGETS rali DESTINATION lib)

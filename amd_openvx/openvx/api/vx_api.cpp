@@ -2351,6 +2351,34 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnloadKernels(vx_context context, const vx_
     return agoUnloadModule(context, module);
 }
 
+/*! \brief Registers a module with kernels in a context.
+ * \details This function registers the appropriate publish and unpublish functions
+ * with the module name if the module is not a dynamic library, so <tt>\ref vxLoadKernels</tt> and
+ * <tt>\ref vxUnloadKernels</tt> can be called.
+ * \param [in] context The reference to the context the kernels must be added to.
+ * \param [in] module The short name of the module to load.
+ * \param [in] publish must add kernels to the context by calling <tt>\ref vxAddUserKernel</tt>
+ * for each new kernel. It is called by <tt>\ref vxLoadKernels</tt>.
+ * \param [in] unpublish must remove kernels from the context by calling <tt>\ref vxRemoveKernel</tt>
+ * for each kernel the <tt>vxPublishKernels</tt> has added. It is called by <tt>\ref vxUnloadKernels</tt>.
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_SUCCESS No errors; any other value indicates failure.
+ * \retval VX_ERROR_INVALID_REFERENCE context is not a valid <tt>\ref vx_context</tt> reference.
+ * \retval VX_ERROR_INVALID_PARAMETERS If any of the other parameters are incorrect.
+ * \ingroup group_user_kernels
+ * \see vxLoadKernels
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxRegisterKernelLibrary(vx_context context, const vx_char *module, vx_publish_kernels_f publish, vx_unpublish_kernels_f unpublish)
+{
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context))
+    {
+        // TBD: add support to load obj files or static libs
+        status = VX_SUCCESS;
+    }
+    return status;
+}
+
 /*! \brief Obtains a reference to a kernel using a string to specify the name.
 * \param [in] context The reference to the implementation context.
 * \param [in] name The string of the name of the kernel to get.

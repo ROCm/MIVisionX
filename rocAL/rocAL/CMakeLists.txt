@@ -215,7 +215,7 @@ if(${BUILD_RALI})
     endif()
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-        target_link_libraries(${PROJECT_NAME} rocAL_hip)
+        target_link_libraries(${PROJECT_NAME} $<TARGET_OBJECTS:rocAL_hip>)
     endif()
 
     install(TARGETS rali DESTINATION lib)

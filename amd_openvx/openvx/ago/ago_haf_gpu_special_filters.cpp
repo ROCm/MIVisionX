@@ -1437,7 +1437,6 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 		"  int gx = get_global_id(0);\n"
 		"  int gy = get_global_id(1);\n"
 		"  p0_buf += p0_offset + (gy * p0_stride) + (gx << 2);\n"
-        "  *(__global uint *)p0_buf = 0;\n"
 		"  int gstride = p1_stride;\n"
 		"  __global uchar * gbuf = p1_buf + p1_offset + (((gy - ly) << 1) + 1) * gstride + ((gx - lx) << 3);\n"
 		"  bool valid = ((gx < %d) && (gy < %d)) ? true : false;\n" // (width+3)/4, height

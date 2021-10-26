@@ -118,7 +118,7 @@ public:
     virtual size_t open() = 0;
 
     //! Copies the data of the opened item to the buf
-    virtual size_t read(unsigned char *buf, size_t read_size) = 0;
+    virtual size_t read_data(unsigned char *buf, size_t read_size) = 0;
 
     //! Closes the opened item
     virtual int close() = 0;
@@ -129,7 +129,8 @@ public:
     //! Returns the name/identifier of the last item opened in this resource
     virtual std::string id() = 0;
     //! Returns the number of items remained in this resource
-    virtual unsigned count() = 0;
+    virtual unsigned count_items() = 0;
+    
     //! return shuffle_time if applicable
     virtual unsigned long long get_shuffle_time() = 0;
 

@@ -38,7 +38,7 @@ VideoFileSourceReader::VideoFileSourceReader() : _shuffle_time("shuffle_time", D
     _sequence_count_all_shards = 0;
 }
 
-unsigned VideoFileSourceReader::count()
+unsigned VideoFileSourceReader::count_items()
 {
     if (_loop)
         return _total_sequences_count;

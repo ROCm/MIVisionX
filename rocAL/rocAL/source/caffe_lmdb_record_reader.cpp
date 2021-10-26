@@ -49,7 +49,7 @@ _shuffle_time("shuffle_time", DBG_TIMING)
     _last_rec = false;
 }
 
-unsigned CaffeLMDBRecordReader::count()
+unsigned CaffeLMDBRecordReader::count_items()
 {
     if (_loop)
         return _file_names.size();
@@ -93,7 +93,7 @@ size_t CaffeLMDBRecordReader::open()
     return _current_file_size;
 }
 
-size_t CaffeLMDBRecordReader::read(unsigned char *buf, size_t read_size)
+size_t CaffeLMDBRecordReader::read_data(unsigned char *buf, size_t read_size)
 {
     read_image(buf, _file_names[_curr_file_idx]);
     incremenet_read_ptr();

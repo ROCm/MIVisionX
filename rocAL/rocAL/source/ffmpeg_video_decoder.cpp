@@ -79,19 +79,16 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     }
     do
     {
-        if (!end_of_stream)
+        // read packet from input file
+        ret = av_read_frame(_fmt_ctx, &pkt);
+        if (ret < 0 && ret != AVERROR_EOF)
         {
-            // read packet from input file
-            ret = av_read_frame(_fmt_ctx, &pkt);
-            if (ret < 0 && ret != AVERROR_EOF)
-            {
-                ERR("Fail to av_read_frame: ret=" + TOSTR(ret));
-                status = Status::FAILED;
-                break;
-            }
-            if (ret == 0 && pkt.stream_index != _video_stream_idx) continue;
-            end_of_stream = (ret == AVERROR_EOF);
+            ERR("Fail to av_read_frame: ret=" + TOSTR(ret));
+            status = Status::FAILED;
+            break;
         }
+        if (ret == 0 && pkt.stream_index != _video_stream_idx) continue;
+        end_of_stream = (ret == AVERROR_EOF);
         if (end_of_stream)
         {
             // null packet for bumping process

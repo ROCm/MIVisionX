@@ -84,6 +84,27 @@ auto get_ago_affinity_info = []
     return affinity;
 };
 
+//Function to append ImageNameBatch
+ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
+{
+    dest.insert(dest.end(), src.cbegin(), src.cend());
+    return dest;
+}
+
+//Function to append vectors
+std::vector<size_t>& operator+=(std::vector<size_t>& dest, const std::vector<size_t>& src)
+{
+    dest.insert(dest.end(), src.cbegin(), src.cend());
+    return dest;
+}
+
+//Function to append vector of vectors
+std::vector<std::vector<float>>& operator+=(std::vector<std::vector<float>>& dest, const std::vector<std::vector<float>>& src)
+{
+    dest.insert(dest.end(), src.cbegin(), src.cend());
+    return dest;
+}
+
 MasterGraph::~MasterGraph()
 {
     release();
@@ -818,24 +839,6 @@ MasterGraph::copy_output(unsigned char *out_ptr)
     return Status::OK;
 }
 
-ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
-{
-    dest.insert(dest.end(), src.cbegin(), src.cend());
-    return dest;
-}
-
-std::vector<size_t>& operator+=(std::vector<size_t>& dest, const std::vector<size_t>& src)
-{
-    dest.insert(dest.end(), src.cbegin(), src.cend());
-    return dest;
-}
-
-std::vector<std::vector<float>>& operator+=(std::vector<std::vector<float>>& dest, const std::vector<std::vector<float>>& src)
-{
-    dest.insert(dest.end(), src.cbegin(), src.cend());
-    return dest;
-}
-
 void MasterGraph::output_routine()
 {
     _process_time.start();
@@ -861,15 +864,7 @@ void MasterGraph::output_routine()
             pMetaDataBatch augmented_batch_meta_data = nullptr;
             std::vector<size_t> full_batch_sequence_start_frame_number = {};
             std::vector<std::vector<float>> full_batch_sequence_frame_timestamps = {};
-            size_t _count ;
-            if(_is_video_loader)
-            {
-                _count = _video_loader_module->remaining_count();
-            }
-            else
-            {
-                _count = _loader_module->remaining_count();
-            }
+            size_t _count = _is_video_loader ? _video_loader_module->remaining_count() : _loader_module->remaining_count();
             if (_count < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size))
             {
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
@@ -1005,15 +1000,10 @@ void MasterGraph::output_routine()
 void MasterGraph::start_processing()
 {
     _processing = true;
-    if(_is_video_loader)
-    {
-        _remaining_count = _video_loader_module->remaining_count();
-    }
-    else
-    {
-        _remaining_count = _loader_module->remaining_count();
-    }
+    _remaining_count = _is_video_loader ? _video_loader_module->remaining_count() : _loader_module->remaining_count();
     _output_thread = std::thread(&MasterGraph::output_routine, this);
+    //if video loader - run output_routine_video
+    //add remaining count as part of same if condition
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else
 //  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds

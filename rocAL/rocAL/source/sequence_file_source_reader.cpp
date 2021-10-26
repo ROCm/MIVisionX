@@ -42,7 +42,7 @@ SequenceFileSourceReader::SequenceFileSourceReader() : _shuffle_time("shuffle_ti
     _sequence_count_all_shards = 0;
 }
 
-unsigned SequenceFileSourceReader::count()
+unsigned SequenceFileSourceReader::count_items()
 {
     if (_loop)
         return _frame_names.size();
@@ -125,7 +125,7 @@ size_t SequenceFileSourceReader::open()
     return _current_file_size;
 }
 
-size_t SequenceFileSourceReader::read(unsigned char *buf, size_t read_size)
+size_t SequenceFileSourceReader::read_data(unsigned char *buf, size_t read_size)
 {
     if (!_current_fPtr)
         return 0;

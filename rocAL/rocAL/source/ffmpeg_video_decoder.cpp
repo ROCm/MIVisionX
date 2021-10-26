@@ -66,7 +66,6 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     unsigned frame_count = 0;
     bool end_of_stream = false;
     bool sequence_filled = false;
-    int ret;
     uint8_t *dst_data[4] = {0};
     int dst_linesize[4] = {0};
     int image_size = out_height * out_stride * sizeof(unsigned char);
@@ -79,6 +78,7 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     }
     do
     {
+        int ret;
         // read packet from input file
         ret = av_read_frame(_fmt_ctx, &pkt);
         if (ret < 0 && ret != AVERROR_EOF)

@@ -377,22 +377,18 @@ MasterGraph::output_height()
     return _output_image_info.height_batch() * (_is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio);
 }
 
-std::vector<size_t>
-MasterGraph::sequence_start_frame_number()
+void
+MasterGraph::sequence_start_frame_number(std::vector<size_t> &sequence_start_framenum)
 {
-    std::vector<size_t> sequence_start_framenum;
     sequence_start_framenum = _sequence_start_framenum_vec.back();
     _sequence_start_framenum_vec.pop_back();
-    return sequence_start_framenum;
 }
 
-std::vector<std::vector<float>>
-MasterGraph::sequence_frame_timestamps()
+void
+MasterGraph::sequence_frame_timestamps(std::vector<std::vector<float>> &sequence_frame_timestamp)
 {
-    std::vector<std::vector<float>> sequence_frame_timestamp;
     sequence_frame_timestamp = _sequence_frame_timestamps_vec.back();
     _sequence_frame_timestamps_vec.pop_back();
-    return sequence_frame_timestamp;
 }
 
 MasterGraph::Status
@@ -1002,8 +998,6 @@ void MasterGraph::start_processing()
     _processing = true;
     _remaining_count = _is_video_loader ? _video_loader_module->remaining_count() : _loader_module->remaining_count();
     _output_thread = std::thread(&MasterGraph::output_routine, this);
-    //if video loader - run output_routine_video
-    //add remaining count as part of same if condition
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else
 //  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds

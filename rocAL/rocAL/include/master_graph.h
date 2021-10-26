@@ -62,8 +62,8 @@ public:
     size_t output_height();
     size_t output_byte_size();
     size_t output_depth();
-    std::vector<size_t> sequence_start_frame_number(); // Returns the starting frame number of the sequences
-    std::vector<std::vector<float>> sequence_frame_timestamps(); // Returns the timestamps of the frames in the sequences
+    void sequence_start_frame_number(std::vector<size_t> &sequence_start_framenum); // Returns the starting frame number of the sequences
+    void sequence_frame_timestamps(std::vector<std::vector<float>> &sequence_frame_timestamp); // Returns the timestamps of the frames in the sequences
     size_t augmentation_branch_count();
     size_t output_sample_size();
     RaliColorFormat output_color_format();

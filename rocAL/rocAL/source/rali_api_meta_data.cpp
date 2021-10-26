@@ -359,7 +359,8 @@ RALI_API_CALL raliGetSequenceStartFrameNumber(RaliContext p_context,  unsigned i
     if (!p_context)
         THROW("Invalid rali context passed to raliGetSequenceStartFrameNumber")
     auto context = static_cast<Context*>(p_context);
-    std::vector<size_t> sequence_start_frame = context->master_graph->sequence_start_frame_number();
+    std::vector<size_t> sequence_start_frame;
+    context->master_graph->sequence_start_frame_number(sequence_start_frame);
     std::copy(sequence_start_frame.begin(), sequence_start_frame.end(), buf);
 }
 
@@ -369,7 +370,8 @@ RALI_API_CALL raliGetSequenceFrameTimestamps(RaliContext p_context,  float* buf)
     if (!p_context)
         THROW("Invalid rali context passed to raliGetSequenceFrameTimestamps")
     auto context = static_cast<Context*>(p_context);
-    std::vector<std::vector<float>> sequence_frame_timestamps = context->master_graph->sequence_frame_timestamps();
+    std::vector<std::vector<float>> sequence_frame_timestamps;
+    context->master_graph->sequence_frame_timestamps(sequence_frame_timestamps);
     auto sequence_length = sequence_frame_timestamps[0].size();
     for (unsigned int i = 0; i < sequence_frame_timestamps.size(); i++)
     {

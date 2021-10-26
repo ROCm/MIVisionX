@@ -138,14 +138,14 @@ void VideoLabelReader::read_text_file(const std::string &_path)
             std::string video_file_name;
             unsigned start_frame_number = 0;
             unsigned end_frame_number = 0;
-            float start_time = 0.0;
-            float end_time = 0.0;
             std::istringstream line_ss(line);
             if (!(line_ss >> video_file_name >> label))
                 continue;
             open_video_context(video_file_name.c_str(), props);
             if (!_file_list_frame_num)
             {
+                float start_time = 0.0;
+                float end_time = 0.0;
                 line_ss >> start_time >> end_time;
                 start_frame_number = static_cast<unsigned int>(std::ceil(start_time * (props[3] / (double)props[4])));
                 end_frame_number = static_cast<unsigned int>(std::floor(end_time * (props[3] / (double)props[4])));

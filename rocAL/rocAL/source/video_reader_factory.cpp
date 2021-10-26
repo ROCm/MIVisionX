@@ -28,7 +28,6 @@ THE SOFTWARE.
 #ifdef RALI_VIDEO
 std::shared_ptr<VideoReader> create_video_reader(VideoReaderConfig config) {
     switch(config.type()) {
-
         case VideoStorageType::VIDEO_FILE_SYSTEM:
         {
             auto ret = std::make_shared<VideoFileSourceReader>();

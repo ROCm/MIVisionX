@@ -75,7 +75,7 @@ raliSequenceRearrange(
             unsigned int sequence_length,
             bool is_output )
 {
-    if(!p_input || !p_context)
+    if(!p_context || !p_input)
         THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -999,7 +999,7 @@ raliFlipFixed(
         bool is_output)
 {
     Image* output = nullptr;
-    if(!p_context || !p_input)
+    if(!p_input)
         THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);

@@ -144,7 +144,7 @@ endif()
 
 install(TARGETS openvx DESTINATION lib)
 install(TARGETS vxu DESTINATION lib)
-install(FILES include/vx_ext_amd.h DESTINATION include)
+install(FILES include/vx_ext_amd.h DESTINATION include/miopen)
 install (FILES
             include/VX/vx.h
             include/VX/vx_api.h
@@ -160,7 +160,7 @@ install (FILES
             include/VX/vx_types.h
             include/VX/vx_vendors.h
             include/VX/vxu.h
-         DESTINATION include/VX)
+         DESTINATION include/miopen/VX)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")

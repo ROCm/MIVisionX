@@ -108,6 +108,7 @@ private:
     void start_processing();
     void stop_processing();
     void output_routine();
+    void output_routine_video();
     void decrease_image_count();
     bool processing_on_device_ocl() { return _output_image_info.mem_type() == RaliMemType::OCL; };
     bool processing_on_device_hip() { return _output_image_info.mem_type() == RaliMemType::HIP; };

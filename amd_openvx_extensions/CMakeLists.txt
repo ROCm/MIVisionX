@@ -67,7 +67,7 @@ if(GPU_SUPPORT)
             set(MIOPEN_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
         else()
             message("-- ${Red}WARNING: ${ROCM_PATH}/miopen/include/miopen/config.h file Not Found. please run the setup script to install the MIOpen package ${ColourReset}")
-    endif()
+        endif()
 
     endif()
 endif()

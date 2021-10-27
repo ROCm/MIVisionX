@@ -34,7 +34,7 @@ find_program(DPKG_EXE dpkg)
 set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
 # need to do this to avoid setting the default path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "mivisionx default ROCm installation path" FORCE)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default ROCm installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 if(NOT WIN32)
@@ -96,7 +96,7 @@ else()
   message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
 endif()
 
-install(DIRECTORY docs DESTINATION .)
+install(DIRECTORY docs DESTINATION share/)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})

@@ -984,8 +984,6 @@ void MasterGraph::output_routine_video()
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
             pMetaDataBatch augmented_batch_meta_data = nullptr;
-            std::vector<size_t> full_batch_sequence_start_frame_number = {};
-            std::vector<std::vector<float>> full_batch_sequence_frame_timestamps = {};
             if (_video_loader_module->remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size))
             {
                 // If the internal process routine ,output_routine_video(), has finished processing all the images, and last
@@ -1016,8 +1014,8 @@ void MasterGraph::output_routine_video()
                 std::vector<std::string> this_cycle_names;
                 this_cycle_names = _video_loader_module->get_id();
                 decode_image_info = _video_loader_module->get_decode_image_info();
-                full_batch_sequence_start_frame_number += _video_loader_module->get_sequence_start_frame_number();
-                full_batch_sequence_frame_timestamps += _video_loader_module->get_sequence_frame_timestamps();
+                _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), _video_loader_module->get_sequence_start_frame_number());
+                _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), _video_loader_module->get_sequence_frame_timestamps());
 
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -1069,8 +1067,6 @@ void MasterGraph::output_routine_video()
                 }
                 _graph->process();
             }
-            _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), full_batch_sequence_start_frame_number);
-            _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), full_batch_sequence_frame_timestamps);
             if(_is_box_encoder )
             {
                 _meta_data_graph->update_box_encoder_meta_data(&_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);

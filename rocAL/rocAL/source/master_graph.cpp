@@ -879,13 +879,9 @@ void MasterGraph::output_routine()
 
                 if (!_processing)
                     break;
-
-                decoded_image_info decode_image_info;
-                std::vector<std::string> this_cycle_names;
-                crop_image_info crop_image_info;
-                this_cycle_names =  _loader_module->get_id();
-                decode_image_info = _loader_module->get_decode_image_info();
-                crop_image_info = _loader_module->get_crop_image_info();
+                auto this_cycle_names =  _loader_module->get_id();
+                auto decode_image_info = _loader_module->get_decode_image_info();
+                auto crop_image_info = _loader_module->get_crop_image_info();
 
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -1009,11 +1005,8 @@ void MasterGraph::output_routine_video()
 
                 if (!_processing)
                     break;
-
-                decoded_image_info decode_image_info;
-                std::vector<std::string> this_cycle_names;
-                this_cycle_names = _video_loader_module->get_id();
-                decode_image_info = _video_loader_module->get_decode_image_info();
+                auto this_cycle_names = _video_loader_module->get_id();
+                auto decode_image_info = _video_loader_module->get_decode_image_info();
                 _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), _video_loader_module->get_sequence_start_frame_number());
                 _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), _video_loader_module->get_sequence_frame_timestamps());
 

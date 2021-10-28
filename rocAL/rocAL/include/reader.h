@@ -27,6 +27,11 @@ THE SOFTWARE.
 #include <tuple>
 #include "meta_data_reader.h"
 
+#define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
+#define CHECK_CAFFE(test, msg) \
+    ;                          \
+    ((test) ? (void)0 : ((void)fprintf(stderr, "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
+
 enum class StorageType
 {
     FILE_SYSTEM = 0,
@@ -135,9 +140,4 @@ public:
     virtual unsigned long long get_shuffle_time() = 0;
 
     virtual ~Reader() = default;
-
-#define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
-#define CHECK_CAFFE(test, msg) \
-    ;                          \
-    ((test) ? (void)0 : ((void)fprintf(stderr, "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
 };

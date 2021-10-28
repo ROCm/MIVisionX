@@ -21,7 +21,8 @@ THE SOFTWARE.
 */
 
 
-#include <node_warp_affine.h>
+
+#include "node_warp_affine.h"
 #include "node_exposure.h"
 #include "node_vignette.h"
 #include "node_jitter.h"
@@ -65,8 +66,6 @@ THE SOFTWARE.
 #include "context.h"
 #include "rali_api.h"
 
-
-
 RaliImage  RALI_API_CALL
 raliRotate(
         RaliContext p_context,
@@ -76,9 +75,12 @@ raliRotate(
         unsigned dest_width,
         unsigned dest_height)
 {
-    if(!p_input || !p_context)
-        THROW("Null values passed as input")
+
     Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto angle = static_cast<FloatParam*>(p_angle);
@@ -121,11 +123,15 @@ raliRotateFixed(
         unsigned dest_width,
         unsigned dest_height)
 {
-    if(!p_input || !p_context)
-        THROW("Null values passed as input")
+    
     Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
+
     try
     {
         if(dest_width == 0 || dest_height == 0)
@@ -164,9 +170,12 @@ raliFlip(
         RaliFlipAxis axis,
         bool is_output)
 {
-    if(!p_input || !p_context)
-        THROW("Null values passed as input")
     Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
+
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
@@ -192,9 +201,12 @@ raliGamma(
         bool is_output,
         RaliFloatParam p_alpha)
 {
-    if(!p_context || !p_input)
-        THROW("Null values passed as input")
     Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
+
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto alpha = static_cast<FloatParam*>(p_alpha);
@@ -218,10 +230,12 @@ raliGammaFixed(
         float alpha,
         bool is_output)
 {
-    if(!p_input || !p_context)
-        THROW("Null values passed as input")
-
     Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
+
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
@@ -244,10 +258,12 @@ raliHue(
         bool is_output,
         RaliFloatParam p_hue)
 {
-    if(!p_input || !p_context)
-        THROW("Null values passed as input")
-
     Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
+
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto hue = static_cast<FloatParam*>(p_hue);
@@ -271,9 +287,11 @@ raliHueFixed(
         float hue,
         bool is_output)
 {
-    if(!p_input || !p_context)
-        THROW("Null values passed as input")
     Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
@@ -296,9 +314,11 @@ raliSaturation(
         bool is_output,
         RaliFloatParam p_sat)
 {
-    if(!p_input || !p_context)
-        THROW("Null values passed as input")
     Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto sat = static_cast<FloatParam*>(p_sat);

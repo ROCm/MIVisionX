@@ -201,7 +201,8 @@ enum vx_array_attribute_amd_e {
     /*! \brief OpenCL buffer. <tt>cl_mem</tt>. */
     VX_ARRAY_BUFFER_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x9,
     VX_ARRAY_BUFFER_HIP   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x10,
-        VX_ARRAY_BUFFER    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x11
+    VX_ARRAY_BUFFER    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x11,
+    VX_ARRAY_OFFSET_GPU = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x12
 };
 
 /*! \brief These enumerations are given to the \c vxDirective API to enable/disable

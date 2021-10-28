@@ -350,7 +350,7 @@ else()
 endif()
 
 install(TARGETS vx_rpp DESTINATION lib)
-install(FILES include/vx_ext_rpp.h DESTINATION include/miopen)
+install(FILES include/vx_ext_rpp.h DESTINATION include/mivisionx)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     target_link_libraries(OpenVX)

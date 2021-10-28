@@ -96,7 +96,7 @@ else()
   message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
 endif()
 
-install(DIRECTORY docs DESTINATION share/)
+install(DIRECTORY docs DESTINATION share/mivisionx)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})

@@ -25,17 +25,17 @@ THE SOFTWARE.
 #include "video_decoder.h"
 
 #ifdef RALI_VIDEO
-class FFmpegVideoDecoder : public VideoDecoder
+class HardWareVideoDecoder : public VideoDecoder
 {
 public:
     //! Default constructor
-    FFmpegVideoDecoder();
+    HardWareVideoDecoder();
     VideoDecoder::Status Initialize(const char *src_filename) override;
     VideoDecoder::Status Decode(unsigned char *output_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_format) override;
     int seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number) override;
     int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx) override;
     void release() override;
-    ~FFmpegVideoDecoder() override;
+    ~HardWareVideoDecoder() override;
 private:
     const char *_src_filename = NULL;
     AVFormatContext *_fmt_ctx = NULL;
@@ -45,5 +45,8 @@ private:
     int _video_stream_idx = -1;
     AVPixelFormat _dec_pix_fmt;
     int _codec_width, _codec_height;
+    int useVaapi = true;
+    AVHWDeviceType *hwDeviceType;
+    AVBufferRef *hw_device_ctx = NULL;
 };
 #endif

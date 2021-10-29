@@ -1551,7 +1551,12 @@ raliVideoFileSource(
         stride = (stride == 0)? 1 : stride;
 
         VideoProperties video_prop;
+        VideoDecoderType decoder_type;
         find_video_properties(video_prop, source_path, file_list_frame_num);
+        if(rali_decode_device == RaliDecodeDevice::RALI_HW_DECODE)
+            decoder_type = VideoDecoderType::HARDWARE_VIDEO_DECODE;
+        else
+            decoder_type = VideoDecoderType::FFMPEG_VIDEO;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1565,7 +1570,7 @@ raliVideoFileSource(
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                             source_path,
                                                                             VideoStorageType::VIDEO_FILE_SYSTEM,
-                                                                            VideoDecoderType::FFMPEG_VIDEO,
+                                                                            decoder_type,
                                                                             decoder_mode,
                                                                             sequence_length,
                                                                             step,
@@ -1634,7 +1639,12 @@ raliVideoFileSourceSingleShard(
         stride = (stride == 0)? 1 : stride;
 
         VideoProperties video_prop;
+        VideoDecoderType decoder_type;
         find_video_properties(video_prop, source_path, file_list_frame_num);
+        if(rali_decode_device == RaliDecodeDevice::RALI_HW_DECODE)
+            decoder_type = VideoDecoderType::HARDWARE_VIDEO_DECODE;
+        else
+            decoder_type = VideoDecoderType::FFMPEG_VIDEO;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1648,7 +1658,7 @@ raliVideoFileSourceSingleShard(
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path,
                                                                                         VideoStorageType::VIDEO_FILE_SYSTEM,
-                                                                                        VideoDecoderType::FFMPEG_VIDEO,
+                                                                                        decoder_type,
                                                                                         decoder_mode,
                                                                                         sequence_length,
                                                                                         step,
@@ -1716,7 +1726,12 @@ raliVideoFileResize(
         stride = (stride == 0)? 1 : stride;
 
         VideoProperties video_prop;
+        VideoDecoderType decoder_type;
         find_video_properties(video_prop, source_path, file_list_frame_num);
+        if(rali_decode_device == RaliDecodeDevice::RALI_HW_DECODE)
+            decoder_type = VideoDecoderType::HARDWARE_VIDEO_DECODE;
+        else
+            decoder_type = VideoDecoderType::FFMPEG_VIDEO;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1729,7 +1744,7 @@ raliVideoFileResize(
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                             source_path,
                                                                             VideoStorageType::VIDEO_FILE_SYSTEM,
-                                                                            VideoDecoderType::FFMPEG_VIDEO,
+                                                                            decoder_type,
                                                                             decoder_mode,
                                                                             sequence_length,
                                                                             step,
@@ -1827,7 +1842,12 @@ raliVideoFileResizeSingleShard(
         stride = (stride == 0)? 1 : stride;
 
         VideoProperties video_prop;
+        VideoDecoderType decoder_type;
         find_video_properties(video_prop, source_path, file_list_frame_num);
+        if(rali_decode_device == RaliDecodeDevice::RALI_HW_DECODE)
+            decoder_type = VideoDecoderType::HARDWARE_VIDEO_DECODE;
+        else
+            decoder_type = VideoDecoderType::FFMPEG_VIDEO;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1840,7 +1860,7 @@ raliVideoFileResizeSingleShard(
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path,
                                                                                         VideoStorageType::VIDEO_FILE_SYSTEM,
-                                                                                        VideoDecoderType::FFMPEG_VIDEO,
+                                                                                        decoder_type,
                                                                                         decoder_mode,
                                                                                         sequence_length,
                                                                                         step,

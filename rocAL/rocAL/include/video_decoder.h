@@ -47,6 +47,7 @@ extern "C"
 enum class VideoDecoderType
 {
     FFMPEG_VIDEO = 0, //!< Can decode video stream
+    HARDWARE_VIDEO_DECODE = 1,
 };
 
 class VideoDecoderConfig

@@ -60,9 +60,9 @@ int main(int argc, const char **argv)
     bool enable_timestamps = true;
     bool enable_sequence_rearrange = false;
     bool is_output = true;
-    unsigned video_mode = 0;
-    // auto decoder_mode = ((video_mode == 1) ? RaliDecodeDevice::RALI_HW_DECODE : RaliDecodeDevice::RALI_SW_DECODE); // Hardware decoder support will be added in future
-    auto decoder_mode = RaliDecodeDevice::RALI_SW_DECODE;
+    unsigned video_mode = 1;
+    auto decoder_mode = ((video_mode == 1) ? RaliDecodeDevice::RALI_HW_DECODE : RaliDecodeDevice::RALI_SW_DECODE); // Hardware decoder support will be added in future
+    //auto decoder_mode = RaliDecodeDevice::RALI_SW_DECODE;
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         reader_case = atoi(argv[++argIdx]);

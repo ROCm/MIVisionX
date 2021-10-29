@@ -46,4 +46,13 @@ int HipExec_tensor_to_image_layer(hipStream_t stream, vx_df_image format, vx_enu
 int HipExec_copy(hipStream_t stream, vx_enum type, unsigned char* inp, unsigned char* out, uint width, uint height, uint ldi, uint i_offset,
     uint ldc, uint c_offset, bool tI);
 
+int HipExec_permute_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, unsigned char* in, uint in_offset, uint4 in_stride,
+    unsigned char* order_buf, uint order_offset, uint order_cap, unsigned char* out, uint out_offset, uint4 out_stride);
+
+int HipExec_tensor_log_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, unsigned char *in, uint in_offset,
+    uint4 in_stride, unsigned char *out, uint out_offset, uint4 out_stride);
+
+int HipExec_tensor_exp_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, unsigned char *in, uint in_offset,
+    uint4 in_stride, unsigned char *out, uint out_offset, uint4 out_stride);
+
 #endif //NN_HIP_HOST_DECLS_H

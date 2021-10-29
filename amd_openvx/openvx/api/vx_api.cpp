@@ -8114,6 +8114,44 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryArray(vx_array arr, vx_enum attribute,
                     status = VX_SUCCESS;
                 }
                 break;
+#if (ENABLE_OPENCL||ENABLE_HIP)
+            case VX_ARRAY_OFFSET_GPU:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->gpu_buffer_offset;
+                    status = VX_SUCCESS;
+                }
+                break;
+#if ENABLE_OPENCL
+            case VX_ARRAY_BUFFER_OPENCL:
+                if (size == sizeof(cl_mem)) {
+                    if (data->opencl_buffer) {
+                        *(cl_mem *)ptr = data->opencl_buffer;
+                    }
+                    else {
+#if defined(CL_VERSION_2_0)
+                        *(vx_uint8 **)ptr = data->opencl_svm_buffer;
+#else
+                        *(vx_uint8 **)ptr = NULL;
+#endif
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
+#else
+            case VX_ARRAY_BUFFER_HIP:
+                if (size == sizeof(vx_uint8 *)) {
+                    if (data->hip_memory) {
+                        *(vx_uint8 **)ptr = data->hip_memory;
+                    }
+                    else {
+                        *(vx_uint8 **)ptr = NULL;
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
+
+#endif
+#endif
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;

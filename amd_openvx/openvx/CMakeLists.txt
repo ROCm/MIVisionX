@@ -94,7 +94,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     SET(OpenCL_FOUND FALSE)
     # HSA_PATH
     if(NOT DEFINED ENV{HSA_PATH})
-        SET(HSA_PATH ${ROCM_PATH}/hsa)
+        SET(HSA_PATH ${ROCM_PATH})
     else()
         SET(HSA_PATH $ENV{HSA_PATH})
     endif()
@@ -144,7 +144,7 @@ endif()
 
 install(TARGETS openvx DESTINATION lib)
 install(TARGETS vxu DESTINATION lib)
-install(FILES include/vx_ext_amd.h DESTINATION include)
+install(FILES include/vx_ext_amd.h DESTINATION include/mivisionx)
 install (FILES
             include/VX/vx.h
             include/VX/vx_api.h
@@ -160,7 +160,7 @@ install (FILES
             include/VX/vx_types.h
             include/VX/vx_vendors.h
             include/VX/vxu.h
-         DESTINATION include/VX)
+         DESTINATION include/mivisionx/VX)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")

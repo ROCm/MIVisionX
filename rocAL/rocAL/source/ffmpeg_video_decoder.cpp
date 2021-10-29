@@ -40,6 +40,29 @@ int FFmpegVideoDecoder::seek_frame(AVRational avg_frame_rate, AVRational time_ba
     return select_frame_pts;
 }
 
+int FFmpegVideoDecoder::hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx)
+{
+    int err = 0;
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type,
+                                      NULL, NULL, 0)) < 0) {
+        return err;
+    }
+    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    return err;
+}
+static enum AVPixelFormat hwPixelFormat;
+enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts)
+{
+    const enum AVPixelFormat *p;
+    for (p = pix_fmts; *p != -1; p++) {
+        if (*p == hwPixelFormat)
+            return *p;
+    }
+    ERR("Error : Failed to get HW surface format");
+
+    return AV_PIX_FMT_NONE;
+}
+
 // Seeks to the frame_number in the video file and decodes each frame in the sequence.
 VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_pix_format)
 {
@@ -72,9 +95,15 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     int image_size = out_height * out_stride * sizeof(unsigned char);
     AVPacket pkt;
     AVFrame *dec_frame = av_frame_alloc();
+    AVFrame *sw_frame = av_frame_alloc();
     if (!dec_frame)
     {
         ERR("Could not allocate dec_frame");
+        return Status::NO_MEMORY;
+    }
+    if (!sw_frame)
+    {
+        ERR("Could not allocate sw_frame");
         return Status::NO_MEMORY;
     }
     do
@@ -116,18 +145,37 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
             if ((dec_frame->pts < select_frame_pts) || (ret < 0)) continue;
             if (frame_count % stride == 0)
             {
+                if (useVaapi) {
+                    //retrieve data from GPU to CPU
+                    if ((av_hwframe_transfer_data(sw_frame, dec_frame, 0)) < 0) {
+                        ERR("avcodec_receive_frame() failed");
+                        //eof[mediaIndex] = true;
+                        ERR("\nTransfer failed");
+                        return Status::FAILED;
+                    }
+                }
+
                 dst_data[0] = out_buffer;
                 dst_linesize[0] = out_stride;
                 if (swsctx)
-                    sws_scale(swsctx, dec_frame->data, dec_frame->linesize, 0, dec_frame->height, dst_data, dst_linesize);
+                {
+                    if(!useVaapi)
+                        sws_scale(swsctx, dec_frame->data, dec_frame->linesize, 0, dec_frame->height, dst_data, dst_linesize);
+                    else
+                        sws_scale(swsctx, sw_frame->data, sw_frame->linesize, 0, sw_frame->height, dst_data, dst_linesize);
+                }
                 else
                 {
                     // copy from frame to out_buffer
-                    memcpy(out_buffer, dec_frame->data[0], dec_frame->linesize[0] * out_height);
+                    if(!useVaapi)
+                        memcpy(out_buffer, dec_frame->data[0], dec_frame->linesize[0] * out_height);
+                    else
+                        memcpy(out_buffer, sw_frame->data[0], sw_frame->linesize[0] * out_height);
                 }
                 out_buffer = out_buffer + image_size;
             }
             ++frame_count;
+            av_frame_unref(sw_frame);
             av_frame_unref(dec_frame);
             if (frame_count == sequence_length * stride)  
             {
@@ -140,6 +188,7 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     } while (!end_of_stream);
     avcodec_flush_buffers(_video_dec_ctx);
     av_frame_free(&dec_frame);
+    av_frame_free(&sw_frame);
     sws_freeContext(swsctx);
     return status;
 }
@@ -154,6 +203,18 @@ VideoDecoder::Status FFmpegVideoDecoder::Initialize(const char *src_filename)
     // open input file, and initialize the context required for decoding
     _fmt_ctx = avformat_alloc_context();
     _src_filename = src_filename;
+
+    // find if hardware decode is available
+    AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_NONE;
+    if (useVaapi) {
+        hw_type = av_hwdevice_find_type_by_name("vaapi");
+        if (hw_type == AV_HWDEVICE_TYPE_NONE) {
+            ERR("ERROR: vaapi is not supported for this device\n");
+            return Status::FAILED;
+        }
+        printf("Found vaapi device for the device\n");
+    }
+
     if (avformat_open_input(&_fmt_ctx, src_filename, NULL, NULL) < 0)
     {
         ERR("Couldn't Open video file " + STR(src_filename));
@@ -164,15 +225,36 @@ VideoDecoder::Status FFmpegVideoDecoder::Initialize(const char *src_filename)
         ERR("av_find_stream_info error");
         return Status::FAILED;
     }
-    ret = av_find_best_stream(_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+    if(useVaapi)
+        ret = av_find_best_stream(_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &_decoder, 0);
+    else
+        ret = av_find_best_stream(_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+
     if (ret < 0)
     {
         ERR("Could not find %s stream in input file " +
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " " + STR(src_filename));
         return Status::FAILED;
     }
+    if(useVaapi) {
+            // for hardware accelerated decoding, find config
+            for (int i = 0; ; i++) {
+                const AVCodecHWConfig *config = avcodec_get_hw_config(_decoder, i);
+                if (!config) {
+                    std::cerr << "ERROR: decoder " << _decoder->name << " doesn't support device_type \n" << av_hwdevice_get_type_name(hw_type);
+                    return Status::FAILED;
+                }
+                if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
+                    config->device_type == hw_type) {
+                    //_dec_pix_fmt = config->pix_fmt;
+                    hwPixelFormat = config->pix_fmt;
+                    break;
+                }
+            }
+    }
     _video_stream_idx = ret;
     _video_stream = _fmt_ctx->streams[_video_stream_idx];
+
     if (!_video_stream)
     {
         ERR("Could not find video stream in the input, aborting");
@@ -205,6 +287,16 @@ VideoDecoder::Status FFmpegVideoDecoder::Initialize(const char *src_filename)
         return Status::FAILED;
     }
 
+    if (useVaapi)
+    {
+        _video_dec_ctx->get_format  = get_hw_format;
+        if (hw_decoder_init(_video_dec_ctx, hw_type, hw_device_ctx) < 0) {
+            ERR("ERROR: Failed to create specified HW device");
+            return Status::FAILED;
+        }
+        _dec_pix_fmt = AV_PIX_FMT_NV12; // nv12 for vaapi
+        std::cerr << "\nDecoder_format after hw-decoder-init: " << _dec_pix_fmt;
+    }
     // Init the decoders 
     if ((ret = avcodec_open2(_video_dec_ctx, _decoder, &opts)) < 0)
     {
@@ -212,7 +304,8 @@ VideoDecoder::Status FFmpegVideoDecoder::Initialize(const char *src_filename)
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " codec");
         return Status::FAILED;
     }
-    _dec_pix_fmt = _video_dec_ctx->pix_fmt;
+    if(!useVaapi)
+        _dec_pix_fmt = _video_dec_ctx->pix_fmt;
     _codec_width = _video_stream->codecpar->width;
     _codec_height = _video_stream->codecpar->height;
     return status;

@@ -36,6 +36,10 @@ extern "C"
 #include <libavutil/avutil.h>
 #include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
+#include <libavutil/hwcontext.h>
+#include <libavutil/opt.h>
+#include <libavutil/avassert.h>
+#include <libavutil/imgutils.h>
 }
 #endif
 #include "parameter_factory.h"
@@ -76,6 +80,7 @@ public:
     virtual VideoDecoder::Status Initialize(const char *src_filename) = 0;
     virtual VideoDecoder::Status Decode(unsigned char *output_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_format) = 0;
     virtual int seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number) = 0;
+    virtual int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx) = 0;
     virtual void release() = 0;
     virtual ~VideoDecoder() = default;
 };

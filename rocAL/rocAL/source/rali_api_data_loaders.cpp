@@ -279,8 +279,10 @@ raliSequenceReader(
         unsigned stride)
 {
     Image* output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -360,8 +362,10 @@ raliSequenceReaderSingleShard(
         unsigned stride)
 {
     Image* output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -1321,8 +1325,10 @@ raliRawTFRecordSource(
         const char* record_name_prefix)
 {
     Image* output = nullptr;
-    if(!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
 
     auto context = static_cast<Context*>(p_context);
     try
@@ -1550,8 +1556,10 @@ raliVideoFileSource(
         bool file_list_frame_num)
 {
     Image* output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -1627,8 +1635,10 @@ raliVideoFileSourceSingleShard(
         bool file_list_frame_num)
 {
     Image* output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -1711,8 +1721,10 @@ raliVideoFileResize(
         bool file_list_frame_num)
 {
     Image* resize_output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return resize_output;
+    }
 
     auto context = static_cast<Context*>(p_context);
     try
@@ -1816,8 +1828,10 @@ raliVideoFileResizeSingleShard(
         bool file_list_frame_num)
 {
     Image* resize_output = nullptr;
-    if(!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return resize_output;
+    }
 
     auto context = static_cast<Context*>(p_context);
     try

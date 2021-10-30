@@ -76,11 +76,11 @@ raliSequenceRearrange(
             unsigned int sequence_length,
             bool is_output )
 {
-    if(!p_context)
-        THROW("Null values passed as input")
-    if(!p_input)
-        THROW("Null values passed as input")
     Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {

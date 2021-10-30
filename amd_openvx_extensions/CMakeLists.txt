@@ -58,11 +58,17 @@ if(GPU_SUPPORT)
         #find the MIOPEN backend type
         set(MIOPEN_BACKEND_OPENCL_FOUND 0)
         set(MIOPEN_BACKEND_HIP_FOUND 0)
-        file(READ ${ROCM_PATH}/miopen/include/miopen/config.h MIOPEN_CONFIG_FILE)
-        string(REGEX MATCH "MIOPEN_BACKEND_OPENCL ([0-9]*)" _ ${MIOPEN_CONFIG_FILE})
-        set(MIOPEN_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-        string(REGEX MATCH "MIOPEN_BACKEND_HIP ([0-9]*)" _ ${MIOPEN_CONFIG_FILE})
-        set(MIOPEN_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+
+        if(EXISTS ${ROCM_PATH}/miopen/include/miopen/config.h)
+            file(READ ${ROCM_PATH}/miopen/include/miopen/config.h MIOPEN_CONFIG_FILE)
+            string(REGEX MATCH "MIOPEN_BACKEND_OPENCL ([0-9]*)" _ ${MIOPEN_CONFIG_FILE})
+            set(MIOPEN_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+            string(REGEX MATCH "MIOPEN_BACKEND_HIP ([0-9]*)" _ ${MIOPEN_CONFIG_FILE})
+            set(MIOPEN_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+        else()
+            message("-- ${Red}WARNING: ${ROCM_PATH}/miopen/include/miopen/config.h file Not Found. please run the setup script to install the MIOpen package ${ColourReset}")
+        endif()
+
     endif()
 endif()
 

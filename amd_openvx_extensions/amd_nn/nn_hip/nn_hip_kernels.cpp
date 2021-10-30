@@ -557,3 +557,124 @@ int HipExec_copy(hipStream_t stream, vx_enum type, uchar* inp, uchar* out, uint 
     }
     return VX_SUCCESS;
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_permute_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* order_buf, uint order_offset, uint order_cap, uchar* out, uint out_offset,
+    uint4 out_stride) {
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+    int num_axis = order_cap;
+    int i = x * out_stride.x + y * out_stride.y + z * out_stride.z;
+    int old_idx = 0;
+    int idx = i;
+    for(int k = num_axis - 1, j = 0; k >= 0; k--, j++) {
+        int order = 3 - ((int *)(order_buf + order_offset))[j];
+        old_idx += (idx / out_stride.data[k]) * (in_stride.data[order]);
+        idx %= (out_stride.data[k]);
+    }
+    out += out_offset + i;
+    in += in_offset + old_idx;
+    *(float4 *)&out[0] = *(float4 *)&in[0];
+}
+
+int HipExec_permute_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, uchar* in, uint in_offset, uint4 in_stride, uchar* order_buf,
+    uint order_offset, uint order_cap, uchar* out, uint out_offset, uint4 out_stride) {
+
+    hipLaunchKernelGGL(Hip_permute_layer, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+        order_buf, order_offset, order_cap, out, out_offset, out_stride);
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_log_layer(uchar *in, uint in_offset, uint4 in_stride, uchar *out, uint out_offset, uint4 out_stride) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+     float4 value = *(float4 *)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+     out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+     *(float4 *)&out[0] = make_float4(log(value.x), log(value.y), log(value.z), log(value.w));
+ }
+
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_log_layer_half(uchar *in, uint in_offset, uint4 in_stride, uchar *out, uint out_offset, uint4 out_stride) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+     d_half4 value = *(d_half4 *)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+     out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+     d_half4 p;
+     p.data[0] = hlog(value.data[0]);
+     p.data[1] = hlog(value.data[1]);
+     p.data[2] = hlog(value.data[2]);
+     p.data[3] = hlog(value.data[3]);
+     *(d_half4 *)&out[0] = p;
+ }
+
+int HipExec_tensor_log_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar *in, uint in_offset, uint4 in_stride, uchar *out,
+    uint out_offset, uint4 out_stride) {
+
+    if (type == VX_TYPE_FLOAT32) {
+        hipLaunchKernelGGL(Hip_tensor_log_layer, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+            ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+            out, out_offset, out_stride);
+    } else {
+        hipLaunchKernelGGL(Hip_tensor_log_layer_half, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+            ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+            out, out_offset, out_stride);
+    }
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_exp_layer(uchar *in, uint in_offset, uint4 in_stride, uchar *out, uint out_offset, uint4 out_stride) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+     float4 value = *(float4 *)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+     out += out_offset + x  * out_stride.x + y * out_stride.y + z * out_stride.z;
+     *(float4 *)&out[0] = make_float4(exp(value.x), exp(value.y), exp(value.z), exp(value.w));
+ }
+
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_exp_layer_half(uchar *in, uint in_offset, uint4 in_stride, uchar *out, uint out_offset, uint4 out_stride) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    d_half4 value = *(d_half4 *)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+
+     d_half4 p;
+     p.data[0] = hexp(value.data[0]);
+     p.data[1] = hexp(value.data[1]);
+     p.data[2] = hexp(value.data[2]);
+     p.data[3] = hexp(value.data[3]);
+     *(d_half4 *)&out[0] = p;
+ }
+
+int HipExec_tensor_exp_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar *in, uint in_offset, uint4 in_stride, uchar *out,
+    uint out_offset, uint4 out_stride) {
+
+    if (type == VX_TYPE_FLOAT32) {
+        hipLaunchKernelGGL(Hip_tensor_exp_layer, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+            ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+            out, out_offset, out_stride);
+    } else {
+        hipLaunchKernelGGL(Hip_tensor_exp_layer_half, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+            ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+            out, out_offset, out_stride);
+    }
+
+    return VX_SUCCESS;
+}

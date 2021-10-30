@@ -144,32 +144,22 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
             if ((dec_frame->pts < select_frame_pts) || (ret < 0)) continue;
             if (frame_count % stride == 0)
             {
-                if (useVaapi) {
-                    //retrieve data from GPU to CPU
-                    if ((av_hwframe_transfer_data(sw_frame, dec_frame, 0)) < 0) {
-                        ERR("avcodec_receive_frame() failed");
-                        //eof[mediaIndex] = true;
-                        ERR("\nTransfer failed");
-                        return Status::FAILED;
-                    }
+                //retrieve data from GPU to CPU
+                if ((av_hwframe_transfer_data(sw_frame, dec_frame, 0)) < 0) {
+                    ERR("avcodec_receive_frame() failed");
+                    //eof[mediaIndex] = true;
+                    ERR("\nTransfer failed");
+                    return Status::FAILED;
                 }
 
                 dst_data[0] = out_buffer;
                 dst_linesize[0] = out_stride;
                 if (swsctx)
-                {
-                    if(!useVaapi)
-                        sws_scale(swsctx, dec_frame->data, dec_frame->linesize, 0, dec_frame->height, dst_data, dst_linesize);
-                    else
-                        sws_scale(swsctx, sw_frame->data, sw_frame->linesize, 0, sw_frame->height, dst_data, dst_linesize);
-                }
+                    sws_scale(swsctx, sw_frame->data, sw_frame->linesize, 0, sw_frame->height, dst_data, dst_linesize);
                 else
                 {
                     // copy from frame to out_buffer
-                    if(!useVaapi)
-                        memcpy(out_buffer, dec_frame->data[0], dec_frame->linesize[0] * out_height);
-                    else
-                        memcpy(out_buffer, sw_frame->data[0], sw_frame->linesize[0] * out_height);
+                    memcpy(out_buffer, sw_frame->data[0], sw_frame->linesize[0] * out_height);
                 }
                 out_buffer = out_buffer + image_size;
             }
@@ -205,14 +195,12 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
 
     // find if hardware decode is available
     AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_NONE;
-    if (useVaapi) {
-        hw_type = av_hwdevice_find_type_by_name("vaapi");
-        if (hw_type == AV_HWDEVICE_TYPE_NONE) {
-            ERR("ERROR: vaapi is not supported for this device\n");
-            return Status::FAILED;
-        }
-        printf("Found vaapi device for the device\n");
+    hw_type = av_hwdevice_find_type_by_name("vaapi");
+    if (hw_type == AV_HWDEVICE_TYPE_NONE) {
+        ERR("ERROR: vaapi is not supported for this device\n");
+        return Status::FAILED;
     }
+    std::cerr << "Found vaapi device for the device\n";
 
     if (avformat_open_input(&_fmt_ctx, src_filename, NULL, NULL) < 0)
     {
@@ -224,33 +212,28 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         ERR("av_find_stream_info error");
         return Status::FAILED;
     }
-    if(useVaapi)
-        ret = av_find_best_stream(_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &_decoder, 0);
-    else
-        ret = av_find_best_stream(_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-
+    ret = av_find_best_stream(_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &_decoder, 0);
     if (ret < 0)
     {
         ERR("Could not find %s stream in input file " +
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " " + STR(src_filename));
         return Status::FAILED;
     }
-    if(useVaapi) {
-            // for hardware accelerated decoding, find config
-            for (int i = 0; ; i++) {
-                const AVCodecHWConfig *config = avcodec_get_hw_config(_decoder, i);
-                if (!config) {
-                    std::cerr << "ERROR: decoder " << _decoder->name << " doesn't support device_type \n" << av_hwdevice_get_type_name(hw_type);
-                    return Status::FAILED;
-                }
-                if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
-                    config->device_type == hw_type) {
-                    //_dec_pix_fmt = config->pix_fmt;
-                    hwPixelFormat = config->pix_fmt;
-                    break;
-                }
-            }
+    // for hardware accelerated decoding, find config
+    for (int i = 0; ; i++) {
+        const AVCodecHWConfig *config = avcodec_get_hw_config(_decoder, i);
+        if (!config) {
+            std::cerr << "ERROR: decoder " << _decoder->name << " doesn't support device_type \n" << av_hwdevice_get_type_name(hw_type);
+            return Status::FAILED;
+        }
+        if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
+                config->device_type == hw_type) {
+            //_dec_pix_fmt = config->pix_fmt;
+            hwPixelFormat = config->pix_fmt;
+            break;
+        }
     }
+
     _video_stream_idx = ret;
     _video_stream = _fmt_ctx->streams[_video_stream_idx];
 
@@ -286,16 +269,14 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         return Status::FAILED;
     }
 
-    if (useVaapi)
-    {
-        _video_dec_ctx->get_format  = get_hw_format;
-        if (hw_decoder_init(_video_dec_ctx, hw_type, hw_device_ctx) < 0) {
-            ERR("ERROR: Failed to create specified HW device");
-            return Status::FAILED;
-        }
-        _dec_pix_fmt = AV_PIX_FMT_NV12; // nv12 for vaapi
-        std::cerr << "\nDecoder_format after hw-decoder-init: " << _dec_pix_fmt;
+    _video_dec_ctx->get_format  = get_hw_format;
+    if (hw_decoder_init(_video_dec_ctx, hw_type, hw_device_ctx) < 0) {
+        ERR("ERROR: Failed to create specified HW device");
+        return Status::FAILED;
     }
+    _dec_pix_fmt = AV_PIX_FMT_NV12; // nv12 for vaapi
+    std::cerr << "\nDecoder_format after hw-decoder-init: " << _dec_pix_fmt;
+
     // Init the decoders 
     if ((ret = avcodec_open2(_video_dec_ctx, _decoder, &opts)) < 0)
     {
@@ -303,8 +284,6 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " codec");
         return Status::FAILED;
     }
-    if(!useVaapi)
-        _dec_pix_fmt = _video_dec_ctx->pix_fmt;
     _codec_width = _video_stream->codecpar->width;
     _codec_height = _video_stream->codecpar->height;
     return status;

@@ -71,25 +71,15 @@ void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_
     }
 }
 
-inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false)
+inline float ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const float &box1_area, const BoundingBoxCord &box2)
 {
-    double iou;
     float xA = std::max(box1.l, box2.l);
     float yA = std::max(box1.t, box2.t);
     float xB = std::min(box1.r, box2.r);
     float yB = std::min(box1.b, box2.b);
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
-    float box1_area = (box1.b - box1.t) * (box1.r - box1.l);
     float box2_area = (box2.b - box2.t) * (box2.r - box2.l);
-
-    if (is_iou)
-    {
-        iou = intersection_area / float(box1_area + box2_area - intersection_area);
-    }
-    else
-        iou = intersection_area / float(box1_area);
-
-    return iou;
+    return (float) (intersection_area / (box1_area + box2_area - intersection_area));
 }
 
 void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info, crop_image_info crop_image_info)
@@ -146,13 +136,14 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
 
 inline void calculate_ious_for_box(float *ious, BoundingBoxCord &box, BoundingBoxCord *anchors, unsigned int num_anchors)
 {
-    int best_idx = 0;
-    ious[0] = ssd_BBoxIntersectionOverUnion(box, anchors[0], true);
-    float best_iou = ious[0];
+    float box_area = (box.b - box.t) * (box.r - box.l);
+    ious[0] = ssd_BBoxIntersectionOverUnion(box, box_area, anchors[0]);
 
+    int best_idx = 0;
+    float best_iou = ious[0];
     for (unsigned int anchor_idx = 1; anchor_idx < num_anchors; anchor_idx++)
     {
-        ious[anchor_idx] = ssd_BBoxIntersectionOverUnion(box, anchors[anchor_idx], true);
+        ious[anchor_idx] = ssd_BBoxIntersectionOverUnion(box, box_area, anchors[anchor_idx]);
         if (ious[anchor_idx] > best_iou)
         {
             best_iou = ious[anchor_idx];

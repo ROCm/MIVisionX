@@ -104,6 +104,7 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST),
 #endif
         _process_time("Process Time", DBG_TIMING),
+        _bencode_time("BoxEncoder Time", DBG_TIMING),
         _first_run(true),
         _processing(false),
         _internal_batch_size(compute_optimum_internal_batch_size(batch_size, affinity)),
@@ -457,6 +458,7 @@ MasterGraph::timing()
     Timing t = _loader_module->timing();
     t.image_process_time += _process_time.get_timing();
     t.copy_to_output += _convert_time.get_timing();
+    t.bb_process_time += _bencode_time.get_timing();
     return t;
 }
 
@@ -899,10 +901,12 @@ void MasterGraph::output_routine()
                 }
                 _graph->process();
             }
+            _bencode_time.start();
             if(_is_box_encoder )
             {
                 _meta_data_graph->update_box_encoder_meta_data(&_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);
             }
+            _bencode_time.end();
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
             _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
         }
@@ -913,7 +917,7 @@ void MasterGraph::output_routine()
         _processing = false;
         _ring_buffer.release_all_blocked_calls();
     }
-        _process_time.end();
+    _process_time.end();
 }
 
 void MasterGraph::start_processing()

@@ -113,6 +113,12 @@ def parse_args():
         default=None,
         help="The generator to use (default: CMake default)",
     )
+    parser.add_argument(
+        '--build-target',
+        type=str,
+        default="build_all",
+        help="The target to build (default: build_all)."
+    )
 
     return parser.parse_args()
 
@@ -200,7 +206,7 @@ def build_cmd() -> Tuple[str, str]:
     if os.name == "nt":
         build_exe = "cmake.exe"
         build_options.append("--build .")
-        build_options.append("--target all_build")
+        build_options.append(f"--target {ARGS.build_target}")
     else:
         # TODO
         pass

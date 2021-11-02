@@ -151,7 +151,7 @@ def delete_dir(dir_path):
             if child.is_dir():
                 delete_dir(child)
             else:
-                dir_.unlink()
+                child.unlink()
         dir_.rmdir()
 
 

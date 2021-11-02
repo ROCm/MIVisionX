@@ -34,7 +34,10 @@ list(APPEND SOURCES loom_shell_util.cpp loom_shell.cpp help.cpp)
 add_executable(loom_shell ${SOURCES})
 install(TARGETS loom_shell DESTINATION bin)
 
-target_link_libraries(loom_shell vx_loomsl openvx pthread)
+target_link_libraries(loom_shell vx_loomsl openvx)
+if(NOT WIN32)
+    target_link_libraries(loom_shell pthread)
+endif()
 
 if (OpenCL_FOUND)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)

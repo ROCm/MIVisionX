@@ -104,7 +104,7 @@ install(TARGETS vx_opencv DESTINATION lib)
 install(FILES include/vx_ext_opencv.h DESTINATION include)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	target_link_libraries(vx_opencv OpenVX)
+	target_link_libraries(vx_opencv openvx)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()

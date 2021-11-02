@@ -52,10 +52,16 @@ list(APPEND SOURCES
 
 include_directories(module_files)
 add_library(neuralNetModels SHARED module_files/annmodule.cpp)
-target_link_libraries(neuralNetModels openvx vx_nn pthread)
+target_link_libraries(neuralNetModels openvx vx_nn)
+if(NOT WIN32)
+    target_link_libraries(neuralNetModels pthread)
+endif()
 
 add_executable(classifier  ${SOURCES})
 target_compile_definitions(classifier PUBLIC ENABLE_OPENCV=1)
-target_link_libraries(classifier openvx vx_nn neuralNetModels ${OpenCV_LIBRARIES}  pthread)
+target_link_libraries(classifier openvx vx_nn neuralNetModels ${OpenCV_LIBRARIES})
+if(NOT WIN32)
+    target_link_libraries(classifier pthread)
+endif()
 
 

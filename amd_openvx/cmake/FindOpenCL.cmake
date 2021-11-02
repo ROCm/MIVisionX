@@ -45,6 +45,7 @@ else()
         ${OPENCL_ROOT}/include
         $ENV{AMDAPPSDKROOT}/include
         $ENV{CUDA_PATH}/include
+        $ENV{OCL_ROOT}/include
         PATHS
         ${ROCM_PATH}/opencl/include
         /usr/include
@@ -62,6 +63,7 @@ else()
             ${OPENCL_ROOT}/lib
             $ENV{AMDAPPSDKROOT}/lib
             $ENV{CUDA_PATH}/lib
+            $ENV{OCL_ROOT}/lib
             DOC "OpenCL dynamic library path"
             PATH_SUFFIXES x86_64 x64 x86_64/sdk
             PATHS
@@ -77,6 +79,7 @@ else()
             ${OPENCL_ROOT}/lib
             $ENV{AMDAPPSDKROOT}/lib
             $ENV{CUDA_PATH}/lib
+            $ENV{OCL_ROOT}/lib
             DOC "OpenCL dynamic library path"
             PATH_SUFFIXES x86 Win32
             PATHS

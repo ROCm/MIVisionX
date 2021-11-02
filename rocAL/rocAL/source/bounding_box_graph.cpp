@@ -105,6 +105,8 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
         crop_box.t = crop_cords[i][1];
         crop_box.r = crop_box.l + crop_cords[i][2];
         crop_box.b = crop_box.t + crop_cords[i][3];
+        float w_factor = 1.0 / crop_cords[i][2];
+        float h_factor = 1.0 / crop_cords[i][3];
         for (uint j = 0; j < bb_count; j++)
         {
             //Mask Criteria
@@ -116,18 +118,17 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
                 float yA = std::max(crop_box.t, coords_buf[j].t);
                 float xB = std::min(crop_box.r, coords_buf[j].r);
                 float yB = std::min(crop_box.b, coords_buf[j].b);
-                coords_buf[j].l = (xA - crop_box.l) / (crop_box.r - crop_box.l);
-                coords_buf[j].t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
-                coords_buf[j].r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
-                coords_buf[j].b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
+                coords_buf[j].l = (xA - crop_box.l) * w_factor;
+                coords_buf[j].t = (yA - crop_box.t) * h_factor;
+                coords_buf[j].r = (xB - crop_box.l) * w_factor;
+                coords_buf[j].b = (yB - crop_box.t) * h_factor;
                 bb_coords.push_back(coords_buf[j]);
                 bb_labels.push_back(labels_buf[j]);
             }
         }
         if (bb_coords.size() == 0)
         {
-            std::cerr << "Bounding box co-ordinates not found in the image";
-            exit(0);
+            THROW("Bounding box co-ordinates not found in the image ");
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;

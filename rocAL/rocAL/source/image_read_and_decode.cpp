@@ -112,7 +112,7 @@ ImageReadAndDecode::reset()
 size_t
 ImageReadAndDecode::count()
 {
-    return _reader->count();
+    return _reader->count_items();
 }
 
 void ImageReadAndDecode::set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader)
@@ -149,7 +149,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         THROW("Zero image dimension is not valid")
     if(!buff)
         THROW("Null pointer passed as output buffer")
-    if(_reader->count() < _batch_size)
+    if(_reader->count_items() < _batch_size)
         return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
     // load images/frames from the disk and push them as a large image onto the buff
     unsigned file_counter = 0;
@@ -163,7 +163,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start();// Debug timing
     if (_decoder_config._type == DecoderType::SKIP_DECODE) {
-        while ((file_counter != _batch_size) && _reader->count() > 0)
+        while ((file_counter != _batch_size) && _reader->count_items() > 0)
         {
             auto read_ptr = buff + image_size * file_counter;
             size_t fsize = _reader->open();
@@ -172,7 +172,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                 continue;
             }
 
-            _actual_read_size[file_counter] = _reader->read(read_ptr, fsize);
+            _actual_read_size[file_counter] = _reader->read_data(read_ptr, fsize);
             if(_actual_read_size[file_counter] < fsize)
                 LOG("Reader read less than requested bytes of size: " + _actual_read_size[file_counter]);
 
@@ -189,7 +189,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         //_file_load_time.end();// Debug timing
         //return LoaderModuleStatus::OK;
     }else {
-        while ((file_counter != _batch_size) && _reader->count() > 0) {
+        while ((file_counter != _batch_size) && _reader->count_items() > 0) {
 
             size_t fsize = _reader->open();
             if (fsize == 0) {
@@ -197,7 +197,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                 continue;
             }
             _compressed_buff[file_counter].reserve(fsize);
-            _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
+            _actual_read_size[file_counter] = _reader->read_data(_compressed_buff[file_counter].data(), fsize);
             _image_names[file_counter] = _reader->id();
             _reader->close();
             _compressed_image_size[file_counter] = fsize;

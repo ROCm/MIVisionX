@@ -92,7 +92,6 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         y1 = std::lround(_bbox_coord[1] * original_image_height);
         crop_width = std::lround((_bbox_coord[2]) * original_image_width);
         crop_height = std::lround((_bbox_coord[3]) * original_image_height);
-
     }
     else
     {

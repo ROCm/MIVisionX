@@ -84,6 +84,27 @@ auto get_ago_affinity_info = []
     return affinity;
 };
 
+//Function to append ImageNameBatch
+ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
+{
+    dest.insert(dest.end(), src.cbegin(), src.cend());
+    return dest;
+}
+
+//Function to append vectors
+std::vector<size_t>& operator+=(std::vector<size_t>& dest, const std::vector<size_t>& src)
+{
+    dest.insert(dest.end(), src.cbegin(), src.cend());
+    return dest;
+}
+
+//Function to append vector of vectors
+std::vector<std::vector<float>>& operator+=(std::vector<std::vector<float>>& dest, const std::vector<std::vector<float>>& src)
+{
+    dest.insert(dest.end(), src.cbegin(), src.cend());
+    return dest;
+}
+
 MasterGraph::~MasterGraph()
 {
     release();
@@ -167,13 +188,6 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
             THROW("Cannot load vx_rpp extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
         else
             LOG("vx_rpp module loaded successfully")
-#ifdef RALI_VIDEO
-        // loading video decoder modules
-        if ((status = vxLoadKernels(_context, "vx_amd_media")) != VX_SUCCESS)
-            WRN("Cannot load vx_amd_media extension, video decode functionality will not be available")
-        else
-            LOG("vx_amd_media module loaded")
-#endif
         if(_affinity == RaliAffinity::GPU) {
 #if ENABLE_HIP
             _device.init_hip(_context);
@@ -225,8 +239,9 @@ void
 MasterGraph::decrease_image_count()
 {
     if(!_loop)
-        _remaining_images_count -= _user_batch_size;
+        _remaining_count -= (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size);
 }
+
 void
 MasterGraph::create_single_graph()
 {
@@ -359,7 +374,21 @@ MasterGraph::output_width()
 size_t
 MasterGraph::output_height()
 {
-    return _output_image_info.height_batch()*_user_to_internal_batch_ratio;
+    return _output_image_info.height_batch() * (_is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio);
+}
+
+void
+MasterGraph::sequence_start_frame_number(std::vector<size_t> &sequence_start_framenum)
+{
+    sequence_start_framenum = _sequence_start_framenum_vec.back();
+    _sequence_start_framenum_vec.pop_back();
+}
+
+void
+MasterGraph::sequence_frame_timestamps(std::vector<std::vector<float>> &sequence_frame_timestamp)
+{
+    sequence_frame_timestamp = _sequence_frame_timestamps_vec.back();
+    _sequence_frame_timestamps_vec.pop_back();
 }
 
 MasterGraph::Status
@@ -427,11 +456,21 @@ MasterGraph::reset()
         _output_thread.join();
     _ring_buffer.reset();
     // clearing meta ring buffer
-    // if random_bbox meta reader is used: read again to get different crops
-    if (_randombboxcrop_meta_data_reader != nullptr)
-        _randombboxcrop_meta_data_reader->release();
-    // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
-    _loader_module->reset();
+    if(_is_video_loader)
+    {
+        _video_loader_module->reset();
+        _sequence_start_framenum_vec.clear();
+        _sequence_frame_timestamps_vec.clear();
+    }
+    else
+    {
+        // if random_bbox meta reader is used: read again to get different crops
+        if (_randombboxcrop_meta_data_reader != nullptr)
+            _randombboxcrop_meta_data_reader->release();
+        // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
+        _loader_module->reset();
+    }
+
     // restart processing of the images
     _first_run = true;
     _output_routine_finished_processing = false;
@@ -440,9 +479,9 @@ MasterGraph::reset()
 }
 
 size_t
-MasterGraph::remaining_images_count()
+MasterGraph::remaining_count()
 {
-    return (_remaining_images_count >= 0) ? _remaining_images_count:0;
+    return (_remaining_count >= 0) ? _remaining_count:0;
 }
 
 RaliMemType
@@ -454,8 +493,17 @@ MasterGraph::mem_type()
 Timing
 MasterGraph::timing()
 {
-    Timing t = _loader_module->timing();
-    t.image_process_time += _process_time.get_timing();
+    Timing t;
+    if(_is_video_loader)
+    {
+        t = _video_loader_module->timing();
+        t.video_process_time += _process_time.get_timing();
+    }
+    else
+    {
+        t  = _loader_module->timing();
+        t.image_process_time += _process_time.get_timing();
+    }
     t.copy_to_output += _convert_time.get_timing();
     return t;
 }
@@ -787,16 +835,10 @@ MasterGraph::copy_output(unsigned char *out_ptr)
     return Status::OK;
 }
 
-ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
-{
-    dest.insert(dest.end(), src.cbegin(), src.cend());
-    return dest;
-}
-
 void MasterGraph::output_routine()
 {
     _process_time.start();
-    INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
+    INFO("Output routine started with "+TOSTR(_remaining_count) + " to load");
 #if !ENABLE_HIP
     if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
@@ -812,7 +854,6 @@ void MasterGraph::output_routine()
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
             pMetaDataBatch augmented_batch_meta_data = nullptr;
-
             if (_loader_module->remaining_count() < _user_batch_size)
             {
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
@@ -839,8 +880,8 @@ void MasterGraph::output_routine()
                 if (!_processing)
                     break;
                 auto this_cycle_names =  _loader_module->get_id();
-                auto decode_image_info = _loader_module->get_decode_image_info();  
-                auto crop_image_info = _loader_module->get_crop_image_info();              
+                auto decode_image_info = _loader_module->get_decode_image_info();
+                auto crop_image_info = _loader_module->get_crop_image_info();
 
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -913,14 +954,136 @@ void MasterGraph::output_routine()
         _processing = false;
         _ring_buffer.release_all_blocked_calls();
     }
-        _process_time.end();
+    _process_time.end();
+}
+
+void MasterGraph::output_routine_video()
+{
+    _process_time.start();
+    INFO("Output routine of video pipeline started with "+TOSTR(_remaining_count) + " to load");
+    size_t batch_ratio = _is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio;
+    if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_batch_ratio is different. Will be removed in TensorSupport.
+    {
+#if !ENABLE_HIP
+    if(processing_on_device_ocl() && batch_ratio != 1)
+        THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
+#else
+    if(processing_on_device_hip() && batch_ratio != 1)
+        THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
+#endif
+    }
+    try {
+        while (_processing)
+        {
+            const size_t each_cycle_size = output_byte_size()/batch_ratio;
+
+            ImageNameBatch full_batch_image_names = {};
+            pMetaDataBatch full_batch_meta_data = nullptr;
+            pMetaDataBatch augmented_batch_meta_data = nullptr;
+            if (_video_loader_module->remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size))
+            {
+                // If the internal process routine ,output_routine_video(), has finished processing all the images, and last
+                // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
+                notify_user_thread();
+                // the following call is required in case the ring buffer is waiting for more data to be loaded and there is no more data to process.
+                _ring_buffer.release_if_empty();
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+            // _ring_buffer.get_write_buffers() is blocking and blocks here until user uses processed image by calling run() and frees space in the ring_buffer
+            auto write_buffers = _ring_buffer.get_write_buffers();
+
+            // When executing on CPU the internal batch count can be smaller than the user batch count
+            // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
+            // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
+            for(unsigned cycle_idx = 0; cycle_idx< batch_ratio; cycle_idx++)
+            {
+                // Swap handles on the input sequence, so that new sequence is loaded to be processed
+                auto load_ret = _video_loader_module->load_next();
+                if (load_ret != VideoLoaderModuleStatus::OK)
+                    THROW("Video Loader module failed to load next batch of images, status " + TOSTR(load_ret))
+
+                if (!_processing)
+                    break;
+                auto this_cycle_names = _video_loader_module->get_id();
+                auto decode_image_info = _video_loader_module->get_decode_image_info();
+                _sequence_start_framenum_vec.insert(_sequence_start_framenum_vec.begin(), _video_loader_module->get_sequence_start_frame_number());
+                _sequence_frame_timestamps_vec.insert(_sequence_frame_timestamps_vec.begin(), _video_loader_module->get_sequence_frame_timestamps());
+
+                if(this_cycle_names.size() != _internal_batch_size)
+                    WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
+
+                // meta_data lookup is done before _meta_data_graph->process() is called to have the new meta_data ready for processing
+                if (_meta_data_reader)
+                    _meta_data_reader->lookup(this_cycle_names);
+
+                full_batch_image_names += this_cycle_names;
+
+                if (!_processing)
+                    break;
+
+                // Swap handles on the output images, so that new processed image will be written to the a new buffer
+                for (size_t idx = 0; idx < _output_images.size(); idx++)
+                {
+                    if(_affinity == RaliAffinity::GPU)
+                        _output_images[idx]->swap_handle(write_buffers[idx]);
+                    else
+                    {
+                        auto this_cycle_buffer_ptr = (unsigned char *) write_buffers[idx] + each_cycle_size * cycle_idx;
+                        _output_images[idx]->swap_handle(this_cycle_buffer_ptr);
+                    }
+                }
+
+                if (!_processing)
+                    break;
+
+                for(auto node: _nodes)
+                {
+                    if(node->_is_ssd)
+                    {
+                        node->set_meta_data(_augmented_meta_data);
+                    }
+                }
+
+                update_node_parameters();
+                if(_augmented_meta_data)
+                {
+                    if (_meta_data_graph)
+                    {
+                        _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
+                        _meta_data_graph->process(_augmented_meta_data);
+                    }
+                    if (full_batch_meta_data)
+                        full_batch_meta_data->concatenate(_augmented_meta_data);
+                    else
+                        full_batch_meta_data = _augmented_meta_data->clone();
+                }
+                _graph->process();
+            }
+            if(_is_box_encoder )
+            {
+                _meta_data_graph->update_box_encoder_meta_data(&_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);
+            }
+            _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
+            _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
+        }
+    }
+    catch (const std::exception &e)
+    {
+        ERR("Exception thrown in the process routine: " + STR(e.what()) + STR("\n"));
+        _processing = false;
+        _ring_buffer.release_all_blocked_calls();
+    }
+    _process_time.end();
 }
 
 void MasterGraph::start_processing()
 {
     _processing = true;
-    _remaining_images_count = _loader_module->remaining_count();
-    _output_thread = std::thread(&MasterGraph::output_routine, this);
+    _is_video_loader ? (_remaining_count = _video_loader_module->remaining_count(),
+                        _output_thread = std::thread(&MasterGraph::output_routine_video, this))
+                        : (_remaining_count = _loader_module->remaining_count(),
+                        _output_thread = std::thread(&MasterGraph::output_routine, this));
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else
 //  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds
@@ -964,8 +1127,8 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     return _meta_data_reader->get_output();
 }
 
- MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type, std::map<std::string, std::string> feature_key_map)
- {
+MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type, std::map<std::string, std::string> feature_key_map)
+{
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(label_type, reader_type, source_path, feature_key_map);
@@ -995,6 +1158,24 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     return _meta_data_reader->get_output();
 }
 
+MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, MetaDataReaderType reader_type, unsigned sequence_length, unsigned frame_step, unsigned frame_stride, bool file_list_frame_num)
+{
+    if( _meta_data_reader)
+        THROW("A metadata reader has already been created")
+    MetaDataConfig config(MetaDataType::Label, reader_type, source_path, std::map<std::string, std::string>(), std::string(), sequence_length, frame_step, frame_stride);
+    _meta_data_reader = create_meta_data_reader(config);
+    _meta_data_reader->init(config);
+    if(!file_list_frame_num)
+    {
+        _meta_data_reader->set_timestamp_mode();
+    }
+    _meta_data_reader->read_all(source_path);
+    if (_augmented_meta_data)
+        THROW("Metadata can only have a single output")
+    else
+        _augmented_meta_data = _meta_data_reader->get_output();
+    return _meta_data_reader->get_output();
+}
 
 void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts, int64_t seed)
 {

@@ -178,7 +178,6 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
     {
         BoundingBoxCord *bbox_anchors = reinterpret_cast<BoundingBoxCord *>(anchors->data());
         auto bb_count = full_batch_meta_data->get_bb_labels_batch()[i].size();
-        //int labels_buf[bb_count];
         BoundingBoxCord bb_coords[bb_count];
         BoundingBoxLabels bb_labels;
         bb_labels.resize(bb_count);
@@ -197,7 +196,8 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
             auto iou_rows = ious.data() + (bb_idx * (anchors_size));
             calculate_ious_for_box(iou_rows, bb_coords[bb_idx], bbox_anchors, anchors_size);
         }
-        
+        float inv_stds[4] = {(float)(1./stds[0]), (float)(1./stds[1]), (float)(1./stds[2]), (float)(1./stds[3])};
+        float half_scale = 0.5 * scale;
         // Depending on the matches ->place the best bbox instead of the corresponding anchor_idx in anchor
         for (unsigned anchor_idx = 0; anchor_idx < anchors_size; anchor_idx++)
         {
@@ -208,32 +208,32 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
             if (ious[(best_idx * anchors_size) + anchor_idx] > criteria) //Its a match
             {
                 //Convert the "ltrb" format to "xcycwh"
-                box_bestidx.xc = 0.5 * (bb_coords[best_idx].l + bb_coords[best_idx].r); //xc
-                box_bestidx.yc = 0.5 * (bb_coords[best_idx].t + bb_coords[best_idx].b); //yc
-                box_bestidx.w = bb_coords[best_idx].r - bb_coords[best_idx].l;      //w
-                box_bestidx.h = bb_coords[best_idx].b - bb_coords[best_idx].t;      //h
                 if (offset)
                 {
-                    box_bestidx.xc *= scale; //xc
-                    box_bestidx.yc *= scale; //yc
-                    box_bestidx.w *= scale; //w
-                    box_bestidx.h *= scale; //h
+                    box_bestidx.xc = (bb_coords[best_idx].l + bb_coords[best_idx].r) * half_scale; //xc
+                    box_bestidx.yc = (bb_coords[best_idx].t + bb_coords[best_idx].b) * half_scale; //yc
+                    box_bestidx.w = (bb_coords[best_idx].r - bb_coords[best_idx].l) * scale;      //w
+                    box_bestidx.h = (bb_coords[best_idx].b - bb_coords[best_idx].t) * scale;      //h
                     //Convert the "ltrb" format to "xcycwh"
-                    anchor_xcyxwh.xc = 0.5 * (p_anchor->l + p_anchor->r) * scale; //xc
-                    anchor_xcyxwh.yc = 0.5 * (p_anchor->t + p_anchor->b) * scale; //yc
-                    anchor_xcyxwh.w = (-p_anchor->l + p_anchor->r) * scale;      //w
-                    anchor_xcyxwh.h = (-p_anchor->t + p_anchor->b) * scale;      //h
+                    anchor_xcyxwh.xc = (p_anchor->l + p_anchor->r) * half_scale; //xc
+                    anchor_xcyxwh.yc = (p_anchor->t + p_anchor->b) * half_scale; //yc
+                    anchor_xcyxwh.w = ( p_anchor->r - p_anchor->l ) * scale;      //w
+                    anchor_xcyxwh.h = ( p_anchor->b - p_anchor->t ) * scale;      //h
                     // Reference for offset calculation between the Ground Truth bounding boxes & anchor boxes in <xc,yc,w,h> format
                     // https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Object-Detection#predictions-vis-%C3%A0-vis-priors
-                    box_bestidx.xc = ((box_bestidx.xc - anchor_xcyxwh.xc) / anchor_xcyxwh.w - means[0]) / stds[0];
-                    box_bestidx.yc = ((box_bestidx.yc - anchor_xcyxwh.yc) / anchor_xcyxwh.h - means[1]) / stds[1];
-                    box_bestidx.w = (std::log(box_bestidx.w / anchor_xcyxwh.w) - means[2]) / stds[2];
-                    box_bestidx.h = (std::log(box_bestidx.h / anchor_xcyxwh.h) - means[3]) / stds[3];
+                    box_bestidx.xc = ((box_bestidx.xc - anchor_xcyxwh.xc) / anchor_xcyxwh.w - means[0]) * inv_stds[0] ;
+                    box_bestidx.yc = ((box_bestidx.yc - anchor_xcyxwh.yc) / anchor_xcyxwh.h - means[1]) * inv_stds[1];
+                    box_bestidx.w = (std::log(box_bestidx.w / anchor_xcyxwh.w) - means[2]) * inv_stds[2];
+                    box_bestidx.h = (std::log(box_bestidx.h / anchor_xcyxwh.h) - means[3]) * inv_stds[3];
                     encoded_bb[anchor_idx] = box_bestidx;
                     encoded_labels[anchor_idx] = bb_labels.at(best_idx);
                 }
                 else
                 {
+                    box_bestidx.xc = 0.5 * (bb_coords[best_idx].l + bb_coords[best_idx].r); //xc
+                    box_bestidx.yc = 0.5 * (bb_coords[best_idx].t + bb_coords[best_idx].b); //yc
+                    box_bestidx.w = bb_coords[best_idx].r - bb_coords[best_idx].l;      //w
+                    box_bestidx.h = bb_coords[best_idx].b - bb_coords[best_idx].t;      //h
                     encoded_bb[anchor_idx] = box_bestidx;
                     encoded_labels[anchor_idx] = bb_labels.at(best_idx);
                 }
@@ -259,8 +259,8 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
         BoundingBoxCords * encoded_bb_ltrb = (BoundingBoxCords*)&encoded_bb;
         full_batch_meta_data->get_bb_cords_batch()[i] = (*encoded_bb_ltrb);
         full_batch_meta_data->get_bb_labels_batch()[i] = encoded_labels;
-        encoded_bb.clear();
-        encoded_labels.clear();
+        //encoded_bb.clear();
+        //encoded_labels.clear();
     }
 }
 

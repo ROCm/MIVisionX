@@ -9,7 +9,7 @@ RUN apt-get -y install gcc g++ cmake git
 # install ROCm for mivisionx OpenCL dependency - Level 2
 RUN apt-get -y install libnuma-dev wget sudo gnupg2 kmod python3-dev &&  \
         wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add - && \
-        echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list && \
+        echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list && \
         sudo apt-get update -y && \
         sudo apt-get -y install rocm-dev
 # install OpenCV & FFMPEG - Level 3

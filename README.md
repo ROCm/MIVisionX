@@ -113,7 +113,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 * Windows 10
 * Windows SDK
-* Visual Studio 2017 or later
+* Visual Studio 2019 or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
 * Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)

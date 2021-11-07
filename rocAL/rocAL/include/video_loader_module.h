@@ -21,27 +21,43 @@ THE SOFTWARE.
 */
 
 #pragma once
-#include <string>
-#include <utility>
+#include <memory>
+#include "video_reader.h"
+#include "video_decoder.h"
 #include "commons.h"
-#include "loader_module.h"
-#include "node_video_file_source.h"
+#include "image.h"
+#include "circular_buffer.h"
+#include "meta_data_reader.h"
+#include "meta_data_graph.h"
 
-#ifdef RALI_VIDEO
-class VideoLoaderModule : public LoaderModule
+enum class VideoLoaderModuleStatus
+{
+    OK = 0,
+    DEVICE_BUFFER_SWAP_FAILED,
+    HOST_BUFFER_SWAP_FAILED,
+    NO_FILES_TO_READ,
+    DECODE_FAILED,
+    NO_MORE_DATA_TO_READ,
+    NOT_INITIALIZED
+};
+
+/*! \class VideoLoaderModule The interface defining the API and requirements of loader modules*/
+class VideoLoaderModule
 {
 public:
-    explicit VideoLoaderModule(std::shared_ptr<VideoFileNode> sharedPtr);
-
-    LoaderModuleStatus load_next() override;
-    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size) override;
-    void set_output_image (Image* output_image) override;
-    size_t count() override; // returns number of remaining items to be loaded
-    void reset() override; // Resets the loader to load from the beginning of the media
-    std::vector<long long unsigned> timing() override {return {0}; }
-    void stop() override  {}
-    void get_id() { return 0; }
-private:
-    std::shared_ptr<VideoFileNode> _video_node;
+    virtual void initialize(VideoReaderConfig reader_config, VideoDecoderConfig decoder_config, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size) = 0;
+    virtual void set_output_image(Image *output_image) = 0;
+    virtual VideoLoaderModuleStatus load_next() = 0; // Loads the next sequence of frames into the buffer set by calling into the set_output_image
+    virtual void reset() = 0;                        // Resets the loader to load from the beginning of the video files
+    virtual size_t remaining_count() = 0;            // Returns the number of available frames to be loaded
+    virtual ~VideoLoaderModule() = default;
+    virtual Timing timing() = 0;                   // Returns timing info
+    virtual std::vector<std::string> get_id() = 0; // returns the id of the last batch of images/frames loaded
+    virtual void start_loading() = 0;              // starts internal loading thread
+    virtual decoded_image_info get_decode_image_info() = 0;
+    virtual void set_prefetch_queue_depth(size_t prefetch_queue_depth) = 0;
+    virtual std::vector<size_t> get_sequence_start_frame_number() = 0;
+    virtual std::vector<std::vector<float>> get_sequence_frame_timestamps() = 0;
 };
-#endif
+
+using pVideoLoaderModule = std::shared_ptr<VideoLoaderModule>;

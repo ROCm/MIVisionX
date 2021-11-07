@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "commons.h"
 #include "meta_data.h"
 #include "meta_data_reader.h"
+#include "reader.h"
 #include "lmdb.h"
 #include "caffe_protos.pb.h"
 
@@ -40,6 +41,7 @@ public :
     void read_all(const std::string& path) override;
     void release(std::string image_name);
     void release() override;
+    bool set_timestamp_mode() override { return false; }
     void print_map_contents();
     MetaDataBatch * get_output() override { return _output; }
     CaffeMetaDataReaderDetection();

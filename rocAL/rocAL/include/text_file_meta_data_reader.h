@@ -33,6 +33,7 @@ public:
     void read_all(const std::string& path) override;
     void release(std::string image_name);
     void release() override;
+    bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
     TextFileMetaDataReader();
     ~TextFileMetaDataReader() override { delete _output; }

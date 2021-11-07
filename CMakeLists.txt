@@ -36,6 +36,7 @@ set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default ROCm installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
@@ -63,23 +64,35 @@ else()
   endif()
 ENDIF()
 
-option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
-option(ROCAL      "Build MIVisionX with ROCAL Support"       ON)
-option(LOOM       "Build MIVisionX with LOOM Support"         ON)
+option(NEURAL_NET  "Build MIVisionX with Neural Net Support"  ON)
+option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
+option(LOOM        "Build MIVisionX with LOOM Support"        ON)
+option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
 
-if (NOT DEFINED BACKEND)
-    SET(BACKEND "OPENCL")   # set default backend to OPENCL
-    message("-- ${BoldBlue}MIVisionX Backend set to OPENCL")
+if(NOT DEFINED BACKEND)
+  set(BACKEND "OPENCL")   # set default backend to OPENCL
+else()
+  if("${BACKEND}" STREQUAL "OPENCL" OR "${BACKEND}" STREQUAL "OCL" OR "${BACKEND}" STREQUAL "OpenCL")
+    set(BACKEND "OPENCL")
+  elseif("${BACKEND}" STREQUAL "HIP" OR "${BACKEND}" STREQUAL "hip")
+    set(BACKEND "HIP")
+  elseif("${BACKEND}" STREQUAL "CPU" OR "${BACKEND}" STREQUAL "cpu")
+    set(BACKEND "CPU")
+    set(GPU_SUPPORT OFF)
+  else()
+    message("-- ${Red} Warning: MIVisionX backend option unknown -- ${BACKEND}${ColourReset}")
+    message("-- ${Red} Warning: MIVisionX default backend will enforced${ColourReset}")
+    set(BACKEND "OPENCL")
+  endif()
 endif()
-
-option(GPU_SUPPORT "Build MIVisionX with GPU Support"   ON)
+message("-- ${BoldBlue}MIVisionX Backend set to -- ${BACKEND}${ColourReset}")
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D BACKEND=HIP [select HIP for GPU backend (default:OPENCL)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=HIP [select HIP for GPU backend [options:CPU/OPENCL/HIP](default:OPENCL)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
@@ -134,6 +147,13 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
   set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
+# set dependency to ROCm if set to TRUE, default to OFF
+set(ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
+if(ROCM_DEP_ROCMCORE)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-core")
+  set(CPACK_RPM_PACKAGE_REQUIRES   "rocm-core")
+endif()
+
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(COMMAND rpm --eval %{?dist}
                 RESULT_VARIABLE PROC_RESULT
@@ -146,9 +166,7 @@ endif()
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
-#set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl") # Remove Explict requirements
 set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
-#set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl") # Remove Explict requirements
 set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
 
 if(APPLE)

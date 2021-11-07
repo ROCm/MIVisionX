@@ -78,8 +78,10 @@ using namespace std;
 #endif
 
 #if ENABLE_HIP
-#define HIPRTC_GET_TYPE_NAME
+#ifndef __HIP_PLATFORM_HCC__
 #define __HIP_PLATFORM_HCC__
+#endif
+#define HIPRTC_GET_TYPE_NAME
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 #include "hip/hiprtc.h"
@@ -134,6 +136,7 @@ int64_t    agoGetClockCounter();
 int64_t    agoGetClockFrequency();
 bool       agoGetEnvironmentVariable(const char * name, char * value, size_t valueSize); // returns true if success
 bool       agoSetEnvironmentVariable(const char * name, const char * value); // returns true if success
+bool       agoUnsetEnvironmentVariable(const char * name); // returns true if success
 ago_module agoOpenModule(const char * libFileName);
 void *     agoGetFunctionAddress(ago_module module, const char * functionName);
 void       agoCloseModule(ago_module module);

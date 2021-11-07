@@ -751,20 +751,20 @@ int HipExec_WarpAffine_U8_U8_Nearest(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        ago_affine_matrix_t *affineMatrix);
+        vx_uint32 srcImageBufferSize, ago_affine_matrix_t *affineMatrix);
 int HipExec_WarpAffine_U8_U8_Nearest_Constant(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
         ago_affine_matrix_t *affineMatrix,
-        vx_uint8 borderValue);
+        vx_uint8 borderValue, vx_rectangle_t rect_valid);
 int HipExec_WarpAffine_U8_U8_Bilinear(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        ago_affine_matrix_t *affineMatrix);
+        vx_uint32 srcImageBufferSize, ago_affine_matrix_t *affineMatrix);
 int HipExec_WarpAffine_U8_U8_Bilinear_Constant(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -777,7 +777,7 @@ int HipExec_WarpPerspective_U8_U8_Nearest(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        ago_perspective_matrix_t *perspectiveMatrix);
+        vx_uint32 srcImageBufferSize, ago_perspective_matrix_t *perspectiveMatrix);
 int HipExec_WarpPerspective_U8_U8_Nearest_Constant(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -790,7 +790,7 @@ int HipExec_WarpPerspective_U8_U8_Bilinear(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        ago_perspective_matrix_t *perspectiveMatrix);
+        vx_uint32 srcImageBufferSize, ago_perspective_matrix_t *perspectiveMatrix);
 int HipExec_WarpPerspective_U8_U8_Bilinear_Constant(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -802,20 +802,20 @@ int HipExec_Remap_U8_U8_Nearest(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
         ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes);
 int HipExec_Remap_U8_U8_Nearest_Constant(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,vx_uint32 srcImageBufferSize,
         ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes, const vx_uint8 borderValue);
 int HipExec_Remap_U8_U8_Bilinear(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes);
+        vx_uint32 srcImageBufferSize, ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes);
 int HipExec_Remap_U8_U8_Bilinear_Constant(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

@@ -42,7 +42,7 @@ CIFAR10DataReader::CIFAR10DataReader()
     _last_file_idx = 0;
 }
 
-unsigned CIFAR10DataReader::count()
+unsigned CIFAR10DataReader::count_items()
 {
     if(_loop)
         return _file_names.size();
@@ -115,7 +115,7 @@ size_t CIFAR10DataReader::open()
     return (_raw_file_size-1);
 }
 
-size_t CIFAR10DataReader::read(unsigned char* buf, size_t read_size)
+size_t CIFAR10DataReader::read_data(unsigned char* buf, size_t read_size)
 {
     if(!_current_fPtr)
         return 0;

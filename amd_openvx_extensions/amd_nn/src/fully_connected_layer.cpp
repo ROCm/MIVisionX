@@ -30,15 +30,16 @@ struct FullyConnectedLayerLocalData {
     miopenTensorDescriptor_t weight_desc;
     miopenTensorDescriptor_t bias_desc;
     miopenDataType_t data_type;          // data_type for the kernel
-    cl_mem input_mem;
-    cl_mem output_mem;
-    cl_mem weight_mem;
-    cl_mem bias_mem;
+    void *input_mem;
+    void *output_mem;
+    void *weight_mem;
+    void *bias_mem;
     miopenConvFwdAlgorithm_t algo;
     size_t workspace_size;
     float alpha;
     float beta;
-    cl_mem workspace;
+    void *workspace;
+
 };
 
 static vx_status VX_CALLBACK validateFullyConnectedLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -98,8 +99,13 @@ PROFILER_START(VX_NN, Fully_Connected_Layer)
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopen_handle = data->handle->miopen_handle;
 
+#if ENABLE_OPENCL
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#elif ENABLE_HIP
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
 
     //ConvolutionForward.
     ERROR_CHECK_MIOPEN_STATUS(miopenConvolutionForward(data->handle->miopen_handle, &data->alpha, data->input_desc, data->input_mem,
@@ -164,6 +170,7 @@ static vx_status VX_CALLBACK initializeFullyConnectedLayer(vx_node node, const v
     ERROR_CHECK_MIOPEN_STATUS(miopenCreateConvolutionDescriptor(&data->convdesc));
     ERROR_CHECK_MIOPEN_STATUS(miopenInitConvolutionDescriptor(data->convdesc, mode, 0, 0, 1, 1, 1, 1));
 
+#if ENABLE_OPENCL
     //Memory Declaration.
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
@@ -171,6 +178,15 @@ static vx_status VX_CALLBACK initializeFullyConnectedLayer(vx_node node, const v
     if(parameters[2]) {
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_OPENCL, &data->bias_mem, sizeof(data->bias_mem)));
     }
+#elif ENABLE_HIP
+    //Memory Declaration.
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->weight_mem, sizeof(data->weight_mem)));
+    if(parameters[2]) {
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->bias_mem, sizeof(data->bias_mem)));
+    }
+#endif
     data->alpha = 1;
     data->beta = 0;
 
@@ -178,6 +194,7 @@ static vx_status VX_CALLBACK initializeFullyConnectedLayer(vx_node node, const v
     ERROR_CHECK_MIOPEN_STATUS(miopenConvolutionForwardGetWorkSpaceSize(data->handle->miopen_handle, data->weight_desc, data->input_desc, data->convdesc, data->output_desc, &data->workspace_size ));
     if (data->workspace_size > 0) {
         vx_context   vxContext = vxGetContext((vx_reference)node);
+#if ENABLE_OPENCL
         cl_context context;
         ERROR_CHECK_STATUS(vxQueryContext(vxContext, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
         data->workspace_size = (data->workspace_size + 3) & ~3;
@@ -187,8 +204,26 @@ static vx_status VX_CALLBACK initializeFullyConnectedLayer(vx_node node, const v
         }
         cl_float pattern = 0;
         cl_int err = 0;
-        err = clEnqueueFillBuffer(data->handle->cmdq, data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
+        err = clEnqueueFillBuffer(data->handle->cmdq, (cl_mem)data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
         if(err) return VX_FAILURE;
+#elif ENABLE_HIP
+        int hip_device = -1;
+        ERROR_CHECK_STATUS(vxQueryContext(vxContext, VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &hip_device, sizeof(hip_device)));
+        if (hip_device < 0) {
+            return VX_FAILURE;
+        }
+        hipError_t errcode_ret = hipSuccess;
+        data->workspace_size = (data->workspace_size + 3) & ~3;
+        errcode_ret = hipMalloc(&data->workspace, data->workspace_size);
+        if (errcode_ret != hipSuccess) {
+            return VX_FAILURE;
+        }
+
+        errcode_ret = hipMemset(data->workspace, 0, data->workspace_size);
+        if (errcode_ret != hipSuccess) {
+            return VX_FAILURE;
+        }
+#endif
     }
     //Finding best Convolution Algorithm.
     miopenConvAlgoPerf_t perf;
@@ -212,7 +247,16 @@ static vx_status VX_CALLBACK uninitializeFullyConnectedLayer(vx_node node, const
 {
     FullyConnectedLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if(data->workspace && clReleaseMemObject(data->workspace) != 0 ) return VX_FAILURE;
+#if ENABLE_OPENCL
+    if(data && data->workspace && clReleaseMemObject((cl_mem)data->workspace) != 0 ) return VX_FAILURE;
+#elif ENABLE_HIP
+    if (data->workspace) {
+        hipError_t errcode_ret = hipFree(data->workspace);
+        if (errcode_ret != hipSuccess) {
+            return VX_FAILURE;
+        }
+    }
+#endif
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyConvolutionDescriptor(data->convdesc));
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->input_desc));
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->output_desc));

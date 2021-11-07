@@ -64,6 +64,14 @@ int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
         return -1;
     }
 
+    //Force creation of the underlying HW queue associated with the HIP stream created above here;
+    // otherwise, the HW queue creation will be delayed until this stream is used in the graph
+    err = hipDeviceSynchronize();
+    if (err != hipSuccess) {
+        agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipDeviceSynchronize => %d (failed)\n", err);
+        return -1;
+    }
+
     err = hipGetDeviceProperties(&context->hip_dev_prop, deviceID);
     if (err != hipSuccess) {
         agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipGetDeviceProperties(%d) => %d (failed)\n", deviceID, err);
@@ -176,6 +184,13 @@ int agoGpuHipAllocBuffer(AgoData * data) {
         if (data != dataMaster) {
             // special handling for image ROI
             data->hip_memory = dataMaster->hip_memory;
+            if((dataMaster->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE)) {
+                // copy the image into HIP buffer because commits aren't done to this buffer
+                hipError_t err = hipMemcpyHtoD((void *)(dataMaster->hip_memory + dataMaster->gpu_buffer_offset), dataMaster->buffer, dataMaster->size);
+                if (err != hipSuccess) {
+                    agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer: hipMemcpyHtoD() => %d\n", err);
+                }
+            }
         }
     }
     else if (data->ref.type == VX_TYPE_ARRAY || data->ref.type == AGO_TYPE_CANNY_STACK) {

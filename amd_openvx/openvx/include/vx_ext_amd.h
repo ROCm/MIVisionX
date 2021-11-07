@@ -182,10 +182,10 @@ enum vx_image_attribute_amd_e {
 * \ingroup group_tensor
 */
 enum vx_tensor_attribute_amd_e {
-    /*! \brief OpenCL buffer strides (array of <tt>vx_size</tt>). */
-    VX_TENSOR_STRIDE_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x5,
-    /*! \brief OpenCL buffer offset. <tt>vx_size</tt>. */
-    VX_TENSOR_OFFSET_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x6,
+    /*! \brief GPU buffer strides (array of <tt>vx_size</tt>). */
+    VX_TENSOR_STRIDE_GPU   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x5,
+    /*! \brief GPU buffer offset. <tt>vx_size</tt>. */
+    VX_TENSOR_OFFSET_GPU   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x6,
     /*! \brief OpenCL buffer. <tt>cl_mem</tt>. */
     VX_TENSOR_BUFFER_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x7,
     /*! \brief HIP buffer. <tt>cl_mem</tt>. */
@@ -201,7 +201,8 @@ enum vx_array_attribute_amd_e {
     /*! \brief OpenCL buffer. <tt>cl_mem</tt>. */
     VX_ARRAY_BUFFER_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x9,
     VX_ARRAY_BUFFER_HIP   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x10,
-        VX_ARRAY_BUFFER    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x11
+    VX_ARRAY_BUFFER    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x11,
+    VX_ARRAY_OFFSET_GPU = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x12
 };
 
 /*! \brief These enumerations are given to the \c vxDirective API to enable/disable

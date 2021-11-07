@@ -20,6 +20,7 @@
 
 from datetime import datetime
 from subprocess import Popen, PIPE
+import argparse
 import os
 import platform
 
@@ -43,14 +44,42 @@ def write_formatted(output, f):
     f.write("%s\n\n" % output)
     f.write("````\n")
 
+
+# Import arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('--install_directory',    type=str, default='/opt/rocm/mivisionx',
+                    help='MIVisionX Install Directory - optional')
+parser.add_argument('--backend_type',       type=str, default='OCL',
+                    help='Backend type - optional (default:HOST [options:HOST/HIP/OCL])')
+args = parser.parse_args()
+
+installDir = args.install_directory
+backendType = args.backend_type
+
+# check arguments
+if backendType not in ('HOST', 'HIP', 'OCL'):
+    print("ERROR: Backends supported - HOST or HIP or OCL]")
+    exit()
+
+# check install
+runVX_exe = installDir+'/bin/runvx'
+if(os.path.isfile(runVX_exe)):
+    print("STATUS: MIVisionX Install Path Found - "+installDir)
+else:
+    print("\nERROR: MIVisionX Install Path Not Found\n")
+    exit()
+
+# get absolute path
+MIVisionXAbsPath = os.path.abspath(installDir)
+
 # get data
 platform_name = platform.platform()
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-reportFilename = 'libraries_report_%s_%s.md' % (
-    platform_name, file_dtstr)
+reportFilename = 'libraries_report_%s_%s_%s.md' % (
+    backendType, platform_name, file_dtstr)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 
@@ -62,24 +91,24 @@ memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
 
 # level 1 - Libraries
-openvx_lib = shell('ldd /opt/rocm/mivisionx/lib/libopenvx.so')
-vxu_lib = shell('ldd /opt/rocm/mivisionx/lib/libvxu.so')
+openvx_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libopenvx.so')
+vxu_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvxu.so')
 # level 2 - Libraries
-loom_lib = shell('ldd /opt/rocm/mivisionx/lib/libvx_loomsl.so')
+loom_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_loomsl.so')
 # level 3 - libraries
-media_lib = shell('ldd /opt/rocm/mivisionx/lib/libvx_amd_media.so')
-opencv_lib = shell('ldd /opt/rocm/mivisionx/lib/libvx_opencv.so')
+media_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_amd_media.so')
+opencv_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_opencv.so')
 # level 4 - libraries
-nn_lib = shell('ldd /opt/rocm/mivisionx/lib/libvx_nn.so')
+nn_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_nn.so')
 # level 5 - libraries
-rpp_lib = shell('ldd /opt/rocm/mivisionx/lib/libvx_rpp.so')
-rali_lib = shell('ldd /opt/rocm/mivisionx/lib/librali.so')
+rpp_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_rpp.so')
+rali_lib = shell('ldd '+MIVisionXAbsPath+'/lib/librali.so')
 
 # Executables
-runvx_exe = shell('ldd /opt/rocm/mivisionx/bin/runvx')
-runcl_exe = shell('ldd /opt/rocm/mivisionx/bin/runcl')
-loom_exe = shell('ldd /opt/rocm/mivisionx/bin/loom_shell')
-mv_compile_exe = shell('ldd /opt/rocm/mivisionx/bin/mv_compile')
+runvx_exe = shell('ldd '+MIVisionXAbsPath+'/bin/runvx')
+runcl_exe = shell('ldd '+MIVisionXAbsPath+'/bin/runcl')
+loom_exe = shell('ldd '+MIVisionXAbsPath+'/bin/loom_shell')
+mv_compile_exe = shell('ldd '+MIVisionXAbsPath+'/bin/mv_compile')
 
 warning = 0
 
@@ -102,8 +131,10 @@ with open(reportFilename, 'w') as f:
     write_formatted(board_info, f)
     write_formatted(memory_info, f)
 
-    f.write("\nLibraries Report\n")
+    f.write("\nLibraries Report - Backend:%s\n" % (backendType))
     f.write("--------\n")
+    f.write("\n")
+    f.write("\nInstall Path: %s\n" % (MIVisionXAbsPath))
     f.write("\n")
     # OpenVX Libraries
     f.write("* OpenVX Library\n")
@@ -123,24 +154,25 @@ with open(reportFilename, 'w') as f:
     else:
         write_formatted(vxu_lib, f)
     f.write("\n")
-    # Loom Libraries
-    f.write("* Loom Library\n")
-    if not loom_lib:
-        f.write("WARNING: Loom Library Not Built\n")
-        print("WARNING: Loom Library Not Built\n")
-        warning = 1
-    else:
-        write_formatted(loom_lib, f)
-    f.write("\n")
-    # AMD Media Libraries
-    f.write("* AMD Media Library\n")
-    if not media_lib:
-        f.write("WARNING: AMD Media Library Not Built\n")
-        print("WARNING: AMD Media Library Not Built\n")
-        warning = 1
-    else:
-        write_formatted(media_lib, f)
-    f.write("\n")
+    if backendType == 'OCL':
+        # Loom Libraries
+        f.write("* Loom Library\n")
+        if not loom_lib:
+            f.write("WARNING: Loom Library Not Built\n")
+            print("WARNING: Loom Library Not Built\n")
+            warning = 1
+        else:
+            write_formatted(loom_lib, f)
+        f.write("\n")
+        # AMD Media Libraries
+        f.write("* AMD Media Library\n")
+        if not media_lib:
+            f.write("WARNING: AMD Media Library Not Built\n")
+            print("WARNING: AMD Media Library Not Built\n")
+            warning = 1
+        else:
+            write_formatted(media_lib, f)
+        f.write("\n")
     # OpenCV Ext Libraries
     f.write("* VX OpenCV Ext Library\n")
     if not opencv_lib:
@@ -150,33 +182,34 @@ with open(reportFilename, 'w') as f:
     else:
         write_formatted(opencv_lib, f)
     f.write("\n")
-    # VX NN Libraries
-    f.write("* VX Neural Net Library\n")
-    if not nn_lib:
-        f.write("WARNING: VX Neural Net Library Not Built\n")
-        print("WARNING: VX Neural Net Library Not Built\n")
-        warning = 1
-    else:
-        write_formatted(nn_lib, f)
-    f.write("\n")
-    # VX RPP Libraries
-    f.write("* VX RPP Library\n")
-    if not rpp_lib:
-        f.write("WARNING: VX RPP Library Not Built\n")
-        print("WARNING: VX RPP Library Not Built\n")
-        warning = 1
-    else:
-        write_formatted(rpp_lib, f)
-    f.write("\n")
-    # rocAL Libraries
-    f.write("* rocAL Library\n")
-    if not rali_lib:
-        f.write("WARNING: rocAL Library Not Built\n")
-        print("WARNING: rocAL Library Not Built\n")
-        warning = 1
-    else:
-        write_formatted(rali_lib, f)
-    f.write("\n")
+    if backendType == 'OCL' or backendType == 'HIP':
+        # VX NN Libraries
+        f.write("* VX Neural Net Library\n")
+        if not nn_lib:
+            f.write("WARNING: VX Neural Net Library Not Built\n")
+            print("WARNING: VX Neural Net Library Not Built\n")
+            warning = 1
+        else:
+            write_formatted(nn_lib, f)
+        f.write("\n")
+        # VX RPP Libraries
+        f.write("* VX RPP Library\n")
+        if not rpp_lib:
+            f.write("WARNING: VX RPP Library Not Built\n")
+            print("WARNING: VX RPP Library Not Built\n")
+            warning = 1
+        else:
+            write_formatted(rpp_lib, f)
+        f.write("\n")
+        # rocAL Libraries
+        f.write("* rocAL Library\n")
+        if not rali_lib:
+            f.write("WARNING: rocAL Library Not Built\n")
+            print("WARNING: rocAL Library Not Built\n")
+            warning = 1
+        else:
+            write_formatted(rali_lib, f)
+        f.write("\n")
 
     f.write("\nExecutables Report\n")
     f.write("--------\n")
@@ -190,37 +223,41 @@ with open(reportFilename, 'w') as f:
     else:
         write_formatted(runvx_exe, f)
     f.write("\n")
-    # RunCL
-    f.write("* RunCL\n")
-    if not runcl_exe:
-        f.write("WARNING: RunCL Not Built\n")
-        print("WARNING: RunCL Not Built\n")
-        warning = 1
-    else:
-        write_formatted(runcl_exe, f)
-    f.write("\n")
-    # Loom Shell
-    f.write("* Loom Shell\n")
-    if not loom_exe:
-        f.write("WARNING: Loom Shell Not Built\n")
-        print("WARNING: Loom Shell Not Built\n")
-        warning = 1
-    else:
-        write_formatted(loom_exe, f)
-    f.write("\n")
-    # MV Compile
-    f.write("* MV Compile\n")
-    if not mv_compile_exe:
-        f.write("WARNING: MV Compile Not Built\n")
-        print("WARNING: MV Compile Not Built\n")
-        warning = 1
-    else:
-        write_formatted(mv_compile_exe, f)
-    f.write("\n")
-    f.write("\n")
+    if backendType == 'OCL':
+        # RunCL
+        f.write("* RunCL\n")
+        if not runcl_exe:
+            f.write("WARNING: RunCL Not Built\n")
+            print("WARNING: RunCL Not Built\n")
+            warning = 1
+        else:
+            write_formatted(runcl_exe, f)
+        f.write("\n")
+        # Loom Shell
+        f.write("* Loom Shell\n")
+        if not loom_exe:
+            f.write("WARNING: Loom Shell Not Built\n")
+            print("WARNING: Loom Shell Not Built\n")
+            warning = 1
+        else:
+            write_formatted(loom_exe, f)
+        f.write("\n")
+        # MV Compile
+        f.write("* MV Compile\n")
+        if not mv_compile_exe:
+            f.write("WARNING: MV Compile Not Built\n")
+            print("WARNING: MV Compile Not Built\n")
+            warning = 1
+        else:
+            write_formatted(mv_compile_exe, f)
+        f.write("\n")
+        f.write("\n")
+
     if warning == 1:
-        f.write("WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
-        print("WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
+        f.write(
+            "WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
+        print(
+            "WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
     else:
         f.write("SUCCESS: All modules of MIVisionX built")
         print("SUCCESS: All modules of MIVisionX built")

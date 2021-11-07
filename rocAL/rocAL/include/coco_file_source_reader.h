@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <fstream>
 #include <dirent.h>
 #include "reader.h"
 #include "meta_data_reader.h"
@@ -22,7 +23,7 @@ public:
      \param buf User's provided buffer to receive the loaded images
      \return Size of the loaded resource
     */
-    size_t read(unsigned char* buf, size_t max_size) override;
+    size_t read_data(unsigned char* buf, size_t max_size) override;
     //! Opens the next file in the folder
     /*!
      \return The size of the next file, 0 if couldn't access it
@@ -35,7 +36,7 @@ public:
     //! Returns the name of the latest file opened
     std::string id() override { return _last_id;};
 
-    unsigned count() override;
+    unsigned count_items() override;
     unsigned long long get_shuffle_time() {return _shuffle_time.get_timing();};
 
     ~COCOFileSourceReader() override;
@@ -46,7 +47,6 @@ public:
 
 private:
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
-    std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;
     //! opens the folder containnig the images
     Reader::Status open_folder();
     Reader::Status subfolder_reading();
@@ -59,6 +59,7 @@ private:
     std::vector<std::string> _files;
     unsigned  _curr_file_idx;
     FILE* _current_fPtr;
+    std::ifstream _current_ifs;
     unsigned _current_file_size;
     std::string _last_id;
     std::string _last_file_name;

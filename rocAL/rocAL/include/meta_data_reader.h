@@ -24,8 +24,8 @@ THE SOFTWARE.
 
 #include <string>
 #include <memory>
+#include <map>
 #include "meta_data.h"
-#include "reader.h"
 
 enum class MetaDataReaderType
 {
@@ -38,7 +38,8 @@ enum class MetaDataReaderType
     CAFFE_DETECTION_META_DATA_READER,
     CAFFE2_META_DATA_READER,
     CAFFE2_DETECTION_META_DATA_READER,
-    TF_DETECTION_META_DATA_READER
+    TF_DETECTION_META_DATA_READER,
+    VIDEO_LABEL_READER
 };
 enum class MetaDataType
 {
@@ -54,15 +55,22 @@ private:
     std::string _path;
     std::map<std::string, std::string> _feature_key_map; 
     std::string _file_prefix;           // if we want to read only filenames with prefix (needed for cifar10 meta data)
+    unsigned _sequence_length;
+    unsigned _frame_step;
+    unsigned _frame_stride;
+
 public:
-    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path, const std::map<std::string, std::string> &feature_key_map=std::map<std::string, std::string>(), const std::string file_prefix=std::string())
-                    :_type(type), _reader_type(reader_type),  _path(path), _feature_key_map(feature_key_map), _file_prefix(file_prefix){}
+    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path, const std::map<std::string, std::string> &feature_key_map=std::map<std::string, std::string>(), const std::string file_prefix=std::string(), const unsigned& sequence_length = 3, const unsigned& frame_step = 3, const unsigned& frame_stride = 1)
+                    :_type(type), _reader_type(reader_type),  _path(path), _feature_key_map(feature_key_map), _file_prefix(file_prefix), _sequence_length(sequence_length), _frame_step(frame_step), _frame_stride(frame_stride){}
     MetaDataConfig() = delete;
     MetaDataType type() const { return _type; }
     MetaDataReaderType reader_type() const { return _reader_type; }
     std::string path() const { return  _path; }
     std::map<std::string, std::string> feature_key_map() const {return _feature_key_map; }
     std::string file_prefix() const { return  _file_prefix; }
+    unsigned sequence_length() const { return _sequence_length; }
+    unsigned frame_step() const { return _frame_step; }
+    unsigned frame_stride() const { return _frame_stride; }
 };
 
 
@@ -80,5 +88,6 @@ public:
     virtual void release() = 0; // Deletes the loaded information
     virtual MetaDataBatch * get_output()= 0;
     virtual bool exists(const std::string &image_name) = 0;
+    virtual bool set_timestamp_mode() = 0;
 };
 

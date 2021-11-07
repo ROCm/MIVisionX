@@ -48,7 +48,11 @@ THE SOFTWARE.
 #if __APPLE__
 #include <opencl.h>
 #else
+#if ENABLE_OPENCL
 #include <CL/cl.h>
+#elif ENABLE_HIP
+#include "../nn_hip/nn_hip_host_decls.h"
+#endif
 #endif
 #if _WIN32
 #include <windows.h>
@@ -124,7 +128,11 @@ enum user_kernel_e
 struct NeuralNetworkCommonHandle {
     int count;
     miopenHandle_t  miopen_handle;
+#if ENABLE_OPENCL
     cl_command_queue cmdq;
+#elif ENABLE_HIP
+    hipStream_t cmdq;
+#endif
     bool exhaustiveSearch;
 };
 

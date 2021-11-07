@@ -26,8 +26,8 @@ THE SOFTWARE.
 #include <sys/stat.h>
 struct ReshapeLayerLocalData {
     NeuralNetworkCommonHandle * handle;
-    cl_mem input_mem;
-    cl_mem output_mem;
+    void *input_mem;
+    void *output_mem;
     vx_bool aliased;
     vx_size memsizeInBytes;
 };
@@ -72,11 +72,23 @@ PROFILER_START(VX_NN, Reshape_Layer)
     ReshapeLayerLocalData * data= NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
+#if ENABLE_OPENCL
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#elif ENABLE_HIP
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
 
     if (data->aliased == vx_false_e) {
-        ERROR_CHECK_STATUS(clEnqueueCopyBuffer(data->handle->cmdq, data->input_mem, data->output_mem, 0, 0, data->memsizeInBytes, 0, NULL, NULL));
+#if ENABLE_OPENCL
+        ERROR_CHECK_STATUS(clEnqueueCopyBuffer(data->handle->cmdq, (cl_mem)data->input_mem, (cl_mem)data->output_mem, 0, 0, data->memsizeInBytes, 0, NULL, NULL));
+#elif ENABLE_HIP
+        hipError_t errcode_ret = hipMemcpyDtoD(data->output_mem, data->input_mem, data->memsizeInBytes);
+        if (errcode_ret != hipSuccess) {
+            return VX_FAILURE;
+        }
+#endif
 #if ENABLE_DEBUG_PRINT_DIMS
         std::cout << "Reshape Layer: not using aliased buffer "<< std::endl;
 #endif

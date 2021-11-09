@@ -22,7 +22,8 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-struct CopyLocalData {
+struct CopyLocalData
+{
 
     RPPCommonHandle handle;
     RppiSize dimensions;
@@ -37,28 +38,29 @@ struct CopyLocalData {
     void *hip_pSrc;
     void *hip_pDst;
 #endif
-
 };
 
 static vx_status VX_CALLBACK refreshcopy(vx_node node, const vx_reference *parameters, vx_uint32 num, CopyLocalData *data)
 {
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
-        if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        {
-    #if ENABLE_OPENCL
-            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
-            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
-    #elif ENABLE_HIP
-            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
-            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
-    #endif
-        }
-        if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        {
-            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc, sizeof(vx_uint8)));
-            STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pDst, sizeof(vx_uint8)));
-        }
+    vx_status status = VX_SUCCESS;
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
+    {
+#if ENABLE_OPENCL
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
+#elif ENABLE_HIP
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
+#endif
+    }
+    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
+    {
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc, sizeof(vx_uint8)));
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pDst, sizeof(vx_uint8)));
+    }
+    return status;
 }
 
 static vx_status VX_CALLBACK validateCopy(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -76,7 +78,7 @@ static vx_status VX_CALLBACK validateCopy(vx_node node, const vx_reference param
 
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_FORMAT, &df_image, sizeof(df_image)));
 
-    vx_uint32  height, width;
+    vx_uint32 height, width;
     STATUS_ERROR_CHECK(vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_HEIGHT, &height, sizeof(height)));
 
@@ -87,41 +89,50 @@ static vx_status VX_CALLBACK validateCopy(vx_node node, const vx_reference param
     return status;
 }
 
-static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference * parameters, vx_uint32 num)
+static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    CopyLocalData * data = NULL;
+    CopyLocalData *data = NULL;
     vx_status return_status = VX_SUCCESS;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     vx_df_image df_image = VX_DF_IMAGE_VIRT;
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
-    unsigned size = data->dimensions.height* data->dimensions.width;
-    if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
+    unsigned size = data->dimensions.height * data->dimensions.width;
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
+    {
 #if ENABLE_OPENCL
         refreshcopy(node, parameters, num, data);
         cl_command_queue handle = data->handle.cmdq;
-        if (df_image == VX_DF_IMAGE_U8 ){
-            clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size, 0 , NULL, NULL);
+        if (df_image == VX_DF_IMAGE_U8)
+        {
+            clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size, 0, NULL, NULL);
         }
-        else if(df_image == VX_DF_IMAGE_RGB) {
-            clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size*3, 0 , NULL, NULL);
+        else if (df_image == VX_DF_IMAGE_RGB)
+        {
+            clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size * 3, 0, NULL, NULL);
         }
         return_status = VX_SUCCESS;
 #elif ENABLE_HIP
         refreshcopy(node, parameters, num, data);
-        if (df_image == VX_DF_IMAGE_U8 ){
-            hipMemcpy(data->hip_pDst,data->hip_pSrc,size, hipMemcpyDeviceToDevice);
+        if (df_image == VX_DF_IMAGE_U8)
+        {
+            hipMemcpy(data->hip_pDst, data->hip_pSrc, size, hipMemcpyDeviceToDevice);
         }
-        else if(df_image == VX_DF_IMAGE_RGB) {
-            hipMemcpy(data->hip_pDst,data->hip_pSrc,size * 3, hipMemcpyDeviceToDevice);
+        else if (df_image == VX_DF_IMAGE_RGB)
+        {
+            hipMemcpy(data->hip_pDst, data->hip_pSrc, size * 3, hipMemcpyDeviceToDevice);
         }
 #endif
-    } else if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
+    }
+    else if (data->device_type == AGO_TARGET_AFFINITY_CPU)
+    {
         refreshcopy(node, parameters, num, data);
-        if (df_image == VX_DF_IMAGE_U8 ){
+        if (df_image == VX_DF_IMAGE_U8)
+        {
             memcpy(data->pDst, data->pSrc, size);
         }
-        else if(df_image == VX_DF_IMAGE_RGB) {
-            memcpy(data->pDst, data->pSrc, size*3);
+        else if (df_image == VX_DF_IMAGE_RGB)
+        {
+            memcpy(data->pDst, data->pSrc, size * 3);
         }
         return_status = VX_SUCCESS;
     }
@@ -130,7 +141,7 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference * para
 
 static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    CopyLocalData * data = new CopyLocalData;
+    CopyLocalData *data = new CopyLocalData;
     memset(data, 0, sizeof(*data));
 
 #if ENABLE_OPENCL
@@ -150,10 +161,33 @@ static vx_status VX_CALLBACK uninitializeCopy(vx_node node, const vx_reference *
     return VX_SUCCESS;
 }
 
+//! \brief The kernel target support callback.
+// TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
+static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
+                                                  vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
+                                                  vx_uint32 &supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+)
+{
+    vx_context context = vxGetContext((vx_reference)graph);
+    AgoTargetAffinityInfo affinity;
+    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
+    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+    else
+        supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+
+// hardcode the affinity to  CPU for OpenCL backend to avoid VerifyGraph failure since there is no codegen callback for amd_rpp nodes
+#if ENABLE_OPENCL
+    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+#endif
+
+    return VX_SUCCESS;
+}
+
 vx_status Copy_Register(vx_context context)
 {
     vx_status status = VX_SUCCESS;
-// add kernel to the context with callbacks
+    // add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Copy",
                                        VX_KERNEL_RPP_COPY,
                                        processCopy,
@@ -164,27 +198,30 @@ vx_status Copy_Register(vx_context context)
 
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
-    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-#if ENABLE_OPENCL|| ENABLE_HIP
+    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
+#if ENABLE_OPENCL || ENABLE_HIP
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
-    if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-    STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
+    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+        STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
 #else
     vx_bool enableBufferAccess = vx_false_e;
 #endif
+    amd_kernel_query_target_support_f query_target_support_f = query_target_support;
     if (kernel)
     {
+        STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
 
     if (status != VX_SUCCESS)
     {
-        exit:	vxRemoveKernel(kernel); return VX_FAILURE;
+    exit:
+        vxRemoveKernel(kernel);
+        return VX_FAILURE;
     }
 
     return status;

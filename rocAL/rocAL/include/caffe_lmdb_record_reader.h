@@ -47,7 +47,7 @@ public:
      \param buf User's provided buffer to receive the loaded images
      \return Size of the loaded resource
     */
-    size_t read(unsigned char* buf, size_t max_size) override;
+    size_t read_data(unsigned char* buf, size_t max_size) override;
     //! Opens the next file in the folder
     /*!
      \return The size of the next file, 0 if couldn't access it
@@ -59,7 +59,7 @@ public:
     //! Returns the id of the latest file opened
     std::string id() override { return _last_id;};
 
-    unsigned count() override;
+    unsigned count_items() override;
 
     ~CaffeLMDBRecordReader() override;
 

@@ -25,6 +25,8 @@ THE SOFTWARE.
 #include "commons.h"
 #include "meta_data.h"
 #include "meta_data_reader.h"
+#include "timing_debug.h"
+
 class COCOMetaDataReader: public MetaDataReader
 {
 public:
@@ -34,6 +36,7 @@ public:
     void release(std::string image_name);
     void release() override;
     void print_map_contents();
+    bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
     std::map<std::string, std::shared_ptr<BoundingBox>> get_map_content() { return _map_content;}
     COCOMetaDataReader();
@@ -41,11 +44,15 @@ public:
 private:
     BoundingBoxBatch* _output;
     std::string _path;
+    int meta_data_reader_type;
     void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSizes image_size);
     bool exists(const std::string &image_name);
     std::map<std::string, std::shared_ptr<BoundingBox>> _map_content;
     std::map<std::string, std::shared_ptr<BoundingBox>>::iterator _itr;
     std::map<std::string ,std::vector<ImgSize>> _map_img_sizes;
     std::map<std::string , std::vector<ImgSize> > ::iterator itr;
+    std::map<int ,int> _label_info;
+    std::map<int ,int > ::iterator _it_label;
+    TimingDBG _coco_metadata_read_time;
 };
 

@@ -1,4 +1,5 @@
 build*
+docker_build*
 .vscode*
 opencv-3.4.0/*
 openvx_test_results*

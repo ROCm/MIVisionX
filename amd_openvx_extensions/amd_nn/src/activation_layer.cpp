@@ -31,8 +31,8 @@ struct ActivationLayerLocalData {
     miopenTensorDescriptor_t inputDescriptor;
     miopenTensorDescriptor_t outputDescriptor;
     miopenActivationDescriptor_t activationDesc;
-    cl_mem input_mem;
-    cl_mem output_mem;
+    void* input_mem;
+    void* output_mem;
 };
 
 static vx_status VX_CALLBACK validateActivationLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -81,8 +81,13 @@ PROFILER_START(VX_NN, Activation_Layer)
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
 
+#if ENABLE_OPENCL
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
+#else
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->input_mem, sizeof(data->input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
+#endif
 
     float alpha = 1.0f, beta = 0.0f;
     //miopen activation forward call.
@@ -147,8 +152,6 @@ static vx_status VX_CALLBACK initializeActivationLayer(vx_node node, const vx_re
     //activation Descriptor.
     ERROR_CHECK_MIOPEN_STATUS((miopenCreateActivationDescriptor(&data->activationDesc)));
     ERROR_CHECK_MIOPEN_STATUS((miopenSetActivationDescriptor(data->activationDesc, data->mode, data->activAlpha, data->activBeta, data->activPower)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
 
 #if ENABLE_DEBUG_PRINT_DIMS
     std::cout << "activation param active_alpha: " << data->activAlpha << "active_beta: " << data->activBeta << "activationmode: " << activationMode << std::endl;
@@ -180,7 +183,7 @@ vx_status publishActivationLayer(vx_context context)
     vx_kernel kernel = vxAddUserKernel(context, "org.khronos.nn_extension.activation_layer", VX_KERNEL_ACTIVATION_LAYER, processActivationLayer, 5, validateActivationLayer, initializeActivationLayer, uninitializeActivationLayer);
     ERROR_CHECK_OBJECT(kernel);
 
-    // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
+    // enable GPU buffer access since the kernel_f callback uses GPU buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
 

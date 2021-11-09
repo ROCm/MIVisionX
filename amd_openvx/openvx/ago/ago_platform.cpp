@@ -94,6 +94,15 @@ bool agoSetEnvironmentVariable(const char * name, const char * value)
 #endif
 }
 
+bool agoUnsetEnvironmentVariable(const char * name)
+{
+#if _WIN32
+    return SetEnvironmentVariableA(name, NULL);
+#else
+    return !(unsetenv(name));
+#endif
+}
+
 ago_module agoOpenModule(const char * libFileName)
 {
 #if _WIN32

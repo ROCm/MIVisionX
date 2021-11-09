@@ -63,7 +63,6 @@ list(APPEND SOURCES
     api/vx_nodes.cpp
 )
 
-
 # Backend Specific Settings
 if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(OpenCL QUIET)
@@ -88,7 +87,7 @@ if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
         target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=0)
         target_compile_definitions(vxu PUBLIC ENABLE_HIP=0)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
-        message("-- ${Yellow}WARNING:OpenCL Not Found -- OpenVX built for CPU only${ColourReset}")
+        message("-- ${Red}WARNING:OpenCL Not Found -- OpenVX built for CPU only${ColourReset}")
     endif()
 elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     SET(OpenCL_FOUND FALSE)
@@ -102,12 +101,11 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     if(HIP_FOUND)
         message(STATUS "Found HIP: " ${HIP_PATH} " version: " ${HIP_VERSION})
         if(HIP_COMPILER STREQUAL clang)
-            set(hip_library_name amdhip64)
             add_subdirectory(hipvx)
             add_library(vxu SHARED api/vxu.cpp)
             target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=0)
             target_compile_definitions(vxu PUBLIC ENABLE_HIP=1)
-            add_library(openvx SHARED ${SOURCES})
+            add_library(openvx SHARED ${SOURCES} $<TARGET_OBJECTS:openvx_hip>)
             set_target_properties(openvx PROPERTIES LINKER_LANGUAGE CXX)
             set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
             include_directories(${HIP_PATH}/include ${HSA_PATH}/include)
@@ -129,7 +127,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=0)
         target_compile_definitions(vxu PUBLIC ENABLE_HIP=0)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
-        message("-- ${Yellow}WARNING:HIP Not Found -- OpenVX built for CPU only${ColourReset}")
+        message("-- ${Red}WARNING:HIP Not Found -- OpenVX built for CPU only${ColourReset}")
     endif()
 else()
     add_library(openvx SHARED ${SOURCES})
@@ -139,7 +137,7 @@ else()
     target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=0)
     target_compile_definitions(vxu PUBLIC ENABLE_HIP=0)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
-    message("-- ${Yellow}WARNING:OpenCL/HIP Not Found or GPU Support Turned OFF -- OpenVX built for CPU only${ColourReset}")
+    message("-- ${Red}WARNING:OpenCL/HIP Not Found or GPU Support Turned OFF -- OpenVX built for CPU only${ColourReset}")
 endif()
 
 install(TARGETS openvx DESTINATION lib)
@@ -151,10 +149,16 @@ install (FILES
             include/VX/vx_compatibility.h
             include/VX/vx_import.h
             include/VX/vx_kernels.h
+            include/VX/vx_khr_buffer_aliasing.h
+            include/VX/vx_khr_class.h
             include/VX/vx_khr_icd.h
+            include/VX/vx_khr_import_kernel.h
             include/VX/vx_khr_ix.h
             include/VX/vx_khr_nn.h
+            include/VX/vx_khr_opencl_interop.h
+            include/VX/vx_khr_pipelining.h
             include/VX/vx_khr_tiling.h
+            include/VX/vx_khr_user_data_object.h
             include/VX/vx_khr_xml.h
             include/VX/vx_nodes.h
             include/VX/vx_types.h

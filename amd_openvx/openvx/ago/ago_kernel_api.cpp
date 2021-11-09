@@ -1867,8 +1867,6 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
     // INFO: use VX_KERNEL_AMD_HARRIS_SOBEL_* kernels to compute Gx^2, Gx*Gy, Gy^2
     //       use VX_KERNEL_AMD_HARRIS_SCORE_* kernels to compute Vc
     //       use VX_KERNEL_AMD_HARRIS_MERGE_SORT_AND_PICK_XY_HVC kernel for final step
-    //       disable buffer merging for HarrisCorners
-    agoSetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS", "1");
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
         // TBD: not implemented yet
@@ -1893,6 +1891,15 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
         node->metaList[6].data.u.arr.capacity = 0;
         node->metaList[7].data.u.scalar.type = VX_TYPE_SIZE;
         status = VX_SUCCESS;
+        //disable buffer merging for HarrisCorners on both OCL and HIP GPU backends temporarily as a workaround
+#if ENABLE_OPENCL || ENABLE_HIP
+    char textBuffer[1024];
+    if (agoGetEnvironmentVariable("AGO_DEFAULT_TARGET", textBuffer, sizeof(textBuffer))) {
+        if (!strcmp(textBuffer, "GPU")) {
+            agoSetEnvironmentVariable("AGO_BUFFER_MERGE_FLAGS", "1");
+        }
+    }
+#endif
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -2294,9 +2301,6 @@ int ovxKernel_LaplacianPyramid(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#endif
                     ;
         status = VX_SUCCESS;
     }
@@ -5288,7 +5292,7 @@ int agoKernel_And_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
             status = VX_FAILURE;
         }
     }
-	#endif
+#endif
     return status;
 }
 
@@ -15489,11 +15493,12 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
+        hipMemset(oImg->hip_memory, 0, oImg->size + oImg->gpu_buffer_offset);
         if (HipExec_ScaleGaussianHalf_U8_U8_5x5(
-            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height - 1,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size)) {
             status = VX_FAILURE;
         }
     }
@@ -18236,7 +18241,7 @@ int agoKernel_Remap_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iImg->size, (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
             status = VX_FAILURE;
         }
@@ -18329,7 +18334,7 @@ int agoKernel_Remap_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iImg->size, (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t),
             node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
@@ -18421,7 +18426,7 @@ int agoKernel_Remap_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size,
             (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
             status = VX_FAILURE;
@@ -19003,7 +19008,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
+            iImg->size, (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
             status = VX_FAILURE;
         }
     }
@@ -19052,43 +19057,45 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
+        AgoData * iImg = node->paramList[1];
         char textBuffer[4096];
         sprintf(textBuffer, OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_affine_matrix_t matrix, uint border)\n"
             "{\n"
             "  U8x8 rv;\n"
+            "  uint vl = %d, vt = %d, vr = %d, vb = %d;\n"
             "  float sx, sy; uint mask, v;\n"
             "  float dx = (float)x, dy = (float)y;\n"
             "  sx = mad(dy, matrix.M[1][0], matrix.M[2][0]); sx = mad(dx, matrix.M[0][0], sx);\n"
             "  sy = mad(dy, matrix.M[1][1], matrix.M[2][1]); sy = mad(dx, matrix.M[0][1], sy);\n"
             "  x = (uint)(int)sx; y = (uint)(int)sy;\n"
-            "  width -= 2; height -= 2;\n"
-            "  mask = ((int)(x | (width - x) | y | (height - y))) >> 31; mask = ~mask;\n"
+            "  width -= vl; height -= vt;\n"
+            "  mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31; mask = ~mask;\n"
             "  x &= mask; y &= mask; v = p[mad24(stride, y, x)]; v = bitselect(border, v, mask); rv.s0 = v;\n"
             "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; x = (uint)(int)sx; y = (uint)(int)sy; \n"
-            "  mask = ((int)(x | (width - x) | y | (height - y))) >> 31; mask = ~mask;\n"
+            "  mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31; mask = ~mask;\n"
             "  x &= mask; y &= mask; v = p[mad24(stride, y, x)]; v = bitselect(border, v, mask); rv.s0 |= v << 8;\n"
             "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;\n"
-            "  mask = ((int)(x | (width - x) | y | (height - y))) >> 31; mask = ~mask;\n"
+            "  mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31; mask = ~mask;\n"
             "  x &= mask; y &= mask; v = p[mad24(stride, y, x)]; v = bitselect(border, v, mask); rv.s0 |= v << 16;\n"
             "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;\n"
-            "  mask = ((int)(x | (width - x) | y | (height - y))) >> 31; mask = ~mask;\n"
+            "  mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31; mask = ~mask;\n"
             "  x &= mask; y &= mask; v = p[mad24(stride, y, x)]; v = bitselect(border, v, mask); rv.s0 |= v << 24;\n"
             "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;\n"
-            "  mask = ((int)(x | (width - x) | y | (height - y))) >> 31; mask = ~mask;\n"
+            "  mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31; mask = ~mask;\n"
             "  x &= mask; y &= mask; v = p[mad24(stride, y, x)]; v = bitselect(border, v, mask); rv.s1 = v;\n"
             "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;\n"
-            "  mask = ((int)(x | (width - x) | y | (height - y))) >> 31; mask = ~mask;\n"
+            "  mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31; mask = ~mask;\n"
             "  x &= mask; y &= mask; v = p[mad24(stride, y, x)]; v = bitselect(border, v, mask); rv.s1 |= v << 8;\n"
             "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;\n"
-            "  mask = ((int)(x | (width - x) | y | (height - y))) >> 31; mask = ~mask;\n"
+            "  mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31; mask = ~mask;\n"
             "  x &= mask; y &= mask; v = p[mad24(stride, y, x)]; v = bitselect(border, v, mask); rv.s1 |= v << 16;\n"
             "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;\n"
-            "  mask = ((int)(x | (width - x) | y | (height - y))) >> 31; mask = ~mask;\n"
+            "  mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31; mask = ~mask;\n"
             "  x &= mask; y &= mask; v = p[mad24(stride, y, x)]; v = bitselect(border, v, mask); rv.s1 |= v << 24;\n"
             "  *r = rv;\n"
             "}\n"
-            ), node->opencl_name);
+            ), node->opencl_name, iImg->u.img.rect_valid.start_x, iImg->u.img.rect_valid.start_y, iImg->u.img.rect_valid.end_x, iImg->u.img.rect_valid.end_y);
         node->opencl_code += textBuffer;
         node->opencl_type = NODE_OPENCL_TYPE_MEM2REG | NODE_OPENCL_TYPE_NEED_IMGSIZE;
         node->opencl_param_as_value_mask |= (1 << 2); // matrix parameter needs to be passed by value
@@ -19117,7 +19124,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
             (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset),
-            node->paramList[3]->u.scalar.u.u)) {
+            node->paramList[3]->u.scalar.u.u, iImg->u.img.rect_valid)) {
             status = VX_FAILURE;
         }
     }
@@ -19215,7 +19222,7 @@ int agoKernel_WarpAffine_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
+            iImg->size, (ago_affine_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
             status = VX_FAILURE;
         }
     }
@@ -19412,7 +19419,7 @@ int agoKernel_WarpPerspective_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size,
             (ago_perspective_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
             status = VX_FAILURE;
         }
@@ -19627,7 +19634,7 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cm
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_perspective_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
+            iImg->size, (ago_perspective_matrix_t *)(iMat->hip_memory + iMat->gpu_buffer_offset))) {
             status = VX_FAILURE;
         }
     }

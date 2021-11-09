@@ -89,7 +89,7 @@ int getEnvironmentVariable(const char * name, char * value, size_t valueSize)
 #else
     const char * text = getenv(name);
     if (text) {
-        strncpy(value, text, strlen(text)+1);
+        strncpy(value, text, valueSize);
         value[strlen(text)+1] = '\0';
         if(isdigit(value[0]) != 0)
             return atoi(value);
@@ -116,10 +116,16 @@ vx_status createGraphHandle(vx_node node, NeuralNetworkCommonHandle ** pHandle)
             handle->exhaustiveSearch = true;
 
         handle->count = 1;
+
+#if ENABLE_OPENCL
         ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &handle->cmdq, sizeof(handle->cmdq)));
-        
+#elif ENABLE_HIP
+        ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &handle->cmdq, sizeof(handle->cmdq)));
+#endif
+
         //create miopen_handle from cmdq
         ERROR_CHECK_MIOPEN_STATUS(miopenCreateWithStream(&handle->miopen_handle, handle->cmdq));
+
         ERROR_CHECK_STATUS(vxSetModuleHandle(node, OPENVX_KHR_NN, handle));
     }
     *pHandle = handle;
@@ -200,6 +206,7 @@ void nn_layer_test_dumpBuffer(const char * fileNameFormat, vx_tensor tensor)
 SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
 {
     PROFILER_INITIALIZE();
+#if ENABLE_OPENCL
     // set command-queue properties to be CL_QUEUE_PROFILING_ENABLE needed by MIOpen (default)
     const char * searchEnvName = "NN_MIOPEN_CL_QUEUE_PROPERTIES";
     cl_command_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
@@ -214,7 +221,8 @@ SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
         properties = atoi(text);
     }
 #endif
-    ERROR_CHECK_STATUS(vxSetContextAttribute(context, VX_CONTEXT_CL_QUEUE_PROPERTIES, &properties, sizeof(properties)));
+     ERROR_CHECK_STATUS(vxSetContextAttribute(context, VX_CONTEXT_CL_QUEUE_PROPERTIES, &properties, sizeof(properties)));
+#endif
 
     // register kernels
     ERROR_CHECK_STATUS(publishConvolutionLayer(context));

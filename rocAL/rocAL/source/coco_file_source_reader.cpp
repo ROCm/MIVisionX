@@ -1,12 +1,14 @@
 #include <cassert>
 #include <algorithm>
 #include <commons.h>
+#include "coco_meta_data_reader.h"
 #include "coco_file_source_reader.h"
 #include <boost/filesystem.hpp>
 #include "meta_data_reader_factory.h"
 #include "meta_data_graph_factory.h"
 
 namespace filesys = boost::filesystem;
+#define USE_STDIO_FILE 0
 
 COCOFileSourceReader::COCOFileSourceReader():
 _shuffle_time("shuffle_time", DBG_TIMING)
@@ -23,7 +25,7 @@ _shuffle_time("shuffle_time", DBG_TIMING)
     _file_count_all_shards = 0;  
 }
 
-unsigned COCOFileSourceReader::count()
+unsigned COCOFileSourceReader::count_items()
 {
     if (_loop)
         return _file_names.size();
@@ -43,17 +45,16 @@ Reader::Status COCOFileSourceReader::initialize(ReaderConfig desc)
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
     _shuffle = desc.shuffle();
+    _meta_data_reader = desc.meta_data_reader();
 
     if(_json_path == "")
     {
         std::cout<<"\n _json_path has to be set manually";
         exit(0);
     }
-    MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, _json_path);
-    _meta_data_graph = create_meta_data_graph(config);
-    _meta_data_reader = create_meta_data_reader(config);
-    _meta_data_reader->init(config);
-    _meta_data_reader->read_all(_json_path);
+    //if (!_meta_data_reader )
+    //    std::cout<<"Metadata reader not initialized for COCO file source\n";
+
     ret = subfolder_reading();
     // the following code is required to make every shard the same size:: required for multi-gpu training
     if (_shard_count > 1 && _batch_count > 1) {
@@ -88,36 +89,52 @@ size_t COCOFileSourceReader::open()
         _last_id.erase(0, last_slash_idx + 1);
     }
 
+#if USE_STDIO_FILE
     _current_fPtr = fopen(file_path.c_str(), "rb"); // Open the file,
-
     if (!_current_fPtr) // Check if it is ready for reading
         return 0;
-
     fseek(_current_fPtr, 0, SEEK_END); // Take the file read pointer to the end
-
     _current_file_size = ftell(_current_fPtr); // Check how many bytes are there between and the current read pointer position (end of the file)
-
     if (_current_file_size == 0)
     { // If file is empty continue
         fclose(_current_fPtr);
         _current_fPtr = nullptr;
         return 0;
     }
-
     fseek(_current_fPtr, 0, SEEK_SET); // Take the file pointer back to the start
-
+#else
+    _current_ifs.open (file_path, std::ifstream::in);
+    if (_current_ifs.fail()) return 0;
+    // Determine the file length
+    _current_ifs.seekg(0, std::ios_base::end);
+    _current_file_size = _current_ifs.tellg();
+    if (_current_file_size == 0)
+    { // If file is empty continue
+        _current_ifs.close();
+        return 0;
+    }
+    _current_ifs.seekg(0, std::ios_base::beg);
+#endif    
     return _current_file_size;
 }
 
-size_t COCOFileSourceReader::read(unsigned char *buf, size_t read_size)
+size_t COCOFileSourceReader::read_data(unsigned char *buf, size_t read_size)
 {
+#if USE_STDIO_FILE
     if (!_current_fPtr)
         return 0;
-
+#else
+    if (!_current_ifs)
+        return 0;
+#endif        
     // Requested read size bigger than the file size? just read as many bytes as the file size
     read_size = (read_size > _current_file_size) ? _current_file_size : read_size;
-
+#if USE_STDIO_FILE
     size_t actual_read_size = fread(buf, sizeof(unsigned char), read_size, _current_fPtr);
+#else
+    _current_ifs.read((char *)buf, (int)read_size);
+    size_t actual_read_size = _current_ifs.gcount();
+#endif    
     return actual_read_size;
 }
 
@@ -133,10 +150,16 @@ COCOFileSourceReader::~COCOFileSourceReader()
 
 int COCOFileSourceReader::release()
 {
+#if USE_STDIO_FILE
     if (!_current_fPtr)
         return 0;
     fclose(_current_fPtr);
     _current_fPtr = nullptr;
+#else
+    if (_current_ifs.bad())
+        return 0;
+    _current_ifs.close();
+#endif    
     return 0;
 }
 
@@ -216,26 +239,24 @@ Reader::Status COCOFileSourceReader::open_folder()
     {
         if (_entity->d_type != DT_REG)
             continue;
-
-     if(_meta_data_reader->exists(_entity->d_name))
-        { 
-        if (get_file_shard_id() != _shard_id)
-        {
-            _file_count_all_shards++;            
+        if(!_meta_data_reader || _meta_data_reader->exists(_entity->d_name)) {
+            if (get_file_shard_id() != _shard_id)
+            {
+                _file_count_all_shards++;
+                incremenet_file_id();
+                continue;
+            }
+            _in_batch_read_count++;
+            _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
+            std::string file_path = _folder_path;
+            file_path.append("/");
+            file_path.append(_entity->d_name);
+            _last_file_name = file_path;
+            _file_names.push_back(file_path);
+            _file_count_all_shards++;
             incremenet_file_id();
-            continue;
         }
-          _in_batch_read_count++;
-          _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
-          std::string file_path = _folder_path;
-          file_path.append("/");
-          file_path.append(_entity->d_name);
-          _last_file_name = file_path;
-          _file_names.push_back(file_path);	  
-          _file_count_all_shards++;          
-          incremenet_file_id();
-        }
-    } 
+    }
     if (_file_names.empty())
         WRN("FileReader ShardID [" + TOSTR(_shard_id) + "] Did not load any file from " + _folder_path)
 

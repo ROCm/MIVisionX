@@ -111,15 +111,20 @@ float inceptionV4Time_g, resnet50Time_g, vgg16Time_g, googlenetTime_g, resnet101
 
 void createLegendImage()
 {
+
+    cv::Mat AMD_Epyc_Black_resize, AMD_ROCm_Black_resize;
+    AMD_Epyc_Black_resize = cv::imread("../../../samples/images/amd-epyc-black-resize.png");
+    AMD_ROCm_Black_resize = cv::imread("../../../samples/images/rocm-black-resize.png");
+
     // create display legend image
     int fontFace = CV_FONT_HERSHEY_DUPLEX;
     double fontScale = 0.75;
     int thickness = 1.3;
-    cv::Size legendGeometry = cv::Size(625, (10 * 40) + 40);
+    cv::Size legendGeometry = cv::Size(720, 720);
     Mat legend = Mat::zeros(legendGeometry,CV_8UC3);
-    Rect roi = Rect(0,0,625,(10 * 40) + 40);
+    Rect roi = Rect(0,0,720,720);
     legend(roi).setTo(cv::Scalar(128,128,128));
-    int l = 0, model = 0;
+    int l = 4, model = 0;
     int red, green, blue;
     std::string className;
     std::string bufferName;
@@ -199,6 +204,12 @@ void createLegendImage()
     cvui::trackbar(legend, 100, (l * 40)+10, 450, &threshold_slider, 0, 100);
 
     cvui::update();
+
+    //adding logo
+    cv::Mat legend_ROI = legend(cv::Rect(500,0, AMD_Epyc_Black_resize.cols, AMD_Epyc_Black_resize.rows));
+    cv::Mat legend_ROI_1 = legend(cv::Rect(0,0, AMD_ROCm_Black_resize.cols, AMD_ROCm_Black_resize.rows));
+    AMD_Epyc_Black_resize.copyTo(legend_ROI);
+    AMD_ROCm_Black_resize.copyTo(legend_ROI_1);
     cv::imshow(MIVisionX_LEGEND, legend);
 
     thresholdValue = (double) threshold_slider/threshold_slider_max ;
@@ -249,6 +260,11 @@ static void show_usage()
 
 int main(int argc, const char ** argv)
 {
+
+    cv::Mat AMD_Epyc_Black_resize, AMD_ROCm_Black_resize;
+    AMD_Epyc_Black_resize = cv::imread("../../../samples/images/amd-epyc-black-resize.png");
+    AMD_ROCm_Black_resize = cv::imread("../../../samples/images/rocm-black-resize.png");
+
     // check command-line usage   
     std::string binaryFilename_inception_str = "empty";
     std::string binaryFilename_resnet_str = "empty";
@@ -384,14 +400,14 @@ int main(int argc, const char ** argv)
             arg++;
             labelFileName = (argv[arg]);
             std::string line;
-	        std::ifstream out(labelFileName);
-	        int lineNum = 0;
-	        while(getline(out, line)) {
-	            labelText[lineNum] = line;
-	            lineNum++;
-	        }
-	        out.close();
-	        parameter++;
+            std::ifstream out(labelFileName);
+            int lineNum = 0;
+            while(getline(out, line)) {
+                labelText[lineNum] = line;
+                lineNum++;
+            }
+            out.close();
+            parameter++;
         }
 
         else if (!strcasecmp(argv[arg], "--video") || !strcasecmp(argv[arg], "--V") || !strcasecmp(argv[arg], "--v"))
@@ -489,7 +505,6 @@ int main(int argc, const char ** argv)
         printf("ERROR: vxCreateGraph(...) failed (%d)\n", status);
         return -1;
     }
-
     // create and initialize input tensor data
     vx_size dims_data_299x299[4] = { 299, 299, 3, 1 };
     vx_size dims_data_224x224[4] = { 224, 224, 3, 1 };
@@ -505,7 +520,6 @@ int main(int argc, const char ** argv)
         printf("ERROR: vxCreateTensor() failed for data\n");
         return -1;
     }
-
     // create output tensor prob
     vx_size dims_prob[4] = { 1, 1, 1000, 1 };
     vx_tensor prob_inception = vxCreateTensor(context, 4, dims_prob, VX_TYPE_FLOAT32, 0);
@@ -553,7 +567,6 @@ int main(int argc, const char ** argv)
         printf("ERROR: vxCreateTensor() failed for prob\n");
         return -1;
     }
-
     // build graph using annmodule
     int64_t freq = clockFrequency(), t0, t1;
     char binaryFilename_inception[1024], binaryFilename_resnet[1024], binaryFilename_resnet101[1024], binaryFilename_vgg[1024], binaryFilename_googlenet[1024], binaryFilename_resnet152[1024], binaryFilename_vgg19[1024];
@@ -567,102 +580,103 @@ int main(int argc, const char ** argv)
     t0 = clockCounter();
 
     if(binaryFilename_inception_str != "empty"){
-    	status = annAddToGraph_inception(graph_inception, data_299x299, prob_inception, binaryFilename_inception);
-	    if(status) {
-	        printf("ERROR: inception annAddToGraph() failed (%d)\n", status);
-	        return -1;
-	    }
-	    status = vxVerifyGraph(graph_inception);
-	    if(status) {
-	        printf("ERROR: inception vxVerifyGraph(...) failed (%d)\n", status);
-	        return -1;
-    	}
+        status = annAddToGraph_inception(graph_inception, data_299x299, prob_inception, binaryFilename_inception);
+        if(status) {
+            printf("ERROR: inception annAddToGraph() failed (%d)\n", status);
+            return -1;
+        }
+        status = vxVerifyGraph(graph_inception);
+        if(status) {
+            printf("ERROR: inception vxVerifyGraph(...) failed (%d)\n", status);
+            return -1;
+        }
         runInception = true;
     }
    
     if(binaryFilename_resnet_str != "empty"){
-    	status = annAddToGraph_resnet(graph_resnet, data_224x224, prob_resnet, binaryFilename_resnet);
-	    if(status) {
-	        printf("ERROR: resnet annAddToGraph() failed (%d)\n", status);
-	        return -1;
-	    }
-	    status = vxVerifyGraph(graph_resnet);
-	    if(status) {
-	        printf("ERROR: resnet vxVerifyGraph(...) failed (%d)\n", status);
-	        return -1;
-	    }
+        status = annAddToGraph_resnet(graph_resnet, data_224x224, prob_resnet, binaryFilename_resnet);
+        if(status) {
+            printf("ERROR: resnet annAddToGraph() failed (%d)\n", status);
+            return -1;
+        }
+        status = vxVerifyGraph(graph_resnet);
+        if(status) {
+            printf("ERROR: resnet vxVerifyGraph(...) failed (%d)\n", status);
+            return -1;
+        }
         runResnet50 = true;
     }
     
     if(binaryFilename_vgg_str != "empty"){
-    	status = annAddToGraph_vgg(graph_vgg, data_224x224, prob_vgg, binaryFilename_vgg);
-	    if(status) {
-	        printf("ERROR: vgg annAddToGraph() failed (%d)\n", status);
-	        return -1;
-	    }
-	    status = vxVerifyGraph(graph_vgg);
-	    if(status) {
-	        printf("ERROR: vgg vxVerifyGraph(...) failed (%d)\n", status);
-	        return -1;
-	    }
+        status = annAddToGraph_vgg(graph_vgg, data_224x224, prob_vgg, binaryFilename_vgg);
+        if(status) {
+            printf("ERROR: vgg annAddToGraph() failed (%d)\n", status);
+            return -1;
+        }
+        status = vxVerifyGraph(graph_vgg);
+        if(status) {
+            printf("ERROR: vgg vxVerifyGraph(...) failed (%d)\n", status);
+            return -1;
+        }
         runVgg16 = true;
     }
     
     if(binaryFilename_googlenet_str != "empty"){
-    	status = annAddToGraph_googleNet(graph_googlenet, data_224x224, prob_googlenet, prob_googlenet1, prob_googlenet2, binaryFilename_googlenet);
-	    if(status) {
-	        printf("ERROR: googlenet annAddToGraph() failed (%d)\n", status);
-	        return -1;
-	    }
-	    status = vxVerifyGraph(graph_googlenet);
-	    if(status) {
-	        printf("ERROR: googlenet vxVerifyGraph(...) failed (%d)\n", status);
-	        return -1;
-	    }
+        status = annAddToGraph_googleNet(graph_googlenet, data_224x224, prob_googlenet, prob_googlenet1, prob_googlenet2, binaryFilename_googlenet);
+        if(status) {
+            printf("ERROR: googlenet annAddToGraph() failed (%d)\n", status);
+            return -1;
+        }
+        status = vxVerifyGraph(graph_googlenet);
+        if(status) {
+            printf("ERROR: googlenet vxVerifyGraph(...) failed (%d)\n", status);
+            return -1;
+        }
         runGooglenet = true;
     }
     
 
     if(binaryFilename_resnet101_str != "empty"){
-    	status = annAddToGraph_resnet101(graph_resnet101, data_224x224, prob_resnet101, binaryFilename_resnet101);
-	    if(status) {
-	        printf("ERROR: resnet101 annAddToGraph() failed (%d)\n", status);
-	        return -1;
-	    }
-	    status = vxVerifyGraph(graph_resnet101);
-	    if(status) {
-	        printf("ERROR: resnet101 vxVerifyGraph(...) failed (%d)\n", status);
-	        return -1;
-	    }
+        status = annAddToGraph_resnet101(graph_resnet101, data_224x224, prob_resnet101, binaryFilename_resnet101);
+        if(status) {
+            printf("ERROR: resnet101 annAddToGraph() failed (%d)\n", status);
+            return -1;
+        }
+        status = vxVerifyGraph(graph_resnet101);
+        if(status) {
+            printf("ERROR: resnet101 vxVerifyGraph(...) failed (%d)\n", status);
+            return -1;
+        }
         runResnet101 = true;
     }
    
     if(binaryFilename_resnet152_str != "empty"){
-    	status = annAddToGraph_resnet152(graph_resnet152, data_224x224, prob_resnet152, binaryFilename_resnet152);
-	    if(status) {
-	        printf("ERROR: resnet152 annAddToGraph() failed (%d)\n", status);
-	        return -1;
-	    }
-	    status = vxVerifyGraph(graph_resnet152);
-	    if(status) {
-	        printf("ERROR: resnet`52 vxVerifyGraph(...) failed (%d)\n", status);
-	        return -1;
-	    }
+        status = annAddToGraph_resnet152(graph_resnet152, data_224x224, prob_resnet152, binaryFilename_resnet152);
+        if(status) {
+            printf("ERROR: resnet152 annAddToGraph() failed (%d)\n", status);
+            return -1;
+        }
+        status = vxVerifyGraph(graph_resnet152);
+        if(status) {
+            printf("ERROR: resnet`52 vxVerifyGraph(...) failed (%d)\n", status);
+            return -1;
+        }
         runResnet152 = true;
     }
     
     if(binaryFilename_vgg19_str != "empty"){
-    	status = annAddToGraph_vgg19(graph_vgg19, data_224x224, prob_vgg19, binaryFilename_vgg19);
-	    if(status) {
-	        printf("ERROR: vgg19 annAddToGraph() failed (%d)\n", status);
-	        return -1;
-	    }
-	    status = vxVerifyGraph(graph_vgg);
-	    if(status) {
-	        printf("ERROR: vgg19 vxVerifyGraph(...) failed (%d)\n", status);
-	        return -1;
-	    }
+        status = annAddToGraph_vgg19(graph_vgg19, data_224x224, prob_vgg19, binaryFilename_vgg19);
+        if(status) {
+            printf("ERROR: vgg19 annAddToGraph() failed (%d)\n", status);
+            return -1;
+        }
+        status = vxVerifyGraph(graph_vgg19);
+        if(status) {
+            printf("ERROR: vgg19 vxVerifyGraph(...) failed (%d)\n", status);
+            return -1;
+        }
         runVgg19 = true;
+        
     }
     
 
@@ -670,40 +684,54 @@ int main(int argc, const char ** argv)
     printf("OK: graph initialization with annAddToGraph() took %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
 
     t0 = clockCounter();
-    status = vxProcessGraph(graph_inception);
-    if(status != VX_SUCCESS) {
-        printf("ERROR: vxProcessGraph() failed (%d)\n", status);
-        return -1;
+    if(binaryFilename_inception_str != "empty"){
+        status = vxProcessGraph(graph_inception);
+        if(status != VX_SUCCESS) {
+            printf("ERROR: vxProcessGraph() failed (%d)\n", status);
+            return -1;
+        }
     }
-    status = vxProcessGraph(graph_resnet);
-    if(status != VX_SUCCESS) {
-        printf("ERROR: vxProcessGraph() failed (%d)\n", status);
-        return -1;
+    if(binaryFilename_resnet_str != "empty"){
+        status = vxProcessGraph(graph_resnet);
+        if(status != VX_SUCCESS) {
+            printf("ERROR: vxProcessGraph() failed (%d)\n", status);
+            return -1;
+        }
     }
-    status = vxProcessGraph(graph_vgg);
-    if(status != VX_SUCCESS) {
-        printf("ERROR: vxProcessGraph() failed (%d)\n", status);
-        return -1;
+    if(binaryFilename_vgg_str != "empty"){
+        status = vxProcessGraph(graph_vgg);
+        if(status != VX_SUCCESS) {
+            printf("ERROR: vxProcessGraph() failed (%d)\n", status);
+            return -1;
+        }
     }
-    status = vxProcessGraph(graph_googlenet);
-    if(status != VX_SUCCESS) {
-        printf("ERROR: vxProcessGraph() failed (%d)\n", status);
-        return -1;
+    if(binaryFilename_googlenet_str != "empty"){
+        status = vxProcessGraph(graph_googlenet);
+        if(status != VX_SUCCESS) {
+            printf("ERROR: vxProcessGraph() failed (%d)\n", status);
+            return -1;
+        }
     }
-    status = vxProcessGraph(graph_resnet101);
-    if(status != VX_SUCCESS) {
-        printf("ERROR: vxProcessGraph() failed (%d)\n", status);
-        return -1;
+    if(binaryFilename_resnet101_str != "empty"){
+        status = vxProcessGraph(graph_resnet101);
+        if(status != VX_SUCCESS) {
+            printf("ERROR: vxProcessGraph() failed (%d)\n", status);
+            return -1;
+        }
     }
-    status = vxProcessGraph(graph_resnet152);
-    if(status != VX_SUCCESS) {
-        printf("ERROR: vxProcessGraph() failed (%d)\n", status);
-        return -1;
+    if(binaryFilename_resnet152_str != "empty"){
+        status = vxProcessGraph(graph_resnet152);
+        if(status != VX_SUCCESS) {
+            printf("ERROR: vxProcessGraph() failed (%d)\n", status);
+            return -1;
+        }
     }
-    status = vxProcessGraph(graph_vgg19);
-    if(status != VX_SUCCESS) {
-        printf("ERROR: vxProcessGraph() failed (%d)\n", status);
-        return -1;
+    if(binaryFilename_vgg19_str != "empty"){
+        status = vxProcessGraph(graph_vgg19);
+        if(status != VX_SUCCESS) {
+            printf("ERROR: vxProcessGraph() failed (%d)\n", status);
+            return -1;
+        }
     }
     t1 = clockCounter();
     printf("OK: vxProcessGraph() took %.3f msec (1st iteration)\n", (float)(t1-t0)*1000.0f/(float)freq);
@@ -1231,7 +1259,7 @@ int main(int argc, const char ** argv)
             // Write Output on Image
             t0 = clockCounter();
             cv::resize(frame, outputDisplay, cv::Size(outputImgWidth,outputImgHeight));
-            int l = 1;
+            int l = 4;
             std::string modelName1 = "InceptionV4 - ";
             std::string modelName2 = "Resnet50 - ";
             std::string modelName3 = "VGG16 - ";
@@ -1304,6 +1332,13 @@ int main(int argc, const char ** argv)
    
             // display img time
             t0 = clockCounter();
+
+            //adding logo
+            cv::Mat outputDisplay_ROI = outputDisplay(cv::Rect(outputImgWidth/2 + 250 , 0, AMD_Epyc_Black_resize.cols, AMD_Epyc_Black_resize.rows));
+            cv::Mat outputDisplay_ROI_1 = outputDisplay(cv::Rect(40, 0, AMD_ROCm_Black_resize.cols, AMD_ROCm_Black_resize.rows));
+            AMD_Epyc_Black_resize.copyTo(outputDisplay_ROI);
+            AMD_ROCm_Black_resize.copyTo(outputDisplay_ROI_1);
+
             cv::imshow("MIVisionX Image Classification - LIVE", outputDisplay);
             createLegendImage();
             t1 = clockCounter();

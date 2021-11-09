@@ -9,7 +9,7 @@ This application shows how to run tiny yolov2 (20 classes) with MIVisionX RunTim
 
 * Windows 10, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
 * Windows SDK, build `17763` or later
-* Visual Studio 2017, [version `15.7.4` or later](https://developer.microsoft.com/en-us/windows/downloads)
+* Visual Studio 2019, [version `16.11.5` or later](https://developer.microsoft.com/en-us/windows/downloads)
 
  - Visual Studio extension for C++/WinRT
 

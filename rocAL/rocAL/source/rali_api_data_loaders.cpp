@@ -98,10 +98,10 @@ auto convert_decoder_mode= [](RaliDecodeDevice decode_mode)
 {
     switch(decode_mode){
         case RALI_HW_DECODE:
-            return DecodeMode::USE_HW;
+            return DecodeMode::HW_VAAPI;
 
         case RALI_SW_DECODE:
-            return DecodeMode::USE_SW;
+            return DecodeMode::CPU;
         default:
 
             THROW("Unsupported decoder mode" + TOSTR(decode_mode))
@@ -149,6 +149,7 @@ raliJpegFileSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -226,6 +227,7 @@ raliJpegFileSource(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -277,8 +279,10 @@ raliSequenceReader(
         unsigned stride)
 {
     Image* output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -358,8 +362,10 @@ raliSequenceReaderSingleShard(
         unsigned stride)
 {
     Image* output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -464,6 +470,7 @@ raliJpegCaffe2LMDBRecordSource(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -542,6 +549,7 @@ raliJpegCaffe2LMDBRecordSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -615,6 +623,7 @@ raliJpegCaffeLMDBRecordSource(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -694,6 +703,7 @@ raliJpegCaffeLMDBRecordSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -768,6 +778,7 @@ raliJpegCOCOFileSource(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -848,6 +859,7 @@ raliJpegCOCOFileSourceSingleShard(
                                                        source_path, json_path);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -929,6 +941,7 @@ raliFusedJpegCrop(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1010,6 +1023,7 @@ raliJpegCOCOFileSourcePartial(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1098,6 +1112,7 @@ raliJpegCOCOFileSourcePartialSingleShard(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1182,6 +1197,7 @@ raliJpegTFRecordSource(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1258,6 +1274,7 @@ raliJpegTFRecordSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1308,8 +1325,10 @@ raliRawTFRecordSource(
         const char* record_name_prefix)
 {
     Image* output = nullptr;
-    if(!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
 
     auto context = static_cast<Context*>(p_context);
     try
@@ -1400,6 +1419,7 @@ raliRawTFRecordSourceSingleShard(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(out_width)+ " height = "+ TOSTR(out_height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(out_width, out_height,
@@ -1484,6 +1504,7 @@ raliFusedJpegCropSingleShard(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1535,8 +1556,10 @@ raliVideoFileSource(
         bool file_list_frame_num)
 {
     Image* output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -1617,8 +1640,10 @@ raliVideoFileSourceSingleShard(
         bool file_list_frame_num)
 {
     Image* output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -1706,8 +1731,10 @@ raliVideoFileResize(
         bool file_list_frame_num)
 {
     Image* resize_output = nullptr;
-    if (!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return resize_output;
+    }
 
     auto context = static_cast<Context*>(p_context);
     try
@@ -1816,8 +1843,10 @@ raliVideoFileResizeSingleShard(
         bool file_list_frame_num)
 {
     Image* resize_output = nullptr;
-    if(!p_context)
-        THROW("Invalid context passed as input")
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return resize_output;
+    }
 
     auto context = static_cast<Context*>(p_context);
     try
@@ -1941,6 +1970,7 @@ raliRawCIFAR10Source(
         auto [width, height] = std::make_tuple(out_width, out_height);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,

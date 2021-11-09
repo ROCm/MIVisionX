@@ -33,11 +33,11 @@ class VideoLabelReader : public MetaDataReader
 {
 public:
     void init(const MetaDataConfig &cfg) override;
-    void lookup(const std::vector<std::string> &image_names) override;
+    void lookup(const std::vector<std::string> &frame_names) override;
     void read_all(const std::string &path) override;
-    void release(std::string image_name);
+    void release(std::string frame_name);
     void release() override;
-    void set_timestamp_mode() override { _file_list_frame_num = false; }
+    bool set_timestamp_mode() override { _file_list_frame_num = false; return _file_list_frame_num;}
     void print_map_contents();
     MetaDataBatch *get_output() override { return _output; }
     VideoLabelReader();
@@ -45,8 +45,8 @@ public:
 private:
     void read_files(const std::string &_path);
     void read_text_file(const std::string &_path);
-    bool exists(const std::string &image_name);
-    void add(std::string image_name, int label, unsigned int video_frame_count = 0, unsigned int start_frame = 0);
+    bool exists(const std::string &frame_name);
+    void add(std::string frame_name, int label, unsigned int video_frame_count = 0, unsigned int start_frame = 0);
     std::map<std::string, std::shared_ptr<Label>> _map_content;
     std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
     std::string _path;

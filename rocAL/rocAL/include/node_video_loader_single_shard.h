@@ -51,7 +51,7 @@ protected:
     void create_node() override {};
     void update_node() override {};
 private:
-    DecodeMode _decode_mode  = DecodeMode::USE_SW;
+    DecodeMode _decode_mode  = DecodeMode::CPU;
     std::shared_ptr<VideoLoader> _loader_module = nullptr;
 };
 #endif

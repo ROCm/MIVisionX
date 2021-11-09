@@ -59,13 +59,13 @@ ImageSourceEvaluator::find_max_dimension()
 {
     _reader->reset();
 
-    while( _reader->count() ) 
+    while( _reader->count_items() ) 
     {
         size_t fsize = _reader->open();
         if( (fsize) == 0 )
             continue;
         _header_buff.resize(fsize);
-        auto actual_read_size = _reader->read(_header_buff.data(), fsize);
+        auto actual_read_size = _reader->read_data(_header_buff.data(), fsize);
         _reader->close();
         
         int width, height, jpeg_sub_samp;

@@ -123,7 +123,7 @@ void VideoReadAndDecode::reset()
 size_t
 VideoReadAndDecode::count()
 {
-    return _video_reader->count();
+    return _video_reader->count_items();
 }
 
 float VideoReadAndDecode::convert_framenum_to_timestamp(size_t frame_number)
@@ -160,7 +160,7 @@ VideoReadAndDecode::load(unsigned char *buff,
         THROW("Zero image dimension is not valid")
     if (!buff)
         THROW("Null pointer passed as output buffer")
-    if (_video_reader->count() < _sequence_count)
+    if (_video_reader->count_items() < _sequence_count)
         return VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
     std::vector<size_t> sequence_start_framenum;
     std::vector<std::vector<float>> sequence_frame_timestamps;

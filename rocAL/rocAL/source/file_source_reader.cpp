@@ -43,7 +43,7 @@ _shuffle_time("shuffle_time", DBG_TIMING)
     _file_count_all_shards = 0;
 }
 
-unsigned FileSourceReader::count()
+unsigned FileSourceReader::count_items()
 {
     if(_loop)
         return _file_names.size();
@@ -118,7 +118,7 @@ size_t FileSourceReader::open()
     return _current_file_size;
 }
 
-size_t FileSourceReader::read(unsigned char* buf, size_t read_size)
+size_t FileSourceReader::read_data(unsigned char* buf, size_t read_size)
 {
     if(!_current_fPtr)
         return 0;

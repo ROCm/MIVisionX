@@ -163,7 +163,7 @@ CIFAR10DataLoader::start_loading()
     if(!_is_initialized)
         THROW("start_loading() should be called after initialize() function is called")
 
-    _remaining_image_count = _reader->count();
+    _remaining_image_count = _reader->count_items();
     _internal_thread_running = true;
     _load_thread = std::thread(&CIFAR10DataLoader::load_routine, this);
 }
@@ -189,7 +189,7 @@ CIFAR10DataLoader::load_routine()
             unsigned file_counter = 0;
             _file_load_time.start();// Debug timing
 
-            while ((file_counter != _batch_size) && _reader->count() > 0)
+            while ((file_counter != _batch_size) && _reader->count_items() > 0)
             {
                 auto read_ptr = data + _image_size * file_counter;
                 size_t readSize = _reader->open();
@@ -197,7 +197,7 @@ CIFAR10DataLoader::load_routine()
                     WRN("Opened file " + _reader->id() + " of size 0");
                     continue;
                 }
-                _actual_read_size[file_counter] = _reader->read(read_ptr, readSize);
+                _actual_read_size[file_counter] = _reader->read_data(read_ptr, readSize);
                 _raw_img_info._image_names[file_counter] = _reader->id();
                 _raw_img_info._roi_width[file_counter] = _output_image->info().width();
                 _raw_img_info._roi_height[file_counter] = _output_image->info().height_single();

@@ -49,7 +49,6 @@ THE SOFTWARE.
 #include <functional>
 #include <chrono>
 #include <thread>
-using namespace std;
 
 #if _WIN32
 #include <Windows.h>
@@ -68,6 +67,7 @@ using namespace std;
 #define _strnicmp strncasecmp
 #define _stricmp  strcasecmp
 #endif
+using namespace std;
 
 #if ENABLE_OPENCL
 #if __APPLE__

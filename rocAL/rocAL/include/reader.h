@@ -27,6 +27,11 @@ THE SOFTWARE.
 #include <tuple>
 #include "meta_data_reader.h"
 
+#define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
+#define CHECK_CAFFE(test, msg) \
+    ;                          \
+    ((test) ? (void)0 : ((void)fprintf(stderr, "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
+
 enum class StorageType
 {
     FILE_SYSTEM = 0,
@@ -118,7 +123,7 @@ public:
     virtual size_t open() = 0;
 
     //! Copies the data of the opened item to the buf
-    virtual size_t read(unsigned char *buf, size_t read_size) = 0;
+    virtual size_t read_data(unsigned char *buf, size_t read_size) = 0;
 
     //! Closes the opened item
     virtual int close() = 0;
@@ -129,14 +134,10 @@ public:
     //! Returns the name/identifier of the last item opened in this resource
     virtual std::string id() = 0;
     //! Returns the number of items remained in this resource
-    virtual unsigned count() = 0;
+    virtual unsigned count_items() = 0;
+    
     //! return shuffle_time if applicable
     virtual unsigned long long get_shuffle_time() = 0;
 
     virtual ~Reader() = default;
-
-#define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
-#define CHECK_CAFFE(test, msg) \
-    ;                          \
-    ((test) ? (void)0 : ((void)fprintf(stderr, "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
 };

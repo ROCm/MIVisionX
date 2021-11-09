@@ -66,7 +66,6 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     unsigned frame_count = 0;
     bool end_of_stream = false;
     bool sequence_filled = false;
-    int ret;
     uint8_t *dst_data[4] = {0};
     int dst_linesize[4] = {0};
     int image_size = out_height * out_stride * sizeof(unsigned char);
@@ -79,19 +78,17 @@ VideoDecoder::Status FFmpegVideoDecoder::Decode(unsigned char *out_buffer, unsig
     }
     do
     {
-        if (!end_of_stream)
+        int ret;
+        // read packet from input file
+        ret = av_read_frame(_fmt_ctx, &pkt);
+        if (ret < 0 && ret != AVERROR_EOF)
         {
-            // read packet from input file
-            ret = av_read_frame(_fmt_ctx, &pkt);
-            if (ret < 0 && ret != AVERROR_EOF)
-            {
-                ERR("Fail to av_read_frame: ret=" + TOSTR(ret));
-                status = Status::FAILED;
-                break;
-            }
-            if (ret == 0 && pkt.stream_index != _video_stream_idx) continue;
-            end_of_stream = (ret == AVERROR_EOF);
+            ERR("Fail to av_read_frame: ret=" + TOSTR(ret));
+            status = Status::FAILED;
+            break;
         }
+        if (ret == 0 && pkt.stream_index != _video_stream_idx) continue;
+        end_of_stream = (ret == AVERROR_EOF);
         if (end_of_stream)
         {
             // null packet for bumping process
@@ -229,10 +226,5 @@ void FFmpegVideoDecoder::release()
 FFmpegVideoDecoder::~FFmpegVideoDecoder()
 {
     release();
-}
-
-int FFmpegVideoDecoder::hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx)
-{
-    return 0;
 }
 #endif

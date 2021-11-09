@@ -47,7 +47,7 @@ public:
     //! Returns the name of the latest file opened
     std::string id() override { return _last_id;};
 
-    unsigned count() override;
+    unsigned count_items() override;
 
     ~VideoFileSourceReader() override;
     

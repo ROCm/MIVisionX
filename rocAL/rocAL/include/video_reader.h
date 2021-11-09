@@ -112,7 +112,7 @@ public:
     virtual std::string id() = 0;
 
     //! Returns the number of items remained in this resource
-    virtual unsigned count() = 0;
+    virtual unsigned count_items() = 0;
 
     //! return shuffle_time if applicable
     virtual unsigned long long get_shuffle_time() = 0;

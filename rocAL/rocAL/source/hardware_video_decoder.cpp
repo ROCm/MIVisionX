@@ -43,13 +43,12 @@ int HardWareVideoDecoder::seek_frame(AVRational avg_frame_rate, AVRational time_
 int HardWareVideoDecoder::hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx)
 {
     int err = 0;
-    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type,
-                                      NULL, NULL, 0)) < 0) {
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0)
         return err;
-    }
     ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
     return err;
 }
+
 static enum AVPixelFormat hwPixelFormat;
 enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts)
 {
@@ -88,7 +87,6 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
     unsigned frame_count = 0;
     bool end_of_stream = false;
     bool sequence_filled = false;
-    int ret;
     uint8_t *dst_data[4] = {0};
     int dst_linesize[4] = {0};
     int image_size = out_height * out_stride * sizeof(unsigned char);
@@ -107,19 +105,17 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
     }
     do
     {
-        if (!end_of_stream)
+        int ret;
+        // read packet from input file
+        ret = av_read_frame(_fmt_ctx, &pkt);
+        if (ret < 0 && ret != AVERROR_EOF)
         {
-            // read packet from input file
-            ret = av_read_frame(_fmt_ctx, &pkt);
-            if (ret < 0 && ret != AVERROR_EOF)
-            {
-                ERR("Fail to av_read_frame: ret=" + TOSTR(ret));
-                status = Status::FAILED;
-                break;
-            }
-            if (ret == 0 && pkt.stream_index != _video_stream_idx) continue;
-            end_of_stream = (ret == AVERROR_EOF);
+            ERR("Fail to av_read_frame: ret=" + TOSTR(ret));
+            status = Status::FAILED;
+            break;
         }
+        if (ret == 0 && pkt.stream_index != _video_stream_idx) continue;
+        end_of_stream = (ret == AVERROR_EOF);
         if (end_of_stream)
         {
             // null packet for bumping process
@@ -147,7 +143,6 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
                 //retrieve data from GPU to CPU
                 if ((av_hwframe_transfer_data(sw_frame, dec_frame, 0)) < 0) {
                     ERR("avcodec_receive_frame() failed");
-                    //eof[mediaIndex] = true;
                     ERR("\nTransfer failed");
                     return Status::FAILED;
                 }
@@ -200,7 +195,8 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         ERR("ERROR: vaapi is not supported for this device\n");
         return Status::FAILED;
     }
-    std::cerr << "Found vaapi device for the device\n";
+    else
+        INFO("Found vaapi device for the device\n");
 
     if (avformat_open_input(&_fmt_ctx, src_filename, NULL, NULL) < 0)
     {
@@ -223,7 +219,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
     for (int i = 0; ; i++) {
         const AVCodecHWConfig *config = avcodec_get_hw_config(_decoder, i);
         if (!config) {
-            std::cerr << "ERROR: decoder " << _decoder->name << " doesn't support device_type \n" << av_hwdevice_get_type_name(hw_type);
+            ERR("ERROR: decoder " + STR(_decoder->name) + " doesn't support device_type \n " + STR(av_hwdevice_get_type_name(hw_type)));
             return Status::FAILED;
         }
         if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
@@ -275,7 +271,6 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         return Status::FAILED;
     }
     _dec_pix_fmt = AV_PIX_FMT_NV12; // nv12 for vaapi
-    std::cerr << "\nDecoder_format after hw-decoder-init: " << _dec_pix_fmt;
 
     // Init the decoders 
     if ((ret = avcodec_open2(_video_dec_ctx, _decoder, &opts)) < 0)

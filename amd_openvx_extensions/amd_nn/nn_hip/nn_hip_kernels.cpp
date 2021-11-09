@@ -695,24 +695,24 @@ Hip_Prior_Box_layer(uint imgWidth, uint imgHeight, uint layerWidth, uint layerHe
     box_width = minSize;
     box_height = minSize;
     out += out_offset + y * hipGridDim_x * num_bytes_for_each_prior + x * num_bytes_for_each_prior;
-    *(float *)&out[0] = (center_x - box_width / 2.) / imgWidth;
+    *(float *)&out[0] = (center_x - box_width * .5) / imgWidth;
     out += out_stride.y;
-    *(float *)&out[0] = (center_y - box_height / 2.) / imgHeight;
+    *(float *)&out[0] = (center_y - box_height * .5) / imgHeight;
     out += out_stride.y;
-    *(float *)&out[0] = (center_x + box_width / 2.) / imgWidth;
+    *(float *)&out[0] = (center_x + box_width * .5) / imgWidth;
     out += out_stride.y;
-    *(float *)&out[0] = (center_y + box_height / 2.) / imgHeight;
+    *(float *)&out[0] = (center_y + box_height * .5) / imgHeight;
     if (maxSize > 0) {
         box_width = sqrtf((float)(minSize * maxSize));
         box_height = sqrtf((float)(minSize * maxSize));
         out += out_stride.y;
-        *(float *)&out[0] = (center_x - box_width / 2.) / imgWidth;
+        *(float *)&out[0] = (center_x - box_width * .5) / imgWidth;
         out += out_stride.y;
-        *(float *)&out[0] = (center_y - box_height / 2.) / imgHeight;
+        *(float *)&out[0] = (center_y - box_height * .5) / imgHeight;
         out += out_stride.y;
-        *(float *)&out[0] = (center_x + box_width / 2.) / imgWidth;
+        *(float *)&out[0] = (center_x + box_width * .5) / imgWidth;
         out += out_stride.y;
-        *(float *)&out[0] = (center_y + box_height / 2.) / imgHeight;
+        *(float *)&out[0] = (center_y + box_height * .5) / imgHeight;
     }
     int r = 0;
     while(r < aspect_ratio_num) {
@@ -724,13 +724,13 @@ Hip_Prior_Box_layer(uint imgWidth, uint imgHeight, uint layerWidth, uint layerHe
         box_width = minSize * sqrtf(ar);
         box_height = minSize / sqrtf(ar);
         out += out_stride.y; 
-        *(float *)&out[0] = (center_x - box_width / 2.) / imgWidth;
+        *(float *)&out[0] = (center_x - box_width * .5) / imgWidth;
         out += out_stride.y; 
-        *(float *)&out[0] = (center_y - box_height / 2.) / imgHeight;
+        *(float *)&out[0] = (center_y - box_height * .5) / imgHeight;
         out += out_stride.y; 
-        *(float *)&out[0] = (center_x + box_width / 2.) / imgWidth;
+        *(float *)&out[0] = (center_x + box_width * .5) / imgWidth;
         out += out_stride.y; 
-        *(float *)&out[0] = (center_y + box_height / 2.) / imgHeight;
+        *(float *)&out[0] = (center_y + box_height * .5) / imgHeight;
         if(flip == 1) {
             float ar_flip=  1 / ar;
             if(isinf(ar_flip) || fabsf(ar_flip - (float)1.) < 1e-6) {
@@ -740,13 +740,13 @@ Hip_Prior_Box_layer(uint imgWidth, uint imgHeight, uint layerWidth, uint layerHe
             box_width = minSize * sqrtf(ar_flip);
             box_height = minSize / sqrtf(ar_flip);
             out += out_stride.y;
-            *(float *)&out[0] = (center_x - box_width / 2.) / imgWidth;
+            *(float *)&out[0] = (center_x - box_width * .5) / imgWidth;
             out += out_stride.y;
-            *(float *)&out[0] = (center_y - box_height / 2.) / imgHeight;
+            *(float *)&out[0] = (center_y - box_height * .5) / imgHeight;
             out += out_stride.y;
-            *(float *)&out[0] = (center_x + box_width / 2.) / imgWidth;
+            *(float *)&out[0] = (center_x + box_width * .5) / imgWidth;
             out += out_stride.y;
-            *(float *)&out[0] = (center_y + box_height / 2.) / imgHeight;
+            *(float *)&out[0] = (center_y + box_height * .5) / imgHeight;
         }
         r++;
     }

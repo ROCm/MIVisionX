@@ -20,40 +20,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#include <stdexcept>
+#include <memory>
+#include "video_reader_factory.h"
+#include "video_file_source_reader.h"
 
-#include "video_loader_module.h"
 #ifdef RALI_VIDEO
-VideoLoaderModule::VideoLoaderModule(std::shared_ptr<VideoFileNode> video_node):_video_node(std::move(video_node))
-{
-}
-
-LoaderModuleStatus 
-VideoLoaderModule::load_next()
-{
-    // Do nothing since call to process graph suffices (done externally)
-    return LoaderModuleStatus::OK;
-}
-
-void
-VideoLoaderModule::set_output_image (Image* output_image)
-{
-}
-
-void
-VideoLoaderModule::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
-{
-}
-
-size_t VideoLoaderModule::count()
-{
-    // TODO: use FFMPEG to find the total number of frames and keep counting 
-    // how many times laod_next() is called successfully, subtract them and 
-    // that would be the count of frames remained to be decoded
-    return 9999999;
-}
-
-void VideoLoaderModule::reset()
-{
-    // Functionality not there yet in the OpenVX API
+std::shared_ptr<VideoReader> create_video_reader(VideoReaderConfig config) {
+    switch(config.type()) {
+        case VideoStorageType::VIDEO_FILE_SYSTEM:
+        {
+            auto ret = std::make_shared<VideoFileSourceReader>();
+            if(ret->initialize(config) !=  VideoReader::Status::OK)
+                throw std::runtime_error("VideoReader cannot access the storage");
+            return ret;
+        }
+        break;
+        default:
+            throw std::runtime_error (" VideoReader type is unsupported");
+    }
 }
 #endif

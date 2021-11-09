@@ -67,6 +67,16 @@ RALI_API_CALL raliCreateLabelReader(RaliContext p_context, const char* source_pa
 }
 
 RaliMetaData
+RALI_API_CALL raliCreateVideoLabelReader(RaliContext p_context, const char* source_path, unsigned sequence_length, unsigned frame_step, unsigned frame_stride, bool file_list_frame_num) {
+    if (!p_context)
+        THROW("Invalid rali context passed to raliCreateLabelReader")
+    auto context = static_cast<Context*>(p_context);
+
+    return context->master_graph->create_video_label_reader(source_path, MetaDataReaderType::VIDEO_LABEL_READER, sequence_length, frame_step, frame_stride, file_list_frame_num);
+
+}
+
+RaliMetaData
 RALI_API_CALL raliCreateCOCOReader(RaliContext p_context, const char* source_path, bool is_output){
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateCOCOReader")
@@ -341,6 +351,33 @@ RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext p_context, const char
 
     return context->master_graph->create_cifar10_label_reader(source_path, file_prefix);
 
+}
+
+void
+RALI_API_CALL raliGetSequenceStartFrameNumber(RaliContext p_context,  unsigned int* buf)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliGetSequenceStartFrameNumber")
+    auto context = static_cast<Context*>(p_context);
+    std::vector<size_t> sequence_start_frame;
+    context->master_graph->sequence_start_frame_number(sequence_start_frame);
+    std::copy(sequence_start_frame.begin(), sequence_start_frame.end(), buf);
+}
+
+void
+RALI_API_CALL raliGetSequenceFrameTimestamps(RaliContext p_context,  float* buf)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliGetSequenceFrameTimestamps")
+    auto context = static_cast<Context*>(p_context);
+    std::vector<std::vector<float>> sequence_frame_timestamps;
+    context->master_graph->sequence_frame_timestamps(sequence_frame_timestamps);
+    auto sequence_length = sequence_frame_timestamps[0].size();
+    for (unsigned int i = 0; i < sequence_frame_timestamps.size(); i++)
+    {
+        std::copy(sequence_frame_timestamps[i].begin(), sequence_frame_timestamps[i].end(), buf);
+        buf = buf + sequence_length;
+    }
 }
 
 void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<float>& anchors, float criteria,

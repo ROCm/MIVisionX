@@ -416,11 +416,11 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install clang')
-            # turbo-JPEG - https://github.com/rrawther/libjpeg-turbo.git -- 2.0.6.1
+            # turbo-JPEG - https://github.com/rrawther/libjpeg-turbo.git -- 2.0.6.2
             os.system(
-                '(cd '+deps_dir+'; git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git )')
+                '(cd '+deps_dir+'; git clone -b 2.0.6.2 https://github.com/rrawther/libjpeg-turbo.git )')
             os.system('(cd '+deps_dir+'/libjpeg-turbo; mkdir build; cd build; '+linuxCMake +
-                      ' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
+                      ' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
             # RPP
             # Remove Previous Install - RPP
             os.system('sudo -v')

@@ -1168,12 +1168,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                     data->children[child]->u.img.maxValue = (vx_int32)data->children[child]->u.img.uniform[0];
                 }
                 data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-                data->children[child]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
+                data->children[child]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes;
             }
         }
         else if (data->u.img.planes == 1) {
             data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width, data));
-            data->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
+            data->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes;
         }
         // set min/max values as uniform value
         if (data->u.img.format == VX_DF_IMAGE_U8 ||
@@ -1317,7 +1317,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
             data->children[level]->siblingIndex = (vx_int32)level;
             data->children[level]->parent = data;
             data->children[level]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[level]->u.img.width, data->children[level]));
-            data->children[level]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes*3;
+            data->children[level]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes*2;
             if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) {
                 float orb_scale_factor[4] = {
                     VX_SCALE_PYRAMID_ORB,

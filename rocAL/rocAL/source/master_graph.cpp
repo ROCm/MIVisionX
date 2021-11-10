@@ -1089,14 +1089,14 @@ void MasterGraph::start_processing()
     if(_is_video_loader)
     {
 #ifdef RALI_VIDEO
-    _remaining_count = _video_loader_module->remaining_count();
-    _output_thread = std::thread(&MasterGraph::output_routine_video, this);
+        _remaining_count = _video_loader_module->remaining_count();
+        _output_thread = std::thread(&MasterGraph::output_routine_video, this);
 #endif
     }
     else
     {
-    _remaining_count = _loader_module->remaining_count();
-    _output_thread = std::thread(&MasterGraph::output_routine, this);
+        _remaining_count = _loader_module->remaining_count();
+        _output_thread = std::thread(&MasterGraph::output_routine, this);
     }
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else

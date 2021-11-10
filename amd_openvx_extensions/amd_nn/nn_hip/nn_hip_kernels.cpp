@@ -678,3 +678,103 @@ int HipExec_tensor_exp_layer(hipStream_t stream, dim3 globalThreads, dim3 localT
 
     return VX_SUCCESS;
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_Prior_Box_layer(uint imgWidth, uint imgHeight, uint layerWidth, uint layerHeight, float minSize, float maxSize, uint flip,
+    uint clip, float offset, uint output_num, uint output_dims_ch2, uint num_bytes_for_each_prior, uchar *out, uint out_offset,
+    uint4 out_stride, uchar *aspect_ratio_buf, uint aspect_ratio_offset, uint aspect_ratio_num, uchar *variance_buf, uint variance_offset) {
+
+    uchar *out_ptr = out;
+    const float step_x = (float)imgWidth /(float)layerWidth;
+    const float step_y = (float)imgHeight /(float)layerHeight;
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    float center_x = (x + offset) * step_x;
+    float center_y = (y + offset) * step_y;
+    float box_width, box_height;
+    box_width = minSize;
+    box_height = minSize;
+    out += out_offset + y * hipGridDim_x * num_bytes_for_each_prior + x * num_bytes_for_each_prior;
+    *(float *)&out[0] = (center_x - box_width * .5) / imgWidth;
+    out += out_stride.y;
+    *(float *)&out[0] = (center_y - box_height * .5) / imgHeight;
+    out += out_stride.y;
+    *(float *)&out[0] = (center_x + box_width * .5) / imgWidth;
+    out += out_stride.y;
+    *(float *)&out[0] = (center_y + box_height * .5) / imgHeight;
+    if (maxSize > 0) {
+        box_width = sqrtf((float)(minSize * maxSize));
+        box_height = sqrtf((float)(minSize * maxSize));
+        out += out_stride.y;
+        *(float *)&out[0] = (center_x - box_width * .5) / imgWidth;
+        out += out_stride.y;
+        *(float *)&out[0] = (center_y - box_height * .5) / imgHeight;
+        out += out_stride.y;
+        *(float *)&out[0] = (center_x + box_width * .5) / imgWidth;
+        out += out_stride.y;
+        *(float *)&out[0] = (center_y + box_height * .5) / imgHeight;
+    }
+    int r = 0;
+    while(r < aspect_ratio_num) {
+        float ar = ((float *)(aspect_ratio_buf + aspect_ratio_offset))[r];
+        if(ar == 0.0f || fabsf(ar - (float)1.) < 1e-6) {
+            r++;
+            continue;
+        }
+        box_width = minSize * sqrtf(ar);
+        box_height = minSize / sqrtf(ar);
+        out += out_stride.y; 
+        *(float *)&out[0] = (center_x - box_width * .5) / imgWidth;
+        out += out_stride.y; 
+        *(float *)&out[0] = (center_y - box_height * .5) / imgHeight;
+        out += out_stride.y; 
+        *(float *)&out[0] = (center_x + box_width * .5) / imgWidth;
+        out += out_stride.y; 
+        *(float *)&out[0] = (center_y + box_height * .5) / imgHeight;
+        if(flip == 1) {
+            float ar_flip=  1 / ar;
+            if(isinf(ar_flip) || fabsf(ar_flip - (float)1.) < 1e-6) {
+                r++;
+                continue;
+            }
+            box_width = minSize * sqrtf(ar_flip);
+            box_height = minSize / sqrtf(ar_flip);
+            out += out_stride.y;
+            *(float *)&out[0] = (center_x - box_width * .5) / imgWidth;
+            out += out_stride.y;
+            *(float *)&out[0] = (center_y - box_height * .5) / imgHeight;
+            out += out_stride.y;
+            *(float *)&out[0] = (center_x + box_width * .5) / imgWidth;
+            out += out_stride.y;
+            *(float *)&out[0] = (center_y + box_height * .5) / imgHeight;
+        }
+        r++;
+    }
+    if (clip == 1) {
+        int idx = 0;
+        out = out_ptr;
+        while(idx < (output_dims_ch2 - 1)) {
+            ((float *)(out + out_offset))[idx] = fminf(fmaxf((float)out[idx], (float)0.), (float)1.);
+            idx++;
+        }
+    }
+    int count = output_dims_ch2;
+    out = out_ptr;
+    while(count < output_num) {
+        ((float4 *)(out + out_offset))[count++] = ((float4 *)(variance_buf + variance_offset))[0];
+    }
+
+}
+
+int HipExec_Prior_Box_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, uint imgWidth, uint imgHeight, uint layerWidth,
+    uint layerHeight, float minSize, float maxSize, uint flip, uint clip, float offset, uint output_num, uint output_dims_ch2,
+    uint num_bytes_for_each_prior, uchar *out, uint out_offset, uint4 out_stride, uchar *aspect_ratio_buf, uint aspect_ratio_offset,
+    uint aspect_ratio_num, uchar *variance_buf, uint variance_offset) {
+
+    hipLaunchKernelGGL(Hip_Prior_Box_layer, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, imgWidth, imgHeight,
+        layerWidth, layerHeight, minSize, maxSize, flip, clip, offset, output_num, output_dims_ch2 / 4, num_bytes_for_each_prior, out, out_offset,
+        out_stride, aspect_ratio_buf, aspect_ratio_offset, aspect_ratio_num, variance_buf, variance_offset);
+
+    return VX_SUCCESS;
+}

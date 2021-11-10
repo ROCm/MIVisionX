@@ -138,7 +138,9 @@ private:
     RaliAffinity _affinity;
     const int _gpu_id;//!< Defines the device id used for processing
     pLoaderModule _loader_module; //!< Keeps the loader module used to feed the input the images of the graph
+#ifdef RALI_VIDEO
     pVideoLoaderModule _video_loader_module; //!< Keeps the video loader module used to feed the input sequences of the graph
+#endif
     TimingDBG _convert_time;
     const size_t _user_batch_size;//!< Batch size provided by the user
     const size_t _cpu_threads;//!< Not in use

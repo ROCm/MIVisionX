@@ -456,20 +456,17 @@ MasterGraph::reset()
         _output_thread.join();
     _ring_buffer.reset();
     // clearing meta ring buffer
-    if(_is_video_loader)
-    {
-        _video_loader_module->reset();
-        _sequence_start_framenum_vec.clear();
-        _sequence_frame_timestamps_vec.clear();
-    }
-    else
-    {
-        // if random_bbox meta reader is used: read again to get different crops
-        if (_randombboxcrop_meta_data_reader != nullptr)
-            _randombboxcrop_meta_data_reader->release();
-        // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
-        _loader_module->reset();
-    }
+#ifdef RALI_VIDEO
+    _video_loader_module->reset();
+    _sequence_start_framenum_vec.clear();
+    _sequence_frame_timestamps_vec.clear();
+#else
+    // if random_bbox meta reader is used: read again to get different crops
+    if (_randombboxcrop_meta_data_reader != nullptr)
+        _randombboxcrop_meta_data_reader->release();
+    // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
+    _loader_module->reset();
+#endif
 
     // restart processing of the images
     _first_run = true;
@@ -494,16 +491,13 @@ Timing
 MasterGraph::timing()
 {
     Timing t;
-    if(_is_video_loader)
-    {
-        t = _video_loader_module->timing();
-        t.video_process_time += _process_time.get_timing();
-    }
-    else
-    {
-        t  = _loader_module->timing();
-        t.image_process_time += _process_time.get_timing();
-    }
+#ifdef RALI_VIDEO
+    t = _video_loader_module->timing();
+    t.video_process_time += _process_time.get_timing();
+#else
+    t  = _loader_module->timing();
+    t.image_process_time += _process_time.get_timing();
+#endif
     t.copy_to_output += _convert_time.get_timing();
     return t;
 }
@@ -957,6 +951,7 @@ void MasterGraph::output_routine()
     _process_time.end();
 }
 
+#ifdef RALI_VIDEO
 void MasterGraph::output_routine_video()
 {
     _process_time.start();
@@ -1076,14 +1071,18 @@ void MasterGraph::output_routine_video()
     }
     _process_time.end();
 }
+#endif
 
 void MasterGraph::start_processing()
 {
     _processing = true;
-    _is_video_loader ? (_remaining_count = _video_loader_module->remaining_count(),
-                        _output_thread = std::thread(&MasterGraph::output_routine_video, this))
-                        : (_remaining_count = _loader_module->remaining_count(),
-                        _output_thread = std::thread(&MasterGraph::output_routine, this));
+#ifdef RALI_VIDEO
+    _remaining_count = _video_loader_module->remaining_count();
+    _output_thread = std::thread(&MasterGraph::output_routine_video, this);
+#else
+    _remaining_count = _loader_module->remaining_count();
+    _output_thread = std::thread(&MasterGraph::output_routine, this);
+#endif
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else
 //  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds

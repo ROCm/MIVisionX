@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
 
+#ifdef RALI_VIDEO
 enum class VideoLoaderModuleStatus
 {
     OK = 0,
@@ -61,3 +62,4 @@ public:
 };
 
 using pVideoLoaderModule = std::shared_ptr<VideoLoaderModule>;
+#endif

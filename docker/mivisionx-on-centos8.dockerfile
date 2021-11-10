@@ -23,14 +23,14 @@ RUN yum -y install --nogpgcheck libsqlite3x-devel bzip2-devel openssl-devel pyth
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && cp half-files/include/half.hpp /usr/local/include/ && \
         git clone -b rocm-4.2.0 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \
-        cmake3 ../ && make -j8 && make install && cd ../../ && \
+        cmake ../ && make -j8 && make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && make install
 RUN wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/1.1.5.zip && unzip 1.1.5.zip && \
-        cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake3 ../ && make -j8 && make install && cd ../../ && \
-        wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.11.0.zip && unzip 2.11.0.zip && \
-        cd MIOpen-2.11.0 && cmake3 -P install_deps.cmake --minimum && mkdir build && cd build && \
-        cmake3 -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && \
+        cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake ../ && make -j8 && make install && cd ../../ && \
+        wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.14.0.zip && unzip 2.14.0.zip && \
+        cd MIOpen-2.14.0 && cmake -P install_deps.cmake --minimum && mkdir build && cd build && \
+        cmake -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && \
         make -j8 && make MIOpenDriver && make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && make install

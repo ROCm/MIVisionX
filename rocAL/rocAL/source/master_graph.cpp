@@ -456,17 +456,22 @@ MasterGraph::reset()
         _output_thread.join();
     _ring_buffer.reset();
     // clearing meta ring buffer
+    if(_is_video_loader)
+    {
 #ifdef RALI_VIDEO
-    _video_loader_module->reset();
-    _sequence_start_framenum_vec.clear();
-    _sequence_frame_timestamps_vec.clear();
-#else
-    // if random_bbox meta reader is used: read again to get different crops
-    if (_randombboxcrop_meta_data_reader != nullptr)
-        _randombboxcrop_meta_data_reader->release();
-    // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
-    _loader_module->reset();
+        _video_loader_module->reset();
+        _sequence_start_framenum_vec.clear();
+        _sequence_frame_timestamps_vec.clear();
 #endif
+    }
+    else
+    {
+        // if random_bbox meta reader is used: read again to get different crops
+        if (_randombboxcrop_meta_data_reader != nullptr)
+            _randombboxcrop_meta_data_reader->release();
+        // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
+        _loader_module->reset();
+    }
 
     // restart processing of the images
     _first_run = true;
@@ -491,13 +496,18 @@ Timing
 MasterGraph::timing()
 {
     Timing t;
+    if(_is_video_loader)
+    {
 #ifdef RALI_VIDEO
-    t = _video_loader_module->timing();
-    t.video_process_time += _process_time.get_timing();
-#else
-    t  = _loader_module->timing();
-    t.image_process_time += _process_time.get_timing();
+        t = _video_loader_module->timing();
+        t.video_process_time += _process_time.get_timing();
 #endif
+    }
+    else
+    {
+        t  = _loader_module->timing();
+        t.image_process_time += _process_time.get_timing();
+    }
     t.copy_to_output += _convert_time.get_timing();
     return t;
 }
@@ -833,22 +843,26 @@ void MasterGraph::output_routine()
 {
     _process_time.start();
     INFO("Output routine started with "+TOSTR(_remaining_count) + " to load");
+    size_t batch_ratio = _is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio;
+    if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_batch_ratio is different. Will be removed in TensorSupport.
+    {
 #if !ENABLE_HIP
-    if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
+    if(processing_on_device_ocl() && batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 #else
-    if(processing_on_device_hip() && _user_to_internal_batch_ratio != 1)
+    if(processing_on_device_hip() && batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 #endif
+    }
     try {
         while (_processing)
         {
-            const size_t each_cycle_size = output_byte_size()/_user_to_internal_batch_ratio;
+            const size_t each_cycle_size = output_byte_size()/batch_ratio;
 
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
             pMetaDataBatch augmented_batch_meta_data = nullptr;
-            if (_loader_module->remaining_count() < _user_batch_size)
+            if (_loader_module->remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size))
             {
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
                 // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
@@ -864,7 +878,7 @@ void MasterGraph::output_routine()
             // When executing on CPU the internal batch count can be smaller than the user batch count
             // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
             // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
-            for(unsigned cycle_idx = 0; cycle_idx< _user_to_internal_batch_ratio; cycle_idx++)
+            for(unsigned cycle_idx = 0; cycle_idx< batch_ratio; cycle_idx++)
             {
                 // Swap handles on the input image, so that new image is loaded to be processed
                 auto load_ret = _loader_module->load_next();
@@ -956,26 +970,22 @@ void MasterGraph::output_routine_video()
 {
     _process_time.start();
     INFO("Output routine of video pipeline started with "+TOSTR(_remaining_count) + " to load");
-    size_t batch_ratio = _is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio;
-    if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_batch_ratio is different. Will be removed in TensorSupport.
-    {
 #if !ENABLE_HIP
-    if(processing_on_device_ocl() && batch_ratio != 1)
+    if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 #else
-    if(processing_on_device_hip() && batch_ratio != 1)
+    if(processing_on_device_hip() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 #endif
-    }
     try {
         while (_processing)
         {
-            const size_t each_cycle_size = output_byte_size()/batch_ratio;
+            const size_t each_cycle_size = output_byte_size()/_user_to_internal_batch_ratio;
 
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
             pMetaDataBatch augmented_batch_meta_data = nullptr;
-            if (_video_loader_module->remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size))
+            if (_video_loader_module->remaining_count() < _user_batch_size)
             {
                 // If the internal process routine ,output_routine_video(), has finished processing all the images, and last
                 // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
@@ -991,7 +1001,7 @@ void MasterGraph::output_routine_video()
             // When executing on CPU the internal batch count can be smaller than the user batch count
             // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
             // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
-            for(unsigned cycle_idx = 0; cycle_idx< batch_ratio; cycle_idx++)
+            for(unsigned cycle_idx = 0; cycle_idx< _user_to_internal_batch_ratio; cycle_idx++)
             {
                 // Swap handles on the input sequence, so that new sequence is loaded to be processed
                 auto load_ret = _video_loader_module->load_next();
@@ -1076,13 +1086,18 @@ void MasterGraph::output_routine_video()
 void MasterGraph::start_processing()
 {
     _processing = true;
+    if(_is_video_loader)
+    {
 #ifdef RALI_VIDEO
     _remaining_count = _video_loader_module->remaining_count();
     _output_thread = std::thread(&MasterGraph::output_routine_video, this);
-#else
+#endif
+    }
+    else
+    {
     _remaining_count = _loader_module->remaining_count();
     _output_thread = std::thread(&MasterGraph::output_routine, this);
-#endif
+    }
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else
 //  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds

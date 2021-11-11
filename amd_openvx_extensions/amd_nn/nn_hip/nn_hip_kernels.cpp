@@ -778,3 +778,818 @@ int HipExec_Prior_Box_layer(hipStream_t stream, dim3 globalThreads, dim3 localTh
 
     return VX_SUCCESS;
 }
+
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat2_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size_t ip_size_per_batch0, uchar *in1, uint in1_offset, size_t ip_size_per_batch1,
+    const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[2] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+
+    if (id < work_items) {
+        outn += out_offset >> 2;
+        if (id < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2);
+            outn[id] = in0n[id];
+        } else if ((id >= ip_buffer_offset[1]) && (id < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2);
+            outn[id] = in1n[id - ip_buffer_offset[1]];
+        }
+    }
+
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat3_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size_t ip_size_per_batch0, uchar *in1, uint in1_offset, size_t ip_size_per_batch1,
+    uchar *in2, uint in2_offset, size_t ip_size_per_batch2, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[3] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+
+    if (id < work_items) {
+        outn += out_offset >> 2;
+        if (id < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2);
+            outn[id] = in0n[id];
+        } else if ((id >= ip_buffer_offset[1]) && (id < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2);
+            outn[id] = in1n[id - ip_buffer_offset[1]];
+        } else if ((id >= ip_buffer_offset[2]) && (id < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2);
+            outn[id] = in2n[id - ip_buffer_offset[2]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat4_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size_t ip_size_per_batch0, uchar *in1, uint in1_offset, size_t ip_size_per_batch1,
+    uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3, uint in3_offset, size_t ip_size_per_batch3, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[4] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+
+    if (id < work_items) {
+        out += out_offset >> 2;
+        if (id < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2);
+            outn[id] = in0n[id];
+        } else if ((id >= ip_buffer_offset[1]) && (id < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2);
+            outn[id] = in1n[id - ip_buffer_offset[1]];
+        } else if ((id >= ip_buffer_offset[2]) && (id < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2);
+            outn[id] = in2n[id - ip_buffer_offset[2]];
+        } else if ((id >= ip_buffer_offset[3]) && (id < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2);
+            outn[id] = in3n[id - ip_buffer_offset[3]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat5_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size_t ip_size_per_batch0, uchar *in1, uint in1_offset, size_t ip_size_per_batch1,
+    uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3, uint in3_offset, size_t ip_size_per_batch3, uchar *in4, uint in4_offset,
+    size_t ip_size_per_batch4, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[5] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+    T *in4n = (T*)in4;
+
+    if (id < work_items) {
+        outn += out_offset >> 2;
+        if (id < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2);
+            outn[id] = in0n[id];
+        } else if ((id >= ip_buffer_offset[1]) && (id < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2);
+            outn[id] = in1n[id - ip_buffer_offset[1]];
+        } else if ((id >= ip_buffer_offset[2]) && (id < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2);
+            outn[id] = in2n[id - ip_buffer_offset[2]];
+        } else if ((id >= ip_buffer_offset[3]) && (id < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2);
+            outn[id] = in3n[id - ip_buffer_offset[3]];
+        }  else if ((id >= ip_buffer_offset[4]) && (id < ip_buffer_offset[4] + ip_size_per_batch4)) {
+            in4n += (in4_offset >> 2);
+            outn[id] = in4n[id - ip_buffer_offset[4]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat6_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size_t ip_size_per_batch0, uchar *in1, uint in1_offset, size_t ip_size_per_batch1,
+    uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3, uint in3_offset, size_t ip_size_per_batch3, uchar *in4, uint in4_offset,
+    size_t ip_size_per_batch4, uchar *in5, uint in5_offset, size_t ip_size_per_batch5, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[6] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+    T *in4n = (T*)in4;
+    T *in5n = (T*)in5;
+
+    if (id < work_items) {
+        out += out_offset >> 2;
+        if (id < ip_size_per_batch0) {
+            in0 += (in0_offset >> 2);
+            outn[id] = in0n[id];
+        } else if ((id >= ip_buffer_offset[1]) && (id < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2);
+            outn[id] = in1n[id - ip_buffer_offset[1]];
+        } else if ((id >= ip_buffer_offset[2]) && (id < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2);
+            outn[id] = in2n[id - ip_buffer_offset[2]];
+        } else if ((id >= ip_buffer_offset[3]) && (id < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2);
+            outn[id] = in3n[id - ip_buffer_offset[3]];
+        } else if ((id >= ip_buffer_offset[4]) && (id < ip_buffer_offset[4] + ip_size_per_batch4)) {
+            in4n += (in4_offset >> 2);
+            outn[id] = in4n[id - ip_buffer_offset[4]];
+        } else if ((id >= ip_buffer_offset[5]) && (id < ip_buffer_offset[5] + ip_size_per_batch5)) {
+            in5n += (in5_offset >> 2);
+            outn[id] = in5n[id - ip_buffer_offset[5]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat7_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size_t ip_size_per_batch0, uchar *in1, uint in1_offset, size_t ip_size_per_batch1,
+    uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3, uint in3_offset, size_t ip_size_per_batch3, uchar *in4, uint in4_offset,
+    size_t ip_size_per_batch4, uchar *in5, uint in5_offset, size_t ip_size_per_batch5, uchar *in6, uint in6_offset, size_t ip_size_per_batch6,
+    const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[7] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
+    ip_buffer_offset[6] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+    T *in4n = (T*)in4;
+    T *in5n = (T*)in5;
+    T *in6n = (T*)in6;
+
+    if (id < work_items) {
+        outn += out_offset >> 2;
+        if (id < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2);
+            outn[id] = in0n[id];
+        } else if ((id >= ip_buffer_offset[1]) && (id < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2);
+            outn[id] = in1n[id - ip_buffer_offset[1]];
+        } else if ((id >= ip_buffer_offset[2]) && (id < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2);
+            outn[id] = in2n[id - ip_buffer_offset[2]];
+        } else if ((id >= ip_buffer_offset[3]) && (id < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2);
+            outn[id] = in3n[id - ip_buffer_offset[3]];
+        } else if ((id >= ip_buffer_offset[4]) && (id < ip_buffer_offset[4] + ip_size_per_batch4)) {
+            in4n += (in4_offset >> 2);
+            outn[id] = in4n[id - ip_buffer_offset[4]];
+        } else if ((id >= ip_buffer_offset[5]) && (id < ip_buffer_offset[5] + ip_size_per_batch5)) {
+            in5n += (in5_offset >> 2);
+            outn[id] = in5n[id - ip_buffer_offset[5]];
+        } else if ((id >= ip_buffer_offset[6]) && (id < ip_buffer_offset[6] + ip_size_per_batch6)) {
+            in6n += (in6_offset >> 2);
+            outn[id] = in6n[id - ip_buffer_offset[6]];
+        }
+
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat8_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size_t ip_size_per_batch0, uchar *in1, uint in1_offset, size_t ip_size_per_batch1,
+    uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3, uint in3_offset, size_t ip_size_per_batch3, uchar *in4, uint in4_offset,
+    size_t ip_size_per_batch4, uchar *in5, uint in5_offset, size_t ip_size_per_batch5, uchar *in6, uint in6_offset, size_t ip_size_per_batch6,
+    uchar *in7, uint in7_offset, size_t ip_size_per_batch7, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[8] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
+    ip_buffer_offset[6] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5;
+    ip_buffer_offset[7] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5 + ip_size_per_batch6;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+    T *in4n = (T*)in4;
+    T *in5n = (T*)in5;
+    T *in6n = (T*)in6;
+    T *in7n = (T*)in7;
+
+    if (id < work_items) {
+        out += out_offset >> 2;
+        if (id < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2);
+            outn[id] = in0n[id];
+        } else if ((id >= ip_buffer_offset[1]) && (id < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2);
+            outn[id] = in1n[id - ip_buffer_offset[1]];
+        } else if ((id >= ip_buffer_offset[2]) && (id < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2);
+            outn[id] = in2n[id - ip_buffer_offset[2]];
+        } else if ((id >= ip_buffer_offset[3]) && (id < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2);
+            outn[id] = in3n[id - ip_buffer_offset[3]];
+        } else if ((id >= ip_buffer_offset[4]) && (id < ip_buffer_offset[4] + ip_size_per_batch4)) {
+            in4n += (in4_offset >> 2);
+            outn[id] = in4n[id - ip_buffer_offset[4]];
+        } else if ((id >= ip_buffer_offset[5]) && (id < ip_buffer_offset[5] + ip_size_per_batch5)) {
+            in5n += (in5_offset >> 2);
+            outn[id] = in5n[id - ip_buffer_offset[5]];
+        } else if ((id >= ip_buffer_offset[6]) && (id < ip_buffer_offset[6] + ip_size_per_batch6)) {
+            in6n += (in6_offset >> 2);
+            outn[id] = in6n[id - ip_buffer_offset[6]];
+        } else if ((id >= ip_buffer_offset[7]) && (id < ip_buffer_offset[7] + ip_size_per_batch7)) {
+            in7n += (in7_offset >> 2);
+            outn[id] = in7n[id - ip_buffer_offset[7]];
+        }
+
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat2_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *in0, uint in0_offset, size_t ip_size_per_batch0, uchar *in1, uint in1_offset,
+    size_t ip_size_per_batch1, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[2] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+
+    if (id < work_items) {
+        size_t batch_id = id / output_dim3;
+        size_t id_within_batch = id - batch_id * output_dim3;
+        outn += out_offset >> 2;
+        if (id_within_batch < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2) + (batch_id * ip_size_per_batch0);
+            outn[id] = in0n[id_within_batch];
+        } else if ((id_within_batch >= ip_buffer_offset[1]) && (id_within_batch < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2) + (batch_id * ip_size_per_batch1);
+            outn[id] = in1n[id_within_batch - ip_buffer_offset[1]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat3_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *in0, uint in0_offset, size_t ip_size_per_batch0, uchar *in1, uint in1_offset,
+    size_t ip_size_per_batch1, uchar *in2, uint in2_offset, size_t ip_size_per_batch2, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[3] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+
+    if (id < work_items) {
+        size_t batch_id = id / output_dim3;
+        size_t id_within_batch = id - batch_id * output_dim3;
+        outn += out_offset >> 2;
+        if (id_within_batch < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2) + (batch_id * ip_size_per_batch0);
+            outn[id] = in0n[id_within_batch];
+        } else if ((id_within_batch >= ip_buffer_offset[1]) && (id_within_batch < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2) + (batch_id * ip_size_per_batch1);
+            outn[id] = in1n[id_within_batch - ip_buffer_offset[1]];
+        } else if ((id_within_batch >= ip_buffer_offset[2]) && (id_within_batch < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2) + (batch_id * ip_size_per_batch2);
+            outn[id] = in2n[id_within_batch - ip_buffer_offset[2]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat4_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *in0, uint in0_offset, size_t ip_size_per_batch0,
+    uchar *in1, uint in1_offset, size_t ip_size_per_batch1, uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3,
+    uint in3_offset, size_t ip_size_per_batch3, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[4] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+
+    if (id < work_items) {
+        size_t batch_id = id / output_dim3;
+        size_t id_within_batch = id - batch_id * output_dim3;
+        outn += out_offset >> 2;
+        if (id_within_batch < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2) + (batch_id * ip_size_per_batch0);
+            outn[id] = in0n[id_within_batch];
+        } else if ((id_within_batch >= ip_buffer_offset[1]) && (id_within_batch < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2) + (batch_id * ip_size_per_batch1);
+            outn[id] = in1n[id_within_batch - ip_buffer_offset[1]];
+        } else if ((id_within_batch >= ip_buffer_offset[2]) && (id_within_batch < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2) + (batch_id * ip_size_per_batch2);
+            outn[id] = in2n[id_within_batch - ip_buffer_offset[2]];
+        } else if ((id_within_batch >= ip_buffer_offset[3]) && (id_within_batch < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2) + (batch_id * ip_size_per_batch3);
+            outn[id] = in3n[id_within_batch - ip_buffer_offset[3]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat5_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *in0, uint in0_offset, size_t ip_size_per_batch0,
+    uchar *in1, uint in1_offset, size_t ip_size_per_batch1, uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3,
+    uint in3_offset, size_t ip_size_per_batch3, uchar *in4, uint in4_offset, size_t ip_size_per_batch4, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[5] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+    T *in4n = (T*)in4;
+
+    if (id < work_items) {
+        size_t batch_id = id / output_dim3;
+        size_t id_within_batch = id - batch_id * output_dim3;
+        outn += out_offset >> 2;
+        if (id_within_batch < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2) + (batch_id * ip_size_per_batch0);
+            outn[id] = in0n[id_within_batch];
+        } else if ((id_within_batch >= ip_buffer_offset[1]) && (id_within_batch < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2) + (batch_id * ip_size_per_batch1);
+            outn[id] = in1n[id_within_batch - ip_buffer_offset[1]];
+        } else if ((id_within_batch >= ip_buffer_offset[2]) && (id_within_batch < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2) + (batch_id * ip_size_per_batch2);
+            outn[id] = in2n[id_within_batch - ip_buffer_offset[2]];
+        } else if ((id_within_batch >= ip_buffer_offset[3]) && (id_within_batch < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2) + (batch_id * ip_size_per_batch3);
+            outn[id] = in3n[id_within_batch - ip_buffer_offset[3]];
+        } else if ((id_within_batch >= ip_buffer_offset[4]) && (id_within_batch < ip_buffer_offset[4] + ip_size_per_batch4)) {
+            in4n += (in4_offset >> 2) + (batch_id * ip_size_per_batch4);
+            outn[id] = in4n[id_within_batch - ip_buffer_offset[4]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat6_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *in0, uint in0_offset, size_t ip_size_per_batch0,
+    uchar *in1, uint in1_offset, size_t ip_size_per_batch1, uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3,
+    uint in3_offset, size_t ip_size_per_batch3, uchar *in4, uint in4_offset, size_t ip_size_per_batch4, uchar *in5, uint in5_offset,
+    size_t ip_size_per_batch5, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[6] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+    T *in4n = (T*)in4;
+    T *in5n = (T*)in5;
+
+    if (id < work_items) {
+        size_t batch_id = id / output_dim3;
+        size_t id_within_batch = id - batch_id * output_dim3;
+        outn += out_offset >> 2;
+        if (id_within_batch < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2) + (batch_id * ip_size_per_batch0);
+            outn[id] = in0n[id_within_batch];
+        } else if ((id_within_batch >= ip_buffer_offset[1]) && (id_within_batch < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2) + (batch_id * ip_size_per_batch1);
+            outn[id] = in1n[id_within_batch - ip_buffer_offset[1]];
+        } else if ((id_within_batch >= ip_buffer_offset[2]) && (id_within_batch < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2) + (batch_id * ip_size_per_batch2);
+            outn[id] = in2n[id_within_batch - ip_buffer_offset[2]];
+        } else if ((id_within_batch >= ip_buffer_offset[3]) && (id_within_batch < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2) + (batch_id * ip_size_per_batch3);
+            outn[id] = in3n[id_within_batch - ip_buffer_offset[3]];
+        } else if ((id_within_batch >= ip_buffer_offset[4]) && (id_within_batch < ip_buffer_offset[4] + ip_size_per_batch4)) {
+            in4n += (in4_offset >> 2) + (batch_id * ip_size_per_batch4);
+            outn[id] = in4n[id_within_batch - ip_buffer_offset[4]];
+        } else if ((id_within_batch >= ip_buffer_offset[5]) && (id_within_batch < ip_buffer_offset[5] + ip_size_per_batch5)) {
+            in5n += (in5_offset >> 2) + (batch_id * ip_size_per_batch5);
+            outn[id] = in5n[id_within_batch - ip_buffer_offset[5]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat7_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *in0, uint in0_offset, size_t ip_size_per_batch0,
+    uchar *in1, uint in1_offset, size_t ip_size_per_batch1, uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3,
+    uint in3_offset, size_t ip_size_per_batch3, uchar *in4, uint in4_offset, size_t ip_size_per_batch4, uchar *in5, uint in5_offset,
+    size_t ip_size_per_batch5, uchar *in6, uint in6_offset, size_t ip_size_per_batch6, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[7] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
+    ip_buffer_offset[6] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+    T *in4n = (T*)in4;
+    T *in5n = (T*)in5;
+    T *in6n = (T*)in6;
+
+    if (id < work_items) {
+        size_t batch_id = id / output_dim3;
+        size_t id_within_batch = id - batch_id * output_dim3;
+        outn += out_offset >> 2;
+        if (id_within_batch < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2) + (batch_id * ip_size_per_batch0);
+            outn[id] = in0n[id_within_batch];
+        } else if ((id_within_batch >= ip_buffer_offset[1]) && (id_within_batch < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2) + (batch_id * ip_size_per_batch1);
+            outn[id] = in1n[id_within_batch - ip_buffer_offset[1]];
+        } else if ((id_within_batch >= ip_buffer_offset[2]) && (id_within_batch < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2) + (batch_id * ip_size_per_batch2);
+            outn[id] = in2n[id_within_batch - ip_buffer_offset[2]];
+        } else if ((id_within_batch >= ip_buffer_offset[3]) && (id_within_batch < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2) + (batch_id * ip_size_per_batch3);
+            outn[id] = in3n[id_within_batch - ip_buffer_offset[3]];
+        } else if ((id_within_batch >= ip_buffer_offset[4]) && (id_within_batch < ip_buffer_offset[4] + ip_size_per_batch4)) {
+            in4n += (in4_offset >> 2) + (batch_id * ip_size_per_batch4);
+            outn[id] = in4n[id_within_batch - ip_buffer_offset[4]];
+        } else if ((id_within_batch >= ip_buffer_offset[5]) && (id_within_batch < ip_buffer_offset[5] + ip_size_per_batch5)) {
+            in5n += (in5_offset >> 2) + (batch_id * ip_size_per_batch5);
+            outn[id] = in5n[id_within_batch - ip_buffer_offset[5]];
+        } else if ((id_within_batch >= ip_buffer_offset[6]) && (id_within_batch < ip_buffer_offset[6] + ip_size_per_batch6)) {
+            in6n += (in6_offset >> 2) + (batch_id * ip_size_per_batch6);
+            outn[id] = in6n[id_within_batch - ip_buffer_offset[6]];
+        }
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Concat8_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *in0, uint in0_offset, size_t ip_size_per_batch0,
+    uchar *in1, uint in1_offset, size_t ip_size_per_batch1, uchar *in2, uint in2_offset, size_t ip_size_per_batch2, uchar *in3,
+    uint in3_offset, size_t ip_size_per_batch3, uchar *in4, uint in4_offset, size_t ip_size_per_batch4, uchar *in5, uint in5_offset,
+    size_t ip_size_per_batch5, uchar *in6, uint in6_offset, size_t ip_size_per_batch6, uchar *in7, uint in7_offset,
+    size_t ip_size_per_batch7, const int axis, size_t work_items) {
+
+    size_t id = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+
+    vx_size ip_buffer_offset[8] = {0};
+    ip_buffer_offset[1] += ip_size_per_batch0;
+    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
+    ip_buffer_offset[6] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5;
+    ip_buffer_offset[7] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5 + ip_size_per_batch6;
+
+    T *outn = (T*)out;
+    T *in0n = (T*)in0;
+    T *in1n = (T*)in1;
+    T *in2n = (T*)in2;
+    T *in3n = (T*)in3;
+    T *in4n = (T*)in4;
+    T *in5n = (T*)in5;
+    T *in6n = (T*)in6;
+    T *in7n = (T*)in7;
+
+    if (id < work_items) {
+        size_t batch_id = id / output_dim3;
+        size_t id_within_batch = id - batch_id * output_dim3;
+        outn += out_offset >> 2;
+        if (id_within_batch < ip_size_per_batch0) {
+            in0n += (in0_offset >> 2) + (batch_id * ip_size_per_batch0);
+            outn[id] = in0n[id_within_batch];
+        } else if ((id_within_batch >= ip_buffer_offset[1]) && (id_within_batch < ip_buffer_offset[1] + ip_size_per_batch1)) {
+            in1n += (in1_offset >> 2) + (batch_id * ip_size_per_batch1);
+            outn[id] = in1n[id_within_batch - ip_buffer_offset[1]];
+        } else if ((id_within_batch >= ip_buffer_offset[2]) && (id_within_batch < ip_buffer_offset[2] + ip_size_per_batch2)) {
+            in2n += (in2_offset >> 2) + (batch_id * ip_size_per_batch2);
+            outn[id] = in2n[id_within_batch - ip_buffer_offset[2]];
+        } else if ((id_within_batch >= ip_buffer_offset[3]) && (id_within_batch < ip_buffer_offset[3] + ip_size_per_batch3)) {
+            in3n += (in3_offset >> 2) + (batch_id * ip_size_per_batch3);
+            outn[id] = in3n[id_within_batch - ip_buffer_offset[3]];
+        } else if ((id_within_batch >= ip_buffer_offset[4]) && (id_within_batch < ip_buffer_offset[4] + ip_size_per_batch4)) {
+            in4n += (in4_offset >> 2) + (batch_id * ip_size_per_batch4);
+            outn[id] = in4n[id_within_batch - ip_buffer_offset[4]];
+        } else if ((id_within_batch >= ip_buffer_offset[5]) && (id_within_batch < ip_buffer_offset[5] + ip_size_per_batch5)) {
+            in5n += (in5_offset >> 2) + (batch_id * ip_size_per_batch5);
+            outn[id] = in5n[id_within_batch - ip_buffer_offset[5]];
+        } else if ((id_within_batch >= ip_buffer_offset[6]) && (id_within_batch < ip_buffer_offset[6] + ip_size_per_batch6)) {
+            in6n += (in6_offset >> 2) + (batch_id * ip_size_per_batch6);
+            outn[id] = in6n[id_within_batch - ip_buffer_offset[6]];
+        } else if ((id_within_batch >= ip_buffer_offset[7]) && (id_within_batch < ip_buffer_offset[7] + ip_size_per_batch7)) {
+            in7n += (in7_offset >> 2) + (batch_id * ip_size_per_batch7);
+            outn[id] = in7n[id_within_batch - ip_buffer_offset[7]];
+        }
+    }
+}
+
+int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, uchar *out, uint out_offset, size_t output_dim3,
+    uchar *in_mem[], size_t in_offset[], size_t ip_size_per_batch[], int axis, size_t work_items, int num_inputs, bool batchsz1, vx_enum type) {
+
+    switch (num_inputs) {
+        case 2:
+            if (batchsz1) {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat2_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat2_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], axis, work_items);
+                }
+            } else {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat2_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat2_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], axis, work_items);
+                }
+            }
+            break;
+        case 3:
+            if (batchsz1) {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat3_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat3_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], axis, work_items);
+                }
+            } else {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat3_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat3_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], axis, work_items);
+                }
+            }
+            break;
+        case 4:
+            if (batchsz1) {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat4_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat4_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], axis, work_items);
+                }
+            } else {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat4_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat4_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], axis, work_items);
+                }
+            }
+            break;
+        case 5:
+            if (batchsz1) {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat5_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat5_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], axis, work_items);
+                }
+            } else {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat5_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat5_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], axis, work_items);
+                }
+            }
+            break;
+        case 6:
+            if (batchsz1) {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat6_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat6_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], axis, work_items);
+                }
+            } else {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat6_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat6_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], axis, work_items);
+                }
+            }
+            break;
+        case 7:
+            if (batchsz1) {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat7_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat7_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], axis, work_items);
+                }
+            } else {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat7_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat7_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], axis, work_items);
+                }
+            }
+            break;
+        case 8:
+            if (batchsz1) {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat8_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], in_mem[7], in_offset[7], ip_size_per_batch[7], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat8_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], in_mem[7], in_offset[7], ip_size_per_batch[7], axis, work_items);
+                }
+            } else {
+                if (type == VX_TYPE_FLOAT32) {
+                    hipLaunchKernelGGL(Hip_Concat8_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], in_mem[7], in_offset[7], ip_size_per_batch[7], axis, work_items);
+                } else {
+                    hipLaunchKernelGGL(Hip_Concat8_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                        output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
+                        ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
+                        in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], in_mem[7], in_offset[7], ip_size_per_batch[7], axis, work_items);
+                }
+            }
+            break;
+        default:
+            return VX_ERROR_NOT_SUPPORTED;
+    }
+
+    return VX_SUCCESS;
+}

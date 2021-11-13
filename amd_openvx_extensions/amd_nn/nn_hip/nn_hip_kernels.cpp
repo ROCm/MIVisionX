@@ -1593,3 +1593,408 @@ int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
 
     return VX_SUCCESS;
 }
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Argmax_topk1_layer(uchar * i0_buf, uint i0_offset, uint4 i0_stride, uint4 i0_dims, uchar *o0_buf, uint o0_offset, uint4 o0_stride,
+    uint o0_image_stride, uint m, bool isOutputImage) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if (x < i0_dims.x && y < i0_dims.y) {
+        i0_buf += i0_offset + z * i0_stride.w + y * i0_stride.y + x * i0_stride.x;
+        uint cmax = 0;
+        float fmax = *(float *)i0_buf;
+        for (uint c = 1; c < i0_dims.z; c++) {
+            i0_buf += i0_stride.z;
+            float f = *(float *)i0_buf;
+            cmax = (f > fmax) ? c : cmax;
+            fmax = (f > fmax) ? f : fmax;
+        }
+        if (isOutputImage) {
+            o0_buf += o0_offset + (z * i0_dims.y + y) * o0_image_stride + x * m;
+        }
+        else {
+            o0_buf += o0_offset + z * o0_stride.w + y * o0_stride.y + x * o0_stride.x;
+        }
+        *(T *)o0_buf = (T)cmax;
+    }
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Argmax_topk1_m4_u8_layer(uchar * i0_buf, uint i0_offset, uint4 i0_stride, uint4 i0_dims, uchar *o0_buf, uint o0_offset, uint4 o0_stride,
+    uint o0_image_stride, uint m, bool isOutputImage) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x ) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if (x < i0_dims.x && y < i0_dims.y) {
+        i0_buf += i0_offset + z * i0_stride.w + y * i0_stride.y + x * i0_stride.x;
+        uint4 cmax = (uint4)0;
+        float4 fmax = *(float4 *)i0_buf;
+        for (uint c = 1; c < i0_dims.z; c++) {
+            i0_buf += i0_stride.z;
+            float4 f = *(float4 *)i0_buf;
+            cmax.x = (f.x > fmax.x) ? c : cmax.x;
+            fmax.x = (f.x > fmax.x) ? f.x : fmax.x;
+            cmax.y = (f.y > fmax.y) ? c : cmax.y;
+            fmax.y = (f.y > fmax.y) ? f.y : fmax.y;
+            cmax.z = (f.z > fmax.z) ? c : cmax.z;
+            fmax.z = (f.z > fmax.z) ? f.z : fmax.z;
+            cmax.w = (f.w > fmax.w) ? c : cmax.w;
+            fmax.w = (f.w > fmax.w) ? f.w : fmax.w;
+        }
+        if (isOutputImage) {
+            o0_buf += o0_offset + (z * i0_dims.y + y) * o0_image_stride + x * m;
+        }
+        else {
+            o0_buf += o0_offset + z * o0_stride.w + y * o0_stride.y + x * o0_stride.x;
+        }
+        uint imax = cmax.x + (cmax.y << 8) + (cmax.z << 16) + (cmax.w << 24);
+        *(uint *)o0_buf = imax;
+    }
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Argmax_topk1_m4_u16_i64_layer(uchar * i0_buf, uint i0_offset, uint4 i0_stride, uint4 i0_dims, uchar *o0_buf, uint o0_offset, uint4 o0_stride,
+    uint factor, uint o0_image_stride, uint m, bool isOutputImage) {
+
+   uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+   uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+   uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if (x < i0_dims.x && y < i0_dims.y) {
+        i0_buf += i0_offset + z * i0_stride.w + y * i0_stride.y + x * i0_stride.x;
+        uint4 cmax = (uint4)0;
+        float4 fmax = *(float4 *)i0_buf;
+        for (uint c = 1; c < i0_dims.z; c++) {
+            i0_buf += i0_stride.z;
+            float4 f = *(float4 *)i0_buf;
+            cmax.x = (f.x > fmax.x) ? c : cmax.x;
+            fmax.x = (f.x > fmax.x) ? f.x : fmax.x;
+            cmax.y = (f.y > fmax.y) ? c : cmax.y;
+            fmax.y = (f.y > fmax.y) ? f.y : fmax.y;
+            cmax.z = (f.z > fmax.z) ? c : cmax.z;
+            fmax.z = (f.z > fmax.z) ? f.z : fmax.z;
+            cmax.w = (f.w > fmax.w) ? c : cmax.w;
+            fmax.w = (f.w > fmax.w) ? f.w : fmax.w;
+        }
+
+        if (isOutputImage) {
+            o0_buf += o0_offset + (z * i0_dims.y + y) * o0_image_stride + x * m;
+        }
+        else {
+            o0_buf += o0_offset + z * o0_stride.w + y * o0_stride.y + x * o0_stride.x;
+        }
+
+        uint2 imax;
+        imax.x = cmax.x + (cmax.y << factor);
+        imax.y = cmax.z + (cmax.w << factor);
+        *(uint2 *)o0_buf = imax;
+    }
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Argmax_topk2_layer(uchar * i0_buf, uint i0_offset, uint4 i0_stride, uint4 i0_dims, uchar *o0_buf, uint o0_offset, uint4 o0_stride,
+    uint o0_image_stride, uint m, bool isOutputImage) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if (x < i0_dims.x && y < i0_dims.y) {
+        i0_buf += i0_offset + z * i0_stride.w + y * i0_stride.y + x * i0_stride.x;
+        uint cmax = 0;
+        uint cmax1;
+        float f, fmax, fmax1;
+        fmax = *(float *)i0_buf;
+        i0_buf += i0_stride.z; f = *(float *)i0_buf;
+        cmax1 = (f > fmax) ? 0 : 1;
+        cmax = (f > fmax) ? 1 : 0;
+        fmax1 = (f > fmax) ? fmax : f;
+        fmax = (f > fmax) ? f : fmax;
+        for (uint c = 2; c < i0_dims.z; c++) {
+            i0_buf += i0_stride.z; f = *(float *)i0_buf;
+            cmax1 = (f > fmax) ? cmax : ((f > fmax1) ? c : cmax1);
+            fmax1 = (f > fmax) ? fmax : ((f > fmax1) ? f : fmax1);
+            cmax  = (f > fmax) ? c : cmax;
+            fmax  = (f > fmax) ? f : fmax;
+        }
+
+        if (isOutputImage) {
+            o0_buf += o0_offset + (z * i0_dims.y + y) * o0_image_stride + x * m;
+        }
+        else {
+            o0_buf += o0_offset + z * o0_stride.w + y * o0_stride.y + x * o0_stride.x;
+        }
+
+        *(T *)o0_buf = (T)cmax;
+        *(T *)&o0_buf[o0_stride.z] = (T)cmax1;
+    }
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Argmax_topk2_m4_u8_layer(uchar * i0_buf, uint i0_offset, uint4 i0_stride, uint4 i0_dims, uchar *o0_buf, uint o0_offset, uint4 o0_stride,
+    uint o0_image_stride, uint m, bool isOutputImage) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if (x < i0_dims.x && y < i0_dims.y) {
+        i0_buf += i0_offset + z * i0_stride.w + y * i0_stride.y + x * i0_stride.x;
+        uint4 cmax = (uint4)0;
+        uint4 cmax1;
+        float4 f, fmax, fmax1;
+        fmax = *(float4 *)i0_buf;
+        i0_buf += i0_stride.z; f = *(float4 *)i0_buf;
+        cmax1.x = (f.x > fmax.x) ? 0 : 1;
+        cmax.x = (f.x > fmax.x) ? 1 : 0;
+        fmax1.x = (f.x > fmax.x) ? fmax.x : f.x;
+        fmax.x = (f.x > fmax.x) ? f.x : fmax.x;
+        cmax1.y = (f.y > fmax.y) ? 0 : 1;
+        cmax.y = (f.y > fmax.y) ? 1 : 0;
+        fmax1.y = (f.y > fmax.y) ? fmax.y : f.y;
+        fmax.y = (f.y > fmax.y) ? f.y : fmax.y;
+        cmax1.z = (f.z > fmax.z) ? 0 : 1;
+        cmax.z = (f.z > fmax.z) ? 1 : 0;
+        fmax1.z = (f.z > fmax.z) ? fmax.z : f.z;
+        fmax.z = (f.z > fmax.z) ? f.z : fmax.z;
+        cmax1.w = (f.w > fmax.w) ? 0 : 1;
+        cmax.w = (f.w > fmax.w) ? 1 : 0;
+        fmax1.w = (f.w > fmax.w) ? fmax.w : f.w;
+        fmax.w = (f.w > fmax.w) ? f.w : fmax.w;
+        for (uint c = 2; c < i0_dims.z; c++) {
+            i0_buf += i0_stride.z; f = *(float4 *)i0_buf;
+            cmax1.x = (f.x > fmax.x) ? cmax.x : ((f.x > fmax1.x) ? c : cmax1.x);
+            fmax1.x = (f.x > fmax.x) ? fmax.x : ((f.x > fmax1.x) ? f.x : fmax1.x);
+            cmax.x  = (f.x > fmax.x) ? c    : cmax.x;
+            fmax.x  = (f.x > fmax.x) ? f.x : fmax.x;
+            cmax1.y = (f.y > fmax.y) ? cmax.y : ((f.y > fmax1.y) ? c : cmax1.y);
+            fmax1.y = (f.y > fmax.y) ? fmax.y : ((f.y > fmax1.y) ? f.y : fmax1.y);
+            cmax.y  = (f.y > fmax.y) ? c : cmax.y;
+            fmax.y  = (f.y > fmax.y) ? f.y : fmax.y;
+            cmax1.z = (f.z > fmax.z) ? cmax.z : ((f.z > fmax1.z) ? c : cmax1.z);
+            fmax1.z = (f.z > fmax.z) ? fmax.z : ((f.z > fmax1.z) ? f.z : fmax1.z);
+            cmax.z  = (f.z > fmax.z) ? c : cmax.z;
+            fmax.z  = (f.z > fmax.z) ? f.z : fmax.z;
+            cmax1.w = (f.w > fmax.w) ? cmax.w : ((f.w > fmax1.w) ? c : cmax1.w);
+            fmax1.w = (f.w > fmax.w) ? fmax.w : ((f.w > fmax1.w) ? f.w : fmax1.w);
+            cmax.w  = (f.w > fmax.w) ? c : cmax.w;
+            fmax.w  = (f.w > fmax.w) ? f.w : fmax.w;
+        }
+
+        if (isOutputImage) {
+            o0_buf += o0_offset + (z * i0_dims.y + y) * o0_image_stride + x * m;
+        }
+        else {
+            o0_buf += o0_offset + z * o0_stride.w + y * o0_stride.y + x * o0_stride.x;
+        }
+
+        uint imax = cmax.x + (cmax.y << 8) + (cmax.z << 16) + (cmax.w << 24);
+        *(uint *)o0_buf = imax;
+        uint imax1 = cmax1.x + (cmax1.y << 8) + (cmax1.z << 16) + (cmax1.w << 24);
+        *(uint *)&o0_buf[o0_stride.z] = imax1;
+    }
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Argmax_topk2_m4_u16_i64_layer(uchar * i0_buf, uint i0_offset, uint4 i0_stride, uint4 i0_dims, uchar *o0_buf, uint o0_offset, uint4 o0_stride, uint factor,
+    uint o0_image_stride, uint m, bool isOutputImage) {
+
+    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 4;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    if (x < i0_dims.x && y < i0_dims.y) {
+        i0_buf += i0_offset + z * i0_stride.w + y * i0_stride.y + x * i0_stride.x;
+        uint4 cmax = (uint4)0;
+        uint4 cmax1;
+        float4 f, fmax, fmax1;
+        fmax = *(float4 *)i0_buf;
+        i0_buf += i0_stride.z; f = *(float4 *)i0_buf;
+        cmax1.x = (f.x > fmax.x) ? 0 : 1;
+        cmax.x = (f.x > fmax.x) ? 1 : 0;
+        fmax1.x = (f.x > fmax.x) ? fmax.x : f.x;
+        fmax.x = (f.x > fmax.x) ? f.x : fmax.x;
+        cmax1.y = (f.y > fmax.y) ? 0 : 1;
+        cmax.y = (f.y > fmax.y) ? 1 : 0;
+        fmax1.y = (f.y > fmax.y) ? fmax.y : f.y;
+        fmax.y = (f.y > fmax.y) ? f.y : fmax.y;
+        cmax1.z = (f.z > fmax.z) ? 0 : 1;
+        cmax.z = (f.z > fmax.z) ? 1 : 0;
+        fmax1.z = (f.z > fmax.z) ? fmax.z : f.z;
+        fmax.z = (f.z > fmax.z) ? f.z : fmax.z;
+        cmax1.w = (f.w > fmax.w) ? 0 : 1;
+        cmax.w = (f.w > fmax.w) ? 1 : 0;
+        fmax1.w = (f.w > fmax.w) ? fmax.w : f.w;
+        fmax.w = (f.w > fmax.w) ? f.w : fmax.w;
+        for (uint c = 2; c < i0_dims.z; c++) {
+            i0_buf += i0_stride.z; f = *(float4 *)i0_buf;
+            cmax1.x = (f.x > fmax.x) ? cmax.x : ((f.x > fmax1.x) ? c : cmax1.x);
+            fmax1.x = (f.x > fmax.x) ? fmax.x : ((f.x > fmax1.x) ? f.x : fmax1.x);
+            cmax.x  = (f.x > fmax.x) ? c    : cmax.x;
+            fmax.x  = (f.x > fmax.x) ? f.x : fmax.x;
+            cmax1.y = (f.y > fmax.y) ? cmax.y : ((f.y > fmax1.y) ? c : cmax1.y);
+            fmax1.y = (f.y > fmax.y) ? fmax.y : ((f.y > fmax1.y) ? f.y : fmax1.y);
+            cmax.y  = (f.y > fmax.y) ? c : cmax.y;
+            fmax.y  = (f.y > fmax.y) ? f.y : fmax.y;
+            cmax1.z = (f.z > fmax.z) ? cmax.z : ((f.z > fmax1.z) ? c : cmax1.z);
+            fmax1.z = (f.z > fmax.z) ? fmax.z : ((f.z > fmax1.z) ? f.z : fmax1.z);
+            cmax.z  = (f.z > fmax.z) ? c : cmax.z;
+            fmax.z  = (f.z > fmax.z) ? f.z : fmax.z;
+            cmax1.w = (f.w > fmax.w) ? cmax.w : ((f.w > fmax1.w) ? c : cmax1.w);
+            fmax1.w = (f.w > fmax.w) ? fmax.w : ((f.w > fmax1.w) ? f.w : fmax1.w);
+            cmax.w  = (f.w > fmax.w) ? c : cmax.w;
+            fmax.w  = (f.w > fmax.w) ? f.w : fmax.w;
+        }
+
+        if (isOutputImage) {
+            o0_buf += o0_offset + (z * i0_dims.y + y) * o0_image_stride + x * m;
+        }
+        else {
+            o0_buf += o0_offset + z * o0_stride.w + y * o0_stride.y + x * o0_stride.x;
+        }
+
+        uint2 imax;
+        imax.x = cmax.x + (cmax.y << factor);
+        imax.y = cmax.z + (cmax.w << factor);
+        *(uint2 *)o0_buf = imax;
+        uint2 imax1;
+        imax1.x = cmax1.x + (cmax1.y << factor);
+        imax1.y = cmax1.z + (cmax1.w << factor);
+        *(uint2 *)&o0_buf[o0_stride.z] = imax1;
+    }
+}
+
+int HipExec_Argmax_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, uchar *i0_buf, uint i0_offset, uint4 i0_stride, uint4 i0_dims, uchar *o0_buf,
+    uint o0_offset, uint4 o0_stride, uint o0_image_stride, vx_enum output_data_type, uint top_k, vx_enum output_obj_type) {
+
+    bool input_width_multiple_of_4 = (i0_dims.x & 3) ? false : true;
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z));
+
+    if (output_data_type == VX_TYPE_UINT8) {
+        if (output_obj_type == VX_TYPE_IMAGE) {
+            if(input_width_multiple_of_4) {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_m4_u8_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, o0_image_stride, 1, 1);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_m4_u8_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, o0_image_stride, 1, 1);
+                }
+            } else {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_layer<uchar>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, o0_image_stride, 1, 1);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_layer<uchar>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, o0_image_stride, 1, 1);
+                }
+            }
+        } else {
+            if(input_width_multiple_of_4) {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_m4_u8_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 0, 0, 0);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_m4_u8_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 0, 0, 0);
+                }
+            } else {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_layer<uchar>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 0, 0, 0);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_layer<uchar>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 0, 0, 0);
+                }
+            }
+        }
+    } else if (output_data_type == VX_TYPE_UINT16) {
+        if (output_obj_type == VX_TYPE_IMAGE) {
+            if(input_width_multiple_of_4) {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_m4_u16_i64_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 16, o0_image_stride, 2, 1);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_m4_u16_i64_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 16, o0_image_stride, 2, 1);
+                }
+            } else {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_layer<short>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, o0_image_stride, 2, 1);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_layer<short>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, o0_image_stride, 2, 1);
+                }
+            }
+        } else {
+            if(input_width_multiple_of_4) {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_m4_u16_i64_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 16, 0, 0, 0);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_m4_u16_i64_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 16, 0, 0, 0);
+                }
+            } else {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_layer<short>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 0, 0, 0);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_layer<short>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 0, 0, 0);
+                }
+            }
+        }
+    } else if (output_data_type == VX_TYPE_INT64) {
+        if (output_obj_type == VX_TYPE_IMAGE) {
+            if(input_width_multiple_of_4) {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_m4_u16_i64_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 64, o0_image_stride, 2, 1);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_m4_u16_i64_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 64, o0_image_stride, 2, 1);
+                }
+            } else {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_layer<short>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, o0_image_stride, 2, 1);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_layer<short>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, o0_image_stride, 2, 1);
+                }
+            }
+        } else {
+            if(input_width_multiple_of_4) {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_m4_u16_i64_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 64, 0, 0, 0);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_m4_u16_i64_layer, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 64, 0, 0, 0);
+                }
+            } else {
+                if(top_k == 2) {
+                    hipLaunchKernelGGL(Hip_Argmax_topk2_layer<short>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 0, 0, 0);
+                } else {
+                    hipLaunchKernelGGL(Hip_Argmax_topk1_layer<short>, gridDim, localThreads, 0, stream, i0_buf, i0_offset, i0_stride, i0_dims,
+                        o0_buf, o0_offset, o0_stride, 0, 0, 0);
+                }
+            }
+        }
+    } else {
+        return VX_ERROR_NOT_SUPPORTED;
+    }
+
+    return VX_SUCCESS;
+
+    }

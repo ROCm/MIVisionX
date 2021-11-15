@@ -73,7 +73,7 @@ The following is a list of OpenCV functions that have been included in the vx_op
 * OpenCV [3.4](https://github.com/opencv/opencv/releases/tag/3.4.0) `with`/`without` **contrib**
     - OpenCV_DIR environment variable should point to OpenCV/build folder
 
-### Build using `Visual Studio 2017` on 64-bit Windows 10
+### Build using `Visual Studio 2019` on 64-bit Windows 10
 
 * Use amd_openvx_extensions/amd_opencv/amd_opencv.sln to build for x64 platform
 

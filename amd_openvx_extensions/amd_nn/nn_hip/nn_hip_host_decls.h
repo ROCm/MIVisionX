@@ -55,4 +55,12 @@ int HipExec_tensor_log_layer(hipStream_t stream, dim3 globalThreads, dim3 localT
 int HipExec_tensor_exp_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, unsigned char *in, uint in_offset,
     uint4 in_stride, unsigned char *out, uint out_offset, uint4 out_stride);
 
+int HipExec_Prior_Box_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, uint imgWidth, uint imgHeight, uint layerWidth,
+    uint layerHeight, float minSize, float maxSize, uint flip, uint clip, float offset, uint output_num, uint output_dims_ch2,
+    uint num_bytes_for_each_prior, unsigned char *out, uint out_offset, uint4 out_stride, unsigned char *aspect_ratio_buf,
+    uint aspect_ratio_offset, uint aspect_ratio_num, unsigned char *variance_buf, uint variance_offset);
+
+int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, unsigned char *out, uint out_offset, size_t output_dim3,
+    unsigned char *in_mem[], size_t *in_offset, size_t *ip_size_per_batch, int axis, size_t work_items, int num_inputs, bool batchsz1, vx_enum type);
+
 #endif //NN_HIP_HOST_DECLS_H

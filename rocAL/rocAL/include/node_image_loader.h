@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include "image_loader_sharded.h"
 #include "graph.h"
 
-class ImageLoaderNode: public Node
+class ImageLoaderNode : public Node
 {
 public:
     /// \param device_resources shard count from user
@@ -44,13 +44,13 @@ public:
     /// \param load_batch_count Defines the quantum count of the images to be loaded. It's usually equal to the user's batch size.
     /// The loader will repeat images if necessary to be able to have images in multiples of the load_batch_count,
     /// for example if there are 10 images in the dataset and load_batch_count is 3, the loader repeats 2 images as if there are 12 images available.
-    void init(unsigned internal_shard_count, const std::string &source_path,const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-              DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::shared_ptr<MetaDataReader> meta_data_reader, bool decoder_keep_orig = false, const char* prefix="");
+    void init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type, DecoderType decoder_type, bool shuffle, bool loop,
+              size_t load_batch_count, RaliMemType mem_type, std::shared_ptr<MetaDataReader> meta_data_reader, bool decoder_keep_orig = false, const char *prefix = "", unsigned sequence_length = 0, unsigned step = 0, unsigned stride = 0);
 
     std::shared_ptr<LoaderModule> get_loader_module();
 protected:
-    void create_node() override {};
-    void update_node() override {};
+    void create_node() override{};
+    void update_node() override{};
 private:
     std::shared_ptr<ImageLoaderSharded> _loader_module = nullptr;
 };

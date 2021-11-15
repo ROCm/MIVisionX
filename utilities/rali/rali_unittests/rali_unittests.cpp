@@ -38,7 +38,7 @@ using namespace cv;
 
 //#define PARTIAL_DECODE
 // #define COCO_READER
-//#define COCO_READER_PARTIAL
+// #define COCO_READER_PARTIAL
 // #define TF_READER
 // #define TF_READER_DETECTION
 // #define CAFFE2_READER

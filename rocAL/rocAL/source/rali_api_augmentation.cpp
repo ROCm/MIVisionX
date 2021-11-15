@@ -61,10 +61,48 @@ THE SOFTWARE.
 #include "meta_node_rotate.h"
 #include "meta_node_ssd_random_crop.h"
 #include "meta_node_flip.h"
+#include "node_sequence_rearrange.h"
 
 #include "commons.h"
 #include "context.h"
 #include "rali_api.h"
+
+RaliImage  RALI_API_CALL
+raliSequenceRearrange(
+            RaliContext p_context,
+            RaliImage p_input,
+            unsigned int* new_order,
+            unsigned int  new_sequence_length,
+            unsigned int sequence_length,
+            bool is_output )
+{
+    Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+        if(sequence_length == 0)
+            THROW("sequence_length passed should be bigger than 0")
+        auto input = static_cast<Image*>(p_input);
+        auto info = ImageInfo(input->info().width(), input->info().height_single(),
+                              context->master_graph->internal_batch_size() * new_sequence_length,
+                              input->info().color_plane_count(),
+                              context->master_graph->mem_type(),
+                              input->info().color_format() );
+        output = context->master_graph->create_image(info, is_output);
+        std::shared_ptr<SequenceRearrangeNode> sequence_rearrange_node =  context->master_graph->add_node<SequenceRearrangeNode>({input}, {output});
+        sequence_rearrange_node->init(new_order, new_sequence_length, sequence_length, context->master_graph->internal_batch_size());
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
 
 RaliImage  RALI_API_CALL
 raliRotate(

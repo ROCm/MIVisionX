@@ -155,7 +155,6 @@ void RandomBBoxCropReader::read_all()
     size_t sample = 0;
     for (auto &elem : _meta_bbox_map_content)
     {
-
         std::string image_name = elem.first;
         BoundingBoxCords bb_coords = elem.second->get_bb_cords();
         bb_count = bb_coords.size();

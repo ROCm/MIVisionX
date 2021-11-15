@@ -25,6 +25,21 @@ THE SOFTWARE.
 #include "rali_api_types.h"
 
 /// Accepts U8 and RGB24 input.
+// Rearranges the order of the frames in the sequences with respect to new_order.
+// new_order can have values in the range [0, sequence_length).
+// Frames can be repeated or dropped in the new_order.
+/// \param context
+/// \param input
+/// \param new_order
+/// \param new_sequence_length
+/// \param sequence_length
+/// \param is_output
+/// \return
+extern "C"  RaliImage  RALI_API_CALL raliSequenceRearrange(RaliContext context, RaliImage input,
+                                                unsigned int* new_order, unsigned int  new_sequence_length,
+                                                unsigned int sequence_length, bool is_output );
+
+/// Accepts U8 and RGB24 input.
 /// \param context
 /// \param input
 /// \param dest_width

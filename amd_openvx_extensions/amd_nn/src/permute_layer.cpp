@@ -48,7 +48,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
-#ifdef ENABLE_OPENCL
+#if ENABLE_OPENCL
 static vx_status VX_CALLBACK opencl_codegen(
     vx_node node,                                  // [input] node
     const vx_reference parameters[],               // [input] parameters

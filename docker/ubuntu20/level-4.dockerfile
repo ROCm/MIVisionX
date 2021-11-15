@@ -9,7 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config g
 # install ROCm for mivisionx OpenCL dependency - Level 2
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libnuma-dev wget sudo gnupg2 kmod python3-dev &&  \
         wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add - && \
-        echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list && \
+        echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list && \
         sudo apt-get update -y && \
         sudo apt-get -y install rocm-dev
 # install OpenCV & FFMPEG - Level 3
@@ -38,9 +38,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install sqlite3 libsqlite3-dev lib
         cmake ../ && make -j8 && sudo make install && cd ../../ && \
         wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/1.1.5.zip && unzip 1.1.5.zip && \
         cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake ../ && make -j8 && sudo make install && cd ../../ && \
-        wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.11.0.zip && unzip 2.11.0.zip && \
-        cd MIOpen-2.11.0 && mkdir build && cd build && \
-        #cd MIOpen-2.11.0 && sudo cmake -P install_deps.cmake --minimum && mkdir build && cd build && \ - deps install turned off
+        wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.14.0.zip && unzip 2.14.0.zip && \
+        cd MIOpen-2.14.0 && mkdir build && cd build && \
+        #cd MIOpen-2.14.0 && sudo cmake -P install_deps.cmake --minimum && mkdir build && cd build && \ - deps install turned off
         cmake -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && make -j8 && make MIOpenDriver && sudo make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd

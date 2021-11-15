@@ -25,7 +25,7 @@ _shuffle_time("shuffle_time", DBG_TIMING)
     _file_count_all_shards = 0;  
 }
 
-unsigned COCOFileSourceReader::count()
+unsigned COCOFileSourceReader::count_items()
 {
     if (_loop)
         return _file_names.size();
@@ -118,7 +118,7 @@ size_t COCOFileSourceReader::open()
     return _current_file_size;
 }
 
-size_t COCOFileSourceReader::read(unsigned char *buf, size_t read_size)
+size_t COCOFileSourceReader::read_data(unsigned char *buf, size_t read_size)
 {
 #if USE_STDIO_FILE
     if (!_current_fPtr)
@@ -256,7 +256,7 @@ Reader::Status COCOFileSourceReader::open_folder()
             _file_count_all_shards++;
             incremenet_file_id();
         }
-    } 
+    }
     if (_file_names.empty())
         WRN("FileReader ShardID [" + TOSTR(_shard_id) + "] Did not load any file from " + _folder_path)
 

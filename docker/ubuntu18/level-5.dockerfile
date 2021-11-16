@@ -38,9 +38,9 @@ RUN apt-get -y install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python-dev p
         cmake ../ && make -j8 && sudo make install && cd ../../ && \
         wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/1.1.5.zip && unzip 1.1.5.zip && \
         cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake ../ && make -j8 && sudo make install && cd ../../ && \
-        wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.11.0.zip && unzip 2.11.0.zip && \
-        cd MIOpen-2.11.0 && mkdir build && cd build && \
-        #cd MIOpen-2.11.0 && sudo cmake -P install_deps.cmake --minimum && mkdir build && cd build && \ - deps install turned off
+        wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.14.0.zip && unzip 2.14.0.zip && \
+        cd MIOpen-2.14.0 && mkdir build && cd build && \
+        #cd MIOpen-2.14.0 && sudo cmake -P install_deps.cmake --minimum && mkdir build && cd build && \ - deps install turned off
         cmake -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && make -j8 && make MIOpenDriver && sudo make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd

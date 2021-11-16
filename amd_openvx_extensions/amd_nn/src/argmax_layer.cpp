@@ -79,6 +79,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
+#if ENABLE_OPENCL
 //! \brief The OpenCL code generator callback.
 static vx_status VX_CALLBACK opencl_codegen(
     vx_node node,                                  // [input] node
@@ -351,11 +352,83 @@ static vx_status VX_CALLBACK opencl_codegen(
 #endif
     return VX_SUCCESS;
 }
+#endif
 
 //! \brief The kernel execution.
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+#if ENABLE_HIP
+    vx_size num_dims, top_k = 1;
+    vx_enum output_obj_type, output_data_type = VX_TYPE_UINT16;
+    vx_size temp[4] = {1, 1, 1, 1};
+    uint4 input_dims = (uint4)1, input_stride = (uint4)1, output_stride = (uint4)1;
+    uint output_image_stride;
+    vx_size in_offset, output_offset;
+    unsigned char *input_mem = NULL;
+    unsigned char *output_mem = NULL;
+    hipStream_t hip_stream;
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &temp[4 - num_dims], sizeof(temp[0]) * num_dims));
+    input_dims.x = temp[0];
+    input_dims.y = temp[1];
+    input_dims.z = temp[2];
+    input_dims.w = temp[3];
+    temp[0] = temp[1] = temp[2] = temp[3] = 1;
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &in_offset, sizeof(in_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    input_stride.x = temp[0];
+    input_stride.y = temp[1];
+    input_stride.z = temp[2];
+    input_stride.w = temp[3];
+    temp[0] = temp[1] = temp[2] = temp[3] = 1;
+
+    ERROR_CHECK_STATUS(vxQueryReference(parameters[1], VX_REFERENCE_TYPE, &output_obj_type, sizeof(output_obj_type)));
+    if (output_obj_type == VX_TYPE_IMAGE) {
+        vx_df_image format;
+        ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &output_mem, sizeof(output_mem)));
+        ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET, &output_offset, sizeof(output_offset)));
+        ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE, &output_image_stride, sizeof(output_image_stride)));
+        ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_FORMAT, &format, sizeof(format)));
+        if(format == VX_DF_IMAGE_U8)
+            output_data_type = VX_TYPE_UINT8;
+        else if(format == VX_DF_IMAGE_U16)
+            output_data_type = VX_TYPE_UINT16;
+    } else {
+        vx_size num_dims_output, output_dims[4] = { 1, 1, 1, 1 };
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims_output, sizeof(num_dims_output)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, &output_dims[4-num_dims_output], sizeof(output_dims[0])*num_dims_output));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &output_data_type, sizeof(output_data_type)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_GPU, &output_offset, sizeof(output_offset)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+        output_stride.x = temp[0];
+        output_stride.y = temp[1];
+        output_stride.z = temp[2];
+        output_stride.w = temp[3];
+        top_k = output_dims[2];
+    }
+
+    bool input_width_multiple_of_4 = (input_dims.x & 3) ? false : true;
+    dim3 localThreads = dim3(8, 8, 1);
+    dim3 globalThreads = dim3(((input_width_multiple_of_4 ? ((input_dims.x + 3) / 4) : input_dims.x) + localThreads.x - 1) & ~(localThreads.x - 1),
+                               (input_dims.y + localThreads.y - 1) & ~(localThreads.y - 1),
+                                input_dims.w);
+
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+
+    if (HipExec_Argmax_layer(hip_stream, globalThreads, localThreads, input_mem, in_offset, input_stride, input_dims, output_mem, output_offset,
+        output_stride, output_image_stride, output_data_type, top_k, output_obj_type)) {
+        return VX_FAILURE;
+    }
+
+    return VX_SUCCESS;
+
+#elif ENABLE_OPENCL
     return VX_ERROR_NOT_IMPLEMENTED;
+#endif
 }
 
 //! \brief The kernel publisher.
@@ -365,9 +438,12 @@ vx_status publishArgmaxLayer(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
-    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
+
+#if ENABLE_OPENCL
+    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK, &opencl_codegen_callback_f, sizeof(opencl_codegen_callback_f)));
+#endif
 
     // set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));

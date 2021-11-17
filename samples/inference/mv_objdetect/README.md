@@ -91,11 +91,11 @@ Usage: mvobjdetect <options>
 	<output-data-file/- >: for video all frames will be output to single file OR '-'for no output	[required]
 	--install_folder <install_folder> : the location for compiled module                         	[required]
 	--bb <channels, threshold_c threshold_nms> bounding box detection parameters                 	[required]
-	--frames <#num/eof> : num of frames to process inference         	[optional: default till eof]
+	--frames <#num/eof/loop> : num of frames to process inference         	[optional: default till eof, loop: loop the video]
 	--backend <backend>: is the name of the backend for compilation  	[optional: default OpenVX_Rocm_OpenCL]
 	--argmax <topK> : give argmax output in vec<label,prob>          	[optional: default no argmax]
 	--t <num of interations> to run for performance                  	[optional: default 1]
-	--hwdec :use hwaccel for decoding                                	[optional: default cpu decoding]
+	--hwdec <1/0>:use hwaccel for decoding                            [optional: default cpu decoding, 1:hwdec 0:cpu dec]
 	--label <labels.txt>                                             	[optional: default use yolo_v2 20 classes]
 	--v :if specified visualize the result on the input image        	[optional: default no visualization]
 

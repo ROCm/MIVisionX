@@ -456,15 +456,15 @@ MasterGraph::reset()
         _output_thread.join();
     _ring_buffer.reset();
     // clearing meta ring buffer
+#ifdef RALI_VIDEO
     if(_is_video_loader)
     {
-#ifdef RALI_VIDEO
         _video_loader_module->reset();
         _sequence_start_framenum_vec.clear();
         _sequence_frame_timestamps_vec.clear();
-#endif
     }
     else
+#endif
     {
         // if random_bbox meta reader is used: read again to get different crops
         if (_randombboxcrop_meta_data_reader != nullptr)
@@ -496,14 +496,14 @@ Timing
 MasterGraph::timing()
 {
     Timing t;
+#ifdef RALI_VIDEO
     if(_is_video_loader)
     {
-#ifdef RALI_VIDEO
         t = _video_loader_module->timing();
         t.video_process_time += _process_time.get_timing();
-#endif
     }
     else
+#endif
     {
         t  = _loader_module->timing();
         t.image_process_time += _process_time.get_timing();
@@ -1086,14 +1086,14 @@ void MasterGraph::output_routine_video()
 void MasterGraph::start_processing()
 {
     _processing = true;
+#ifdef RALI_VIDEO
     if(_is_video_loader)
     {
-#ifdef RALI_VIDEO
         _remaining_count = _video_loader_module->remaining_count();
         _output_thread = std::thread(&MasterGraph::output_routine_video, this);
-#endif
     }
     else
+#endif
     {
         _remaining_count = _loader_module->remaining_count();
         _output_thread = std::thread(&MasterGraph::output_routine, this);

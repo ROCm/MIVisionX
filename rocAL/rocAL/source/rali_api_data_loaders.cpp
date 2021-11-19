@@ -1577,9 +1577,9 @@ raliVideoFileSource(
         VideoDecoderType decoder_type;
         find_video_properties(video_prop, source_path, file_list_frame_num);
         if(rali_decode_device == RaliDecodeDevice::RALI_HW_DECODE)
-            decoder_type = VideoDecoderType::HARDWARE_VIDEO_DECODE;
+            decoder_type = VideoDecoderType::FFMPEG_HARDWARE_DECODE;
         else
-            decoder_type = VideoDecoderType::FFMPEG_VIDEO;
+            decoder_type = VideoDecoderType::FFMPEG_SOFTWARE_DECODE;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1667,9 +1667,9 @@ raliVideoFileSourceSingleShard(
         VideoDecoderType decoder_type;
         find_video_properties(video_prop, source_path, file_list_frame_num);
         if(rali_decode_device == RaliDecodeDevice::RALI_HW_DECODE)
-            decoder_type = VideoDecoderType::HARDWARE_VIDEO_DECODE;
+            decoder_type = VideoDecoderType::FFMPEG_HARDWARE_DECODE;
         else
-            decoder_type = VideoDecoderType::FFMPEG_VIDEO;
+            decoder_type = VideoDecoderType::FFMPEG_SOFTWARE_DECODE;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1756,9 +1756,9 @@ raliVideoFileResize(
         VideoDecoderType decoder_type;
         find_video_properties(video_prop, source_path, file_list_frame_num);
         if(rali_decode_device == RaliDecodeDevice::RALI_HW_DECODE)
-            decoder_type = VideoDecoderType::HARDWARE_VIDEO_DECODE;
+            decoder_type = VideoDecoderType::FFMPEG_HARDWARE_DECODE;
         else
-            decoder_type = VideoDecoderType::FFMPEG_VIDEO;
+            decoder_type = VideoDecoderType::FFMPEG_SOFTWARE_DECODE;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
@@ -1874,9 +1874,9 @@ raliVideoFileResizeSingleShard(
         VideoDecoderType decoder_type;
         find_video_properties(video_prop, source_path, file_list_frame_num);
         if(rali_decode_device == RaliDecodeDevice::RALI_HW_DECODE)
-            decoder_type = VideoDecoderType::HARDWARE_VIDEO_DECODE;
+            decoder_type = VideoDecoderType::FFMPEG_HARDWARE_DECODE;
         else
-            decoder_type = VideoDecoderType::FFMPEG_VIDEO;
+            decoder_type = VideoDecoderType::FFMPEG_SOFTWARE_DECODE;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,

@@ -46,8 +46,8 @@ extern "C"
 
 enum class VideoDecoderType
 {
-    FFMPEG_VIDEO = 0, //!< Can decode video stream
-    HARDWARE_VIDEO_DECODE = 1,
+    FFMPEG_SOFTWARE_DECODE = 0, //!< Can decode video stream
+    FFMPEG_HARDWARE_DECODE = 1,
 };
 
 class VideoDecoderConfig
@@ -56,7 +56,7 @@ public:
     VideoDecoderConfig() {}
     explicit VideoDecoderConfig(VideoDecoderType type) : _type(type) {}
     virtual VideoDecoderType type() { return _type; };
-    VideoDecoderType _type = VideoDecoderType::FFMPEG_VIDEO;
+    VideoDecoderType _type = VideoDecoderType::FFMPEG_SOFTWARE_DECODE;
 };
 
 #ifdef RALI_VIDEO

@@ -30,9 +30,9 @@ std::shared_ptr<VideoDecoder> create_video_decoder(VideoDecoderConfig config)
 {
     switch (config.type())
     {
-        case VideoDecoderType::FFMPEG_VIDEO:
+        case VideoDecoderType::FFMPEG_SOFTWARE_DECODE:
             return std::make_shared<FFmpegVideoDecoder>();
-        case VideoDecoderType::HARDWARE_VIDEO_DECODE:
+        case VideoDecoderType::FFMPEG_HARDWARE_DECODE:
             return std::make_shared<HardWareVideoDecoder>();
         default:
             THROW("Unsupported decoder type " + TOSTR(config.type()));

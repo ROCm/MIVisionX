@@ -146,7 +146,7 @@ private:
     const size_t _cpu_threads;//!< Not in use
     vx_context _context;
     const RaliMemType _mem_type;//!< Is set according to the _affinity, if GPU, is set to CL, otherwise host
-    TimingDBG _process_time;
+    TimingDBG _process_time, _bencode_time;
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
     std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;

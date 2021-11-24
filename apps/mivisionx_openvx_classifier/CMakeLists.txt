@@ -35,10 +35,10 @@ find_package(OpenCV REQUIRED)
 
 include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(/opt/rocm/mivisionx/include)
+include_directories(/opt/rocm/include)
 include_directories(include)
 
-link_directories(/opt/rocm/mivisionx/lib)
+link_directories(/opt/rocm/lib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
 

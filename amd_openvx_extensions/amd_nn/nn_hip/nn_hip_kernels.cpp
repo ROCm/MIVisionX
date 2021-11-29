@@ -38,20 +38,20 @@ Hip_Gather_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* ind, uint in
 
    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-   uint c = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+   uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
 
    int indices = *(int*)&ind[ind_offset + y * ind_stride.x];
    T value;
    uint offset;
    if (axis == 0) {
-       value = *(T*)&in[in_offset + x * in_stride.x + indices * in_stride.y + c * in_stride.z];
-       offset = out_offset + x * out_stride.x + y * out_stride.y + c * out_stride.z;
+       value = *(T*)&in[in_offset + x * in_stride.x + indices * in_stride.y + z * in_stride.z];
+       offset = out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
    } else if (axis == 1) {
-       value = *(T*)&in[in_offset + indices * in_stride.x + c * in_stride.y];
-       offset = out_offset + y * out_stride.x + c * out_stride.y;
+       value = *(T*)&in[in_offset + indices * in_stride.x + z * in_stride.y];
+       offset = out_offset + y * out_stride.x + z * out_stride.y;
    } else if (axis == 2) {
-       value = *(T*)&in[in_offset + c * in_stride.x];
-       offset = out_offset + c * out_stride.x;
+       value = *(T*)&in[in_offset + z * in_stride.x];
+       offset = out_offset + z * out_stride.x;
    }
    out += offset;
    *(T *)&out[0] = value;
@@ -61,15 +61,15 @@ int HipExec_Gather_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
     uint in_offset, uint4 in_stride, uchar* ind, uint ind_offset, uint4 ind_stride, uchar* out, uint out_offset,
     uint4 out_stride, uint axis) {
 
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+
     if (type == VX_TYPE_FLOAT32) {
-        hipLaunchKernelGGL(Hip_Gather_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x),
-            ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
-            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+        hipLaunchKernelGGL(Hip_Gather_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             ind, ind_offset, ind_stride, out, out_offset, out_stride, axis);
     } else {
-        hipLaunchKernelGGL(Hip_Gather_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x),
-            ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
-            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+        hipLaunchKernelGGL(Hip_Gather_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             ind, ind_offset, ind_stride, out, out_offset, out_stride, axis);
     }
 
@@ -99,15 +99,15 @@ int HipExec_Tile_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads
     uint in_offset, uint4 in_stride, uint4 in_dims, uchar* rep, uint rep_offset, uint4 rep_stride, uchar* out,
     uint out_offset, uint4 out_stride) {
 
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+
     if (type == VX_TYPE_FLOAT32) {
-        hipLaunchKernelGGL(Hip_Tile_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x),
-            ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
-            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+        hipLaunchKernelGGL(Hip_Tile_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             in_dims, rep, rep_offset, rep_stride, out, out_offset, out_stride);
     } else {
-        hipLaunchKernelGGL(Hip_Tile_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x),
-            ceil((float)globalThreads.y/localThreads.y), ceil((float)globalThreads.z/localThreads.z)),
-            dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+        hipLaunchKernelGGL(Hip_Tile_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             in_dims, rep, rep_offset, rep_stride, out, out_offset, out_stride);
     }
 
@@ -227,41 +227,41 @@ int HipExec_Cast_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads
     dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
                         ceil((float)globalThreads.y/localThreads.y),
                         ceil((float)globalThreads.z/localThreads.z));
-    dim3 blockDim = dim3(localThreads.x, localThreads.y, localThreads.z);
+
     if(input_element_count_multiple_of_4) {
         if(input_type == VX_TYPE_FLOAT32) {
             if(output_type == VX_TYPE_INT32) {
-                hipLaunchKernelGGL(Hip_Cast_layer_int32_float_v, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_int32_float_v, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             } else if(output_type == VX_TYPE_INT64) {
-                hipLaunchKernelGGL(Hip_Cast_layer_int64_float_v, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_int64_float_v, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             } else if(output_type == VX_TYPE_FLOAT32) {
-                hipLaunchKernelGGL(Hip_Cast_layer_float_float_v, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_float_float_v, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             }
         } else if(input_type == VX_TYPE_INT32) {
             if(output_type == VX_TYPE_INT64) {
-                hipLaunchKernelGGL(Hip_Cast_layer_int64_int32_v, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_int64_int32_v, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             }
         } else if(input_type == VX_TYPE_INT64) {
             if(output_type == VX_TYPE_INT32) {
-                hipLaunchKernelGGL(Hip_Cast_layer_int32_int64_v, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_int32_int64_v, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             }
         }
     } else {
         if(input_type == VX_TYPE_FLOAT32) {
             if(output_type == VX_TYPE_INT32) {
-                hipLaunchKernelGGL(Hip_Cast_layer_int32_float, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_int32_float, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             } else if(output_type == VX_TYPE_INT64) {
-                hipLaunchKernelGGL(Hip_Cast_layer_int64_float, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_int64_float, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             } else if(output_type == VX_TYPE_FLOAT32) {
-                hipLaunchKernelGGL(Hip_Cast_layer_float_float, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_float_float, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             }
         } else if(input_type == VX_TYPE_INT32) {
             if(output_type == VX_TYPE_INT64) {
-                hipLaunchKernelGGL(Hip_Cast_layer_int64_int32, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_int64_int32, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             }
         } else if(input_type == VX_TYPE_INT64) {
             if(output_type == VX_TYPE_INT32) {
-                hipLaunchKernelGGL(Hip_Cast_layer_int32_int64, gridDim, blockDim, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
+                hipLaunchKernelGGL(Hip_Cast_layer_int32_int64, gridDim, localThreads, 0, stream, in, in_offset, in_stride, out, out_offset, out_stride);
             }
         }
     }
@@ -581,8 +581,11 @@ Hip_permute_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* order_buf, 
 int HipExec_permute_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, uchar* in, uint in_offset, uint4 in_stride, uchar* order_buf,
     uint order_offset, uint order_cap, uchar* out, uint out_offset, uint4 out_stride) {
 
-    hipLaunchKernelGGL(Hip_permute_layer, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+
+    hipLaunchKernelGGL(Hip_permute_layer, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
         order_buf, order_offset, order_cap, out, out_offset, out_stride);
 
     return VX_SUCCESS;
@@ -620,13 +623,15 @@ Hip_tensor_log_layer_half(uchar *in, uint in_offset, uint4 in_stride, uchar *out
 int HipExec_tensor_log_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar *in, uint in_offset, uint4 in_stride, uchar *out,
     uint out_offset, uint4 out_stride) {
 
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+
     if (type == VX_TYPE_FLOAT32) {
-        hipLaunchKernelGGL(Hip_tensor_log_layer, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-            ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+        hipLaunchKernelGGL(Hip_tensor_log_layer, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             out, out_offset, out_stride);
     } else {
-        hipLaunchKernelGGL(Hip_tensor_log_layer_half, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-            ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+        hipLaunchKernelGGL(Hip_tensor_log_layer_half, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             out, out_offset, out_stride);
     }
 
@@ -666,13 +671,15 @@ Hip_tensor_exp_layer_half(uchar *in, uint in_offset, uint4 in_stride, uchar *out
 int HipExec_tensor_exp_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar *in, uint in_offset, uint4 in_stride, uchar *out,
     uint out_offset, uint4 out_stride) {
 
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+
     if (type == VX_TYPE_FLOAT32) {
-        hipLaunchKernelGGL(Hip_tensor_exp_layer, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-            ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+        hipLaunchKernelGGL(Hip_tensor_exp_layer, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             out, out_offset, out_stride);
     } else {
-        hipLaunchKernelGGL(Hip_tensor_exp_layer_half, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-            ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, in, in_offset, in_stride,
+        hipLaunchKernelGGL(Hip_tensor_exp_layer_half, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             out, out_offset, out_stride);
     }
 
@@ -771,8 +778,11 @@ int HipExec_Prior_Box_layer(hipStream_t stream, dim3 globalThreads, dim3 localTh
     uint num_bytes_for_each_prior, uchar *out, uint out_offset, uint4 out_stride, uchar *aspect_ratio_buf, uint aspect_ratio_offset,
     uint aspect_ratio_num, uchar *variance_buf, uint variance_offset) {
 
-    hipLaunchKernelGGL(Hip_Prior_Box_layer, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, imgWidth, imgHeight,
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+
+    hipLaunchKernelGGL(Hip_Prior_Box_layer, gridDim, localThreads, 0, stream, imgWidth, imgHeight,
         layerWidth, layerHeight, minSize, maxSize, flip, clip, offset, output_num, output_dims_ch2 / 4, num_bytes_for_each_prior, out, out_offset,
         out_stride, aspect_ratio_buf, aspect_ratio_offset, aspect_ratio_num, variance_buf, variance_offset);
 
@@ -816,7 +826,7 @@ Hip_Concat3_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size
 
     vx_size ip_buffer_offset[3] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -847,8 +857,8 @@ Hip_Concat4_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size
 
     vx_size ip_buffer_offset[4] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -884,9 +894,9 @@ Hip_Concat5_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size
 
     vx_size ip_buffer_offset[5] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
-    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_buffer_offset[3] + ip_size_per_batch3;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -926,10 +936,10 @@ Hip_Concat6_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size
 
     vx_size ip_buffer_offset[6] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
-    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
-    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_buffer_offset[3] + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_buffer_offset[4] + ip_size_per_batch4;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -974,11 +984,11 @@ Hip_Concat7_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size
 
     vx_size ip_buffer_offset[7] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
-    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
-    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
-    ip_buffer_offset[6] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_buffer_offset[3] + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_buffer_offset[4] + ip_size_per_batch4;
+    ip_buffer_offset[6] += ip_buffer_offset[5] + ip_size_per_batch5;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -1028,12 +1038,12 @@ Hip_Concat8_layer(uchar *out, uint out_offset, uchar *in0, uint in0_offset, size
 
     vx_size ip_buffer_offset[8] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
-    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
-    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
-    ip_buffer_offset[6] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5;
-    ip_buffer_offset[7] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5 + ip_size_per_batch6;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_buffer_offset[3] + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_buffer_offset[4] + ip_size_per_batch4;
+    ip_buffer_offset[6] += ip_buffer_offset[5] + ip_size_per_batch5;
+    ip_buffer_offset[7] += ip_buffer_offset[6] + ip_size_per_batch6;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -1113,7 +1123,7 @@ Hip_Concat3_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *
 
     vx_size ip_buffer_offset[3] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -1147,8 +1157,8 @@ Hip_Concat4_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *
 
     vx_size ip_buffer_offset[4] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -1186,9 +1196,9 @@ Hip_Concat5_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *
 
     vx_size ip_buffer_offset[5] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
-    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_buffer_offset[3] + ip_size_per_batch3;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -1231,10 +1241,10 @@ Hip_Concat6_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *
 
     vx_size ip_buffer_offset[6] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
-    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
-    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_buffer_offset[3] + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_buffer_offset[4] + ip_size_per_batch4;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -1281,11 +1291,11 @@ Hip_Concat7_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *
 
     vx_size ip_buffer_offset[7] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
-    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
-    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
-    ip_buffer_offset[6] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_buffer_offset[3] + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_buffer_offset[4] + ip_size_per_batch4;
+    ip_buffer_offset[6] += ip_buffer_offset[5] + ip_size_per_batch5;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -1337,12 +1347,12 @@ Hip_Concat8_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *
 
     vx_size ip_buffer_offset[8] = {0};
     ip_buffer_offset[1] += ip_size_per_batch0;
-    ip_buffer_offset[2] += ip_size_per_batch0 + ip_size_per_batch1;
-    ip_buffer_offset[3] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2;
-    ip_buffer_offset[4] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3;
-    ip_buffer_offset[5] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4;
-    ip_buffer_offset[6] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5;
-    ip_buffer_offset[7] += ip_size_per_batch0 + ip_size_per_batch1 + ip_size_per_batch2 + ip_size_per_batch3 + ip_size_per_batch4 + ip_size_per_batch5 + ip_size_per_batch6;
+    ip_buffer_offset[2] += ip_buffer_offset[1] + ip_size_per_batch1;
+    ip_buffer_offset[3] += ip_buffer_offset[2] + ip_size_per_batch2;
+    ip_buffer_offset[4] += ip_buffer_offset[3] + ip_size_per_batch3;
+    ip_buffer_offset[5] += ip_buffer_offset[4] + ip_size_per_batch4;
+    ip_buffer_offset[6] += ip_buffer_offset[5] + ip_size_per_batch5;
+    ip_buffer_offset[7] += ip_buffer_offset[6] + ip_size_per_batch6;
 
     T *outn = (T*)out;
     T *in0n = (T*)in0;
@@ -1389,26 +1399,26 @@ Hip_Concat8_batch_layer(uchar *out, uint out_offset, size_t output_dim3, uchar *
 int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, uchar *out, uint out_offset, size_t output_dim3,
     uchar *in_mem[], size_t in_offset[], size_t ip_size_per_batch[], int axis, size_t work_items, int num_inputs, bool batchsz1, vx_enum type) {
 
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+
     switch (num_inputs) {
         case 2:
             if (batchsz1) {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat2_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat2_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat2_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat2_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], axis, work_items);
                 }
             } else {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat2_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat2_batch_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat2_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat2_batch_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], axis, work_items);
                 }
             }
@@ -1416,25 +1426,21 @@ int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
         case 3:
             if (batchsz1) {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat3_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat3_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat3_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat3_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], axis, work_items);
                 }
             } else {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat3_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat3_batch_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat3_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat3_batch_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], axis, work_items);
                 }
@@ -1443,25 +1449,21 @@ int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
         case 4:
             if (batchsz1) {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat4_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat4_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat4_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat4_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], axis, work_items);
                 }
             } else {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat4_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat4_batch_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat4_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat4_batch_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], axis, work_items);
                 }
@@ -1470,25 +1472,21 @@ int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
         case 5:
             if (batchsz1) {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat5_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat5_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat5_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat5_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], axis, work_items);
                 }
             } else {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat5_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat5_batch_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat5_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat5_batch_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], axis, work_items);
                 }
@@ -1497,28 +1495,24 @@ int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
         case 6:
             if (batchsz1) {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat6_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat6_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat6_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat6_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], axis, work_items);
                 }
             } else {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat6_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat6_batch_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat6_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat6_batch_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], axis, work_items);
@@ -1528,28 +1522,24 @@ int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
         case 7:
             if (batchsz1) {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat7_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat7_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat7_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat7_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], axis, work_items);
                 }
             } else {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat7_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat7_batch_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat7_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat7_batch_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], axis, work_items);
@@ -1559,28 +1549,24 @@ int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
         case 8:
             if (batchsz1) {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat8_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat8_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], in_mem[7], in_offset[7], ip_size_per_batch[7], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat8_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat8_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], in_mem[7], in_offset[7], ip_size_per_batch[7], axis, work_items);
                 }
             } else {
                 if (type == VX_TYPE_FLOAT32) {
-                    hipLaunchKernelGGL(Hip_Concat8_batch_layer<float>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat8_batch_layer<float>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], in_mem[7], in_offset[7], ip_size_per_batch[7], axis, work_items);
                 } else {
-                    hipLaunchKernelGGL(Hip_Concat8_batch_layer<__half>, dim3(ceil((float)globalThreads.x/localThreads.x), ceil((float)globalThreads.y/localThreads.y),
-                        ceil((float)globalThreads.z/localThreads.z)), dim3(localThreads.x, localThreads.y, localThreads.z), 0, stream, out, out_offset,
+                    hipLaunchKernelGGL(Hip_Concat8_batch_layer<__half>, gridDim, localThreads, 0, stream, out, out_offset,
                         output_dim3, in_mem[0], in_offset[0], ip_size_per_batch[0], in_mem[1], in_offset[1], ip_size_per_batch[1], in_mem[2], in_offset[2],
                         ip_size_per_batch[2], in_mem[3], in_offset[3], ip_size_per_batch[3], in_mem[4], in_offset[4], ip_size_per_batch[4], in_mem[5],
                         in_offset[5], ip_size_per_batch[5], in_mem[6], in_offset[6], ip_size_per_batch[6], in_mem[7], in_offset[7], ip_size_per_batch[7], axis, work_items);

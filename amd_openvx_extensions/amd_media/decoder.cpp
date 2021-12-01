@@ -122,14 +122,24 @@ private:
 
 static enum AVPixelFormat hwPixelFormat;
 
-static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx)
+static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx, int hw_device_id)
 {
     int err = 0;
-
-    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type,
-                                      NULL, NULL, 0)) < 0) {
+    char device[128] = "";
+    char* pdevice = NULL;
+    if (hw_device_id >= 0 && hw_device_id < 10000) {
+        if (type == AV_HWDEVICE_TYPE_VAAPI) {
+          snprintf(device, sizeof(device), "/dev/dri/renderD%d", 128 + hw_device_id);
+        }else {
+          snprintf(device, sizeof(device), "%d", hw_device_id);
+        }
+        pdevice = device;
+    }
+    const char* device_name = pdevice ? pdevice : "'default'";
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, pdevice, NULL, 0)) < 0) {
         return err;
     }
+    printf("VAAPI device created for device %s\n", device_name);
     ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
 
     return err;
@@ -451,7 +461,7 @@ vx_status CLoomIoMediaDecoder::Initialize()
             return -1;
         if (useVaapi[mediaIndex]) {
             codecContext->get_format  = get_hw_format;
-            if (hw_decoder_init(codecContext, hw_type, hw_device_ctx) < 0) {
+            if (hw_decoder_init(codecContext, hw_type, hw_device_ctx, mediaIndex) < 0) {
                 vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Failed to create specified HW device.\n");
                 return VX_FAILURE;
             }

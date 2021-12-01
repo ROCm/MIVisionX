@@ -33,7 +33,7 @@ RUN cd conformance_tests/build-cts-opencl && AGO_DEFAULT_TARGET=CPU LD_LIBRARY_P
 # install MIVisionX HIP
 RUN mkdir build-hip && cd build-hip && cmake ../MIVisionX -DBACKEND=HIP && make -j8
 RUN cd conformance_tests && mkdir build-cts-hip && cd build-cts-hip && \
-        cmake -DOPENVX_INCLUDES=$OPENVX_INC/include -DOPENVX_LIBRARIES=$OPENVX_DIR_HIP/lib/libopenvx.so\;$OPENVX_DIR_HIP/lib/libvxu.so\;pthread\;dl\;m\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts && \
+        cmake -DOPENVX_INCLUDES=$OPENVX_INC/include -DOPENVX_LIBRARIES=$OPENVX_DIR_HIP/lib/libopenvx.so\;$OPENVX_DIR_HIP/lib/libvxu.so\;/opt/rocm/hip/lib/libamdhip64.so\;pthread\;dl\;m\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts && \
         cmake --build .
 RUN cd conformance_tests/build-cts-hip && AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-CTS-HIP-centos7.md && \
         AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-GPU-CTS-HIP-centos7.md && \

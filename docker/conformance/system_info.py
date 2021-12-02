@@ -21,7 +21,6 @@
 from datetime import datetime
 from subprocess import Popen, PIPE
 import os
-import sys
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
@@ -31,11 +30,6 @@ __version__ = "1.0.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
-
-if sys.version_info[0] < 3:
-    import commands
-else:
-    import subprocess
 
 
 def shell(cmd):
@@ -65,13 +59,14 @@ def write_lines_as_table(header, lines, f):
             f.write("|%s" % field)
         f.write("|\n")
 
+
 # get system data
 platform_name = platform.platform()
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-reportFilename = 'system_info_report_%s_%s.md' %(platform_name, file_dtstr)
+reportFilename = 'system_info_report_%s_%s.md' % (platform_name, file_dtstr)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 
@@ -110,7 +105,7 @@ with open(reportFilename, 'w') as f:
     write_formatted(board_info, f)
     write_formatted(memory_info, f)
 
-    f.write("\n")
+    f.write("\n\n\n")
     f.write("ROCm Package and Version Report\n")
     f.write("-------------\n")
     f.write("\n")

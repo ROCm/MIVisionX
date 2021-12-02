@@ -79,10 +79,9 @@ enum mv_status
 //! \brief: backend for inference runtime
 enum mivid_backend
 {
-	OpenVX_Rocm_OpenCL 	= 0,
+	OpenVX_Rocm_GPU 	= 0,
 	OpenVX_WinML 		= 1,
 	OpenVX_CPU   		= 2,
-	OpenVX_Rocm_HCC   	= 3
 };
 
 

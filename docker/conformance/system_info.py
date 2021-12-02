@@ -93,7 +93,7 @@ rocm_packages = rocm_packages.splitlines()
 
 # Write Report
 with open(reportFilename, 'w') as f:
-    f.write("MIVisionX - ML Inference Report\n")
+    f.write("MIVisionX - System Report\n")
     f.write("================================\n")
     f.write("\n")
 
@@ -110,6 +110,7 @@ with open(reportFilename, 'w') as f:
     write_formatted(board_info, f)
     write_formatted(memory_info, f)
 
+    f.write("\n")
     f.write("ROCm Package and Version Report\n")
     f.write("-------------\n")
     f.write("\n")
@@ -132,5 +133,4 @@ with open(reportFilename, 'w') as f:
 # report file
 reportFileDir = os.path.abspath(reportFilename)
 print("\nSTATUS: Output Report File - "+reportFileDir)
-
 print("\nsystem_info.py - V:"+__version__+"\n")

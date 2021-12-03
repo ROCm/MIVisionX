@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include "meta_data_reader_factory.h"
 #include "meta_data_graph_factory.h"
 #include "randombboxcrop_meta_data_reader_factory.h"
+#include "node_copy.h"
 
 using half_float::half;
 
@@ -314,6 +315,23 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
     }
 
     return output;
+}
+
+void 
+MasterGraph::set_output(Image* output_image)
+{
+    if(output_image->is_handle_set() == false)
+    {
+        if (output_image->create_from_handle(_context) != 0)
+                THROW("Cannot create the image from handle")
+        _output_images.push_back(output_image);
+    }
+    else
+    {
+        // Decoder case only
+        auto actual_output = create_image(output_image->info(), true);
+        add_node<CopyNode>({output_image}, {actual_output});
+    }
 }
 
 void MasterGraph::release()

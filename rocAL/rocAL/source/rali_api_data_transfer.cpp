@@ -111,3 +111,16 @@ raliCopyToOutput(
     return RALI_OK;
 }
 
+void 
+RALI_API_CALL raliSetOutputs(RaliContext p_context, unsigned int num_of_outputs, std::vector<RaliImage> &output_images)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliSetOutputs")
+    auto context = static_cast<Context *>(p_context);
+    std::vector<Image*> output_images_vector ;
+    for (auto& it : output_images) {
+        auto img = static_cast<Image*>(it);
+        context->master_graph->set_output(img);
+    }
+}
+

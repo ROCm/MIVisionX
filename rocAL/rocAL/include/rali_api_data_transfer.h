@@ -43,4 +43,9 @@ extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutputTensor16(RaliContext rali
                                                               float multiplier1, float multiplier2, float offset0,
                                                               float offset1, float offset2,
                                                               bool reverse_channels);
+///
+/// \param rali_context
+/// \param output_images The user's buffer that will be filled with output images with set_output = True
+extern "C" void RALI_API_CALL raliSetOutputs(RaliContext p_context, unsigned int num_of_outputs, std::vector<RaliImage> &output_images);
+
 #endif //MIVISIONX_RALI_API_DATA_TRANSFER_H

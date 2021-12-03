@@ -71,8 +71,8 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "shuffle": random_shuffle,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
-            "max_width": 0, 
-            "max_height":0} 
+            "max_width": 0,
+            "max_height":0}
         decoded_image = b.Caffe2_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     elif reader == "CaffeReader" or reader == "CaffeReaderDetection":
@@ -85,8 +85,8 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "shuffle": random_shuffle,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
-            "max_width": 0, 
-            "max_height":0} 
+            "max_width": 0,
+            "max_height":0}
         decoded_image = b.Caffe_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     else:
@@ -99,8 +99,8 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "shuffle": random_shuffle,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
-            "max_width": 0, 
-            "max_height":0} 
+            "max_width": 0,
+            "max_height":0}
         decoded_image = b.ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     return (decoded_image)
@@ -112,6 +112,7 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
                  seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct= False, device = None):
 
     reader = Pipeline._current_pipeline._reader
+    b.setSeed(seed)
     #Creating 2 Nodes here (Image Decoder + Random Crop Node)
     #Node 1 Image Decoder
     if( reader == 'COCOReader'):
@@ -153,8 +154,8 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "shuffle": random_shuffle,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
-            "max_width": 0, 
-            "max_height":0} 
+            "max_width": 0,
+            "max_height":0}
         image_decoder_output_image = b.Caffe2_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     elif reader == "CaffeReader" or reader == "CaffeReaderDetection":
@@ -167,8 +168,8 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "shuffle": random_shuffle,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
-            "max_width": 0, 
-            "max_height":0} 
+            "max_width": 0,
+            "max_height":0}
         image_decoder_output_image = b.Caffe_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     else:
@@ -181,8 +182,8 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "shuffle": random_shuffle,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
-            "max_width": 0, 
-            "max_height":0} 
+            "max_width": 0,
+            "max_height":0}
         image_decoder_output_image = b.ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
 
@@ -213,7 +214,7 @@ def image_slice(*inputs,file_root='',annotations_file='',shard_id = 0, num_shard
 
     #Reader -> Randon BBox Crop -> ImageDecoderSlice
     if( reader == 'COCOReader'):
-        
+
         kwargs_pybind = {
             "source_path": file_root,
             "json_path": annotations_file,
@@ -229,7 +230,7 @@ def image_slice(*inputs,file_root='',annotations_file='',shard_id = 0, num_shard
             "area_factor": None,
             "aspect_ratio": None,
             "x_drift_factor": None,
-            "y_drift_factor": None} 
+            "y_drift_factor": None}
                 #         obj.rali_c_func_call(handle)
                 # output_image = b.COCO_ImageDecoderSliceShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
         image_decoder_slice = b.COCO_ImageDecoderSliceShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))

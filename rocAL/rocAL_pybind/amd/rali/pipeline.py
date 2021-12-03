@@ -1,5 +1,5 @@
 from amd.rali.global_cfg import MetaDataNode, Node
-from numpy.core.fromnumeric import trace 
+from numpy.core.fromnumeric import trace
 import rali_pybind as b
 import amd.rali.types as types
 import numpy as np
@@ -127,6 +127,7 @@ class Pipeline(object):
         self._current_output_image = None
         self._current_pipeline
         self._reader = None
+        self._define_graph_set = False
 
 
     def store_values(self, operator):
@@ -185,41 +186,42 @@ class Pipeline(object):
     def build(self):
         """Build the pipeline using raliVerify call
         """
-        # outputs = self.define_graph()
-        # self.process_calls(outputs[0])
+        if self.define_graph()!=0:
+            outputs = self.define_graph()
+            self.process_calls(outputs[0])
 
-        # #Checks for Casting "Labels" as last node & Box Encoder as last Prev node
-        # if(len(outputs)==3):
-        #     if((isinstance(outputs[1],list)== False) & (isinstance(outputs[2],list)== False)):
-        #         if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
-        #             if(outputs[2].prev.data == "Cast") :
-        #                 self._castLabels = True
-        #                 if(outputs[2].prev.prev.prev.data is not None):
-        #                     if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
-        #                         self._BoxEncoder = True
-        #                         self._anchors = outputs[2].prev.prev.data
-        #                         self._encode_tensor = outputs[2].prev.prev
-        #                         self._encode_tensor.prev.rali_c_func_call(self._handle )
-        # #Checks for Box Encoding as the Last Node
-        # if(len(outputs)==3):
-        #     if(isinstance(outputs[1],list)== False):
-        #         if(outputs[1].prev is not None):
-        #             if(outputs[2].prev is not None):
-        #                 if(outputs[2].prev.data == "BoxEncoder"):
-        #                     self._BoxEncoder = True
-        #                     self._anchors = outputs[2].data
-        #                     self._encode_tensor = outputs[2]
-        #                     self._encode_tensor.prev.rali_c_func_call(self._handle )
+            #Checks for Casting "Labels" as last node & Box Encoder as last Prev node
+            if(len(outputs)==3):
+                if((isinstance(outputs[1],list)== False) & (isinstance(outputs[2],list)== False)):
+                    if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
+                        if(outputs[2].prev.data == "Cast") :
+                            self._castLabels = True
+                            if(outputs[2].prev.prev.prev.data is not None):
+                                if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
+                                    self._BoxEncoder = True
+                                    self._anchors = outputs[2].prev.prev.data
+                                    self._encode_tensor = outputs[2].prev.prev
+                                    self._encode_tensor.prev.rali_c_func_call(self._handle )
+            #Checks for Box Encoding as the Last Node
+            if(len(outputs)==3):
+                if(isinstance(outputs[1],list)== False):
+                    if(outputs[1].prev is not None):
+                        if(outputs[2].prev is not None):
+                            if(outputs[2].prev.data == "BoxEncoder"):
+                                self._BoxEncoder = True
+                                self._anchors = outputs[2].data
+                                self._encode_tensor = outputs[2]
+                                self._encode_tensor.prev.rali_c_func_call(self._handle )
 
-        # #Checks for One Hot Encoding as the last Node
-        # if(isinstance(outputs[1],list)== False):
-        #     if(len(outputs)==2):
-        #         if(outputs[1].prev is not None):
-        #             print(type(outputs[1]))
-        #             if(outputs[1].prev.data == "OneHotLabel"):
-        #                 self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
-        #                 self._oneHotEncoding = True
-      
+            #Checks for One Hot Encoding as the last Node
+            if(isinstance(outputs[1],list)== False):
+                if(len(outputs)==2):
+                    if(outputs[1].prev is not None):
+                        print(type(outputs[1]))
+                        if(outputs[1].prev.data == "OneHotLabel"):
+                            self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
+                            self._oneHotEncoding = True
+
 
         status = b.raliVerify(self._handle)
         if(status != types.OK):
@@ -239,7 +241,9 @@ class Pipeline(object):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
         It returns a list of outputs created by calling RALI Operators."""
-        raise NotImplementedError
+        print("define_graph NotImplemented")
+        return 0
+
 
     def get_handle(self):
         return self._handle
@@ -331,7 +335,7 @@ class Pipeline(object):
 
 
             #Reader Node
-            self._name = node[0].node_name   #Store the name of the reader in a variable for further use     
+            self._name = node[0].node_name   #Store the name of the reader in a variable for further use
             current_list=[node[0],0, "NULL"]
             output_dict.append(current_list)
             output_traces_list.append(output_dict)
@@ -365,7 +369,7 @@ class Pipeline(object):
                             trace[0].rali_c_func_call(self._handle,*l)
                             trace[0].set_visited(True)
                             trace[0] = trace[0].prev[0]  # Need to check this !!
-                        
+
         for meta_node in set_output_meta_data:
             while(meta_node.prev is not None ):
                 if(meta_node.node_name == "OneHotLabel"):
@@ -383,7 +387,7 @@ class Pipeline(object):
                     l = (meta_node.kwargs_pybind.values())
                     meta_node.rali_c_func_call(self._handle,*l)
                     self._BoxEncoder = True
-                
+
         # exit(0)
         status = b.raliVerify(self._handle)
         if(status != types.OK):
@@ -391,7 +395,7 @@ class Pipeline(object):
 
     def __enter__(self):
         print("\n __enter__ block")
-        
+
         Pipeline._current_pipeline = self
         print("\n Pipeline handle in enter block:", Pipeline._current_pipeline._handle)
         return self
@@ -426,7 +430,7 @@ class Pipeline(object):
     def GetImageName(self, array_len):
 
         return b.getImageName(self._handle,array_len)
-    
+
     def GetImageId(self, array):
         b.getImageId(self._handle, array)
 
@@ -445,7 +449,7 @@ class Pipeline(object):
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
         b.raliCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)
-        
+
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
 

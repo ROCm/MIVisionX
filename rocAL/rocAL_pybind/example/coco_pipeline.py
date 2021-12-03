@@ -5,6 +5,7 @@ from math import sqrt
 import torch
 import random
 import itertools
+import os
 
 from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
@@ -129,6 +130,12 @@ class RALICOCOIterator(object):
         self.n = self.loader.getOutputImageCount()
         self.rim = self.loader.getRemainingImages()
         self.display = display
+        if self.display:
+            try:
+                path= "OUTPUT_IMAGES_PYTHON/OLD_API/COCO_READER"
+                os.makedirs(path, exist_ok=True)
+            except OSError as error:
+                print(error)
         print("____________REMAINING IMAGES____________:", self.rim)
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
@@ -229,7 +236,7 @@ def draw_patches(img, idx, bboxes):
         image = cv2.UMat(image).get()
         image = cv2.rectangle(image, (int(loc_[0]*wtot), int(loc_[1] * htot)), (int(
             (loc_[2] * wtot)), int((loc_[3] * htot))), color, thickness)
-        cv2.imwrite(str(idx)+"_"+"train"+".png", image)
+        cv2.imwrite("OUTPUT_IMAGES_PYTHON/OLD_API/COCO_READER/"+str(idx)+"_"+"train"+".png", image)
 
 def main():
     if len(sys.argv) < 5:

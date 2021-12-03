@@ -7,7 +7,7 @@ def coco_trail(*inputs,file_root, annotations_file='', bytes_per_sample_hint=0, 
                  preserve=False, random_shuffle=False, ratio=False, read_ahead=False,
                  save_img_ids=False, seed=-1, shard_id=0, shuffle_after_epoch=False, size_threshold=0.1,
                  skip_cached_images=False, skip_empty=False, stick_to_shard=False, tensor_init_bytes=1048576):
-    
+
     #Output
     labels = []
     bboxes = []
@@ -28,6 +28,7 @@ def coco(*inputs,file_root, annotations_file='', bytes_per_sample_hint=0, dump_m
     labels = []
     bboxes = []
     kwargs_pybind = {"source_path": annotations_file, "is_output":True}
+    b.setSeed(seed)
     meta_data = b.COCOReader(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (meta_data, labels, bboxes)
 
@@ -35,7 +36,7 @@ def coco(*inputs,file_root, annotations_file='', bytes_per_sample_hint=0, dump_m
 def file(*inputs, file_root, bytes_per_sample_hint=0, file_list='', initial_fill='', lazy_init='', num_shards=1,
                  pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False,
                  seed=-1, shard_id=0, shuffle_after_epoch=False, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576, device=None):
-    
+
     Pipeline._current_pipeline._reader = "labelReader"
     #Output
     labels = []
@@ -47,8 +48,8 @@ def file(*inputs, file_root, bytes_per_sample_hint=0, file_list='', initial_fill
 
 def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reader_type=0, bytes_per_sample_hint=0, initial_fill=1024, lazy_init=False,
  num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576,  device=None):
-       
-    
+
+
 
     labels=[]
     if reader_type == 1:
@@ -82,7 +83,7 @@ def caffe(*inputs, path, bbox=False, bytes_per_sample_hint=0, image_available=Tr
                  lazy_init=False,  num_shards=1,
                  pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False,
                  seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576, device=None):
-       
+
     #Output
     bboxes = []
     labels = []
@@ -105,7 +106,7 @@ def caffe2(*inputs, path, bbox=False, additional_inputs=0, bytes_per_sample_hint
                  lazy_init=False, num_labels=1,  num_shards=1,
                  pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False,
                  seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576, device=None):
-       
+
     #Output
     bboxes = []
     labels = []

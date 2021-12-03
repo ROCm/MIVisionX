@@ -51,9 +51,10 @@ class RALICOCOIterator(object):
         self.display = display
         if self.display:
             try:
-                os.mkdir("OUTPUT_IMAGES_COCO_NEW_API")
+                path= "OUTPUT_IMAGES_PYTHON/NEW_API/COCO_READER"
+                os.makedirs(path, exist_ok=True)
             except OSError as error:
-                print(error) 
+                print(error)
         print("____________REMAINING IMAGES____________:", self.rim)
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
@@ -110,9 +111,9 @@ class RALICOCOIterator(object):
                 if x!=0:
                     index_list.append(idx)
                     actual_bboxes.append(encoded_bboxes_tensor[i][idx].tolist())
-                    actual_labels.append(encodded_labels_tensor[i][idx].tolist()) 
-              
-            if self.display: 
+                    actual_labels.append(encodded_labels_tensor[i][idx].tolist())
+
+            if self.display:
                 if self.n == 1:
                     img = torch.from_numpy(self.out)
                     draw_patches(img[i], self.image_id[i], actual_bboxes)
@@ -138,7 +139,7 @@ def draw_patches(img,idx, bboxes):
     image = img.detach().numpy()
     image = image.transpose([0,1,2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
- 
+
     wtot,htot ,_ = img.shape
     for (xc, yc ,w,h) in bboxes:
         l = xc - 0.5*(w)
@@ -149,8 +150,8 @@ def draw_patches(img,idx, bboxes):
         color = (255, 0, 0)
         thickness = 2
         image = cv2.UMat(image).get()
-        image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)  
-        cv2.imwrite("OUTPUT_IMAGES_COCO_NEW_API/"+str(idx)+"_"+"train"+".png", image)
+        image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)
+        cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/COCO_READER/"+str(idx)+"_"+"train"+".png", image)
 
 def draw_all_images(img,id,idx):
     #image is expected as a tensor, bboxes as numpy
@@ -158,7 +159,7 @@ def draw_all_images(img,id,idx):
     image = img.detach().numpy()
     # image = image.transpose([0,1,2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
- 
+
     # wtot,htot ,_ = img.shape
     image = cv2.UMat(image).get()
     cv2.imwrite(str(id)+"_"+str(idx)+"_"+"train"+".png", image)
@@ -183,7 +184,7 @@ def main():
         fig_size = 300
         feat_size = [38, 19, 10, 5, 3, 1]
         steps = [8, 16, 32, 64, 100, 300]
-        
+
         # use the scales here: https://github.com/amdegroot/ssd.pytorch/blob/master/data/config.py
         scales = [21, 45, 99, 153, 207, 261, 315]
         aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
@@ -213,11 +214,11 @@ def main():
         dboxes_ltrb[:, 1] = dboxes[:, 1] - 0.5 * dboxes[:, 3]
         dboxes_ltrb[:, 2] = dboxes[:, 0] + 0.5 * dboxes[:, 2]
         dboxes_ltrb[:, 3] = dboxes[:, 1] + 0.5 * dboxes[:, 3]
-        
+
         return dboxes_ltrb
     default_boxes = coco_anchors().numpy().flatten().tolist()
     pipe = Pipeline(batch_size=bs, num_threads=1,device_id=0, seed=random_seed, rali_cpu=_rali_cpu)
-    
+
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(
             file_root=image_path, annotations_file=ann_path, random_shuffle=False, seed=random_seed)
@@ -243,14 +244,14 @@ def main():
                                         crop=(300, 300),
                                         mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
                                         std=[0.229 * 255, 0.224 * 255, 0.225 * 255],
-                                        mirror=0,
+                                        mirror=flip_coin,
                                         output_dtype=types.FLOAT,
                                         output_layout=types.NCHW,
                                         pad_output=False)
         bboxes, labels = fn.box_encoder(bboxes, labels,
                                     criteria=0.5,
                                     anchors=default_boxes)
-        pipe.set_outputs(res_images)
+        pipe.set_outputs(cmn_images)
     pipe.build()
     data_loader = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display)
@@ -263,25 +264,25 @@ def main():
         for i, it in enumerate(data_loader, 0):
             print("**************", i, "*******************")
             print("**************starts*******************")
-            # print("\n IMAGES : \n", it[0])
-            # print("\nBBOXES:\n", it[1])
-            # print("\nLABELS:\n", it[2])
-            # print("\nIMAGE ID:\n", it[3])
-            # print("\nIMAGE SIZE:\n", it[4])
+            print("\n IMAGES : \n", it[0])
+            print("\nBBOXES:\n", it[1])
+            print("\nLABELS:\n", it[2])
+            print("\nIMAGE ID:\n", it[3])
+            print("\nIMAGE SIZE:\n", it[4])
             print("**************ends*******************")
             print("**************", i, "*******************")
         data_loader.reset()
     #Your statements here
     stop = timeit.default_timer()
 
-    print('\n Time: ', stop - start)  
+    print('\n Time: ', stop - start)
 
 
 if __name__ == '__main__':
     main()
 
 
-    
+
 
 
 

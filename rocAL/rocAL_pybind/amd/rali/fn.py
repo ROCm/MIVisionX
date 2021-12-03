@@ -1,7 +1,7 @@
 import sys
 
-from amd.rali import readers 
-from amd.rali import decoders 
+from amd.rali import readers
+from amd.rali import decoders
 from amd.rali import random
 from amd.rali import reductions
 from amd.rali import segmentation
@@ -134,7 +134,7 @@ def gamma_correction(*inputs, gamma=0.5, device=None):
     gamma_correction_image = b.GammaCorrection(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (gamma_correction_image)
 
-def hue(*inputs, bytes_per_sample_hint=0,  hue=0.0, image_type=0, 
+def hue(*inputs, bytes_per_sample_hint=0,  hue=0.0, image_type=0,
         preserve=False, seed = -1, device = None):
     """
     bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
@@ -155,7 +155,7 @@ def hue(*inputs, bytes_per_sample_hint=0,  hue=0.0, image_type=0,
 
     return (hue_image)
 
-def jitter(*inputs, bytes_per_sample_hint=0, fill_value=0.0, interp_type= 0, 
+def jitter(*inputs, bytes_per_sample_hint=0, fill_value=0.0, interp_type= 0,
         mask = 1, nDegree = 2, kernel_size, preserve = False, seed = -1, device = None):
     """
     bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
@@ -266,7 +266,7 @@ def resize_trail(*inputs, bytes_per_sample_hint=0, image_type=0, interp_type=1, 
     return (resized_image)
 
 
-def random_crop(*inputs, crop_area_factor=[0.08, 1], crop_aspect_ratio=[0.75, 1.333333], 
+def random_crop(*inputs, crop_area_factor=[0.08, 1], crop_aspect_ratio=[0.75, 1.333333],
             crop_pox_x=0, crop_pox_y=0, device = None):
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False,
@@ -274,7 +274,7 @@ def random_crop(*inputs, crop_area_factor=[0.08, 1], crop_aspect_ratio=[0.75, 1.
     random_cropped_image = b.RandomCrop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (random_cropped_image)
 
-def rotate(*inputs, angle=0, axis=None, bytes_per_sample_hint= 0, fill_value = 0.0, interp_type = 1, keep_size = False, 
+def rotate(*inputs, angle=0, axis=None, bytes_per_sample_hint= 0, fill_value = 0.0, interp_type = 1, keep_size = False,
             output_dtype = -1, preserve = False, seed = -1, size = None, device = None):
     """
     angle (float) – Angle, in degrees, by which the image is rotated. For 2D data, the rotation is counter-clockwise, assuming top-left corner at (0,0) For 3D data, the angle is a positive rotation around given axis
@@ -341,7 +341,7 @@ def ssd_random_crop(*inputs, bytes_per_sample_hint=0, num_attempts=1.0, preserve
     else:
         _num_attempts = num_attempts
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0], "is_output": False, "p_threshold": None, 
+    kwargs_pybind = {"input_image0": inputs[0], "is_output": False, "p_threshold": None,
                     "crop_area_factor": None, "crop_aspect_ratio": None, "crop_pos_x": None, "crop_pos_y": None, "num_of_attempts": _num_attempts}
     ssd_random_cropped_image = b.SSDRandomCrop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (ssd_random_cropped_image)
@@ -410,10 +410,7 @@ def crop_mirror_normalize(*inputs, bytes_per_sample_hint=0, crop=[0.0, 0.0], cro
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0], "crop_depth":crop_d, "crop_height":crop_h, "crop_width":crop_w, "start_x":1, "start_y":1, "start_z":1, "mean":mean, "std_dev":std,
                      "is_output": False, "mirror": mirror}
-    
-        # output_image = b.CropMirrorNormalize(handle, input_image, self._crop_d, self._crop_h, self._crop_w, 1,
-        #                                          1, 1, self._mean, self._std, is_output, mirror
-        
+    b.setSeed(seed)
     cmn = b.CropMirrorNormalize(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     Pipeline._current_pipeline._tensor_layout = output_layout
     Pipeline._current_pipeline._tensor_dtype = output_dtype
@@ -439,7 +436,7 @@ def centre_crop(*inputs, bytes_per_sample_hint=0, crop=[0.0, 0.0], crop_d=1, cro
     #Set Seed
     b.setSeed(seed)
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0], "crop_width":crop_w, "crop_height":crop_h, "crop_depth":crop_d, 
+    kwargs_pybind = {"input_image0": inputs[0], "crop_width":crop_w, "crop_height":crop_h, "crop_depth":crop_d,
                      "is_output": False}
     centre_cropped_image = b.CenterCropFixed(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 

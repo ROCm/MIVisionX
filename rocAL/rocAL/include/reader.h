@@ -40,7 +40,8 @@ enum class StorageType
     CAFFE_LMDB_RECORD = 3,
     CAFFE2_LMDB_RECORD = 4,
     COCO_FILE_SYSTEM = 5,
-    SEQUENCE_FILE_SYSTEM = 6
+    SEQUENCE_FILE_SYSTEM = 6,
+    MXNET_RECORDIO = 7,
 };
 
 struct ReaderConfig
@@ -94,6 +95,11 @@ private:
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
 };
 
+struct ImageRecordIOHeader {
+  uint32_t flag;
+  float label;
+  uint64_t image_id[2];
+};
 class Reader
 {
 public:

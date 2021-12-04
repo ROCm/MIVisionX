@@ -45,6 +45,7 @@ using namespace cv;
 // #define CAFFE2_READER_DETECTION
 //  #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
+#define MXNET_READER
 
 //#define RANDOMBBOXCROP
 
@@ -96,7 +97,7 @@ int main(int argc, const char **argv)
 int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all)
 {
     size_t num_threads = 1;
-    unsigned int inputBatchSize = 2;
+    unsigned int inputBatchSize = 4;
     int decode_max_width = width;
     int decode_max_height = height;
     std::cout << ">>> test case " << test_case << std::endl;
@@ -151,7 +152,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #endif
 
 #if defined COCO_READER || defined COCO_READER_PARTIAL
-    char *json_path = "";
+    char *json_path = "/data/indu/coco2017/annotations/instances_train2017.json";
     if (strcmp(json_path, "") == 0)
     {
         std::cout << "\n json_path has to be set in rali_unit test manually";
@@ -170,6 +171,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     meta_data = raliCreateTFReader(handle, path, true, key2, key8);
 #elif defined TF_READER_DETECTION
     meta_data = raliCreateTFReaderDetection(handle, path, true, key2, key3, key4, key5, key6, key7, key8);
+#elif defined MXNET_READER
+    meta_data = raliCreateMXNetReader(handle, path, true);
 #else
     meta_data = raliCreateLabelReader(handle, path);
 #endif
@@ -209,6 +212,9 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                                         RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined COCO_READER_PARTIAL
         input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
+#elif defined MXNET_READER
+    input1 = raliMXNetRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                           RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);

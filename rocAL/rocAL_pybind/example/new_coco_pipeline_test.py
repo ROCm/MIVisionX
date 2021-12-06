@@ -49,10 +49,11 @@ class RALICOCOIterator(object):
         self.n = self.loader.getOutputImageCount()
         self.rim = self.loader.getRemainingImages()
         self.display = display
-        if self.display:
+        print(self.display)
+        if self.display!= "False":
             try:
-                path= "OUTPUT_IMAGES_PYTHON/NEW_API/COCO_READER"
-                os.makedirs(path, exist_ok=True)
+                self.path= "OUTPUT_IMAGES_PYTHON/NEW_API/"+self.loader._reader+"/"
+                os.makedirs(self.path, exist_ok=True)
             except OSError as error:
                 print(error)
         print("____________REMAINING IMAGES____________:", self.rim)
@@ -113,14 +114,14 @@ class RALICOCOIterator(object):
                     actual_bboxes.append(encoded_bboxes_tensor[i][idx].tolist())
                     actual_labels.append(encodded_labels_tensor[i][idx].tolist())
 
-            if self.display:
+            if self.display!="False":
                 if self.n == 1:
                     img = torch.from_numpy(self.out)
-                    draw_patches(img[i], self.image_id[i], actual_bboxes)
+                    draw_patches(img[i], self.image_id[i], actual_bboxes, self.path)
                 else:
                     img = torch.from_numpy(self.out)
                     for idx in range(self.n):
-                        draw_all_images(img[i],self.image_id[i],idx)
+                        draw_all_images(img[i],self.image_id[i],idx, self.path)
 
         if self.tensor_dtype == types.FLOAT:
             return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
@@ -133,7 +134,7 @@ class RALICOCOIterator(object):
     def __iter__(self):
         return self
 
-def draw_patches(img,idx, bboxes):
+def draw_patches(img,idx, bboxes, path_to_save_imgs):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     image = img.detach().numpy()
@@ -151,7 +152,7 @@ def draw_patches(img,idx, bboxes):
         thickness = 2
         image = cv2.UMat(image).get()
         image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)
-        cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/COCO_READER/"+str(idx)+"_"+"train"+".png", image)
+        cv2.imwrite(path_to_save_imgs+str(idx)+"_"+"train"+".png", image)
 
 def draw_all_images(img,id,idx):
     #image is expected as a tensor, bboxes as numpy
@@ -255,7 +256,7 @@ def main():
     pipe.build()
     data_loader = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display)
-    epochs = 10
+    epochs = 2
     import timeit
     start = timeit.default_timer()
 

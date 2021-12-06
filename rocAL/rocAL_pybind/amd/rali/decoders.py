@@ -19,10 +19,8 @@ def image_trail(*inputs,file_root, annotations_file ,user_feature_key_map = None
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 0, #TODO: what happens when we give user given size = multiplier * max_decoded_width
             "max_height":0} #TODO: what happens when we give user given size = multiplier * max_decoded_width
-    print("\n Pipeline handle in decoder:", Pipeline._current_pipeline._handle)
     decoded_output_image = b.COCO_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     reader = Pipeline._current_pipeline._reader
-    print("Reader:",reader)
     return (decoded_output_image)
 
 
@@ -44,7 +42,6 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "max_width": 0, #TODO: what happens when we give user given size = multiplier * max_decoded_width
             "max_height":0} #TODO: what happens when we give user given size = multiplier * max_decoded_width
         decoded_image = b.COCO_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
-        print("Reader:",reader)
 
     elif reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection":
         kwargs_pybind = {

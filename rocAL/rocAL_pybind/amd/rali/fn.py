@@ -156,7 +156,7 @@ def hue(*inputs, bytes_per_sample_hint=0,  hue=0.0, image_type=0,
     return (hue_image)
 
 def jitter(*inputs, bytes_per_sample_hint=0, fill_value=0.0, interp_type= 0,
-        mask = 1, nDegree = 2, kernel_size, preserve = False, seed = -1, device = None):
+        mask = 1, nDegree = 2, kernel_size=None, preserve = False, seed = -1, device = None):
     """
     bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
 

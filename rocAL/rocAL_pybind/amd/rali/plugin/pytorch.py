@@ -21,22 +21,29 @@ class RALIGenericImageIterator(object):
         return self.__next__()
 
     def __next__(self):
-        if b.getRemainingImages(self.loader._handle) < self.bs:
+        if(self.loader.isEmpty()):
+            timing_info = self.loader.Timing_Info()
+            print("Load     time ::", timing_info.load_time)
+            print("Decode   time ::", timing_info.decode_time)
+            print("Process  time ::", timing_info.process_time)
+            print("Transfer time ::", timing_info.transfer_time)
+            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
+            self.reset()
             raise StopIteration
 
         self.loader.copyImage(self.out_image)
         if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):
-         
+
             for i in range(self.bs):
                 size = b.getImageNameLen(self.loader._handle,i)
                 print(size)
                 self.array = np.array(["                 "])
-                
+
                 self.out=np.frombuffer(self.array, dtype=(self.array).dtype)
-            
+
                 b.getImageName(self.loader._handle, self.out ,i)
             return self.out_image ,self.out_bbox, self.out_tensor
         else:
@@ -88,20 +95,23 @@ class RALIGenericIterator(object):
             print("Decode   time ::",timing_info.decode_time)
             print("Process  time ::",timing_info.process_time)
             print("Transfer time ::",timing_info.transfer_time)
+            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
+            print("loader.run() & reset")
+            self.reset()
             raise StopIteration
 
         if(types.NCHW == self.tensor_format):
             self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        
+
         if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):
             self.lis = []  # Empty list for bboxes
             self.lis_lab = []  # Empty list of labels
-            
+
             #Count of labels/ bboxes in a batch
             self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
             self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
@@ -114,20 +124,20 @@ class RALIGenericIterator(object):
             #Image sizes of a batch
             self.img_size = np.zeros((self.bs * 2),dtype = "int32")
             self.loader.GetImgSizes(self.img_size)
-            
+
             count =0
             sum_count=0
             for i in range(self.bs):
                 count = self.bboxes_label_count[i]
-  
+
                 self.label_2d_numpy = (self.labels[sum_count : sum_count+count])
                 self.label_2d_numpy = np.reshape(self.label_2d_numpy, (-1, 1)).tolist()
                 self.bb_2d_numpy = (self.bboxes[sum_count*4 : (sum_count+count)*4])
                 self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
-                
+
                 self.lis_lab.append(self.label_2d_numpy)
                 self.lis.append(self.bb_2d_numpy)
-                
+
                 sum_count = sum_count +count
 
             self.target = self.lis

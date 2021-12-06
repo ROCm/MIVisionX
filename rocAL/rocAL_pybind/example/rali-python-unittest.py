@@ -7,6 +7,8 @@ from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
 import amd.rali.types as types
 import sys
+import os
+
 class HybridTrainPipe(Pipeline):
         def __init__(self, batch_size, num_threads, device_id, data_dir, augmentation, crop, rali_cpu = True):
                 super(HybridTrainPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
@@ -28,7 +30,7 @@ class HybridTrainPipe(Pipeline):
                 #self.resizeCrop = ops.CropResize(crop, crop)
                 self.exposure = ops.Exposure(exposure = 0.2)
                 self.rotate = ops.Rotate()
-                self.brightness = ops.Brightness()                
+                self.brightness = ops.Brightness()
                 self.gamma = ops.GammaCorrection()
                 self.contrast = ops.Contrast()
                 self.flip = ops.Flip()
@@ -42,7 +44,7 @@ class HybridTrainPipe(Pipeline):
                 self.snow = ops.Snow(snow=0.5)
                 self.rain = ops.Rain(rain=0.5)
                 self.fog = ops.Fog()
-                
+
                 self.pixelate = ops.Pixelate()
                 self.exposure = ops.Exposure()
                 self.hue = ops.Hue()
@@ -66,11 +68,11 @@ class HybridTrainPipe(Pipeline):
                 images = self.decode(self.jpegs)
                 if self.aug_num != 0:
                     images = self.resize(images)
-                
-                
+
+
                 if self.aug_num == 0:
                     output = self.resize(images)
-                elif self.aug_num == 1:        
+                elif self.aug_num == 1:
                     output = self.resize(images)
                 elif self.aug_num == 2:
                     output = self.rotate(images)
@@ -122,9 +124,9 @@ class HybridTrainPipe(Pipeline):
                     output = self.colortwist(images)
                 elif self.aug_num == 25:
                     output = self.cropMirrorNormalize(images)
-                
-                
-                
+
+
+
                 return [output, self.labels]
 
 def main():
@@ -146,10 +148,16 @@ def main():
         pipe.build()
         world_size=1
         imageIterator = RALI_iterator(pipe)
+        epochs = 2
 
-
-        for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
-                cv2.imwrite(output_img, cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
+        for epoch in range(int(epochs)):
+            try:
+                path= "OUTPUT_IMAGES_PYTHON/OLD_API/"+pipe._name+"/"+"epoch"+str(epoch)+"/"
+                os.makedirs(path, exist_ok=True)
+            except OSError as error:
+                print(error)
+            for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
+                    cv2.imwrite(path+str(i)+".jpg", cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
 
 if __name__ == '__main__':
-    main() 
+    main()

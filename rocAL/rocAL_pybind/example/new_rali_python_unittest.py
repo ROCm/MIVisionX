@@ -331,7 +331,7 @@ def main():
                 os.makedirs(path, exist_ok=True)
         except OSError as error:
                 print(error)
-    data_loader = RALIClassificationIterator(pipe , display=True)
+    data_loader = RALIClassificationIterator(pipe)
     epochs = 2
     cnt=0
     import timeit

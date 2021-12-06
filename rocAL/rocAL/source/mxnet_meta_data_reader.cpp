@@ -83,42 +83,40 @@ void MXNetMetaDataReader::print_map_contents()
 
 void MXNetMetaDataReader::read_all(const std::string &path)
 {
-    string rec_file = _path + "/train.rec";   
-    string idx_file = _path + "/train.idx";
-
+    if (_path.find("train") != std::string::npos)
+    {
+        _rec_file = _path + "/train.rec";
+        _idx_file = _path + "/train.idx";
+    }
+    else if(_path.find("val") != std::string::npos)
+    {
+        _rec_file = _path + "/val.rec";
+        _idx_file = _path + "/val.idx";
+    }
+    else
+    {
+        THROW("\nFolder name should be train/val for the train/val MXNet train/validation RecordIO files");
+    }
     uint rec_size;
-    _file_contents.open(rec_file);
+    _file_contents.open(_rec_file);
     if (!_file_contents)
-        THROW("ERROR: Failed opening the file " + rec_file);
-    _file_offsets.push_back(0);
+        THROW("ERROR: Failed opening the file " + _rec_file);
     _file_contents.seekg(0, ifstream::end);
     rec_size = _file_contents.tellg();
     _file_contents.seekg(0, ifstream::beg);
-    _file_offsets.push_back(rec_size);
-    
-    ifstream index_file(idx_file);
+
+    ifstream index_file(_idx_file);
     if(!index_file)
-        THROW("ERROR: Could not open RecordIO index file. Provided path: " + idx_file);
+        THROW("ERROR: Could not open RecordIO index file. Provided path: " + _idx_file);
 
     while (index_file >> _index >> _offset)
-        _temp.push_back(_offset);
-    if(_temp.empty())
-        THROW("ERROR: RecordIO index file doesn't contain any indices. Provided path: " + idx_file);
-    
-    std::sort(_temp.begin(), _temp.end());
-    size_t file_offset_index = 0;
-    int64_t size;
-    for (size_t i = 0; i < _temp.size() - 1; ++i)
-    {
-        if (_temp[i] >= _file_offsets[file_offset_index + 1])
-            ++file_offset_index;
-        size = _temp[i + 1] - _temp[i];
-        if (size)
-            _indices.emplace_back(_temp[i] - _file_offsets[file_offset_index], size, file_offset_index);
-    }
-    size = _file_offsets.back() - _temp.back();
-    if (size)
-        _indices.emplace_back(_temp.back() - _file_offsets[file_offset_index], size, file_offset_index);
+        _index_list.push_back(_offset);
+    if(_index_list.empty())
+        THROW("ERROR: RecordIO index file doesn't contain any indices. Provided path: " + _idx_file);
+    _index_list.push_back(rec_size);
+    std::sort(_index_list.begin(), _index_list.end());
+    for (size_t i = 0; i < _index_list.size() - 1; ++i)
+        _indices.emplace_back(_index_list[i], _index_list[i + 1] - _index_list[i]);
     read_images();
 }
 
@@ -138,9 +136,9 @@ void MXNetMetaDataReader::release() {
 
 void MXNetMetaDataReader::read_images()
 {
-    for(int current_index = 0; current_index < _indices.size(); current_index++ )
+    for(int current_index = 0; current_index < (int)_indices.size(); current_index++ )
     {
-        std::tie(_seek_pos, _data_size_to_read, _file_index) = _indices[current_index];        
+        std::tie(_seek_pos, _data_size_to_read) = _indices[current_index];
         _file_contents.seekg(_seek_pos, ifstream::beg);
         _data = (uint8_t*)malloc(_data_size_to_read);
         _file_contents.read((char *)_data, _data_size_to_read);        
@@ -157,13 +155,14 @@ void MXNetMetaDataReader::read_images()
         
         if (_hdr.flag == 0)
         {
-            //std::string img_name = rec_file;
-            //img_name.append("_");
-            //img_name.append(to_string(_hdr.image_id[0]));
-            add((to_string(_hdr.image_id[0]) + ".jpg"), _hdr.label);
+            add((to_string(_hdr.image_id[0])), _hdr.label);
+        }
+        else
+        {
+            WRN("\nMultiple record reading has not supported");
+            continue;
         }
     }
-    print_map_contents();
 }
 
 MXNetMetaDataReader::MXNetMetaDataReader()

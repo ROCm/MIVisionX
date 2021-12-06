@@ -31,10 +31,9 @@ private:
     void add(std::string image_name, int label);
     uint32_t DecodeFlag(uint32_t rec) {return (rec >> 29U) & 7U; };
     uint32_t DecodeLength(uint32_t rec) {return rec & ((1U << 29U) - 1U); };
-    std::vector<std::tuple<int64_t, int64_t, size_t>> _indices;
+    std::vector<std::tuple<int64_t, int64_t>> _indices; // used to store seek position and record size for a particular record.
     std::ifstream _file_contents;
-    std::vector<size_t> _file_offsets;
-    std::vector<size_t> _temp;
+    std::vector<size_t> _index_list;
     size_t _index, _offset, _file_index;
     const uint8_t* _data;
     const uint32_t _kMagic = 0xced7230a;
@@ -43,7 +42,7 @@ private:
     ImageRecordIOHeader _hdr;
     std::map<std::string, std::shared_ptr<Label>> _map_content;
     std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
-    std::string _path;
+    std::string _path, _rec_file, _idx_file;
     LabelBatch* _output;
     DIR *_src_dir;
     struct dirent *_entity;

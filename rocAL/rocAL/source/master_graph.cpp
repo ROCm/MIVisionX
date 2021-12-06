@@ -1195,7 +1195,7 @@ MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, 
     return _meta_data_reader->get_output();
 }
 
-MetaDataBatch * MasterGraph::create_mxnet_meta_data_reader(const char *source_path, bool is_output)
+MetaDataBatch * MasterGraph::create_mxnet_label_reader(const char *source_path, bool is_output)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")

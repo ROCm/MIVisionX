@@ -139,7 +139,7 @@ RALI_API_CALL raliCreateMXNetReader(RaliContext p_context, const char* source_pa
         THROW("Invalid rali context passed to raliCreateMXNetReader")
     auto context = static_cast<Context*>(p_context);
 
-    return context->master_graph->create_mxnet_meta_data_reader(source_path, is_output);
+    return context->master_graph->create_mxnet_label_reader(source_path, is_output);
 
 }
 

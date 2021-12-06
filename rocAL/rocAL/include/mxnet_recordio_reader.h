@@ -67,15 +67,13 @@ public:
     unsigned long long get_shuffle_time() override {return 0;}
 private:
     //! opens the folder containnig the images
-    Reader::Status folder_reading();
+    Reader::Status record_reading();
     Reader::Status MXNet_reader();
-    std::string _folder_path;
-    std::string _path;
+    std::string _path, _rec_file, _idx_file;
     DIR *_sub_dir;
     std::string _image_key;
     std::vector<std::string> _file_names;
-    //std::map<std::string, unsigned int> _file_size;
-    std::map<std::string, std::tuple<unsigned int, int64_t, int64_t> > _file_size;
+    std::map<std::string, std::tuple<unsigned int, int64_t, int64_t> > _record_properties;
     unsigned  _curr_file_idx;
     unsigned _current_file_size;
     std::string _last_id, _last_file_name;
@@ -84,7 +82,6 @@ private:
     int64_t _last_data_size;
     size_t _shard_id = 0;
     size_t _shard_count = 1;// equivalent of batch size
-    bool _last_rec;
     //!< _batch_count Defines the quantum count of the images to be read. It's usually equal to the user's batch size.
     /// The loader will repeat images if necessary to be able to have images available in multiples of the load_batch_count,
     /// for instance if there are 10 images in the dataset and _batch_count is 3, the loader repeats 2 images as if there are 12 images available.
@@ -104,10 +101,10 @@ private:
     void read_image_names();
     uint32_t DecodeFlag(uint32_t rec) {return (rec >> 29U) & 7U; };
     uint32_t DecodeLength(uint32_t rec) {return rec & ((1U << 29U) - 1U); };
-    std::vector<std::tuple<int64_t, int64_t, size_t>> _indices;
+    std::vector<std::tuple<int64_t, int64_t>> _indices;// used to store seek position and record size for a particular record.
     std::ifstream _file_contents;
     std::vector<size_t> _file_offsets;
-    std::vector<size_t> _temp;
+    std::vector<size_t> _index_list;
     size_t _index, _offset, _file_index;
     const uint8_t* _data;
     const uint32_t _kMagic = 0xced7230a;

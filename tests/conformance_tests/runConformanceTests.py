@@ -66,7 +66,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--directory', 	type=str, default='~/mivisionx-conformance',
                     help='conformance build directory - optional (default:~/)')
 parser.add_argument('--backend_type',       type=str, default='ALL',
-                    help='Backend type - optional (default:HOST [options:ALL/HOST/HIP/OCL])')
+                    help='Backend type - optional (default:ALL [options:ALL/HOST/HIP/OCL])')
 args = parser.parse_args()
 setupDir = args.directory
 backendType = args.backend_type

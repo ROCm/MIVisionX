@@ -207,7 +207,5 @@ def image_slice(*inputs,file_root='',annotations_file='',shard_id = 0, num_shard
             "aspect_ratio": None,
             "x_drift_factor": None,
             "y_drift_factor": None}
-                #         obj.rali_c_func_call(handle)
-                # output_image = b.COCO_ImageDecoderSliceShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
         image_decoder_slice = b.COCO_ImageDecoderSliceShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (image_decoder_slice)

@@ -252,6 +252,7 @@ namespace rali{
         m.def("getImageId", &wrapper_image_id);
         m.def("getImageNameLen",&wrapper_image_name_length);
         m.def("getStatus",&raliGetStatus);
+        m.def("setOutputImages",&raliSetOutputs);
         m.def("labelReader",&raliCreateLabelReader);
         m.def("TFReader",&raliCreateTFReader);
         m.def("TFReaderDetection",&raliCreateTFReaderDetection);

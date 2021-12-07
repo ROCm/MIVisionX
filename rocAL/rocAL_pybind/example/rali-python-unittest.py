@@ -28,7 +28,7 @@ class HybridTrainPipe(Pipeline):
                 #self.resizeCrop = ops.CropResize(crop, crop)
                 self.exposure = ops.Exposure(exposure = 0.2)
                 self.rotate = ops.Rotate()
-                self.brightness = ops.Brightness()                
+                self.brightness = ops.Brightness()
                 self.gamma = ops.GammaCorrection()
                 self.contrast = ops.Contrast()
                 self.flip = ops.Flip()
@@ -42,7 +42,6 @@ class HybridTrainPipe(Pipeline):
                 self.snow = ops.Snow(snow=0.5)
                 self.rain = ops.Rain(rain=0.5)
                 self.fog = ops.Fog()
-                
                 self.pixelate = ops.Pixelate()
                 self.exposure = ops.Exposure()
                 self.hue = ops.Hue()
@@ -66,11 +65,11 @@ class HybridTrainPipe(Pipeline):
                 images = self.decode(self.jpegs)
                 if self.aug_num != 0:
                     images = self.resize(images)
-                
-                
+
+
                 if self.aug_num == 0:
                     output = self.resize(images)
-                elif self.aug_num == 1:        
+                elif self.aug_num == 1:
                     output = self.resize(images)
                 elif self.aug_num == 2:
                     output = self.rotate(images)
@@ -122,9 +121,9 @@ class HybridTrainPipe(Pipeline):
                     output = self.colortwist(images)
                 elif self.aug_num == 25:
                     output = self.cropMirrorNormalize(images)
-                
-                
-                
+
+
+
                 return [output, self.labels]
 
 def main():
@@ -152,4 +151,4 @@ def main():
                 cv2.imwrite(output_img, cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
 
 if __name__ == '__main__':
-    main() 
+    main()

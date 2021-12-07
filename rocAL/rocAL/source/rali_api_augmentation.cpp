@@ -161,7 +161,7 @@ raliRotateFixed(
         unsigned dest_width,
         unsigned dest_height)
 {
-    
+
     Image* output = nullptr;
     if ((p_context == nullptr) || (p_input == nullptr)) {
         ERR("Invalid RALI context or invalid input image")
@@ -1647,7 +1647,7 @@ RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, 
         context->capture_error(e.what());
         ERR(e.what())
     }
-    return input; // Changed to input----------------IMPORTANT
+    return output;
 }
 
 

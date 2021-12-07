@@ -91,6 +91,7 @@ if os.path.exists(cts_dir):
     print("\nMIVisionX Conformance Tests: Removing Previous Logs -- "+cts_dir+"\n")
 
 # Build MIVisionX OpenCL & HIP
+os.system('(mkdir -p '+cts_dir+')')
 os.system('(cd '+cts_dir+'; mkdir -p build-opencl; mkdir -p build-hip)')
 os.system('(cd '+cts_dir+'/build-opencl; cmake '+scriptPath+'/../../; make -j8)')
 os.system('(cd '+cts_dir+'/build-hip; cmake -DBACKEND=HIP '+scriptPath+'/../../; make -j8)')

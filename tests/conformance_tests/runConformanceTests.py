@@ -72,7 +72,7 @@ setupDir = args.directory
 backendType = args.backend_type
 
 if backendType not in ('ALL', 'HOST', 'HIP', 'OCL'):
-    print("ERROR: OpenVX Backends supported - ALL or HOST or HIP or OCL]")
+    print("ERROR: OpenVX Backends supported - [ALL or HOST or HIP or OCL]")
     exit()
 
 # Directory for Conformance

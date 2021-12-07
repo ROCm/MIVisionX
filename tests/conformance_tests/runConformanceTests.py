@@ -75,10 +75,10 @@ if backendType not in ('HOST', 'HIP', 'OCL'):
     exit()
 
 # Directory for Conformance
-if setupDir == '~/mivisionx-deps':
+if setupDir == '~/mivisionx-conformance':
     setupDir_cts = setupDir
 else:
-    setupDir_cts = setupDir+'/mivisionx-deps'
+    setupDir_cts = setupDir+'/mivisionx-conformance'
 
 # cts directory path
 cts_dir = os.path.expanduser(setupDir_cts)

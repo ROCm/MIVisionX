@@ -122,6 +122,15 @@ private:
 
 static enum AVPixelFormat hwPixelFormat;
 
+static inline bool exists (const char *name) {
+    if (FILE *file = fopen(name, "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }
+}
+
 static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx, int hw_device_id)
 {
     int err = 0;
@@ -135,7 +144,9 @@ static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, 
         }
         pdevice = device;
     }
-    const char* device_name = pdevice ? pdevice : "'default'";
+    // check  if the device file exists in the system
+
+    const char* device_name = pdevice && exists(pdevice) ? pdevice : NULL;
     if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, pdevice, NULL, 0)) < 0) {
         return err;
     }

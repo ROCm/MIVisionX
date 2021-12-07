@@ -194,5 +194,6 @@ with open(reportFilename, 'w') as f:
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)
+os.system('(cp '+reportFileDir+' '+cts_dir+')')
 print("\nSTATUS: Output Report File - "+reportFileDir)
 print("\nsystem_info.py - V:"+__version__+"\n")

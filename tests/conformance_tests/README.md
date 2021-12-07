@@ -1,6 +1,6 @@
 # MIVisionX - OpenVX 1.3 Conformance Test
 
-## Script to run neural network tests
+## Script to run tests
 
 ```
 python runConformanceTests.py  --help

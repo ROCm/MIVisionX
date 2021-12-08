@@ -131,23 +131,38 @@ static inline bool exists (const char *name) {
     }
 }
 
+static inline int num_hw_devices() {
+    char device[128] = "";
+    int num_hw_devices = 0;
+    for (int i=0; i<10000; i++){
+        snprintf(device, sizeof(device), "/dev/dri/renderD%d", 128 + i);
+        // check  if the device file exists in the system: todo:: is there any other way to enumerate the device
+        if (exists(device))
+            num_hw_devices++;
+        else
+            break;
+    }
+    return num_hw_devices;
+}
+
 static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx, int hw_device_id)
 {
     int err = 0;
     char device[128] = "";
     char* pdevice = NULL;
+    int num_devices = 1; // default;
+    if (type == AV_HWDEVICE_TYPE_VAAPI)
+      num_devices = num_hw_devices();
     if (hw_device_id >= 0 && hw_device_id < 10000) {
         if (type == AV_HWDEVICE_TYPE_VAAPI) {
-          snprintf(device, sizeof(device), "/dev/dri/renderD%d", 128 + hw_device_id);
+          snprintf(device, sizeof(device), "/dev/dri/renderD%d", (128 + (hw_device_id % num_devices)));
         }else {
           snprintf(device, sizeof(device), "%d", hw_device_id);
         }
         pdevice = device;
     }
-    // check  if the device file exists in the system
-
-    const char* device_name = pdevice && exists(pdevice) ? pdevice : NULL;
-    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, pdevice, NULL, 0)) < 0) {
+    const char* device_name = pdevice? pdevice : NULL;
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, device_name, NULL, 0)) < 0) {
         return err;
     }
     printf("VAAPI device created for device %s\n", device_name);

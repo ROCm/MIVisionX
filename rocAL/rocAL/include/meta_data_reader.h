@@ -32,6 +32,7 @@ enum class MetaDataReaderType
     FOLDER_BASED_LABEL_READER = 0,// Used for imagenet-like dataset
     TEXT_FILE_META_DATA_READER,// Used when metadata is stored in a text file
     COCO_META_DATA_READER,
+    COCO_KEY_POINTS_META_DATA_READER,
     CIFAR10_META_DATA_READER,    // meta_data for cifar10 data which is store as part of bin file
     TF_META_DATA_READER,
     CAFFE_META_DATA_READER,
@@ -44,7 +45,8 @@ enum class MetaDataReaderType
 enum class MetaDataType
 {
     Label,
-    BoundingBox
+    BoundingBox,
+    KeyPoints
 };
 
 struct MetaDataConfig
@@ -55,13 +57,15 @@ private:
     std::string _path;
     std::map<std::string, std::string> _feature_key_map; 
     std::string _file_prefix;           // if we want to read only filenames with prefix (needed for cifar10 meta data)
+    bool _keypoint;
+    int _out_img_width;
+    int _out_img_height;
     unsigned _sequence_length;
     unsigned _frame_step;
     unsigned _frame_stride;
-
 public:
-    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path, const std::map<std::string, std::string> &feature_key_map=std::map<std::string, std::string>(), const std::string file_prefix=std::string(), const unsigned& sequence_length = 3, const unsigned& frame_step = 3, const unsigned& frame_stride = 1)
-                    :_type(type), _reader_type(reader_type),  _path(path), _feature_key_map(feature_key_map), _file_prefix(file_prefix), _sequence_length(sequence_length), _frame_step(frame_step), _frame_stride(frame_stride){}
+    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path, const std::map<std::string, std::string> &feature_key_map=std::map<std::string, std::string>(), const std::string file_prefix=std::string(), const bool keypoint = 0, const int out_img_width = 288, const int out_img_height = 384, const unsigned& sequence_length = 3, const unsigned& frame_step = 3, const unsigned& frame_stride = 1)
+                    :_type(type), _reader_type(reader_type),  _path(path), _feature_key_map(feature_key_map), _file_prefix(file_prefix), _keypoint(keypoint),_out_img_width(out_img_width),_out_img_height(out_img_height),_sequence_length(sequence_length), _frame_step(frame_step), _frame_stride(frame_stride){}
     MetaDataConfig() = delete;
     MetaDataType type() const { return _type; }
     MetaDataReaderType reader_type() const { return _reader_type; }
@@ -71,6 +75,9 @@ public:
     unsigned sequence_length() const { return _sequence_length; }
     unsigned frame_step() const { return _frame_step; }
     unsigned frame_stride() const { return _frame_stride; }
+    bool keypoint() const { return _keypoint; }
+    int out_img_width() const { return _out_img_width; }
+    int out_img_height() const { return _out_img_height; }
 };
 
 

@@ -77,13 +77,21 @@ RALI_API_CALL raliCreateVideoLabelReader(RaliContext p_context, const char* sour
 }
 
 RaliMetaData
-RALI_API_CALL raliCreateCOCOReader(RaliContext p_context, const char* source_path, bool is_output){
+RALI_API_CALL raliCreateCOCOReader(RaliContext p_context, const char* source_path, bool is_output, bool keypoint, float sigma , int pose_output_width , int pose_output_height){
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateCOCOReader")
     auto context = static_cast<Context*>(p_context);
 
-    return context->master_graph->create_coco_meta_data_reader(source_path, is_output);
+    return context->master_graph->create_coco_meta_data_reader(source_path, is_output, MetaDataReaderType::COCO_META_DATA_READER,  MetaDataType::BoundingBox, keypoint, sigma , pose_output_width , pose_output_height);
+}
 
+RaliMetaData
+RALI_API_CALL raliCreateCOCOReaderKeyPoints(RaliContext p_context, const char* source_path, bool is_output, bool keypoint, float sigma , int pose_output_width , int pose_output_height){
+    if (!p_context)
+        THROW("Invalid rali context passed to raliCreateCOCOReaderKeyPoints")
+    auto context = static_cast<Context*>(p_context);
+
+    return context->master_graph->create_coco_meta_data_reader(source_path, is_output, MetaDataReaderType::COCO_KEY_POINTS_META_DATA_READER,  MetaDataType::KeyPoints, keypoint, sigma , pose_output_width , pose_output_height);
 }
 
 RaliMetaData
@@ -421,4 +429,53 @@ RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_
         memcpy(temp_labels_buf, meta_data.second->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         memcpy(temp_bbox_buf, meta_data.second->get_bb_cords_batch()[i].data(), sizeof(BoundingBoxCord) * bb_count);
     }
+}
+
+void
+RALI_API_CALL raliGetJointsDataPtr(RaliContext p_context, RaliJointsData **joints_data)
+{  
+    if (!p_context)
+        THROW("Invalid rali context passed to raliGetBoundingBoxCords")
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_joints_data_batch().center_batch.size();
+
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    if(!meta_data.second)
+    {
+        WRN("No label has been loaded for this output image")
+        return;
+    }
+
+    *joints_data = (RaliJointsData *)(&(meta_data.second->get_joints_data_batch()));
+}
+
+
+void
+RALI_API_CALL raliGetJointsData(RaliContext p_context, RaliJointsData *joints_data)
+{  
+    if (!p_context)
+        THROW("Invalid rali context passed to raliGetBoundingBoxCords")
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_joints_data_batch().image_id_batch.size();
+
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    if(!meta_data.second)
+    {
+        WRN("No label has been loaded for this output image")
+        return;
+    }
+
+    joints_data->image_id_batch = meta_data.second->get_joints_data_batch().image_id_batch;
+    joints_data->annotation_id_batch = meta_data.second->get_joints_data_batch().annotation_id_batch;
+    joints_data->image_path_batch = meta_data.second->get_joints_data_batch().image_path_batch;
+    joints_data->center_batch = meta_data.second->get_joints_data_batch().center_batch;
+    joints_data->scale_batch = meta_data.second->get_joints_data_batch().scale_batch;
+    joints_data->joints_batch = meta_data.second->get_joints_data_batch().joints_batch;
+    joints_data->joints_visibility_batch = meta_data.second->get_joints_data_batch().joints_visibility_batch;
+    joints_data->score_batch = meta_data.second->get_joints_data_batch().score_batch;
+    joints_data->rotation_batch = meta_data.second->get_joints_data_batch().rotation_batch;
 }

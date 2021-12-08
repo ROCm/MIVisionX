@@ -927,8 +927,9 @@ void MasterGraph::output_routine()
                         node->set_meta_data(_augmented_meta_data);
                     }
                 }
-
+        
                 update_node_parameters();
+        
                 if(_augmented_meta_data)
                 {
                     if (_meta_data_graph)
@@ -939,7 +940,9 @@ void MasterGraph::output_routine()
                         }
                         else
                         {
+                            std::cout<<"update meta data begin"<<std::endl;
                             _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
+                            std::cout<<"update meta data end"<<std::endl;
                         }
                         _meta_data_graph->process(_augmented_meta_data);
                     }
@@ -1126,11 +1129,12 @@ void MasterGraph::stop_processing()
         _output_thread.join();
 }
 
-MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output)
+MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type , MetaDataType label_type, bool keypoint, float sigma = 0.0, int pose_output_width = 0, int pose_output_height = 0)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, source_path);
+    
+    MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string(), keypoint, pose_output_width, pose_output_height);
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);

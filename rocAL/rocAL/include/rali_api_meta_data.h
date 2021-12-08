@@ -61,7 +61,13 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateTFReaderDetection(RaliContext ra
 /// \param rali_context
 /// \param source_path path to the coco json file
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
-extern "C" RaliMetaData RALI_API_CALL raliCreateCOCOReader(RaliContext rali_context, const char* source_path, bool is_output);
+extern "C" RaliMetaData RALI_API_CALL raliCreateCOCOReader(RaliContext rali_context, const char* source_path, bool is_output, bool keypoint = false, float sigma = 0.0, int pose_output_width = 0, int pose_output_height = 0);
+
+///
+/// \param rali_context
+/// \param source_path path to the coco json file
+/// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
+extern "C" RaliMetaData RALI_API_CALL raliCreateCOCOReaderKeyPoints(RaliContext rali_context, const char* source_path, bool is_output, bool keypoint = false, float sigma = 0.0, int pose_output_width = 0, int pose_output_height = 0);
 
 ///
 /// \param rali_context
@@ -166,5 +172,15 @@ extern "C" void RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_contex
 /// \param rali_context
 /// \param buf The user's buffer that will be filled with image id info for the images in the output batch. 
 extern "C" void RALI_API_CALL raliGetImageId(RaliContext p_context,  int* buf);
+
+//
+/// \param rali_context
+/// \param joints_data The user's buffer that will be filled with joints_data values
+extern "C" void RALI_API_CALL raliGetJointsData(RaliContext p_context, RaliJointsData *joints_data);
+
+//
+/// \param rali_context
+/// \param joints_data The user's RaliJointsData pointer that will be pointed to JointsDataBatch pointer
+extern "C" void RALI_API_CALL raliGetJointsDataPtr(RaliContext p_context, RaliJointsData **joints_data);
 
 #endif //MIVISIONX_RALI_API_META_DATA_H

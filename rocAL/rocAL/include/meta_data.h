@@ -27,7 +27,12 @@ THE SOFTWARE.
 #include <memory>
 #include "commons.h"
 
-
+//Defined constant since needed in reader and meta nodes
+#define NUMBER_OF_JOINTS 17
+#define NUMBER_OF_JOINTS_HALFBODY 8
+#define PIXEL_STD  200
+#define SCALE_CONSTANT_CS 1.25
+#define SCALE_CONSTANT_HALF_BODY 1.5
 typedef struct BoundingBoxCord_
 { 
   float l; float t; float r; float b;
@@ -43,6 +48,38 @@ typedef  std::vector<int> BoundingBoxLabels;
 typedef  struct { int w; int h; } ImgSize;
 typedef  std::vector<ImgSize> ImgSizes;
 
+typedef std::vector<int> ImageIDBatch,AnnotationIDBatch;
+typedef std::vector<std::string> ImagePathBatch;
+typedef std::vector<float> Joint,JointVisibility,Center,Scale,ScoreBatch,RotationBatch;
+typedef std::vector<std::vector<float>> Joints,JointsVisibility, CenterBatch, ScaleBatch;
+typedef std::vector<std::vector<std::vector<float>>> JointsBatch, JointsVisibilityBatch;
+
+typedef struct
+{
+    int image_id;
+    int annotation_id;
+    std::string image_path;
+    Center center;
+    Scale scale;
+    Joints joints;
+    JointsVisibility joints_visibility;
+    float score;
+    float rotation;
+}JointsData;
+
+typedef struct
+{
+    ImageIDBatch image_id_batch;
+    AnnotationIDBatch annotation_id_batch;
+    ImagePathBatch image_path_batch;
+    CenterBatch center_batch;
+    ScaleBatch scale_batch;
+    JointsBatch joints_batch;
+    JointsVisibilityBatch joints_visibility_batch;
+    ScoreBatch score_batch;
+    RotationBatch rotation_batch;
+}JointsDataBatch;
+
 struct MetaData
 {
     int& get_label() { return _label_id; }
@@ -50,11 +87,13 @@ struct MetaData
     BoundingBoxCords_xcycwh& get_bb_cords_xcycwh() { return _bb_cords_xcycwh; }
     BoundingBoxLabels& get_bb_labels() { return _bb_label_ids; }
     ImgSizes& get_img_sizes() {return _img_sizes; }
+    JointsData& get_joints_data(){ return _joints_data; }
 protected:
     BoundingBoxCords _bb_cords = {}; // For bb use
     BoundingBoxCords_xcycwh _bb_cords_xcycwh = {}; // For bb use
     BoundingBoxLabels _bb_label_ids = {};// For bb use
     ImgSizes _img_sizes = {};
+    JointsData _joints_data = {};
     int _label_id = -1; // For label use only
 };
 
@@ -95,6 +134,17 @@ struct BoundingBox : public MetaData
     void set_img_sizes(ImgSizes img_sizes) { _img_sizes =std::move(img_sizes); }
 };
 
+struct KeyPoint : public MetaData
+{
+    KeyPoint()= default;
+    KeyPoint(ImgSizes img_sizes, JointsData joints_data)
+    {
+        _img_sizes = std::move(img_sizes);
+        _joints_data = std::move(joints_data);
+    }
+    void set_joints_data(JointsData joints_data) { _joints_data = std::move(joints_data); }
+};
+
 struct MetaDataBatch
 {
     virtual ~MetaDataBatch() = default;
@@ -113,12 +163,14 @@ struct MetaDataBatch
     std::vector<BoundingBoxCords_xcycwh>& get_bb_cords_batch_xcycxwh() { return _bb_cords_xcycwh; }
     std::vector<BoundingBoxLabels>& get_bb_labels_batch() { return _bb_label_ids; }
     std::vector<ImgSizes>& get_img_sizes_batch() { return _img_sizes; }
+    JointsDataBatch & get_joints_data_batch(){return _joints_data; }
 protected:
     std::vector<int> _label_id = {}; // For label use only
     std::vector<BoundingBoxCords> _bb_cords = {};
     std::vector<BoundingBoxCords_xcycwh> _bb_cords_xcycwh = {};
     std::vector<BoundingBoxLabels> _bb_label_ids = {};
     std::vector<ImgSizes> _img_sizes = {};
+    JointsDataBatch _joints_data = {};
 };
 
 struct LabelBatch : public MetaDataBatch
@@ -181,7 +233,51 @@ struct BoundingBoxBatch: public MetaDataBatch
         return std::make_shared<BoundingBoxBatch>(*this);
     }
 };
+
+struct KeyPointBatch : public MetaDataBatch
+{
+    void clear() override
+    {
+        _img_sizes.clear();
+        _joints_data = {};
+    }
+    MetaDataBatch&  operator += (MetaDataBatch& other) override
+    {
+        _img_sizes.insert(_img_sizes.end(),other.get_img_sizes_batch().begin(), other.get_img_sizes_batch().end());
+        _joints_data.image_id_batch.insert(_joints_data.image_id_batch.end(),other.get_joints_data_batch().image_id_batch.begin(),other.get_joints_data_batch().image_id_batch.end());
+        _joints_data.annotation_id_batch.insert(_joints_data.annotation_id_batch.end(),other.get_joints_data_batch().annotation_id_batch.begin(),other.get_joints_data_batch().annotation_id_batch.end());
+        _joints_data.center_batch.insert(_joints_data.center_batch.end(),other.get_joints_data_batch().center_batch.begin(),other.get_joints_data_batch().center_batch.end());
+        _joints_data.scale_batch.insert(_joints_data.scale_batch.end(),other.get_joints_data_batch().scale_batch.begin(),other.get_joints_data_batch().scale_batch.end());
+        _joints_data.joints_batch.insert(_joints_data.joints_batch.end(),other.get_joints_data_batch().joints_batch.begin(),other.get_joints_data_batch().joints_batch.end());
+        _joints_data.joints_visibility_batch.insert(_joints_data.joints_visibility_batch.end(),other.get_joints_data_batch().joints_visibility_batch.begin(),other.get_joints_data_batch().joints_visibility_batch.end());
+        _joints_data.score_batch.insert(_joints_data.score_batch.end(),other.get_joints_data_batch().score_batch.begin(),other.get_joints_data_batch().score_batch.end());
+        _joints_data.rotation_batch.insert(_joints_data.rotation_batch.end(),other.get_joints_data_batch().rotation_batch.begin(),other.get_joints_data_batch().rotation_batch.end());
+        return *this;
+    }
+    void resize(int batch_size) override
+    {
+        _joints_data.image_id_batch.resize(batch_size);
+        _joints_data.annotation_id_batch.resize(batch_size);
+        _joints_data.center_batch.resize(batch_size);
+        _joints_data.scale_batch.resize(batch_size);
+        _joints_data.joints_batch.resize(batch_size);
+        _joints_data.joints_visibility_batch.resize(batch_size);
+        _joints_data.score_batch.resize(batch_size);
+        _joints_data.rotation_batch.resize(batch_size);
+    }
+    int size() override
+    {
+        return _joints_data.image_id_batch.size();
+    }
+    std::shared_ptr<MetaDataBatch> clone() override
+    {
+        return std::make_shared<KeyPointBatch>(*this);
+    }
+};
+
 using ImageNameBatch = std::vector<std::string>;
 using pMetaData = std::shared_ptr<Label>;
 using pMetaDataBox = std::shared_ptr<BoundingBox>;
+using pMetaDataKeyPoint = std::shared_ptr<KeyPoint>;
 using pMetaDataBatch = std::shared_ptr<MetaDataBatch>;
+

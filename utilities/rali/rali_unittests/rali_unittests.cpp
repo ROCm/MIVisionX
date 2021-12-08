@@ -39,7 +39,7 @@ using namespace cv;
 //#define PARTIAL_DECODE
 // #define COCO_READER
 // #define COCO_READER_PARTIAL
-#define COCO_READER_KEYPOINTS
+// #define COCO_READER_KEYPOINTS
 // #define TF_READER
 // #define TF_READER_DETECTION
 // #define CAFFE2_READER
@@ -152,7 +152,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #endif
 
 #if defined COCO_READER || defined COCO_READER_PARTIAL
-    const char *json_path = "/media/datasets/COCO/coco_10_img_person/annotations/person_keypoints_val2017.json";
+    const char *json_path = "";
 
     if (strcmp(json_path, "") == 0)
     {
@@ -162,7 +162,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 
     meta_data = raliCreateCOCOReader(handle, json_path, true);
 #elif defined COCO_READER_KEYPOINTS
-    const char *json_path = "/media/sampath/datasets/COCO/coco_10_img_person/annotations/person_keypoints_val2017.json";
+    const char *json_path = "";
 
     if (strcmp(json_path, "") == 0)
     {
@@ -659,8 +659,10 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         index++;
         if (raliRun(handle) != 0)
             break;
-#if defined COCO_READER || defined COCO_READER_PARTIAL || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
+        int label_id[inputBatchSize];
+        int numOfClasses = 0;
         int image_name_length[inputBatchSize];
+#if defined COCO_READER || defined COCO_READER_PARTIAL || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
         // Print the bb cords and label if keypoint flag is false
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];
@@ -708,8 +710,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
             }
         }
 #else
-        int label_id[inputBatchSize];
-        int numOfClasses = 0;
         raliGetImageLabels(handle, label_id);
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];

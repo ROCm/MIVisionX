@@ -27,11 +27,9 @@ class RALIGenericImageIterator(object):
             print("Decode   time ::", timing_info.decode_time)
             print("Process  time ::", timing_info.process_time)
             print("Transfer time ::", timing_info.transfer_time)
-            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
-            self.reset()
             raise StopIteration
 
         self.loader.copyImage(self.out_image)
@@ -95,12 +93,10 @@ class RALIGenericIterator(object):
             print("Decode   time ::",timing_info.decode_time)
             print("Process  time ::",timing_info.process_time)
             print("Transfer time ::",timing_info.transfer_time)
-            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
             print("loader.run() & reset")
-            self.reset()
             raise StopIteration
 
         if(types.NCHW == self.tensor_format):

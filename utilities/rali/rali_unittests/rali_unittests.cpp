@@ -690,23 +690,23 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         }
 #elif defined COCO_READER_KEYPOINTS
         int size = inputBatchSize;
-        // RaliJointsData *joints_data;
-        // raliGetJointsDataPtr(handle, &joints_data);
-        // for (int i = 0; i < size; i++)
-        // {
-        //     std::cout << "ImageID: " << joints_data->image_id_batch[i] << std::endl;
-        //     std::cout << "AnnotationID: " << joints_data->annotation_id_batch[i] << std::endl;
-        //     std::cout << "ImagePath: " << joints_data->image_path_batch[i] << std::endl;
-        //     std::cout << "Center: " << joints_data->center_batch[i][0] << " " << joints_data->center_batch[i][1] << std::endl;
-        //     std::cout << "Scale: " << joints_data->scale_batch[i][0] << " " << joints_data->scale_batch[i][1] << std::endl;
-        //     std::cout << "Score: " << joints_data->score_batch[i] << std::endl;
-        //     std::cout << "Rotation: " << joints_data->rotation_batch[i] << std::endl;
+        RaliJointsData *joints_data;
+        raliGetJointsDataPtr(handle, &joints_data);
+        for (int i = 0; i < size; i++)
+        {
+            std::cout << "ImageID: " << joints_data->image_id_batch[i] << std::endl;
+            std::cout << "AnnotationID: " << joints_data->annotation_id_batch[i] << std::endl;
+            std::cout << "ImagePath: " << joints_data->image_path_batch[i] << std::endl;
+            std::cout << "Center: " << joints_data->center_batch[i][0] << " " << joints_data->center_batch[i][1] << std::endl;
+            std::cout << "Scale: " << joints_data->scale_batch[i][0] << " " << joints_data->scale_batch[i][1] << std::endl;
+            std::cout << "Score: " << joints_data->score_batch[i] << std::endl;
+            std::cout << "Rotation: " << joints_data->rotation_batch[i] << std::endl;
 
-        //     for (int k = 0; k < 17; k++)
-        //     {
-        //         std::cout << "x : " << joints_data->joints_batch[i][k][0] << " , y : " << joints_data->joints_batch[i][k][1] << " , v : " << joints_data->joints_visibility_batch[i][k][0] << std::endl;
-        //     }
-        // }
+            for (int k = 0; k < 17; k++)
+            {
+                std::cout << "x : " << joints_data->joints_batch[i][k][0] << " , y : " << joints_data->joints_batch[i][k][1] << " , v : " << joints_data->joints_visibility_batch[i][k][0] << std::endl;
+            }
+        }
 #else
         int label_id[inputBatchSize];
         int numOfClasses = 0;

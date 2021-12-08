@@ -240,6 +240,8 @@ struct KeyPointBatch : public MetaDataBatch
     {
         _img_sizes.clear();
         _joints_data = {};
+        _bb_cords.clear();
+        _bb_label_ids.clear();
     }
     MetaDataBatch&  operator += (MetaDataBatch& other) override
     {
@@ -264,6 +266,8 @@ struct KeyPointBatch : public MetaDataBatch
         _joints_data.joints_visibility_batch.resize(batch_size);
         _joints_data.score_batch.resize(batch_size);
         _joints_data.rotation_batch.resize(batch_size);
+        _bb_cords.resize(batch_size);
+        _bb_label_ids.resize(batch_size);
     }
     int size() override
     {

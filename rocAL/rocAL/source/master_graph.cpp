@@ -940,9 +940,10 @@ void MasterGraph::output_routine()
                         }
                         else
                         {
-                            std::cout<<"update meta data begin"<<std::endl;
+                            if(!_is_keypoint)
+                            {
                             _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
-                            std::cout<<"update meta data end"<<std::endl;
+                            }
                         }
                         _meta_data_graph->process(_augmented_meta_data);
                     }
@@ -1139,6 +1140,10 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
+
+    if(keypoint)
+        MasterGraph::set_keypoint_pose();
+
     if(is_output)
     {
         if (_augmented_meta_data)
@@ -1222,6 +1227,11 @@ void MasterGraph::box_encoder(std::vector<float> &anchors, float criteria, const
     _means = means;
     _stds = stds;
 
+}
+
+void MasterGraph::set_keypoint_pose()
+{
+    _is_keypoint = true;
 }
 
 MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)

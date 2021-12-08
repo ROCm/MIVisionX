@@ -73,7 +73,7 @@ class RALIGenericIteratorDetection(object):
             self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        
+
         if(self.loader._name == "TFRecordReaderDetection"):
             self.bbox_list =[]
             self.label_list=[]
@@ -133,12 +133,12 @@ class RALIGenericIteratorDetection(object):
             else:
                 self.labels = np.zeros((self.bs),dtype = "int32")
                 self.loader.getImageLabels(self.labels)
-        
+
             if self.tensor_dtype == types.FLOAT:
                 return self.out.astype(np.float32), self.labels
             elif self.tensor_dtype == types.TensorDataType.FLOAT16:
                 return self.out.astype(np.float16), self.labels
-        
+
     def reset(self):
         b.raliResetLoaders(self.loader._handle)
 
@@ -176,7 +176,7 @@ class RALI_iterator(RALIGenericImageIterator):
     """
     RALI iterator for classification tasks for PyTorch. It returns 2 outputs
     (data and label) in the form of PyTorch's Tensor.
-   
+
     """
     def __init__(self,
                  pipelines,

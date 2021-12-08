@@ -136,7 +136,7 @@ static inline int num_hw_devices() {
     int num_hw_devices = 0;
     for (int i=0; i<10000; i++){
         snprintf(device, sizeof(device), "/dev/dri/renderD%d", 128 + i);
-        // check  if the device file exists in the system: todo:: is there any other way to enumerate the device
+        // check  if the device file exists in the system: todo:: is there any other way to enumerate the device?
         if (exists(device))
             num_hw_devices++;
         else
@@ -165,7 +165,7 @@ static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, 
     if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, device_name, NULL, 0)) < 0) {
         return err;
     }
-    printf("VAAPI device created for device %s\n", device_name);
+    printf("VAAPI device created for device %s and stream %d\n", device_name, hw_device_id);
     ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
 
     return err;
@@ -413,7 +413,7 @@ vx_status CLoomIoMediaDecoder::Initialize()
                 vxAddLogEntry((vx_reference)node, status, "ERROR: vaapi is not supported for this device\n");
                 return status;
             }
-            printf("Found vaapi device for %d\n", mediaIndex);
+            //printf("Found vaapi device for %d\n", mediaIndex);
         }
         int err = avformat_open_input(&formatContext, mediaFileName, inputFormat, nullptr);
         if (err) {

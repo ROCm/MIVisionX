@@ -83,6 +83,7 @@ else:
 
 # cts directory path
 cts_dir = os.path.expanduser(setupDir_cts)
+cts_dir = os.path.abspath(cts_dir)
 scriptPath = os.path.dirname(os.path.realpath(__file__))
 
 # clean old conformance
@@ -201,7 +202,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(openvx_hip_lib, f)
     f.write("\n")
 
-    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2021 -- system_info.py V-"+__version__+"**\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2021 -- runConformanceTests.py V-"+__version__+"**\n")
 
 # system report file
 reportFileDir = os.path.abspath(reportFilename)

@@ -29,7 +29,7 @@ The mv_compile utility generates deployment library, header files, and .cpp file
 mv_compile   --model 	        <model_name: name of the trained model with path> 		[required]
 	     --install_folder   <install_folder:  the location for compiled model> 		[required]
 	     --input_dims 	<input_dims: n,c,h,w - batch size, channels, height, width> 	[required]
-	     --backend 	        <backend: name of the backend for compilation> 	  		[optional - default:OpenVX_Rocm_OpenCL]
+	     --backend 	        <backend: name of the backend for compilation> 	  		[optional - default:OpenVX_Rocm_GPU]
 	     --fuse_cba 	<fuse_cba: enable or disable Convolution_bias_activation fuse mode (0/1)> [optional - default: 0]
 	     --quant_mode       <quant_mode: fp32/fp16 - quantization_mode for the model: if enabled the model and weights would be converted [optional -default: fp32]
 ```
@@ -91,11 +91,11 @@ Usage: mvobjdetect <options>
 	<output-data-file/- >: for video all frames will be output to single file OR '-'for no output	[required]
 	--install_folder <install_folder> : the location for compiled module                         	[required]
 	--bb <channels, threshold_c threshold_nms> bounding box detection parameters                 	[required]
-	--frames <#num/eof> : num of frames to process inference         	[optional: default till eof]
-	--backend <backend>: is the name of the backend for compilation  	[optional: default OpenVX_Rocm_OpenCL]
+	--frames <#num/eof/loop> : num of frames to process inference         	[optional: default till eof, loop: loop the video]
+	--backend <backend>: is the name of the backend for compilation  	[optional: default OpenVX_Rocm_GPU]
 	--argmax <topK> : give argmax output in vec<label,prob>          	[optional: default no argmax]
 	--t <num of interations> to run for performance                  	[optional: default 1]
-	--hwdec :use hwaccel for decoding                                	[optional: default cpu decoding]
+	--hwdec <1/0>:use hwaccel for decoding                            [optional: default cpu decoding, 1:hwdec 0:cpu dec]
 	--label <labels.txt>                                             	[optional: default use yolo_v2 20 classes]
 	--v :if specified visualize the result on the input image        	[optional: default no visualization]
 

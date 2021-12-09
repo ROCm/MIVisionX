@@ -63,4 +63,7 @@ int HipExec_Prior_Box_layer(hipStream_t stream, dim3 globalThreads, dim3 localTh
 int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, unsigned char *out, uint out_offset, size_t output_dim3,
     unsigned char *in_mem[], size_t *in_offset, size_t *ip_size_per_batch, int axis, size_t work_items, int num_inputs, bool batchsz1, vx_enum type);
 
+int HipExec_Argmax_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, unsigned char *i0_buf, uint i0_offset, uint4 i0_stride, uint4 i0_dims,
+    unsigned char *o0_buf, uint o0_offset, uint4 o0_stride, uint o0_image_stride, vx_enum output_data_type, uint top_k, vx_enum output_obj_type);
+
 #endif //NN_HIP_HOST_DECLS_H

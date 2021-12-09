@@ -118,16 +118,33 @@ set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-find_package(OpenCL QUIET)
-find_package(OpenCV QUIET)
-
-if(OpenCL_FOUND)
-    message("-- Using OpenCL Library -- ${OpenCL_LIBRARIES}")
+#find the OPENVX backend type
+set(OPENVX_BACKEND_OPENCL_FOUND 0)
+set(OPENVX_BACKEND_HIP_FOUND 0)
+if(EXISTS ${ROCM_PATH}/mivisionx/include/openvx_backend.h)
+    file(READ ${ROCM_PATH}/mivisionx/include/openvx_backend.h OPENVX_BACKEND_FILE)
+    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
 else()
-    message(FATAL_ERROR "OpenCL Required for NN Flow")
+    message("-- ${Red}WARNING: ${ROCM_PATH}/mivisionx/include/openvx_backend.h file Not Found. please install the latest mivisionx! ${ColourReset}")
 endif()
 
-include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
+find_package(OpenCV QUIET)
+
+if (OPENVX_BACKEND_OPENCL_FOUND)
+    find_package(OpenCL QUIET)
+
+    if(OpenCL_FOUND)
+        message("-- Using OpenCL Library -- ${OpenCL_LIBRARIES}")
+    else()
+        message(FATAL_ERROR "OpenCL Required for NN Flow")
+    endif()
+
+    include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
+endif()
+
 include_directories(${ROCM_PATH}/mivisionx/include)
 
 link_directories(${ROCM_PATH}/mivisionx/lib)
@@ -136,7 +153,11 @@ list(APPEND SOURCES annmodule.cpp)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
 
-target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
+if (OPENVX_BACKEND_OPENCL_FOUND)
+    target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
+else()
+    target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread)
+endif()
 
 add_executable(anntest anntest.cpp)
 if(OpenCV_FOUND)
@@ -147,11 +168,20 @@ else(OpenCV_FOUND)
   target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=0)
 endif(OpenCV_FOUND)
 
-target_link_libraries(anntest ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
+if (OPENVX_BACKEND_OPENCL_FOUND)
+    target_link_libraries(anntest ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
+else()
+    target_link_libraries(anntest ${PROJECT_NAME} openvx vx_nn pthread)
+endif()
 
 add_library(annpython SHARED annpython.cpp)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
-target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
+
+if (OPENVX_BACKEND_OPENCL_FOUND)
+    target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
+else()
+    target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread)
+endif()
 """)
     if not os.path.isdir(outputFolder + '/cmake'):
         os.mkdir(outputFolder + '/cmake')

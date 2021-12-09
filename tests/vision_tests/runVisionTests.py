@@ -69,7 +69,7 @@ parser.add_argument('--profiling',          type=str, default='no',
 parser.add_argument('--width',              type=int, default='1920',
                     help='Image width for Vision Performance tests - optional (default:1920) [range: 1 - 7680]')
 parser.add_argument('--height',             type=int, default='1080',
-                    help='Image height for Vision Performance tests - optional (default:1080) [range: 1 - 4320]')
+                    help='Image height for Vision Performance tests - optional (default:1080) [range: 1 - 7680]')
 
 args = parser.parse_args()
 
@@ -321,8 +321,8 @@ if not 1 <= width <= 7680:
     print("\nERROR: image width not in range - [1 - 7680]\n")
     exit()
 
-if not 1 <= height <= 4320:
-    print("\nERROR: image width not in range - [1 - 4320]\n")
+if not 1 <= height <= 7680:
+    print("\nERROR: image width not in range - [1 - 7680]\n")
     exit()
 
 if hardwareMode == "CPU":

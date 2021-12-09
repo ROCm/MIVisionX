@@ -234,15 +234,17 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   cd MIVisionX
   ```
 
-  ``` 
-  python MIVisionX-setup.py
-  ```
-
   **Note:** MIVisionX has support for two GPU backends: **OPENCL** and **HIP**:
 
   + Instructions for building MIVisionX with **OPENCL** (i.e., default GPU backend):
 
-  ``` 
+    * run the setup script to install all the dependencies required by the **OPENCL** GPU backend:
+  ```
+  python MIVisionX-setup.py
+  ```
+
+    * run the below commands to build MIVisionX with the **OPENCL** GPU backend:
+  ```
   mkdir build
   cd build
   cmake ../
@@ -250,11 +252,17 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   sudo make install
   ```
 
-  + Instructions for building MIVisionX with **HIP** GPU backend:
+  + Instructions for building MIVisionX with the **HIP** GPU backend:
 
+    * run the setup script to install all the dependencies required by the **HIP** GPU backend:
   ```
-  mkdir build
-  cd build
+  python MIVisionX-setup.py --reinstall yes --backend HIP
+  ```
+
+    * run the below commands to build MIVisionX with the **HIP** GPU backend:
+  ```
+  mkdir build-hip
+  cd build-hip
   cmake -DBACKEND=HIP ../
   make -j8
   sudo make install

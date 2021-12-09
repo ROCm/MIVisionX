@@ -176,7 +176,7 @@ private:
     float _scale; // Rescales the box and anchor values before the offset is calculated (for example, to return to the absolute values).
     bool _offset; // Returns normalized offsets ((encoded_bboxes*scale - anchors*scale) - mean) / stds in EncodedBBoxes that use std and the mean and scale arguments if offset="True"
     std::vector<float> _means, _stds; //_means:  [x y w h] mean values for normalization _stds: [x y w h] standard deviations for offset normalization.
-    bool _is_keypoint = false; //bool variable to set the box encoder
+    bool _is_keypoint = false; //bool variable to set the keypoint flag
 };
 
 template <typename T>

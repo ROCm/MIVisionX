@@ -220,7 +220,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false);
     else
         input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false,
-                                        RALI_USE_MAX_SIZE_RESTRICTED, decode_max_width, decode_max_height);
+                                        RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined COCO_READER_PARTIAL
     input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
 #else
@@ -667,7 +667,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];
         raliGetImageName(handle, img_name);
-        // std::cerr << "\nPrinting image names of batch: " << img_name << std::endl;
+        std::cerr << "\nPrinting image names of batch: " << img_name;
 
         int bb_label_count[inputBatchSize];
         int size = raliGetBoundingBoxCount(handle, bb_label_count);

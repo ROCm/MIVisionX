@@ -1134,8 +1134,9 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    
-    MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string(), keypoint, pose_output_width, pose_output_height);
+    MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string());
+    config.set_out_img_width(pose_output_width);
+    config.set_out_img_height(pose_output_height);
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);

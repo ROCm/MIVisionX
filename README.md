@@ -391,11 +391,18 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
     runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
     ```
 
+## Technical Support
+
+Please email `mivisionx.support@amd.com` for questions, issues, and feedback on MIVisionX.
+
+Please submit your questions, feature requests, and bug reports on the
+[GitHub issues](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/issues) page.
+
 ## Release Notes
 
-### Known issues
+### Latest Release
 
-* Package install requires **OpenCV** `v3.4.0` to execute `AMD OpenCV extensions`
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
 
 ### Tested configurations
 
@@ -415,9 +422,11 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * Dependencies for all the above packages
 * MIVisionX Setup Script - `V2.0.0`
 
-### Latest Release
+### Known issues
 
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
+* Package install requires **OpenCV** `v3.4.0` to execute `AMD OpenCV extensions`
+
+## MIVisionX Dependency Map
 
 **Docker Image:** `docker pull kiritigowda/ubuntu-18.04:{TAGNAME}`
 

@@ -1,6 +1,6 @@
 <p align="center"><img width="60%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/raw/master/docs/images/MIVisionX.png" /></p>
 
-# Change Log for MIVisionX
+# Changelog for MIVisionX
 
 ## Online Documentation
 

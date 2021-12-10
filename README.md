@@ -11,30 +11,44 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
 
 ## Table of Contents
-
-* [AMD OpenVX](#amd-openvx)
-* [AMD OpenVX Extensions](#amd-openvx-extensions)
-  + [360 Video Stitch Extension](amd_openvx_extensions/amd_loomsl)
-  + [Media Extension](amd_openvx_extensions/amd_media)
-  + [Neural Net Extension](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
-  + [OpenCV Extension](amd_openvx_extensions/amd_opencv#amd-opencv-extension)
-  + [RPP Extension](amd_openvx_extensions/amd_rpp)
-  + [WinML Extension](amd_openvx_extensions/amd_winml#amd-winml-extension)
-* [Applications](#applications)
-* [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
-* [rocAL](#rocAL)
-* [Samples](samples#samples)
-* [Toolkit](#toolkit)
-* [Utilities](#utilities)
-  + [Inference Generator](utilities/inference_generator#inference-generator)
-  + [Loom Shell](utilities/loom_shell#radeon-loomshell)
-  + [RunCL](utilities/runcl#amd-runcl)
-  + [RunVX](utilities/runvx#amd-runvx)
-* [Prerequisites](#prerequisites)
-* [Build & Install MIVisionX](#build--install-mivisionx)
-* [Verify the Installation](#verify-the-installation)
-* [Docker](#docker)
-* [Release Notes](#release-notes)
+- [Table of Contents](#table-of-contents)
+- [AMD OpenVX](#amd-openvx)
+- [AMD OpenVX Extensions](#amd-openvx-extensions)
+- [Applications](#applications)
+- [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
+- [rocAL](#rocal)
+- [Toolkit](#toolkit)
+- [Utilities](#utilities)
+- [Prerequisites](#prerequisites)
+  - [Hardware](#hardware)
+  - [Operating System](#operating-system)
+    - [Windows](#windows)
+    - [macOS](#macos)
+    - [Linux](#linux)
+      - [Prerequisites setup script for Linux - `MIVisionX-setup.py`](#prerequisites-setup-script-for-linux---mivisionx-setuppy)
+        - [Prerequisites for running the script](#prerequisites-for-running-the-script)
+- [Build & Install MIVisionX](#build--install-mivisionx)
+  - [Windows](#windows-1)
+    - [Using .msi packages](#using-msi-packages)
+    - [Using `Visual Studio`](#using-visual-studio)
+  - [macOS](#macos-1)
+  - [Linux](#linux-1)
+    - [Using `apt-get` / `yum`](#using-apt-get--yum)
+    - [Using `MIVisionX-setup.py`](#using-mivisionx-setuppy)
+- [Verify the Installation](#verify-the-installation)
+  - [Linux / macOS](#linux--macos)
+  - [Windows](#windows-2)
+- [Docker](#docker)
+  - [MIVisionX Docker](#mivisionx-docker)
+  - [Docker Workflow Sample on Ubuntu `18.04` / `20.04`](#docker-workflow-sample-on-ubuntu-1804--2004)
+    - [Prerequisites](#prerequisites-1)
+    - [Workflow](#workflow)
+- [Technical Support](#technical-support)
+- [Release Notes](#release-notes)
+  - [Latest Release](#latest-release-1)
+  - [Tested configurations](#tested-configurations)
+  - [Known issues](#known-issues)
+- [MIVisionX Dependency Map](#mivisionx-dependency-map)
 
 ## AMD OpenVX
 
@@ -109,7 +123,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ### Operating System
 
-### Windows
+#### Windows
 
 * Windows 10
 * Windows SDK
@@ -120,7 +134,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
-### macOS
+#### macOS
 
 * Install [Homebrew](https://brew.sh)
 * Install [CMake](https://cmake.org)
@@ -128,7 +142,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
   **Note:** macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
 
-### Linux
+#### Linux
 
 * Linux distribution
   + **Ubuntu** - `18.04` / `20.04`
@@ -145,13 +159,13 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + FFMPEG is required for amd_media & mv_deploy modules
 * [rocAL](rocAL#prerequisites) Prerequisites
 
-#### Prerequisites setup script for Linux - `MIVisionX-setup.py`
+##### Prerequisites setup script for Linux - `MIVisionX-setup.py`
 
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
   **NOTE:** This script only needs to be executed once. 
 
-##### Prerequisites for running the script
+###### Prerequisites for running the script
 
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`

@@ -47,8 +47,8 @@ parser.add_argument('--miopengemm',	type=str, default='1.1.5',
                     help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',
                     help='ProtoBuf Version - optional (default:3.12.0)')
-parser.add_argument('--rpp',   		type=str, default='0.91',
-                    help='RPP Version - optional (default:0.91)')
+parser.add_argument('--rpp',   		type=str, default='0.92',
+                    help='RPP Version - optional (default:0.92)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG V4.0.4 Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',

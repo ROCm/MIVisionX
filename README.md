@@ -438,7 +438,7 @@ Please submit your questions, feature requests, and bug reports on the
 
 ### Known issues
 
-* Package install requires **OpenCV** `v3.4.0` to execute `AMD OpenCV extensions`
+* Package install requires **OpenCV** `v3.4.X` to execute `AMD OpenCV extensions`
 
 ## MIVisionX Dependency Map
 

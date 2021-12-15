@@ -23,10 +23,6 @@ class RALIGenericImageIterator(object):
     def __next__(self):
         if(self.loader.isEmpty()):
             timing_info = self.loader.Timing_Info()
-            print("Load     time ::", timing_info.load_time)
-            print("Decode   time ::", timing_info.decode_time)
-            print("Process  time ::", timing_info.process_time)
-            print("Transfer time ::", timing_info.transfer_time)
             raise StopIteration
 
         if self.loader.run() != 0:
@@ -91,14 +87,9 @@ class RALIGenericIterator(object):
     def __next__(self):
         if(b.isEmpty(self.loader._handle)):
             timing_info = b.getTimingInfo(self.loader._handle)
-            print("Load     time ::",timing_info.load_time)
-            print("Decode   time ::",timing_info.decode_time)
-            print("Process  time ::",timing_info.process_time)
-            print("Transfer time ::",timing_info.transfer_time)
             raise StopIteration
 
         if self.loader.run() != 0:
-            print("loader.run() & reset")
             raise StopIteration
 
         if(types.NCHW == self.tensor_format):

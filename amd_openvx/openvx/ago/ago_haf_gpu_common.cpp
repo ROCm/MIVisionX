@@ -258,7 +258,7 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, std::string& code, int srcImageBufferSize)
 {
 	char item[1024];
-    printf("%d %d %d %d %d %d\n", WGWidth, WGHeight, LMWidth, LMHeight, gxoffset, gyoffset);
+
 	// configuration parameters
 	int LMdivWGWidthShift = leftmostbit(LMWidth / WGWidth);
 	int LMWidthRemain = LMWidth - (WGWidth << LMdivWGWidthShift);
@@ -289,7 +289,7 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 	int dGroupsShift = LMdivWGWidthShift - dTypeShift;
 	int dGroups = 1 << dGroupsShift;
 	bool use_vload = ((dTypeShift > 2) && (gxoffset & ((1 << dTypeShift) - 1))) ? true : false;
-    printf("image size %d\n", srcImageBufferSize);
+
 	// generate code
 	sprintf(item,
 		OPENCL_FORMAT(
@@ -360,10 +360,8 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 				sprintf(item,
 					"    loffset += %d * %d;\n" // WGHeight, LMWidth
 					"    goffset += %d * gstride;\n" // WGHeight
-                    "    int tmp = gbuf + goffset - p1_buf - p1_offset;\n"
-                    "    if (tmp < %d)\n" // WGHeight
-                    // "    printf(\"stride is %%d and %%d \\n\", goffset, p1_offset); \n"
-                    // "    if (goffset < 17916)" // srcImageBufferSize
+                    "    int sidx = gbuf + goffset - p1_buf - p1_offset;\n"
+                    "    if (sidx < %d)\n" // srcImageBufferSize
 					, WGHeight, LMWidth, WGHeight, srcImageBufferSize);
 				code += item;
 			}
@@ -442,14 +440,11 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 				}
 				code += item;
                 sprintf(item, 
-                    "    int tmp2 = gbuf + goffset - p1_buf - p1_offset + ry * gstride + (rx << %d);\n"
-                    // "    printf(\"tmp2 is %%d \\n\", tmp2); \n"
-                    // "    if (tmp2 < gstride* %d)\n" // WGHeight)
+                    "    int sidx2 = gbuf + goffset - p1_buf - p1_offset + ry * gstride + (rx << %d);\n"
                     , dTypeShift);
                 code += item;
 				if ((dSize - dCount) < (WGWidth * WGHeight)) {
-                    // sprintf(item, "    if (ry < %d) {\n", dHeight);
-					sprintf(item, "    if (ry < %d && (tmp2 < %d)) {\n", dHeight, srcImageBufferSize);
+					sprintf(item, "    if (ry < %d && (sidx2 < %d)) {\n", dHeight, srcImageBufferSize);
 					code += item;
 				}
 				if (use_vload) {

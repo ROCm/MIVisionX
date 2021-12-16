@@ -38,6 +38,6 @@ set(HIPVX_SOURCES
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")
     add_library(openvx_hip OBJECT ${HIPVX_SOURCES})
     set_target_properties(openvx_hip PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    target_compile_definitions(openvx_hip PRIVATE __HIP_PLATFORM_HCC__)
+    target_compile_definitions(openvx_hip PRIVATE __HIP_PLATFORM_AMD__)
 
 

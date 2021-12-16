@@ -169,8 +169,8 @@ THE SOFTWARE.
 #endif
 // opencl related constants
 #define DATA_GPU_ARRAY_OFFSET             16  // first 16 bytes of array buffer will be used for numitems
-// opencl image fixed byte offset
-#define OPENCL_IMAGE_FIXED_OFFSET             256
+// GPU image fixed byte offset
+#define GPU_IMAGE_FIXED_OFFSET             256
 
 // thread scheduling configuration
 #define CONFIG_THREAD_DEFAULT                 1  // 0:disable 1:enable separate threads for graph scheduling

@@ -375,15 +375,15 @@ int agoGpuOclAllocBuffer(AgoData * data)
 #endif
             {
                 // allocate normal opencl_buffer
-                dataMaster->opencl_buffer = dataMaster->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, dataMaster->size + dataMaster->gpu_buffer_offset*3, NULL, &err);
+                dataMaster->opencl_buffer = dataMaster->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, dataMaster->size + dataMaster->gpu_buffer_offset, NULL, &err);
             }
             if (err) {
-                agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d\n", context->opencl_context, (int)dataMaster->size + dataMaster->gpu_buffer_offset*3, err);
+                agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d\n", context->opencl_context, (int)dataMaster->size + dataMaster->gpu_buffer_offset, err);
                 return -1;
             }
             else {
                 vx_uint32 zero = 0;
-                err = clEnqueueFillBuffer(context->opencl_cmdq, dataMaster->opencl_buffer, &zero, sizeof(zero), 0, dataMaster->gpu_buffer_offset*3 + dataMaster->size, 0, NULL, NULL);
+                err = clEnqueueFillBuffer(context->opencl_cmdq, dataMaster->opencl_buffer, &zero, sizeof(zero), 0, dataMaster->gpu_buffer_offset + dataMaster->size, 0, NULL, NULL);
                 if (err) {
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clEnqueueFillBuffer() => %d\n", err);
                     return -1;

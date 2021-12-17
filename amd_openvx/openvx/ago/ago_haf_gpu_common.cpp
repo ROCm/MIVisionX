@@ -263,7 +263,7 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 	int LMdivWGWidthShift = leftmostbit(LMWidth / WGWidth);
 	int LMWidthRemain = LMWidth - (WGWidth << LMdivWGWidthShift);
 	if (LMdivWGWidthShift < 2) {
-		agoAddLogEntry(NULL, VX_FAILURE, "ERROR: HafGpu_Load_Local(%dx%d,%dx%d,(%d,%d)): doesn't support LMdivWGWidthShift=%d\n", WGWidth, WGHeight, LMWidth, LMHeight, gxoffset, gyoffset, LMdivWGWidthShift);
+		agoAddLogEntry(NULL, VX_FAILURE, "ERROR: HafGpu_Load_Local_ImageSize(%dx%d,%dx%d,(%d,%d)): doesn't support LMdivWGWidthShift=%d\n", WGWidth, WGHeight, LMWidth, LMHeight, gxoffset, gyoffset, LMdivWGWidthShift);
 		return -1;
 	}
 
@@ -303,7 +303,7 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 	if (dGroups == 1 && LMWidthRemain > 0 && LMHeightRemain > 0 && LMRemain < (WGWidth * WGHeight)) {
 		// sanity check
 		if (LMWidthRemain & ((1 << dTypeShift) - 1)) {
-			agoAddLogEntry(NULL, VX_FAILURE, "ERROR: HafGpu_Load_Local(%dx%d,%dx%d,(%d,%d)): doesn't support LMWidthRemain=%d with %s\n", WGWidth, WGHeight, LMWidth, LMHeight, gxoffset, gyoffset, LMWidthRemain, dType);
+			agoAddLogEntry(NULL, VX_FAILURE, "ERROR: HafGpu_Load_Local_ImageSize(%dx%d,%dx%d,(%d,%d)): doesn't support LMWidthRemain=%d with %s\n", WGWidth, WGHeight, LMWidth, LMHeight, gxoffset, gyoffset, LMWidthRemain, dType);
 			return -1;
 		}
 		if (use_vload) {
@@ -360,8 +360,8 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 				sprintf(item,
 					"    loffset += %d * %d;\n" // WGHeight, LMWidth
 					"    goffset += %d * gstride;\n" // WGHeight
-                    "    int sidx = gbuf + goffset - p1_buf - p1_offset;\n"
-                    "    if (sidx < %d)\n" // srcImageBufferSize
+					"    int sidx = gbuf + goffset - p1_buf - p1_offset;\n"  // gbuf = p1_buf + p1_offset + (((gy - ly) << 1) + 1) * gstride + ((gx - lx) << 3). Subtract p1_buf and p1_offset to get the actual offset
+					"    if (sidx < %d)\n" // srcImageBufferSize
 					, WGHeight, LMWidth, WGHeight, srcImageBufferSize);
 				code += item;
 			}
@@ -405,7 +405,7 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 		if (LMWidthRemain > 0) {
 			// sanity check
 			if (LMWidthRemain & ((1 << dTypeShift) - 1)) {
-				agoAddLogEntry(NULL, VX_FAILURE, "ERROR: HafGpu_Load_Local(%dx%d,%dx%d,(%d,%d)): doesn't support LMWidthRemain=%d with %s\n", WGWidth, WGHeight, LMWidth, LMHeight, gxoffset, gyoffset, LMWidthRemain, dType);
+				agoAddLogEntry(NULL, VX_FAILURE, "ERROR: HafGpu_Load_Local_ImageSize(%dx%d,%dx%d,(%d,%d)): doesn't support LMWidthRemain=%d with %s\n", WGWidth, WGHeight, LMWidth, LMHeight, gxoffset, gyoffset, LMWidthRemain, dType);
 				return -1;
 			}
 			// get configuration
@@ -439,10 +439,10 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 						, dWidthShift, dWidth - 1);
 				}
 				code += item;
-                sprintf(item, 
-                    "    int sidx2 = gbuf + goffset - p1_buf - p1_offset + ry * gstride + (rx << %d);\n"
-                    , dTypeShift);
-                code += item;
+				sprintf(item, 
+					"    int sidx2 = gbuf + goffset - p1_buf - p1_offset + ry * gstride + (rx << %d);\n" // gbuf = p1_buf + p1_offset + (((gy - ly) << 1) + 1) * gstride + ((gx - lx) << 3). Subtract p1_buf and p1_offset to get the actual offset
+					, dTypeShift);
+				code += item;
 				if ((dSize - dCount) < (WGWidth * WGHeight)) {
 					sprintf(item, "    if (ry < %d && (sidx2 < %d)) {\n", dHeight, srcImageBufferSize);
 					code += item;

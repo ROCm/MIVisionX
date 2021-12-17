@@ -201,18 +201,18 @@ void MXNetRecordIOReader::read_image_names()
     {
         std::tie(_seek_pos, _data_size_to_read) = _indices[current_index];
         _file_contents.seekg(_seek_pos, ifstream::beg);
-        _data = (uint8_t*)malloc(_data_size_to_read);
-        _file_contents.read((char *)_data, _data_size_to_read);        
-        memcpy(&_magic, _data, sizeof(_magic));
-        _data += sizeof(_magic);
+        _data = new uint8_t[_data_size_to_read];
+        _data_ptr = _data;
+        _file_contents.read((char *)_data_ptr, _data_size_to_read);
+        memcpy(&_magic, _data_ptr, sizeof(_magic));
+        _data_ptr += sizeof(_magic);
         if(_magic != _kMagic)
             THROW("ERROR: Invalid MXNet RecordIO: wrong _magic number");
-        memcpy(&_length_flag, _data, sizeof(_length_flag));
-        _data += sizeof(_length_flag);
+        memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
+        _data_ptr += sizeof(_length_flag);
         _cflag = DecodeFlag(_length_flag);
         _clength =  DecodeLength(_length_flag);
-        memcpy(&_hdr, _data, sizeof(_hdr));
-        _data += sizeof(_hdr);
+        memcpy(&_hdr, _data_ptr, sizeof(_hdr));
         
         if (_hdr.flag == 0)
             _image_key = to_string(_hdr.image_id[0]);
@@ -224,6 +224,7 @@ void MXNetRecordIOReader::read_image_names()
         int64_t data_size = _clength - sizeof(ImageRecordIOHeader);
         int64_t label_size = _hdr.flag * sizeof(float);
         int64_t image_size = data_size - label_size;
+        delete[] _data;
 
         if (get_file_shard_id() != _shard_id)
         {
@@ -249,24 +250,26 @@ void MXNetRecordIOReader::read_image_names()
 void MXNetRecordIOReader::read_image(unsigned char *buff, size_t read_size, int64_t seek_position, int64_t _data_size_to_read)
 {
     _file_contents.seekg(seek_position, ifstream::beg);
-    _data = (uint8_t*)malloc(_data_size_to_read);
-    _file_contents.read((char *)_data, _data_size_to_read);
-    memcpy(&_magic, _data, sizeof(_magic));
-    _data += sizeof(_magic);
+    _data = new uint8_t[_data_size_to_read];
+    _data_ptr = _data;
+    _file_contents.read((char *)_data_ptr, _data_size_to_read);
+    memcpy(&_magic, _data_ptr, sizeof(_magic));
+    _data_ptr += sizeof(_magic);
     if(_magic != _kMagic)
         THROW("ERROR: Invalid RecordIO: wrong _magic number");
-    memcpy(&_length_flag, _data, sizeof(_length_flag));
-    _data += sizeof(_length_flag);
+    memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
+    _data_ptr += sizeof(_length_flag);
     _cflag = DecodeFlag(_length_flag);
     _clength =  DecodeLength(_length_flag);
-    memcpy(&_hdr, _data, sizeof(_hdr));
-    _data += sizeof(_hdr);
+    memcpy(&_hdr, _data_ptr, sizeof(_hdr));
+    _data_ptr += sizeof(_hdr);
 
     int64_t data_size = _clength - sizeof(ImageRecordIOHeader);
     int64_t label_size = _hdr.flag * sizeof(float);
     int64_t image_size = data_size - label_size;
     if (_cflag == 0)
-        memcpy(buff, _data + label_size, image_size);
+        memcpy(buff, _data_ptr + label_size, image_size);
     else
         THROW("\n Multiple record reading has not supported");
+    delete[] _data;
 }

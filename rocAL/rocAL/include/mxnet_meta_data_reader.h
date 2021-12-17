@@ -35,7 +35,7 @@ private:
     std::ifstream _file_contents;
     std::vector<size_t> _index_list;
     size_t _index, _offset, _file_index;
-    const uint8_t* _data;
+    uint8_t* _data, *_data_ptr;
     const uint32_t _kMagic = 0xced7230a;
     uint32_t _magic, _length_flag, _cflag, _clength;
     int64_t _seek_pos, _data_size_to_read;

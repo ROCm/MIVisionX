@@ -140,18 +140,18 @@ void MXNetMetaDataReader::read_images()
     {
         std::tie(_seek_pos, _data_size_to_read) = _indices[current_index];
         _file_contents.seekg(_seek_pos, ifstream::beg);
-        _data = (uint8_t*)malloc(_data_size_to_read);
-        _file_contents.read((char *)_data, _data_size_to_read);        
-        memcpy(&_magic, _data, sizeof(_magic));
-        _data += sizeof(_magic);
+        _data = new uint8_t[_data_size_to_read];
+        _data_ptr = _data;
+        _file_contents.read((char *)_data_ptr, _data_size_to_read);
+        memcpy(&_magic, _data_ptr, sizeof(_magic));
+        _data_ptr += sizeof(_magic);
         if(_magic != _kMagic)
             THROW("ERROR: Invalid RecordIO: wrong magic number");
-        memcpy(&_length_flag, _data, sizeof(_length_flag));
-        _data += sizeof(_length_flag);
+        memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
+        _data_ptr += sizeof(_length_flag);
         _cflag = DecodeFlag(_length_flag);
         _clength =  DecodeLength(_length_flag);
-        memcpy(&_hdr, _data, sizeof(_hdr));
-        _data += sizeof(_hdr);
+        memcpy(&_hdr, _data_ptr, sizeof(_hdr));
         
         if (_hdr.flag == 0)
         {
@@ -162,6 +162,7 @@ void MXNetMetaDataReader::read_images()
             WRN("\nMultiple record reading has not supported");
             continue;
         }
+        delete[] _data;
     }
 }
 

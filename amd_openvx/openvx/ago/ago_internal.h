@@ -531,8 +531,8 @@ struct AgoKernel {
     amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f;
     amd_kernel_node_regen_callback_f regen_callback_f;
     amd_kernel_opencl_global_work_update_callback_f opencl_global_work_update_callback_f;
-    amd_kernel_opencl_buffer_update_callback_f gpu_buffer_update_callback_f;
-    vx_uint32 opencl_buffer_update_param_index;
+    amd_kernel_gpu_buffer_update_callback_f gpu_buffer_update_callback_f;
+    vx_uint32 gpu_buffer_update_param_index;
     vx_bool opencl_buffer_access_enable;
     vx_uint32 importing_module_index_plus1;
 public:

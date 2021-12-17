@@ -3198,7 +3198,7 @@ AgoKernel::AgoKernel()
       localDataSize{ 0 }, localDataPtr{ nullptr }, external_kernel{ false }, finalized{ false },
       kernel_f{ nullptr }, validate_f{ nullptr }, input_validate_f{ nullptr }, output_validate_f{ nullptr }, initialize_f{ nullptr }, deinitialize_f{ nullptr },
       query_target_support_f{ nullptr }, opencl_codegen_callback_f{ nullptr }, regen_callback_f{ nullptr }, opencl_global_work_update_callback_f{ nullptr },
-      gpu_buffer_update_callback_f{ nullptr }, opencl_buffer_update_param_index{ 0 },
+      gpu_buffer_update_callback_f{ nullptr }, gpu_buffer_update_param_index{ 0 },
       opencl_buffer_access_enable{ vx_false_e }, importing_module_index_plus1{ 0 }
 {
     memset(&name, 0, sizeof(name));

@@ -46,6 +46,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 - [Technical Support](#technical-support)
 - [Release Notes](#release-notes)
   - [Latest Release](#latest-release-1)
+  - [Changelog](#changelog)
   - [Tested configurations](#tested-configurations)
   - [Known issues](#known-issues)
 - [MIVisionX Dependency Map](#mivisionx-dependency-map)
@@ -417,6 +418,10 @@ Please submit your questions, feature requests, and bug reports on the
 ### Latest Release
 
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
+
+### Changelog
+
+Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Tested configurations
 

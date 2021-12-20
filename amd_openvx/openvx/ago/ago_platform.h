@@ -78,8 +78,8 @@ using namespace std;
 #endif
 
 #if ENABLE_HIP
-#ifndef __HIP_PLATFORM_HCC__
-#define __HIP_PLATFORM_HCC__
+#ifndef __HIP_PLATFORM_AMD__
+#define __HIP_PLATFORM_AMD__
 #endif
 #define HIPRTC_GET_TYPE_NAME
 #include "hip/hip_runtime_api.h"

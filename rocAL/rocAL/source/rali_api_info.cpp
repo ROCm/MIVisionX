@@ -119,6 +119,7 @@ RALI_API_CALL raliGetTimingInfo(RaliContext p_context)
     auto context = static_cast<Context*>(p_context);
     auto info = context->timing();
     //INFO("shuffle time "+ TOSTR(info.shuffle_time)); to display time taken for shuffling dataset
+    //INFO("bbencode time "+ TOSTR(info.bb_process_time)); //to display time taken for bbox encoder
     if (context->master_graph->is_video_loader())
         return {info.video_read_time, info.video_decode_time, info.video_process_time, info.copy_to_output};
     else

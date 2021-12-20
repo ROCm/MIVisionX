@@ -73,8 +73,8 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
     bool bUpdateModel = false;
     size_t batchSize = (input_dims[3] <= 0)? 1: input_dims[3];
 
-    if (backend == OpenVX_Rocm_OpenCL) {
-        printf("compiling model for backend OpenVX_Rocm_OpenCL\n");
+    if (backend == OpenVX_Rocm_GPU) {
+        printf("compiling model for backend OpenVX_Rocm_GPU\n");
         std::string compiler_path = "/opt/rocm/mivisionx/model_compiler";       // default
         char *model_compiler_path = getenv("MIVISIONX_MODEL_COMPILER_PATH");
         std::string install_dir = std::string(install_folder).empty()? "mvdeploy_lib" : std::string(install_folder); 
@@ -198,7 +198,7 @@ void printUsage() {
         "\t--model <model_name> : name of the trained model with full path    \t\t[required]\n"
         "\t--install_folder <install_folder> : the location for compiled model\t\t[required]\n"
         "\t--input_dims <n,c,h,w>: dimension of input for the model given in format NCHW\t[required]\n"
-        "\t--backend <backend>: is the name of the backend for compilation\t\t\t[optional-default:OpenVX_Rocm_OpenCL]\n"
+        "\t--backend <backend>: is the name of the backend for compilation\t\t\t[optional-default:OpenVX_Rocm_GPU]\n"
         "\t--fuse_cba <0/1> :enable or disable Convolution_bias_activation fuse mode(0/1)\t[optional-default:0]\n"
         "\t--quant_mode <fp32/fp16>: quant_mode for the model, if enabled the model and weights are converted to FP16\t[optional(default:fp32)]\n"
         "\n"
@@ -216,7 +216,7 @@ int main(int argc, const char ** argv)
     mv_status status;
     const char *model, *install_folder, *input_dim_str;
     mivid_update_model_params model_update_params = {0};
-    mivid_backend backend = (mivid_backend)OpenVX_Rocm_OpenCL;   // default
+    mivid_backend backend = (mivid_backend)OpenVX_Rocm_GPU;   // default
     install_folder = "";
     int quant_mode = quant_fp32;
     for (int arg = 1; arg < argc; arg++) {

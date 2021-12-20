@@ -122,9 +122,27 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_INSTALL_PREFIX /opt/rocm/mivisionx)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(OpenCL REQUIRED)
+
+set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
+#find the OPENVX backend type
+set(OPENVX_BACKEND_OPENCL_FOUND 0)
+set(OPENVX_BACKEND_HIP_FOUND 0)
+if(EXISTS ${ROCM_PATH}/mivisionx/include/openvx_backend.h)
+    file(READ ${ROCM_PATH}/mivisionx/include/openvx_backend.h OPENVX_BACKEND_FILE)
+    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+else()
+    message("-- ${Red}WARNING: ${ROCM_PATH}/mivisionx/include/openvx_backend.h file Not Found. please install the latest mivisionx! ${ColourReset}")
+endif()
+
+if (OPENVX_BACKEND_OPENCL_FOUND)
+    find_package(OpenCL REQUIRED)
+    include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
+endif()
+
 find_package(OpenCV QUIET)
-include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 include_directories (/opt/rocm/mivisionx/include)
 link_directories    (/opt/rocm/mivisionx/lib)
 list(APPEND SOURCES mvmodule.cpp)
@@ -226,9 +244,27 @@ cmake_minimum_required (VERSION 3.0)
 project (mv_extras)
 set (CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH ../cmake)
-find_package(OpenCL REQUIRED)
+
+set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
+#find the OPENVX backend type
+set(OPENVX_BACKEND_OPENCL_FOUND 0)
+set(OPENVX_BACKEND_HIP_FOUND 0)
+if(EXISTS ${ROCM_PATH}/mivisionx/include/openvx_backend.h)
+    file(READ ${ROCM_PATH}/mivisionx/include/openvx_backend.h OPENVX_BACKEND_FILE)
+    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+else()
+    message("-- ${Red}WARNING: ${ROCM_PATH}/mivisionx/include/openvx_backend.h file Not Found. please install the latest mivisionx! ${ColourReset}")
+endif()
+
+if (OPENVX_BACKEND_OPENCL_FOUND)
+    find_package(OpenCL REQUIRED)
+    include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
+endif()
+
 find_package(OpenCV QUIET)
-include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 include_directories (/opt/rocm/mivisionx/include ../)
 link_directories    (/opt/rocm/mivisionx/lib)
 add_library(${PROJECT_NAME} SHARED mv_extras_postproc.cpp)
@@ -852,7 +888,7 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
             f.write( \
 """            vx_size inp_dim_%s[%d] = { %s };
             inp_stride[0] = %d, inp_stride[1] = %d, inp_stride[2] = %d, inp_stride[3] = %d;
-            cl_mem inp_mem = nullptr;
+            void *inp_mem = nullptr;
             if (g_mv_preprocess_callback != nullptr) {
                 input_tensor = vxCreateVirtualTensor(handle->graph, 4, inp_dim_%s, %s, 0);
                 preprocess_callback(handle, input_tensor);
@@ -862,7 +898,11 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
                     input_tensor = vxCreateTensorFromHandle(handle->context, 4, inp_dim_%s, %s, 0, inp_stride, inp_mem, VX_MEMORY_TYPE_HOST);
                 }
                 else {
+#if OPENVX_BACKEND_OPENCL_FOUND
                     input_tensor = vxCreateTensorFromHandle(handle->context, 4, inp_dim_%s, %s, 0, inp_stride, inp_mem, VX_MEMORY_TYPE_OPENCL);
+#elif OPENVX_BACKEND_HIP_FOUND
+                    input_tensor = vxCreateTensorFromHandle(handle->context, 4, inp_dim_%s, %s, 0, inp_stride, inp_mem, VX_MEMORY_TYPE_HIP);
+#endif
                 }
                 if ((status = vxGetStatus((vx_reference)input_tensor)) != VX_SUCCESS) {
                     printf("ERROR: vxCreateTensor(input:[%s]): failed (%%d)\\n", status);
@@ -873,7 +913,8 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
             }
 """ % (tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
         input_elm_size, tensor.shape[3]*input_elm_size, tensor.shape[2]*tensor.shape[3]*input_elm_size, tensor.shape[1]*tensor.shape[2]*tensor.shape[3]*input_elm_size, \
-        tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
+        tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor_type_nnir2openvx[tensor.type], \
+        tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
         for tensor in graph.outputs:
             f.write( \
 """            vx_size out_dim_%d[%d] = { %s };
@@ -1443,7 +1484,9 @@ def generateDeployH(graph,fileName):
 
 #include <VX/vx.h>
 #include "mvdeploy_api.h"
-#include <CL/cl.h>
+#if OPENVX_BACKEND_OPENCL_FOUND
+    #include <CL/cl.h>
+#endif
 #include <VX/vx_khr_nn.h>
 #include <vx_amd_nn.h>
 #include <vx_ext_amd.h>
@@ -1616,7 +1659,7 @@ void printUsage() {
         "\t<input-data-file>: is raw tensor file OR .jpg/.png file OR <-> for empty input\t[required]\\n"
         "\t<output-data-file>: output file for inference output OR <-> for no output     \t[required]\\n"
         "\t--install_folder <install_folder>: location of the compiled model binary      \t[optional: default-current folder]\\n"
-        "\t--backend <backend>: the name of the backend for compilation                  \t[optional: default-OpenVX_Rocm_OpenCL]\\n"
+        "\t--backend <backend>: the name of the backend for compilation                  \t[optional: default-OpenVX_Rocm_GPU]\\n"
         "\t--t <num of interations>: to run for performance                              \t[optional: default 1]\\n"
         "\t--argmax <UINT/Lut>: give argmax output in UINT or LUT                        \t[optional: default no argmax]\\n"
         "\t--label <labels.txt>: labels file for classes                                 \t[optional: default no class detected]\\n"        
@@ -1638,7 +1681,7 @@ int main(int argc, const char ** argv)
     int num_inputs=1, num_outputs=1;
     std::string install_folder = ".";       // default for install folder
     std::string  weightsFile  = "./weights.bin";    // default for weights file
-    mivid_backend backend = OpenVX_Rocm_OpenCL;
+    mivid_backend backend = OpenVX_Rocm_GPU;
     std::string inpFileName  = std::string(argv[1]);
     std::string outFileName  = std::string(argv[2]);
     int bPeformanceRun = 0, numIterations = 1;

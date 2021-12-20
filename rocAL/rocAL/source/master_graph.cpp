@@ -929,7 +929,6 @@ void MasterGraph::output_routine()
                 }
         
                 update_node_parameters();
-        
                 if(_augmented_meta_data)
                 {
                     if (_meta_data_graph)
@@ -1130,7 +1129,7 @@ void MasterGraph::stop_processing()
         _output_thread.join();
 }
 
-MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type , MetaDataType label_type, bool keypoint, float sigma = 0.0, int pose_output_width = 0, int pose_output_height = 0)
+MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type , MetaDataType label_type, bool keypoint, float sigma, unsigned pose_output_width, unsigned pose_output_height)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")

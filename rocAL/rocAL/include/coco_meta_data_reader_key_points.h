@@ -44,8 +44,8 @@ public:
 private:
     KeyPointBatch* _output;
     std::string _path;
-    int _out_img_width;
-    int _out_img_height;
+    unsigned _out_img_width;
+    unsigned _out_img_height;
     int meta_data_reader_type;
     void add(std::string image_name, ImgSizes image_size, JointsData joints_data);
     bool exists(const std::string &image_name);

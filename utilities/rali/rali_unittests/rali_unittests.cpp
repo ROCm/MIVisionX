@@ -171,7 +171,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     }
     bool keypoint = true;
     float sigma = 3.0;
-    meta_data = raliCreateCOCOReaderKeyPoints(handle, json_path, true, keypoint, sigma, width, height);
+    meta_data = raliCreateCOCOReaderKeyPoints(handle, json_path, true, keypoint, sigma, (unsigned)width, (unsigned)height);
 #elif defined CAFFE_READER
     meta_data = raliCreateCaffeLMDBLabelReader(handle, path);
 #elif defined CAFFE_READER_DETECTION

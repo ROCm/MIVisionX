@@ -86,7 +86,7 @@ RALI_API_CALL raliCreateCOCOReader(RaliContext p_context, const char* source_pat
 }
 
 RaliMetaData
-RALI_API_CALL raliCreateCOCOReaderKeyPoints(RaliContext p_context, const char* source_path, bool is_output, bool keypoint, float sigma , int pose_output_width , int pose_output_height){
+RALI_API_CALL raliCreateCOCOReaderKeyPoints(RaliContext p_context, const char* source_path, bool is_output, bool keypoint, float sigma , unsigned pose_output_width , unsigned pose_output_height){
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateCOCOReaderKeyPoints")
     auto context = static_cast<Context*>(p_context);

@@ -56,6 +56,7 @@ struct TimingInfo
     long long unsigned transfer_time;
 };
 
+//HRNet training expects meta data (joints_data) in below format, so added here as a type for exposing to user
 struct RaliJointsData
 {
     ImageIDBatch image_id_batch;

@@ -74,12 +74,6 @@ void COCOMetaDataReaderKeyPoints::lookup(const std::vector<std::string> &image_n
 
 void COCOMetaDataReaderKeyPoints::add(std::string image_id, ImgSizes image_size, JointsData joints_data)
 {
-    if (exists(image_id))
-    {
-        // check and delete - shobi
-        // auto it = _map_content.find(annotation_id);
-        return;
-    }
     pMetaDataKeyPoint info = std::make_shared<KeyPoint>(image_size, joints_data);
     _map_content.insert(pair<std::string, std::shared_ptr<KeyPoint>>(image_id, info));
 }
@@ -331,15 +325,15 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                     box_scale[1] = SCALE_CONSTANT_CS * box_scale[1];
                 }
 
-                // Convert raw keypoint values to Joints,Joint Visibilities
+                // Convert raw keypoint values to Joints,Joint Visibilities - Clip the visibilities to range [0,1]
                 std::vector<std::vector<float>> joints(NUMBER_OF_JOINTS), joints_visibility(NUMBER_OF_JOINTS);
                 unsigned int j = 0;
                 for (unsigned int i = 0; i < NUMBER_OF_JOINTS; i++)
                 {
                     joints[i].push_back(keypoint[j]);
                     joints[i].push_back(keypoint[j + 1]);
-                    joints_visibility[i].push_back(!(!keypoint[j + 2]));
-                    joints_visibility[i].push_back(!(!keypoint[j + 2]));
+                    joints_visibility[i].push_back(std::clamp((int)keypoint[j + 2], 0, 1));
+                    joints_visibility[i].push_back(std::clamp((int)keypoint[j + 2], 0, 1));
                     j = j + 3;
                 }
 
@@ -391,3 +385,4 @@ void COCOMetaDataReaderKeyPoints::release()
 COCOMetaDataReaderKeyPoints::COCOMetaDataReaderKeyPoints() : _coco_metadata_read_time("coco meta read time", DBG_TIMING)
 {
 }
+

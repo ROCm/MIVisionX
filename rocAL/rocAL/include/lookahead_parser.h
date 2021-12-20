@@ -42,7 +42,6 @@ RAPIDJSON_DIAG_OFF(effc++)
 // This parser uses in-situ strings, so the JSON buffer will be altered during the
 // parse.
 
-
 using namespace rapidjson;
 
 

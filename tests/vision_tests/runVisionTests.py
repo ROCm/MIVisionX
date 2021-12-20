@@ -34,15 +34,18 @@ __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
 
+
 def shell(cmd):
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     output = p.communicate()[0][0:-1]
     return output
 
+
 def write_formatted(output, f):
     f.write("````\n")
     f.write("%s\n\n" % output)
     f.write("````\n")
+
 
 def strip_libtree_addresses(lib_tree):
     return lib_tree
@@ -134,141 +137,246 @@ visionTestConfig = [
 
 # OpenVX Vision Functions 1080P
 openvxNodes = [
-# Arithmetic kernels
-    ('AbsDiff_U8_U8U8',                           'org.khronos.openvx.absdiff uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
-    ('AbsDiff_S16_S16S16_Sat',                    'org.khronos.openvx.absdiff uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Add_U8_U8U8_Wrap',                          'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Add_U8_U8U8_Sat',                           'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Add_S16_U8U8_Wrap',                         'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Add_S16_S16U8_Wrap',                        'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Add_S16_S16U8_Sat',                         'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Add_S16_S16S16_Wrap',                       'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Add_S16_S16S16_Sat',                        'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Sub_U8_U8U8_Wrap',                          'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Sub_U8_U8U8_Sat',                           'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Sub_S16_U8U8_Wrap',                         'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Sub_S16_S16U8_Wrap',                        'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Sub_S16_S16U8_Sat',                         'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Sub_S16_U8S16_Wrap',                        'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Sub_S16_U8S16_Sat',                         'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Sub_S16_S16S16_Wrap',                       'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Sub_S16_S16S16_Sat',                        'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_U8_U8U8_Wrap_Trunc',                    'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Mul_U8_U8U8_Wrap_Round',                    'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Mul_U8_U8U8_Sat_Trunc',                     'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Mul_U8_U8U8_Sat_Round',                     'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Mul_S16_U8U8_Wrap_Trunc',                   'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_U8U8_Wrap_Round',                   'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_U8U8_Sat_Trunc',                    'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_U8U8_Sat_Round',                    'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_S16U8_Wrap_Trunc',                  'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_S16U8_Wrap_Round',                  'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_S16U8_Sat_Trunc',                   'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_S16U8_Sat_Round',                   'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_S16S16_Wrap_Trunc',                 'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_S16S16_Wrap_Round',                 'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_S16S16_Sat_Trunc',                  'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Mul_S16_S16S16_Sat_Round',                  'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Magnitude_S16_S16S16',                      'org.khronos.openvx.magnitude uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Phase_U8_S16S16',                           'org.khronos.openvx.phase uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
-    ('WeightedAverage_U8_U8U8',                   'org.khronos.openvx.weighted_average uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa scalar:FLOAT32,0.25 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
-# logical kernels
-    ('And_U8_U8U8',                               'org.khronos.openvx.and uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Or_U8_U8U8',                                'org.khronos.openvx.or uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Xor_U8_U8U8',                               'org.khronos.openvx.xor uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Not_U8_U8',                                 'org.khronos.openvx.not uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
-# Color kernels
-    ('Lut_U8_U8',                                 'org.khronos.openvx.table_lookup uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa lut:UINT8,256 image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ColorDepth_U8_S16_Wrap',                    'org.khronos.openvx.convertdepth uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa image:' + str(width) + ',' + str(height) + ',U008 !WRAP scalar:INT32,1'),
-    ('ColorDepth_U8_S16_Sat',                     'org.khronos.openvx.convertdepth uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa image:' + str(width) + ',' + str(height) + ',U008 !SATURATE scalar:INT32,1'),
-    ('ColorDepth_S16_U8',                         'org.khronos.openvx.convertdepth uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',S016 !WRAP scalar:INT32,1'),
+    # Arithmetic kernels
+    ('AbsDiff_U8_U8U8',                           'org.khronos.openvx.absdiff uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
+    ('AbsDiff_S16_S16S16_Sat',                    'org.khronos.openvx.absdiff uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Add_U8_U8U8_Wrap',                          'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Add_U8_U8U8_Sat',                           'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Add_S16_U8U8_Wrap',                         'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Add_S16_S16U8_Wrap',                        'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Add_S16_S16U8_Sat',                         'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Add_S16_S16S16_Wrap',                       'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Add_S16_S16S16_Sat',                        'org.khronos.openvx.add uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Sub_U8_U8U8_Wrap',                          'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Sub_U8_U8U8_Sat',                           'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Sub_S16_U8U8_Wrap',                         'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Sub_S16_S16U8_Wrap',                        'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Sub_S16_S16U8_Sat',                         'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Sub_S16_U8S16_Wrap',                        'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Sub_S16_U8S16_Sat',                         'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Sub_S16_S16S16_Wrap',                       'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !WRAP image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Sub_S16_S16S16_Sat',                        'org.khronos.openvx.subtract uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb !SATURATE image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_U8_U8U8_Wrap_Trunc',                    'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Mul_U8_U8U8_Wrap_Round',                    'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Mul_U8_U8U8_Sat_Trunc',                     'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Mul_U8_U8U8_Sat_Round',                     'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Mul_S16_U8U8_Wrap_Trunc',                   'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_U8U8_Wrap_Round',                   'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_U8U8_Sat_Trunc',                    'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_U8U8_Sat_Round',                    'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_S16U8_Wrap_Trunc',                  'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_S16U8_Wrap_Round',                  'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_S16U8_Sat_Trunc',                   'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_S16U8_Sat_Round',                   'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_S16S16_Wrap_Trunc',                 'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',S016,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_S16S16_Wrap_Round',                 'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',S016,0xbb scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_S16S16_Sat_Trunc',                  'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',S016,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Mul_S16_S16S16_Sat_Round',                  'org.khronos.openvx.multiply uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa uniform-image:' + \
+     str(width) + ',' + str(height) + ',S016,0xbb scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Magnitude_S16_S16S16',                      'org.khronos.openvx.magnitude uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Phase_U8_S16S16',                           'org.khronos.openvx.phase uniform-image:' + str(width) + ',' + str(height) + \
+     ',S016,0xaa uniform-image:' + str(width) + ',' + str(height) + ',S016,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
+    ('WeightedAverage_U8_U8U8',                   'org.khronos.openvx.weighted_average uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa scalar:FLOAT32,0.25 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
+    # logical kernels
+    ('And_U8_U8U8',                               'org.khronos.openvx.and uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Or_U8_U8U8',                                'org.khronos.openvx.or uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Xor_U8_U8U8',                               'org.khronos.openvx.xor uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Not_U8_U8',                                 'org.khronos.openvx.not uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
+    # Color kernels
+    ('Lut_U8_U8',                                 'org.khronos.openvx.table_lookup uniform-image:' + str(width) + \
+     ',' + str(height) + ',U008,0xaa lut:UINT8,256 image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ColorDepth_U8_S16_Wrap',                    'org.khronos.openvx.convertdepth uniform-image:' + str(width) + \
+     ',' + str(height) + ',S016,0xaa image:' + str(width) + ',' + str(height) + ',U008 !WRAP scalar:INT32,1'),
+    ('ColorDepth_U8_S16_Sat',                     'org.khronos.openvx.convertdepth uniform-image:' + str(width) + \
+     ',' + str(height) + ',S016,0xaa image:' + str(width) + ',' + str(height) + ',U008 !SATURATE scalar:INT32,1'),
+    ('ColorDepth_S16_U8',                         'org.khronos.openvx.convertdepth uniform-image:' + str(width) + \
+     ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',S016 !WRAP scalar:INT32,1'),
     # ('ChannelExtract_U8_U16_Pos0',                'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',YUYV !CHANNEL_Y image:' + str(width) + ',' + str(height) + ',U008'),
     # ('ChannelExtract_U8_U16_Pos1',                'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',YUYV !CHANNEL_Y image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U24_Pos0',                'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U24_Pos1',                'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_G image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U24_Pos2',                'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_B image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U32_Pos0_UYVY',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',UYVY,0xaabbcc !CHANNEL_U image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U32_Pos1_YUYV',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',YUYV,0xaabbcc !CHANNEL_U image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U32_Pos2_UYVY',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',UYVY,0xaabbcc !CHANNEL_V image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U32_Pos3_YUYV',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',YUYV,0xaabbcc !CHANNEL_V image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U32_Pos0_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U32_Pos1_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_G image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U32_Pos2_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_B image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8_U32_Pos3_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_A image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8U8U8_U24',                 'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8U8U8_U32',                 'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8U8U8U8_U32',               'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U24_Pos0',                'org.khronos.openvx.channel_extract uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U24_Pos1',                'org.khronos.openvx.channel_extract uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_G image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U24_Pos2',                'org.khronos.openvx.channel_extract uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_B image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U32_Pos0_UYVY',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',UYVY,0xaabbcc !CHANNEL_U image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U32_Pos1_YUYV',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',YUYV,0xaabbcc !CHANNEL_U image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U32_Pos2_UYVY',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',UYVY,0xaabbcc !CHANNEL_V image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U32_Pos3_YUYV',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',YUYV,0xaabbcc !CHANNEL_V image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U32_Pos0_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U32_Pos1_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_G image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U32_Pos2_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_B image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8_U32_Pos3_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_A image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8U8U8_U24',                 'org.khronos.openvx.channel_extract uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8U8U8_U32',                 'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ChannelExtract_U8U8U8U8_U32',               'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
+     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
     # ('ChannelCombine_U16_U8U8',                   'org.khronos.openvx.channel_combine uniform-image:' + str(width) + ',' + str(height) + ',U008 uniform-image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 uniform-image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 image:' + str(width) + ',' + str(height) + ',NV12'),
     # ('ChannelCombine_U32_U8U8U8_UYVY',            'org.khronos.openvx.channel_combine uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(widthDiv2) + ',' + str(height) + ',U008,0xbb uniform-image:' + str(widthDiv2) + ',' + str(height) + ',U008,0xcc null image:' + str(width) + ',' + str(height) + ',UYVY'),
     # ('ChannelCombine_U32_U8U8U8_YUYV',            'org.khronos.openvx.channel_combine uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(widthDiv2) + ',' + str(height) + ',U008,0xbb uniform-image:' + str(widthDiv2) + ',' + str(height) + ',U008,0xcc null image:' + str(width) + ',' + str(height) + ',YUYV'),
     # ('ChannelCombine_U24_U8U8U8_RGB',             'org.khronos.openvx.channel_combine uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb uniform-image:' + str(width) + ',' + str(height) + ',U008,0xcc null image:' + str(width) + ',' + str(height) + ',RGB2'),
-    ('ChannelCombine_U32_U8U8U8U8_RGBX',          'org.khronos.openvx.channel_combine uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb uniform-image:' + str(width) + ',' + str(height) + ',U008,0xcc uniform-image:' + str(width) + ',' + str(height) + ',U008,0xdd image:' + str(width) + ',' + str(height) + ',RGBA'),
-    ('ColorConvert_RGB_RGBX',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',RGB2'),
-    ('ColorConvert_RGB_UYVY',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
-    ('ColorConvert_RGB_YUYV',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
-    ('ColorConvert_RGB_IYUV',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
-    ('ColorConvert_RGB_NV12',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
-    ('ColorConvert_RGB_NV21',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
-    ('ColorConvert_RGBX_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
-    ('ColorConvert_RGBX_UYVY',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
-    ('ColorConvert_RGBX_YUYV',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
-    ('ColorConvert_RGBX_IYUV',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
-    ('ColorConvert_RGBX_NV12',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
-    ('ColorConvert_RGBX_NV21',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
-    ('ColorConvert_IYUV_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
-    ('ColorConvert_IYUV_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',IYUV'),
-    ('FormatConvert_IYUV_UYVY',                   'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
-    ('FormatConvert_IYUV_YUYV',                   'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
-    ('ColorConvert_NV12_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
-    ('ColorConvert_NV12_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',NV12'),
-    ('FormatConvert_NV12_UYVY',                   'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
-    ('FormatConvert_NV12_YUYV',                   'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
-    ('ColorConvert_YUV4_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',YUV4'),
-    ('ColorConvert_YUV4_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',YUV4'),
+    ('ChannelCombine_U32_U8U8U8U8_RGBX',          'org.khronos.openvx.channel_combine uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xbb uniform-image:' + str(width) + ',' + str(height) + ',U008,0xcc uniform-image:' + str(width) + ',' + str(height) + ',U008,0xdd image:' + str(width) + ',' + str(height) + ',RGBA'),
+    ('ColorConvert_RGB_RGBX',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',RGB2'),
+    ('ColorConvert_RGB_UYVY',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
+    ('ColorConvert_RGB_YUYV',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
+    ('ColorConvert_RGB_IYUV',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
+    ('ColorConvert_RGB_NV12',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
+    ('ColorConvert_RGB_NV21',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
+    ('ColorConvert_RGBX_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+    ('ColorConvert_RGBX_UYVY',                    'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+    ('ColorConvert_RGBX_YUYV',                    'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+    ('ColorConvert_RGBX_IYUV',                    'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+    ('ColorConvert_RGBX_NV12',                    'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+    ('ColorConvert_RGBX_NV21',                    'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+    ('ColorConvert_IYUV_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
+    ('ColorConvert_IYUV_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',IYUV'),
+    ('FormatConvert_IYUV_UYVY',                   'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
+    ('FormatConvert_IYUV_YUYV',                   'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
+    ('ColorConvert_NV12_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
+    ('ColorConvert_NV12_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',NV12'),
+    ('FormatConvert_NV12_UYVY',                   'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
+    ('FormatConvert_NV12_YUYV',                   'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
+    ('ColorConvert_YUV4_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',YUV4'),
+    ('ColorConvert_YUV4_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + \
+     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',YUV4'),
     # ('FormatConvert_IUV_UV12',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
     # ('FormatConvert_UV12_IUV',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
     # ('FormatConvert_UV_UV12',                     'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',YUV4'),
     # ('ScaleUp2x2_U8_U8',                          'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',YUV4'),
-# filter kernels
-    ('Box_U8_U8_3x3',                             'org.khronos.openvx.box_3x3 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Dilate_U8_U8_3x3',                          'org.khronos.openvx.dilate_3x3 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Erode_U8_U8_3x3',                           'org.khronos.openvx.erode_3x3 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Median_U8_U8_3x3',                          'org.khronos.openvx.median_3x3 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Gaussian_U8_U8_3x3',                        'org.khronos.openvx.gaussian_3x3 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ScaleGaussianHalf_U8_U8_3x3',               'org.khronos.openvx.halfscale_gaussian uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 scalar:INT32,3'),
+    # filter kernels
+    ('Box_U8_U8_3x3',                             'org.khronos.openvx.box_3x3 uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Dilate_U8_U8_3x3',                          'org.khronos.openvx.dilate_3x3 uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Erode_U8_U8_3x3',                           'org.khronos.openvx.erode_3x3 uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Median_U8_U8_3x3',                          'org.khronos.openvx.median_3x3 uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Gaussian_U8_U8_3x3',                        'org.khronos.openvx.gaussian_3x3 uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',U008'),
+    ('ScaleGaussianHalf_U8_U8_3x3',               'org.khronos.openvx.halfscale_gaussian uniform-image:' + str(width) + \
+     ',' + str(height) + ',U008,0xaa image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 scalar:INT32,3'),
     # ('ScaleGaussianHalf_U8_U8_5x5',               'org.khronos.openvx.halfscale_gaussian uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 scalar:INT32,5'),
-    ('Convolve_U8_U8_3x3',                        'org.khronos.openvx.custom_convolution uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa "convolution:3,3:INIT,{-1;-1;-1;-1;16;-1;-1;-1;-1}" image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Convolve_S16_U8_3x3',                       'org.khronos.openvx.custom_convolution uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa "convolution:3,3:INIT,{-1;-1;-1;-1;16;-1;-1;-1;-1}" image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Sobel_S16S16_U8_3x3_GXY',                   'org.khronos.openvx.sobel_3x3 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',S016 image:' + str(width) + ',' + str(height) + ',S016'),
-    ('Sobel_S16_U8_3x3_GX',                       'org.khronos.openvx.sobel_3x3 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Convolve_U8_U8_3x3',                        'org.khronos.openvx.custom_convolution uniform-image:' + str(width) + ',' + \
+     str(height) + ',U008,0xaa "convolution:3,3:INIT,{-1;-1;-1;-1;16;-1;-1;-1;-1}" image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Convolve_S16_U8_3x3',                       'org.khronos.openvx.custom_convolution uniform-image:' + str(width) + ',' + \
+     str(height) + ',U008,0xaa "convolution:3,3:INIT,{-1;-1;-1;-1;16;-1;-1;-1;-1}" image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Sobel_S16S16_U8_3x3_GXY',                   'org.khronos.openvx.sobel_3x3 uniform-image:' + str(width) + ',' + str(height) + \
+     ',U008,0xaa image:' + str(width) + ',' + str(height) + ',S016 image:' + str(width) + ',' + str(height) + ',S016'),
+    ('Sobel_S16_U8_3x3_GX',                       'org.khronos.openvx.sobel_3x3 uniform-image:' + \
+     str(width) + ',' + str(height) + ',U008,0xaa image:' + str(width) + ',' + str(height) + ',S016'),
     # ('Sobel_S16_U8_3x3_GY',                       'org.khronos.openvx.sobel_3x3 uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa null image:' + str(width) + ',' + str(height) + ',S016'),
-# Statistical kernels
-    ('Threshold_U8_U8_Binary',                    'org.khronos.openvx.threshold uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa threshold:BINARY,U008,U008:INIT,127 image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Threshold_U8_U8_Range',                     'org.khronos.openvx.threshold uniform-image:' + str(width) + ',' + str(height) + ',U008,0xaa threshold:RANGE,U008,U008:INIT,100,200 image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Threshold_U8_S16_Binary',                   'org.khronos.openvx.threshold uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa threshold:BINARY,S016,U008:INIT,127 image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Threshold_U8_S16_Range',                    'org.khronos.openvx.threshold uniform-image:' + str(width) + ',' + str(height) + ',S016,0xaa threshold:RANGE,S016,U008:INIT,100,200 image:' + str(width) + ',' + str(height) + ',U008'),
-# geometric kernels
-    ('ScaleImage_U8_U8_Nearest',                  'org.khronos.openvx.scale_image image:' + str(width) + ',' + str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !NEAREST_NEIGHBOR'),
-    ('ScaleImage_U8_U8_Bilinear',                 'org.khronos.openvx.scale_image image:' + str(width) + ',' + str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !BILINEAR'),
-    ('ScaleImage_U8_U8_Bilinear_Replicate',       'org.khronos.openvx.scale_image image:' + str(width) + ',' + str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !BILINEAR attr:BORDER_MODE:REPLICATE'),
-    ('ScaleImage_U8_U8_Bilinear_Constant',        'org.khronos.openvx.scale_image image:' + str(width) + ',' + str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !BILINEAR attr:BORDER_MODE:CONSTANT,0'),
-    ('ScaleImage_U8_U8_Area',                     'org.khronos.openvx.scale_image image:' + str(width) + ',' + str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !AREA'),
-    ('WarpAffine_U8_U8_Nearest',                  'org.khronos.openvx.warp_affine image:' + str(width) + ',' + str(height) + ',U008 "matrix:FLOAT32,2,3:INIT,{0.25;0;0;0.5;20;20}" !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008'),
-    ('WarpAffine_U8_U8_Nearest_Constant',         'org.khronos.openvx.warp_affine image:' + str(width) + ',' + str(height) + ',U008 "matrix:FLOAT32,2,3:INIT,{0.25;0;0;0.5;20;20}" !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
-    ('WarpAffine_U8_U8_Bilinear',                 'org.khronos.openvx.warp_affine image:' + str(width) + ',' + str(height) + ',U008 "matrix:FLOAT32,2,3:INIT,{0.25;0;0;0.5;20;20}" !BILINEAR image:' + str(width) + ',' + str(height) + ',U008'),
-    ('WarpAffine_U8_U8_Bilinear_Constant',        'org.khronos.openvx.warp_affine image:' + str(width) + ',' + str(height) + ',U008 "matrix:FLOAT32,2,3:INIT,{0.25;0;0;0.5;20;20}" !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
+    # Statistical kernels
+    ('Threshold_U8_U8_Binary',                    'org.khronos.openvx.threshold uniform-image:' + str(width) + ',' + \
+     str(height) + ',U008,0xaa threshold:BINARY,U008,U008:INIT,127 image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Threshold_U8_U8_Range',                     'org.khronos.openvx.threshold uniform-image:' + str(width) + ',' + \
+     str(height) + ',U008,0xaa threshold:RANGE,U008,U008:INIT,100,200 image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Threshold_U8_S16_Binary',                   'org.khronos.openvx.threshold uniform-image:' + str(width) + ',' + \
+     str(height) + ',S016,0xaa threshold:BINARY,S016,U008:INIT,127 image:' + str(width) + ',' + str(height) + ',U008'),
+    ('Threshold_U8_S16_Range',                    'org.khronos.openvx.threshold uniform-image:' + str(width) + ',' + \
+     str(height) + ',S016,0xaa threshold:RANGE,S016,U008:INIT,100,200 image:' + str(width) + ',' + str(height) + ',U008'),
+    # geometric kernels
+    ('ScaleImage_U8_U8_Nearest',                  'org.khronos.openvx.scale_image image:' + str(width) + \
+     ',' + str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !NEAREST_NEIGHBOR'),
+    ('ScaleImage_U8_U8_Bilinear',                 'org.khronos.openvx.scale_image image:' + str(width) + \
+     ',' + str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !BILINEAR'),
+    ('ScaleImage_U8_U8_Bilinear_Replicate',       'org.khronos.openvx.scale_image image:' + str(width) + ',' + \
+     str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !BILINEAR attr:BORDER_MODE:REPLICATE'),
+    ('ScaleImage_U8_U8_Bilinear_Constant',        'org.khronos.openvx.scale_image image:' + str(width) + ',' + \
+     str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !BILINEAR attr:BORDER_MODE:CONSTANT,0'),
+    ('ScaleImage_U8_U8_Area',                     'org.khronos.openvx.scale_image image:' + str(width) + \
+     ',' + str(height) + ',U008 image:' + str(widthDiv2) + ',' + str(heightDiv2) + ',U008 !AREA'),
+    ('WarpAffine_U8_U8_Nearest',                  'org.khronos.openvx.warp_affine image:' + str(width) + ',' + str(height) + \
+     ',U008 "matrix:FLOAT32,2,3:INIT,{0.25;0;0;0.5;20;20}" !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008'),
+    ('WarpAffine_U8_U8_Nearest_Constant',         'org.khronos.openvx.warp_affine image:' + str(width) + ',' + str(height) + \
+     ',U008 "matrix:FLOAT32,2,3:INIT,{0.25;0;0;0.5;20;20}" !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
+    ('WarpAffine_U8_U8_Bilinear',                 'org.khronos.openvx.warp_affine image:' + str(width) + ',' + str(height) + \
+     ',U008 "matrix:FLOAT32,2,3:INIT,{0.25;0;0;0.5;20;20}" !BILINEAR image:' + str(width) + ',' + str(height) + ',U008'),
+    ('WarpAffine_U8_U8_Bilinear_Constant',        'org.khronos.openvx.warp_affine image:' + str(width) + ',' + str(height) + \
+     ',U008 "matrix:FLOAT32,2,3:INIT,{0.25;0;0;0.5;20;20}" !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
     # ('WarpPerspective_U8_U8_Nearest',             'org.khronos.openvx.warp_perspective image:' + str(width) + ',' + str(height) + ',U008 "matrix:FLOAT32,3,3:INIT,{2;0.1;0;2;1.9;0;-1200;-360;1}" !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008'),
     # ('WarpPerspective_U8_U8_Nearest_Constant',    'org.khronos.openvx.warp_perspective image:' + str(width) + ',' + str(height) + ',U008 "matrix:FLOAT32,3,3:INIT,{2;0.1;0;2;1.9;0;-1200;-360;1}" !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
     # ('WarpPerspective_U8_U8_Bilinear',            'org.khronos.openvx.warp_perspective image:' + str(width) + ',' + str(height) + ',U008 "matrix:FLOAT32,3,3:INIT,{2;0.1;0;2;1.9;0;-1200;-360;1}" !BILINEAR image:' + str(width) + ',' + str(height) + ',U008'),
     # ('WarpPerspective_U8_U8_Bilinear_Constant',   'org.khronos.openvx.warp_perspective image:' + str(width) + ',' + str(height) + ',U008 "matrix:FLOAT32,3,3:INIT,{2;0.1;0;2;1.9;0;-1200;-360;1}" !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
-# To be updated...
-#     ('Remap_S16_nearest',                         'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008'),
-#     ('Remap_S16_nearest_constant',                'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
-#     ('Remap_S16_bilinear',                        'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008'),
-#     ('Remap_S16_bilinear_constant',               'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
-# # vision kernels
-#     ('FastCorners_XY_U8_NoSupression',            'org.khronos.openvx.fast_corners image:' + str(width) + ',' + str(height) + ',U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
-#     ('FastCorners_XY_U8_Supression',              'org.khronos.openvx.fast_corners image:' + str(width) + ',' + str(height) + ',U008 scalar:FLOAT32,80.0 scalar:BOOL,0 array:KEYPOINT,1000 scalar:SIZE,0'),
+    # To be updated...
+    #     ('Remap_S16_nearest',                         'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008'),
+    #     ('Remap_S16_nearest_constant',                'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
+    #     ('Remap_S16_bilinear',                        'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008'),
+    #     ('Remap_S16_bilinear_constant',               'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
+    # # vision kernels
+    #     ('FastCorners_XY_U8_NoSupression',            'org.khronos.openvx.fast_corners image:' + str(width) + ',' + str(height) + ',U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
+    #     ('FastCorners_XY_U8_Supression',              'org.khronos.openvx.fast_corners image:' + str(width) + ',' + str(height) + ',U008 scalar:FLOAT32,80.0 scalar:BOOL,0 array:KEYPOINT,1000 scalar:SIZE,0'),
 ]
 
 #  Popular Video Sizes
@@ -298,7 +406,8 @@ if hardwareMode not in ('CPU', 'GPU'):
     print("ERROR: OpenVX Hardware supported - CPU or GPU]")
     exit()
 if listTest not in ('no', 'yes'):
-    print("ERROR: List Vision Performance Tests options supported - [no or yes]")
+    print(
+        "ERROR: List Vision Performance Tests options supported - [no or yes]")
     exit()
 if functionalityTests not in ('no', 'yes'):
     print("ERROR: Vision functionality Tests option supported - [no or yes]")
@@ -311,7 +420,8 @@ if profilingOption not in ('no', 'yes'):
     exit()
 
 if not 0 <= testFilter <= len(openvxNodes):
-    print("\nERROR: Vision Performance Filter not in range - [1 - %d]\n" % (len(openvxNodes)))
+    print(
+        "\nERROR: Vision Performance Filter not in range - [1 - %d]\n" % (len(openvxNodes)))
     exit()
 if not 1 <= numFrames <= 10000:
     print("\nERROR: Vision Test Number of Frames not in range - [1 - 10000]\n")
@@ -376,6 +486,7 @@ if testFilter == 0 and functionalityTests == 'yes':
     for i in range(len(visionTestConfig)):
         testFileName = visionTestConfig[i]
         print("Running Test Script: "+testFileName)
+        os.system('echo '+testFileName)
         os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                   hardwareMode+' -dump-profile file '+scriptPath+'/gdfs/'+testFileName+' | tee -a '+scriptPath+'/gdfs/openvx_test_results/VisionOutput.log')
         print("\n")
@@ -396,34 +507,37 @@ else:
 nodeList = []
 case_num_list = []
 
+
 def multiCaseProfilerOCL(nodeList, case_num_list):
 
     for i in nodeList:
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
-                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+                  ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
         print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-            hardwareMode+' -dump-profile node '+nodeFormat)
+              hardwareMode+' -dump-profile node '+nodeFormat)
         os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-            hardwareMode+' -dump-profile node '+nodeFormat)
+                  hardwareMode+' -dump-profile node '+nodeFormat)
         print("\n")
 
     RESULTS_DIR = "rocprof_vision_tests_outputs"
     print("RESULTS_DIR = " + RESULTS_DIR)
     CONSOLIDATED_FILE = RESULTS_DIR + "/consolidated_results.stats.csv"
-    new_file = open(CONSOLIDATED_FILE,'w')
-    new_file.write('"OCL Kernel Name","Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
+    new_file = open(CONSOLIDATED_FILE, 'w')
+    new_file.write(
+        '"OCL Kernel Name","Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
 
     for case_num in case_num_list:
         nodeName, nodeFormat = openvxNodes[case_num-1]
         CASE_RESULTS_DIR = RESULTS_DIR + "/case_" + str(case_num)
         print("CASE_RESULTS_DIR = " + CASE_RESULTS_DIR)
-        CASE_FILE_PATH = CASE_RESULTS_DIR + "/output_case_" + str(case_num) + ".stats.csv"
+        CASE_FILE_PATH = CASE_RESULTS_DIR + \
+            "/output_case_" + str(case_num) + ".stats.csv"
         print("CASE_FILE_PATH = " + CASE_FILE_PATH)
         try:
-            case_file = open(CASE_FILE_PATH,'r')
+            case_file = open(CASE_FILE_PATH, 'r')
             for line in case_file:
                 print(line)
                 if line.startswith('"OpenVX_kernel'):
@@ -434,7 +548,8 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
             continue
 
     new_file.close()
-    os.system('chown $USER:$USER '+RESULTS_DIR+'/consolidated_results.stats.csv')
+    os.system('chown $USER:$USER '+RESULTS_DIR +
+              '/consolidated_results.stats.csv')
 
     try:
         import pandas as pd
@@ -442,12 +557,13 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
         df = pd.read_csv(CONSOLIDATED_FILE)
         df["AverageMs"] = df["AverageNs"] / 1000000
         dfPrint = df.drop(['Name', 'Percentage'], axis=1)
-        dfPrint["OCL Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Ocl_")
+        dfPrint["OCL Kernel Name"] = dfPrint.iloc[:, 0].str.lstrip("Ocl_")
         print(dfPrint)
     except ImportError:
         print("\nPandas not available! Results of GPU profiling experiment are available in " + CONSOLIDATED_FILE)
     except IOError:
-            print("Unable to open results in " + CONSOLIDATED_FILE)
+        print("Unable to open results in " + CONSOLIDATED_FILE)
+
 
 def multiCaseProfilerHIP(nodeList, case_num_list):
 
@@ -455,28 +571,30 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
-                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+                  ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
         print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-            hardwareMode+' -dump-profile node '+nodeFormat)
+              hardwareMode+' -dump-profile node '+nodeFormat)
         os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-            hardwareMode+' -dump-profile node '+nodeFormat)
+                  hardwareMode+' -dump-profile node '+nodeFormat)
         print("\n")
 
     RESULTS_DIR = "rocprof_vision_tests_outputs"
     print("RESULTS_DIR = " + RESULTS_DIR)
     CONSOLIDATED_FILE = RESULTS_DIR + "/consolidated_results.stats.csv"
-    new_file = open(CONSOLIDATED_FILE,'w')
-    new_file.write('"HIP Kernel Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
+    new_file = open(CONSOLIDATED_FILE, 'w')
+    new_file.write(
+        '"HIP Kernel Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
 
     for case_num in case_num_list:
         nodeName, nodeFormat = openvxNodes[case_num-1]
         CASE_RESULTS_DIR = RESULTS_DIR + "/case_" + str(case_num)
         print("CASE_RESULTS_DIR = " + CASE_RESULTS_DIR)
-        CASE_FILE_PATH = CASE_RESULTS_DIR + "/output_case_" + str(case_num) + ".stats.csv"
+        CASE_FILE_PATH = CASE_RESULTS_DIR + \
+            "/output_case_" + str(case_num) + ".stats.csv"
         print("CASE_FILE_PATH = " + CASE_FILE_PATH)
         try:
-            case_file = open(CASE_FILE_PATH,'r')
+            case_file = open(CASE_FILE_PATH, 'r')
             for line in case_file:
                 print(line)
                 if line.startswith('"Hip'):
@@ -487,7 +605,8 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
             continue
 
     new_file.close()
-    os.system('chown $USER:$USER '+RESULTS_DIR+'/consolidated_results.stats.csv')
+    os.system('chown $USER:$USER '+RESULTS_DIR +
+              '/consolidated_results.stats.csv')
 
     try:
         import pandas as pd
@@ -495,12 +614,13 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
         df = pd.read_csv(CONSOLIDATED_FILE)
         df["AverageMs"] = df["AverageNs"] / 1000000
         dfPrint = df.drop(['Percentage'], axis=1)
-        dfPrint["HIP Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Hip_")
+        dfPrint["HIP Kernel Name"] = dfPrint.iloc[:, 0].str.lstrip("Hip_")
         print(dfPrint)
     except ImportError:
         print("\nPandas not available! Results of GPU profiling experiment are available in " + CONSOLIDATED_FILE)
     except IOError:
-            print("Unable to open results in " + CONSOLIDATED_FILE)
+        print("Unable to open results in " + CONSOLIDATED_FILE)
+
 
 if testFilter == 0:
     totalCount = len(openvxNodes[:])
@@ -517,9 +637,9 @@ if profilingOption == "yes":
     os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')
 
     if backendType == "OCL":
-        multiCaseProfilerOCL(nodeList = nodeList, case_num_list = case_num_list)
+        multiCaseProfilerOCL(nodeList=nodeList, case_num_list=case_num_list)
     else:
-        multiCaseProfilerHIP(nodeList = nodeList, case_num_list = case_num_list)
+        multiCaseProfilerHIP(nodeList=nodeList, case_num_list=case_num_list)
 
 # Option B - All cases / single case without GPU profiling
 else:
@@ -527,12 +647,14 @@ else:
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
-                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        print(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile node '+nodeFormat)
-        os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
+                  ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+        print(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+              hardwareMode+' -dump-profile node '+nodeFormat)
+        os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode +
+                  ' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print("\n")
     orig_stdout = sys.stdout
-    sys.stdout = open('openvx_node_results/nodePerformance.md','a')
+    sys.stdout = open('openvx_node_results/nodePerformance.md', 'a')
     echo_1 = '| OpenVX Node                          |Frames Count| tmp (ms) | avg (ms) | min (ms) | max (ms) |'
     print(echo_1)
     echo_2 = '|--------------------------------------|------------|----------|----------|----------|----------|'
@@ -604,7 +726,8 @@ else:
         write_formatted(lib_tree, f)
         f.write("\n")
 
-        f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"**\n")
+        f.write(
+            "\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2021 -- runVisionTests.py V-"+__version__+"**\n")
         f.write("\n")
 
         # report file

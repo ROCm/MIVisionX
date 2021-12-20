@@ -117,7 +117,7 @@ visionTestConfig = [
     '26_minMaxLoc.gdf',
     '27_multiply.gdf',
     '28_not.gdf',
-    # '29_opticalFlowLK.gdf',
+    '29_opticalFlowLK.gdf',
     '30_or.gdf',
     '31_phase.gdf',
     '32_gaussianPyramid.gdf',

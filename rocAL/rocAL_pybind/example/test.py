@@ -1,11 +1,11 @@
 import numpy as np
 import cv2
 from enum import Enum
-from amd.rali.plugin.pytorch import RALIClassificationIterator
-from amd.rali.plugin.pytorch import RALI_iterator
-from amd.rali.pipeline import Pipeline
-import amd.rali.ops as ops
-import amd.rali.types as types
+from amd.rocAL.plugin.pytorch import RALIClassificationIterator
+from amd.rocAL.plugin.pytorch import RALI_iterator
+from amd.rocAL.pipeline import Pipeline
+import amd.rocAL.ops as ops
+import amd.rocAL.types as types
 import sys
 class HybridTrainPipe(Pipeline):
 	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):
@@ -67,4 +67,4 @@ def main():
 		cv2.waitKey(10)
 
 if __name__ == '__main__':
-    main() 
+    main()

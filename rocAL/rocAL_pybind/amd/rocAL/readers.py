@@ -1,5 +1,5 @@
 import rali_pybind as b
-from amd.rali.pipeline import Pipeline
+from amd.rocAL.pipeline import Pipeline
 
 def coco(*inputs,file_root, annotations_file='', bytes_per_sample_hint=0, dump_meta_files=False, dump_meta_files_path='', file_list='', initial_fill=1024,  lazy_init=False, ltrb=False, masks=False, meta_files_path='', num_shards=1, pad_last_batch=False, prefetch_queue_depth=1,
                  preserve=False, random_shuffle=False, ratio=False, read_ahead=False,

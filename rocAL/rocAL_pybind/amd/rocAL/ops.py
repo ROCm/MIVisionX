@@ -1,5 +1,5 @@
 import rali_pybind as b
-import amd.rali.types as types
+import amd.rocAL.types as types
 
 class Node:
     def __init__(self):
@@ -50,7 +50,7 @@ class OneHot(Node):
 
 class Cast(Node):
     """
-       
+
         dtype (nvidia.dali.types.DALIDataType) – Output data type.
 
         bytes_per_sample_hint (int, optional, default = 0) – Output size hint, in bytes per sample.
@@ -66,7 +66,7 @@ class Cast(Node):
     def __init__(self,dtype = types.FLOAT, bytes_per_sample_hint=0, preserve = False, seed =-1,  device = None):
 
         Node().__init__()
-        
+
         self._dtype = dtype
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._preserve = preserve
@@ -682,7 +682,7 @@ class BBFlip(Node):
 
 
     def __call__(self,bboxes, horizontal=1):
-        
+
         self.data = "BBFlip"
         self.prev = bboxes
         self.next = self.output
@@ -693,7 +693,7 @@ class BBFlip(Node):
 
 def rali_c_func_call(self,input_image, is_output):
         return 0
-    
+
 
 class ImageDecoderSlice(Node):
     """
@@ -809,7 +809,7 @@ class ImageDecoderSlice(Node):
         self._use_chunk_allocator = use_chunk_allocator
         self._use_fast_idct = use_fast_idct
         self._device = device
-        
+
         self.output = Node()
 
 
@@ -904,7 +904,7 @@ class BoxEncoder(Node):
     def rali_c_func_call(self, handle, criteria=0.5):
         b.BoxEncoder(handle, self._anchors, self._criteria, self._means, self._stds, self._offset,self._scale)
         return 0,0
-        
+
 
 
 class ImageDecoder(Node):
@@ -1046,7 +1046,7 @@ class ImageDecoderRandomCrop(Node):
                  num_attempts=10, output_type=0, preserve=False, random_area = None, random_aspect_ratio = None,
                  seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct= False, device = None):
         Node().__init__()
-        
+
         self._user_feature_key_map = user_feature_key_map if user_feature_key_map else {}
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
@@ -1427,9 +1427,9 @@ class RandomBBoxCrop( ):
         self._threshold_type = threshold_type
         self._thresholds = thresholds if thresholds else [0.0]
         self._total_num_attempts = total_num_attempts
-       
+
         self.crop_begin = []
-       
+
         if(len(self._crop_shape) == 0):
             self.has_shape = False
             self.crop_width = 0
@@ -1454,7 +1454,7 @@ class RandomBBoxCrop( ):
         self._aspect_ratio = b.CreateFloatUniformRand(self._aspect_ratio[0], self._aspect_ratio[1])
         b.RandomBBoxCrop(handle, self._all_boxes_above_threshold, self._allow_no_crop, self._aspect_ratio, self.has_shape, self.crop_width, self.crop_height, self._num_attempts, self._scaling, self._total_num_attempts )
         # b.RandomBBoxCrop(handle, self.all_boxes_overlap, self.no_crop, self.has_shape, self.crop_width, self.crop_height)
-        
+
 class ColorTwist(Node):
     """
         brightness (float, optional, default = 1.0) –

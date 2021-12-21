@@ -1,5 +1,5 @@
 import rali_pybind as b
-import amd.rali.types as types
+import amd.rocAL.types as types
 import numpy as np
 import torch
 

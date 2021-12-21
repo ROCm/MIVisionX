@@ -25,7 +25,7 @@ def snow(*inputs, snow=0.5, device=None):
 
 def exposure(*inputs, exposure=0.5, device=None):
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": exposure}
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": None}
     exposure_image = b.Exposure(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (exposure_image)
 
@@ -51,7 +51,7 @@ def brightness_trail(*inputs, brightness=1.0, bytes_per_sample_hint=0, image_typ
 def fog(*inputs, fog=0.5, device=None):
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],
-                     "is_output": False, "fog_value": fog}
+                     "is_output": False, "fog_value": None}
     fog_image = b.Fog(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (fog_image)
 
@@ -123,14 +123,14 @@ def contrast(*inputs, bytes_per_sample_hint=0, contrast=1.0, image_type=0, min_c
 def flip(*inputs, flip=0, device=None):
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],
-                     "is_output": False, "flip_axis": flip}
+                     "is_output": False, "flip_axis": None}
     flip_image = b.Flip(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (flip_image)
 
 def gamma_correction(*inputs, gamma=0.5, device=None):
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],
-                     "is_output": False, "alpha": gamma}
+                     "is_output": False, "alpha": None}
     gamma_correction_image = b.GammaCorrection(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (gamma_correction_image)
 
@@ -150,7 +150,7 @@ def hue(*inputs, bytes_per_sample_hint=0,  hue=0.0, image_type=0,
     """
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],
-                     "is_output": False, "hue": hue}
+                     "is_output": False, "hue": None}
     hue_image = b.Hue(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     return (hue_image)
@@ -195,7 +195,7 @@ def pixelate(*inputs, device = None):
 
 def rain(*inputs, rain=0.5, rain_width = None, rain_height = None, rain_transparency = None, device = None):
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "rain_value": rain, "rain_width": rain_width, "rain_height": rain_height, "rain_transparency": rain_transparency}
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "rain_value": None, "rain_width": rain_width, "rain_height": rain_height, "rain_transparency": rain_transparency}
     rain_image = b.Rain(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (rain_image)
 
@@ -300,7 +300,7 @@ def rotate(*inputs, angle=0, axis=None, bytes_per_sample_hint= 0, fill_value = 0
     """
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False,
-                    "angle": angle, "dest_width": 0, "dest_height": 0}
+                    "angle": None, "dest_width": 0, "dest_height": 0}
     rotated_image = b.Rotate(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (rotated_image)
 
@@ -325,7 +325,7 @@ def saturation(*inputs, bytes_per_sample_hint=0,  saturation=1.0, image_type=0, 
     """
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],
-                     "is_output": False, "sat": saturation}
+                     "is_output": False, "sat": None}
     saturated_image = b.Saturation(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (saturated_image)
 
@@ -370,21 +370,20 @@ def warp_affine(*inputs, bytes_per_sample_hint=0, fill_value=0.0, interp_type = 
 
     size (float or list of float, optional, default = []) – Output size, in pixels/points. Non-integer sizes are rounded to nearest integer. Channel dimension should be excluded (e.g. for RGB images specify (480,640), not (480,640,3).
     """    # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False,"dest_width": 0, "dest_height": 0, "x0": matrix[0], "x1": matrix[1], "y0": matrix[2], "y1": matrix[3], "o0": matrix[4], "o1": matrix[5]}
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False,"dest_width": 0, "dest_height": 0, "x0": None, "x1": None, "y0": None, "y1": None, "o0": None, "o1": None}
     warp_affine_transformed_image = b.WarpAffine(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (warp_affine_transformed_image)
 
 def vignette(*inputs, vignette=0.5, device=None):
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "sdev": vignette}
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "sdev": None}
     vignette_transformed_image = b.Vignette(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (vignette_transformed_image)
 
 # TODO: Changes required
-def crop_mirror_normalize(*inputs, bytes_per_sample_hint=0, crop=[0.0, 0.0], crop_d=0, crop_h=0, crop_pos_x=0.5, crop_pos_y=0.5, crop_pos_z=0.5,
+def crop_mirror_normalize(*inputs, bytes_per_sample_hint=0, crop=[0, 0], crop_d=0, crop_h=0, crop_pos_x=0.5, crop_pos_y=0.5, crop_pos_z=0.5,
                           crop_w=0, image_type=0, mean=[0.0], mirror=1, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False,
                           preserve=False, seed=1, std=[1.0], device=None):
-
 
     if(len(crop) == 2):
         crop_d = crop_d
@@ -418,7 +417,7 @@ def crop_mirror_normalize(*inputs, bytes_per_sample_hint=0, crop=[0.0, 0.0], cro
     Pipeline._current_pipeline._offset = list(map(lambda x,y: -(x/y), mean, std))
     return (cmn)
 
-def centre_crop(*inputs, bytes_per_sample_hint=0, crop=[0.0, 0.0], crop_d=1, crop_h= 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
+def centre_crop(*inputs, bytes_per_sample_hint=0, crop=[100, 100], crop_d=1, crop_h= 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
                  crop_w=0, image_type=0, output_dtype=types.FLOAT, preserve = False, seed = 1, device = None):
 
     if(len(crop) == 2):
@@ -481,7 +480,7 @@ def color_twist(*inputs, brightness=1.0, bytes_per_sample_hint=0, contrast=1.0, 
         saturation, float) else saturation
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0], "is_output": False,
-                     "alpha": brightness, "beta": contrast, "hue": hue, "sat": saturation}
+                     "alpha": None, "beta": None, "hue": None, "sat": None}
     color_twist_image = b.ColorTwist(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (color_twist_image)
 
@@ -544,7 +543,7 @@ def box_encoder(*inputs, anchors, bytes_per_sample_hint=0, criteria=0.5, means=N
 
 def color_temp(*inputs, adjustment_value=50, device=None, preserve = False):
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "adjustment_value": adjustment_value}
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "adjustment_value": None}
     color_temp_transformed_image = b.ColorTemp(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (color_temp_transformed_image)
 
@@ -566,6 +565,6 @@ def copy(*inputs, device=None):
 
 def snp_noise(*inputs, snpNoise=0.5, device=None, preserve = False):
     # pybind call arguments
-    kwargs_pybind = {"input_image0":inputs[0], "is_output":False ,"snpNoise": snpNoise}
+    kwargs_pybind = {"input_image0":inputs[0], "is_output":False ,"snpNoise": None}
     snp_noise_added_image = b.SnPNoise(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (snp_noise_added_image)

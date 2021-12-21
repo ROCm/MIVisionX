@@ -228,7 +228,7 @@ int HipExecCopyInt8ToNHWC
 int HipExecCopyInt8ToNCHW
 (
     hipStream_t stream,
-    void*     inp_image_u8,
+    const void*     inp_image_u8,
     void*     output_tensor,
     unsigned int     dst_buf_offset,
     const unsigned int     n,

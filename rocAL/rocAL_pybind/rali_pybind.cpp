@@ -83,6 +83,28 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_hip_tensor32(RaliContext context, RaliTensorLayout tensor_format,
+                                float multiplier0, float multiplier1, float multiplier2,
+                                float offset0, float offset1, float offset2,
+                                bool reverse_channels)
+    {
+        auto out_void_ptr = raliCopyToHipOutputTensor32(context, tensor_format, multiplier0,
+                                              multiplier1, multiplier2, offset0,
+                                              offset1, offset2, reverse_channels);
+        return py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(out_void_ptr));
+    }
+
+    py::object wrapper_hip_tensor16(RaliContext context, RaliTensorLayout tensor_format,
+                                float multiplier0, float multiplier1, float multiplier2,
+                                float offset0, float offset1, float offset2,
+                                bool reverse_channels)
+    {
+        auto out_void_ptr = raliCopyToHipOutputTensor16(context, tensor_format, multiplier0,
+                                              multiplier1, multiplier2, offset0,
+                                              offset1, offset2, reverse_channels);
+        return py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(out_void_ptr));
+    }
+
     py::object wrapper_tensor16(RaliContext context, py::array_t<float16> array,
                                 RaliTensorLayout tensor_format, float multiplier0,
                                 float multiplier1, float multiplier2, float offset0,
@@ -291,6 +313,8 @@ namespace rali{
         m.def("raliCopyToOutput",&wrapper);
         m.def("raliCopyToOutputTensor32",&wrapper_tensor32);
         m.def("raliCopyToOutputTensor16",&wrapper_tensor16);
+        m.def("raliCopyToHipOutputTensor32",&wrapper_hip_tensor32);
+        m.def("raliCopyToHipOutputTensor16",&wrapper_hip_tensor16);
         // rali_api_data_loaders.h
          m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,

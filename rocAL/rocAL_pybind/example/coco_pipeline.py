@@ -11,6 +11,8 @@ import amd.rali.ops as ops
 import amd.rali.types as types
 import sys
 import numpy as np
+import cupy as cp
+import torch.utils.dlpack as dp
 
 
 class COCOPipeline(Pipeline):
@@ -18,7 +20,7 @@ class COCOPipeline(Pipeline):
         super(COCOPipeline, self).__init__(batch_size, num_threads,
                                            device_id, seed=seed, rali_cpu=rali_cpu)
         self.input = ops.COCOReader(
-            file_root=data_dir, annotations_file=ann_dir, random_shuffle=True, seed=seed)
+            file_root=data_dir, annotations_file=ann_dir,random_shuffle=True,seed=seed)
         rali_device = 'cpu' if rali_cpu else 'gpu'
         decoder_device = 'cpu' if rali_cpu else 'mixed'
         # device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
@@ -32,15 +34,14 @@ class COCOPipeline(Pipeline):
         self.decode = ops.ImageDecoder(
             device=decoder_device, output_type=types.RGB)
         self.crop = ops.SSDRandomCrop(num_attempts=5)
-        self.decode_slice = ops.ImageDecoderSlice(
-            device=decoder_device, output_type=types.RGB)
+        self.decode_slice = ops.ImageDecoderSlice(device=decoder_device, output_type = types.RGB)
         self.random_bbox_crop = ops.RandomBBoxCrop(device="cpu",
-                                                   aspect_ratio=[0.5, 2.0],
-                                                   thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
-                                                   scaling=[0.3, 1.0],
-                                                   ltrb=True,
-                                                   allow_no_crop=True,
-                                                   num_attempts=1)
+                                                    aspect_ratio=[0.5, 2.0],
+                                                    thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
+                                                    scaling=[0.3, 1.0],
+                                                    ltrb=True,
+                                                    allow_no_crop=True,
+                                                    num_attempts=1)
         self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
         self.twist = ops.ColorTwist(device=rali_device)
         self.bbflip = ops.BBFlip(device=rali_device, ltrb=True)
@@ -65,7 +66,7 @@ class COCOPipeline(Pipeline):
                                                 output_layout=types.NCHW,
                                                 crop=(crop, crop),
                                                 image_type=types.RGB,
-                                                mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+                                                mean=[0.485 * 255, 0.456 *255, 0.406 * 255],
                                                 std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
             #offset = True
             self.boxEncoder = ops.BoxEncoder(device=rali_device,
@@ -112,7 +113,7 @@ class RALICOCOIterator(object):
            Epoch size.
     """
 
-    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=None, offset=None, tensor_dtype=types.FLOAT, display=False):
+    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=None, offset=None, tensor_dtype=types.FLOAT, device = "cpu", display=False):
 
         # self._num_gpus = len(pipelines)
         assert pipelines is not None, "Number of provided pipelines has to be at least 1"
@@ -123,6 +124,8 @@ class RALICOCOIterator(object):
         self.offset = offset if offset else [0.0, 0.0, 0.0]
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
+        self.device = device
+        self.device_id = self.loader._device_id
         self.bs = self.loader._batch_size
         self.w = self.loader.getOutputWidth()
         self.h = self.loader.getOutputHeight()
@@ -132,6 +135,7 @@ class RALICOCOIterator(object):
         print("____________REMAINING IMAGES____________:", self.rim)
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
+        self.hip_array = None
         if self.tensor_dtype == types.FLOAT:
             self.out = np.zeros(
                 (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype="float32")
@@ -145,10 +149,36 @@ class RALICOCOIterator(object):
         # Image sizes of a batch
         self.img_size = np.zeros((self.bs * 2), dtype="int32")
 
+    def get_cupy_array_from_address(self):
+        if(self.tensor_format == types.NCHW):
+            address = self.loader.copyToHipTensorNCHW(
+                self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            print("Address : ",address)
+            mem = cp.cuda.memory.UnownedMemory(address, 0, None, self.device_id)
+            memptr = cp.cuda.memory.MemoryPointer(mem, 0)
+            if self.tensor_dtype == types.FLOAT:
+                self.hip_array = cp.ndarray(
+                    (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), "float32", memptr)
+            else:
+                self.hip_array = cp.ndarray(
+                    (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), "float16", memptr)
+        else:
+            address = self.loader.copyToHipTensorNHWC(
+                self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            mem = cp.cuda.memory.UnownedMemory(address, 0, None, self.device_id)
+            memptr = cp.cuda.memory.MemoryPointer(mem, 0)
+            if self.tensor_dtype == types.FLOAT:
+                self.hip_array = cp.ndarray(
+                    (self.bs*self.n, int(self.h/self.bs), self.w,  self.p), "float32", memptr)
+            else:
+                self.hip_array = cp.ndarray(
+                    (self.bs*self.n, int(self.h/self.bs), self.w,  self.p), "float16", memptr)
+
     def next(self):
         return self.__next__()
 
     def __next__(self):
+        print("In the next routine of COCO Iterator")
         if(self.loader.isEmpty()):
             timing_info = self.loader.Timing_Info()
             print("Load     time ::", timing_info.load_time)
@@ -162,12 +192,15 @@ class RALICOCOIterator(object):
         self.lis = []  # Empty list for bboxes
         self.lis_lab = []  # Empty list of labels
 
-        if(types.NCHW == self.tensor_format):
-            self.loader.copyToTensorNCHW(
-                self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+        if (self.device == "cpu"):
+            if(types.NCHW == self.tensor_format):
+                self.loader.copyToTensorNCHW(
+                    self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            else:
+                self.loader.copyToTensorNHWC(
+                    self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
-            self.loader.copyToTensorNHWC(
-                self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            self.get_cupy_array_from_address()
 
 #Image id of a batch of images
         self.loader.GetImageId(self.image_id)
@@ -197,13 +230,22 @@ class RALICOCOIterator(object):
                     actual_labels.append(encodded_labels_tensor[i][idx].tolist())
 
             if self.display:
-               img = torch.from_numpy(self.out)
-               draw_patches(img[i], self.image_id[i], actual_bboxes)
+                if self.device == "cpu":
+                    img = torch.from_numpy(self.out)
+                else:
+                    dlpack_array = self.hip_array.toDlpack()
+                    img = dp.from_dlpack(dlpack_array)
+                draw_patches(img[i], self.image_id[i], actual_bboxes, self.device)
 
-        if self.tensor_dtype == types.FLOAT:
-            return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
-        elif self.tensor_dtype == types.FLOAT16:
-            return torch.from_numpy(self.out.astype(np.float16)), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
+        if self.device == "cpu":
+            if self.tensor_dtype == types.FLOAT:
+                return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
+            elif self.tensor_dtype == types.FLOAT16:
+                return torch.from_numpy(self.out.astype(np.float16)), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
+
+        if self.device == "cuda":
+            dlpack_array = self.hip_array.toDlpack()
+            return dp.from_dlpack(dlpack_array), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
 
     def reset(self):
         self.loader.raliResetLoaders()
@@ -211,10 +253,13 @@ class RALICOCOIterator(object):
     def __iter__(self):
         return self
 
-def draw_patches(img, idx, bboxes):
+def draw_patches(img, idx, bboxes, device):
     #image is expected as a tensor, bboxes as numpy
     import cv2
-    image = img.detach().numpy()
+    if device == "cpu:":
+        image = img.detach().numpy()
+    else:
+        image = img.cpu().numpy()
     image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     _, htot, wtot = img.shape
@@ -248,7 +293,6 @@ def main():
     di = 0
     crop_size = 300
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
-
     def coco_anchors():  # Should be Tensor of floats in ltrb format - input - Mx4 where M="No of anchor boxes"
         fig_size = 300
         feat_size = [38, 19, 10, 5, 3, 1]
@@ -284,14 +328,18 @@ def main():
         dboxes_ltrb[:, 3] = dboxes[:, 1] + 0.5 * dboxes[:, 3]
         return dboxes_ltrb
     dboxes = coco_anchors().numpy().flatten().tolist()
-    pipe = COCOPipeline(batch_size=bs, num_threads=nt, device_id=di, seed=random_seed,
+    pipe = COCOPipeline(batch_size=bs, num_threads=nt, device_id=di,seed = random_seed,
                         data_dir=image_path, ann_dir=ann_path, crop=crop_size, rali_cpu=_rali_cpu, default_boxes=dboxes, display=display)
     pipe.build()
-    data_loader = RALICOCOIterator(
-        pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display)
-    epochs = 3
+    if( _rali_cpu):
+        data_loader = RALICOCOIterator(
+            pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display, device="cpu")
+    else:
+        data_loader = RALICOCOIterator(
+            pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display, device="cuda")
+    epochs = 2
     for epoch in range(int(epochs)):
-        print("EPOCH:::::", epoch)
+        print("EPOCH:::::",epoch)
         for i, it in enumerate(data_loader, 0):
             print("**************", i, "*******************")
             print("**************starts*******************")

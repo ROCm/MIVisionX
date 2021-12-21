@@ -240,6 +240,22 @@ class Pipeline(object):
         b.raliCopyToOutput(
             self._handle, np.ascontiguousarray(out, dtype=array.dtype))
 
+    def copyToHipTensorNHWC(self, multiplier, offset, reverse_channels, tensor_dtype):
+        if tensor_dtype == types.FLOAT:
+            return b.raliCopyToHipOutputTensor32(self._handle, types.NHWC,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        elif tensor_dtype == types.FLOAT16:
+            return b.raliCopyToHipOutputTensor16(self._handle, types.NHWC,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+
+    def copyToHipTensorNCHW(self, multiplier, offset, reverse_channels, tensor_dtype):
+        if tensor_dtype == types.FLOAT:
+            return b.raliCopyToHipOutputTensor32(self._handle, types.NCHW,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        elif tensor_dtype == types.FLOAT16:
+            return b.raliCopyToHipOutputTensor16(self._handle, types.NCHW,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+
     def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
         if tensor_dtype == types.FLOAT:

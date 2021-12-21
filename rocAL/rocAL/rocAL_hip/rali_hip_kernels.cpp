@@ -41,11 +41,11 @@ Hip_CopyInt8ToNHWC_fp32
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     const int W = nchw.y; const int H = nchw.z;
-    const int img_offset = nchw.y * nchw.z * nchw.w;
+    const int img_offset = nchw.y * W * H;
 
     if ((x >= W) || (y >= H)) return;
     for (unsigned int n=0; n < nchw.x; n++) {
-        unsigned int srcIdx =  y*W + x;
+        unsigned int srcIdx =  y*W*3 + x*3;
         unsigned int dstIdx =  y*W + x;
         // copy float3  pixels to dst
         if (nchw.y == 3){
@@ -120,11 +120,11 @@ Hip_CopyInt8ToNCHW_fp32
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     const int W = nchw.w; const int H = nchw.z;
-    const int img_offset = nchw.y * nchw.z * nchw.w;
+    const int img_offset = nchw.y * W * H;
 
     if ((x >= W) || (y >= H)) return;
     for (unsigned int n=0; n < nchw.x; n++) {
-        unsigned int srcIdx =  y*W + x;
+        unsigned int srcIdx =  y*W*3 + x*3;
         unsigned int dstIdx =  y*W + x;
         // copy float3  pixels to dst
         const uchar *inp_img = &inp_image_u8[n*img_offset+dst_buf_offset];
@@ -165,7 +165,7 @@ Hip_CopyInt8ToNCHW_fp16
     for (unsigned int n=0; n < nchw.x; n++) {
         unsigned short *out_tensor = (unsigned short *)output_tensor + n*img_offset+dst_buf_offset;
         const uchar *inp_img = &inp_image_u8[n*img_offset+dst_buf_offset];
-        unsigned int srcIdx =  y*W + x;
+        unsigned int srcIdx =  y*W*3 + x*3;
         // copy float3  pixels to dst
         unsigned int dstIdx =  y*W + x;
         if (nchw.y == 3){
@@ -228,7 +228,7 @@ int HipExecCopyInt8ToNHWC
 int HipExecCopyInt8ToNCHW
 (
     hipStream_t stream,
-    void*     inp_image_u8,
+    const void*     inp_image_u8,
     void*     output_tensor,
     unsigned int     dst_buf_offset,
     const unsigned int     n,

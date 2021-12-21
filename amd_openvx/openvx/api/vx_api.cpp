@@ -410,12 +410,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
 #elif ENABLE_HIP
         case VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE:
             if (size == sizeof(hipDevice_t)) {
-                if (context->hip_device < 0 && agoGpuHipCreateContext(context, context->hip_device) != VX_SUCCESS) {
+                if (context->hip_device_id < 0 && agoGpuHipCreateContext(context, context->hip_device_id) != VX_SUCCESS) {
                     status = VX_FAILURE;
                 }
                 else {
-                    *(int *)ptr = context->hip_device_id;
-                    status = VX_SUCCESS;
+                    status = agoGpuHipCreateContext(context, *(int *)ptr);
                 }
             }
             break;

@@ -12,6 +12,7 @@
 
 - Added OpenVX 1.3 - Vision Feature Set
 - Added Conformance Test Script
+- HIP Backend Support for OpenVX and OpenVX Extensions
 
 ### Optimizations
 
@@ -26,6 +27,7 @@
 
 - MIVisionX-setup.py install on Linux
 - Fixed out-of-bounds read for OpenVX OpenCL Kernels
+- OpenVX - optical flow segfault fix
 
 ### Tested Configurations
 
@@ -34,7 +36,7 @@
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
-* ROCm: rocm-dkms - `4.5.0.40500-56 `
+* ROCm: rocm-dev - `4.5.2.40502-164`
 * rocm-cmake - [rocm-4.2.0](https://github.com/RadeonOpenCompute/rocm-cmake/releases/tag/rocm-4.2.0)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)

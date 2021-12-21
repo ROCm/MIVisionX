@@ -44,6 +44,16 @@ extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutputTensor16(RaliContext rali
                                                               float offset1, float offset2,
                                                               bool reverse_channels);
 
+extern "C" void *RALI_API_CALL raliCopyToHipOutputTensor32(RaliContext p_context, RaliTensorLayout tensor_format,
+                                                           float multiplier0, float multiplier1, float multiplier2,
+                                                           float offset0, float offset1, float offset2,
+                                                           bool reverse_channels);
+
+extern "C" void *RALI_API_CALL raliCopyToHipOutputTensor16(RaliContext p_context, RaliTensorLayout tensor_format,
+                                                           float multiplier0, float multiplier1, float multiplier2,
+                                                           float offset0, float offset1, float offset2,
+                                                           bool reverse_channels);
+
 ///
 /// \param rali_context
 /// \param output_images The buffer that will be filled with output images with set_output = True

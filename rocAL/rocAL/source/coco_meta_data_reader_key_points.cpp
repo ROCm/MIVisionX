@@ -332,8 +332,8 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                 {
                     joints[i].push_back(keypoint[j]);
                     joints[i].push_back(keypoint[j + 1]);
-                    joints_visibility[i].push_back(std::clamp((int)keypoint[j + 2], 0, 1));
-                    joints_visibility[i].push_back(std::clamp((int)keypoint[j + 2], 0, 1));
+                    joints_visibility[i].push_back(std::clamp(keypoint[j + 2], 0.0f, 1.0f));
+                    joints_visibility[i].push_back(std::clamp(keypoint[j + 2], 0.0f, 1.0f));
                     j = j + 3;
                 }
 

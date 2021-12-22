@@ -184,43 +184,6 @@ class Pipeline(object):
     def build(self):
         """Build the pipeline using raliVerify call
         """
-        if self.define_graph()!=0:
-            outputs = self.define_graph()
-            self.process_calls(outputs[0])
-
-            #Checks for Casting "Labels" as last node & Box Encoder as last Prev node
-            if(len(outputs)==3):
-                if((isinstance(outputs[1],list)== False) & (isinstance(outputs[2],list)== False)):
-                    if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
-                        if(outputs[2].prev.data == "Cast") :
-                            self._castLabels = True
-                            if(outputs[2].prev.prev.prev.data is not None):
-                                if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
-                                    self._BoxEncoder = True
-                                    self._anchors = outputs[2].prev.prev.data
-                                    self._encode_tensor = outputs[2].prev.prev
-                                    self._encode_tensor.prev.rali_c_func_call(self._handle )
-            #Checks for Box Encoding as the Last Node
-            if(len(outputs)==3):
-                if(isinstance(outputs[1],list)== False):
-                    if(outputs[1].prev is not None):
-                        if(outputs[2].prev is not None):
-                            if(outputs[2].prev.data == "BoxEncoder"):
-                                self._BoxEncoder = True
-                                self._anchors = outputs[2].data
-                                self._encode_tensor = outputs[2]
-                                self._encode_tensor.prev.rali_c_func_call(self._handle )
-
-            #Checks for One Hot Encoding as the last Node
-            if(isinstance(outputs[1],list)== False):
-                if(len(outputs)==2):
-                    if(outputs[1].prev is not None):
-                        print(type(outputs[1]))
-                        if(outputs[1].prev.data == "OneHotLabel"):
-                            self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
-                            self._oneHotEncoding = True
-
-
         status = b.raliVerify(self._handle)
         if(status != types.OK):
             print("Verify graph failed")
@@ -240,7 +203,7 @@ class Pipeline(object):
         graph of operations for their pipeline.
         It returns a list of outputs created by calling RALI Operators."""
         print("define_graph NotImplemented")
-        return 0
+        raise NotImplementedError
 
 
     def get_handle(self):

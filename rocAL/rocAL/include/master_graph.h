@@ -79,7 +79,7 @@ public:
     Image *create_loader_output_image(const ImageInfo &info);
     MetaDataBatch *create_label_reader(const char *source_path, MetaDataReaderType reader_type);
     MetaDataBatch *create_video_label_reader(const char *source_path, MetaDataReaderType reader_type, unsigned sequence_length, unsigned frame_step, unsigned frame_stride, bool file_list_frame_num = true);
-    MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type , MetaDataType label_type, bool keypoint, float sigma = 0.0, unsigned pose_output_width = 0, unsigned pose_output_height = 0);
+    MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type , MetaDataType label_type, float sigma = 0.0, unsigned pose_output_width = 0, unsigned pose_output_height = 0);
     MetaDataBatch *create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type, const std::map<std::string, std::string> feature_key_map);
     MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch *create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
@@ -100,7 +100,6 @@ public:
     void set_sequence_reader_output() { _is_sequence_reader_output = true; }
     void set_sequence_batch_size(size_t sequence_length) { _sequence_batch_size = _user_batch_size * sequence_length; }
     void set_sequence_batch_ratio() { _sequence_batch_ratio = _sequence_batch_size / _internal_batch_size; }
-    void set_keypoint_pose();
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -176,7 +175,6 @@ private:
     float _scale; // Rescales the box and anchor values before the offset is calculated (for example, to return to the absolute values).
     bool _offset; // Returns normalized offsets ((encoded_bboxes*scale - anchors*scale) - mean) / stds in EncodedBBoxes that use std and the mean and scale arguments if offset="True"
     std::vector<float> _means, _stds; //_means:  [x y w h] mean values for normalization _stds: [x y w h] standard deviations for offset normalization.
-    bool _is_keypoint = false; //bool variable to set the keypoint flag
 };
 
 template <typename T>

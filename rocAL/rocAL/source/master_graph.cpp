@@ -937,13 +937,6 @@ void MasterGraph::output_routine()
                         {
                             _meta_data_graph->update_random_bbox_meta_data(_augmented_meta_data, decode_image_info, crop_image_info);
                         }
-                        else
-                        {
-                            if(!_is_keypoint)
-                            {
-                            _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
-                            }
-                        }
                         _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
@@ -1062,7 +1055,6 @@ void MasterGraph::output_routine_video()
                 {
                     if (_meta_data_graph)
                     {
-                        _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
                         _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
@@ -1129,7 +1121,7 @@ void MasterGraph::stop_processing()
         _output_thread.join();
 }
 
-MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type , MetaDataType label_type, bool keypoint, float sigma, unsigned pose_output_width, unsigned pose_output_height)
+MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type, MetaDataType label_type, float sigma, unsigned pose_output_width, unsigned pose_output_height)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
@@ -1140,9 +1132,6 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
-
-    if(keypoint)
-        MasterGraph::set_keypoint_pose();
 
     if(is_output)
     {
@@ -1227,11 +1216,6 @@ void MasterGraph::box_encoder(std::vector<float> &anchors, float criteria, const
     _means = means;
     _stds = stds;
 
-}
-
-void MasterGraph::set_keypoint_pose()
-{
-    _is_keypoint = true;
 }
 
 MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)

@@ -32,7 +32,7 @@ set(HIPVX_SOURCES
     )
 
     set_source_files_properties(${HIPVX_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-    set(HIP_CXX_FLAGS -std=c++14)
+    set(HIP_CXX_FLAGS -std=gnu++14)
     set(COMPILER_FOR_HIP ${ROCM_PATH}/bin/hipcc)
     set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")

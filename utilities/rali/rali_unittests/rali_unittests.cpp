@@ -152,7 +152,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #endif
 
 #if defined COCO_READER || defined COCO_READER_PARTIAL
-    const char *json_path = "";
+    char *json_path = "";
 
     if (strcmp(json_path, "") == 0)
     {
@@ -162,7 +162,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 
     meta_data = raliCreateCOCOReader(handle, json_path, true);
 #elif defined COCO_READER_KEYPOINTS
-    const char *json_path = "";
+    char *json_path = "";
 
     if (strcmp(json_path, "") == 0)
     {
@@ -221,7 +221,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false,
                                         RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined COCO_READER_PARTIAL
-    input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
+        input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
@@ -662,7 +662,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         int numOfClasses = 0;
         int image_name_length[inputBatchSize];
 #if defined COCO_READER || defined COCO_READER_PARTIAL || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
-        // Print the bb cords and label if keypoint flag is false
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];
         raliGetImageName(handle, img_name);
@@ -671,8 +670,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         int bb_label_count[inputBatchSize];
         int size = raliGetBoundingBoxCount(handle, bb_label_count);
         for (unsigned int i = 0; i < inputBatchSize; i++)
-            std::cerr << "\n Number of box:  " << bb_label_count[i] << std::endl;
-        std::cout << "";
+            std::cerr << "\n Number of box:  " << bb_label_count[i];
         int bb_labels[size];
         raliGetBoundingBoxLabel(handle, bb_labels);
         float bb_coords[size * 4];
@@ -686,8 +684,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         raliGetImageSizes(handle, img_sizes_batch);
         for (unsigned int i = 0; i < inputBatchSize; i++)
         {
-            std::cout << "\nwidth:" << img_sizes_batch[i * 2] << std::endl;
-            std::cout << "\nHeight:" << img_sizes_batch[(i * 2) + 1] << std::endl;
+            std::cout<<"\nwidth:"<<img_sizes_batch[i*2];
+            std::cout<<"\nHeight:"<<img_sizes_batch[(i*2)+1];
         }
 #elif defined COCO_READER_KEYPOINTS
         int size = inputBatchSize;

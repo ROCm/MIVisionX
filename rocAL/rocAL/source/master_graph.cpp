@@ -927,7 +927,7 @@ void MasterGraph::output_routine()
                         node->set_meta_data(_augmented_meta_data);
                     }
                 }
-        
+
                 update_node_parameters();
                 if(_augmented_meta_data)
                 {

@@ -66,7 +66,6 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateCOCOReader(RaliContext rali_cont
 ///
 /// \param rali_context
 /// \param source_path path to the coco json file
-/// \param keypoint boolean flag to read keypoint data from JSON file
 /// \param sigma  sigma used for gaussian distribution (needed for HRNet Pose estimation)
 /// \param pose_output_width output image width (needed for HRNet Pose estimation)
 /// \param pose_output_width output image height (needed for HRNet Pose estimation)

@@ -153,7 +153,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 
 #if defined COCO_READER || defined COCO_READER_PARTIAL
     char *json_path = "";
-
     if (strcmp(json_path, "") == 0)
     {
         std::cout << "\n json_path has to be set in rali_unit test manually";
@@ -163,7 +162,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     meta_data = raliCreateCOCOReader(handle, json_path, true);
 #elif defined COCO_READER_KEYPOINTS
     char *json_path = "";
-
     if (strcmp(json_path, "") == 0)
     {
         std::cout << "\n json_path has to be set in rali_unit test manually";

@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -81,7 +81,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         message(STATUS "Found HIP: " ${HIP_PATH} " version: " ${HIP_VERSION})
         if(HIP_COMPILER STREQUAL clang)
             set(hip_library_name amdhip64)
-            list(APPEND HIP_CXX_FLAGS -std=c++14)
+            list(APPEND HIP_CXX_FLAGS -std=gnu++14)
             include_directories(${ROCM_PATH}/include ${HIP_PATH}/include ${HSA_PATH}/include)
             link_directories(${HIP_PATH}/lib)
             add_executable(runvx ${SOURCES})

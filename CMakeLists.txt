@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -53,22 +53,6 @@ endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  message("-- ${BoldBlue}MIVisionX Build Type -- Debug${ColourReset}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -ffunction-sections")
-else()
-  message("-- ${BoldBlue}MIVisionX Build Type -- Release${ColourReset}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-  if(NOT APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
-  endif()
-ENDIF()
-
-option(NEURAL_NET  "Build MIVisionX with Neural Net Support"  ON)
-option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
-option(LOOM        "Build MIVisionX with LOOM Support"        ON)
-option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
-
 if(NOT DEFINED BACKEND)
   set(BACKEND "OPENCL")   # set default backend to OPENCL
 else()
@@ -86,6 +70,22 @@ else()
   endif()
 endif()
 message("-- ${BoldBlue}MIVisionX Backend set to -- ${BACKEND}${ColourReset}")
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  message("-- ${BoldBlue}MIVisionX Build Type -- Debug${ColourReset}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -ffunction-sections")
+else()
+  message("-- ${BoldBlue}MIVisionX Build Type -- Release${ColourReset}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+  if(NOT APPLE AND (NOT "${BACKEND}" STREQUAL "HIP"))
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
+  endif()
+ENDIF()
+
+option(NEURAL_NET  "Build MIVisionX with Neural Net Support"  ON)
+option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
+option(LOOM        "Build MIVisionX with LOOM Support"        ON)
+option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")

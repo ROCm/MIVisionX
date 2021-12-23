@@ -32,7 +32,6 @@ def file(*inputs, file_root, bytes_per_sample_hint=0, file_list='', initial_fill
 
 def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reader_type=0, bytes_per_sample_hint=0, initial_fill=1024, lazy_init=False,
  num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576,  device=None):
-
     labels=[]
     if reader_type == 1:
         Pipeline._current_pipeline._reader = "TFRecordReaderDetection"
@@ -54,9 +53,8 @@ def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reade
                     print(
                         "For Image Classification, RALI TFRecordReader needs all the following keys in the featureKeyMap:")
                     print("image/encoded\nimage/class/label\n")
-                exit()
+                    exit()
         tf_meta_data = b.TFReader(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
-
     features["image/encoded"] = tf_meta_data
     features["image/class/label"] = labels
     return features

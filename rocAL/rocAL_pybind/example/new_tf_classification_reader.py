@@ -39,21 +39,17 @@ def main():
             }
         )
         jpegs = inputs["image/encoded"]
-        images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB)
+        images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=imagePath)
         resized = fn.resize(images, resize_x=300, resize_y=300)
         if(oneHotLabel == 1):
             labels = inputs["image/class/label"]
             labels = fn.one_hot(labels, num_classes=1000)
-            pipe.set_outputs(resized, labels)
-        else:
-            pipe.set_outputs(resized)
-    pipe.build()
+        pipe.set_outputs(resized)
 
-    imageIterator = RALIIterator(pipe, display=display)
-    for i, (images_array, labels_array) in enumerate(imageIterator, 0):
+    pipe.build()
+    imageIterator = RALIIterator(pipe)
+    for i in enumerate(imageIterator,0):
         print("\n\n",i)
-        print("\nIMAGES ARRAY:\n",images_array)
-        print("\nLABELS ARRAY:\n",labels_array)
     imageIterator.reset()
 
 

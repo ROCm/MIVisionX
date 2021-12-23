@@ -4,26 +4,6 @@ import rali_pybind as b
 from amd.rali.pipeline import Pipeline
 
 
-def image_trail(*inputs,file_root, annotations_file ,user_feature_key_map = None,shard_id =0, random_shuffle=False, num_shards=0, affine=True, bytes_per_sample_hint=0, cache_batch_copy= True, cache_debug = False, cache_size = 0, cache_threshold = 0,
-                 cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold= 1000000, output_type = types.RGB,
-                 preserve=False, seed=-1, split_stages=False, use_chunk_allocator= False, use_fast_idct = False, device = None):
-    kwargs_pybind = {
-            "source_path": file_root ,
-            "json_path": annotations_file,
-            "color_format": output_type,
-            "shard_id": 0,
-            "num_shards": 1,
-            'is_output': False,
-            "shuffle": True,
-            "loop": False,
-            "decode_size_policy": types.MAX_SIZE,
-            "max_width": 0, #TODO: what happens when we give user given size = multiplier * max_decoded_width
-            "max_height":0} #TODO: what happens when we give user given size = multiplier * max_decoded_width
-    decoded_output_image = b.COCO_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
-    reader = Pipeline._current_pipeline._reader
-    return (decoded_output_image)
-
-
 def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotations_file= '', shard_id = 0, num_shards = 1, random_shuffle = False, affine=True, bytes_per_sample_hint=0, cache_batch_copy= True, cache_debug = False, cache_size = 0, cache_threshold = 0,
                  cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold= 1000000, output_type = types.RGB,
                  preserve=False, seed=-1, split_stages=False, use_chunk_allocator= False, use_fast_idct = False, device = None):
@@ -43,7 +23,7 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "max_height":0} #TODO: what happens when we give user given size = multiplier * max_decoded_width
         decoded_image = b.COCO_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
-    elif reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection":
+    elif (reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,
@@ -58,7 +38,7 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "max_height": 2000} # TODO: Needs change
         decoded_image   = b.TF_ImageDecoder(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
-    elif reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection":
+    elif (reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,
@@ -126,7 +106,7 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "max_width": 0, #TODO: what happens when we give user given size = multiplier * max_decoded_width
             "max_height":0} #TODO: what happens when we give user given size = multiplier * max_decoded_width
         image_decoder_output_image = b.COCO_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
-    elif reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection":
+    elif (reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,
@@ -141,7 +121,7 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "max_height": 0}
         image_decoder_output_image   = b.TF_ImageDecoder(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
-    elif reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection":
+    elif (reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,
@@ -155,7 +135,7 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "max_height":0}
         image_decoder_output_image = b.Caffe2_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
-    elif reader == "CaffeReader" or reader == "CaffeReaderDetection":
+    elif (reader == "CaffeReader" or reader == "CaffeReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,

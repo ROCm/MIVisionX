@@ -13,13 +13,6 @@ import amd.rali.types as types
 import sys
 import numpy as np
 
-#Testing the fn import
-# print(dir(fn))
-# print(fn.__dict__)
-
-
-
-
 class RALICOCOIterator(object):
     """
     COCO RALI iterator for pyTorch.

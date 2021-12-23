@@ -31,11 +31,11 @@ def main():
     pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=2, rali_cpu=raliCPU)
     # pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rali_cpu=raliCPU)
     with pipe:
-        inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap, 
+        inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
             features={
-                'image/encoded':tf.FixedLenFeature((), tf.string, ""),
-                'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1),
-                'image/filename':tf.FixedLenFeature((), tf.string, "")
+                'image/encoded':tf.io.FixedLenFeature((), tf.string, ""),
+                'image/class/label':tf.io.FixedLenFeature([1], tf.int64,  -1),
+                'image/filename':tf.io.FixedLenFeature((), tf.string, "")
             }
         )
         jpegs = inputs["image/encoded"]
@@ -47,19 +47,16 @@ def main():
             pipe.set_outputs(resized, labels)
         else:
             pipe.set_outputs(resized)
+    pipe.build()
 
-
-        
-    # pipe.build()
-    
     imageIterator = RALIIterator(pipe, display=display)
     for i, (images_array, labels_array) in enumerate(imageIterator, 0):
         print("\n\n",i)
         print("\nIMAGES ARRAY:\n",images_array)
         print("\nLABELS ARRAY:\n",labels_array)
     imageIterator.reset()
-            
-        
+
+
 
 if __name__ == '__main__':
-    main() 
+    main()

@@ -91,12 +91,15 @@ private:
     bool _loop;
     bool _shuffle;
     int _read_counter = 0;
+    //!< _file_count_all_shards total_number of files in to figure out the max_batch_size (usually needed for distributed training).
+    size_t  _file_count_all_shards;
     uint _file_byte_size;
     void incremenet_read_ptr();
     int release();
     size_t get_file_shard_id();
     void incremenet_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
+    void replicate_last_batch_to_pad_partial_shard();
     void read_image(unsigned char* buff, size_t read_size, int64_t seek_position, int64_t data_size);
     void read_image_names();
     uint32_t DecodeFlag(uint32_t rec) {return (rec >> 29U) & 7U; };

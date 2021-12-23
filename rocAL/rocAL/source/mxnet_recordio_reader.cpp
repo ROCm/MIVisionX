@@ -43,6 +43,7 @@ _shuffle_time("shuffle_time", DBG_TIMING)
     _loop = false;
     _shuffle = false;
     _file_id = 0;
+    _file_count_all_shards = 0;
 }
 
 unsigned MXNetRecordIOReader::count_items()
@@ -65,6 +66,15 @@ Reader::Status MXNetRecordIOReader::initialize(ReaderConfig desc)
     _loop = desc.loop();
     _shuffle = desc.shuffle();
     ret = record_reading();
+    // the following code is required to make every shard the same size:: required for multi-gpu training
+    if (_shard_count > 1 && _batch_count > 1) {
+        int _num_batches = _file_names.size()/_batch_count;
+        int max_batches_per_shard = (_file_count_all_shards + _shard_count-1)/_shard_count;
+        max_batches_per_shard = (max_batches_per_shard + _batch_count-1)/_batch_count;
+        if (_num_batches < max_batches_per_shard) {
+            replicate_last_batch_to_pad_partial_shard();
+        }
+    }
     //shuffle dataset if set
     _shuffle_time.start();
     if( ret==Reader::Status::OK && _shuffle)
@@ -92,7 +102,7 @@ size_t MXNetRecordIOReader::open()
 size_t MXNetRecordIOReader::read_data(unsigned char *buf, size_t read_size)
 {
     auto it = _record_properties.find(_file_names[_curr_file_idx]);
-    std::tie(_current_file_size, _seek_pos, _data_size_to_read) = it->second;    
+    std::tie(_current_file_size, _seek_pos, _data_size_to_read) = it->second;
     read_image(buf, read_size, _seek_pos, _data_size_to_read);
     incremenet_read_ptr();
     return read_size;
@@ -148,6 +158,14 @@ void MXNetRecordIOReader::replicate_last_image_to_fill_last_shard()
     }
 }
 
+void MXNetRecordIOReader::replicate_last_batch_to_pad_partial_shard()
+{
+    if (_file_names.size() >=  _batch_count) {
+        for (size_t i = 0; i < _batch_count; i++)
+            _file_names.push_back(_file_names[i - _batch_count]);
+    }
+}
+
 Reader::Status MXNetRecordIOReader::MXNet_reader()
 {
     if (_path.find("train") != std::string::npos)
@@ -171,7 +189,7 @@ Reader::Status MXNetRecordIOReader::MXNet_reader()
     _file_contents.seekg(0, ifstream::end);
     rec_size = _file_contents.tellg();
     _file_contents.seekg(0, ifstream::beg);
-    
+
     ifstream index_file(_idx_file);
     if(!index_file)
         THROW("ERROR: Could not open RecordIO index file. Provided path: " + _idx_file);
@@ -213,7 +231,7 @@ void MXNetRecordIOReader::read_image_names()
         _cflag = DecodeFlag(_length_flag);
         _clength =  DecodeLength(_length_flag);
         memcpy(&_hdr, _data_ptr, sizeof(_hdr));
-        
+
         if (_hdr.flag == 0)
             _image_key = to_string(_hdr.image_id[0]);
         else
@@ -229,6 +247,7 @@ void MXNetRecordIOReader::read_image_names()
         if (get_file_shard_id() != _shard_id)
         {
             incremenet_file_id();
+            _file_count_all_shards++;
             continue;
         }
         _in_batch_read_count++;
@@ -236,8 +255,9 @@ void MXNetRecordIOReader::read_image_names()
 
         _file_names.push_back(_image_key.c_str());
         _last_file_name = _image_key.c_str();
-        
+
         incremenet_file_id();
+        _file_count_all_shards++;
 
         _last_file_size = image_size;
         _last_seek_pos = _seek_pos;

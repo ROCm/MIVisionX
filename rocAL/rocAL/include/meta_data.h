@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <memory>
 #include "commons.h"
 
+
 //Defined constants since needed in reader and meta nodes for Pose Estimation
 #define NUMBER_OF_JOINTS 17
 #define NUMBER_OF_JOINTS_HALFBODY 8

@@ -1132,7 +1132,6 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
-
     if(is_output)
     {
         if (_augmented_meta_data)

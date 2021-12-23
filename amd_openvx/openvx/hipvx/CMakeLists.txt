@@ -32,7 +32,6 @@ set(HIPVX_SOURCES
     )
 
     set_source_files_properties(${HIPVX_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-    set(HIP_CXX_FLAGS -std=gnu++14)
     set(COMPILER_FOR_HIP ${ROCM_PATH}/bin/hipcc)
     set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")
@@ -40,4 +39,9 @@ set(HIPVX_SOURCES
     set_target_properties(openvx_hip PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_compile_definitions(openvx_hip PRIVATE __HIP_PLATFORM_AMD__)
 
-
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /DVX_API_ENTRY=__declspec(dllexport)")
+    else()
+        set(HIP_CXX_FLAGS -std=gnu++14)
+    endif()

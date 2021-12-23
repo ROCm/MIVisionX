@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef _VX_EXT_AMD_POP_H_
 #define _VX_EXT_AMD_POP_H_
 
-#include"vx_ext_pop.h"
+#include "vx_ext_pop.h"
 
 #ifdef  __cplusplus
 extern "C" {

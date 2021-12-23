@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 
-#include"internal_opencvTunnel.h"
+#include "internal_opencvTunnel.h"
 
 /************************************************************************************************************
 Converting CV Pyramid into an OpenVX Pyramid

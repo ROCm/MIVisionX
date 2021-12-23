@@ -21,8 +21,8 @@ THE SOFTWARE.
 */
 
 
-#include"internal_publishKernels.h"
-#include"vx_ext_winml.h"
+#include "internal_publishKernels.h"
+#include "vx_ext_winml.h"
 
 vx_node vxCreateNodeByStructure(vx_graph graph,
         vx_enum kernelenum,

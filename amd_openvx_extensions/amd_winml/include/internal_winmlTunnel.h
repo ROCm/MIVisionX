@@ -24,8 +24,8 @@ THE SOFTWARE.
 #ifndef _WINML_TUNNEL_
 #define _WINML_TUNNEL_
 
-#include"vx_ext_winml.h"
-#include"vx_winml.h"
+#include "vx_ext_winml.h"
+#include "vx_winml.h"
 
 #include "winrt/Windows.Foundation.h"
 #include <winrt/Windows.AI.MachineLearning.h>

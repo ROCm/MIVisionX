@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 #if USE_OPENCV_CONTRIB
-#include"internal_publishKernels.h"
+#include "internal_publishKernels.h"
 
 /*!***********************************************************************************************************
 input parameter validator.

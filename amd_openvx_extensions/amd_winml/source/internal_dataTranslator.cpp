@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 
-#include"internal_winmlTunnel.h"
+#include "internal_winmlTunnel.h"
 
 TensorFloat VX_to_ML_tensor(vx_tensor inputTensor)
 {

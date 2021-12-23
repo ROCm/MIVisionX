@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include"internal_publishKernels.h"
-#include"vx_ext_pop.h"
+#include "internal_publishKernels.h"
+#include "vx_ext_pop.h"
 
 /**********************************************************************
   PUBLIC FUNCTION for VX POP user defined functions

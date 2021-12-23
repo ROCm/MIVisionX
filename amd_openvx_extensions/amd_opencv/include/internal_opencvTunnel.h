@@ -23,13 +23,13 @@ THE SOFTWARE.
 #ifndef _CV_TUNNEL_
 #define _CV_TUNNEL_
 
-#include"opencv2/opencv.hpp"
+#include "opencv2/opencv.hpp"
 #if USE_OPENCV_CONTRIB
-#include"opencv2/xfeatures2d.hpp"
+#include "opencv2/xfeatures2d.hpp"
 #endif
 
-#include"VX/vx.h"
-#include"vx_opencv.h"
+#include "VX/vx.h"
+#include "vx_opencv.h"
 #include <VX/vx_compatibility.h>
 
 #include<stdio.h>

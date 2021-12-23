@@ -59,25 +59,25 @@ def main():
     pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=2, rali_cpu=raliCPU)
     # pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rali_cpu=raliCPU)
     with pipe:
-        inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap, 
+        inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
             features={
-                                            'image/encoded': tf.FixedLenFeature((), tf.string, ""),
-                                            'image/class/label': tf.FixedLenFeature([1], tf.int64,  -1),
-                                            'image/class/text': tf.FixedLenFeature([], tf.string, ''),
-                                            'image/object/bbox/xmin': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/object/bbox/ymin': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/object/bbox/xmax': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/object/bbox/ymax': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/filename': tf.FixedLenFeature((), tf.string, "")
+                                            'image/encoded': tf.io.FixedLenFeature((), tf.string, ""),
+                                            'image/class/label': tf.io.FixedLenFeature([1], tf.int64,  -1),
+                                            'image/class/text': tf.io.FixedLenFeature([], tf.string, ''),
+                                            'image/object/bbox/xmin': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/object/bbox/ymin': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/object/bbox/xmax': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/object/bbox/ymax': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/filename': tf.io.FixedLenFeature((), tf.string, "")
                                         }
         )
         jpegs = inputs["image/encoded"]
         labels = inputs["image/class/label"]
-        images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB)
+        images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=imagePath)
         resized = fn.resize(images, resize_x=300, resize_y=300)
         pipe.set_outputs(resized)
-
-    imageIterator = RALIIterator(pipe, display=True)
+    pipe.build()
+    imageIterator = RALIIterator(pipe)
 
     for i, (images_array, bboxes_array, labels_array, num_bboxes_array) in enumerate(imageIterator, 0):
         images_array = np.transpose(images_array, [0, 2, 3, 1])

@@ -13,14 +13,14 @@ class HybridPipe(Pipeline):
                                          device_id, seed=12 + device_id, rali_cpu=rali_cpu)
         self.input = ops.TFRecordReader(path=data_dir, index_path="", reader_type=tfrecordreader_type, user_feature_key_map=feature_key_map,
                                         features={
-                                            'image/encoded': tf.FixedLenFeature((), tf.string, ""),
-                                            'image/class/label': tf.FixedLenFeature([1], tf.int64,  -1),
-                                            'image/class/text': tf.FixedLenFeature([], tf.string, ''),
-                                            'image/object/bbox/xmin': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/object/bbox/ymin': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/object/bbox/xmax': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/object/bbox/ymax': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/filename': tf.FixedLenFeature((), tf.string, "")
+                                            'image/encoded': tf.io.FixedLenFeature((), tf.string, ""),
+                                            'image/class/label': tf.io.FixedLenFeature([1], tf.int64,  -1),
+                                            'image/class/text': tf.io.FixedLenFeature([], tf.string, ''),
+                                            'image/object/bbox/xmin': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/object/bbox/ymin': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/object/bbox/xmax': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/object/bbox/ymax': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/filename': tf.io.FixedLenFeature((), tf.string, "")
                                         }
                                         )
         rali_device = 'cpu' if rali_cpu else 'gpu'

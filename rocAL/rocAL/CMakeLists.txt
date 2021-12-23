@@ -214,7 +214,7 @@ if(${BUILD_RALI})
     else()
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall  -fPIC -pg -pthread -std=c++14 -Wno-deprecated-declarations")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall  -fPIC -pg -pthread -std=gnu++14 -Wno-deprecated-declarations")
     message("-- ${Green}rocAL - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 
     if(NOT FFMPEG_FOUND)

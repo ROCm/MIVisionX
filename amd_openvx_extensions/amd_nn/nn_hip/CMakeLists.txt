@@ -27,7 +27,7 @@ set(NN_HIP_SOURCES
 
     set(hip_library_name amdhip64)
     set_source_files_properties(${NN_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-    set(HIP_CXX_FLAGS -std=c++14)
+    set(HIP_CXX_FLAGS -std=gnu++14)
 
     set(COMPILER_FOR_HIP ${ROCM_PATH}/bin/hipcc)
     set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})

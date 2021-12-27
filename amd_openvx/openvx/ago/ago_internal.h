@@ -169,8 +169,8 @@ THE SOFTWARE.
 #endif
 // opencl related constants
 #define DATA_GPU_ARRAY_OFFSET             16  // first 16 bytes of array buffer will be used for numitems
-// opencl image fixed byte offset
-#define OPENCL_IMAGE_FIXED_OFFSET             256
+// GPU image fixed byte offset
+#define GPU_IMAGE_FIXED_OFFSET             256
 
 // thread scheduling configuration
 #define CONFIG_THREAD_DEFAULT                 1  // 0:disable 1:enable separate threads for graph scheduling
@@ -531,8 +531,8 @@ struct AgoKernel {
     amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f;
     amd_kernel_node_regen_callback_f regen_callback_f;
     amd_kernel_opencl_global_work_update_callback_f opencl_global_work_update_callback_f;
-    amd_kernel_opencl_buffer_update_callback_f gpu_buffer_update_callback_f;
-    vx_uint32 opencl_buffer_update_param_index;
+    amd_kernel_gpu_buffer_update_callback_f gpu_buffer_update_callback_f;
+    vx_uint32 gpu_buffer_update_param_index;
     vx_bool opencl_buffer_access_enable;
     vx_uint32 importing_module_index_plus1;
 public:

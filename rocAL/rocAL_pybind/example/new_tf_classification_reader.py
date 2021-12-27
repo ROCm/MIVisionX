@@ -5,8 +5,15 @@ import amd.rali.types as types
 import sys
 import amd.rali.fn as fn
 import tensorflow as tf
+import numpy as np
 
-
+def draw_patches(img,idx):
+    #image is expected as a tensor, bboxes as numpy
+    import cv2
+    image = img.transpose([0,1,2])
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
+    
 def main():
     if  len(sys.argv) < 5:
         print ('Please pass the <TensorFlowrecord> <cpu/gpu> <batch_size> <oneHotLabels=0/1> <display = True/False>')
@@ -48,8 +55,15 @@ def main():
 
     pipe.build()
     imageIterator = RALIIterator(pipe)
-    for i in enumerate(imageIterator,0):
-        print("\n\n",i)
+    cnt = 0
+    for i, (images_array, labels_array) in enumerate(imageIterator, 0):
+        images_array = np.transpose(images_array, [0, 2, 3, 1])
+        print("\n",i)
+        for element in list(range(bs)):
+            cnt = cnt + 1
+            draw_patches(images_array[element],cnt)
+        print("\n\nPrinted first batch with", (bs), "images!")
+        break
     imageIterator.reset()
 
 

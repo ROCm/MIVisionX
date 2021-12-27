@@ -7,6 +7,13 @@ import amd.rali.fn as fn
 import os
 import random
 
+def draw_patches(img,idx):
+    #image is expected as a tensor, bboxes as numpy
+    import cv2
+    image = img.detach().numpy()
+    image = image.transpose([1,2,0])
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
 
 def main():
     if len(sys.argv) < 4:
@@ -50,6 +57,7 @@ def main():
     data_loader = RALIClassificationIterator(pipe , display=True)
 
     # Training loop
+    cnt = 0
     for epoch in range(1):  # loop over the dataset multiple times
         print("epoch:: ", epoch)
         if not _rali_bbox:
@@ -57,6 +65,9 @@ def main():
                 sys.stdout.write("\r Mini-batch " + str(i))
                 print("Images", image_batch)
                 print("Labels", labels)
+                for element in list(range(bs)):
+                    cnt = cnt + 1
+                    draw_patches(image_batch[element],cnt)
             data_loader.reset()
         else:
             for i, (image_batch, bboxes, labels) in enumerate(data_loader, 0):  # Detection
@@ -64,6 +75,9 @@ def main():
                 print("Images", image_batch)
                 print("Bboxes", bboxes)
                 print("Labels", labels)
+                for element in list(range(bs)):
+                    cnt = cnt + 1
+                    draw_patches(image_batch[element],cnt)
             data_loader.reset()
     print('Finished Training')
     print('Finished !!')

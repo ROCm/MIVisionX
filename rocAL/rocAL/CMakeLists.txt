@@ -193,7 +193,7 @@ if(${BUILD_RALI})
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
         include_directories(${HIP_PATH}/include ${HSA_PATH}/include rocAL_hip)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_HCC__)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=1)
     else()
         include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)

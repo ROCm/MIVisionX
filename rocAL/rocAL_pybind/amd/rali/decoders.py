@@ -116,9 +116,9 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "user_key_for_filename": user_feature_key_map["image/filename"],
             "shuffle": random_shuffle,
             "loop": False,
-            "decode_size_policy": types.MAX_SIZE,
-            "max_width": 0,
-            "max_height": 0}
+            "decode_size_policy": types.USER_GIVEN_SIZE,
+            "max_width": 2000,
+            "max_height": 2000}
         image_decoder_output_image   = b.TF_ImageDecoder(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     elif (reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection"):

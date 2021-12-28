@@ -10,12 +10,12 @@ __script_name__ = "MIVisionX Validation Tool"
 
 import sys
 import argparse
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 from inference_control import *
 
 # MIVisionX Classifier
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     if len(sys.argv) == 1:
         panel = InferenceControl()

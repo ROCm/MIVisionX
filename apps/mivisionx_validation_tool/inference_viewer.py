@@ -1,8 +1,8 @@
 import pyqtgraph as pg
-import Queue
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QPixmap
-from PyQt4.QtCore import QTime, QTimer, QThread
+import queue
+from PyQt5 import QtGui, uic
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import QTime, QTimer, QThread
 from inference_setup import *
 
 class InferenceViewer(QtGui.QMainWindow):
@@ -33,8 +33,8 @@ class InferenceViewer(QtGui.QMainWindow):
         self.rali_mode = rali_mode
         inputImageDir = os.path.expanduser(image_dir)
         self.total_images = len(os.listdir(inputImageDir))
-        self.origImageQueue = Queue.Queue()
-        self.augImageQueue = Queue.Queue()
+        self.origImageQueue = queue.Queue()
+        self.augImageQueue = queue.Queue()
         self.fps_file = fps_file
         self.inferenceEngine = None
         self.receiver_thread = None

@@ -252,7 +252,6 @@ namespace rali{
         m.def("getImageId", &wrapper_image_id);
         m.def("getImageNameLen",&wrapper_image_name_length);
         m.def("getStatus",&raliGetStatus);
-        m.def("setOutputImages",&raliSetOutputs);
         m.def("labelReader",&raliCreateLabelReader);
         m.def("TFReader",&raliCreateTFReader);
         m.def("TFReaderDetection",&raliCreateTFReaderDetection);
@@ -288,12 +287,14 @@ namespace rali{
         m.def("UpdateFloatRand", &raliUpdateFloatUniformRand);
         m.def("UpdateIntParameter", &raliUpdateIntParameter);
         m.def("UpdateFloatParameter", &raliUpdateFloatParameter);
+        m.def("GetIntValue",&raliGetIntValue);
+        m.def("GetFloatValue",&raliGetFloatValue);
         // rali_api_data_transfer.h
         m.def("raliCopyToOutput",&wrapper);
         m.def("raliCopyToOutputTensor32",&wrapper_tensor32);
         m.def("raliCopyToOutputTensor16",&wrapper_tensor16);
         // rali_api_data_loaders.h
-         m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
+        m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -369,20 +370,7 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("COCO_ImageDecoderShard",&raliJpegCOCOFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("source_path"),
-	        py::arg("json_path"),
-            py::arg("color_format"),
-            py::arg("shard_id"),
-            py::arg("shard_count"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0);
+        m.def("COCO_ImageDecoderShard",&raliJpegCOCOFileSourceSingleShard);
         m.def("TF_ImageDecoder",&raliJpegTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
             py::return_value_policy::reference,
             py::arg("p_context"),
@@ -422,6 +410,7 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
+        m.def("Caffe_ImageDecoderPartialShard",&raliJpegCaffeLMDBRecordSourcePartialSingleShard);
         m.def("Caffe2_ImageDecoder",&raliJpegCaffe2LMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
             py::return_value_policy::reference,
             py::arg("p_context"),
@@ -447,6 +436,7 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
+        m.def("Caffe2_ImageDecoderPartialShard",&raliJpegCaffe2LMDBRecordSourcePartialSingleShard);
         m.def("FusedDecoderCrop",&raliFusedJpegCrop,"Reads file from the source and decodes them partially to output random crops",
             py::return_value_policy::reference,
             py::arg("context"),
@@ -599,13 +589,7 @@ namespace rali{
             py::arg("crop_height"),
             py::arg("crop_depth"),
             py::arg("is_output"));
-        m.def("Brightness",&raliBrightness,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input"),
-            py::arg("is_output"),
-            py::arg("alpha") = NULL,
-            py::arg("beta") = NULL);
+        m.def("Brightness",&raliBrightness);
         m.def("GammaCorrection",&raliGamma,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -714,13 +698,7 @@ namespace rali{
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"));
-        m.def("Blend",&raliBlend,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input1"),
-            py::arg("input2"),
-            py::arg("is_output"),
-            py::arg("ratio") = NULL);
+        m.def("Blend",&raliBlend);
         m.def("Flip",&raliFlip,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -737,11 +715,5 @@ namespace rali{
             py::arg("crop_pos_x") = NULL,
             py::arg("crop_pos_y") = NULL,
             py::arg("num_of_attempts") = 20);
-        m.def("ColorTemp",&raliColorTemp,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input"),
-            py::arg("is_output"),
-            py::arg("p_adj_value_param") = 0);
     }
 }

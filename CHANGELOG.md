@@ -10,19 +10,19 @@
 
 ### Added
 
-- Support for cmake 3.22.X 
+* Support for cmake 3.22.X
 
 ### Optimizations
 
-- TDB
+* Code Cleanup
 
 ### Changed
 
-- TDB
+* License Updates
 
 ### Fixed
 
-- TDB
+* Minor bugs and warnings
 
 ### Tested Configurations
 
@@ -44,7 +44,7 @@
 
 ### Known issues
 
-- TDB
+* Package install requires **OpenCV** `v3.4.X` to execute `AMD OpenCV extensions`
 
 ## MIVisionX 2.0.0
 

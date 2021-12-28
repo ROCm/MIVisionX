@@ -28,6 +28,13 @@ def get_weights(num_bboxes):
 
     return weights_array
 
+def draw_patches(img,idx):
+    #image is expected as a tensor, bboxes as numpy
+    import cv2
+    image = img.transpose([0,1,2])
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
+
 
 def main():
     if len(sys.argv) < 5:
@@ -79,11 +86,13 @@ def main():
     pipe.build()
     imageIterator = RALIIterator(pipe)
 
+    cnt = 0
     for i, (images_array, bboxes_array, labels_array, num_bboxes_array) in enumerate(imageIterator, 0):
         images_array = np.transpose(images_array, [0, 2, 3, 1])
         print("RALI augmentation pipeline - Processing batch %d....." % i)
 
         for element in list(range(bs)):
+            cnt = cnt + 1
             print("Processing image %d....." % element)
             features_dict = {
                 "image": images_array[element],
@@ -97,6 +106,7 @@ def main():
             }
             processed_tensors = (features_dict, labels_dict)
             print("\nPROCESSED_TENSORS:\n", processed_tensors)
+            draw_patches(images_array[element],cnt)
         print("\n\nPrinted first batch with", (bs), "images!")
         break
     imageIterator.reset()

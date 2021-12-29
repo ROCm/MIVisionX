@@ -2,10 +2,11 @@ import pyqtgraph as pg
 import queue
 from PyQt5 import QtGui, uic
 from PyQt5.QtGui import QPixmap
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import QTime, QTimer, QThread
 from inference_setup import *
 
-class InferenceViewer(QtGui.QMainWindow):
+class InferenceViewer(QtWidgets.QMainWindow):
     def __init__(self, model_name, model_format, image_dir, model_location, label, hierarchy, image_val, input_dims, output_dims, batch_size, output_dir, 
                                         add, multiply, verbose, fp16, replace, loop, rali_mode, gui, container_logo, fps_file, cpu_name, gpu_name, parent):
         super(InferenceViewer, self).__init__(parent)

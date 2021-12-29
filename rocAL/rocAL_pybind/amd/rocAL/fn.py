@@ -1,4 +1,3 @@
-import sys
 
 from amd.rocAL import readers
 from amd.rocAL import decoders

@@ -20,9 +20,8 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "max_width": 0,
             "max_height":0}
         decoded_image = b.COCO_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
-        print("Reader:",reader)
 
-    elif reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection":
+    elif (reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,
@@ -37,7 +36,7 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "max_height": 2000}
         decoded_image   = b.TF_ImageDecoder(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
-    elif reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection":
+    elif (reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,
@@ -105,7 +104,7 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "max_width": 0,
             "max_height":0}
         image_decoder_output_image = b.COCO_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
-    elif reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection":
+    elif (reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,
@@ -115,12 +114,12 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "user_key_for_filename": user_feature_key_map["image/filename"],
             "shuffle": random_shuffle,
             "loop": False,
-            "decode_size_policy": types.MAX_SIZE,
-            "max_width": 0,
-            "max_height": 0}
+            "decode_size_policy": types.USER_GIVEN_SIZE,
+            "max_width": 2000,
+            "max_height": 2000}
         image_decoder_output_image   = b.TF_ImageDecoder(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
-    elif reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection":
+    elif (reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,
@@ -134,7 +133,7 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "max_height":0}
         image_decoder_output_image = b.Caffe2_ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
-    elif reader == "CaffeReader" or reader == "CaffeReaderDetection":
+    elif (reader == "CaffeReader" or reader == "CaffeReaderDetection"):
         kwargs_pybind = {
             "source_path": path,
             "color_format": output_type,
@@ -179,7 +178,7 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
     return (crop_output_image)
 
 
-def image_slice(*inputs,file_root='',annotations_file='',shard_id = 0, num_shards = 1, random_shuffle = False, affine = True, axes = None, axis_names = "WH",bytes_per_sample_hint = 0, device_memory_padding = 16777216,
+def image_slice(*inputs,file_root='',path='',annotations_file='',shard_id = 0, num_shards = 1, random_shuffle = False, affine = True, axes = None, axis_names = "WH",bytes_per_sample_hint = 0, device_memory_padding = 16777216,
                 device_memory_padding_jpeg2k = 0, host_memory_padding = 8388608,
                 host_memory_padding_jpeg2k = 0, hybrid_huffman_threshold = 1000000,
                  memory_stats = False, normalized_anchor = True, normalized_shape = True, output_type = types.RGB,

@@ -8,7 +8,6 @@ from amd.rocAL.pipeline import Pipeline
 import amd.rocAL.fn as fn
 import amd.rocAL.types as types
 import sys
-import numpy as np
 import cv2
 import os
 

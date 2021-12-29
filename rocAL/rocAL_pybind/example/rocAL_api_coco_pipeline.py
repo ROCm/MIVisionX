@@ -205,9 +205,6 @@ def main():
         _rali_cpu = False
     bs = int(sys.argv[4])
     display = sys.argv[5]
-    nt = 1
-    di = 0
-    crop_size = 300
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     def coco_anchors(): # Should be Tensor of floats in ltrb format - input - Mx4 where M="No of anchor boxes"
         fig_size = 300

@@ -1031,7 +1031,7 @@ void MasterGraph::output_routine_video()
                 if (!_processing)
                     break;
 
-	            // Swap handles on the output images, so that new processed image will be written to the a new buffer
+                // Swap handles on the output images, so that new processed image will be written to the a new buffer
                 for (size_t idx = 0; idx < _output_images.size(); idx++)
                 {
                     if(_affinity == RaliAffinity::GPU)

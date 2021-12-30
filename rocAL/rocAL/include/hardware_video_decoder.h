@@ -44,7 +44,6 @@ private:
     int _video_stream_idx = -1;
     AVPixelFormat _dec_pix_fmt;
     int _codec_width, _codec_height;
-    //int useVaapi = true;
     AVHWDeviceType *hwDeviceType;
     AVBufferRef *hw_device_ctx = NULL;
     int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx);

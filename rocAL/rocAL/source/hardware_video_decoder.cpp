@@ -224,7 +224,6 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         }
         if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
                 config->device_type == hw_type) {
-            //_dec_pix_fmt = config->pix_fmt;
             hwPixelFormat = config->pix_fmt;
             break;
         }

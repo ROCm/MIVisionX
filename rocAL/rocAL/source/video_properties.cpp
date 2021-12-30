@@ -133,6 +133,7 @@ void get_video_properties_from_txt_file(VideoProperties &video_props, const char
                 THROW("Variable frame rate videos cannot be processed")
             video_props.frame_rate = video_frame_rate;
             video_count++;
+            props.clear();
         }
         video_props.width = max_width;
         video_props.height = max_height;
@@ -173,6 +174,7 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
             video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
             video_file_path = std::to_string(0) + "#" + _full_path; // Video index is added to each video file name to identify repeated videos files.
             video_props.video_file_names.push_back(video_file_path);
+            props.clear();
         }
     }
     else if (filesys::exists(pathObj) && filesys::is_directory(pathObj))
@@ -217,6 +219,7 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
                 video_props.video_file_names.push_back(video_file_path);
                 video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
                 video_count++;
+                props.clear();
             }
             else if (filesys::exists(pathObj) && filesys::is_directory(pathObj))
             {
@@ -258,6 +261,7 @@ void find_video_properties(VideoProperties &video_props, const char *source_path
                     video_props.start_end_frame_num.push_back(std::make_tuple(0, (int)props[2]));
                     video_count++;
                     _full_path = subfolder_path;
+                    props.clear();
                 }
                 video_files.clear();
             }

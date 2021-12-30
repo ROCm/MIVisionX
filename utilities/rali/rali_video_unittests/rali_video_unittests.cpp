@@ -84,7 +84,7 @@ int main(int argc, const char **argv)
     bool enable_timestamps = true;
     bool enable_sequence_rearrange = false;
     bool is_output = true;
-    unsigned hardware_decode_mode = 1;
+    unsigned hardware_decode_mode = 0;
     auto decoder_mode = ((hardware_decode_mode == 1) ? RaliDecodeDevice::RALI_HW_DECODE : RaliDecodeDevice::RALI_SW_DECODE);
     if (argc >= argIdx + MIN_ARG_COUNT)
         reader_case = atoi(argv[++argIdx]);

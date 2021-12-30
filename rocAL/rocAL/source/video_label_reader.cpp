@@ -57,10 +57,9 @@ bool VideoLabelReader::exists(const std::string &frame_name)
 
 void VideoLabelReader::add(std::string frame_name, int label, unsigned int video_frame_count, unsigned int start_frame)
 {
-    std::vector<unsigned> props;
-    open_video_context(frame_name.c_str(), props);
-    unsigned frame_count = video_frame_count ? video_frame_count : props[2];
-    if ((video_frame_count + start_frame) > props[2])
+    open_video_context(frame_name.c_str(), _props);
+    unsigned frame_count = video_frame_count ? video_frame_count : _props[2];
+    if ((video_frame_count + start_frame) > _props[2])
         THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + frame_name)
     std::vector<std::string> substrings;
     char delim = '/';
@@ -131,7 +130,6 @@ void VideoLabelReader::read_text_file(const std::string &_path)
     if (text_file.good())
     {
         std::string line;
-        std::vector<unsigned> props;
         while (std::getline(text_file, line))
         {
             int label;
@@ -141,21 +139,21 @@ void VideoLabelReader::read_text_file(const std::string &_path)
             std::istringstream line_ss(line);
             if (!(line_ss >> video_file_name >> label))
                 continue;
-            open_video_context(video_file_name.c_str(), props);
+            open_video_context(video_file_name.c_str(), _props);
             if (!_file_list_frame_num)
             {
                 float start_time = 0.0;
                 float end_time = 0.0;
                 line_ss >> start_time >> end_time;
-                start_frame_number = static_cast<unsigned int>(std::ceil(start_time * (props[3] / (double)props[4])));
-                end_frame_number = static_cast<unsigned int>(std::floor(end_time * (props[3] / (double)props[4])));
+                start_frame_number = static_cast<unsigned int>(std::ceil(start_time * (_props[3] / (double)_props[4])));
+                end_frame_number = static_cast<unsigned int>(std::floor(end_time * (_props[3] / (double)_props[4])));
             }
             else
             {
                 line_ss >> start_frame_number >> end_frame_number;
             }
-            end_frame_number = end_frame_number != 0 ? end_frame_number : props[2];
-            if ((end_frame_number > props[2]) || (start_frame_number >= end_frame_number))
+            end_frame_number = end_frame_number != 0 ? end_frame_number : _props[2];
+            if ((end_frame_number > _props[2]) || (start_frame_number >= end_frame_number))
             {
                 INFO("Invalid start_frame_number or end_frame_number time/frame passed, skipping the file" + video_file_name)
                 continue;

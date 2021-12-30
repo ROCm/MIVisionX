@@ -47,7 +47,7 @@ private:
     unsigned _out_img_width;
     unsigned _out_img_height;
     int meta_data_reader_type;
-    void add(std::string image_name, ImgSizes image_size, JointsData joints_data);
+    void add(std::string image_name, ImgSizes image_size, JointsData *joints_data);
     bool exists(const std::string &image_name);
     std::map<std::string, std::shared_ptr<KeyPoint>> _map_content;
     std::map<std::string, std::shared_ptr<KeyPoint>>::iterator _itr;

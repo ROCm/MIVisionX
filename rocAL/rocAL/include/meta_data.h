@@ -60,8 +60,8 @@ typedef struct
     int image_id;
     int annotation_id;
     std::string image_path;
-    Center center;
-    Scale scale;
+    std::array<float,2> center;
+    std::array<float,2> scale;
     Joints joints;
     JointsVisibility joints_visibility;
     float score;
@@ -138,12 +138,12 @@ struct BoundingBox : public MetaData
 struct KeyPoint : public MetaData
 {
     KeyPoint()= default;
-    KeyPoint(ImgSizes img_sizes, JointsData joints_data)
+    KeyPoint(ImgSizes img_sizes, JointsData *joints_data)
     {
         _img_sizes = std::move(img_sizes);
-        _joints_data = std::move(joints_data);
+        _joints_data = std::move(*joints_data);
     }
-    void set_joints_data(JointsData joints_data) { _joints_data = std::move(joints_data); }
+    void set_joints_data(JointsData *joints_data) { _joints_data = std::move(*joints_data); }
 };
 
 struct MetaDataBatch

@@ -162,7 +162,12 @@ void MXNetRecordIOReader::replicate_last_batch_to_pad_partial_shard()
 {
     if (_file_names.size() >=  _batch_count) {
         for (size_t i = 0; i < _batch_count; i++)
+        {
             _file_names.push_back(_file_names[i - _batch_count]);
+            auto it = _record_properties.find(_file_names[i - _batch_count]);
+            std::tie(_current_file_size, _seek_pos, _data_size_to_read) = it->second;
+            _record_properties.insert(pair<std::string, std::tuple<unsigned int, int64_t, int64_t>>(_file_names[i - _batch_count], std::make_tuple(_current_file_size, _seek_pos, _data_size_to_read)));
+        }
     }
 }
 
@@ -210,7 +215,8 @@ size_t MXNetRecordIOReader::get_file_shard_id()
 {
     if (_batch_count == 0 || _shard_count == 0)
         THROW("Shard (Batch) size cannot be set to 0")
-    return (_file_id / (_batch_count)) % _shard_count;
+    //return (_file_id / (_batch_count)) % _shard_count;
+    return _file_id  % _shard_count;
 }
 
 void MXNetRecordIOReader::read_image_names()

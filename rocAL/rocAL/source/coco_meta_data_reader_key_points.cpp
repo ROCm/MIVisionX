@@ -53,7 +53,7 @@ void COCOMetaDataReaderKeyPoints::lookup(const std::vector<std::string> &image_n
         _output->resize(image_names.size());
 
     JointsDataBatch joints_data_batch;
-    JointsData *joints_data;
+    const JointsData *joints_data;
     for (unsigned i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i];

@@ -155,6 +155,7 @@ private:
     TimingDBG _process_time, _bencode_time;
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
     std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;
+    MetaDataReaderType _reader_config;
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
     bool _first_run = true;
     bool _processing;//!< Indicates if internal processing thread should keep processing or not
@@ -175,7 +176,7 @@ private:
     size_t _sequence_batch_ratio; //!< Indicates the _user_to_internal_batch_ratio when sequence reader outputs are required
     bool _is_sequence_reader_output = false; //!< Set to true if Sequence Reader is invoked.
     // box encoder variables
-    bool _is_box_encoder = false; //bool variable to set the box encoder 
+    bool _is_box_encoder = false; //bool variable to set the box encoder
     std::vector<float>_anchors; // Anchors to be used for encoding, as the array of floats is in the ltrb format of size 8732x4
     float _criteria = 0.5; // Threshold IoU for matching bounding boxes with anchors. The value needs to be between 0 and 1.
     float _scale; // Rescales the box and anchor values before the offset is calculated (for example, to return to the absolute values).

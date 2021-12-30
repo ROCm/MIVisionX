@@ -39,6 +39,8 @@ public:
     void release() override;
     bool set_timestamp_mode() override { _file_list_frame_num = false; return _file_list_frame_num;}
     void print_map_contents();
+        std::map<std::string, std::shared_ptr<Label>> get_map_content() override{ return _map_content;}
+
     MetaDataBatch *get_output() override { return _output; }
     VideoLabelReader();
     ~VideoLabelReader() override { delete _output; }

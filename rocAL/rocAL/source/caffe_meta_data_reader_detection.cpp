@@ -114,7 +114,7 @@ void CaffeMetaDataReaderDetection::read_all(const std::string &path)
     file_size1 = in_file1.tellg();
     file_bytes = file_size + file_size1;
     read_lmdb_record(path, file_bytes);
-    // print_map_contents();
+    print_map_contents();
 }
 
 void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint file_byte_size)

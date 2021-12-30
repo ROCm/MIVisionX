@@ -31,7 +31,7 @@ def main():
 
     nt = 1
     di = 0
-    crop_size = 224
+    crop_size_resize = 224
     image_path = sys.argv[1]
     rali_device = 'cpu' if _rali_cpu else 'gpu'
     decoder_device = 'cpu' if _rali_cpu else 'mixed'
@@ -44,14 +44,20 @@ def main():
 
     with pipe:  # TODO: Need to add oneHotLabels, CMN, CoinFlip
         if _rali_bbox:
-            jpegs, labels, bboxes = fn.readers.caffe(
-                path=image_path, bbox=_rali_bbox, random_shuffle=True)
+            jpegs, labels, bboxes = fn.readers.caffe(path=image_path, bbox=_rali_bbox, random_shuffle=True)
+            crop_begin, crop_size, bboxes, labels = fn.random_bbox_crop(bboxes, labels, device="cpu",
+                                    aspect_ratio=[0.5, 2.0],
+                                    thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
+                                    scaling=[0.3, 1.0],
+                                    ltrb=True,
+                                    allow_no_crop=True,
+                                    num_attempts=1)
         else:
-            jpegs, labels = fn.readers.caffe(
-                path=image_path, bbox=_rali_bbox, random_shuffle=True)
-        images = fn.decoders.image(jpegs, output_type=types.RGB, path=image_path, random_shuffle=True)
-        images = fn.resize(images, resize_x=crop_size,
-                           resize_y=crop_size, device=rali_device)
+            jpegs, labels = fn.readers.caffe( path=image_path, bbox=_rali_bbox, random_shuffle=True)
+
+        images = fn.decoders.image_slice(jpegs, crop_begin, crop_size, device=decoder_device, output_type = types.RGB, path=image_path, annotations_file="", random_shuffle=True,shard_id=0, num_shards=1)
+        images = fn.resize(images, resize_x=crop_size_resize,
+                           resize_y=crop_size_resize, device=rali_device)
         pipe.set_outputs(images)
     pipe.build()
     data_loader = RALIClassificationIterator(pipe , display=True)

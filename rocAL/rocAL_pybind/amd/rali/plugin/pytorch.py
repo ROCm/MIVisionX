@@ -87,9 +87,11 @@ class RALIGenericIterator(object):
     def __next__(self):
         if(b.isEmpty(self.loader._handle)):
             timing_info = b.getTimingInfo(self.loader._handle)
+            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
+            self.reset()
             raise StopIteration
 
         if(types.NCHW == self.tensor_format):

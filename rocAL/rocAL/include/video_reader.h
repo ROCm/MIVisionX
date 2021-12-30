@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "meta_data_reader.h"
 #include "video_properties.h"
 
+#ifdef RALI_VIDEO
 enum class VideoStorageType
 {
     VIDEO_FILE_SYSTEM = 0
@@ -81,8 +82,6 @@ private:
     bool _loop = false;
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
 };
-
-#ifdef RALI_VIDEO
 struct SequenceInfo 
 {
     size_t start_frame_number;

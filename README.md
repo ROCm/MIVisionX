@@ -11,36 +11,51 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
 
 ## Table of Contents
-
-* [AMD OpenVX](#amd-openvx)
-* [AMD OpenVX Extensions](#amd-openvx-extensions)
-  + [360 Video Stitch Extension](amd_openvx_extensions/amd_loomsl)
-  + [Media Extension](amd_openvx_extensions/amd_media)
-  + [Neural Net Extension](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
-  + [OpenCV Extension](amd_openvx_extensions/amd_opencv#amd-opencv-extension)
-  + [RPP Extension](amd_openvx_extensions/amd_rpp)
-  + [WinML Extension](amd_openvx_extensions/amd_winml#amd-winml-extension)
-* [Applications](#applications)
-* [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
-* [rocAL](#rocAL)
-* [Samples](samples#samples)
-* [Toolkit](#toolkit)
-* [Utilities](#utilities)
-  + [Inference Generator](utilities/inference_generator#inference-generator)
-  + [Loom Shell](utilities/loom_shell#radeon-loomshell)
-  + [RunCL](utilities/runcl#amd-runcl)
-  + [RunVX](utilities/runvx#amd-runvx)
-* [Prerequisites](#prerequisites)
-* [Build & Install MIVisionX](#build--install-mivisionx)
-* [Verify the Installation](#verify-the-installation)
-* [Docker](#docker)
-* [Release Notes](#release-notes)
+- [Table of Contents](#table-of-contents)
+- [AMD OpenVX](#amd-openvx)
+- [AMD OpenVX Extensions](#amd-openvx-extensions)
+- [Applications](#applications)
+- [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
+- [rocAL](#rocal)
+- [Toolkit](#toolkit)
+- [Utilities](#utilities)
+- [Prerequisites](#prerequisites)
+  - [Hardware](#hardware)
+  - [Operating System](#operating-system)
+    - [Windows](#windows)
+    - [macOS](#macos)
+    - [Linux](#linux)
+      - [Prerequisites setup script for Linux - `MIVisionX-setup.py`](#prerequisites-setup-script-for-linux---mivisionx-setuppy)
+        - [Prerequisites for running the script](#prerequisites-for-running-the-script)
+- [Build & Install MIVisionX](#build--install-mivisionx)
+  - [Windows](#windows-1)
+    - [Using .msi packages](#using-msi-packages)
+    - [Using `Visual Studio`](#using-visual-studio)
+  - [macOS](#macos-1)
+  - [Linux](#linux-1)
+    - [Using `apt-get` / `yum`](#using-apt-get--yum)
+    - [Using `MIVisionX-setup.py`](#using-mivisionx-setuppy)
+- [Verify the Installation](#verify-the-installation)
+  - [Linux / macOS](#linux--macos)
+  - [Windows](#windows-2)
+- [Docker](#docker)
+  - [MIVisionX Docker](#mivisionx-docker)
+  - [Docker Workflow Sample on Ubuntu `18.04` / `20.04`](#docker-workflow-sample-on-ubuntu-1804--2004)
+    - [Prerequisites](#prerequisites-1)
+    - [Workflow](#workflow)
+- [Technical Support](#technical-support)
+- [Release Notes](#release-notes)
+  - [Latest Release](#latest-release-1)
+  - [Changelog](#changelog)
+  - [Tested configurations](#tested-configurations)
+  - [Known issues](#known-issues)
+- [MIVisionX Dependency Map](#mivisionx-dependency-map)
 
 ## AMD OpenVX
 
 <p align="center"><img width="30%" src="docs/images/OpenVX_logo.png" /></p>
 
-[AMD OpenVX](amd_openvx#amd-openvx-amd_openvx) is a highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+[AMD OpenVX](amd_openvx#amd-openvx-amd_openvx) is a highly optimized open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX™ 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 <a href="https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html" target="_blank">Khronos OpenVX™ 1.0.1</a> conformant implementation is available in [MIVisionX Lite](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/openvx-1.0.1)
 
@@ -109,7 +124,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ### Operating System
 
-### Windows
+#### Windows
 
 * Windows 10
 * Windows SDK
@@ -120,7 +135,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
-### macOS
+#### macOS
 
 * Install [Homebrew](https://brew.sh)
 * Install [CMake](https://cmake.org)
@@ -128,7 +143,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
   **Note:** macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
 
-### Linux
+#### Linux
 
 * Linux distribution
   + **Ubuntu** - `18.04` / `20.04`
@@ -145,13 +160,13 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + FFMPEG is required for amd_media & mv_deploy modules
 * [rocAL](rocAL#prerequisites) Prerequisites
 
-#### Prerequisites setup script for Linux - `MIVisionX-setup.py`
+##### Prerequisites setup script for Linux - `MIVisionX-setup.py`
 
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
   **NOTE:** This script only needs to be executed once. 
 
-##### Prerequisites for running the script
+###### Prerequisites for running the script
 
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`
@@ -164,7 +179,7 @@ For the convenience of the developer, we here provide the setup script which wil
   ``` 
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default:3.4.0)]
-                            --miopen    [MIOpen Version - optional (default:2.11.0)]
+                            --miopen    [MIOpen Version - optional (default:2.14.0)]
                             --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
                             --rpp       [RPP Version - optional (default:0.91)]
@@ -234,15 +249,17 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   cd MIVisionX
   ```
 
-  ``` 
-  python MIVisionX-setup.py
-  ```
-
   **Note:** MIVisionX has support for two GPU backends: **OPENCL** and **HIP**:
 
   + Instructions for building MIVisionX with **OPENCL** (i.e., default GPU backend):
 
-  ``` 
+    * run the setup script to install all the dependencies required by the **OPENCL** GPU backend:
+  ```
+  python MIVisionX-setup.py
+  ```
+
+    * run the below commands to build MIVisionX with the **OPENCL** GPU backend:
+  ```
   mkdir build
   cd build
   cmake ../
@@ -250,11 +267,17 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   sudo make install
   ```
 
-  + Instructions for building MIVisionX with **HIP** GPU backend:
+  + Instructions for building MIVisionX with the **HIP** GPU backend:
 
+    * run the setup script to install all the dependencies required by the **HIP** GPU backend:
   ```
-  mkdir build
-  cd build
+  python MIVisionX-setup.py --reinstall yes --backend HIP
+  ```
+
+    * run the below commands to build MIVisionX with the **HIP** GPU backend:
+  ```
+  mkdir build-hip
+  cd build-hip
   cmake -DBACKEND=HIP ../
   make -j8
   sudo make install
@@ -383,11 +406,22 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
     runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
     ```
 
+## Technical Support
+
+Please email `mivisionx.support@amd.com` for questions, issues, and feedback on MIVisionX.
+
+Please submit your questions, feature requests, and bug reports on the
+[GitHub issues](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/issues) page.
+
 ## Release Notes
 
-### Known issues
+### Latest Release
 
-* Package install requires **OpenCV** `v3.4.0` to execute `AMD OpenCV extensions`
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
+
+### Changelog
+
+Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Tested configurations
 
@@ -396,20 +430,22 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
-* ROCm: rocm-dkms - `4.3.1.40301-59`
+* ROCm: rocm-dev - `4.5.2.40502-164`
 * rocm-cmake - [rocm-4.2.0](https://github.com/RadeonOpenCompute/rocm-cmake/releases/tag/rocm-4.2.0)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [2.11.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.11.0)
+* MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
-* RPP - [0.91](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.91)
+* RPP - [0.92](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.92)
 * FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.9.94`
+* MIVisionX Setup Script - `V2.0.0`
 
-### Latest Release
+### Known issues
 
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
+* Package install requires **OpenCV** `v3.4.X` to execute `AMD OpenCV extensions`
+
+## MIVisionX Dependency Map
 
 **Docker Image:** `docker pull kiritigowda/ubuntu-18.04:{TAGNAME}`
 

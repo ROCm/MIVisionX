@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
 
+#ifdef RALI_VIDEO
 enum class VideoLoaderModuleStatus
 {
     OK = 0,
@@ -61,3 +62,4 @@ public:
 };
 
 using pVideoLoaderModule = std::shared_ptr<VideoLoaderModule>;
+#endif

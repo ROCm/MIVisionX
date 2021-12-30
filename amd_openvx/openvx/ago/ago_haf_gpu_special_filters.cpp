@@ -1,5 +1,5 @@
 /* 
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
  
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1444,8 +1444,9 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 		)
 		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, LMemSize, (width + 3) / 4, height);
 	node->opencl_code = item;
+	int srcImageBufferSize = node->paramList[1]->size;
 	// load input image into local
-	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, work_group_height * 2 - 1 + LMemSideTB * 2, LMemSideLR, LMemSideTB, node->opencl_code) < 0) {
+	if (HafGpu_Load_Local_ImageSize(work_group_width, work_group_height, LMemStride, work_group_height * 2 - 1 + LMemSideTB * 2, LMemSideLR, LMemSideTB, node->opencl_code, srcImageBufferSize) < 0) {
 		return -1;
 	}
 	// perform filtering

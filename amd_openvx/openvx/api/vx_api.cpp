@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -2812,22 +2812,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     }
                 }
                 break;
-            case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK:
-                if (size == sizeof(AgoKernelOpenclBufferUpdateInfo)) {
+            case VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_UPDATE_CALLBACK:
+                if (size == sizeof(AgoKernelGpuBufferUpdateInfo)) {
                     if (!kernel->finalized) {
-                        AgoKernelOpenclBufferUpdateInfo * info = (AgoKernelOpenclBufferUpdateInfo *)ptr;
-                        if (info->opencl_buffer_update_param_index >= kernel->argCount ||
+                        AgoKernelGpuBufferUpdateInfo * info = (AgoKernelGpuBufferUpdateInfo *)ptr;
+                        if (info->gpu_buffer_update_param_index >= kernel->argCount ||
                             info->gpu_buffer_update_callback_f == nullptr ||
-                            kernel->parameters[info->opencl_buffer_update_param_index].direction != VX_INPUT ||
-                            kernel->parameters[info->opencl_buffer_update_param_index].type != VX_TYPE_IMAGE ||
-                            kernel->parameters[info->opencl_buffer_update_param_index].state != VX_PARAMETER_STATE_REQUIRED)
+                            kernel->parameters[info->gpu_buffer_update_param_index].direction != VX_INPUT ||
+                            kernel->parameters[info->gpu_buffer_update_param_index].type != VX_TYPE_IMAGE ||
+                            kernel->parameters[info->gpu_buffer_update_param_index].state != VX_PARAMETER_STATE_REQUIRED)
                         {
                             // param index has to point to required input images only
                             status = VX_ERROR_INVALID_PARAMETERS;
                         }
                         else {
                             kernel->gpu_buffer_update_callback_f = info->gpu_buffer_update_callback_f;
-                            kernel->opencl_buffer_update_param_index = info->opencl_buffer_update_param_index;
+                            kernel->gpu_buffer_update_param_index = info->gpu_buffer_update_param_index;
                             kernel->opencl_buffer_access_enable = vx_true_e;
                             status = VX_SUCCESS;
                         }

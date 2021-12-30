@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -138,13 +138,15 @@ private:
     RaliAffinity _affinity;
     const int _gpu_id;//!< Defines the device id used for processing
     pLoaderModule _loader_module; //!< Keeps the loader module used to feed the input the images of the graph
+#ifdef RALI_VIDEO
     pVideoLoaderModule _video_loader_module; //!< Keeps the video loader module used to feed the input sequences of the graph
+#endif
     TimingDBG _convert_time;
     const size_t _user_batch_size;//!< Batch size provided by the user
     const size_t _cpu_threads;//!< Not in use
     vx_context _context;
     const RaliMemType _mem_type;//!< Is set according to the _affinity, if GPU, is set to CL, otherwise host
-    TimingDBG _process_time;
+    TimingDBG _process_time, _bencode_time;
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
     std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -60,8 +60,8 @@ typedef struct
     int image_id;
     int annotation_id;
     std::string image_path;
-    Center center;
-    Scale scale;
+    std::array<float,2> center;
+    std::array<float,2> scale;
     Joints joints;
     JointsVisibility joints_visibility;
     float score;
@@ -88,7 +88,7 @@ struct MetaData
     BoundingBoxCords_xcycwh& get_bb_cords_xcycwh() { return _bb_cords_xcycwh; }
     BoundingBoxLabels& get_bb_labels() { return _bb_label_ids; }
     ImgSizes& get_img_sizes() {return _img_sizes; }
-    JointsData& get_joints_data(){ return _joints_data; }
+    const JointsData& get_joints_data(){ return _joints_data; }
 protected:
     BoundingBoxCords _bb_cords = {}; // For bb use
     BoundingBoxCords_xcycwh _bb_cords_xcycwh = {}; // For bb use
@@ -138,12 +138,12 @@ struct BoundingBox : public MetaData
 struct KeyPoint : public MetaData
 {
     KeyPoint()= default;
-    KeyPoint(ImgSizes img_sizes, JointsData joints_data)
+    KeyPoint(ImgSizes img_sizes, JointsData *joints_data)
     {
         _img_sizes = std::move(img_sizes);
-        _joints_data = std::move(joints_data);
+        _joints_data = std::move(*joints_data);
     }
-    void set_joints_data(JointsData joints_data) { _joints_data = std::move(joints_data); }
+    void set_joints_data(JointsData *joints_data) { _joints_data = std::move(*joints_data); }
 };
 
 struct MetaDataBatch

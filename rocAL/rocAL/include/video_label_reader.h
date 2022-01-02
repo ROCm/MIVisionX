@@ -39,7 +39,7 @@ public:
     void release() override;
     bool set_timestamp_mode() override { _file_list_frame_num = false; return _file_list_frame_num;}
     void print_map_contents();
-        std::map<std::string, std::shared_ptr<Label>> get_map_content() override{ return _map_content;}
+    std::map<std::string, std::shared_ptr<MetaData>> get_map_content() override{ return _map_content;}
 
     MetaDataBatch *get_output() override { return _output; }
     VideoLabelReader();
@@ -49,8 +49,8 @@ private:
     void read_text_file(const std::string &_path);
     bool exists(const std::string &frame_name);
     void add(std::string frame_name, int label, unsigned int video_frame_count = 0, unsigned int start_frame = 0);
-    std::map<std::string, std::shared_ptr<Label>> _map_content;
-    std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::string _path;
     LabelBatch *_output;
     DIR *_src_dir, *_sub_dir;

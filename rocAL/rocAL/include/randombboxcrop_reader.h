@@ -30,6 +30,15 @@ THE SOFTWARE.
 #include "parameter_crop_factory.h"
 #include "meta_data_reader.h"
 #include "coco_meta_data_reader.h"
+// #include "text_file_meta_data_reader.h"
+// #include "cifar10_meta_data_reader.h"
+// #include "tf_meta_data_reader.h"
+// #include "caffe_meta_data_reader.h"
+#include "caffe_meta_data_reader_detection.h"
+// #include "caffe2_meta_data_reader.h"
+#include "caffe2_meta_data_reader_detection.h"
+#include "tf_meta_data_reader_detection.h"
+// #include "video_label_reader.h"
 #include <random>
 
 // todo:: move this to common header
@@ -85,7 +94,7 @@ public:
 
 private:
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
-    std::map<std::string, std::shared_ptr<BoundingBox>> _meta_bbox_map_content;
+    std::map<std::string, std::shared_ptr<MetaData>> _meta_bbox_map_content;
     bool _all_boxes_overlap;
     bool _no_crop;
     bool _has_shape;

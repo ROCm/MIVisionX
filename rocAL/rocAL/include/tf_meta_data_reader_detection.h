@@ -42,7 +42,7 @@ public :
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
-    std::map<std::string, std::shared_ptr<BoundingBox>> get_map_content() override{ return _map_content;}
+    std::map<std::string, std::shared_ptr<MetaData>> get_map_content() override{ return _map_content;}
     TFMetaDataReaderDetection();
     ~TFMetaDataReaderDetection() override { delete _output; }
 private:
@@ -59,8 +59,8 @@ private:
         std::string user_filename_key);    // std::map<std::string, std::shared_ptr<Label>> _map_content;
     // std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
     // //bbox map contents
-    std::map<std::string, std::shared_ptr<BoundingBox>> _map_content;
-    std::map<std::string, std::shared_ptr<BoundingBox>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::string _path;
     BoundingBoxBatch* _output;
     DIR *_src_dir;

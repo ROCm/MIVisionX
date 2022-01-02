@@ -29,7 +29,7 @@ THE SOFTWARE.
 
 
 typedef struct BoundingBoxCord_
-{ 
+{
   float l; float t; float r; float b;
   BoundingBoxCord_() {}
   BoundingBoxCord_(float l_, float t_, float r_, float b_): l(l_), t(t_), r(r_), b(b_) {}   // constructor
@@ -50,6 +50,8 @@ struct MetaData
     BoundingBoxCords_xcycwh& get_bb_cords_xcycwh() { return _bb_cords_xcycwh; }
     BoundingBoxLabels& get_bb_labels() { return _bb_label_ids; }
     ImgSizes& get_img_sizes() {return _img_sizes; }
+    void set_bb_labels(BoundingBoxLabels bb_label_ids) {_bb_label_ids = std::move(bb_label_ids); }
+
 protected:
     BoundingBoxCords _bb_cords = {}; // For bb use
     BoundingBoxCords_xcycwh _bb_cords_xcycwh = {}; // For bb use
@@ -91,7 +93,6 @@ struct BoundingBox : public MetaData
         _img_sizes = std::move(img_sizes);
     }
     void set_bb_cords_xcycwh(BoundingBoxCords_xcycwh bb_cords_xcycwh) { _bb_cords_xcycwh =std::move(bb_cords_xcycwh); }
-    void set_bb_labels(BoundingBoxLabels bb_label_ids) {_bb_label_ids = std::move(bb_label_ids); }
     void set_img_sizes(ImgSizes img_sizes) { _img_sizes =std::move(img_sizes); }
 };
 

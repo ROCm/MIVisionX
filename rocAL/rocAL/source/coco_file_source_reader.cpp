@@ -22,7 +22,7 @@ _shuffle_time("shuffle_time", DBG_TIMING)
     _loop = false;
     _file_id = 0;
     _shuffle = false;
-    _file_count_all_shards = 0;  
+    _file_count_all_shards = 0;
 }
 
 unsigned COCOFileSourceReader::count_items()
@@ -114,7 +114,7 @@ size_t COCOFileSourceReader::open()
         return 0;
     }
     _current_ifs.seekg(0, std::ios_base::beg);
-#endif    
+#endif
     return _current_file_size;
 }
 
@@ -126,7 +126,7 @@ size_t COCOFileSourceReader::read_data(unsigned char *buf, size_t read_size)
 #else
     if (!_current_ifs)
         return 0;
-#endif        
+#endif
     // Requested read size bigger than the file size? just read as many bytes as the file size
     read_size = (read_size > _current_file_size) ? _current_file_size : read_size;
 #if USE_STDIO_FILE
@@ -134,7 +134,7 @@ size_t COCOFileSourceReader::read_data(unsigned char *buf, size_t read_size)
 #else
     _current_ifs.read((char *)buf, (int)read_size);
     size_t actual_read_size = _current_ifs.gcount();
-#endif    
+#endif
     return actual_read_size;
 }
 
@@ -150,6 +150,7 @@ COCOFileSourceReader::~COCOFileSourceReader()
 
 int COCOFileSourceReader::release()
 {
+    std::cerr<<"RELEASE CALLED";
 #if USE_STDIO_FILE
     if (!_current_fPtr)
         return 0;
@@ -159,7 +160,7 @@ int COCOFileSourceReader::release()
     if (_current_ifs.bad())
         return 0;
     _current_ifs.close();
-#endif    
+#endif
     return 0;
 }
 

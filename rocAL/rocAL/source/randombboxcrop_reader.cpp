@@ -281,7 +281,6 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
     {
         _output->resize(image_names.size());
     }
-    std::cerr<<"\n In get_batch_crop_coords";
     const std::vector<float> sample_options = {-1.0f, 0.1f, 0.3f, 0.5f, 0.7f, 0.9f, 0.0f};
     std::vector<float> coords_buf(4);
     std::pair<bool, float> option;
@@ -289,9 +288,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
     bool crop_success;
     BoundingBoxCord crop_box;
     uint bb_count;
-    std::cerr<<"\n In get_batch_crop_coords 1";
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
-    std::cerr<<"\n In get_batch_crop_coords 2";
 
     std::uniform_int_distribution<> option_dis(0, 6);
     std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
@@ -318,7 +315,6 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
                 crop_box.r = crop_box.b = 1;
                 break;
             }
-            std::cerr<<"\n In get_batch_crop_coords 3";
 
             float min_iou = sample_options[sample_option];
             // If it has no shape, then area and aspect ratio thing should be provided

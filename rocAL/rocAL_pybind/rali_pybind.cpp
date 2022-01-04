@@ -252,6 +252,7 @@ namespace rali{
         m.def("getImageId", &wrapper_image_id);
         m.def("getImageNameLen",&wrapper_image_name_length);
         m.def("getStatus",&raliGetStatus);
+        m.def("setOutputImages",&raliSetOutputs);
         m.def("labelReader",&raliCreateLabelReader);
         m.def("TFReader",&raliCreateTFReader);
         m.def("TFReaderDetection",&raliCreateTFReaderDetection);
@@ -370,7 +371,20 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("COCO_ImageDecoderShard",&raliJpegCOCOFileSourceSingleShard);
+        m.def("COCO_ImageDecoderShard",&raliJpegCOCOFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+	        py::arg("json_path"),
+            py::arg("color_format"),
+            py::arg("shard_id"),
+            py::arg("shard_count"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0);
         m.def("TF_ImageDecoder",&raliJpegTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
             py::return_value_policy::reference,
             py::arg("p_context"),

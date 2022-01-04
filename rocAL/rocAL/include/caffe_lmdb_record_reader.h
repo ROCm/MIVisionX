@@ -114,5 +114,6 @@ private:
     int _open_env = 1;
     int rc;
     void open_env_for_read_image();
+    std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
 };
 

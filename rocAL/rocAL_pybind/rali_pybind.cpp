@@ -630,6 +630,13 @@ namespace rali{
             py::arg("is_output"),
             py::arg("alpha") = NULL,
             py::arg("beta") = NULL);
+        m.def("LensCorrection",&raliLensCorrection,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("strength") = NULL,
+            py::arg("zoom") = NULL);
         m.def("GammaCorrection",&raliGamma,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -761,5 +768,11 @@ namespace rali{
             py::arg("crop_pos_x") = NULL,
             py::arg("crop_pos_y") = NULL,
             py::arg("num_of_attempts") = 20);
+        m.def("ColorTemp",&raliColorTemp,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("adj_value_param") = NULL);
     }
 }

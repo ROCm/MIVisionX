@@ -6,20 +6,20 @@ import amd.rocAL.types as types
 import rali_pybind as b
 from amd.rocAL.pipeline import Pipeline
 
-def blend(*inputs,**kwargs):
-    kwargs_pybind = {"input_image0":inputs[0], "input_image1":inputs[1], "is_output":False ,"ratio":None}
+def blend(*inputs,ratio=None):
+    kwargs_pybind = {"input_image0":inputs[0], "input_image1":inputs[1], "is_output":False ,"ratio":ratio}
     blend_image = b.Blend(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (blend_image)
 
 def snow(*inputs, snow=0.5, device=None):
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": None}
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": snow}
     snow_image = b.Snow(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (snow_image)
 
 def exposure(*inputs, exposure=0.5, device=None):
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": None}
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": exposure}
     exposure_image = b.Exposure(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (exposure_image)
 
@@ -32,7 +32,7 @@ def fish_eye(*inputs, device=None):
 def fog(*inputs, fog=0.5, device=None):
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],
-                     "is_output": False, "fog_value": None}
+                     "is_output": False, "fog_value": fog}
     fog_image = b.Fog(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (fog_image)
 
@@ -62,6 +62,20 @@ def brightness(*inputs, brightness=1.0, bytes_per_sample_hint=0, image_type=0,
     brightness_image = b.Brightness(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (brightness_image)
 
+def brightness_fixed(*inputs, alpha=None, beta=None, seed=-1, device=None):
+    alpha = b.CreateFloatParameter(alpha) if isinstance(alpha, float) else alpha
+    beta = b.CreateFloatParameter(beta) if isinstance(beta, float) else beta
+    kwargs_pybind = {"input_image0": inputs[0], "is_output": False, "alpha": alpha, "beta": beta}
+    brightness_image = b.Brightness(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
+    return (brightness_image)
+
+def lens_correction(*inputs, strength =None, zoom = None):
+    strength = b.CreateFloatParameter(strength) if isinstance(
+        strength, float) else strength
+    zoom = b.CreateFloatParameter(zoom) if isinstance(zoom, float) else zoom
+    kwargs_pybind = {"input_image0": inputs[0], "is_output": False, "strength": strength, "zoom": zoom}
+    len_corrected_image = b.LensCorrection(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
+    return (len_corrected_image)
 
 def blur(*inputs, blur=3, device=None):
     """
@@ -428,12 +442,12 @@ def crop(*inputs, bytes_per_sample_hint=0, crop=[0.0, 0.0], crop_d=1, crop_h= 0,
     b.setSeed(seed)
     if ((crop_w == 0) and (crop_h == 0)):
         # pybind call arguments
-        cropped_image = b.Crop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
         kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "crop_width":None, "crop_height":None, "crop_depth":None ,"crop_pos_x": None, "crop_pos_y": None, "crop_pos_z": None }
+        cropped_image = b.Crop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     else:
         # pybind call arguments
-        cropped_image = b.CropFixed(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
         kwargs_pybind = {"input_image0": inputs[0], "crop_width":crop_w, "crop_height":crop_h, "crop_depth":crop_d ,"is_output": False,"crop_pos_x": crop_pos_x, "crop_pos_y": crop_pos_y, "crop_pos_z": crop_pos_z }
+        cropped_image = b.CropFixed(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (cropped_image)
 
 def color_twist(*inputs, brightness=1.0, bytes_per_sample_hint=0, contrast=1.0, hue=0.0, image_type=0,
@@ -448,15 +462,13 @@ def color_twist(*inputs, brightness=1.0, bytes_per_sample_hint=0, contrast=1.0, 
         saturation, float) else saturation
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0], "is_output": False,
-                     "alpha": None, "beta": None, "hue": None, "sat": None}
+                     "alpha": brightness, "beta": contrast, "hue": hue, "sat": saturation}
     color_twist_image = b.ColorTwist(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (color_twist_image)
-
 
 def uniform(*inputs,range=[-1, 1], device=None):
     output_param = b.CreateFloatUniformRand(range[0], range[1])
     return output_param
-
 
 def random_bbox_crop(*inputs,all_boxes_above_threshold = True, allow_no_crop =True, aspect_ratio = None, bbox_layout = "", bytes_per_sample_hint = 0,
                 crop_shape = None, input_shape = None, ltrb = True, num_attempts = 1 ,scaling =  None,  preserve = False, seed = -1, shape_layout = "",
@@ -500,7 +512,6 @@ def one_hot(*inputs, bytes_per_sample_hint=0, dtype=types.FLOAT, num_classes=0, 
     Pipeline._current_pipeline._oneHotEncoding = True
     return ([])
 
-#TODO: To be Handled Later
 def box_encoder(*inputs, anchors, bytes_per_sample_hint=0, criteria=0.5, means=None, offset=False, preserve=False, scale=1.0, seed=-1, stds=None ,device = None):
     means = means if means else [0.0, 0.0, 0.0, 0.0]
     stds = stds if stds else [1.0, 1.0, 1.0, 1.0]
@@ -511,7 +522,8 @@ def box_encoder(*inputs, anchors, bytes_per_sample_hint=0, criteria=0.5, means=N
 
 def color_temp(*inputs, adjustment_value=50, device=None, preserve = False):
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "adjustment_value": None}
+    adjustment_value = b.CreateIntParameter(adjustment_value) if isinstance(adjustment_value, int) else adjustment_value
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "adjustment_value": adjustment_value}
     color_temp_transformed_image = b.ColorTemp(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (color_temp_transformed_image)
 
@@ -527,8 +539,9 @@ def copy(*inputs, device=None):
     copied_image = b.raliCopy(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (copied_image)
 
-def snp_noise(*inputs, snpNoise=0.5, device=None, preserve = False):
+def snp_noise(*inputs, snpNoise=None, device=None, preserve = False):
     # pybind call arguments
-    kwargs_pybind = {"input_image0":inputs[0], "is_output":False ,"snpNoise": None}
+    snpNoise = b.CreateFloatParameter(snpNoise) if isinstance(snpNoise, float) else snpNoise
+    kwargs_pybind = {"input_image0":inputs[0], "is_output":False ,"snpNoise": snpNoise}
     snp_noise_added_image = b.SnPNoise(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (snp_noise_added_image)

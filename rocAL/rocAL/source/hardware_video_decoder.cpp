@@ -34,7 +34,7 @@ int HardWareVideoDecoder::seek_frame(AVRational avg_frame_rate, AVRational time_
     int ret = av_seek_frame(_fmt_ctx, -1, seek_time, AVSEEK_FLAG_BACKWARD);
     if (ret < 0)
     {
-        ERR("Error in seeking frame..Unable to seek the given frame in a video");
+        ERR("HardWareVideoDecoder::seek_frame Error in seeking frame..Unable to seek the given frame in a video");
         return ret;
     }
     return select_frame_pts;
@@ -74,14 +74,14 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
                                       out_width, out_height, out_pix_format, SWS_BILINEAR, nullptr, nullptr, nullptr);
         if (!swsctx)
         {
-            ERR("Fail to get sws_getCachedContext");
+            ERR("HardWareVideoDecoder::Decode Failed to get sws_getCachedContext");
             return Status::FAILED;
         }
     }
     int select_frame_pts = seek_frame(_video_stream->avg_frame_rate, _video_stream->time_base, seek_frame_number);
     if (select_frame_pts < 0)
     {
-        ERR("Error in seeking frame..Unable to seek the given frame in a video");
+        ERR("HardWareVideoDecoder::Decode Error in seeking frame..Unable to seek the given frame in a video");
         return Status::FAILED;
     }
     unsigned frame_count = 0;
@@ -95,12 +95,12 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
     AVFrame *sw_frame = av_frame_alloc();
     if (!dec_frame)
     {
-        ERR("Could not allocate dec_frame");
+        ERR("HardWareVideoDecoder::Decode Could not allocate dec_frame");
         return Status::NO_MEMORY;
     }
     if (!sw_frame)
     {
-        ERR("Could not allocate sw_frame");
+        ERR("HardWareVideoDecoder::Decode Could not allocate sw_frame");
         return Status::NO_MEMORY;
     }
     do
@@ -110,7 +110,7 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
         ret = av_read_frame(_fmt_ctx, &pkt);
         if (ret < 0 && ret != AVERROR_EOF)
         {
-            ERR("Fail to av_read_frame: ret=" + TOSTR(ret));
+            ERR("HardWareVideoDecoder::Decode Failed to read the frame: ret=" + TOSTR(ret));
             status = Status::FAILED;
             break;
         }
@@ -127,7 +127,7 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
         ret = avcodec_send_packet(_video_dec_ctx, &pkt);
         if (ret < 0)
         {
-            ERR("Error while sending packet to the decoder\n");
+            ERR("HardWareVideoDecoder::Decode Error while sending packet to the decoder\n");
             status = Status::FAILED;
             break;
         }
@@ -142,8 +142,7 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
             {
                 //retrieve data from GPU to CPU
                 if ((av_hwframe_transfer_data(sw_frame, dec_frame, 0)) < 0) {
-                    ERR("avcodec_receive_frame() failed");
-                    ERR("\nTransfer failed");
+                    ERR("HardWareVideoDecoder::Decode avcodec_receive_frame() failed");
                     return Status::FAILED;
                 }
 
@@ -192,26 +191,26 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
     AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_NONE;
     hw_type = av_hwdevice_find_type_by_name("vaapi");
     if (hw_type == AV_HWDEVICE_TYPE_NONE) {
-        ERR("ERROR: vaapi is not supported for this device\n");
+        ERR("HardWareVideoDecoder::Initialize ERROR: vaapi is not supported for this device\n");
         return Status::FAILED;
     }
     else
-        INFO("Found vaapi device for the device\n");
+        INFO("HardWareVideoDecoder::Initialize : Found vaapi device for the device\n");
 
     if (avformat_open_input(&_fmt_ctx, src_filename, NULL, NULL) < 0)
     {
-        ERR("Couldn't Open video file " + STR(src_filename));
+        ERR("HardWareVideoDecoder::Initialize Couldn't Open video file " + STR(src_filename));
         return Status::FAILED;
     }
     if (avformat_find_stream_info(_fmt_ctx, NULL) < 0)
     {
-        ERR("av_find_stream_info error");
+        ERR("HardWareVideoDecoder::Initialize av_find_stream_info error");
         return Status::FAILED;
     }
     ret = av_find_best_stream(_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &_decoder, 0);
     if (ret < 0)
     {
-        ERR("Could not find %s stream in input file " +
+        ERR("HardWareVideoDecoder::Initialize Could not find %s stream in input file " +
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " " + STR(src_filename));
         return Status::FAILED;
     }
@@ -219,7 +218,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
     for (int i = 0; ; i++) {
         const AVCodecHWConfig *config = avcodec_get_hw_config(_decoder, i);
         if (!config) {
-            ERR("ERROR: decoder " + STR(_decoder->name) + " doesn't support device_type " + STR(av_hwdevice_get_type_name(hw_type)));
+            ERR("HardWareVideoDecoder::Initialize ERROR: decoder " + STR(_decoder->name) + " doesn't support device_type " + STR(av_hwdevice_get_type_name(hw_type)));
             return Status::FAILED;
         }
         if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
@@ -234,7 +233,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
 
     if (!_video_stream)
     {
-        ERR("Could not find video stream in the input, aborting");
+        ERR("HardWareVideoDecoder::Initialize Could not find video stream in the input, aborting");
         return Status::FAILED;
     }
 
@@ -242,7 +241,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
     _decoder = avcodec_find_decoder(_video_stream->codecpar->codec_id);
     if (!_decoder)
     {
-        ERR("Failed to find " +
+        ERR("HardWareVideoDecoder::Initialize Failed to find " +
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " codec");
         return Status::FAILED;
     }
@@ -251,7 +250,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
     _video_dec_ctx = avcodec_alloc_context3(_decoder);
     if (!_video_dec_ctx)
     {
-        ERR("Failed to allocate the " +
+        ERR("HardWareVideoDecoder::Initialize Failed to allocate the " +
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " codec context");
         return Status::NO_MEMORY;
     }
@@ -259,14 +258,14 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
     // Copy codec parameters from input stream to output codec context 
     if ((ret = avcodec_parameters_to_context(_video_dec_ctx, _video_stream->codecpar)) < 0)
     {
-        ERR("Failed to copy " +
+        ERR("HardWareVideoDecoder::Initialize Failed to copy " +
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " codec parameters to decoder context");
         return Status::FAILED;
     }
 
     _video_dec_ctx->get_format  = get_hw_format;
     if (hw_decoder_init(_video_dec_ctx, hw_type, hw_device_ctx) < 0) {
-        ERR("ERROR: Failed to create specified HW device");
+        ERR("HardWareVideoDecoder::Initialize ERROR: Failed to create specified HW device");
         return Status::FAILED;
     }
     _dec_pix_fmt = AV_PIX_FMT_NV12; // nv12 for vaapi
@@ -274,7 +273,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
     // Init the decoders 
     if ((ret = avcodec_open2(_video_dec_ctx, _decoder, &opts)) < 0)
     {
-        ERR("Failed to open " +
+        ERR("HardWareVideoDecoder::Initialize Failed to open " +
                 STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " codec");
         return Status::FAILED;
     }

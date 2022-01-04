@@ -53,7 +53,7 @@ void Caffe2MetaDataReader::add(std::string _image_name, int label)
         WRN("Entity with the same name exists")
         return;
     }
-    _map_content.insert(pair<std::string, std::shared_ptr<Label>>(_image_name, info));
+    _map_content.insert(pair<std::string, std::shared_ptr<MetaData>>(_image_name, info));
 }
 
 void Caffe2MetaDataReader::lookup(const std::vector<std::string> &_image_names)
@@ -63,7 +63,7 @@ void Caffe2MetaDataReader::lookup(const std::vector<std::string> &_image_names)
         WRN("No image names passed")
         return;
     }
-    if(_image_names.size() != (unsigned)_output->size())   
+    if(_image_names.size() != (unsigned)_output->size())
         _output->resize(_image_names.size());
 
     for(unsigned i = 0; i < _image_names.size(); i++)
@@ -87,7 +87,7 @@ void Caffe2MetaDataReader::print_map_contents()
 
 void Caffe2MetaDataReader::read_all(const std::string &path)
 {
-    string tmp1 = path + "/data.mdb";   
+    string tmp1 = path + "/data.mdb";
     string tmp2 = path + "/lock.mdb";
     uint file_size, file_size1, file_bytes;
 
@@ -115,33 +115,33 @@ void Caffe2MetaDataReader::read_lmdb_record(std::string file_name, uint file_byt
     // Creating an LMDB environment handle
 	E(mdb_env_create(&env));
     // Setting the size of the memory map to use for this environment.
-    // The size of the memory map is also the maximum size of the database. 
+    // The size of the memory map is also the maximum size of the database.
     E(mdb_env_set_mapsize(env, file_byte_size));
     // Opening an environment handle.
 	E(mdb_env_open(env, file_name.c_str(), 0, 0664));
-    // Creating a transaction for use with the environment. 
+    // Creating a transaction for use with the environment.
 	E(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
-    // Opening a database in the environment. 
+    // Opening a database in the environment.
 	E(mdb_dbi_open(txn, NULL, 0, &dbi));
-    
+
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
 	E(mdb_cursor_open(txn, dbi, &cursor));
-    
+
     // Retrieve by cursor. It retrieves key/data pairs from the database
 	while((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT)) == 0)
-    {		
-        // Reading the key value for each record from LMDB 
-        str_key = string((char *) key.mv_data); 
-        
+    {
+        // Reading the key value for each record from LMDB
+        str_key = string((char *) key.mv_data);
+
         // Parsing Image and Label Protos using the key and data values
         // read from LMDB records
         caffe2_protos::TensorProtos tens_protos;
         tens_protos.ParseFromArray((char *)data.mv_data, data.mv_size);
         // parse_Image_Protos(tens_protos);
-        int protos_size = tens_protos.protos_size();   
+        int protos_size = tens_protos.protos_size();
         if(protos_size != 0)
-        { 
+        {
             // Parsing label protos
             caffe2_protos::TensorProto label_proto = tens_protos.protos(1);
 
@@ -160,7 +160,7 @@ void Caffe2MetaDataReader::read_lmdb_record(std::string file_name, uint file_byt
         }
 
     }
-    
+
     // Closing all the LMDB environment and cursor handles
 	mdb_cursor_close(cursor);
 	mdb_txn_abort(txn);

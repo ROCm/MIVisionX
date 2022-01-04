@@ -70,6 +70,7 @@ Reader::Status CaffeLMDBRecordReader::initialize(ReaderConfig desc)
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
     _shuffle = desc.shuffle();
+    _meta_data_reader = desc.meta_data_reader();
     ret = folder_reading();
      // the following code is required to make every shard the same size:: required for multi-gpu training
     if (_shard_count > 1 && _batch_count > 1) {
@@ -234,25 +235,25 @@ void CaffeLMDBRecordReader::read_image_names()
             datum = annotatedDatum_protos.datum(); // parse datum for detection
         else
             datum.ParseFromArray((const void *)_mdb_value.mv_data, _mdb_value.mv_size); //parse datum for classification
-
-        if (get_file_shard_id() != _shard_id)
-        {
+        if((!_meta_data_reader || _meta_data_reader->exists(string((char *)_mdb_key.mv_data).c_str())))
+       {
+           if (get_file_shard_id() != _shard_id)
+            {
+                _file_count_all_shards++;
+                incremenet_file_id();
+                continue;
+            }
+            _in_batch_read_count++;
+            _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
+            string image_key = string((char *)_mdb_key.mv_data);
+            _file_names.push_back(image_key.c_str());
+            _last_file_name = image_key.c_str();
             _file_count_all_shards++;
             incremenet_file_id();
-            continue;
+            _last_file_size = datum.data().size();
+            _file_size.insert(pair<std::string, unsigned int>(_last_file_name, _last_file_size));
         }
-        _in_batch_read_count++;
-        _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
 
-        string image_key = string((char *)_mdb_key.mv_data);
-
-        _file_names.push_back(image_key.c_str());
-        _last_file_name = image_key.c_str();
-        _file_count_all_shards++;
-        incremenet_file_id();
-
-        _last_file_size = datum.data().size();
-        _file_size.insert(pair<std::string, unsigned int>(_last_file_name, _last_file_size));
     }
 
     release();

@@ -114,7 +114,7 @@ void CaffeMetaDataReaderDetection::read_all(const std::string &path)
     file_size1 = in_file1.tellg();
     file_bytes = file_size + file_size1;
     read_lmdb_record(path, file_bytes);
-    print_map_contents();
+    // print_map_contents();
 }
 
 void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint file_byte_size)
@@ -161,7 +161,7 @@ void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint 
 
         img_sizes.push_back(img_size);
 
-        if (boundBox_size != 0)
+        if (boundBox_size > 0)
         {
             for (int i = 0; i < boundBox_size; i++)
             {
@@ -171,8 +171,8 @@ void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint 
                 // Parsing the bounding box points using Iterator & normalizing the bbox values between 0 & 1
                 box.l = bbox_protos.xmin() / img_size.w;
                 box.t = bbox_protos.ymin() / img_size.h;
-                box.r = bbox_protos.xmax() / img_size.w;
-                box.b = bbox_protos.ymax() / img_size.h;
+                box.r = (bbox_protos.xmin() + bbox_protos.xmax())/ img_size.w;
+                box.b = (bbox_protos.ymin() + bbox_protos.ymax())/ img_size.h;
 
                 int label = bbox_protos.label();
 
@@ -182,14 +182,6 @@ void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint 
                 bb_coords.clear();
                 bb_labels.clear();
             }
-        }
-        else
-        {
-            box.l = box.t = 0;
-            box.r = box.b = 1;
-            bb_coords.push_back(box);
-            bb_labels.push_back(0);
-            add(file_name.c_str(), bb_coords, bb_labels, img_sizes);
         }
     }
     // Closing all the LMDB environment and cursor handles

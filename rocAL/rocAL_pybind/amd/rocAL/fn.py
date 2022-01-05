@@ -123,8 +123,9 @@ def flip(*inputs, flip=0, device=None):
 
 def gamma_correction(*inputs, gamma=0.5, device=None):
     # pybind call arguments
+    gamma = b.CreateFloatParameter(gamma) if isinstance(gamma, float) else gamma
     kwargs_pybind = {"input_image0": inputs[0],
-                     "is_output": False, "alpha": None}
+                     "is_output": False, "gamma": gamma}
     gamma_correction_image = b.GammaCorrection(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (gamma_correction_image)
 
@@ -366,7 +367,8 @@ def warp_affine(*inputs, bytes_per_sample_hint=0, fill_value=0.0, interp_type = 
 
 def vignette(*inputs, vignette=0.5, device=None):
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "sdev": None}
+    vignette = b.CreateFloatParameter(vignette) if isinstance(vignette, float) else vignette
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "sdev": vignette}
     vignette_transformed_image = b.Vignette(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (vignette_transformed_image)
 

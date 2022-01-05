@@ -128,7 +128,7 @@ def gamma_correction(*inputs, gamma=0.5, device=None):
     gamma_correction_image = b.GammaCorrection(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (gamma_correction_image)
 
-def hue(*inputs, bytes_per_sample_hint=0,  hue=0.0, image_type=0,
+def hue(*inputs, bytes_per_sample_hint=0,  hue=None, image_type=0,
         preserve=False, seed = -1, device = None):
     """
     bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
@@ -143,8 +143,9 @@ def hue(*inputs, bytes_per_sample_hint=0,  hue=0.0, image_type=0,
 
     """
     # pybind call arguments
+    hue = b.CreateFloatParameter(hue) if isinstance(hue, float) else hue
     kwargs_pybind = {"input_image0": inputs[0],
-                     "is_output": False, "hue": None}
+                     "is_output": False, "hue": hue}
     hue_image = b.Hue(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     return (hue_image)
@@ -187,9 +188,14 @@ def pixelate(*inputs, device = None):
     pixelate_image = b.Pixelate(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (pixelate_image)
 
-def rain(*inputs, rain=0.5, rain_width = None, rain_height = None, rain_transparency = None, device = None):
+def rain(*inputs, rain=None, rain_width = None, rain_height = None, rain_transparency = None, device = None):
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "rain_value": None, "rain_width": rain_width, "rain_height": rain_height, "rain_transparency": rain_transparency}
+    rain = b.CreateFloatParameter(rain) if isinstance(rain, float) else rain
+    rain_width = b.CreateIntParameter(rain_width) if isinstance(rain_width, float) else rain_width
+    rain_height = b.CreateIntParameter(rain_height) if isinstance(rain_height, float) else rain_height
+    rain_transparency = b.CreateFloatParameter(rain_transparency) if isinstance(rain_transparency, float) else rain_transparency
+
+    kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "rain_value": rain, "rain_width": rain_width, "rain_height": rain_height, "rain_transparency": rain_transparency}
     rain_image = b.Rain(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (rain_image)
 
@@ -256,7 +262,7 @@ def random_crop(*inputs, crop_area_factor=[0.08, 1], crop_aspect_ratio=[0.75, 1.
     random_cropped_image = b.RandomCrop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (random_cropped_image)
 
-def rotate(*inputs, angle=0, axis=None, bytes_per_sample_hint= 0, fill_value = 0.0, interp_type = 1, keep_size = False,
+def rotate(*inputs, angle=None, axis=None, bytes_per_sample_hint= 0, fill_value = 0.0, interp_type = 1, keep_size = False,
             output_dtype = -1, preserve = False, seed = -1, size = None, device = None):
     """
     angle (float) – Angle, in degrees, by which the image is rotated. For 2D data, the rotation is counter-clockwise, assuming top-left corner at (0,0) For 3D data, the angle is a positive rotation around given axis
@@ -281,8 +287,9 @@ def rotate(*inputs, angle=0, axis=None, bytes_per_sample_hint= 0, fill_value = 0
 
     """
     # pybind call arguments
+    angle = b.CreateFloatParameter(angle) if isinstance(angle, float) else angle
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False,
-                    "angle": None, "dest_width": 0, "dest_height": 0}
+                    "angle": angle, "dest_width": 0, "dest_height": 0}
     rotated_image = b.Rotate(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (rotated_image)
 
@@ -306,8 +313,9 @@ def saturation(*inputs, bytes_per_sample_hint=0,  saturation=1.0, image_type=0, 
 
     """
     # pybind call arguments
+    saturation = b.CreateFloatParameter(saturation) if isinstance(saturation, float) else saturation
     kwargs_pybind = {"input_image0": inputs[0],
-                     "is_output": False, "sat": None}
+                     "is_output": False, "sat": saturation}
     saturated_image = b.Saturation(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (saturated_image)
 

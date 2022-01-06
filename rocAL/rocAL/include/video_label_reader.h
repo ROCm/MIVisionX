@@ -55,7 +55,6 @@ private:
     struct dirent *_entity;
     std::vector<std::string> _file_names;
     std::vector<std::string> _subfolder_video_file_names;
-    std::vector<unsigned> _props;
     int _video_idx = 0;
     bool _file_list_frame_num = true;
     unsigned _sequence_length;

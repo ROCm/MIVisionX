@@ -34,7 +34,7 @@ int HardWareVideoDecoder::seek_frame(AVRational avg_frame_rate, AVRational time_
     int ret = av_seek_frame(_fmt_ctx, -1, seek_time, AVSEEK_FLAG_BACKWARD);
     if (ret < 0)
     {
-        ERR("HardWareVideoDecoder::seek_frame Error in seeking frame..Unable to seek the given frame in a video");
+        ERR("HardWareVideoDecoder::seek_frame Error in seeking frame. Unable to seek the given frame in a video");
         return ret;
     }
     return select_frame_pts;
@@ -43,22 +43,9 @@ int HardWareVideoDecoder::seek_frame(AVRational avg_frame_rate, AVRational time_
 int HardWareVideoDecoder::hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx)
 {
     int err = 0;
-    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0)
-        return err;
-    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    if((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) > 0)
+        ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
     return err;
-}
-
-static enum AVPixelFormat hwPixelFormat;
-enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts)
-{
-    const enum AVPixelFormat *p;
-    for (p = pix_fmts; *p != -1; p++) {
-        if (*p == hwPixelFormat)
-            return *p;
-    }
-    ERR("Error : Failed to get HW surface format");
-    return AV_PIX_FMT_NONE;
 }
 
 // Seeks to the frame_number in the video file and decodes each frame in the sequence.
@@ -81,7 +68,7 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
     int select_frame_pts = seek_frame(_video_stream->avg_frame_rate, _video_stream->time_base, seek_frame_number);
     if (select_frame_pts < 0)
     {
-        ERR("HardWareVideoDecoder::Decode Error in seeking frame..Unable to seek the given frame in a video");
+        ERR("HardWareVideoDecoder::Decode Error in seeking frame. Unable to seek the given frame in a video");
         return Status::FAILED;
     }
     unsigned frame_count = 0;
@@ -223,7 +210,6 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         }
         if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
                 config->device_type == hw_type) {
-            hwPixelFormat = config->pix_fmt;
             break;
         }
     }
@@ -263,7 +249,6 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         return Status::FAILED;
     }
 
-    _video_dec_ctx->get_format  = get_hw_format;
     if (hw_decoder_init(_video_dec_ctx, hw_type, hw_device_ctx) < 0) {
         ERR("HardWareVideoDecoder::Initialize ERROR: Failed to create specified HW device");
         return Status::FAILED;

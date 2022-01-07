@@ -87,13 +87,13 @@ struct MetaData
     BoundingBoxCords& get_bb_cords() { return _bb_cords; }
     BoundingBoxCords_xcycwh& get_bb_cords_xcycwh() { return _bb_cords_xcycwh; }
     BoundingBoxLabels& get_bb_labels() { return _bb_label_ids; }
-    ImgSizes& get_img_sizes() {return _img_sizes; }
+    ImgSize& get_img_size() {return _img_size; }
     const JointsData& get_joints_data(){ return _joints_data; }
 protected:
     BoundingBoxCords _bb_cords = {}; // For bb use
     BoundingBoxCords_xcycwh _bb_cords_xcycwh = {}; // For bb use
     BoundingBoxLabels _bb_label_ids = {};// For bb use
-    ImgSizes _img_sizes = {};
+    ImgSize _img_size = {};
     JointsData _joints_data = {};
     int _label_id = -1; // For label use only
 };
@@ -112,11 +112,11 @@ struct BoundingBox : public MetaData
         _bb_cords =std::move(bb_cords);
         _bb_label_ids = std::move(bb_label_ids);
     }
-    BoundingBox(BoundingBoxCords bb_cords,BoundingBoxLabels bb_label_ids ,ImgSizes img_sizes)
+    BoundingBox(BoundingBoxCords bb_cords,BoundingBoxLabels bb_label_ids ,ImgSize img_size)
     {
         _bb_cords =std::move(bb_cords);
         _bb_label_ids = std::move(bb_label_ids);
-        _img_sizes = std::move(img_sizes);
+        _img_size = std::move(img_size);
     }
     void set_bb_cords(BoundingBoxCords bb_cords) { _bb_cords =std::move(bb_cords); }
     BoundingBox(BoundingBoxCords_xcycwh bb_cords_xcycwh,BoundingBoxLabels bb_label_ids )
@@ -124,23 +124,23 @@ struct BoundingBox : public MetaData
         _bb_cords_xcycwh =std::move(bb_cords_xcycwh);
         _bb_label_ids = std::move(bb_label_ids);
     }
-    BoundingBox(BoundingBoxCords_xcycwh bb_cords_xcycwh,BoundingBoxLabels bb_label_ids ,ImgSizes img_sizes)
+    BoundingBox(BoundingBoxCords_xcycwh bb_cords_xcycwh,BoundingBoxLabels bb_label_ids ,ImgSize img_size)
     {
         _bb_cords_xcycwh =std::move(bb_cords_xcycwh);
         _bb_label_ids = std::move(bb_label_ids);
-        _img_sizes = std::move(img_sizes);
+        _img_size = std::move(img_size);
     }
     void set_bb_cords_xcycwh(BoundingBoxCords_xcycwh bb_cords_xcycwh) { _bb_cords_xcycwh =std::move(bb_cords_xcycwh); }
     void set_bb_labels(BoundingBoxLabels bb_label_ids) {_bb_label_ids = std::move(bb_label_ids); }
-    void set_img_sizes(ImgSizes img_sizes) { _img_sizes =std::move(img_sizes); }
+    void set_img_size(ImgSize img_size) { _img_size = std::move(img_size); }
 };
 
 struct KeyPoint : public MetaData
 {
     KeyPoint()= default;
-    KeyPoint(ImgSizes img_sizes, JointsData *joints_data)
+    KeyPoint(ImgSize img_size, JointsData *joints_data)
     {
-        _img_sizes = std::move(img_sizes);
+        _img_size = std::move(img_size);
         _joints_data = std::move(*joints_data);
     }
     void set_joints_data(JointsData *joints_data) { _joints_data = std::move(*joints_data); }
@@ -163,14 +163,14 @@ struct MetaDataBatch
     std::vector<BoundingBoxCords>& get_bb_cords_batch() { return _bb_cords; }
     std::vector<BoundingBoxCords_xcycwh>& get_bb_cords_batch_xcycxwh() { return _bb_cords_xcycwh; }
     std::vector<BoundingBoxLabels>& get_bb_labels_batch() { return _bb_label_ids; }
-    std::vector<ImgSizes>& get_img_sizes_batch() { return _img_sizes; }
+    ImgSizes & get_img_sizes_batch() { return _img_sizes; }
     JointsDataBatch & get_joints_data_batch(){return _joints_data; }
 protected:
     std::vector<int> _label_id = {}; // For label use only
     std::vector<BoundingBoxCords> _bb_cords = {};
     std::vector<BoundingBoxCords_xcycwh> _bb_cords_xcycwh = {};
     std::vector<BoundingBoxLabels> _bb_label_ids = {};
-    std::vector<ImgSizes> _img_sizes = {};
+    std::vector<ImgSize> _img_sizes = {};
     JointsDataBatch _joints_data = {};
 };
 

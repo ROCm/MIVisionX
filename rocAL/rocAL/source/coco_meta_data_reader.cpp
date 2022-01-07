@@ -59,11 +59,11 @@ void COCOMetaDataReader::lookup(const std::vector<std::string> &image_names)
             THROW("ERROR: Given name not present in the map" + image_name)
         _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
         _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
-        _output->get_img_sizes_batch()[i] = it->second->get_img_sizes();
+        _output->get_img_sizes_batch()[i] = it->second->get_img_size();
     }
 }
 
-void COCOMetaDataReader::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels, ImgSizes image_size)
+void COCOMetaDataReader::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels, ImgSize image_size)
 {
     if (exists(image_name))
     {
@@ -80,7 +80,7 @@ void COCOMetaDataReader::print_map_contents()
 {
     BoundingBoxCords bb_coords;
     BoundingBoxLabels bb_labels;
-    ImgSizes img_sizes;
+    ImgSize img_size;
 
     std::cout << "\nBBox Annotations List: \n";
     for (auto &elem : _map_content)
@@ -88,8 +88,8 @@ void COCOMetaDataReader::print_map_contents()
         std::cout << "\nName :\t " << elem.first;
         bb_coords = elem.second->get_bb_cords();
         bb_labels = elem.second->get_bb_labels();
-        img_sizes = elem.second->get_img_sizes();
-        std::cout << "<wxh, num of bboxes>: " << img_sizes[0].w << " X " << img_sizes[0].h << " , " << bb_coords.size() << std::endl;
+        img_size = elem.second->get_img_size();
+        std::cout << "<wxh, num of bboxes>: " << img_size.w << " X " << img_size.h << " , " << bb_coords.size() << std::endl;
         for (unsigned int i = 0; i < bb_coords.size(); i++)
         {
             std::cout << " l : " << bb_coords[i].l << " t: :" << bb_coords[i].t << " r : " << bb_coords[i].r << " b: :" << bb_coords[i].b << "Label Id : " << bb_labels[i] << std::endl;
@@ -163,9 +163,8 @@ void COCOMetaDataReader::read_all(const std::string &path)
                         parser.SkipValue();
                     }
                 }
-                img_sizes.push_back(img_size);
-                _map_img_sizes.insert(pair<std::string, std::vector<ImgSize>>(image_name, img_sizes));
-                img_sizes.clear();
+                _map_img_sizes.insert(pair<std::string, ImgSize>(image_name, img_size));
+                img_size = {};
             }
         }
         else if (0 == std::strcmp(key, "categories"))
@@ -240,16 +239,17 @@ void COCOMetaDataReader::read_all(const std::string &path)
                 std::string file_name = str + ".jpg";
 
                 auto it = _map_img_sizes.find(file_name);
-                ImgSizes image_size = it->second; //Normalizing the co-ordinates & convert to "ltrb" format
-                box.l = bbox[0] / image_size[0].w;
-                box.t = bbox[1] / image_size[0].h;
-                box.r = (bbox[0] + bbox[2]) / image_size[0].w;
-                box.b = (bbox[1] + bbox[3]) / image_size[0].h;
+                ImgSize image_size = it->second; //Normalizing the co-ordinates & convert to "ltrb" format
+                box.l = bbox[0] / image_size.w;
+                box.t = bbox[1] / image_size.h;
+                box.r = (bbox[0] + bbox[2]) / image_size.w;
+                box.b = (bbox[1] + bbox[3]) / image_size.h;
                 bb_coords.push_back(box);
                 bb_labels.push_back(label);
                 add(file_name, bb_coords, bb_labels, image_size);
                 bb_coords.clear();
                 bb_labels.clear();
+                image_size = {};
             }
         }
         else

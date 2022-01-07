@@ -74,7 +74,7 @@ void COCOMetaDataReaderKeyPoints::lookup(const std::vector<std::string> &image_n
     _output->get_joints_data_batch() = joints_data_batch;
 }
 
-void COCOMetaDataReaderKeyPoints::add(std::string image_id, ImgSizes image_size, JointsData *joints_data)
+void COCOMetaDataReaderKeyPoints::add(std::string image_id, ImgSize image_size, JointsData *joints_data)
 {
     pMetaDataKeyPoint info = std::make_shared<KeyPoint>(image_size, joints_data);
     _map_content.insert(pair<std::string, std::shared_ptr<KeyPoint>>(image_id, info));
@@ -173,9 +173,8 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                         parser.SkipValue();
                     }
                 }
-                img_sizes.push_back(img_size);
-                _map_img_sizes.insert(pair<std::string, std::vector<ImgSize>>(image_name, img_sizes));
-                img_sizes.clear();
+                _map_img_sizes.insert(pair<std::string, ImgSize>(image_name, img_size));
+                img_size = {};
             }
         }
         else if (0 == std::strcmp(key, "categories"))
@@ -277,7 +276,7 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                 string str(buffer);
                 std::string file_name = str + ".jpg";
                 auto it = _map_img_sizes.find(file_name);
-                ImgSizes image_size = it->second; // Normalizing the co-ordinates & convert to "ltrb" format
+                ImgSize image_size = it->second; // Normalizing the co-ordinates & convert to "ltrb" format
 
                 // Ignore annotations if
                 // label is not person (label !=1)
@@ -296,8 +295,8 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                 y1 = std::max(box_center[1] , 0.0f);
                 float box_w = std::max(box_scale[0] - 1 , 0.0f);
                 float box_h = std::max(box_scale[1] - 1 , 0.0f);
-                x2 = std::min((float)image_size[0].w - 1 ,  x1 + box_w);
-                y2 = std::min((float)image_size[0].h - 1 , y1 + box_h);
+                x2 = std::min((float)image_size.w - 1 ,  x1 + box_w);
+                y2 = std::min((float)image_size.h - 1 , y1 + box_h);
 
                 // check area
                 if (area > 0 && x2 >= x1 && y2 >= y1)

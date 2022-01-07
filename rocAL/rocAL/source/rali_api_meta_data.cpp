@@ -345,7 +345,7 @@ RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
     }
     for(unsigned i = 0; i < meta_data_batch_size; i++)
     { 
-        memcpy(buf, meta_data.second->get_img_sizes_batch()[i].data(), sizeof(ImgSize));
+        memcpy(buf, &(meta_data.second->get_img_sizes_batch()[i]), sizeof(ImgSize));
         buf += 2;
     }
 }

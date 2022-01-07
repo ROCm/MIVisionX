@@ -49,7 +49,7 @@ private:
     bool exists(const std::string &image_name);
     // void add(std::string image_name, int label);
     //bbox add
-    void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSizes image_size);
+    void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);
     bool _last_rec;
     //std::shared_ptr<TF_Read> _TF_read = nullptr;
     void read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &image_name, 

@@ -134,7 +134,8 @@ RALI_API_CALL raliCreateTFReaderDetection(RaliContext p_context, const char* sou
 }
 
 RaliMetaData
-RALI_API_CALL raliCreateMXNetReader(RaliContext p_context, const char* source_path, bool is_output){
+RALI_API_CALL raliCreateMXNetReader(RaliContext p_context, const char* source_path, bool is_output)
+{
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateMXNetReader")
     auto context = static_cast<Context*>(p_context);

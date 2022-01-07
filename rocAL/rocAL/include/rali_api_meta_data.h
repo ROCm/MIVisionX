@@ -97,7 +97,7 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateCaffe2LMDBReaderDetection(RaliCo
 
 ///
 /// \param rali_context
-/// \param source_path path to the MXNet recorio files for Classification
+/// \param source_path path to the MXNet recordio files for Classification
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
 extern "C" RaliMetaData RALI_API_CALL raliCreateMXNetReader(RaliContext rali_context, const char* source_path, bool is_output);
 

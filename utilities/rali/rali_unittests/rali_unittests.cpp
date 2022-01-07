@@ -43,9 +43,9 @@ using namespace cv;
 // #define TF_READER_DETECTION
 // #define CAFFE2_READER
 // #define CAFFE2_READER_DETECTION
-//  #define CAFFE_READER
+// #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
-#define MXNET_READER
+//#define MXNET_READER
 
 //#define RANDOMBBOXCROP
 
@@ -97,7 +97,7 @@ int main(int argc, const char **argv)
 int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all)
 {
     size_t num_threads = 1;
-    unsigned int inputBatchSize = 4;
+    unsigned int inputBatchSize = 2;
     int decode_max_width = width;
     int decode_max_height = height;
     std::cout << ">>> test case " << test_case << std::endl;
@@ -152,7 +152,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #endif
 
 #if defined COCO_READER || defined COCO_READER_PARTIAL
-    char *json_path = "/data/indu/coco2017/annotations/instances_train2017.json";
+    char *json_path = "";
     if (strcmp(json_path, "") == 0)
     {
         std::cout << "\n json_path has to be set in rali_unit test manually";

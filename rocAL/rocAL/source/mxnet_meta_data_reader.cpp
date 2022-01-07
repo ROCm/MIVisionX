@@ -20,14 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "mxnet_meta_data_reader.h"
 #include <iostream>
 #include <utility>
 #include <algorithm>
+#include <memory.h>
 #include <stdint.h>
-#include <google/protobuf/message_lite.h>
-#include "example.pb.h"
-#include "feature.pb.h"
+#include "mxnet_meta_data_reader.h"
 
 using namespace std;
 
@@ -83,6 +81,7 @@ void MXNetMetaDataReader::print_map_contents()
 
 void MXNetMetaDataReader::read_all(const std::string &path)
 {
+    std::string _rec_file, _idx_file;
     if (_path.find("train") != std::string::npos)
     {
         _rec_file = _path + "/train.rec";
@@ -109,6 +108,8 @@ void MXNetMetaDataReader::read_all(const std::string &path)
     if(!index_file)
         THROW("ERROR: Could not open RecordIO index file. Provided path: " + _idx_file);
 
+    std::vector<size_t> _index_list;
+    size_t _index, _offset;
     while (index_file >> _index >> _offset)
         _index_list.push_back(_offset);
     if(_index_list.empty())
@@ -138,10 +139,12 @@ void MXNetMetaDataReader::read_images()
 {
     for(int current_index = 0; current_index < (int)_indices.size(); current_index++ )
     {
+        uint32_t _magic, _length_flag;
+        int64_t _seek_pos, _data_size_to_read;
         std::tie(_seek_pos, _data_size_to_read) = _indices[current_index];
         _file_contents.seekg(_seek_pos, ifstream::beg);
-        _data = new uint8_t[_data_size_to_read];
-        _data_ptr = _data;
+        uint8_t* _data = new uint8_t[_data_size_to_read];
+        uint8_t* _data_ptr = _data;
         _file_contents.read((char *)_data_ptr, _data_size_to_read);
         memcpy(&_magic, _data_ptr, sizeof(_magic));
         _data_ptr += sizeof(_magic);
@@ -149,8 +152,6 @@ void MXNetMetaDataReader::read_images()
             THROW("ERROR: Invalid RecordIO: wrong magic number");
         memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
         _data_ptr += sizeof(_length_flag);
-        _cflag = DecodeFlag(_length_flag);
-        _clength =  DecodeLength(_length_flag);
         memcpy(&_hdr, _data_ptr, sizeof(_hdr));
         
         if (_hdr.flag == 0)

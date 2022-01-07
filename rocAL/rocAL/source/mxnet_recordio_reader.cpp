@@ -22,22 +22,20 @@ THE SOFTWARE.
 
 #include <cassert>
 #include <commons.h>
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sstream>
+#include <algorithm>
+#include <memory.h>
 #include <stdint.h>
 #include "mxnet_recordio_reader.h"
 
 using namespace std;
-namespace filesys = boost::filesystem;
 
 MXNetRecordIOReader::MXNetRecordIOReader():
 _shuffle_time("shuffle_time", DBG_TIMING)
 {
-    _sub_dir = nullptr;
     _curr_file_idx = 0;
     _current_file_size = 0;
     _loop = false;
@@ -141,11 +139,10 @@ Reader::Status MXNetRecordIOReader::record_reading()
     if (_in_batch_read_count > 0 && _in_batch_read_count < _batch_count)
     {
         replicate_last_image_to_fill_last_shard();
-        std::cout << "MXNetRecordIOReader ShardID [" << TOSTR(_shard_id) << "] Replicated " << _path + _last_file_name << " " << TOSTR((_batch_count - _in_batch_read_count)) << " times to fill the last batch" << std::endl;
+        LOG("MXNetRecordIOReader ShardID [" << TOSTR(_shard_id) << "] Replicated " << _path + _last_file_name << " " << TOSTR((_batch_count - _in_batch_read_count)) << " times to fill the last batch")
     }
     if (!_file_names.empty())
-        std::cout << "MXNetRecordIOReader ShardID [" << TOSTR(_shard_id) << "] Total of " << TOSTR(_file_names.size()) << " images loaded from " << _path << std::endl;
-    closedir(_sub_dir);
+        LOG("MXNetRecordIOReader ShardID [" << TOSTR(_shard_id) << "] Total of " << TOSTR(_file_names.size()) << " images loaded from " << _path)
     return ret;
 }
 
@@ -173,6 +170,7 @@ void MXNetRecordIOReader::replicate_last_batch_to_pad_partial_shard()
 
 Reader::Status MXNetRecordIOReader::MXNet_reader()
 {
+    std::string _rec_file, _idx_file;
     if (_path.find("train") != std::string::npos)
     {
         _rec_file = _path + "/train.rec";
@@ -199,6 +197,8 @@ Reader::Status MXNetRecordIOReader::MXNet_reader()
     if(!index_file)
         THROW("ERROR: Could not open RecordIO index file. Provided path: " + _idx_file);
 
+    std::vector<size_t> _index_list;
+    size_t _index, _offset;
     while (index_file >> _index >> _offset)
         _index_list.push_back(_offset);
     if(_index_list.empty())
@@ -215,7 +215,6 @@ size_t MXNetRecordIOReader::get_file_shard_id()
 {
     if (_batch_count == 0 || _shard_count == 0)
         THROW("Shard (Batch) size cannot be set to 0")
-    //return (_file_id / (_batch_count)) % _shard_count;
     return _file_id  % _shard_count;
 }
 
@@ -223,10 +222,11 @@ void MXNetRecordIOReader::read_image_names()
 {
     for(int current_index = 0; current_index < (int)_indices.size(); current_index++ )
     {
+        uint32_t _magic, _length_flag;
         std::tie(_seek_pos, _data_size_to_read) = _indices[current_index];
         _file_contents.seekg(_seek_pos, ifstream::beg);
-        _data = new uint8_t[_data_size_to_read];
-        _data_ptr = _data;
+        uint8_t* _data = new uint8_t[_data_size_to_read];
+        uint8_t* _data_ptr = _data;
         _file_contents.read((char *)_data_ptr, _data_size_to_read);
         memcpy(&_magic, _data_ptr, sizeof(_magic));
         _data_ptr += sizeof(_magic);
@@ -234,8 +234,7 @@ void MXNetRecordIOReader::read_image_names()
             THROW("ERROR: Invalid MXNet RecordIO: wrong _magic number");
         memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
         _data_ptr += sizeof(_length_flag);
-        _cflag = DecodeFlag(_length_flag);
-        _clength =  DecodeLength(_length_flag);
+        uint32_t _clength =  DecodeLength(_length_flag);
         memcpy(&_hdr, _data_ptr, sizeof(_hdr));
 
         if (_hdr.flag == 0)
@@ -245,9 +244,9 @@ void MXNetRecordIOReader::read_image_names()
             WRN("\nMultiple record reading has not supported");
             continue;
         }
-        int64_t data_size = _clength - sizeof(ImageRecordIOHeader);
-        int64_t label_size = _hdr.flag * sizeof(float);
-        int64_t image_size = data_size - label_size;
+        /* _clength - sizeof(ImageRecordIOHeader) to get the data size.
+        Subtracting label size(_hdr.flag * sizeof(float)) from data size to get image size*/
+        int64_t image_size = (_clength - sizeof(ImageRecordIOHeader)) - (_hdr.flag * sizeof(float));
         delete[] _data;
 
         if (get_file_shard_id() != _shard_id)
@@ -275,9 +274,10 @@ void MXNetRecordIOReader::read_image_names()
 
 void MXNetRecordIOReader::read_image(unsigned char *buff, size_t read_size, int64_t seek_position, int64_t _data_size_to_read)
 {
+    uint32_t _magic, _length_flag;
     _file_contents.seekg(seek_position, ifstream::beg);
-    _data = new uint8_t[_data_size_to_read];
-    _data_ptr = _data;
+    uint8_t* _data = new uint8_t[_data_size_to_read];
+    uint8_t* _data_ptr = _data;
     _file_contents.read((char *)_data_ptr, _data_size_to_read);
     memcpy(&_magic, _data_ptr, sizeof(_magic));
     _data_ptr += sizeof(_magic);
@@ -285,8 +285,8 @@ void MXNetRecordIOReader::read_image(unsigned char *buff, size_t read_size, int6
         THROW("ERROR: Invalid RecordIO: wrong _magic number");
     memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
     _data_ptr += sizeof(_length_flag);
-    _cflag = DecodeFlag(_length_flag);
-    _clength =  DecodeLength(_length_flag);
+    uint32_t _cflag = DecodeFlag(_length_flag);
+    uint32_t _clength =  DecodeLength(_length_flag);
     memcpy(&_hdr, _data_ptr, sizeof(_hdr));
     _data_ptr += sizeof(_hdr);
 

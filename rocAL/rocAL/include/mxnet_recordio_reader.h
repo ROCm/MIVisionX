@@ -30,12 +30,11 @@ THE SOFTWARE.
 #include <algorithm>
 #include <fstream>
 #include "reader.h"
-#include <google/protobuf/message_lite.h>
 #include "timing_debug.h"
 
 class MXNetRecordIOReader : public Reader{
 public:
-    //! Reads the TFRecord File, and loads the image ids and other necessary info
+    //! Reads the MXNet Record File, and loads the image ids and other necessary info
     /*!
      \param desc  User provided descriptor containing the files' path.
     */
@@ -69,8 +68,7 @@ private:
     //! opens the folder containnig the images
     Reader::Status record_reading();
     Reader::Status MXNet_reader();
-    std::string _path, _rec_file, _idx_file;
-    DIR *_sub_dir;
+    std::string _path;
     std::string _image_key;
     std::vector<std::string> _file_names;
     std::map<std::string, std::tuple<unsigned int, int64_t, int64_t> > _record_properties;
@@ -93,7 +91,6 @@ private:
     int _read_counter = 0;
     //!< _file_count_all_shards total_number of files in to figure out the max_batch_size (usually needed for distributed training).
     size_t  _file_count_all_shards;
-    uint _file_byte_size;
     void incremenet_read_ptr();
     int release();
     size_t get_file_shard_id();
@@ -106,12 +103,7 @@ private:
     uint32_t DecodeLength(uint32_t rec) {return rec & ((1U << 29U) - 1U); };
     std::vector<std::tuple<int64_t, int64_t>> _indices;// used to store seek position and record size for a particular record.
     std::ifstream _file_contents;
-    std::vector<size_t> _file_offsets;
-    std::vector<size_t> _index_list;
-    size_t _index, _offset, _file_index;
-    const uint8_t* _data, *_data_ptr;
     const uint32_t _kMagic = 0xced7230a;
-    uint32_t _magic, _length_flag, _cflag, _clength;
     int64_t _seek_pos, _data_size_to_read;
     ImageRecordIOHeader _hdr;
     TimingDBG _shuffle_time;

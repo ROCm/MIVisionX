@@ -7,9 +7,9 @@ import cv2
 from numpy.ctypeslib import ndpointer
 from PyQt5 import QtCore
 from rali_setup import *
-import amd.rocAL.types as types
-from amd.rocAL.plugin.pytorch import RALI_iterator
-from amd.rocAL.pipeline import Pipeline
+import amd.rocal.types as types
+from amd.rocal.plugin.pytorch import RALI_iterator
+from amd.rocal.pipeline import Pipeline
 
 
 # AMD Neural Net python wrapper

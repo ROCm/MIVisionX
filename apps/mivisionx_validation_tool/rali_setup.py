@@ -2,9 +2,9 @@ import sys
 #setup python path for RALI
 sys.path.append('/opt/rocm/mivisionx/rali/python/')
 
-from amd.rocAL.pipeline import Pipeline
-import amd.rocAL.fn as fn
-import amd.rocAL.types as types
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.fn as fn
+import amd.rocal.types as types
 import numpy as np
 
 #batch size = 64

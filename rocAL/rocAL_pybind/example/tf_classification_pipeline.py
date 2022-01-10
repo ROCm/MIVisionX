@@ -1,7 +1,7 @@
-from amd.rocAL.plugin.tf import RALIIterator
-from amd.rocAL.pipeline import Pipeline
-import amd.rocAL.ops as ops
-import amd.rocAL.types as types
+from amd.rocal.plugin.tf import RALIIterator
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.ops as ops
+import amd.rocal.types as types
 import sys
 import tensorflow as tf
 
@@ -69,18 +69,14 @@ def main():
 		'image/class/label':'image/class/label',
 		'image/filename':'image/filename'
 	}
-
 	pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rali_cpu=raliCPU)
 	pipe.build()
-
 	imageIterator = RALIIterator(pipe)
 	for i, (images_array, labels_array) in enumerate(imageIterator, 0):
 		print("\n\n",i)
 		print("\nIMAGES ARRAY:\n",images_array)
 		print("\nLABELS ARRAY:\n",labels_array)
 	imageIterator.reset()
-
-
 
 if __name__ == '__main__':
     main()

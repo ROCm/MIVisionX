@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import random
-from amd.rocAL.plugin.pytorch import RALI_iterator
+from amd.rocal.plugin.pytorch import RALI_iterator
 
-from amd.rocAL.pipeline import Pipeline
-import amd.rocAL.fn as fn
-import amd.rocAL.types as types
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.fn as fn
+import amd.rocal.types as types
 import sys
 import cv2
 import os

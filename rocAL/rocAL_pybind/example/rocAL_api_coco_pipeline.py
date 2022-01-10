@@ -9,9 +9,9 @@ import os
 import cupy as cp
 import torch.utils.dlpack as dp
 
-from amd.rocAL.pipeline import Pipeline
-import amd.rocAL.fn as fn
-import amd.rocAL.types as types
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.fn as fn
+import amd.rocal.types as types
 import sys
 import numpy as np
 
@@ -61,7 +61,7 @@ class RALICOCOIterator(object):
 
     def get_cupy_array_from_address(self):
         if(self.tensor_format == types.NCHW):
-            address = self.loader.copyToHipTensorNCHW(
+            address = self.loader.CopyToGpuTensorNCHW(
                 self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
             print("Address : ",address)
             mem = cp.cuda.memory.UnownedMemory(address, 0, None)
@@ -73,7 +73,7 @@ class RALICOCOIterator(object):
                 self.hip_array = cp.ndarray(
                     (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), "float16", memptr)
         else:
-            address = self.loader.copyToHipTensorNHWC(
+            address = self.loader.CopyToGpuTensorNHWC(
                 self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
             mem = cp.cuda.memory.UnownedMemory(address, 0, None)
             memptr = cp.cuda.memory.MemoryPointer(mem, 0)

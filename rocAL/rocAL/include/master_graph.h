@@ -90,7 +90,7 @@ public:
     void create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts, int64_t seed=0);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
-    void set_output_images(std::vector<Image*> output_images, unsigned int num_of_outputs)
+    void set_output_images(const std::vector<Image*> &output_images, unsigned int num_of_outputs)
     {
         _output_images.resize(num_of_outputs);
         _output_images = output_images;

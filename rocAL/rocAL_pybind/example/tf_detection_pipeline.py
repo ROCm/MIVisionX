@@ -1,7 +1,7 @@
-from amd.rocAL.plugin.tf import RALIIterator
-from amd.rocAL.pipeline import Pipeline
-import amd.rocAL.ops as ops
-import amd.rocAL.types as types
+from amd.rocal.plugin.tf import RALIIterator
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.ops as ops
+import amd.rocal.types as types
 import sys
 import tensorflow as tf
 import numpy as np

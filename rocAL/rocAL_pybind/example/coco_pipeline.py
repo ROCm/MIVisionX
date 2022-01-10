@@ -6,9 +6,9 @@ import torch
 import random
 import itertools
 
-from amd.rocAL.pipeline import Pipeline
-import amd.rocAL.ops as ops
-import amd.rocAL.types as types
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.ops as ops
+import amd.rocal.types as types
 import sys
 import numpy as np
 

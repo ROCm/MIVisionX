@@ -1,11 +1,11 @@
 import numpy as np
 import cv2
 from enum import Enum
-from amd.rocAL.plugin.pytorch import RALIClassificationIterator
-from amd.rocAL.plugin.pytorch import RALI_iterator
-from amd.rocAL.pipeline import Pipeline
-import amd.rocAL.ops as ops
-import amd.rocAL.types as types
+from amd.rocal.plugin.pytorch import RALIClassificationIterator
+from amd.rocal.plugin.pytorch import RALI_iterator
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.ops as ops
+import amd.rocal.types as types
 import sys
 class HybridTrainPipe(Pipeline):
 	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):

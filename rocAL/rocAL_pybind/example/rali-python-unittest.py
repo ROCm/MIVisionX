@@ -1,8 +1,8 @@
 import cv2
-from amd.rocAL.plugin.pytorch import RALI_iterator
-from amd.rocAL.pipeline import Pipeline
-import amd.rocAL.ops as ops
-import amd.rocAL.types as types
+from amd.rocal.plugin.pytorch import RALI_iterator
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.ops as ops
+import amd.rocal.types as types
 import sys
 class HybridTrainPipe(Pipeline):
         def __init__(self, batch_size, num_threads, device_id, data_dir, augmentation, crop, rali_cpu = True):
@@ -117,9 +117,6 @@ class HybridTrainPipe(Pipeline):
                     output = self.colortwist(images)
                 elif self.aug_num == 25:
                     output = self.cropMirrorNormalize(images)
-
-
-
                 return [output, self.labels]
 
 def main():
@@ -140,8 +137,6 @@ def main():
         pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=_image_path, augmentation=augmentation_num, crop=crop_size, rali_cpu=_rali_cpu)
         pipe.build()
         imageIterator = RALI_iterator(pipe)
-
-
         for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
                 cv2.imwrite(output_img, cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
 

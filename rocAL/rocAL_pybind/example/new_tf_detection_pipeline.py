@@ -6,6 +6,7 @@ import sys
 import tensorflow as tf
 import amd.rali.fn as fn
 import numpy as np
+import os
 
 
 def get_onehot(image_labels_array, numClasses):
@@ -28,12 +29,22 @@ def get_weights(num_bboxes):
 
     return weights_array
 
-def draw_patches(img,idx):
+def draw_patches(img, idx, bboxes):
     #image is expected as a tensor, bboxes as numpy
     import cv2
-    image = img.transpose([0,1,2])
+    # image = img.detach().numpy()
+    image = img.transpose([0, 1, 2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
+    image = cv2.normalize(image, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
+    htot, wtot ,_ = img.shape
+    for (l, t, r, b) in bboxes:
+        loc_ = [l, t, r, b]
+        color = (255, 0, 0)
+        thickness = 2
+        image = cv2.UMat(image).get()
+        image = cv2.rectangle(image, (int(loc_[0]*wtot), int(loc_[1] * htot)), (int(
+            (loc_[2] * wtot)), int((loc_[3] * htot))), color, thickness)
+        cv2.imwrite("OUTPUT_IMAGES_PYTHON/OLD_API/TF_READER/"+str(idx)+"_"+"train"+".png", image)
 
 
 def main():
@@ -61,6 +72,11 @@ def main():
         'image/object/bbox/ymax': 'image/object/bbox/ymax',
         'image/filename': 'image/filename'
     }
+    try:
+        path= "OUTPUT_IMAGES_PYTHON/OLD_API/TF_READER"
+        os.makedirs(path, exist_ok=True)
+    except OSError as error:
+        print(error)
 
 
     pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=2, rali_cpu=raliCPU)
@@ -106,9 +122,10 @@ def main():
             }
             processed_tensors = (features_dict, labels_dict)
             print("\nPROCESSED_TENSORS:\n", processed_tensors)
-            draw_patches(images_array[element],cnt)
+            draw_patches(images_array[element],cnt,bboxes_array[element])
+
         print("\n\nPrinted first batch with", (bs), "images!")
-        break
+
     imageIterator.reset()
 
 

@@ -9,8 +9,6 @@ from PyQt5 import QtCore
 from rali_setup import *
 import amd.rocal.types as types
 from amd.rocal.plugin.pytorch import RALI_iterator
-from amd.rocal.pipeline import Pipeline
-
 
 # AMD Neural Net python wrapper
 class AnnAPI:
@@ -363,7 +361,6 @@ class modelInference(QtCore.QObject):
                     text_off_y = int(self.h_i-7)
                     box_coords = ((text_off_x, text_off_y), (text_off_x + text_width - 2, text_off_y - text_height - 2))
                     color = (245, 197, 66)
-                    thickness = 3
                     cv2.rectangle(original_image, (text_off_x, text_off_y), (text_off_x + text_width + 15, text_off_y - text_height), color, cv2.FILLED)
                     cv2.putText(original_image, groundTruthLabel, (text_off_x, text_off_y), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0,0,0), 2)
                     self.origQueue.put(original_image)

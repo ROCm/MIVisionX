@@ -233,7 +233,6 @@ class InferencePipe(Pipeline):
                 self.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                                 self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
                                 self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
-                output_set=1
             elif raliMode == 2:
                 self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
 
@@ -262,7 +261,6 @@ class InferencePipe(Pipeline):
                 self.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                                 self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
                                 self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
-                output_set=1
             elif raliMode == 3:
                 self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
 
@@ -291,7 +289,6 @@ class InferencePipe(Pipeline):
                 self.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                                 self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
                                 self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
-                output_set=1
             elif raliMode == 4:
                 for i in range(15):
                     self.copy_img = fn.copy(self.input)
@@ -300,7 +297,6 @@ class InferencePipe(Pipeline):
                                 self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
                                 self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
                                 self.copy_img)
-                output_set=1
             elif raliMode == 5:
                 for i in range(15):
                     self.nop_img = fn.nop(self.input, True)
@@ -309,7 +305,6 @@ class InferencePipe(Pipeline):
                                 self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
                                 self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
                                 self.nop_img)
-                output_set=1
         elif model_batch_size == 64:
             if raliMode == 1:
                 self.rot150_img = fn.rotate(self.input, angle=self.degree_param_150)
@@ -358,8 +353,6 @@ class InferencePipe(Pipeline):
                                 self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
                                 self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
                                 self.copy_img)
-                output_set=1
-
             elif raliMode == 5:	
                 for i in range(63):
                     self.nop_img = fn.nop(self.input, True)
@@ -377,7 +370,6 @@ class InferencePipe(Pipeline):
                                 self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
                                 self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
                                 self.nop_img)
-                output_set=1
         #rali iterator
         if self.build() != 0:
             raise Exception('Failed to build the augmentation graph')
@@ -436,7 +428,6 @@ class InferencePipe(Pipeline):
         self.set_outputs(input_image, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                         self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
                         self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
-        output_set=1
 
     def updateAugmentationParameter(self, augmentation):
         #values for contrast

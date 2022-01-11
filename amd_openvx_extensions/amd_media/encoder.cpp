@@ -514,7 +514,7 @@ static vx_status VX_CALLBACK amd_media_encode_gpu_buffer_update_callback(vx_node
     if (!encoder) return VX_FAILURE;
 
     return encoder->UpdateBufferOpenCL((vx_image)parameters[1], (vx_array)parameters[2]);
-    return VX_SUCCESS;
+    //return VX_SUCCESS;
 }
 #endif
 

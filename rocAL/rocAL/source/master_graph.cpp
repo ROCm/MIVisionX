@@ -416,13 +416,12 @@ MasterGraph::allocate_output_tensor()
 #else
     if (processing_on_device_hip())
     {
-        void *hipMemory = nullptr;
+#if 0     // no need to allocate _output_tensor memory for HIP since application is responsible for passing output tensor pointer
         size_t size = (_out_data_type==RaliTensorDataType::FP32)? output_buffer_size*sizeof(float): output_buffer_size*sizeof(half);
-        hipError_t status = hipMalloc( &hipMemory, size);
-        if (status != hipSuccess)
+        hipError_t status = hipMalloc( &_output_tensor, size);
+        if (status != hipSuccess || !_output_tensor )
             THROW("RALI::hipMalloc of size " + TOSTR(size) + " failed " + TOSTR(status))
-
-        _output_tensor = hipMemory;
+#endif
     }
 #endif
     return Status::OK;
@@ -621,12 +620,12 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
             auto img_buffer = out_image;
             if (format == RaliTensorFormat::NHWC)
             {
-                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w,
+                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, out_ptr, dest_buf_offset, n, c, h, w,
                                         multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
 
             }else
             {
-                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w,
+                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, out_ptr, dest_buf_offset, n, c, h, w,
                                         multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
             }
             dest_buf_offset += single_output_image_size;

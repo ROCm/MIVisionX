@@ -163,6 +163,7 @@ int main(int argc, const char ** argv)
     {
         image0 = raliResize(handle, input1, resize_w, resize_h, true);
     }
+#if 0    
     RaliImage image1 = raliRain(handle, image0, false);
 
     RaliImage image11 = raliFishEye(handle, image1, false);
@@ -193,7 +194,7 @@ int main(int argc, const char ** argv)
     RaliImage image10 = raliLensCorrection(handle, image9, false);
 
     raliExposure(handle, image10, true);
-
+#endif
     if(raliGetStatus(handle) != RALI_OK)
     {
         std::cout << "Error while adding the augmentation nodes " << std::endl;

@@ -37,12 +37,11 @@ CircularBuffer::CircularBuffer(DeviceResources ocl):
 CircularBuffer::CircularBuffer(DeviceResourcesHip hipres):
         _hip_stream(hipres.hip_stream),
         _hip_device_id(hipres.device_id),
-        _dev_prop(&hipres.dev_prop),
+        _hip_canMapHostMemory(hipres.dev_prop.canMapHostMemory),
         _write_ptr(0),
         _read_ptr(0),
         _level(0)
 {
-
 }
 #endif
 
@@ -132,7 +131,7 @@ void CircularBuffer::sync()
 #else
     else if (_output_mem_type== RaliMemType::HIP){
         // copy memory to host only if needed
-        if (_dev_prop->canMapHostMemory) {
+        if (!_hip_canMapHostMemory) {
             hipError_t err = hipMemcpyAsync((void *)(_dev_buffer[_write_ptr]), _host_buffer_ptrs[_write_ptr], _output_mem_size, hipMemcpyHostToDevice, _hip_stream);
             if (err != hipSuccess) {
                 THROW("hipMemcpyAsync of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
@@ -233,11 +232,11 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
         for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
         {
             hipError_t err = hipHostMalloc((void **)&_host_buffer_ptrs[buffIdx], _output_mem_size, hipHostMallocMapped|hipHostMallocWriteCombined);
-            if(err != hipSuccess)
+            if(err != hipSuccess || !_host_buffer_ptrs[buffIdx])
             {
                 THROW("hipHostMalloc of size " + TOSTR(_output_mem_size) + " failed " + TOSTR(err));
             }
-            if (_dev_prop->canMapHostMemory) {
+            if (_hip_canMapHostMemory) {
                 err = hipHostGetDevicePointer((void **)&_dev_buffer[buffIdx], _host_buffer_ptrs[buffIdx], 0 );
                 if (err  != hipSuccess)
                 {
@@ -334,9 +333,12 @@ CircularBuffer::~CircularBuffer()
         }
 #else
         if (_output_mem_type == RaliMemType::HIP) {
-            if (_host_buffer_ptrs[buffIdx])
-                if ( hipHostFree((void *)_host_buffer_ptrs[buffIdx]) != hipSuccess )
-                    ERR("Could not release hip memory in the circular buffer")
+            if (_host_buffer_ptrs[buffIdx]) {
+                hipError_t err = hipHostFree((void *)_host_buffer_ptrs[buffIdx]);
+
+                if ( err != hipSuccess)
+                    ERR("Could not release hip memory in the circular buffer " + TOSTR(err))
+            }
         }
 #endif
         else
@@ -356,7 +358,7 @@ CircularBuffer::~CircularBuffer()
     _device_id = 0;
 #else
     _hip_stream = nullptr;
-    _dev_prop = nullptr;
+    _hip_canMapHostMemory = 0;
     _hip_device_id = 0;
 #endif
     _initialized = false;

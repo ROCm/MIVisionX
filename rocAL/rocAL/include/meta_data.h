@@ -51,7 +51,7 @@ typedef  std::vector<ImgSize> ImgSizes;
 
 typedef std::vector<int> ImageIDBatch,AnnotationIDBatch;
 typedef std::vector<std::string> ImagePathBatch;
-typedef std::vector<float> Joint,JointVisibility,Center,Scale,ScoreBatch,RotationBatch;
+typedef std::vector<float> Joint,JointVisibility,ScoreBatch,RotationBatch;
 typedef std::vector<std::vector<float>> Joints,JointsVisibility, CenterBatch, ScaleBatch;
 typedef std::vector<std::vector<std::vector<float>>> JointsBatch, JointsVisibilityBatch;
 
@@ -60,8 +60,8 @@ typedef struct
     int image_id;
     int annotation_id;
     std::string image_path;
-    std::array<float,2> center;
-    std::array<float,2> scale;
+    float center[2];
+    float scale[2];
     Joints joints;
     JointsVisibility joints_visibility;
     float score;

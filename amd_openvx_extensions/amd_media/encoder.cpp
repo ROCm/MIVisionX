@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -506,7 +506,7 @@ void CLoomIoMediaEncoder::EncodeLoop()
 
 #if ENCODE_ENABLE_OPENCL
 //! \brief The kernel execution.
-static vx_status VX_CALLBACK amd_media_encode_opencl_buffer_update_callback(vx_node node, const vx_reference parameters[], vx_uint32 num)
+static vx_status VX_CALLBACK amd_media_encode_gpu_buffer_update_callback(vx_node node, const vx_reference parameters[], vx_uint32 num)
 {
     // get encoder and input image
     CLoomIoMediaEncoder * encoder = nullptr;
@@ -623,9 +623,9 @@ vx_status amd_media_encode_publish(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_OUTPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));  // output auxiliary data
 
 #if ENCODE_ENABLE_OPENCL
-    // register amd_kernel_opencl_buffer_update_callback_f for input image
-    AgoKernelOpenclBufferUpdateInfo info = { amd_media_encode_opencl_buffer_update_callback, 1 };
-    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK, &info, sizeof(info)));
+    // register amd_kernel_gpu_buffer_update_callback_f for input image
+    AgoKernelGpuBufferUpdateInfo info = { amd_media_encode_gpu_buffer_update_callback, 1 };
+    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_UPDATE_CALLBACK, &info, sizeof(info)));
 #endif
 
     // finalize and release kernel object

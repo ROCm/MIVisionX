@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1100,12 +1100,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                 data->children[child]->u.img.x_scale_factor_is_2 = (data->children[child]->u.img.width  != data->u.img.width ) ? 1 : 0;
                 data->children[child]->u.img.y_scale_factor_is_2 = (data->children[child]->u.img.height != data->u.img.height) ? 1 : 0;
                 data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-                data->children[child]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
+                data->children[child]->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
             }
         }
         else if (data->u.img.planes == 1) {
             data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width , data));
-            data->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
+            data->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
         }
         // sanity check and update
         if (agoDataSanityCheckAndUpdate(data)) {
@@ -1168,12 +1168,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                     data->children[child]->u.img.maxValue = (vx_int32)data->children[child]->u.img.uniform[0];
                 }
                 data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-                data->children[child]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
+                data->children[child]->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes;
             }
         }
         else if (data->u.img.planes == 1) {
             data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width, data));
-            data->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
+            data->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes;
         }
         // set min/max values as uniform value
         if (data->u.img.format == VX_DF_IMAGE_U8 ||
@@ -1317,7 +1317,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
             data->children[level]->siblingIndex = (vx_int32)level;
             data->children[level]->parent = data;
             data->children[level]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[level]->u.img.width, data->children[level]));
-            data->children[level]->gpu_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes*3;
+            data->children[level]->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes*2;
             if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) {
                 float orb_scale_factor[4] = {
                     VX_SCALE_PYRAMID_ORB,
@@ -3198,7 +3198,7 @@ AgoKernel::AgoKernel()
       localDataSize{ 0 }, localDataPtr{ nullptr }, external_kernel{ false }, finalized{ false },
       kernel_f{ nullptr }, validate_f{ nullptr }, input_validate_f{ nullptr }, output_validate_f{ nullptr }, initialize_f{ nullptr }, deinitialize_f{ nullptr },
       query_target_support_f{ nullptr }, opencl_codegen_callback_f{ nullptr }, regen_callback_f{ nullptr }, opencl_global_work_update_callback_f{ nullptr },
-      gpu_buffer_update_callback_f{ nullptr }, opencl_buffer_update_param_index{ 0 },
+      gpu_buffer_update_callback_f{ nullptr }, gpu_buffer_update_param_index{ 0 },
       opencl_buffer_access_enable{ vx_false_e }, importing_module_index_plus1{ 0 }
 {
     memset(&name, 0, sizeof(name));

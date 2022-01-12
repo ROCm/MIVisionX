@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "meta_data_reader.h"
 #include "video_properties.h"
 
+#ifdef RALI_VIDEO
 enum class VideoStorageType
 {
     VIDEO_FILE_SYSTEM = 0
@@ -81,8 +82,6 @@ private:
     bool _loop = false;
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
 };
-
-#ifdef RALI_VIDEO
 struct SequenceInfo 
 {
     size_t start_frame_number;

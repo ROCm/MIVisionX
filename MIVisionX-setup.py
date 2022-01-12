@@ -1,4 +1,4 @@
-# Copyright (c) 2018 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,9 +28,9 @@ else:
     import subprocess
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2021, AMD ROCm MIVisionX"
+__copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "1.9.94"
+__version__ = "2.0.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -41,14 +41,14 @@ parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
                     help='Setup home directory - optional (default:~/)')
 parser.add_argument('--opencv',    	type=str, default='3.4.0',
                     help='OpenCV Version - optional (default:3.4.0)')
-parser.add_argument('--miopen',    	type=str, default='2.11.0',
-                    help='MIOpen Version - optional (default:2.11.0)')
+parser.add_argument('--miopen',    	type=str, default='2.14.0',
+                    help='MIOpen Version - optional (default:2.14.0)')
 parser.add_argument('--miopengemm',	type=str, default='1.1.5',
                     help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',
                     help='ProtoBuf Version - optional (default:3.12.0)')
-parser.add_argument('--rpp',   		type=str, default='0.91',
-                    help='RPP Version - optional (default:0.91)')
+parser.add_argument('--rpp',   		type=str, default='0.92',
+                    help='RPP Version - optional (default:0.92)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG V4.0.4 Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
@@ -77,19 +77,24 @@ backend = args.backend
 ROCM_PATH = args.rocm_path
 
 if ffmpegInstall not in ('no', 'yes'):
-    print("ERROR: FFMPEG Install Option Not Supported - [Supported Options: no or yes]")
+    print(
+        "ERROR: FFMPEG Install Option Not Supported - [Supported Options: no or yes]")
     exit()
 if neuralNetInstall not in ('no', 'yes'):
-    print("ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
+    print(
+        "ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
     exit()
 if raliInstall not in ('no', 'yes'):
-    print("ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
+    print(
+        "ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
     exit()
 if reinstall not in ('no', 'yes'):
-    print("ERROR: Re-Install Option Not Supported - [Supported Options: no or yes]")
+    print(
+        "ERROR: Re-Install Option Not Supported - [Supported Options: no or yes]")
     exit()
 if backend not in ('OCL', 'HIP'):
-    print("ERROR: Backend Option Not Supported - [Supported Options: OCL or HIP]")
+    print(
+        "ERROR: Backend Option Not Supported - [Supported Options: OCL or HIP]")
     exit()
 
 # check ROCm installation
@@ -128,6 +133,7 @@ else:
 
 # setup directory path
 deps_dir = os.path.expanduser(setupDir_deps)
+deps_dir = os.path.abspath(deps_dir)
 
 # setup for Linux
 linuxSystemInstall = ''
@@ -319,7 +325,8 @@ else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' remove miopen-opencl')
 
-        os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen-'+backend+')')
+        os.system(
+            '(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen-'+backend+')')
         # Install ROCm-CMake
         os.system('(cd '+deps_dir+'/build/rocm-cmake; ' +
                   linuxCMake+' ../../rocm-cmake )')
@@ -518,7 +525,8 @@ else:
         # FFMPEG 4 from source -- for Ubuntu, CentOS 7, & RedHat 7
         if "Ubuntu" in platfromInfo or "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
             os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; sudo '+linuxFlag+' ldconfig )')
+            os.system(
+                '(cd '+deps_dir+'/FFmpeg-n4.0.4; sudo '+linuxFlag+' ldconfig )')
             os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
             os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; make -j8 )')
             os.system('sudo -v')

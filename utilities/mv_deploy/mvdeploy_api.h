@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -79,10 +79,9 @@ enum mv_status
 //! \brief: backend for inference runtime
 enum mivid_backend
 {
-	OpenVX_Rocm_OpenCL 	= 0,
+	OpenVX_Rocm_GPU 	= 0,
 	OpenVX_WinML 		= 1,
 	OpenVX_CPU   		= 2,
-	OpenVX_Rocm_HCC   	= 3
 };
 
 

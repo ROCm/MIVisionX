@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -101,7 +101,7 @@ void printUsage() {
         "\t--install_folder <install_folder> : the location for compiled module                         \t[required]\n"
         "\t--bb <channels, threshold_c threshold_nms> bounding box detection parameters                 \t[required]\n"
         "\t--frames <#num/eof> : num of frames to process inference         \t[optional: default till eof]\n"
-        "\t--backend <backend>: is the name of the backend for compilation  \t[optional: default OpenVX_Rocm_OpenCL]\n"
+        "\t--backend <backend>: is the name of the backend for compilation  \t[optional: default OpenVX_Rocm_GPU]\n"
         "\t--argmax <topK> : give argmax output in vec<label,prob>          \t[optional: default no argmax]\n"
         "\t--t <num of interations> to run for performance                  \t[optional: default 1]\n"
         "\t--hwdec :use hwaccel for decoding                                \t[optional: default cpu decoding]\n"
@@ -123,7 +123,7 @@ int main(int argc, const char ** argv)
     int num_inputs=1, num_outputs=1;
     std::string install_folder = ".";
     std::string  weightsFile  = "./weights.bin";
-    mivid_backend backend = OpenVX_Rocm_OpenCL;
+    mivid_backend backend = OpenVX_Rocm_GPU;
     std::string inpFileName  = std::string(argv[1]);
     std::string outFileName  = !strncmp(argv[2], "--", 2)? "-" : std::string(argv[2]);
     int bPeformanceRun = 0, numIterations = 0, bVisualize = 0, bVaapi = 0;

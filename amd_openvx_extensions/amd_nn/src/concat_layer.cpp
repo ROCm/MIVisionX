@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "kernels.h"
 
+#if ENABLE_OPENCL
 void concat_codegen_batchsz1(std::string& opencl_code, vx_size work_items, vx_size output_dims[4], int num_inputs, vx_size ip_size_per_batch[8])
 {
     vx_size ip_buffer_offset[8];   // index 0 is unused
@@ -112,6 +113,7 @@ void concat_codegen_batchszN(std::string& opencl_code, vx_size work_items, vx_si
             "  }\n"
             "}\n";
 }
+#endif
 
 static vx_status VX_CALLBACK validateConcatLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {
@@ -236,6 +238,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
+#if ENABLE_OPENCL
 //! \brief The OpenCL code generator callback.
 static vx_status VX_CALLBACK opencl_codegen(
         vx_node node,                                  // [input] node
@@ -336,11 +339,63 @@ static vx_status VX_CALLBACK opencl_codegen(
 
     return VX_SUCCESS;
 }
+#endif
 
 //! \brief The kernel execution.
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+#if ENABLE_HIP
+
+    vx_enum type;
+    vx_size output_dims[4];
+    vx_size ip_size_per_batch[8];
+    int num_inputs = 0;
+    hipStream_t hip_stream;
+    vx_size out_offset;
+    unsigned char *out_mem = NULL;
+    unsigned char *in_mem[8] = {NULL};
+    vx_size in_offset[8] = {0};
+    vx_int32 axis;
+
+    int i = 1;
+    while(parameters[i] && (i < 9)) {
+        vx_size input_dims[4];
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[i], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
+        ip_size_per_batch[i - 1] = input_dims[2] * input_dims[1] * input_dims[0];
+        i++;
+    }
+    num_inputs = i-1;
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &out_mem, sizeof(out_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &out_offset, sizeof(out_offset)));
+
+    for(int i = 1; i <= num_inputs; i++) {
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[i], VX_TENSOR_BUFFER_HIP, &in_mem[i - 1], sizeof(in_mem[i - 1])));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[i], VX_TENSOR_OFFSET_GPU, &in_offset[i - 1], sizeof(in_offset[i - 1])));
+    }
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+
+    vx_size work_items = output_dims[0] * output_dims[1] * output_dims[2] * output_dims[3];
+    vx_size output_dim3 = output_dims[0] * output_dims[1] * output_dims[2];
+
+    dim3 localThreads = dim3(128, 1, 1);
+    dim3 globalThreads = dim3((work_items + localThreads.x - 1) & ~(localThreads.x - 1), 1, 1);
+
+
+    if (HipExec_Concat_layer(hip_stream, globalThreads, localThreads, out_mem, out_offset, output_dim3, in_mem, in_offset,
+        ip_size_per_batch, axis, work_items, num_inputs, (output_dims[3] == 1), type)) {
+        return VX_FAILURE;
+    }
+
+    return VX_SUCCESS;
+
+#elif ENABLE_OPENCL
     return VX_ERROR_NOT_IMPLEMENTED;
+#endif
+
 }
 
 //! \brief The kernel publisher.
@@ -350,9 +405,12 @@ vx_status publishConcatLayer(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
-    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
+
+#if ENABLE_OPENCL
+    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK, &opencl_codegen_callback_f, sizeof(opencl_codegen_callback_f)));
+#endif
 
     //set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));

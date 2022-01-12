@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -622,9 +622,9 @@ vx_status loomio_media_encode_publish(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_OUTPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));  // output auxiliary data
 
 #if ENCODE_ENABLE_OPENCL
-    // register amd_kernel_opencl_buffer_update_callback_f for input image
-    AgoKernelOpenclBufferUpdateInfo info = { loomio_media_encode_opencl_buffer_update_callback, 1 };
-    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK, &info, sizeof(info)));
+    // register amd_kernel_gpu_buffer_update_callback_f for input image
+    AgoKernelGpuBufferUpdateInfo info = { loomio_media_encode_opencl_buffer_update_callback, 1 };
+    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_UPDATE_CALLBACK, &info, sizeof(info)));
 #endif
 
     // finalize and release kernel object

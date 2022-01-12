@@ -1,5 +1,5 @@
 /* 
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
  
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,19 @@ THE SOFTWARE.
 //     lbuf    - local buffer pointer
 //
 int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, std::string& code);
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Generate OpenCL code to load into local memory based on image size:
+//   this code assumes following variables created by caller in "code"
+//     gx      - global work item [0]
+//     gy      - global work item [1]
+//     gbuf    - global buffer pointer
+//     gstride - global buffer stride
+//     lx      - local work item [0]
+//     ly      - local work item [1]
+//     lbuf    - local buffer pointer
+//
+int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, std::string& code, int srcImageBufferSize);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Generate OpenCL code for linear filter

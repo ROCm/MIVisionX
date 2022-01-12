@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -124,8 +124,8 @@ enum vx_kernel_attribute_amd_e {
     VX_KERNEL_ATTRIBUTE_AMD_OPENCL_GLOBAL_WORK_UPDATE_CALLBACK = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x04,
     /*! \brief kernel flag to enable OpenCL buffer access (default OFF). Use a <tt>\ref vx_bool</tt> parameter.*/
     VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE        = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x05,
-    /*! \brief kernel callback for OpenCL buffer update. Use a <tt>\ref AgoKernelOpenclBufferUpdateInfo</tt> parameter.*/
-    VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x06,
+    /*! \brief kernel callback for GPU buffer update. Use a <tt>\ref AgoKernelGpuBufferUpdateInfo</tt> parameter.*/
+    VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_UPDATE_CALLBACK      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_KERNEL) + 0x06,
 };
 
 /*! \brief The AMD graph attributes list.
@@ -387,22 +387,22 @@ typedef vx_status(VX_CALLBACK * amd_kernel_opencl_global_work_update_callback_f)
     const vx_size opencl_local_work[]              // [input] local_work[] for clEnqueueNDRangeKernel()
     );
 
-/*! \brief AMD usernode callback for setting the OpenCL buffers. The framework will pass
-*   OpenVX objects as parameters to OpenCL kernels in othe order they appear to OpenVX node.
+/*! \brief AMD usernode callback for setting the GPU buffers. The framework will pass
+*   OpenVX objects as parameters to GPU kernels in othe order they appear to OpenVX node.
 *   This function will get called before executing the node.
 */
-typedef vx_status(VX_CALLBACK * amd_kernel_opencl_buffer_update_callback_f) (
+typedef vx_status(VX_CALLBACK * amd_kernel_gpu_buffer_update_callback_f) (
     vx_node node,                                  // [input] node
     const vx_reference parameters[],               // [input] parameters
     vx_uint32 num                                  // [input] number of parameters
     );
 
-/*! \brief AMD data structure for use by VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK.
+/*! \brief AMD data structure for use by VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_UPDATE_CALLBACK.
 */
 typedef struct {
-    amd_kernel_opencl_buffer_update_callback_f gpu_buffer_update_callback_f;
-    vx_uint32 opencl_buffer_update_param_index;
-} AgoKernelOpenclBufferUpdateInfo;
+    amd_kernel_gpu_buffer_update_callback_f gpu_buffer_update_callback_f;
+    vx_uint32 gpu_buffer_update_param_index;
+} AgoKernelGpuBufferUpdateInfo;
 #endif
 
 #ifdef  __cplusplus

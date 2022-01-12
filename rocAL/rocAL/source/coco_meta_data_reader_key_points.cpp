@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -53,26 +53,29 @@ void COCOMetaDataReaderKeyPoints::lookup(const std::vector<std::string> &image_n
         _output->resize(image_names.size());
 
     JointsDataBatch joints_data_batch;
+    const JointsData *joints_data;
     for (unsigned i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
         if (_map_content.end() == it)
             THROW("ERROR: Given name not present in the map" + image_name);
-        joints_data_batch.image_id_batch.push_back(it->second->get_joints_data().image_id);
-        joints_data_batch.annotation_id_batch.push_back(it->second->get_joints_data().annotation_id);
-        joints_data_batch.image_path_batch.push_back(it->second->get_joints_data().image_path);
-        joints_data_batch.center_batch.push_back(it->second->get_joints_data().center);
-        joints_data_batch.scale_batch.push_back(it->second->get_joints_data().scale);
-        joints_data_batch.joints_batch.push_back(it->second->get_joints_data().joints);
-        joints_data_batch.joints_visibility_batch.push_back(it->second->get_joints_data().joints_visibility);
-        joints_data_batch.score_batch.push_back(it->second->get_joints_data().score);
-        joints_data_batch.rotation_batch.push_back(it->second->get_joints_data().rotation);
+        joints_data = &(it->second->get_joints_data());
+        joints_data_batch.image_id_batch.push_back(joints_data->image_id);
+        joints_data_batch.annotation_id_batch.push_back(joints_data->annotation_id);
+        joints_data_batch.image_path_batch.push_back(joints_data->image_path);
+        joints_data_batch.center_batch.push_back({joints_data->center[0],joints_data->center[1]});
+        joints_data_batch.scale_batch.push_back({joints_data->scale[0],joints_data->scale[1]});
+        joints_data_batch.joints_batch.push_back(joints_data->joints);
+        joints_data_batch.joints_visibility_batch.push_back(joints_data->joints_visibility);
+        joints_data_batch.score_batch.push_back(joints_data->score);
+        joints_data_batch.rotation_batch.push_back(joints_data->rotation);
     }
     _output->get_joints_data_batch() = joints_data_batch;
+    joints_data_batch = {};
 }
 
-void COCOMetaDataReaderKeyPoints::add(std::string image_id, ImgSizes image_size, JointsData joints_data)
+void COCOMetaDataReaderKeyPoints::add(std::string image_id, ImgSize image_size, JointsData *joints_data)
 {
     pMetaDataKeyPoint info = std::make_shared<KeyPoint>(image_size, joints_data);
     _map_content.insert(pair<std::string, std::shared_ptr<KeyPoint>>(image_id, info));
@@ -129,12 +132,12 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
     JointsData joints_data;
 
     ImgSize img_size;
-    std::vector<float> box_center, box_scale;
+    float box_center[2], box_scale[2];
     float score = 1.0;
     float rotation = 0.0;
-    float aspect_ratio = (_out_img_width * 1.0 / _out_img_height);
+    float aspect_ratio = ((float)_out_img_width / _out_img_height);
     float inverse_aspect_ratio = 1 / aspect_ratio;
-    float inverse_pixel_std = 1 / (1.0 * PIXEL_STD); 
+    float inverse_pixel_std = 1 / ((float) PIXEL_STD); 
 
     RAPIDJSON_ASSERT(parser.PeekType() == kObjectType);
     parser.EnterObject();
@@ -171,9 +174,8 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                         parser.SkipValue();
                     }
                 }
-                img_sizes.push_back(img_size);
-                _map_img_sizes.insert(pair<std::string, std::vector<ImgSize>>(image_name, img_sizes));
-                img_sizes.clear();
+                _map_img_sizes.insert(pair<std::string, ImgSize>(image_name, img_size));
+                img_size = {};
             }
         }
         else if (0 == std::strcmp(key, "categories"))
@@ -245,10 +247,10 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                         RAPIDJSON_ASSERT(parser.PeekType() == kArrayType);
                         parser.EnterArray();
 
-                        box_center.push_back(parser.NextArrayValue() * parser.GetDouble());
-                        box_center.push_back(parser.NextArrayValue() * parser.GetDouble());
-                        box_scale.push_back(parser.NextArrayValue() * parser.GetDouble());
-                        box_scale.push_back(parser.NextArrayValue() * parser.GetDouble());
+                        box_center[0] = parser.NextArrayValue() * parser.GetDouble();
+                        box_center[1] = parser.NextArrayValue() * parser.GetDouble();
+                        box_scale[0] = parser.NextArrayValue() * parser.GetDouble();
+                        box_scale[1] = parser.NextArrayValue() * parser.GetDouble();
 
                         // Move to next section
                         parser.NextArrayValue();
@@ -275,7 +277,7 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                 string str(buffer);
                 std::string file_name = str + ".jpg";
                 auto it = _map_img_sizes.find(file_name);
-                ImgSizes image_size = it->second; // Normalizing the co-ordinates & convert to "ltrb" format
+                ImgSize image_size = it->second; // Normalizing the co-ordinates & convert to "ltrb" format
 
                 // Ignore annotations if
                 // label is not person (label !=1)
@@ -283,25 +285,27 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                 // is_crowd==1
                 if (label != 1 || joint_sum <= 0 || is_crowd == 1)
                 {
-                    box_center.clear();
-                    box_scale.clear();
+                    std::fill(std::begin(box_center), std::end(box_center), 0.0);
+                    std::fill(std::begin(box_scale), std::end(box_scale), 0.0);
                     continue;
                 }
 
                 // Validate bbox values
                 float x1, y1, x2, y2;
-                x1 = (box_center[0] > 0) ? box_center[0] : 0;
-                y1 = (box_center[1] > 0) ? box_center[1] : 0;
-                float box_w = ((box_scale[0] - 1) > 0) ? (box_scale[0] - 1) : 0;
-                float box_h = ((box_scale[1] - 1) > 0) ? (box_scale[1] - 1) : 0;
-                x2 = ((image_size[0].w - 1) < (x1 + box_w)) ? (image_size[0].w - 1) : (x1 + box_w);
-                y2 = ((image_size[0].h - 1) < (y1 + box_h)) ? (image_size[0].h - 1) : (y1 + box_h);
+                x1 = std::max(box_center[0] , 0.0f);
+                y1 = std::max(box_center[1] , 0.0f);
+                float box_w = std::max(box_scale[0] - 1 , 0.0f);
+                float box_h = std::max(box_scale[1] - 1 , 0.0f);
+                x2 = std::min((float)image_size.w - 1 ,  x1 + box_w);
+                y2 = std::min((float)image_size.h - 1 , y1 + box_h);
 
                 // check area
                 if (area > 0 && x2 >= x1 && y2 >= y1)
                 {
-                    box_center = {x1, y1};
-                    box_scale = {x2 - x1, y2 - y1};
+                    box_center[0] = x1;
+                    box_center[1] = y1;
+                    box_scale[0] = x2 - x1;
+                    box_scale[1] = y2 - y1;
                 }
 
                 // Convert from xywh to center,scale
@@ -326,14 +330,18 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                 }
 
                 // Convert raw keypoint values to Joints,Joint Visibilities - Clip the visibilities to range [0,1]
-                std::vector<std::vector<float>> joints(NUMBER_OF_JOINTS), joints_visibility(NUMBER_OF_JOINTS);
+                std::vector<std::vector<float>> joints(NUMBER_OF_JOINTS),joints_visibility(NUMBER_OF_JOINTS);
                 unsigned int j = 0;
                 for (unsigned int i = 0; i < NUMBER_OF_JOINTS; i++)
                 {
                     joints[i].push_back(keypoint[j]);
                     joints[i].push_back(keypoint[j + 1]);
-                    joints_visibility[i].push_back(std::clamp(keypoint[j + 2], 0.0f, 1.0f));
-                    joints_visibility[i].push_back(std::clamp(keypoint[j + 2], 0.0f, 1.0f));
+                    if( keypoint[j + 2] > 1.0)
+                    {
+                        keypoint[j + 2] = 1.0;
+                    }
+                    joints_visibility[i].push_back(keypoint[j + 2]);
+                    joints_visibility[i].push_back(keypoint[j + 2]);
                     j = j + 3;
                 }
 
@@ -341,19 +349,19 @@ void COCOMetaDataReaderKeyPoints::read_all(const std::string &path)
                 joints_data.annotation_id = ann_id;
                 joints_data.image_id = id;
                 joints_data.image_path = file_name;
-                joints_data.center = box_center;
-                joints_data.scale = box_scale;
+                memcpy(joints_data.center, &box_center , sizeof(box_center));
+                memcpy(joints_data.scale, &box_scale , sizeof(box_scale));
                 joints_data.joints = joints;
                 joints_data.joints_visibility = joints_visibility;
                 joints_data.score = score;
                 joints_data.rotation = rotation;
 
-                add(file_name, image_size, joints_data);
+                add(file_name, image_size, &joints_data);
                 joints_data = {};
-                box_center.clear();
-                box_scale.clear();
-                joints.clear();
-                joints_visibility.clear();
+                std::fill(std::begin(box_center), std::end(box_center), 0.0);
+                std::fill(std::begin(box_scale), std::end(box_scale), 0.0);
+                joints = {};
+                joints_visibility = {};
             }
         }
         else

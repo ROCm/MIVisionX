@@ -1,5 +1,5 @@
 /* 
-Copyright (c) 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
  
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef _VX_EXT_AMD_POP_H_
 #define _VX_EXT_AMD_POP_H_
 
-#include"vx_ext_pop.h"
+#include "vx_ext_pop.h"
 
 #ifdef  __cplusplus
 extern "C" {

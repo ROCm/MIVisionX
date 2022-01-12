@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,7 @@ bool TFMetaDataReaderDetection::exists(const std::string& _image_name)
 }
 
 
-void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels,ImgSizes image_size)
+void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels,ImgSize image_size)
 {
     if(exists(image_name))
     {
@@ -80,7 +80,6 @@ void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_nam
             BoundingBoxCords bb_coords;
             BoundingBoxLabels bb_labels;
             BoundingBoxCord box;
-            ImgSizes img_sizes;
             ImgSize img_size;
 
 
@@ -89,17 +88,16 @@ void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_nam
             img_size.w = img_size.h =0;
             bb_coords.push_back(box);
             bb_labels.push_back(0);
-            img_sizes.push_back(img_size);
             // bb_coords={};
 
 	    _output->get_bb_cords_batch()[i] = bb_coords;
 	    _output->get_bb_labels_batch()[i] = bb_labels;
-        _output->get_img_sizes_batch()[i] = img_sizes;
+        _output->get_img_sizes_batch()[i] = img_size;
         }
 	else{
         _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
         _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
-        _output->get_img_sizes_batch()[i] = it->second->get_img_sizes();
+        _output->get_img_sizes_batch()[i] = it->second->get_img_size();
     }
     }
 
@@ -188,14 +186,9 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     image_height = sf_height.int64_list().value()[0];
     image_width = sf_width.int64_list().value()[0];
 
-    ImgSizes img_sizes;
     ImgSize img_size;
     img_size.w = image_width;
     img_size.h = image_height;
-
-    img_sizes.push_back(img_size);
-
-
 
     for(int i = 0; i < size_b_xmin; i++)
     {
@@ -212,7 +205,7 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
       box.b = bbox_ymax ;
       bb_coords.push_back(box);
       bb_labels.push_back(label);
-      add(fname, bb_coords, bb_labels,img_sizes);
+      add(fname, bb_coords, bb_labels,img_size);
       bb_coords.clear();
       bb_labels.clear();
     }

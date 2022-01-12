@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -664,7 +664,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         char img_name[img_size];
         raliGetImageName(handle, img_name);
         std::cerr << "\nPrinting image names of batch: " << img_name;
-
         int bb_label_count[inputBatchSize];
         int size = raliGetBoundingBoxCount(handle, bb_label_count);
         for (unsigned int i = 0; i < inputBatchSize; i++)
@@ -673,11 +672,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         raliGetBoundingBoxLabel(handle, bb_labels);
         float bb_coords[size * 4];
         raliGetBoundingBoxCords(handle, bb_coords);
-        // Display Bounding Boxes
-        for (int k = 0; k < size; k++)
-        {
-            std::cout << "l : " << bb_coords[k * 4] << " , t : " << bb_coords[k * 4 + 1] << " , r : " << bb_coords[k * 4 + 2] << " , b : " << bb_coords[k * 4 + 3] << std::endl;
-        }
         int img_sizes_batch[inputBatchSize * 2];
         raliGetImageSizes(handle, img_sizes_batch);
         for (unsigned int i = 0; i < inputBatchSize; i++)

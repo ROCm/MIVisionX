@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ public:
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
-    std::map<std::string, std::shared_ptr<KeyPoint>> get_map_content() { return _map_content;}
+    const std::map<std::string, std::shared_ptr<KeyPoint>> & get_map_content() { return _map_content;}
     COCOMetaDataReaderKeyPoints();
     ~COCOMetaDataReaderKeyPoints() override { delete _output; }
 private:
@@ -47,11 +47,11 @@ private:
     unsigned _out_img_width;
     unsigned _out_img_height;
     int meta_data_reader_type;
-    void add(std::string image_name, ImgSizes image_size, JointsData joints_data);
+    void add(std::string image_name, ImgSize image_size, JointsData *joints_data);
     bool exists(const std::string &image_name);
     std::map<std::string, std::shared_ptr<KeyPoint>> _map_content;
     std::map<std::string, std::shared_ptr<KeyPoint>>::iterator _itr;
-    std::map<std::string ,std::vector<ImgSize>> _map_img_sizes;
+    std::map<std::string ,ImgSize> _map_img_sizes;
     std::map<std::string , std::vector<ImgSize> > ::iterator itr;
     std::map<int ,int> _label_info;
     std::map<int ,int > ::iterator _it_label;

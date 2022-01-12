@@ -96,8 +96,11 @@ def main():
         )
         jpegs = inputs["image/encoded"]
         labels = inputs["image/class/label"]
-        images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=imagePath)
-        resized = fn.resize(images, resize_x=300, resize_y=300)
+        decoded_images = fn.decoders.image_random_crop(jpegs,user_feature_key_map=featureKeyMap, output_type=types.RGB,
+                                                      random_aspect_ratio=[0.8, 1.25],
+                                                      random_area=[0.1, 1.0],
+                                                      num_attempts=100,path = imagePath)
+        resized = fn.resize(decoded_images, resize_x=300, resize_y=300)
         pipe.set_outputs(resized)
     pipe.build()
     imageIterator = RALIIterator(pipe)
@@ -123,7 +126,6 @@ def main():
             processed_tensors = (features_dict, labels_dict)
             print("\nPROCESSED_TENSORS:\n", processed_tensors)
             draw_patches(images_array[element],cnt,bboxes_array[element])
-
         print("\n\nPrinted first batch with", (bs), "images!")
 
     imageIterator.reset()

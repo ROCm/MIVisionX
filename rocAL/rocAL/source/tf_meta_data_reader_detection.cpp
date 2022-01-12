@@ -208,7 +208,6 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
       add(fname, bb_coords, bb_labels,img_size);
       bb_coords.clear();
       bb_labels.clear();
-      img_size = {};
     }
     file_contents.read(footer_crc, sizeof(data_crc));
     if(!file_contents)

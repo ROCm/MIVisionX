@@ -54,6 +54,7 @@ public:
 #endif
     ~CircularBuffer();
     void init(RaliMemType output_mem_type, size_t output_mem_size, size_t buff_depth);
+    void release(); // release resources
     void sync();// Syncs device buffers with host
     void unblock_reader();// Unblocks the thread currently waiting on a call to get_read_buffer
     void unblock_writer();// Unblocks the thread currently waiting on get_write_buffer

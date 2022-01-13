@@ -49,6 +49,11 @@ VideoLoader::~VideoLoader()
     de_init();
 }
 
+void VideoLoader::shut_down()
+{
+    _circ_buff.release();
+}
+
 void VideoLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
 {
     if (prefetch_queue_depth <= 0)

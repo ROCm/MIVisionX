@@ -160,19 +160,22 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
                 if (err != hipSuccess) {
                     THROW("ERROR: hipInit(0) => %d (failed)" + TOSTR(err));
                 }
+                // initialize HIP device for rocAL
                 int hip_num_devices = -1;
                 err = hipGetDeviceCount(&hip_num_devices);
                 if (err != hipSuccess) {
                     THROW("ERROR: hipGetDeviceCount() => %d (failed)" + TOSTR(err));
                 }
+                //set the device for context if specified.
                 if (gpu_id < hip_num_devices) {
-                    //set the device forcontext if specified.
                     int hipDevice = gpu_id;
                     if((status = vxSetContextAttribute(_context,
                             VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE,
                             &hipDevice, sizeof(hipDevice)) != VX_SUCCESS))
                         THROW("vxSetContextAttribute for hipDevice(%d) failed " + TOSTR(hipDevice) + TOSTR(status))
-                }
+                }else
+                    THROW("ERROR: HIP Device(%d) out of range" + TOSTR(gpu_id));
+
             }
 #endif
         }
@@ -323,6 +326,11 @@ void MasterGraph::release()
     _nodes.clear();
     _root_nodes.clear();
     _image_map.clear();
+#if ENABLE_HIP
+    _ring_buffer.release_hip();
+#endif
+    //shut_down loader:: required for releasing any allocated resourses
+    _loader_module->shut_down();
 
     // release all openvx resources.
     vx_status status;
@@ -330,6 +338,9 @@ void MasterGraph::release()
         delete image;// It will call the vxReleaseImage internally in the destructor
     for(auto& image: _output_images)
         delete image;// It will call the vxReleaseImage internally in the destructor
+    deallocate_output_tensor();
+
+
     if(_graph != nullptr)
         _graph->release();
     if(_context && (status = vxReleaseContext(&_context)) != VX_SUCCESS)
@@ -338,7 +349,6 @@ void MasterGraph::release()
     _augmented_meta_data = nullptr;
     _meta_data_graph = nullptr;
     _meta_data_reader = nullptr;
-    deallocate_output_tensor();
 }
 
 MasterGraph::Status
@@ -395,11 +405,11 @@ MasterGraph::sequence_frame_timestamps(std::vector<std::vector<float>> &sequence
 MasterGraph::Status
 MasterGraph::allocate_output_tensor()
 {
-    // creating a float buffer that can accommodates all output images
-    size_t output_buffer_size = output_byte_size() * _output_images.size();
 #if !ENABLE_HIP
     if(processing_on_device_ocl())
     {
+        // creating a float buffer that can accommodates all output images
+        size_t output_buffer_size = output_byte_size() * _output_images.size();
         cl_int ret = CL_SUCCESS;
         _output_tensor = nullptr;
         size_t size = output_buffer_size*sizeof(cl_float);
@@ -416,7 +426,9 @@ MasterGraph::allocate_output_tensor()
 #else
     if (processing_on_device_hip())
     {
-#if 0     // no need to allocate _output_tensor memory for HIP since application is responsible for passing output tensor pointer
+#if 1   // todo:: check if  _output_tensor memory for HIP is needed since application is responsible for passing output tensor pointer in device
+        // creating a float buffer that can accommodates all output images
+        size_t output_buffer_size = output_byte_size() * _output_images.size();
         size_t size = (_out_data_type==RaliTensorDataType::FP32)? output_buffer_size*sizeof(float): output_buffer_size*sizeof(half);
         hipError_t status = hipMalloc( &_output_tensor, size);
         if (status != hipSuccess || !_output_tensor )
@@ -613,7 +625,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
 
         auto output_buffers =_ring_buffer.get_read_buffers();
         unsigned dest_buf_offset = 0;
-        // copy hip buffer to output.
+        // copy hip buffer to out_ptr
         // todo:: add callback routing to exchange memory pointer to avoid extra copy
         for( auto&& out_image: output_buffers)
         {
@@ -1361,7 +1373,7 @@ MasterGraph::copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, floa
     const size_t single_output_image_size = output_byte_size();
 
 
-    if(_output_image_info.mem_type() == RaliMemType::OCL)
+    if(_output_image_info.mem_type() == RaliMemType::OCL || _output_image_info.mem_type() == RaliMemType::HIP)
     {
         THROW("copy_out_tensor_planar for GPU affinity is not implemented")
     }

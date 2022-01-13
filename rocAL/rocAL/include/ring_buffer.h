@@ -47,6 +47,7 @@ public:
     ///\param sub_buffer_count
 #if ENABLE_HIP
     void initHip(RaliMemType mem_type, DeviceResourcesHip dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
+    void release_hip();
 #else
     void init(RaliMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
 #endif

@@ -235,6 +235,24 @@ void RingBuffer::reset()
         _meta_ring_buffer.pop();
 }
 
+void RingBuffer::release_hip()
+{
+#if ENABLE_HIP
+    if (_mem_type == RaliMemType::HIP) {
+        for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++){
+            for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++){
+                if (_dev_sub_buffer[buffIdx][sub_buf_idx])
+                    if ( hipFree((void *)_dev_sub_buffer[buffIdx][sub_buf_idx]) != hipSuccess ) {
+                        //printf("Error Freeing device buffer <%d, %d, %p>\n", buffIdx, sub_buf_idx, _dev_sub_buffer[buffIdx][sub_buf_idx]);                        
+                        ERR("Could not release hip memory in the ring buffer")
+                    }
+            }
+        }
+        _dev_sub_buffer.clear();
+    }
+#endif
+}
+
 RingBuffer::~RingBuffer()
 {
     //  if(_mem_type!= RaliMemType::OCL)
@@ -248,19 +266,20 @@ RingBuffer::~RingBuffer()
         _host_master_buffers.clear();
         _host_sub_buffers.clear();
     }
-#if ENABLE_HIP
+#if 0//ENABLE_HIP
     else if (_mem_type == RaliMemType::HIP) {
-        for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++)
+        for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++){
             for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++){
                 if (_dev_sub_buffer[buffIdx][sub_buf_idx])
                     if ( hipFree((void *)_dev_sub_buffer[buffIdx][sub_buf_idx]) != hipSuccess ) {
                         //printf("Error Freeing device buffer <%d, %d, %p>\n", buffIdx, sub_buf_idx, _dev_sub_buffer[buffIdx][sub_buf_idx]);                        
                         ERR("Could not release hip memory in the ring buffer")
                     }
-                }
+            }
+        }
         _dev_sub_buffer.clear();
     }
-#else
+#elif ENABLE_OPENCL
     else if (_mem_type == RaliMemType::OCL) {
         for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++)
             for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)

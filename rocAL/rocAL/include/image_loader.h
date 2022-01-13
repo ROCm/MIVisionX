@@ -54,6 +54,7 @@ public:
     decoded_image_info get_decode_image_info() override;
     crop_image_info get_crop_image_info() override;
     void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
+    void shut_down() override;
 private:
     bool is_out_of_data();
     void de_init();

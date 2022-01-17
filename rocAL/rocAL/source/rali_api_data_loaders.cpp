@@ -754,6 +754,10 @@ raliMXNetRecordSource(
         unsigned max_height)
 {
     Image* output = nullptr;
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -831,6 +835,10 @@ raliMXNetRecordSourceSingleShard(
         unsigned max_height)
 {
     Image* output = nullptr;
+    if (p_context == nullptr) {
+        ERR("Invalid RALI context or invalid input image")
+        return output;
+    }
     auto context = static_cast<Context*>(p_context);
     try
     {

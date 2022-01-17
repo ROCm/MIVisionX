@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,12 +30,17 @@ THE SOFTWARE.
 #include <memory.h>
 #include <stdint.h>
 #include "mxnet_recordio_reader.h"
+#include <boost/filesystem.hpp>
+
+namespace filesys = boost::filesystem;
 
 using namespace std;
 
 MXNetRecordIOReader::MXNetRecordIOReader():
 _shuffle_time("shuffle_time", DBG_TIMING)
 {
+    _src_dir = nullptr;
+    _entity = nullptr;
     _curr_file_idx = 0;
     _current_file_size = 0;
     _loop = false;
@@ -171,38 +176,47 @@ void MXNetRecordIOReader::replicate_last_batch_to_pad_partial_shard()
 Reader::Status MXNetRecordIOReader::MXNet_reader()
 {
     std::string _rec_file, _idx_file;
-    if (_path.find("train") != std::string::npos)
+    if ((_src_dir = opendir (_path.c_str())) == nullptr)
+        THROW("MXNetReader ShardID ["+ TOSTR(_shard_id)+ "] ERROR: Failed opening the directory at " + _path);
+
+    while((_entity = readdir (_src_dir)) != nullptr)
     {
-        _rec_file = _path + "/train.rec";
-        _idx_file = _path + "/train.idx";
+        std::string file_name = _path + "/" + _entity->d_name;
+        filesys::path pathObj(file_name);
+        if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
+        {
+            auto file_extension_idx = file_name.find_last_of(".");
+            if (file_extension_idx  != std::string::npos)
+            {
+                std::string file_extension = file_name.substr(file_extension_idx+1);
+                if (file_extension == "rec")
+                    _rec_file = file_name;
+                else if(file_extension == "idx")
+                    _idx_file = file_name;
+                else
+                    continue;
+            }
+        }
     }
-    else if(_path.find("val") != std::string::npos)
-    {
-        _rec_file = _path + "/val.rec";
-        _idx_file = _path + "/val.idx";
-    }
-    else
-    {
-        THROW("\nFolder name should be train/val for the train/val MXNet train/validation RecordIO files");
-    }
+    closedir(_src_dir);
     uint rec_size;
     _file_contents.open(_rec_file, ios::binary);
     if (!_file_contents)
-        THROW("ERROR: Failed opening the file " + _rec_file);
+        THROW("MXNetRecordIOReader ERROR: Failed opening the file " + _rec_file);
     _file_contents.seekg(0, ifstream::end);
     rec_size = _file_contents.tellg();
     _file_contents.seekg(0, ifstream::beg);
 
     ifstream index_file(_idx_file);
     if(!index_file)
-        THROW("ERROR: Could not open RecordIO index file. Provided path: " + _idx_file);
+        THROW("MXNetRecordIOReader ERROR: Could not open RecordIO index file. Provided path: " + _idx_file);
 
     std::vector<size_t> _index_list;
     size_t _index, _offset;
     while (index_file >> _index >> _offset)
         _index_list.push_back(_offset);
     if(_index_list.empty())
-        THROW("ERROR: RecordIO index file doesn't contain any indices. Provided path: " + _idx_file);
+        THROW("MXNetRecordIOReader ERROR: RecordIO index file doesn't contain any indices. Provided path: " + _idx_file);
     _index_list.push_back(rec_size);
     std::sort(_index_list.begin(), _index_list.end());
     for (size_t i = 0; i < _index_list.size() - 1; ++i)
@@ -231,7 +245,7 @@ void MXNetRecordIOReader::read_image_names()
         memcpy(&_magic, _data_ptr, sizeof(_magic));
         _data_ptr += sizeof(_magic);
         if(_magic != _kMagic)
-            THROW("ERROR: Invalid MXNet RecordIO: wrong _magic number");
+            THROW("MXNetRecordIOReader ERROR: Invalid MXNet RecordIO: wrong _magic number");
         memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
         _data_ptr += sizeof(_length_flag);
         uint32_t _clength =  DecodeLength(_length_flag);
@@ -241,7 +255,7 @@ void MXNetRecordIOReader::read_image_names()
             _image_key = to_string(_hdr.image_id[0]);
         else
         {
-            WRN("\nMultiple record reading has not supported");
+            WRN("\nMXNetRecordIOReader Multiple record reading has not supported");
             continue;
         }
         /* _clength - sizeof(ImageRecordIOHeader) to get the data size.
@@ -282,7 +296,7 @@ void MXNetRecordIOReader::read_image(unsigned char *buff, size_t read_size, int6
     memcpy(&_magic, _data_ptr, sizeof(_magic));
     _data_ptr += sizeof(_magic);
     if(_magic != _kMagic)
-        THROW("ERROR: Invalid RecordIO: wrong _magic number");
+        THROW("MXNetRecordIOReader ERROR: Invalid RecordIO: wrong _magic number");
     memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
     _data_ptr += sizeof(_length_flag);
     uint32_t _cflag = DecodeFlag(_length_flag);
@@ -296,6 +310,6 @@ void MXNetRecordIOReader::read_image(unsigned char *buff, size_t read_size, int6
     if (_cflag == 0)
         memcpy(buff, _data_ptr + label_size, image_size);
     else
-        THROW("\n Multiple record reading has not supported");
+        THROW("\nMultiple record reading has not supported");
     delete[] _data;
 }

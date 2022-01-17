@@ -137,7 +137,7 @@ RaliMetaData
 RALI_API_CALL raliCreateMXNetReader(RaliContext p_context, const char* source_path, bool is_output)
 {
     if (!p_context)
-        THROW("Invalid rali context passed to raliCreateMXNetReader")
+        ERR("Invalid rali context passed to raliCreateMXNetReader")
     auto context = static_cast<Context*>(p_context);
 
     return context->master_graph->create_mxnet_label_reader(source_path, is_output);

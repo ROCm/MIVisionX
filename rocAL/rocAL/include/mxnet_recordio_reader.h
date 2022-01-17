@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -69,6 +69,8 @@ private:
     Reader::Status record_reading();
     Reader::Status MXNet_reader();
     std::string _path;
+    DIR *_src_dir;
+    struct dirent *_entity;
     std::string _image_key;
     std::vector<std::string> _file_names;
     std::map<std::string, std::tuple<unsigned int, int64_t, int64_t> > _record_properties;

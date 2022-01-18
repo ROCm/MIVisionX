@@ -235,7 +235,7 @@ void RingBuffer::reset()
         _meta_ring_buffer.pop();
 }
 
-void RingBuffer::release_hip()
+void RingBuffer::release_gpu_res()
 {
 #if ENABLE_HIP
     if (_mem_type == RaliMemType::HIP) {
@@ -250,13 +250,20 @@ void RingBuffer::release_hip()
         }
         _dev_sub_buffer.clear();
     }
+#elif ENABLE_OPENCL
+    if (_mem_type == RaliMemType::OCL) {
+        for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++)
+            for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
+                if (_dev_sub_buffer[buffIdx][sub_buf_idx])
+                    if (clReleaseMemObject((cl_mem) _dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
+                        ERR("Could not release ocl memory in the ring buffer")
+        _dev_sub_buffer.clear();
+    }
 #endif
 }
 
 RingBuffer::~RingBuffer()
 {
-    //  if(_mem_type!= RaliMemType::OCL)
-    //      return;
     if (_mem_type == RaliMemType::HOST) {
         for (unsigned idx = 0; idx < _host_master_buffers.size(); idx++)
             if (_host_master_buffers[idx]) {
@@ -266,16 +273,6 @@ RingBuffer::~RingBuffer()
         _host_master_buffers.clear();
         _host_sub_buffers.clear();
     }
-#if ENABLE_OPENCL
-    else if (_mem_type == RaliMemType::OCL) {
-        for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++)
-            for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
-                if (_dev_sub_buffer[buffIdx][sub_buf_idx])
-                    if (clReleaseMemObject((cl_mem) _dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
-                        ERR("Could not release ocl memory in the ring buffer")
-        _dev_sub_buffer.clear();
-    }
-#endif
 }
 
 bool RingBuffer::empty()

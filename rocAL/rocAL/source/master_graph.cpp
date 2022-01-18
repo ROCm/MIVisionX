@@ -326,9 +326,7 @@ void MasterGraph::release()
     _nodes.clear();
     _root_nodes.clear();
     _image_map.clear();
-#if ENABLE_HIP
-    _ring_buffer.release_hip();
-#endif
+    _ring_buffer.release_gpu_res();
     //shut_down loader:: required for releasing any allocated resourses
     _loader_module->shut_down();
 

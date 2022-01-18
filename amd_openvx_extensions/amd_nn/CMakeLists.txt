@@ -102,6 +102,7 @@ list(APPEND SOURCES
     src/topk_layer.cpp
     src/reduce_min.cpp
     src/tile_layer.cpp
+    src/tensor_compare.cpp
     src/profiler.cpp
     )
 

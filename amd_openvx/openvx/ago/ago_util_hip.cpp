@@ -27,6 +27,9 @@ THE SOFTWARE.
 // Create HIP Context
 int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
     if (deviceID >= 0) {
+      // release context if already set.
+        agoGpuHipReleaseContext(context);
+        hipDeviceReset();
         // use the given HIP device
         context->hip_context_imported = true;
     }

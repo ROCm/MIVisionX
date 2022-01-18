@@ -43,8 +43,9 @@ int HardWareVideoDecoder::seek_frame(AVRational avg_frame_rate, AVRational time_
 int HardWareVideoDecoder::hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx)
 {
     int err = 0;
-    if((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) > 0)
-        ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0)
+        return err;
+    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
     return err;
 }
 

@@ -1073,6 +1073,18 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }    
 """ 
     % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'less':
+                f.write( \
+"""
+    { 
+      vx_int32 mode = %d;
+      vx_scalar s_mode = vxCreateScalarWithSize(context, VX_TYPE_INT32, &mode, sizeof(mode));    
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, s_mode);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.attr.get('mode'), node.inputs[0], node.inputs[1], node.outputs[0]))
             elif node.type == 'reduce_min':
                 axes = node.attr.get('axes')
                 axes_len = -1

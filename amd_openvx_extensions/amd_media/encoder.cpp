@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -514,7 +514,6 @@ static vx_status VX_CALLBACK amd_media_encode_gpu_buffer_update_callback(vx_node
     if (!encoder) return VX_FAILURE;
 
     return encoder->UpdateBufferOpenCL((vx_image)parameters[1], (vx_array)parameters[2]);
-    return VX_SUCCESS;
 }
 #endif
 

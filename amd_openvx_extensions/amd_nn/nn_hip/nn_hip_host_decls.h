@@ -26,6 +26,10 @@ THE SOFTWARE.
 #include "hip/hip_fp16.h"
 #include <VX/vx.h>
 
+int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,
+    uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride, uchar* out, uint4 out_offset,
+    uint4 out_stride, uint mode);
+
 int HipExec_Gather_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, unsigned char* in, uint in_offset,
     uint4 in_stride, unsigned char* ind, uint ind_offset, uint4 ind_stride, unsigned char* out, uint out_offset,
     uint4 out_stride, uint axis);

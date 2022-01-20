@@ -164,7 +164,16 @@ static vx_status VX_CALLBACK opencl_codegen(
 #endif
 
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num) {
+#if ENABLE_HIP
+    if (HipExec_tensor_compare_layer(hip_stream, globalThreads, dim3(1), type, input_mem, in_offset, input_stride,
+        input2_mem, input2_offset, input2_stride, output_mem, output_offset, output_stride, mode)) {
+        return VX_FAILURE;
+    }
+
+    return VX_SUCCESS;
+#elif ENABLE_OPENCL
     return VX_ERROR_NOT_IMPLEMENTED;
+#endif
 }
 
 vx_status publishTensorCompare(vx_context context)

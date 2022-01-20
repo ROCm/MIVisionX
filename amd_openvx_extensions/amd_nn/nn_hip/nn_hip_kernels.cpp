@@ -33,6 +33,50 @@ typedef struct d_half4 {
 
 template <typename T>
 __global__ void __attribute__((visibility("default")))
+Hip_tensor_compare_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride,
+ uchar* out, uint out_offset, uint4 out_stride, uint mode) {
+
+   uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+   uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+   uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+   int indices = *(int*)&ind[ind_offset + y * ind_stride.x];
+   T value;
+   uint offset;
+   if (axis == 0) {
+       value = *(T*)&in[in_offset + x * in_stride.x + indices * in_stride.y + z * in_stride.z];
+       offset = out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+   } else if (axis == 1) {
+       value = *(T*)&in[in_offset + indices * in_stride.x + z * in_stride.y];
+       offset = out_offset + y * out_stride.x + z * out_stride.y;
+   } else if (axis == 2) {
+       value = *(T*)&in[in_offset + z * in_stride.x];
+       offset = out_offset + z * out_stride.x;
+   }
+   out += offset;
+   *(T *)&out[0] = value;
+}
+
+int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,
+    uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride, uchar* out, uint4 out_offset,
+    uint4 out_stride, uint mode) {
+
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+
+    if (type == VX_TYPE_FLOAT32) {
+        hipLaunchKernelGGL(Hip_tensor_compare_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+            in2, in2_offset, in2_stride, out, out_offset, out_stride, mode);
+    } else {
+        hipLaunchKernelGGL(Hip_temsor_compare_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+            in2, in2_offset, in2_stride, out, out_offset, out_stride, mode);
+    }
+    return VX_SUCCESS;
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
 Hip_Gather_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* ind, uint ind_offset, uint4 ind_stride,
  uchar* out, uint out_offset, uint4 out_stride, uint axis) {
 

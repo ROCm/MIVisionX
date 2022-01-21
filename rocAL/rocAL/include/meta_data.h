@@ -107,31 +107,31 @@ struct Label : public MetaData
 struct BoundingBox : public MetaData
 {
     BoundingBox()= default;
-    BoundingBox(BoundingBoxCords bb_cords,BoundingBoxLabels bb_label_ids )
+    BoundingBox(BoundingBoxCords bb_cords, BoundingBoxLabels bb_label_ids)
     {
         _bb_cords =std::move(bb_cords);
         _bb_label_ids = std::move(bb_label_ids);
     }
-    BoundingBox(BoundingBoxCords bb_cords,BoundingBoxLabels bb_label_ids ,ImgSize img_size)
+    BoundingBox(BoundingBoxCords bb_cords, BoundingBoxLabels bb_label_ids, ImgSize img_size)
     {
         _bb_cords =std::move(bb_cords);
         _bb_label_ids = std::move(bb_label_ids);
         _img_size = std::move(img_size);
     }
     void set_bb_cords(BoundingBoxCords bb_cords) { _bb_cords =std::move(bb_cords); }
-    BoundingBox(BoundingBoxCords_xcycwh bb_cords_xcycwh,BoundingBoxLabels bb_label_ids )
+    BoundingBox(BoundingBoxCords_xcycwh bb_cords_xcycwh, BoundingBoxLabels bb_label_ids)
     {
         _bb_cords_xcycwh =std::move(bb_cords_xcycwh);
         _bb_label_ids = std::move(bb_label_ids);
     }
-    BoundingBox(BoundingBoxCords_xcycwh bb_cords_xcycwh,BoundingBoxLabels bb_label_ids ,ImgSize img_size)
+    BoundingBox(BoundingBoxCords_xcycwh bb_cords_xcycwh, BoundingBoxLabels bb_label_ids, ImgSize img_size)
     {
         _bb_cords_xcycwh =std::move(bb_cords_xcycwh);
         _bb_label_ids = std::move(bb_label_ids);
         _img_size = std::move(img_size);
     }
     void set_bb_cords_xcycwh(BoundingBoxCords_xcycwh bb_cords_xcycwh) { _bb_cords_xcycwh =std::move(bb_cords_xcycwh); }
-    void set_bb_labels(BoundingBoxLabels bb_label_ids) {_bb_label_ids = std::move(bb_label_ids); }
+    void set_bb_labels(BoundingBoxLabels bb_label_ids) { _bb_label_ids = std::move(bb_label_ids); }
     void set_img_size(ImgSize img_size) { _img_size = std::move(img_size); }
 };
 
@@ -164,7 +164,7 @@ struct MetaDataBatch
     std::vector<BoundingBoxCords_xcycwh>& get_bb_cords_batch_xcycxwh() { return _bb_cords_xcycwh; }
     std::vector<BoundingBoxLabels>& get_bb_labels_batch() { return _bb_label_ids; }
     ImgSizes & get_img_sizes_batch() { return _img_sizes; }
-    JointsDataBatch & get_joints_data_batch(){return _joints_data; }
+    JointsDataBatch & get_joints_data_batch() { return _joints_data; }
 protected:
     std::vector<int> _label_id = {}; // For label use only
     std::vector<BoundingBoxCords> _bb_cords = {};
@@ -182,7 +182,7 @@ struct LabelBatch : public MetaDataBatch
     }
     MetaDataBatch&  operator += (MetaDataBatch& other) override
     {
-        _label_id.insert(_label_id.end(),other.get_label_batch().begin(), other.get_label_batch().end());
+        _label_id.insert(_label_id.end(), other.get_label_batch().begin(), other.get_label_batch().end());
         return *this;
     }
     void resize(int batch_size) override
@@ -214,9 +214,9 @@ struct BoundingBoxBatch: public MetaDataBatch
     }
     MetaDataBatch&  operator += (MetaDataBatch& other) override
     {
-        _bb_cords.insert(_bb_cords.end(),other.get_bb_cords_batch().begin(), other.get_bb_cords_batch().end());
+        _bb_cords.insert(_bb_cords.end(), other.get_bb_cords_batch().begin(), other.get_bb_cords_batch().end());
         _bb_label_ids.insert(_bb_label_ids.end(), other.get_bb_labels_batch().begin(), other.get_bb_labels_batch().end());
-        _img_sizes.insert(_img_sizes.end(),other.get_img_sizes_batch().begin(), other.get_img_sizes_batch().end());
+        _img_sizes.insert(_img_sizes.end(), other.get_img_sizes_batch().begin(), other.get_img_sizes_batch().end());
         return *this;
     }
     void resize(int batch_size) override
@@ -246,15 +246,15 @@ struct KeyPointBatch : public MetaDataBatch
     }
     MetaDataBatch&  operator += (MetaDataBatch& other) override
     {
-        _img_sizes.insert(_img_sizes.end(),other.get_img_sizes_batch().begin(), other.get_img_sizes_batch().end());
-        _joints_data.image_id_batch.insert(_joints_data.image_id_batch.end(),other.get_joints_data_batch().image_id_batch.begin(),other.get_joints_data_batch().image_id_batch.end());
-        _joints_data.annotation_id_batch.insert(_joints_data.annotation_id_batch.end(),other.get_joints_data_batch().annotation_id_batch.begin(),other.get_joints_data_batch().annotation_id_batch.end());
-        _joints_data.center_batch.insert(_joints_data.center_batch.end(),other.get_joints_data_batch().center_batch.begin(),other.get_joints_data_batch().center_batch.end());
-        _joints_data.scale_batch.insert(_joints_data.scale_batch.end(),other.get_joints_data_batch().scale_batch.begin(),other.get_joints_data_batch().scale_batch.end());
-        _joints_data.joints_batch.insert(_joints_data.joints_batch.end(),other.get_joints_data_batch().joints_batch.begin(),other.get_joints_data_batch().joints_batch.end());
-        _joints_data.joints_visibility_batch.insert(_joints_data.joints_visibility_batch.end(),other.get_joints_data_batch().joints_visibility_batch.begin(),other.get_joints_data_batch().joints_visibility_batch.end());
-        _joints_data.score_batch.insert(_joints_data.score_batch.end(),other.get_joints_data_batch().score_batch.begin(),other.get_joints_data_batch().score_batch.end());
-        _joints_data.rotation_batch.insert(_joints_data.rotation_batch.end(),other.get_joints_data_batch().rotation_batch.begin(),other.get_joints_data_batch().rotation_batch.end());
+        _img_sizes.insert(_img_sizes.end(), other.get_img_sizes_batch().begin(), other.get_img_sizes_batch().end());
+        _joints_data.image_id_batch.insert(_joints_data.image_id_batch.end(), other.get_joints_data_batch().image_id_batch.begin(), other.get_joints_data_batch().image_id_batch.end());
+        _joints_data.annotation_id_batch.insert(_joints_data.annotation_id_batch.end(), other.get_joints_data_batch().annotation_id_batch.begin(), other.get_joints_data_batch().annotation_id_batch.end());
+        _joints_data.center_batch.insert(_joints_data.center_batch.end(), other.get_joints_data_batch().center_batch.begin(), other.get_joints_data_batch().center_batch.end());
+        _joints_data.scale_batch.insert(_joints_data.scale_batch.end(), other.get_joints_data_batch().scale_batch.begin(), other.get_joints_data_batch().scale_batch.end());
+        _joints_data.joints_batch.insert(_joints_data.joints_batch.end(), other.get_joints_data_batch().joints_batch.begin() ,other.get_joints_data_batch().joints_batch.end());
+        _joints_data.joints_visibility_batch.insert(_joints_data.joints_visibility_batch.end(), other.get_joints_data_batch().joints_visibility_batch.begin(), other.get_joints_data_batch().joints_visibility_batch.end());
+        _joints_data.score_batch.insert(_joints_data.score_batch.end(), other.get_joints_data_batch().score_batch.begin(), other.get_joints_data_batch().score_batch.end());
+        _joints_data.rotation_batch.insert(_joints_data.rotation_batch.end(), other.get_joints_data_batch().rotation_batch.begin(), other.get_joints_data_batch().rotation_batch.end());
         return *this;
     }
     void resize(int batch_size) override

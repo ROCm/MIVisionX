@@ -47,7 +47,7 @@ bool TFMetaDataReaderDetection::exists(const std::string& _image_name)
 }
 
 
-void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels,ImgSize image_size)
+void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels, ImgSize image_size)
 {
     if(exists(image_name))
     {
@@ -190,7 +190,7 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
       box.b = bbox_ymax ;
       bb_coords.push_back(box);
       bb_labels.push_back(label);
-      add(fname, bb_coords, bb_labels,img_size);
+      add(fname, bb_coords, bb_labels, img_size);
       bb_coords.clear();
       bb_labels.clear();
     }

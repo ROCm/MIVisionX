@@ -49,10 +49,10 @@ private:
     bool exists(const std::string &image_name);
     std::map<std::string, std::shared_ptr<BoundingBox>> _map_content;
     std::map<std::string, std::shared_ptr<BoundingBox>>::iterator _itr;
-    std::map<std::string ,ImgSize> _map_img_sizes;
-    std::map<std::string , std::vector<ImgSize> > ::iterator itr;
-    std::map<int ,int> _label_info;
-    std::map<int ,int > ::iterator _it_label;
+    std::map<std::string, ImgSize> _map_img_sizes;
+    std::map<std::string, std::vector<ImgSize>> ::iterator itr;
+    std::map<int, int> _label_info;
+    std::map<int, int> ::iterator _it_label;
     TimingDBG _coco_metadata_read_time;
 };
 

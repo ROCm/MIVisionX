@@ -75,38 +75,23 @@ void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_nam
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
 	
-        if(_map_content.end() == it){
-
-            BoundingBoxCords bb_coords;
-            BoundingBoxLabels bb_labels;
-            BoundingBoxCord box;
-            ImgSize img_size;
-
-
-            box.l = box.t = 0;
-            box.r = box.b = 1;
-            img_size.w = img_size.h =0;
-            bb_coords.push_back(box);
-            bb_labels.push_back(0);
-            // bb_coords={};
-
-	    _output->get_bb_cords_batch()[i] = bb_coords;
-	    _output->get_bb_labels_batch()[i] = bb_labels;
-        _output->get_img_sizes_batch()[i] = img_size;
+        if(_map_content.end() == it)
+        {
+            _output->get_bb_cords_batch()[i] = {{0, 0, 0, 0}};
+            _output->get_bb_labels_batch()[i] = {{0}};
+            _output->get_img_sizes_batch()[i] = {0, 0};
         }
-	else{
-        _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
-        _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
-        _output->get_img_sizes_batch()[i] = it->second->get_img_size();
+	    else
+        {
+            _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
+            _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
+            _output->get_img_sizes_batch()[i] = it->second->get_img_size();
+        }
     }
-    }
-
-
 }
 
 void TFMetaDataReaderDetection::print_map_contents()
 {
-
     BoundingBoxCords bb_coords;
     BoundingBoxLabels bb_labels;
 
@@ -253,9 +238,8 @@ void TFMetaDataReaderDetection::read_all(const std::string &path)
         _last_rec = false;
         file_contents.close();
     }
-  //google::protobuf::ShutdownProtobufLibrary();
+    // google::protobuf::ShutdownProtobufLibrary();
     // print_map_contents();
-
 }
 
 void TFMetaDataReaderDetection::release(std::string _image_name)

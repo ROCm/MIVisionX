@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -51,10 +51,10 @@ private:
     bool exists(const std::string &image_name);
     std::map<std::string, std::shared_ptr<KeyPoint>> _map_content;
     std::map<std::string, std::shared_ptr<KeyPoint>>::iterator _itr;
-    std::map<std::string ,ImgSize> _map_img_sizes;
-    std::map<std::string , std::vector<ImgSize> > ::iterator itr;
-    std::map<int ,int> _label_info;
-    std::map<int ,int > ::iterator _it_label;
+    std::map<std::string, ImgSize> _map_img_sizes;
+    std::map<std::string, std::vector<ImgSize>> ::iterator itr;
+    std::map<int, int> _label_info;
+    std::map<int, int> ::iterator _it_label;
     TimingDBG _coco_metadata_read_time;
 };
 

@@ -9188,7 +9188,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatAttribute(vx_meta_format meta,
                     status = VX_SUCCESS;
                 }
                 break;
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
             case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU:
                 if (size == sizeof(vx_bool) && meta->data.ref.type == VX_TYPE_IMAGE) {
                     meta->data.u.img.enableUserBufferGPU = *(vx_bool *)ptr;

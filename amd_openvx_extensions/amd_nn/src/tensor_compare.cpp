@@ -90,7 +90,6 @@ static vx_status VX_CALLBACK opencl_codegen(
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
 
     strcpy(opencl_kernel_function_name, "tensor_compare");
-
     opencl_work_dim = 3;
     opencl_global_work[0] = input_dims[0];
     opencl_global_work[1] = input_dims[1];
@@ -115,18 +114,26 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "     out += out_offset + x  * out_stride.s0 + y * out_stride.s1 + c * out_stride.s2;\n"
                 "     // compare the values and write to the output\n"
                 "     bool result;\n"
-                "     if (mode == 0)\n"
-                "       result = (value < value2);\n"
-                "     else if (mode == 1)\n"
-                "       result = (value > value2);\n"
-                "     else if (mode == 2)\n"
-                "       result = (value <= value2);\n"
-                "     else if (mode == 3)\n"
-                "       result = (value >= value2);\n"
-                "     else if (mode == 4)\n"
-                "       result = (value == value2);\n"
-                "     else if (mode == 5)\n"
-                "       result = (value != value2);\n"
+                "     switch (mode) {\n"
+                "          case 0:\n"
+                "            result = (value < value2);\n"
+                "            break;\n"
+                "          case 1:\n"
+                "            result = (value > value2);\n"
+                "            break;\n"
+                "          case 2:\n"
+                "            result = (value <= value2);\n"
+                "            break;\n"
+                "          case 3:\n"
+                "            result = (value >= value2);\n"
+                "            break;\n"
+                "          case 4:\n"
+                "            result = (value == value2);\n"
+                "            break;\n"
+                "          case 5:\n"
+                "            result = (value != value2);\n"
+                "            break;\n"
+                "     }\n"
                 "     *(__global bool *)&out[0] = result;\n"
                 " }\n", opencl_kernel_function_name);
         } else {
@@ -142,18 +149,26 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "     out += out_offset + x  * out_stride.s0 + y * out_stride.s1 + c * out_stride.s2;\n"
                 "     // compare the values and write to the output\n"
                 "     bool result;\n"
-                "     if (mode == 0)\n"
-                "       result = (value < value2);\n"
-                "     else if (mode == 1)\n"
-                "       result = (value > value2);\n"
-                "     else if (mode == 2)\n"
-                "       result = (value <= value2);\n"
-                "     else if (mode == 3)\n"
-                "       result = (value >= value2);\n"
-                "     else if (mode == 4)\n"
-                "       result = (value == value2);\n"
-                "     else if (mode == 5)\n"
-                "       result = (value != value2);\n"
+                "     switch (mode) {\n"
+                "          case 0:\n"
+                "            result = (value < value2);\n"
+                "            break;\n"
+                "          case 1:\n"
+                "            result = (value > value2);\n"
+                "            break;\n"
+                "          case 2:\n"
+                "            result = (value <= value2);\n"
+                "            break;\n"
+                "          case 3:\n"
+                "            result = (value >= value2);\n"
+                "            break;\n"
+                "          case 4:\n"
+                "            result = (value == value2);\n"
+                "            break;\n"
+                "          case 5:\n"
+                "            result = (value != value2);\n"
+                "            break;\n"
+                "     }\n"
                 "     *(__global bool *)&out[0] = result;\n"
                     " }\n", opencl_kernel_function_name);
         }
@@ -165,6 +180,55 @@ static vx_status VX_CALLBACK opencl_codegen(
 
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num) {
 #if ENABLE_HIP
+    //get input params
+    vx_size input_dims[4] = {1, 1, 1, 1};
+    vx_size num_of_dims;
+    vx_enum type;
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+
+    dim3 globalThreads = dim3(1);
+    globalThreads.x = input_dims[0];
+    globalThreads.y = input_dims[1];
+    globalThreads.z = input_dims[2] * input_dims[3];
+
+    vx_size temp[4] = {0};
+    uint4 input_stride, input2_stride, output_stride;
+    vx_size in_offset, input2_offset, output_offset;
+    unsigned char *input_mem = NULL;
+    unsigned char *input2_mem = NULL;
+    unsigned char *output_mem = NULL;
+    hipStream_t hip_stream;
+    uint4 input_dimensions = make_uint4((uint)input_dims[0], (uint)input_dims[1], (uint)input_dims[2], (uint)input_dims[3]);
+
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &in_offset, sizeof(in_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &input2_mem, sizeof(input2_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_GPU, &input2_offset, sizeof(input2_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_OFFSET_GPU, &output_offset, sizeof(output_offset)));
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    input_stride.x = temp[0];
+    input_stride.y = temp[1];
+    input_stride.z = temp[2];
+    input_stride.w = temp[3];
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    input2_stride.x = temp[0];
+    input2_stride.y = temp[1];
+    input2_stride.z = temp[2];
+    input2_stride.w = temp[3];
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    output_stride.x = temp[0];
+    output_stride.y = temp[1];
+    output_stride.z = temp[2];
+    output_stride.w = temp[3];
+
     if (HipExec_tensor_compare_layer(hip_stream, globalThreads, dim3(1), type, input_mem, in_offset, input_stride,
         input2_mem, input2_offset, input2_stride, output_mem, output_offset, output_stride, mode)) {
         return VX_FAILURE;

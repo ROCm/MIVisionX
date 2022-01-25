@@ -219,6 +219,11 @@ class IrNode(object):
             'reduce_min' : 1,
             'tile' : 1,
             'less' : 1,
+            'greater' : 1,
+            'less_equal' : 1,
+            'greater_equal' : 1,
+            'equal' : 1,
+            'not_equal' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):

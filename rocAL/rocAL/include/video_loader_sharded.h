@@ -39,6 +39,7 @@ public:
     ~VideoLoaderSharded() override;
     VideoLoaderModuleStatus load_next() override;
     void initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size = false) override;
+    void shut_down() override;
     void set_output_image(Image *output_image) override;
     size_t remaining_count() override;
     void reset() override;

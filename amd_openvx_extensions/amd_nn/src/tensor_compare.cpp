@@ -28,7 +28,7 @@ static vx_status VX_CALLBACK validateTensorCompare(vx_node node, const vx_refere
     if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
-    if (out_type != VX_TYPE_BOOL) return VX_ERROR_INVALID_TYPE;
+    // if (out_type != VX_TYPE_BOOL) return VX_ERROR_INVALID_TYPE;
 
     if (output_dims[3] != input_dims[3] || output_dims[2] != input_dims[2] || output_dims[1] != input_dims[1] || output_dims[0] != input_dims[0] ||
         output_dims[3] != input2_dims[3] || output_dims[2] != input2_dims[2] || output_dims[1] != input2_dims[1] || output_dims[0] != input2_dims[0]
@@ -90,6 +90,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
 
     strcpy(opencl_kernel_function_name, "tensor_compare");
+
     opencl_work_dim = 3;
     opencl_global_work[0] = input_dims[0];
     opencl_global_work[1] = input_dims[1];
@@ -134,7 +135,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "            result = (value != value2);\n"
                 "            break;\n"
                 "     }\n"
-                "     *(__global bool *)&out[0] = result;\n"
+                "     *(__global int *)&out[0] = result;\n"
                 " }\n", opencl_kernel_function_name);
         } else {
             sprintf(item,
@@ -169,7 +170,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "            result = (value != value2);\n"
                 "            break;\n"
                 "     }\n"
-                "     *(__global bool *)&out[0] = result;\n"
+                "     *(__global int *)&out[0] = result;\n"
                     " }\n", opencl_kernel_function_name);
         }
         opencl_kernel_code = item;

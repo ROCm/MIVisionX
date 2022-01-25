@@ -87,7 +87,7 @@ struct MetaData
     BoundingBoxCords& get_bb_cords() { return _bb_cords; }
     BoundingBoxCords_xcycwh& get_bb_cords_xcycwh() { return _bb_cords_xcycwh; }
     BoundingBoxLabels& get_bb_labels() { return _bb_label_ids; }
-    ImgSize& get_img_size() {return _img_size; }
+    ImgSize& get_img_size() { return _img_size; }
     const JointsData& get_joints_data(){ return _joints_data; }
 protected:
     BoundingBoxCords _bb_cords = {}; // For bb use

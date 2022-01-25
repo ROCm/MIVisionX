@@ -81,7 +81,7 @@ void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_nam
             _output->get_bb_labels_batch()[i] = {{0}};
             _output->get_img_sizes_batch()[i] = {0, 0};
         }
-	    else
+        else
         {
             _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
             _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();

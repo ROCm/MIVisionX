@@ -14,6 +14,7 @@ In this sample, we provide OpenVX sample applications to use with any conformant
 
 In this sample we will create an OpenVX graph to run Optical Flow on a video/live. This sample application uses <a href="https://en.wikipedia.org/wiki/OpenCV" target="_blank">OpenCV</a> to decode input video and display the output.
 
+<p align="center"> <img width="90%" src="../../docs/images/optical_flow_video.gif"> </p>
 
 ### Prerequisites
 
@@ -48,7 +49,7 @@ export OPENVX_DIR=/opt/rocm/mivisionx
 ```
 
 
-* **Step - 4:** CMake and Build the optical flow application
+* **Step - 3:** CMake and Build the optical flow application
 
 ```
 mkdir opticalFlow-build && cd opticalFlow-build
@@ -56,10 +57,19 @@ cmake -DOPENVX_INCLUDES=$OPENVX_DIR/include -DOPENVX_LIBRARIES=$OPENVX_DIR/lib/l
 make
 ```
 
-* **Step - 5:** Run VX Optical Flow application
+* **Step - 4:** Run VX Optical Flow application
     
     ```
       Usage:
 	      ./opticalFlow --video <Video File>
 	      ./opticalFlow --live  <Capture Device ID>
+    ```
+
+  + Use Video Option
+    ```
+    ./opticalFlow --video ../../../data/videos/AMD_driving_virtual_20.mp4
+    ```
+  + Use Live Device Camera 
+    ```
+    ./opticalFlow --live 0
     ```

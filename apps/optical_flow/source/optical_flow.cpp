@@ -23,9 +23,6 @@ THE SOFTWARE.
 #include <VX/vx.h>
 #include "opencv2/opencv.hpp"
 
-using namespace cv;
-using namespace std;
-
 #ifndef DEFAULT_WAITKEY_DELAY
 #define DEFAULT_WAITKEY_DELAY 1 /* waitKey delay time in milliseconds after each frame processing */
 #endif
@@ -62,13 +59,14 @@ void VX_CALLBACK log_callback(vx_context context,
     fflush(stdout);
 }
 
-void drawPoint(Mat m_imgBGR, int x, int y)
+// OpenCV Draw on image functions
+void drawPoint(cv::Mat m_imgBGR, int x, int y)
 {
     cv::Point center(x, y);
     cv::circle(m_imgBGR, center, 1, cv::Scalar(0, 0, 255), 2);
 }
 
-void drawArrow(Mat m_imgBGR, int x0, int y0, int x1, int y1)
+void drawArrow(cv::Mat m_imgBGR, int x0, int y0, int x1, int y1)
 {
     drawPoint(m_imgBGR, x0, y0);
     float dx = (float)(x1 - x0), dy = (float)(y1 - y0), arrow_len = sqrtf(dx * dx + dy * dy);
@@ -82,13 +80,14 @@ void drawArrow(Mat m_imgBGR, int x0, int y0, int x1, int y1)
     }
 }
 
-void drawText(Mat m_imgBGR, int x, int y, const char *text)
+void drawText(cv::Mat m_imgBGR, int x, int y, const char *text)
 {
     cv::putText(m_imgBGR, text, cv::Point(x, y),
                 cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(128, 0, 0), 1, cv::LineTypes::LINE_AA);
     printf("text: %s\n", text);
 }
 
+// end application
 bool abortRequested()
 {
     char key = cv::waitKey(DEFAULT_WAITKEY_DELAY);
@@ -115,7 +114,7 @@ int main(int argc, char *argv[])
 
     vx_uint32 widthSet = 640, heightSet = 480;
 
-    // Set the application configuration parameters.
+    // Set the application configuration parameters
     vx_uint32 width = widthSet;                        // image width
     vx_uint32 height = heightSet;                      // image height
     vx_size maxKeypointCount = 10000;                  // maximum number of keypoints to track
@@ -133,15 +132,15 @@ int main(int argc, char *argv[])
     vx_uint32 lkWindowDimension = 6;                   // window size for evaluation
     vx_float32 trackableKpRatioThr = 0.8f;             // threshold for the ration of tracked keypoints to all
 
-    // Create the OpenVX context and check if returned context is valid.
+    // Create the OpenVX context and check if returned context is valid
     vx_context context = vxCreateContext();
     ERROR_CHECK_OBJECT(context);
 
     // Register the log_callback
     vxRegisterLogCallback(context, log_callback, vx_false_e);
-    vxAddLogEntry((vx_reference)context, VX_FAILURE, "OpenVX Sample - Optical Flow\n\n");
+    vxAddLogEntry((vx_reference)context, VX_SUCCESS, "OpenVX Sample - Optical Flow\n\n");
 
-    // Create OpenVX image object for input RGB image.
+    // Create OpenVX image object for input RGB image
     vx_image inputRgbImage = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
     ERROR_CHECK_OBJECT(inputRgbImage);
 
@@ -166,13 +165,13 @@ int main(int argc, char *argv[])
     ERROR_CHECK_OBJECT(currentKeypoints);
     ERROR_CHECK_OBJECT(previousKeypoints);
 
-    // Harris and optical flow algorithms require their own graph objects.
+    // Harris and optical flow algorithms require their own graph objects
     vx_graph graphHarris = vxCreateGraph(context);
     vx_graph graphTrack = vxCreateGraph(context);
     ERROR_CHECK_OBJECT(graphHarris);
     ERROR_CHECK_OBJECT(graphTrack);
 
-    // Harris and pyramid computation expect input to be an 8-bit image.
+    // Harris and pyramid computation expect input to be an 8-bit image
     vx_image harrisYuvImage = vxCreateVirtualImage(graphHarris, width, height, VX_DF_IMAGE_IYUV);
     vx_image harrisGrayImage = vxCreateVirtualImage(graphHarris, width, height, VX_DF_IMAGE_U8);
     vx_image opticalflowYuvImage = vxCreateVirtualImage(graphTrack, width, height, VX_DF_IMAGE_IYUV);
@@ -182,7 +181,7 @@ int main(int argc, char *argv[])
     ERROR_CHECK_OBJECT(opticalflowYuvImage);
     ERROR_CHECK_OBJECT(opticalFlowGrayImage);
 
-    // The Harris corner detector and optical flow nodes scalar objects as parameters.
+    // The Harris corner detector and optical flow nodes scalar objects as parameters
     vx_scalar strengthThresh = vxCreateScalar(context, VX_TYPE_FLOAT32, &harrisStrengthThresh);
     vx_scalar minDistance = vxCreateScalar(context, VX_TYPE_FLOAT32, &harrisMinDistance);
     vx_scalar sensitivity = vxCreateScalar(context, VX_TYPE_FLOAT32, &harrisSensitivity);
@@ -196,7 +195,7 @@ int main(int argc, char *argv[])
     ERROR_CHECK_OBJECT(numIterations);
     ERROR_CHECK_OBJECT(useInitialEstimate);
 
-    // Graph to perform Harris corner detection and initial pyramid computation.
+    // Graph to perform Harris corner detection and initial pyramid computation
     vx_node nodesHarris[] =
         {
             vxColorConvertNode(graphHarris, inputRgbImage, harrisYuvImage),
@@ -212,7 +211,7 @@ int main(int argc, char *argv[])
     ERROR_CHECK_STATUS(vxReleaseImage(&harrisGrayImage));
     ERROR_CHECK_STATUS(vxVerifyGraph(graphHarris));
 
-    // Graph to compute image pyramid for the next frame, and tracks features using optical flow.
+    // Graph to compute image pyramid for the next frame, and tracks features using optical flow
     vx_node nodesTrack[] =
         {
             vxColorConvertNode(graphTrack, inputRgbImage, opticalflowYuvImage),
@@ -231,13 +230,13 @@ int main(int argc, char *argv[])
     ERROR_CHECK_STATUS(vxReleaseImage(&opticalFlowGrayImage));
     ERROR_CHECK_STATUS(vxVerifyGraph(graphTrack));
 
-    string option = argv[1];
-    Mat input;
+    std::string option = argv[1];
+    cv::Mat input;
 
     if (option == "--video")
     {
-        VideoCapture cap(argv[2]);
-        int totalFrames = cap.get(CAP_PROP_FRAME_COUNT);
+        cv::VideoCapture cap(argv[2]);
+        int totalFrames = cap.get(cv::CAP_PROP_FRAME_COUNT);
         if (!cap.isOpened())
         {
             vxAddLogEntry((vx_reference)context, VX_FAILURE, "ERROR: Unable to open video\n");
@@ -245,16 +244,17 @@ int main(int argc, char *argv[])
         }
         for (int frameIndex = 0; !abortRequested(); frameIndex++)
         {
-            if(frameIndex >= totalFrames){
+            if (frameIndex >= totalFrames)
+            {
                 vxAddLogEntry((vx_reference)context, VX_SUCCESS, "INFO: End Of Video File\n");
                 break;
             }
 
             cap >> input;
-            resize(input, input, Size(width, height));
-            imshow("inputWindow", input);
-            Mat output = input;
-            if (waitKey(30) >= 0)
+            resize(input, input, cv::Size(width, height));
+            cv::imshow("inputWindow", input);
+            cv::Mat output = input;
+            if (cv::waitKey(30) >= 0)
                 break;
             vx_rectangle_t cvRgbImageRegion;
             cvRgbImageRegion.start_x = 0;
@@ -269,6 +269,7 @@ int main(int argc, char *argv[])
                                                 &cvRgbImageLayout, cvRgbImageBuffer,
                                                 VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 
+            // process graph
             ERROR_CHECK_STATUS(vxProcessGraph(frameIndex == 0 ? graphHarris : graphTrack));
 
             // Mark the keypoints in display
@@ -303,22 +304,22 @@ int main(int argc, char *argv[])
                 ERROR_CHECK_STATUS(vxUnmapArrayRange(currentKeypoints, kpNewMap));
             }
 
-            // Increase the age of the delay objects to make the current entry become previous entry.
+            // Increase the age of the delay objects to make the current entry become previous entry
             ERROR_CHECK_STATUS(vxAgeDelay(pyramidDelay));
             ERROR_CHECK_STATUS(vxAgeDelay(keypointsDelay));
 
-            // Display the results and grab the next input RGB frame for the next iteration.
+            // Display the results
             char text[128];
-            sprintf(text, "Keyboard ESC/Q-Quit SPACE-Pause [FRAME %d]", frameIndex);
+            sprintf(text, "Keyboard: [ESC/Q] -- Quit [SPACE] -- Pause [FRAME %d]", frameIndex);
             drawText(output, 0, 16, text);
             sprintf(text, "Number of Corners: %d [tracking %d]", (int)numCorners, (int)numTracking);
             drawText(output, 0, 36, text);
-            imshow("opticalFlow", output);
+            cv::imshow("opticalFlow", output);
         }
     }
     else if (option == "--live")
     {
-        VideoCapture cap(0);
+        cv::VideoCapture cap(0);
         if (!cap.isOpened())
         {
             vxAddLogEntry((vx_reference)context, VX_FAILURE, "ERROR: Unable to open camera\n");
@@ -327,10 +328,10 @@ int main(int argc, char *argv[])
         for (int frameIndex = 0; !abortRequested(); frameIndex++)
         {
             cap >> input;
-            resize(input, input, Size(width, height));
-            imshow("inputWindow", input);
-            Mat output = input;
-            if (waitKey(30) >= 0)
+            resize(input, input, cv::Size(width, height));
+            cv::imshow("inputWindow", input);
+            cv::Mat output = input;
+            if (cv::waitKey(30) >= 0)
                 break;
             vx_rectangle_t cvRgbImageRegion;
             cvRgbImageRegion.start_x = 0;
@@ -345,6 +346,7 @@ int main(int argc, char *argv[])
                                                 &cvRgbImageLayout, cvRgbImageBuffer,
                                                 VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 
+            // process graph
             ERROR_CHECK_STATUS(vxProcessGraph(frameIndex == 0 ? graphHarris : graphTrack));
 
             // Mark the keypoints in display
@@ -379,17 +381,17 @@ int main(int argc, char *argv[])
                 ERROR_CHECK_STATUS(vxUnmapArrayRange(currentKeypoints, kpNewMap));
             }
 
-            // Increase the age of the delay objects to make the current entry become previous entry.
+            // Increase the age of the delay objects to make the current entry become previous entry
             ERROR_CHECK_STATUS(vxAgeDelay(pyramidDelay));
             ERROR_CHECK_STATUS(vxAgeDelay(keypointsDelay));
 
-            // Display the results and grab the next input RGB frame for the next iteration.
+            // Display the results
             char text[128];
-            sprintf(text, "Keyboard ESC/Q-Quit SPACE-Pause [FRAME %d]", frameIndex);
+            sprintf(text, "Keyboard: [ESC/Q] -- Quit [SPACE] -- Pause [FRAME %d]", frameIndex);
             drawText(output, 0, 16, text);
             sprintf(text, "Number of Corners: %d [tracking %d]", (int)numCorners, (int)numTracking);
             drawText(output, 0, 36, text);
-            imshow("opticalFlow", output);
+            cv::imshow("opticalFlow", output);
         }
     }
     else
@@ -400,13 +402,13 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    // Query graph performance using VX_GRAPH_PERFORMANCE and print timing in milliseconds.
+    // Query graph performance using VX_GRAPH_PERFORMANCE and print timing in milliseconds
     vx_perf_t perfHarris = {0}, perfTrack = {0};
     ERROR_CHECK_STATUS(vxQueryGraph(graphHarris, VX_GRAPH_PERFORMANCE, &perfHarris, sizeof(perfHarris)));
     ERROR_CHECK_STATUS(vxQueryGraph(graphTrack, VX_GRAPH_PERFORMANCE, &perfTrack, sizeof(perfTrack)));
     printf("GraphName NumFrames Avg(ms) Min(ms)\n"
-           "\tHarris    %9d %7.3f %7.3f\n"
-           "\tTrack     %9d %7.3f %7.3f\n",
+           "Harris    %9d %7.3f %7.3f\n"
+           "Track     %9d %7.3f %7.3f\n",
            (int)perfHarris.num, (float)perfHarris.avg * 1e-6f, (float)perfHarris.min * 1e-6f,
            (int)perfTrack.num, (float)perfTrack.avg * 1e-6f, (float)perfTrack.min * 1e-6f);
 

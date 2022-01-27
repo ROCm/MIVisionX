@@ -261,6 +261,10 @@ namespace rali{
             .value("NHWC",RALI_NHWC)
             .value("NCHW",RALI_NCHW)
             .export_values();
+        py::enum_<RaliDecodeDevice>(types_m,"RaliDecodeDevice","Decode device type")
+            .value("HARDWARE_DECODE",RALI_HW_DECODE)
+            .value("SOFTWARE_DECODE",RALI_SW_DECODE)
+            .export_values();
         // rali_api_info.h
         m.def("getOutputWidth",&raliGetOutputWidth);
         m.def("getOutputHeight",&raliGetOutputHeight);
@@ -285,6 +289,7 @@ namespace rali{
         m.def("Cifar10LabelReader",&raliCreateTextCifar10LabelReader);
         m.def("RandomBBoxCrop",&wrapper_random_bbox_crop);
         m.def("COCOReader",&raliCreateCOCOReader);
+        m.def("VideoMetaDataReader",&raliCreateVideoLabelReader);
         m.def("getImageLabels",&wrapper_label_copy);
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
@@ -527,6 +532,20 @@ namespace rali{
               py::arg("out_height") = 0,
               py::arg("file_name_prefix") = "",
               py::arg("loop") = false);
+        m.def("VideoDecoder",&raliVideoFileSource,"Reads videos from the source given and decodes it according to the policy only for Videos as inputs",
+            py::return_value_policy::reference,
+            py::arg("p_context"),
+            py::arg("source_path"),
+            py::arg("color_format"),
+            py::arg("decoder_mode"),
+            py::arg("shard_count"),
+            py::arg("sequence_length"),
+            py::arg("shuffle") = false,
+            py::arg("is_output"),
+            py::arg("loop") = false,
+            py::arg("frame_step"),
+            py::arg("frame_stride"),
+            py::arg("file_list_frame_num") = false);
 
         m.def("raliResetLoaders",&raliResetLoaders);
         // rali_api_augmentation.h

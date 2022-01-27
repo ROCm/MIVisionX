@@ -48,6 +48,8 @@ public:
     crop_image_info get_crop_image_info() override;
     Timing timing() override;
     void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
+    void shut_down() override;
+    
 private:
     void increment_loader_idx();
     bool is_out_of_data();

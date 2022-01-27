@@ -26,10 +26,6 @@ THE SOFTWARE.
 #include "hip/hip_fp16.h"
 #include <VX/vx.h>
 
-int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,
-    uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride, uchar* out, uint4 out_offset,
-    uint4 out_stride, uint mode);
-
 int HipExec_Gather_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, unsigned char* in, uint in_offset,
     uint4 in_stride, unsigned char* ind, uint ind_offset, uint4 ind_stride, unsigned char* out, uint out_offset,
     uint4 out_stride, uint axis);
@@ -69,5 +65,9 @@ int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
 
 int HipExec_Argmax_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, unsigned char *i0_buf, uint i0_offset, uint4 i0_stride, uint4 i0_dims,
     unsigned char *o0_buf, uint o0_offset, uint4 o0_stride, uint o0_image_stride, vx_enum output_data_type, uint top_k, vx_enum output_obj_type);
+
+int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,
+    uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride, uchar* out, uint4 out_offset,
+    uint4 out_stride, uint mode);
 
 #endif //NN_HIP_HOST_DECLS_H

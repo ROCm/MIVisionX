@@ -651,7 +651,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
         auto output_buffers =_ring_buffer.get_read_buffers();
         for( auto&& out_image: output_buffers)
         {
-            unsigned int single_image_size = w * c * h; 
+            unsigned int single_image_size = w * c * h;
             #pragma omp parallel for
             for(unsigned int batchCount = 0; batchCount < n; batchCount ++)
             {
@@ -694,7 +694,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                         if(c != 3)
                         {
                             for(unsigned i = 0; i < channel_size; i++)
-                                output_tensor_32[dest_buf_offset + i] = offset[0] + multiplier[0]*(float)in_buffer[c*i]; 
+                                output_tensor_32[dest_buf_offset + i] = offset[0] + multiplier[0]*(float)in_buffer[c*i];
                         }
                         else {
     #if (ENABLE_SIMD && __AVX2__)
@@ -757,7 +757,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                             for(unsigned channel_idx = 0; channel_idx < c; channel_idx++) {
                                 for(unsigned i = 0; i < channel_size; i++)
                                     output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
-                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[(c*i+c-channel_idx-1)]) : 
+                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[(c*i+c-channel_idx-1)]) :
                                             (float)(in_buffer[(c*i+channel_idx)]));
                             }
     #endif

@@ -83,7 +83,7 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_hip_tensor32(RaliContext context, RaliTensorLayout tensor_format,
+    py::object reflect_hip_copy_tensor32(RaliContext context, RaliTensorLayout tensor_format,
                                 float multiplier0, float multiplier1, float multiplier2,
                                 float offset0, float offset1, float offset2,
                                 bool reverse_channels)
@@ -94,7 +94,7 @@ namespace rali{
         return py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(out_void_ptr));
     }
 
-    py::object wrapper_hip_tensor16(RaliContext context, RaliTensorLayout tensor_format,
+    py::object reflect_hip_copy_tensor16(RaliContext context, RaliTensorLayout tensor_format,
                                 float multiplier0, float multiplier1, float multiplier2,
                                 float offset0, float offset1, float offset2,
                                 bool reverse_channels)
@@ -313,8 +313,8 @@ namespace rali{
         m.def("raliCopyToOutput",&wrapper);
         m.def("raliCopyToOutputTensor32",&wrapper_tensor32);
         m.def("raliCopyToOutputTensor16",&wrapper_tensor16);
-        m.def("raliCopyToHipOutputTensor32",&wrapper_hip_tensor32);
-        m.def("raliCopyToHipOutputTensor16",&wrapper_hip_tensor16);
+        m.def("raliCopyToHipOutputTensor32",&reflect_hip_copy_tensor32);
+        m.def("raliCopyToHipOutputTensor16",&reflect_hip_copy_tensor16);
         // rali_api_data_loaders.h
          m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,

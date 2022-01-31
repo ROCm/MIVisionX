@@ -516,9 +516,9 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
         os.system('echo '+echo1 +
                   ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
-        print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+        print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat)
-        os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+        os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                   hardwareMode+' -dump-profile node '+nodeFormat)
         print("\n")
 
@@ -573,9 +573,9 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
         os.system('echo '+echo1 +
                   ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
-        print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+        print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat)
-        os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+        os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                   hardwareMode+' -dump-profile node '+nodeFormat)
         print("\n")
 

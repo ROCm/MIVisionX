@@ -131,6 +131,11 @@ machine learning inference workloads on a wide range of computer hardware, inclu
 small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.")
 set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
 
+# set license information
+set(CPACK_RPM_PACKAGE_LICENSE    "MIT")
+set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION share/doc/)
+
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")
 endif()

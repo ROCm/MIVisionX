@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,9 @@ THE SOFTWARE.
 // Create HIP Context
 int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
     if (deviceID >= 0) {
+      // release context if already set.
+        agoGpuHipReleaseContext(context);
+        hipDeviceReset();
         // use the given HIP device
         context->hip_context_imported = true;
     }

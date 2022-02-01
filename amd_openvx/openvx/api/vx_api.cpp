@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -9188,7 +9188,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatAttribute(vx_meta_format meta,
                     status = VX_SUCCESS;
                 }
                 break;
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
             case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU:
                 if (size == sizeof(vx_bool) && meta->data.ref.type == VX_TYPE_IMAGE) {
                     meta->data.u.img.enableUserBufferGPU = *(vx_bool *)ptr;

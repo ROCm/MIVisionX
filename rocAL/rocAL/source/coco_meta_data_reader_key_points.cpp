@@ -53,13 +53,13 @@ void COCOMetaDataReaderKeyPoints::lookup(const std::vector<std::string> &image_n
         _output->resize(image_names.size());
 
     JointsDataBatch joints_data_batch;
-    const JointsData *joints_data;
     for (unsigned i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
         if (_map_content.end() == it)
             THROW("ERROR: Given name not present in the map" + image_name);
+        const JointsData *joints_data;
         joints_data = &(it->second->get_joints_data());
         joints_data_batch.image_id_batch.push_back(joints_data->image_id);
         joints_data_batch.annotation_id_batch.push_back(joints_data->annotation_id);

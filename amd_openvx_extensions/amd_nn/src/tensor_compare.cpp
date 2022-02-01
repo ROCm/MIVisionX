@@ -185,6 +185,7 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
     vx_size input_dims[4] = {1, 1, 1, 1};
     vx_size num_of_dims;
     vx_enum type;
+    vx_uint32 mode;
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
@@ -197,7 +198,7 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
 
     vx_size temp[4] = {0};
     uint4 input_stride, input2_stride, output_stride;
-    vx_size in_offset, input2_offset, output_offset;
+    vx_size input_offset, input2_offset, output_offset;
     unsigned char *input_mem = NULL;
     unsigned char *input2_mem = NULL;
     unsigned char *output_mem = NULL;
@@ -206,11 +207,12 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
 
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &in_offset, sizeof(in_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &input_offset, sizeof(input_offset)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &input2_mem, sizeof(input2_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_GPU, &input2_offset, sizeof(input2_offset)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_OFFSET_GPU, &output_offset, sizeof(output_offset)));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &mode, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
     input_stride.x = temp[0];
@@ -230,7 +232,7 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
     output_stride.z = temp[2];
     output_stride.w = temp[3];
 
-    if (HipExec_tensor_compare_layer(hip_stream, globalThreads, dim3(1), type, input_mem, in_offset, input_stride,
+    if (HipExec_tensor_compare_layer(hip_stream, globalThreads, dim3(1), type, input_mem, input_offset, input_stride,
         input2_mem, input2_offset, input2_stride, output_mem, output_offset, output_stride, mode)) {
         return VX_FAILURE;
     }

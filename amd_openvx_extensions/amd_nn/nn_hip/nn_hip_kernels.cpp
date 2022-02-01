@@ -1993,8 +1993,8 @@ Hip_tensor_compare_less_layer(uchar* in, uint in_offset, uint4 in_stride, uchar*
     uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
 
-    float value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
-    float value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    float value = *(float*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    float value2 = *(float*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
     out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
    
     // compare the values and write to the output\n"
@@ -2010,8 +2010,8 @@ Hip_tensor_compare_greater_layer(uchar* in, uint in_offset, uint4 in_stride, uch
     uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
 
-    float value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
-    float value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    float value = *(float*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    float value2 = *(float*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
     out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
    
     // compare the values and write to the output\n"
@@ -2027,8 +2027,8 @@ Hip_tensor_compare_less_than_layer(uchar* in, uint in_offset, uint4 in_stride, u
     uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
 
-    float value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
-    float value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    float value = *(float*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    float value2 = *(float*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
     out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
    
     // compare the values and write to the output\n"
@@ -2044,8 +2044,8 @@ Hip_tensor_compare_greater_than_layer(uchar* in, uint in_offset, uint4 in_stride
     uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
 
-    float value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
-    float value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    float value = *(float*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    float value2 = *(float*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
     out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
    
     // compare the values and write to the output\n"
@@ -2061,8 +2061,8 @@ Hip_tensor_compare_equal_layer(uchar* in, uint in_offset, uint4 in_stride, uchar
     uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
 
-    float value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
-    float value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    float value = *(float*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    float value2 = *(float*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
     out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
    
     // compare the values and write to the output\n"
@@ -2078,8 +2078,8 @@ Hip_tensor_compare_not_equal_layer(uchar* in, uint in_offset, uint4 in_stride, u
     uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
 
-    float value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
-    float value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    float value = *(float*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    float value2 = *(float*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
     out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
    
     // compare the values and write to the output\n"
@@ -2088,7 +2088,7 @@ Hip_tensor_compare_not_equal_layer(uchar* in, uint in_offset, uint4 in_stride, u
 }
 
 int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,
-    uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride, uchar* out, uint4 out_offset,
+    uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride, uchar* out, uint out_offset,
     uint4 out_stride, uint mode) {
 
     dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),

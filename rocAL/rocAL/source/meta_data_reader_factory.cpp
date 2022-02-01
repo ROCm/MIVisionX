@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "meta_data_reader_factory.h"
 #include "exception.h"
 #include "coco_meta_data_reader.h"
+#include "coco_meta_data_reader_key_points.h"
 #include "text_file_meta_data_reader.h"
 #include "cifar10_meta_data_reader.h"
 #include "tf_meta_data_reader.h"
@@ -90,6 +91,15 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             if(config.type() != MetaDataType::BoundingBox)
                 THROW("FOLDER_BASED_LABEL_READER can only be used to load bounding boxes")
             auto ret = std::make_shared<COCOMetaDataReader>();
+            ret->init(config);
+            return ret;
+        }
+            break;
+        case MetaDataReaderType::COCO_KEY_POINTS_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::KeyPoints)
+                THROW("COCO_KEY_POINTS_META_DATA_READER can only be used to load keypoints")
+            auto ret = std::make_shared<COCOMetaDataReaderKeyPoints>();
             ret->init(config);
             return ret;
         }

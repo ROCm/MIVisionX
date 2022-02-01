@@ -82,8 +82,16 @@ RALI_API_CALL raliCreateCOCOReader(RaliContext p_context, const char* source_pat
         THROW("Invalid rali context passed to raliCreateCOCOReader")
     auto context = static_cast<Context*>(p_context);
 
-    return context->master_graph->create_coco_meta_data_reader(source_path, is_output);
+    return context->master_graph->create_coco_meta_data_reader(source_path, is_output, MetaDataReaderType::COCO_META_DATA_READER,  MetaDataType::BoundingBox);
+}
 
+RaliMetaData
+RALI_API_CALL raliCreateCOCOReaderKeyPoints(RaliContext p_context, const char* source_path, bool is_output, float sigma, unsigned pose_output_width, unsigned pose_output_height){
+    if (!p_context)
+        THROW("Invalid rali context passed to raliCreateCOCOReaderKeyPoints")
+    auto context = static_cast<Context*>(p_context);
+
+    return context->master_graph->create_coco_meta_data_reader(source_path, is_output, MetaDataReaderType::COCO_KEY_POINTS_META_DATA_READER, MetaDataType::KeyPoints, sigma, pose_output_width, pose_output_height);
 }
 
 RaliMetaData
@@ -337,7 +345,7 @@ RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
     }
     for(unsigned i = 0; i < meta_data_batch_size; i++)
     { 
-        memcpy(buf, meta_data.second->get_img_sizes_batch()[i].data(), sizeof(ImgSize));
+        memcpy(buf, &(meta_data.second->get_img_sizes_batch()[i]), sizeof(ImgSize));
         buf += 2;
     }
 }
@@ -422,3 +430,24 @@ RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_
         memcpy(temp_bbox_buf, meta_data.second->get_bb_cords_batch()[i].data(), sizeof(BoundingBoxCord) * bb_count);
     }
 }
+
+void
+RALI_API_CALL raliGetJointsDataPtr(RaliContext p_context, RaliJointsData **joints_data)
+{  
+    if (!p_context)
+        THROW("Invalid rali context passed to raliGetBoundingBoxCords")
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_joints_data_batch().center_batch.size();
+
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    if(!meta_data.second)
+    {
+        WRN("No label has been loaded for this output image")
+        return;
+    }
+
+    *joints_data = (RaliJointsData *)(&(meta_data.second->get_joints_data_batch()));
+}
+

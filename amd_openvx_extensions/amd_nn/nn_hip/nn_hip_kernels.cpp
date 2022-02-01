@@ -1999,7 +1999,8 @@ Hip_tensor_compare_less_layer(uchar* in, uint in_offset, uint4 in_stride, uchar*
    
     // compare the values and write to the output\n"
     bool result = (value < value2);
-   *(bool *)&out[0] = result;
+    printf("the values are %f %f and the result is %d\n", value, value2, result);
+   *(int *)&out[0] = result;
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -2016,7 +2017,7 @@ Hip_tensor_compare_greater_layer(uchar* in, uint in_offset, uint4 in_stride, uch
    
     // compare the values and write to the output\n"
     bool result = (value < value2);
-   *(bool *)&out[0] = result;
+   *(int *)&out[0] = result;
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -2033,7 +2034,7 @@ Hip_tensor_compare_less_than_layer(uchar* in, uint in_offset, uint4 in_stride, u
    
     // compare the values and write to the output\n"
     bool result = (value <= value2);
-   *(bool *)&out[0] = result;
+   *(int *)&out[0] = result;
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -2050,7 +2051,7 @@ Hip_tensor_compare_greater_than_layer(uchar* in, uint in_offset, uint4 in_stride
    
     // compare the values and write to the output\n"
     bool result = (value >= value2);
-   *(bool *)&out[0] = result;
+   *(int *)&out[0] = result;
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -2067,7 +2068,7 @@ Hip_tensor_compare_equal_layer(uchar* in, uint in_offset, uint4 in_stride, uchar
    
     // compare the values and write to the output\n"
     bool result = (value == value2);
-   *(bool *)&out[0] = result;
+   *(int *)&out[0] = result;
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -2084,7 +2085,7 @@ Hip_tensor_compare_not_equal_layer(uchar* in, uint in_offset, uint4 in_stride, u
    
     // compare the values and write to the output\n"
     bool result = (value != value2);
-   *(bool *)&out[0] = result;
+   *(int *)&out[0] = result;
 }
 
 int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,

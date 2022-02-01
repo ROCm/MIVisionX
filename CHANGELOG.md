@@ -11,6 +11,7 @@
 ### Added
 
 * Support for cmake 3.22.X
+* Support for mv_compile with the HIP GPU backend
 
 ### Optimizations
 

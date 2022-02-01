@@ -134,6 +134,14 @@ void ImageLoaderSharded::start_loading()
     }
 
 }
+
+void ImageLoaderSharded::shut_down()
+{
+    for(unsigned i = 0; i < _loaders.size(); i++)
+        _loaders[i]->shut_down();
+}
+
+
 void ImageLoaderSharded::set_output_image (Image* output_image)
 {
     _output_image = output_image;

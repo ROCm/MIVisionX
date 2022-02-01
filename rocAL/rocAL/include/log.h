@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 #include <iostream>
 #if DBGINFO
-#define INFO(X) std::clog << "[INF] " << " {" << func <<"} " << " " << X << std::endl;
+#define INFO(X) std::clog << "[INF] " << " {" << __func__ <<"} " << " " << X << std::endl;
 #else
 #define INFO(X) ;
 #endif

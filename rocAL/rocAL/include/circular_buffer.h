@@ -54,6 +54,7 @@ public:
 #endif
     ~CircularBuffer();
     void init(RaliMemType output_mem_type, size_t output_mem_size, size_t buff_depth);
+    void release(); // release resources
     void sync();// Syncs device buffers with host
     void unblock_reader();// Unblocks the thread currently waiting on a call to get_read_buffer
     void unblock_writer();// Unblocks the thread currently waiting on get_write_buffer
@@ -93,8 +94,7 @@ private:
     cl_device_id _device_id = nullptr;
 #else
     hipStream_t _hip_stream;
-    int _hip_device_id;
-    hipDeviceProp_t *_dev_prop;
+    int _hip_device_id, _hip_canMapHostMemory;
 #endif
     std::vector<void *> _dev_buffer;// Actual memory allocated on the device (in the case of GPU affinity)
     std::vector<unsigned char*> _host_buffer_ptrs;

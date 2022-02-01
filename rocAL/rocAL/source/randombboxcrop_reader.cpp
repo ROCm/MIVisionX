@@ -273,8 +273,8 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
         if (_meta_bbox_map_content.end() == elem)
             THROW("ERROR: Given name not present in the map" + image_name)
         BoundingBoxCords bb_coords = elem->second->get_bb_cords();
-        ImgSizes img_sizes = elem->second->get_img_sizes();
-        int img_width = img_sizes[0].w;
+        ImgSize img_size = elem->second->get_img_size();
+        int img_width = img_size.w;
         bb_count = bb_coords.size();
         crop_success = false;
         while (!crop_success)

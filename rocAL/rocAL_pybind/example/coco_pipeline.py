@@ -11,8 +11,6 @@ import amd.rali.ops as ops
 import amd.rali.types as types
 import sys
 import numpy as np
-import cupy as cp
-import torch.utils.dlpack as dp
 
 
 class COCOPipeline(Pipeline):
@@ -20,7 +18,7 @@ class COCOPipeline(Pipeline):
         super(COCOPipeline, self).__init__(batch_size, num_threads,
                                            device_id, seed=seed, rali_cpu=rali_cpu)
         self.input = ops.COCOReader(
-            file_root=data_dir, annotations_file=ann_dir, random_shuffle=True, seed=seed)
+            file_root=data_dir, annotations_file=ann_dir, random_shuffle=True, seed=seed, num_shards=1, shard_id=0)
         rali_device = 'cpu' if rali_cpu else 'gpu'
         decoder_device = 'cpu' if rali_cpu else 'mixed'
         # device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
@@ -137,12 +135,19 @@ class RALICOCOIterator(object):
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
         self.hip_array = None
-        if self.tensor_dtype == types.FLOAT:
-            self.out = np.zeros(
-                (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype="float32")
-        elif self.tensor_dtype == types.FLOAT16:
-            self.out = np.zeros(
-                (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype="float16")
+        if self.device == "cpu":
+            if self.tensor_dtype == types.FLOAT:
+                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
+            elif self.tensor_dtype == types.FLOAT16:
+                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
+        else:
+
+            with torch.cuda.device(self.device_id):
+                if self.tensor_dtype == types.FLOAT:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32).cuda()
+                elif self.tensor_dtype == types.FLOAT16:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16).cuda()
+
         #Image id of a batch of images
         self.image_id = np.zeros(self.bs, dtype="int32")
         # Count of labels/ bboxes in a batch
@@ -150,15 +155,6 @@ class RALICOCOIterator(object):
         # Image sizes of a batch
         self.img_size = np.zeros((self.bs * 2), dtype="int32")
 
-    def get_cupy_array_from_address(self, address):
-        mem = cp.cuda.memory.UnownedMemory(address, 0, None, self.device_id)
-        memptr = cp.cuda.memory.MemoryPointer(mem, 0)
-        if self.tensor_dtype == types.FLOAT:
-            self.hip_array = cp.ndarray(
-                (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), "float32", memptr)
-        else:
-            self.hip_array = cp.ndarray(
-                (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), "float16", memptr)
 
     def next(self):
         return self.__next__()
@@ -186,12 +182,11 @@ class RALICOCOIterator(object):
                     self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
             if(self.tensor_format == types.NCHW):
-                address = self.loader.copyToHipTensorNCHW(
-                    self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+                self.loader.copyToHipTensorNCHW(
+                self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
             else:
-                address = self.loader.copyToHipTensorNHWC(
-                self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-            self.get_cupy_array_from_address(address)
+                self.loader.copyToHipTensorNHWC(
+                self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
 
 #Image id of a batch of images
         self.loader.GetImageId(self.image_id)
@@ -221,22 +216,10 @@ class RALICOCOIterator(object):
                     actual_labels.append(encodded_labels_tensor[i][idx].tolist())
 
             if self.display:
-                if self.device == "cpu":
-                    img = torch.from_numpy(self.out)
-                else:
-                    dlpack_array = self.hip_array.toDlpack()
-                    img = dp.from_dlpack(dlpack_array)
+                img = self.out
                 draw_patches(img[i], self.image_id[i], actual_bboxes, self.device)
 
-        if self.device == "cpu":
-            if self.tensor_dtype == types.FLOAT:
-                return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
-            elif self.tensor_dtype == types.FLOAT16:
-                return torch.from_numpy(self.out.astype(np.float16)), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
-
-        if self.device == "cuda":
-            dlpack_array = self.hip_array.toDlpack()
-            return dp.from_dlpack(dlpack_array), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
+        return (self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
 
     def reset(self):
         self.loader.raliResetLoaders()
@@ -247,7 +230,7 @@ class RALICOCOIterator(object):
 def draw_patches(img, idx, bboxes, device):
     #image is expected as a tensor, bboxes as numpy
     import cv2
-    if device == "cpu:":
+    if device == "cpu":
         image = img.detach().numpy()
     else:
         image = img.cpu().numpy()
@@ -334,6 +317,7 @@ def main():
         for i, it in enumerate(data_loader, 0):
             print("**************", i, "*******************")
             print("**************starts*******************")
+            print("\nIMAGES:\n", it[0])
             print("\nBBOXES:\n", it[1])
             print("\nLABELS:\n", it[2])
             print("\nIMAGE ID's:\n", it[3])

@@ -35,6 +35,19 @@ namespace pybind11
 namespace rali{
     using namespace pybind11::literals; // NOLINT
     // PYBIND11_MODULE(rali_backend_impl, m) {
+        static void *ctypes_void_ptr(const py::object &object)
+    {
+        auto ptr_as_int = getattr(object, "value", py::none());
+        std::cerr<<"\n ptr_as_int"<<ptr_as_int;
+        if (ptr_as_int.is_none())
+        {
+            return nullptr;
+        }
+        void *ptr = PyLong_AsVoidPtr(ptr_as_int.ptr());
+
+        return ptr;
+    }
+
     py::object wrapper(RaliContext context, py::array_t<unsigned char> array)
     {
         auto buf = array.request();
@@ -83,26 +96,28 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object reflect_hip_copy_tensor32(RaliContext context, RaliTensorLayout tensor_format,
+        py::object reflect_hip_copy_tensor32(RaliContext context, py::object p, RaliTensorLayout tensor_format,
                                 float multiplier0, float multiplier1, float multiplier2,
                                 float offset0, float offset1, float offset2,
                                 bool reverse_channels)
     {
-        auto out_void_ptr = raliCopyToHipOutputTensor32(context, tensor_format, multiplier0,
+        auto ptr = ctypes_void_ptr(p);
+        raliCopyToHipOutputTensor32(context, ptr, tensor_format, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels);
-        return py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(out_void_ptr));
+        return py::cast<py::none>(Py_None);
     }
 
-    py::object reflect_hip_copy_tensor16(RaliContext context, RaliTensorLayout tensor_format,
+    py::object reflect_hip_copy_tensor16(RaliContext context, py::object p, RaliTensorLayout tensor_format,
                                 float multiplier0, float multiplier1, float multiplier2,
                                 float offset0, float offset1, float offset2,
                                 bool reverse_channels)
     {
-        auto out_void_ptr = raliCopyToHipOutputTensor16(context, tensor_format, multiplier0,
+        auto ptr = ctypes_void_ptr(p);
+        raliCopyToHipOutputTensor16(context, ptr, tensor_format, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels);
-        return py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(out_void_ptr));
+        return py::cast<py::none>(Py_None);
     }
 
     py::object wrapper_tensor16(RaliContext context, py::array_t<float16> array,

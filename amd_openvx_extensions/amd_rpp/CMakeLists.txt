@@ -155,7 +155,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(vx_rpp amd_rpp boost_filesystem boost_system ${HIP_LIBRARY})
 else()
-    message("-- ${Red}WARNING:OpenCL/HIP Not Found -- amd_rpp module excluded${ColourReset}")
+    message("-- ${Red}WARNING: OpenCL/HIP Not Found -- amd_rpp module excluded${ColourReset}")
 endif()
 
 install(TARGETS vx_rpp DESTINATION lib)

@@ -60,5 +60,5 @@ set(AMDRPP_INCLUDE_DIRS ${AMDRPP_INCLUDE_DIRS} CACHE INTERNAL "")
 set(AMDRPP_LIBRARIES_DIR ${AMDRPP_LIBRARIES_DIR} CACHE INTERNAL "")
 
 if( NOT AMDRPP_FOUND )
-    message( "-- ${Yellow}FindAMDRPP failed to find: amd_rpp${ColourReset}" )
+    message( "-- ${Yellow}NOTE: FindAMDRPP failed to find -- amd_rpp${ColourReset}" )
 endif()

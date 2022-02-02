@@ -23,7 +23,7 @@ project(amd_opencv)
 
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCV REQUIRED)
+find_package(OpenCV QUIET)
 
 include_directories(../../amd_openvx/openvx/include
 					include

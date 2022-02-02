@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -130,6 +130,11 @@ The toolkit allows for rapid prototyping and deployment of optimized computer vi
 machine learning inference workloads on a wide range of computer hardware, including \
 small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.")
 set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+
+# set license information
+set(CPACK_RPM_PACKAGE_LICENSE    "MIT")
+set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION share/doc/)
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -47,6 +47,11 @@ _swap_handle_time("Swap_handle_time", DBG_TIMING)
 VideoLoader::~VideoLoader()
 {
     de_init();
+}
+
+void VideoLoader::shut_down()
+{
+    _circ_buff.release();
 }
 
 void VideoLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)

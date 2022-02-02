@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -117,6 +117,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
             target_compile_definitions(openvx PUBLIC ENABLE_HIP=${ENABLE_HIP})
             target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
             link_directories(${HIP_PATH}/lib)
+            target_link_libraries(openvx ${HIP_PATH}/lib/libamdhip64.so)
             message("-- ${Green}AMD OpenVX -- OpenVX built with HIP Support${ColourReset}")
         else()
             message(FATAL_ERROR "unsupported hip compiler")

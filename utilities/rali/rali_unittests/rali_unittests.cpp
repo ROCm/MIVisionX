@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -74,10 +74,10 @@ int main(int argc, const char **argv)
         rgb = atoi(argv[++argIdx]);
 
     if (argc >= argIdx + MIN_ARG_COUNT)
-         num_of_classes = atoi(argv[++argIdx]);
+        num_of_classes = atoi(argv[++argIdx]);
 
     if (argc >= argIdx + MIN_ARG_COUNT)
-         display_all = atoi(argv[++argIdx]);
+        display_all = atoi(argv[++argIdx]);
 
     test(test_case, reader_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all);
 
@@ -223,6 +223,24 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             std::cout << ">>>>>>> Running CAFFE2 DETECTION READER" << std::endl;
             meta_data = raliCreateCaffe2LMDBReaderDetection(handle, path, true);
             input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+        }
+        break;
+        case 10: //coco reader keypoints
+        {
+            detection_pipeline = 2;
+            std::cout << ">>>>>>> Running CAFFE2 DETECTION READER" << std::endl;
+            char *json_path = "";
+            if (strcmp(json_path, "") == 0)
+            {
+                std::cout << "\n json_path has to be set in rali_unit test manually";
+                exit(0);
+            }
+            float sigma = 3.0;
+            meta_data = raliCreateCOCOReaderKeyPoints(handle, json_path, true, sigma, (unsigned)width, (unsigned)height);
+            if (decode_max_height <= 0 || decode_max_width <= 0)
+                input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false);
+            else
+                input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
         }
         break;
         default: //image pipeline
@@ -668,7 +686,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         int label_id[inputBatchSize];
         int numOfClasses = 0;
         int image_name_length[inputBatchSize];
-        if(detection_pipeline)
+        if(detection_pipeline == 1) //detection pipeline
         {
             int img_size = raliGetImageNameLen(handle, image_name_length);
             char img_name[img_size];
@@ -690,7 +708,28 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                 std::cout<<"\nHeight:"<<img_sizes_batch[(i*2)+1];
             }
         }
-        else
+        else if(detection_pipeline == 2) // keypoints pipeline
+        {
+            int size = inputBatchSize;
+            RaliJointsData *joints_data;
+            raliGetJointsDataPtr(handle, &joints_data);
+            for (int i = 0; i < size; i++)
+            {
+                std::cout << "ImageID: " << joints_data->image_id_batch[i] << std::endl;
+                std::cout << "AnnotationID: " << joints_data->annotation_id_batch[i] << std::endl;
+                std::cout << "ImagePath: " << joints_data->image_path_batch[i] << std::endl;
+                std::cout << "Center: " << joints_data->center_batch[i][0] << " " << joints_data->center_batch[i][1] << std::endl;
+                std::cout << "Scale: " << joints_data->scale_batch[i][0] << " " << joints_data->scale_batch[i][1] << std::endl;
+                std::cout << "Score: " << joints_data->score_batch[i] << std::endl;
+                std::cout << "Rotation: " << joints_data->rotation_batch[i] << std::endl;
+
+                for (int k = 0; k < 17; k++)
+                {
+                std::cout << "x : " << joints_data->joints_batch[i][k][0] << " , y : " << joints_data->joints_batch[i][k][1] << " , v : " << joints_data->joints_visibility_batch[i][k][0] << std::endl;
+                }
+            }
+        }
+        else // classification pipeline
         {
             raliGetImageLabels(handle, label_id);
             int img_size = raliGetImageNameLen(handle, image_name_length);
@@ -713,7 +752,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                 {
                     int idx_value = label_one_hot_encoded[(i*numOfClasses)+j];
                     if(idx_value == 0)
-                    std::cout << idx_value;
+                        std::cout << idx_value;
                     else
                     {
                         std::cout << idx_value;
@@ -722,6 +761,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                 }
                 std::cout << "\n";
             }
+            std::cout << "\n";
         }
         auto last_colot_temp = raliGetIntValue(color_temp_adj);
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);
@@ -735,7 +775,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));
         std::string out_filename = std::string(outName) + ".png";   // in case the user specifies non png filename
         if (display_all)
-          out_filename = std::string(outName) + std::to_string(index) + ".png";   // in case the user specifies non png filename
+            out_filename = std::string(outName) + std::to_string(index) + ".png";   // in case the user specifies non png filename
 
         if (color_format == RaliImageColor::RALI_COLOR_RGB24)
         {

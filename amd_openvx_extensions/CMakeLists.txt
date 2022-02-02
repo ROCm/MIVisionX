@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -73,20 +73,21 @@ if(GPU_SUPPORT)
 endif()
 
 if(GPU_SUPPORT)
+    find_package(FFmpeg QUIET)
+    if(FFMPEG_FOUND)
+        add_subdirectory(amd_media)
+        message("-- ${Green}AMD OpenVX Media Extension -- amd_media module added${ColourReset}")
+    else()
+        message("-- ${Red}WARNING:FFMPEG Not Found -- amd_media module excluded${ColourReset}")
+    endif(FFMPEG_FOUND)
+
     if ("${BACKEND}" STREQUAL "OPENCL" AND OpenCL_FOUND)
-        find_package(FFmpeg QUIET)
         if(LOOM)
             add_subdirectory(amd_loomsl)
             message("-- ${Green}AMD OpenVX Loom Stich Library Extension -- amd_loomsl module added${ColourReset}")
         else()
             message("-- ${Cyan}LOOM Module turned OFF by user option -D LOOM=OFF ${ColourReset}")
         endif()
-        if(FFMPEG_FOUND)
-            add_subdirectory(amd_media)
-            message("-- ${Green}AMD OpenVX Media Extension -- amd_media module added${ColourReset}")
-        else()
-            message("-- ${Red}WARNING:FFMPEG Not Found -- amd_media module excluded${ColourReset}")
-        endif(FFMPEG_FOUND)
     elseif("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
         if(HIP_COMPILER STREQUAL clang)
               set(hip_library_name amdhip64)

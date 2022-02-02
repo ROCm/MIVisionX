@@ -38,7 +38,6 @@ namespace rali{
         static void *ctypes_void_ptr(const py::object &object)
     {
         auto ptr_as_int = getattr(object, "value", py::none());
-        std::cerr<<"\n ptr_as_int"<<ptr_as_int;
         if (ptr_as_int.is_none())
         {
             return nullptr;

@@ -1513,7 +1513,6 @@ MasterGraph::Status
 MasterGraph::copy_hip_out_tensor(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
                              float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type)
 {
-    std::cerr<<"\n OUTPTR"<<out_ptr;
     if(no_more_processed_data())
         return MasterGraph::Status::NO_MORE_DATA;
 

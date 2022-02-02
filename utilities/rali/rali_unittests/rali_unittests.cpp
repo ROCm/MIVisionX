@@ -40,19 +40,20 @@ using namespace cv;
 
 using namespace std::chrono;
 
-int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes, int display_all);
+int test(int test_case, int reader_type, int pipeline_type, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes, int display_all);
 int main(int argc, const char **argv)
 {
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT)
     {
-        printf("Usage: rali_unittests reader-type <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0 one_hot_labels=num_of_classes/0  display_all=0(display_last_only)1(display_all)\n");
+        printf("Usage: rali_unittests reader-type pipeline-type=1(classification)2(detection)3(keypoints) <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0 one_hot_labels=num_of_classes/0  display_all=0(display_last_only)1(display_all)\n");
         return -1;
     }
 
     int argIdx = 0;
     int reader_type = atoi(argv[++argIdx]);
+    int pipeline_type = atoi(argv[++argIdx]);
     const char *path = argv[++argIdx];
     const char *outName = argv[++argIdx];
     int width = atoi(argv[++argIdx]);
@@ -79,12 +80,12 @@ int main(int argc, const char **argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         display_all = atoi(argv[++argIdx]);
 
-    test(test_case, reader_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all);
+    test(test_case, reader_type, pipeline_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all);
 
     return 0;
 }
 
-int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all)
+int test(int test_case, int reader_type, int pipeline_type, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all)
 {
     size_t num_threads = 1;
     unsigned int inputBatchSize = 2;
@@ -122,7 +123,6 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
 #endif
 
     RaliImage input1;
-    int detection_pipeline = 0; // variable used to differentiate classification/detection pipeline. It will be set for detection readers.
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     switch (reader_type)
@@ -137,7 +137,6 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         break;
         case 2: //coco detection
         {
-            detection_pipeline = 1;
             std::cout << ">>>>>>> Running COCO READER" << std::endl;
             char *json_path = "";
             if (strcmp(json_path, "") == 0)
@@ -154,7 +153,6 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         break;
         case 3: //coco detection partial
         {
-            detection_pipeline = 1;
             std::cout << ">>>>>>> Running COCO READER PARTIAL" << std::endl;
             char *json_path = "";
             if (strcmp(json_path, "") == 0)
@@ -181,7 +179,6 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         break;
         case 5: //tf detection
         {
-            detection_pipeline = 1;
             std::cout << ">>>>>>> Running TF DETECTION READER" << std::endl;
             char key1[25] = "image/encoded";
             char key2[25] = "image/object/class/label";
@@ -204,7 +201,6 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         break;
         case 7: //caffe detection
         {
-            detection_pipeline = 1;
             std::cout << ">>>>>>> Running CAFFE DETECTION READER" << std::endl;
             meta_data = raliCreateCaffeLMDBReaderDetection(handle, path);
             input1 = raliJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
@@ -219,7 +215,6 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         break;
         case 9: //caffe2 detection
         {
-            detection_pipeline = 1;
             std::cout << ">>>>>>> Running CAFFE2 DETECTION READER" << std::endl;
             meta_data = raliCreateCaffe2LMDBReaderDetection(handle, path, true);
             input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
@@ -227,8 +222,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         break;
         case 10: //coco reader keypoints
         {
-            detection_pipeline = 2;
-            std::cout << ">>>>>>> Running CAFFE2 DETECTION READER" << std::endl;
+            std::cout << ">>>>>>> Running COCO KEYPOINTS READER" << std::endl;
             char *json_path = "";
             if (strcmp(json_path, "") == 0)
             {
@@ -686,82 +680,92 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         int label_id[inputBatchSize];
         int numOfClasses = 0;
         int image_name_length[inputBatchSize];
-        if(detection_pipeline == 1) //detection pipeline
+        switch(pipeline_type)
         {
-            int img_size = raliGetImageNameLen(handle, image_name_length);
-            char img_name[img_size];
-            raliGetImageName(handle, img_name);
-            std::cerr << "\nPrinting image names of batch: " << img_name;
-            int bb_label_count[inputBatchSize];
-            int size = raliGetBoundingBoxCount(handle, bb_label_count);
-            for (int i = 0; i < (int)inputBatchSize; i++)
-                std::cerr << "\n Number of box:  " << bb_label_count[i];
-            int bb_labels[size];
-            raliGetBoundingBoxLabel(handle, bb_labels);
-            float bb_coords[size * 4];
-            raliGetBoundingBoxCords(handle, bb_coords);
-            int img_sizes_batch[inputBatchSize * 2];
-            raliGetImageSizes(handle, img_sizes_batch);
-            for (int i = 0; i < (int)inputBatchSize; i++)
+            case 1: //classification pipeline
             {
-                std::cout<<"\nwidth:"<<img_sizes_batch[i*2];
-                std::cout<<"\nHeight:"<<img_sizes_batch[(i*2)+1];
-            }
-        }
-        else if(detection_pipeline == 2) // keypoints pipeline
-        {
-            int size = inputBatchSize;
-            RaliJointsData *joints_data;
-            raliGetJointsDataPtr(handle, &joints_data);
-            for (int i = 0; i < size; i++)
-            {
-                std::cout << "ImageID: " << joints_data->image_id_batch[i] << std::endl;
-                std::cout << "AnnotationID: " << joints_data->annotation_id_batch[i] << std::endl;
-                std::cout << "ImagePath: " << joints_data->image_path_batch[i] << std::endl;
-                std::cout << "Center: " << joints_data->center_batch[i][0] << " " << joints_data->center_batch[i][1] << std::endl;
-                std::cout << "Scale: " << joints_data->scale_batch[i][0] << " " << joints_data->scale_batch[i][1] << std::endl;
-                std::cout << "Score: " << joints_data->score_batch[i] << std::endl;
-                std::cout << "Rotation: " << joints_data->rotation_batch[i] << std::endl;
-
-                for (int k = 0; k < 17; k++)
+                raliGetImageLabels(handle, label_id);
+                int img_size = raliGetImageNameLen(handle, image_name_length);
+                char img_name[img_size];
+                numOfClasses = num_of_classes;
+                int label_one_hot_encoded[inputBatchSize * numOfClasses];
+                raliGetImageName(handle, img_name);
+                if (num_of_classes != 0)
                 {
-                std::cout << "x : " << joints_data->joints_batch[i][k][0] << " , y : " << joints_data->joints_batch[i][k][1] << " , v : " << joints_data->joints_visibility_batch[i][k][0] << std::endl;
+                    raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
+                }
+                std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
+                for (unsigned int i = 0; i < inputBatchSize; i++)
+                {
+                    std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
+                    if(num_of_classes != 0)
+                    {
+                        std::cout << "One Hot Encoded labels:"<<"\t";
+                        for (int j = 0; j < numOfClasses; j++)
+                        {
+                            int idx_value = label_one_hot_encoded[(i*numOfClasses)+j];
+                            if(idx_value == 0)
+                                std::cout << idx_value;
+                            else
+                            {
+                                std::cout << idx_value;
+                            }
+                        }
+                    }
+                    std::cout << "\n";
                 }
             }
-        }
-        else // classification pipeline
-        {
-            raliGetImageLabels(handle, label_id);
-            int img_size = raliGetImageNameLen(handle, image_name_length);
-            char img_name[img_size];
-            numOfClasses = num_of_classes;
-            int label_one_hot_encoded[inputBatchSize * numOfClasses];
-            raliGetImageName(handle, img_name);
-            if (num_of_classes != 0)
+            break;
+            case 2: //detection pipeline
             {
-                raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
+                int img_size = raliGetImageNameLen(handle, image_name_length);
+                char img_name[img_size];
+                raliGetImageName(handle, img_name);
+                std::cerr << "\nPrinting image names of batch: " << img_name;
+                int bb_label_count[inputBatchSize];
+                int size = raliGetBoundingBoxCount(handle, bb_label_count);
+                for (int i = 0; i < (int)inputBatchSize; i++)
+                    std::cerr << "\n Number of box:  " << bb_label_count[i];
+                int bb_labels[size];
+                raliGetBoundingBoxLabel(handle, bb_labels);
+                float bb_coords[size * 4];
+                raliGetBoundingBoxCords(handle, bb_coords);
+                int img_sizes_batch[inputBatchSize * 2];
+                raliGetImageSizes(handle, img_sizes_batch);
+                for (int i = 0; i < (int)inputBatchSize; i++)
+                {
+                    std::cout<<"\nwidth:"<<img_sizes_batch[i*2];
+                    std::cout<<"\nHeight:"<<img_sizes_batch[(i*2)+1];
+                }
             }
-            std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
-            for (unsigned int i = 0; i < inputBatchSize; i++)
+            break;
+            case 3: // keypoints pipeline
             {
-                std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
-                if(num_of_classes != 0)
+                int size = inputBatchSize;
+                RaliJointsData *joints_data;
+                raliGetJointsDataPtr(handle, &joints_data);
+                for (int i = 0; i < size; i++)
                 {
-                std::cout << "One Hot Encoded labels:"<<"\t";
-                for (int j = 0; j < numOfClasses; j++)
-                {
-                    int idx_value = label_one_hot_encoded[(i*numOfClasses)+j];
-                    if(idx_value == 0)
-                        std::cout << idx_value;
-                    else
+                    std::cout << "ImageID: " << joints_data->image_id_batch[i] << std::endl;
+                    std::cout << "AnnotationID: " << joints_data->annotation_id_batch[i] << std::endl;
+                    std::cout << "ImagePath: " << joints_data->image_path_batch[i] << std::endl;
+                    std::cout << "Center: " << joints_data->center_batch[i][0] << " " << joints_data->center_batch[i][1] << std::endl;
+                    std::cout << "Scale: " << joints_data->scale_batch[i][0] << " " << joints_data->scale_batch[i][1] << std::endl;
+                    std::cout << "Score: " << joints_data->score_batch[i] << std::endl;
+                    std::cout << "Rotation: " << joints_data->rotation_batch[i] << std::endl;
+
+                    for (int k = 0; k < 17; k++)
                     {
-                        std::cout << idx_value;
+                    std::cout << "x : " << joints_data->joints_batch[i][k][0] << " , y : " << joints_data->joints_batch[i][k][1] << " , v : " << joints_data->joints_visibility_batch[i][k][0] << std::endl;
                     }
                 }
-                }
-                std::cout << "\n";
             }
-            std::cout << "\n";
+            break;
+            default:
+            {
+                std::cout << "Not a valid pipeline type ! Exiting!\n";
+                return -1;
+            }
         }
         auto last_colot_temp = raliGetIntValue(color_temp_adj);
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);

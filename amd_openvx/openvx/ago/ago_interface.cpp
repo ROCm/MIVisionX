@@ -1141,7 +1141,7 @@ int agoLoadModule(AgoContext * context, const char * module)
         ago_module hmodule = agoOpenModule(filePath);
         if (hmodule == NULL) {
             status = VX_ERROR_INVALID_MODULE;
-            agoAddLogEntry(&context->ref, status, "ERROR: Unable to load module %s \n", filePath);
+            agoAddLogEntry(&context->ref, status, "ERROR: Unable to load module %s\n", filePath);
         }
         else {
             vx_publish_kernels_f publish_kernels_f = (vx_publish_kernels_f)agoGetFunctionAddress(hmodule, "vxPublishKernels");

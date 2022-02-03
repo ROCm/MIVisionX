@@ -11,7 +11,9 @@
 ### Added
 
 * Support for cmake 3.22.X
+* Support for OpenCV 4.X.X
 * Support for mv_compile with the HIP GPU backend
+* Support for tensor_compare node (less/greater/less_than/greater_than/equal onnx operators)
 
 ### Optimizations
 

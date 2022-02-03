@@ -1984,3 +1984,177 @@ int HipExec_Argmax_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
     return VX_SUCCESS;
 
     }
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_compare_less_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride,
+ uchar* out, uint out_offset, uint4 out_stride) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    T value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    T value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+   
+    // compare the values and write to the output\n"
+    bool result = (value < value2);
+   *(int *)&out[0] = result;
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_compare_greater_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride,
+ uchar* out, uint out_offset, uint4 out_stride) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    T value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    T value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+   
+    // compare the values and write to the output\n"
+    bool result = (value < value2);
+   *(int *)&out[0] = result;
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_compare_less_than_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride,
+ uchar* out, uint out_offset, uint4 out_stride) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    T value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    T value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+   
+    // compare the values and write to the output\n"
+    bool result = (value <= value2);
+   *(int *)&out[0] = result;
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_compare_greater_than_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride,
+ uchar* out, uint out_offset, uint4 out_stride) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    T value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    T value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+   
+    // compare the values and write to the output\n"
+    bool result = (value >= value2);
+   *(int *)&out[0] = result;
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_compare_equal_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride,
+ uchar* out, uint out_offset, uint4 out_stride) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    T value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    T value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+   
+    // compare the values and write to the output\n"
+    bool result = (value == value2);
+   *(int *)&out[0] = result;
+}
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_tensor_compare_not_equal_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride,
+ uchar* out, uint out_offset, uint4 out_stride) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    T value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    T value2 = *(T*)&in2[in2_offset + x * in2_stride.x + y * in2_stride.y + z * in2_stride.z];
+    out += out_offset + x * out_stride.x + y * out_stride.y + z * out_stride.z;
+   
+    // compare the values and write to the output\n"
+    bool result = (value != value2);
+   *(int *)&out[0] = result;
+}
+
+int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,
+    uint in_offset, uint4 in_stride, uchar* in2, uint in2_offset, uint4 in2_stride, uchar* out, uint out_offset,
+    uint4 out_stride, uint mode) {
+
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+    if (type == VX_TYPE_FLOAT32) {
+        switch (mode) {
+            case 0:
+                hipLaunchKernelGGL(Hip_tensor_compare_less_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 1:
+                hipLaunchKernelGGL(Hip_tensor_compare_greater_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 2:
+                hipLaunchKernelGGL(Hip_tensor_compare_less_than_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 3:
+                hipLaunchKernelGGL(Hip_tensor_compare_greater_than_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 4:
+                hipLaunchKernelGGL(Hip_tensor_compare_equal_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 5:
+                hipLaunchKernelGGL(Hip_tensor_compare_not_equal_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+        }
+    }
+    else if (type == VX_TYPE_FLOAT16) {
+        switch (mode) {
+            case 0:
+                hipLaunchKernelGGL(Hip_tensor_compare_less_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 1:
+                hipLaunchKernelGGL(Hip_tensor_compare_greater_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 2:
+                hipLaunchKernelGGL(Hip_tensor_compare_less_than_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 3:
+                hipLaunchKernelGGL(Hip_tensor_compare_greater_than_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 4:
+                hipLaunchKernelGGL(Hip_tensor_compare_equal_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+            case 5:
+                hipLaunchKernelGGL(Hip_tensor_compare_not_equal_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+                    in2, in2_offset, in2_stride, out, out_offset, out_stride);
+                break;
+        }
+    }
+    return VX_SUCCESS;
+}

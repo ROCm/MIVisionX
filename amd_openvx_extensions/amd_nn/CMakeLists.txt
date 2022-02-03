@@ -52,7 +52,7 @@ if(Protobuf_FOUND)
     add_subdirectory(../../utilities/inference_generator ${CMAKE_CURRENT_BINARY_DIR}/bin)
     message("-- ${Green}Inference Generator -- utilities/inference_generator module added${ColourReset}")
 else(Protobuf_FOUND)
-    message("-- ${Red}WARNING:Protobuf Not Found -- utilities/inference_generator module excluded${ColourReset}")
+    message("-- ${Red}WARNING: Protobuf Not Found -- utilities/inference_generator module excluded${ColourReset}")
 endif(Protobuf_FOUND)
 
 include_directories(../../amd_openvx/openvx/include
@@ -102,6 +102,7 @@ list(APPEND SOURCES
     src/topk_layer.cpp
     src/reduce_min.cpp
     src/tile_layer.cpp
+    src/tensor_compare.cpp
     src/profiler.cpp
     )
 
@@ -127,7 +128,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(vx_nn openvx MIOpen roc::rocblas ${HIP_LIBRARY})
 else()
-    message("-- ${Red}WARNING:OpenCL/HIP Not Found -- amd_nn module excluded${ColourReset}")
+    message("-- ${Red}WARNING: OpenCL/HIP Not Found -- amd_nn module excluded${ColourReset}")
 endif()
 
 

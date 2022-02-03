@@ -264,9 +264,17 @@ static vx_status VX_CALLBACK CV_orb_detector_Kernel(vx_node node, const vx_refer
     STATUS_ERROR_CHECK(VX_to_CV_Image(&mat, image_in));
     STATUS_ERROR_CHECK(VX_to_CV_Image(&mask_mat, mask));
 
+
+#if USE_OPENCV_4
+    ORB::ScoreType scoreTypeORB = (scoreType == 0 ? ORB::HARRIS_SCORE : ORB::FAST_SCORE);
+    //Compute using OpenCV
+    Ptr<Feature2D> orb = ORB::create(nFeatures, ScaleFactor, nLevels, edgeThreshold, firstLevel, WTA_K, scoreTypeORB, patchSize);
+    orb->detect(*mat, key_points, *mask_mat);
+#else
     //Compute using OpenCV
     Ptr<Feature2D> orb = ORB::create(nFeatures, ScaleFactor, nLevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize);
     orb->detect(*mat, key_points, *mask_mat);
+#endif
 
     //OpenCV 2.4 Call
     //ORB orb(nFeatures, ScaleFactor, nLevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize);

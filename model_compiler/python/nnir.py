@@ -218,6 +218,12 @@ class IrNode(object):
             'topk'  : 1,
             'reduce_min' : 1,
             'tile' : 1,
+            'less' : 1,
+            'greater' : 1,
+            'less_equal' : 1,
+            'greater_equal' : 1,
+            'equal' : 1,
+            'not_equal' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -334,7 +340,7 @@ class IrGraph(object):
         for node in self.nodes:
             for output in node.outputs:
                 count+=1
-                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'exp', 'log', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy']:
+                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'exp', 'log', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy', 'less', 'greater', 'less_equal', 'greater_equal', 'equal', 'not_equal']:
                     input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
                     local.setName(output)

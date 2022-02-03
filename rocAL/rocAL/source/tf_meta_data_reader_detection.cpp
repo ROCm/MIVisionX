@@ -47,7 +47,7 @@ bool TFMetaDataReaderDetection::exists(const std::string& _image_name)
 }
 
 
-void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels,ImgSizes image_size)
+void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels, ImgSize image_size)
 {
     if(exists(image_name))
     {
@@ -75,40 +75,23 @@ void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_nam
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
 	
-        if(_map_content.end() == it){
-
-            BoundingBoxCords bb_coords;
-            BoundingBoxLabels bb_labels;
-            BoundingBoxCord box;
-            ImgSizes img_sizes;
-            ImgSize img_size;
-
-
-            box.l = box.t = 0;
-            box.r = box.b = 1;
-            img_size.w = img_size.h =0;
-            bb_coords.push_back(box);
-            bb_labels.push_back(0);
-            img_sizes.push_back(img_size);
-            // bb_coords={};
-
-	    _output->get_bb_cords_batch()[i] = bb_coords;
-	    _output->get_bb_labels_batch()[i] = bb_labels;
-        _output->get_img_sizes_batch()[i] = img_sizes;
+        if(_map_content.end() == it)
+        {
+            _output->get_bb_cords_batch()[i] = {{0, 0, 0, 0}};
+            _output->get_bb_labels_batch()[i] = {{0}};
+            _output->get_img_sizes_batch()[i] = {0, 0};
         }
-	else{
-        _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
-        _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
-        _output->get_img_sizes_batch()[i] = it->second->get_img_sizes();
+        else
+        {
+            _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
+            _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
+            _output->get_img_sizes_batch()[i] = it->second->get_img_size();
+        }
     }
-    }
-
-
 }
 
 void TFMetaDataReaderDetection::print_map_contents()
 {
-
     BoundingBoxCords bb_coords;
     BoundingBoxLabels bb_labels;
 
@@ -188,14 +171,9 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     image_height = sf_height.int64_list().value()[0];
     image_width = sf_width.int64_list().value()[0];
 
-    ImgSizes img_sizes;
     ImgSize img_size;
     img_size.w = image_width;
     img_size.h = image_height;
-
-    img_sizes.push_back(img_size);
-
-
 
     for(int i = 0; i < size_b_xmin; i++)
     {
@@ -212,7 +190,7 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
       box.b = bbox_ymax ;
       bb_coords.push_back(box);
       bb_labels.push_back(label);
-      add(fname, bb_coords, bb_labels,img_sizes);
+      add(fname, bb_coords, bb_labels, img_size);
       bb_coords.clear();
       bb_labels.clear();
     }
@@ -260,9 +238,8 @@ void TFMetaDataReaderDetection::read_all(const std::string &path)
         _last_rec = false;
         file_contents.close();
     }
-  //google::protobuf::ShutdownProtobufLibrary();
+    // google::protobuf::ShutdownProtobufLibrary();
     // print_map_contents();
-
 }
 
 void TFMetaDataReaderDetection::release(std::string _image_name)

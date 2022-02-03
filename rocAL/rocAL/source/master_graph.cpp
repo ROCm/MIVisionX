@@ -946,10 +946,6 @@ void MasterGraph::output_routine()
                         {
                             _meta_data_graph->update_random_bbox_meta_data(_augmented_meta_data, decode_image_info, crop_image_info);
                         }
-                        else
-                        {
-                            _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
-                        }
                         _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
@@ -1068,7 +1064,6 @@ void MasterGraph::output_routine_video()
                 {
                     if (_meta_data_graph)
                     {
-                        _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
                         _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
@@ -1135,11 +1130,13 @@ void MasterGraph::stop_processing()
         _output_thread.join();
 }
 
-MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output)
+MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type, MetaDataType label_type, float sigma, unsigned pose_output_width, unsigned pose_output_height)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, source_path);
+    MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string());
+    config.set_out_img_width(pose_output_width);
+    config.set_out_img_height(pose_output_height);
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);

@@ -1,4 +1,4 @@
-# Copyright (c) 2020 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2020 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import sys
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Vision Test Full Report"
+__copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Vision Test Full Report"
 __license__ = "MIT"
 __version__ = "1.2.2"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -516,9 +516,9 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
         os.system('echo '+echo1 +
                   ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
-        print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+        print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat)
-        os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+        os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                   hardwareMode+' -dump-profile node '+nodeFormat)
         print("\n")
 
@@ -573,9 +573,9 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
         os.system('echo '+echo1 +
                   ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
-        print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+        print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat)
-        os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+        os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                   hardwareMode+' -dump-profile node '+nodeFormat)
         print("\n")
 

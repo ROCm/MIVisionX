@@ -1,4 +1,4 @@
-# Copyright (c) 2020 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2020 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ import os
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Library Tests Report"
+__copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Library Tests Report"
 __license__ = "MIT"
 __version__ = "1.0.0"
 __maintainer__ = "Kiriti Nagesh Gowda"

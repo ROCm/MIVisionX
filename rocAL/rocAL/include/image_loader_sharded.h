@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +48,7 @@ public:
     crop_image_info get_crop_image_info() override;
     Timing timing() override;
     void set_prefetch_queue_depth(size_t prefetch_queue_depth) override;
+    void shut_down() override;
 private:
     void increment_loader_idx();
 #if ENABLE_HIP

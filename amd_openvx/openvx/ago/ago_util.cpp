@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1765,10 +1765,10 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         if (agoParseWordFromDescription(desc, sizeof(data_type), data_type) < 0)
             return -1;
         data->u.tensor.data_type = agoName2Enum(data_type);
-        if (data->u.tensor.data_type != VX_TYPE_INT16 &&
+        if (data->u.tensor.data_type != VX_TYPE_BOOL && data->u.tensor.data_type != VX_TYPE_INT16 &&
             data->u.tensor.data_type != VX_TYPE_UINT8 && data->u.tensor.data_type != VX_TYPE_UINT16 &&
-            data->u.tensor.data_type != VX_TYPE_FLOAT32 && data->u.tensor.data_type != VX_TYPE_FLOAT16
-            && data->u.tensor.data_type != VX_TYPE_INT64 && data->u.tensor.data_type != VX_TYPE_INT32)
+            data->u.tensor.data_type != VX_TYPE_FLOAT32 && data->u.tensor.data_type != VX_TYPE_FLOAT16 &&
+            data->u.tensor.data_type != VX_TYPE_INT64 && data->u.tensor.data_type != VX_TYPE_INT32)
         {
             agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid data_type for tensor: %s\n", data_type);
             return -1;

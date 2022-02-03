@@ -21,6 +21,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(inference_server_app)
 
+set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm Installation Path")
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../amd_openvx/cmake)
 
 set(CMAKE_CXX_STANDARD 11)

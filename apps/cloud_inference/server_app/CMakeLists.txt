@@ -56,7 +56,7 @@ list(APPEND SOURCES
 	)
 
 add_executable(inference_server_app ${SOURCES})
-target_link_libraries(inference_server_app vx_nn openvx pthread)
+target_link_libraries(inference_server_app vx_nn openvx pthread dl)
 install(TARGETS inference_server_app DESTINATION bin)
 
 if(OpenCL_FOUND)

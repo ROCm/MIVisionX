@@ -35,6 +35,10 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(OpenCL QUIET)
 find_package(OpenCV REQUIRED)
 
+if(NOT OpenCL_FOUND)
+	message( FATAL_ERROR "inference_server_app - Only supported with OpenCL Backend" )
+endif(NOT OpenCL_FOUND))
+
 include_directories(../../../amd_openvx/openvx/include
   					${OpenCL_INCLUDE_DIRS}
 					../../../amd_openvx_extensions/amd_nn

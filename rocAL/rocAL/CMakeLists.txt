@@ -66,7 +66,7 @@ if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         endif()
     else()
         SET(BUILD_RALI false)
-        message(FATAL_ERROR "Could'nt find HIP. Ensure that HIP is either installed in /opt/rocm/hip or the variable HIP_PATH is set.")
+        message("-- ${Yellow}NOTE: rocAL library requires HIP for BACKEND=HIP, Not Found ${ColourReset}")
     endif()
 endif()
 

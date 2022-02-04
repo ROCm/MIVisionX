@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include "meta_data_reader.h"
 #include "timing_debug.h"
 
-class COCOMetaDataReader: public MetaDataReader
+class COCOMetaDataReaderKeyPoints: public MetaDataReader
 {
 public:
     void init(const MetaDataConfig& cfg) override;
@@ -38,17 +38,19 @@ public:
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
-    const std::map<std::string, std::shared_ptr<BoundingBox>> & get_map_content() { return _map_content; }
-    COCOMetaDataReader();
-    ~COCOMetaDataReader() override { delete _output; }
+    const std::map<std::string, std::shared_ptr<KeyPoint>> & get_map_content() { return _map_content; }
+    COCOMetaDataReaderKeyPoints();
+    ~COCOMetaDataReaderKeyPoints() override { delete _output; }
 private:
-    BoundingBoxBatch* _output;
+    KeyPointBatch* _output;
     std::string _path;
+    unsigned _out_img_width;
+    unsigned _out_img_height;
     int meta_data_reader_type;
-    void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);
+    void add(std::string image_name, ImgSize image_size, JointsData *joints_data);
     bool exists(const std::string &image_name);
-    std::map<std::string, std::shared_ptr<BoundingBox>> _map_content;
-    std::map<std::string, std::shared_ptr<BoundingBox>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<KeyPoint>> _map_content;
+    std::map<std::string, std::shared_ptr<KeyPoint>>::iterator _itr;
     std::map<std::string, ImgSize> _map_img_sizes;
     std::map<std::string, std::vector<ImgSize>> ::iterator itr;
     std::map<int, int> _label_info;

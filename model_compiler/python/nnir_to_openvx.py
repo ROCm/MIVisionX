@@ -1073,6 +1073,66 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }    
 """ 
     % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'less':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 0);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'greater':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 1);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'less_equal':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 2);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'greater_equal':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 3);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'equal':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 4);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'not_equal':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 5);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
             elif node.type == 'reduce_min':
                 axes = node.attr.get('axes')
                 axes_len = -1

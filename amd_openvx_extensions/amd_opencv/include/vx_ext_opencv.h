@@ -28,6 +28,9 @@ THE SOFTWARE.
 #if USE_OPENCV_CONTRIB
 #include "opencv2/xfeatures2d.hpp"
 #endif
+#if USE_OPENCV_4
+#define CV_DIST_L1 DIST_L1
+#endif
 
 #ifndef dimof
 #define dimof(x) (sizeof(x)/sizeof(x[0]))

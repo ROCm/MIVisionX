@@ -27,6 +27,9 @@ THE SOFTWARE.
 #if USE_OPENCV_CONTRIB
 #include "opencv2/xfeatures2d.hpp"
 #endif
+#if USE_OPENCV_4
+#define CV_DIST_L1 DIST_L1
+#endif
 
 #include "VX/vx.h"
 #include "vx_opencv.h"

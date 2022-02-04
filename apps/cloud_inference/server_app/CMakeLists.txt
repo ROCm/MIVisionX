@@ -27,7 +27,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../amd_openvx/cmake)
 
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCL REQUIRED)
+find_package(OpenCL QUIET)
 find_package(OpenCV REQUIRED)
 
 include_directories(../../../amd_openvx/openvx/include

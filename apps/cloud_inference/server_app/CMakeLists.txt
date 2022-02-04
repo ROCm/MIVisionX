@@ -34,6 +34,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL QUIET)
 find_package(OpenCV REQUIRED)
+find_package(glfw3 3.3 REQUIRED)
 
 include_directories(../../../amd_openvx/openvx/include
   					${OpenCL_INCLUDE_DIRS}
@@ -56,7 +57,7 @@ list(APPEND SOURCES
 	)
 
 add_executable(inference_server_app ${SOURCES})
-target_link_libraries(inference_server_app vx_nn openvx pthread)
+target_link_libraries(inference_server_app vx_nn openvx pthread glfw)
 install(TARGETS inference_server_app DESTINATION bin)
 
 if(OpenCL_FOUND)

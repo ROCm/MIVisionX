@@ -26,6 +26,7 @@
 ### Fixed
 
 * Minor bugs and warnings
+* Inference server application - OpenCL Backend
 
 ### Tested Configurations
 

@@ -158,7 +158,7 @@ CLoomIoMediaEncoder::CLoomIoMediaEncoder(vx_node node_, const char ioConfig_[], 
       inputFrameCount{ 0 }, encodeFrameCount{ 0 }, threadTerminated{ false }, inputFormat{ AV_PIX_FMT_UYVY422 }, 
       outputBuffer{ nullptr }, outputBufferSize{ 1000000 }, fpOutput{ nullptr }, formatContext{ nullptr }, videoStream{ nullptr }, outputAuxBuffer{ nullptr }, outputAuxLength{ 0 },
       videoCodecContext{ nullptr }, videoCodec{ nullptr }, conversionContext{ nullptr }, thread{ nullptr },
-      mbps{ DEFAULT_MBPS }, fps{ DEFAULT_FPS }, gopsize{ DEFAULT_GOPSIZE }, bframes{ DEFAULT_BFRAMES }, hostBuffer{ nullptr}
+      mbps{ DEFAULT_MBPS }, fps{ DEFAULT_FPS }, gopsize{ DEFAULT_GOPSIZE }, bframes{ DEFAULT_BFRAMES }
 {
     m_enableUserBufferGPU = false;   // use host buffers by default
 #if ENABLE_OPENCL
@@ -199,7 +199,7 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
     #if ENABLE_OPENCL
         if (cmdq) clReleaseCommandQueue(cmdq);
     #elif ENABLE_HIP
-        if (hostBuffer) free(hostBuffer);
+        if (hostBuffer) hipHostFree((void *)hostBuffer);
     #endif
     }
 
@@ -351,15 +351,16 @@ vx_status CLoomIoMediaEncoder::Initialize()
       #endif
         ERROR_CHECK_NULLPTR(cmdq);
     #elif ENABLE_HIP
+        hostBuffer  = nullptr;
         int hip_device = -1;
         ERROR_CHECK_STATUS(vxQueryContext(vxGetContext((vx_reference)node), VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &hip_device, sizeof(hip_device)));
         if (hip_device < 0) {
             return VX_FAILURE;
         }
         int bufHeight = (inputFormat == AV_PIX_FMT_NV12) ? (height + (height>>1)) : height;
-        hostBuffer = (uint8_t *)malloc(offset + stride * bufHeight);
-        if (!hostBuffer) {
-            return VX_FAILURE;
+        hipError_t err = hipHostMalloc((void **)&hostBuffer, offset + stride * bufHeight, hipHostMallocDefault);
+        if (err != hipSuccess) {
+            vxAddLogEntry((vx_reference)node, VX_ERROR_NO_MEMORY, "ERROR: CLoomIoMediaEncoder::Memory allocation failed \n");
         }
     #endif
     }

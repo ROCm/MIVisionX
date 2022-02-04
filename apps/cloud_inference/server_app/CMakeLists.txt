@@ -34,7 +34,7 @@ include_directories(../../../amd_openvx/openvx/include
   					${OpenCL_INCLUDE_DIRS}
 					../../../amd_openvx_extensions/amd_nn
 				   )
-set(CMAKE_LIBRARY_PATH ${ROCM_PATH}/mivisionx/lib)
+link_directories(${ROCM_PATH}/mivisionx/lib)
 
 list(APPEND SOURCES
 		common.cpp

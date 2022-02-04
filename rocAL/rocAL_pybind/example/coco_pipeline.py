@@ -141,12 +141,11 @@ class RALICOCOIterator(object):
             elif self.tensor_dtype == types.FLOAT16:
                 self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
         else:
-
-            with torch.cuda.device(self.device_id):
-                if self.tensor_dtype == types.FLOAT:
-                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32).cuda()
-                elif self.tensor_dtype == types.FLOAT16:
-                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16).cuda()
+            torch_gpu_device = torch.device('cuda', self.device_id)
+            if self.tensor_dtype == types.FLOAT:
+                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device=torch_gpu_device)
+            elif self.tensor_dtype == types.FLOAT16:
+                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device=torch_gpu_device)
 
         #Image id of a batch of images
         self.image_id = np.zeros(self.bs, dtype="int32")

@@ -26,11 +26,13 @@ THE SOFTWARE.
 #include <mutex>
 #include <condition_variable>
 #include <deque>
+#include <string>
+#include <vector>
+#include <sstream>
 
 // GPU configuration
 #define ENCODE_ENABLE_GPU       1         // enable use of GPU buffers
 
-#if ENCODE_ENABLE_GPU
 #if __APPLE__
 #include <opencl.h>
 #else
@@ -38,7 +40,6 @@ THE SOFTWARE.
 #include <CL/cl.h>
 #elif ENABLE_HIP
 #include "hip/hip_runtime.h"
-#endif
 #endif
 #endif
 
@@ -67,6 +68,9 @@ public:
     vx_status Initialize();
     vx_status ProcessFrame(vx_image input_image, vx_array input_aux, vx_array output_aux);
     vx_status UpdateBufferGPU(vx_image input_image, vx_array input_aux);
+    void SetEnableUserBufferGPUMode(vx_bool bEnable) { m_enableUserBufferGPU = bEnable;};
+    vx_bool m_enableUserBufferGPU;
+
 protected:
     typedef enum { cmd_abort, cmd_encode } command;
     void EncodeLoop();
@@ -74,11 +78,11 @@ protected:
     void PushAck(int ack);
     command PopCommand();
     int PopAck();
+
 private:
     vx_node node;
     std::string ioConfig;
-    int width;
-    int height;
+    vx_uint32 width, height;
     vx_df_image format;
     AVPixelFormat inputFormat;
     int stride, offset;
@@ -88,14 +92,12 @@ private:
     AVCodecContext * videoCodecContext;
     AVCodec * videoCodec;
     SwsContext * conversionContext;
-#if ENCODE_ENABLE_GPU
     void* mem[ENCODE_BUFFER_POOL_SIZE];
 #if ENABLE_OPENCL
     cl_command_queue cmdq;
 #elif ENABLE_HIP
     hipDeviceProp_t hip_dev_prop;
-    uint8_t *hostBuffer[ENCODE_BUFFER_POOL_SIZE];
-#endif
+    uint8_t *hostBuffer;
 #endif
     AVFrame * videoFrame[ENCODE_BUFFER_POOL_SIZE];
     uint8_t * outputBuffer;
@@ -114,6 +116,9 @@ private:
     float mbps, fps;
     int bframes, gopsize;
 };
+
+// helper function for spliting streams.
+extern std::vector<std::string> split(const std::string& s, char delimiter);
 
 void CLoomIoMediaEncoder::PushCommand(CLoomIoMediaEncoder::command cmd)
 {
@@ -148,19 +153,18 @@ int CLoomIoMediaEncoder::PopAck()
 }
 
 CLoomIoMediaEncoder::CLoomIoMediaEncoder(vx_node node_, const char ioConfig_[], vx_uint32 width_, vx_uint32 height_, vx_df_image format_, vx_uint32 stride_, vx_uint32 offset_, vx_size input_aux_data_max_size_)
-    : node{ node_ }, ioConfig(ioConfig_), width{ static_cast<int>(width_) }, height{ static_cast<int>(height_) }, format{ format_ },
+    : node{ node_ }, ioConfig(ioConfig_), width{ width_ }, height{ height_ }, format{ format_ },
       stride{ static_cast<int>(stride_) }, offset{ static_cast<int>(offset_) }, input_aux_data_max_size{ input_aux_data_max_size_ },
       inputFrameCount{ 0 }, encodeFrameCount{ 0 }, threadTerminated{ false }, inputFormat{ AV_PIX_FMT_UYVY422 }, 
       outputBuffer{ nullptr }, outputBufferSize{ 1000000 }, fpOutput{ nullptr }, formatContext{ nullptr }, videoStream{ nullptr }, outputAuxBuffer{ nullptr }, outputAuxLength{ 0 },
       videoCodecContext{ nullptr }, videoCodec{ nullptr }, conversionContext{ nullptr }, thread{ nullptr },
       mbps{ DEFAULT_MBPS }, fps{ DEFAULT_FPS }, gopsize{ DEFAULT_GOPSIZE }, bframes{ DEFAULT_BFRAMES }
 {
-#if ENCODE_ENABLE_GPU
+    m_enableUserBufferGPU = false;   // use host buffers by default
 #if ENABLE_OPENCL
     cmdq = nullptr;
 #endif
     memset(mem, 0, sizeof(mem));
-#endif
     memset(videoFrame, 0, sizeof(videoFrame));
     outputAuxBuffer = new uint8_t[input_aux_data_max_size + sizeof(LoomIoMediaEncoderAuxInfo)]();
     // initialize freq inside GetTimeInMicroseconds()
@@ -191,34 +195,14 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
 
     // release GPU and media resources
     if (outputBuffer) aligned_free(outputBuffer);
-#if ENCODE_ENABLE_GPU
-#if ENABLE_OPENCL
-    if (cmdq) clReleaseCommandQueue(cmdq);
-    for (int i = 0; i < ENCODE_BUFFER_POOL_SIZE; i++) {
-        if (mem[i]) clReleaseMemObject((cl_mem)mem[i]);
+    if (m_enableUserBufferGPU) {
+    #if ENABLE_OPENCL
+        if (cmdq) clReleaseCommandQueue(cmdq);
+    #elif ENABLE_HIP
+        if (hostBuffer) hipHostFree((void *)hostBuffer);
+    #endif
     }
-#elif ENABLE_HIP
-    hipError_t status;
-    for (int i = 0; i < ENCODE_BUFFER_POOL_SIZE; i++) {
-        if (hostBuffer[i]) {
-            status = hipHostFree(hostBuffer[i]);
-            if (status != hipSuccess) {
-                vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipHostFree(%p) failed (%d)\n", hostBuffer[i], status);
-            }
-        }
-        if (mem[i]) {
-            if (hip_dev_prop.canMapHostMemory) {
-                mem[i] = nullptr;
-            } else {
-                status = hipFree(mem[i]);
-                if (status != hipSuccess) {
-                    vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipFree(%p) failed (%d)\n", mem[i], status);
-                }
-            }
-        }
-    }
-#endif
-#endif
+
     for (int i = 0; i < ENCODE_BUFFER_POOL_SIZE; i++) {
         if (videoFrame[i]) {
             if (videoFrame[i]->data[0]) aligned_free(videoFrame[i]->data[0]);
@@ -231,14 +215,17 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
         avcodec_close(videoCodecContext);
         av_free(videoCodecContext);
     }
-    if (videoCodec) av_free(videoCodec);
     if (outputAuxBuffer) delete[] outputAuxBuffer;
 }
 
 vx_status CLoomIoMediaEncoder::Initialize()
 {
+    const char * outFileName = nullptr;
     // check for valid image type support and get stride in bytes (aligned to 16-byte boundary)
-    if (format == VX_DF_IMAGE_UYVY) {
+    if (format == VX_DF_IMAGE_NV12) {
+        inputFormat = AV_PIX_FMT_NV12;
+    }
+    else if (format == VX_DF_IMAGE_UYVY) {
         inputFormat = AV_PIX_FMT_UYVY422;
     }
     else if (format == VX_DF_IMAGE_YUYV) {
@@ -253,6 +240,26 @@ vx_status CLoomIoMediaEncoder::Initialize()
     }
 
     // get media configuration and fileName
+    std::vector<std::string> mediainfo = split(ioConfig, ',');
+    if (mediainfo.size() < 1) {
+        vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: invalid input arguments");
+        return VX_ERROR_INVALID_LINK;
+    }
+    if (mediainfo.size() == 1) {
+        outFileName = mediainfo[0].c_str();
+    }
+    else if (mediainfo.size() == 5) {
+        outFileName = mediainfo[0].c_str();
+        mbps = atoi(mediainfo[1].c_str());
+        fps = atoi(mediainfo[2].c_str());
+        bframes = atoi(mediainfo[3].c_str());
+        gopsize = atoi(mediainfo[4].c_str());
+    } else{
+        vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: invalid input arguments");
+        return VX_ERROR_INVALID_LINK;
+    }
+
+#if 0 // todo:: runvx has issue taking this string format
     const char * s = ioConfig.c_str();
     if (*s == '{') {
         sscanf(s + 1, "%f,%f,%d,%d", &mbps, &fps, &bframes, &gopsize);
@@ -266,6 +273,7 @@ vx_status CLoomIoMediaEncoder::Initialize()
         }
     }
     const char * fileName = s;
+#endif
 
     // open media file and initialize codec
     ERROR_CHECK_STATUS(initialize_ffmpeg());
@@ -288,36 +296,35 @@ vx_status CLoomIoMediaEncoder::Initialize()
         videoFrame[i]->linesize[0] = width;
         videoFrame[i]->linesize[1] = width;
         videoFrame[i]->format = AV_PIX_FMT_NV12;
-#if ENCODE_ENABLE_GPU
-        // just one videoFrame[0] is sufficient
-        break;
-#endif
+        // just one videoFrame[0] is sufficient for GPU mode
+        if (m_enableUserBufferGPU)
+          break;
     }
     outputBufferSize = 1024*1024;
     ERROR_CHECK_NULLPTR(outputBuffer = aligned_alloc(outputBufferSize));
 
     // open output file
-    if (strlen(fileName) > 4 && !strcmp(fileName + strlen(fileName) - 4, ".264")) {
-        fpOutput = fopen(fileName, "wb");
+    if (strlen(outFileName) > 4 && !strcmp(outFileName + strlen(outFileName) - 4, ".264")) {
+        fpOutput = fopen(outFileName, "wb");
         if (!fpOutput) {
-            vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: CLoomIoMediaEncoder::Initialize: unable to create: %s", fileName);
+            vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: CLoomIoMediaEncoder::Initialize: unable to create: %s", outFileName);
             return VX_ERROR_INVALID_LINK;
         }
     }
     else {
-        int status = avformat_alloc_output_context2(&formatContext, nullptr, nullptr, fileName);
+        int status = avformat_alloc_output_context2(&formatContext, nullptr, nullptr, outFileName);
         if (status < 0) {
-            vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: CLoomIoMediaEncoder::Initialize: avformat_alloc_output_context2(...,%s) failed (%d)", fileName, status);
+            vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: CLoomIoMediaEncoder::Initialize: avformat_alloc_output_context2(...,%s) failed (%d)", outFileName, status);
             return VX_ERROR_INVALID_LINK;
         }
         ERROR_CHECK_NULLPTR(videoStream = avformat_new_stream(formatContext, videoCodec));
         videoStream->id = formatContext->nb_streams - 1;
         if (formatContext->oformat->flags & AVFMT_GLOBALHEADER)
             videoCodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-        av_dump_format(formatContext, 0, fileName, 1);
+        av_dump_format(formatContext, 0, outFileName, 1);
         if (!(formatContext->oformat->flags & AVFMT_NOFILE)) {
-            if ((status = avio_open(&formatContext->pb, fileName, AVIO_FLAG_WRITE)) < 0) {
-                vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: CLoomIoMediaEncoder::Initialize: avio_open(...,%s) failed (%d)", fileName, status);
+            if ((status = avio_open(&formatContext->pb, outFileName, AVIO_FLAG_WRITE)) < 0) {
+                vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: CLoomIoMediaEncoder::Initialize: avio_open(...,%s) failed (%d)", outFileName, status);
                 return VX_ERROR_INVALID_LINK;
             }
         }
@@ -331,56 +338,32 @@ vx_status CLoomIoMediaEncoder::Initialize()
         ERROR_CHECK_STATUS(avformat_write_header(formatContext, nullptr));
     }
 
-#if ENCODE_ENABLE_GPU
-#if ENABLE_OPENCL
-    // allocate OpenCL encode buffers
-    cl_context context = nullptr;
-    ERROR_CHECK_STATUS(vxQueryContext(vxGetContext((vx_reference)node), VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
-    cl_device_id device_id = nullptr;
-    ERROR_CHECK_STATUS(clGetContextInfo(context, CL_CONTEXT_DEVICES, sizeof(device_id), &device_id, nullptr));
-#if defined(CL_VERSION_2_0)
-    cmdq = clCreateCommandQueueWithProperties(context, device_id, 0, nullptr);
-#else
-    cmdq = clCreateCommandQueue(context, device_id, 0, nullptr);
-#endif
-    ERROR_CHECK_NULLPTR(cmdq);
-    for (int i = 0; i < ENCODE_BUFFER_POOL_SIZE; i++) {
-        mem[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, offset + stride * height, nullptr, nullptr);
-        ERROR_CHECK_NULLPTR(mem[i]);
-    }
-
-#elif ENABLE_HIP
-    int hip_device = -1;
-    ERROR_CHECK_STATUS(vxQueryContext(vxGetContext((vx_reference)node), VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &hip_device, sizeof(hip_device)));
-    if (hip_device < 0) {
-        return VX_FAILURE;
-    }
-    hipError_t err;
-
-    for (int i = 0; i < ENCODE_BUFFER_POOL_SIZE; i++) {
-        err = hipHostMalloc((void **)&hostBuffer[i], offset + stride * height);
-        if (err != hipSuccess) {
-            vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipHostMalloc => %d (failed)\n", err);
+    if (m_enableUserBufferGPU) {
+    #if ENABLE_OPENCL
+        cl_context context = nullptr;
+        ERROR_CHECK_STATUS(vxQueryContext(vxGetContext((vx_reference)node), VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
+        cl_device_id device_id = nullptr;
+        ERROR_CHECK_STATUS(clGetContextInfo(context, CL_CONTEXT_DEVICES, sizeof(device_id), &device_id, nullptr));
+      #if defined(CL_VERSION_2_0)
+        cmdq = clCreateCommandQueueWithProperties(context, device_id, 0, nullptr);
+      #else
+        cmdq = clCreateCommandQueue(context, device_id, 0, nullptr);
+      #endif
+        ERROR_CHECK_NULLPTR(cmdq);
+    #elif ENABLE_HIP
+        hostBuffer  = nullptr;
+        int hip_device = -1;
+        ERROR_CHECK_STATUS(vxQueryContext(vxGetContext((vx_reference)node), VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &hip_device, sizeof(hip_device)));
+        if (hip_device < 0) {
             return VX_FAILURE;
         }
-        if (hip_dev_prop.canMapHostMemory) {
-            err = hipHostGetDevicePointer((void **)&mem[i], hostBuffer[i], 0 );
-            if (err != hipSuccess) {
-                vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipHostGetDevicePointer => %d (failed)\n", err);
-                return VX_FAILURE;
-            }
-        } else {
-            err = hipMalloc(&mem[i], offset + stride * height);
-            if (err != hipSuccess) {
-                vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipMalloc(%p) => %d (failed)\n", mem[i], err);
-                return VX_FAILURE;
-            }
+        int bufHeight = (inputFormat == AV_PIX_FMT_NV12) ? (height + (height>>1)) : height;
+        hipError_t err = hipHostMalloc((void **)&hostBuffer, offset + stride * bufHeight, hipHostMallocDefault);
+        if (err != hipSuccess) {
+            vxAddLogEntry((vx_reference)node, VX_ERROR_NO_MEMORY, "ERROR: CLoomIoMediaEncoder::Memory allocation failed \n");
         }
+    #endif
     }
-
-
-#endif
-#endif
 
     // start encoder thread
     inputFrameCount = 0;
@@ -390,7 +373,7 @@ vx_status CLoomIoMediaEncoder::Initialize()
     ERROR_CHECK_NULLPTR(thread);
 
     // debug info
-    vxAddLogEntry((vx_reference)node, VX_SUCCESS, "INFO: writing %dx%d %.2fmbps %.2ffps gopsize=%d bframes=%d video into %s", width, height, mbps, fps, gopsize, bframes, fileName);
+    vxAddLogEntry((vx_reference)node, VX_SUCCESS, "INFO: writing %dx%d %.2fmbps %.2ffps gopsize=%d bframes=%d video into %s", width, height, mbps, fps, gopsize, bframes, outFileName);
 
     return VX_SUCCESS;
 }
@@ -398,13 +381,6 @@ vx_status CLoomIoMediaEncoder::Initialize()
 #if ENCODE_ENABLE_GPU
 vx_status CLoomIoMediaEncoder::UpdateBufferGPU(vx_image input_image, vx_array input_aux)
 {
-    // wait until there is an ACK from encoder thread
-    int ack = PopAck();
-    if ((ack < 0) || threadTerminated) {
-        // nothing to process, so abandon the graph execution
-        return VX_ERROR_GRAPH_ABANDONED;
-    }
-
     // update output auxiliary information
     outputAuxLength = 0;
     if (input_aux) {
@@ -422,49 +398,46 @@ vx_status CLoomIoMediaEncoder::UpdateBufferGPU(vx_image input_image, vx_array in
 
     // pick the OpenCL buffer frame from pool
     int bufId = inputFrameCount % ENCODE_BUFFER_POOL_SIZE; inputFrameCount++;
-
-#if ENABLE_OPENCL
-    ERROR_CHECK_STATUS(vxSetImageAttribute(input_image, VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &mem[bufId], sizeof(void*)));
-#elif ENABLE_HIP
-    ERROR_CHECK_STATUS(vxSetImageAttribute(input_image, VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &mem[bufId], sizeof(void*)));
-#endif
-
+    if (m_enableUserBufferGPU) {
+    #if ENABLE_OPENCL
+        ERROR_CHECK_STATUS(vxQueryImage(input_image, VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &mem[bufId], sizeof(void*)));
+    #elif ENABLE_HIP
+        ERROR_CHECK_STATUS(vxQueryImage(input_image, VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &mem[bufId], sizeof(void*)));
+    #endif
+    }
     return VX_SUCCESS;
 }
 #endif
 
 vx_status CLoomIoMediaEncoder::ProcessFrame(vx_image input_image, vx_array input_aux, vx_array output_aux)
 {
-#if ENCODE_ENABLE_GPU
-    if (threadTerminated)
-#else
     // wait until there is an ACK from encoder thread
     int ack = PopAck();
     if ((ack < 0) || threadTerminated)
-#endif
     { // nothing to process, so abandon the graph execution
         return VX_ERROR_GRAPH_ABANDONED;
     }
 
-#if ENCODE_ENABLE_GPU
-    // just submit GPU buffer for encoding
-    PushCommand(cmd_encode);
-#else
-    // format convert input image into encode buffer
-    int bufId = inputFrameCount % ENCODE_BUFFER_POOL_SIZE; inputFrameCount++;
-    vx_rectangle_t rect = { 0, 0, width, height };
-    vx_map_id map_id; vx_imagepatch_addressing_t addr;
-    uint8_t * ptr = nullptr;
-    ERROR_CHECK_STATUS(vxMapImagePatch(input_image, &rect, 0, &map_id, &addr, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-    int status = sws_scale(conversionContext, &ptr, &addr.stride_y, 0, height, videoFrame[bufId]->data, videoFrame[bufId]->linesize);
-    ERROR_CHECK_STATUS(vxUnmapImagePatch(input_image, map_id));
-    if (status < 0) {
-        vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::ProcessFrame: sws_scale() failed (%d)\n", status);
-        return VX_FAILURE;
+    if (m_enableUserBufferGPU) {        
+        UpdateBufferGPU(input_image, input_aux);
+       // just submit GPU buffer for encoding
+        PushCommand(cmd_encode);
+    } else {
+        // format convert input image into encode buffer
+        int bufId = inputFrameCount % ENCODE_BUFFER_POOL_SIZE; inputFrameCount++;
+        vx_rectangle_t rect = { 0, 0, width, height };
+        vx_map_id map_id; vx_imagepatch_addressing_t addr;
+        uint8_t * ptr = nullptr;
+        ERROR_CHECK_STATUS(vxMapImagePatch(input_image, &rect, 0, &map_id, &addr, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+        int status = sws_scale(conversionContext, &ptr, &addr.stride_y, 0, height, videoFrame[bufId]->data, videoFrame[bufId]->linesize);
+        ERROR_CHECK_STATUS(vxUnmapImagePatch(input_image, map_id));
+        if (status < 0) {
+            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::ProcessFrame: sws_scale() failed (%d)\n", status);
+            return VX_FAILURE;
+        }
+        // submit encoding
+        PushCommand(cmd_encode);
     }
-    // submit encoding
-    PushCommand(cmd_encode);
-#endif
 
     // copy input aux data to output, if there is input aux data.
     ERROR_CHECK_STATUS(vxTruncateArray(output_aux, 0));
@@ -492,68 +465,64 @@ void CLoomIoMediaEncoder::EncodeLoop()
         // get the bufId to process
         int bufId = (encodeFrameCount % ENCODE_BUFFER_POOL_SIZE);
         int got_output = 0;
-#if ENCODE_ENABLE_GPU
         // format convert input image into encode buffer
-#if ENABLE_OPENCL
-        cl_int err = -1;
-        uint8_t * ptr = (uint8_t *)clEnqueueMapBuffer(cmdq, (cl_mem)mem[bufId], CL_TRUE, CL_MAP_READ, offset, height * stride, 0, nullptr, nullptr, &err);
-        if (err < 0 || !ptr) {
-            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: clEnqueueMapBuffer() failed (%d)\n", err);
-            threadTerminated = true;
-            PushAck(-1);
-            return;
-        }
-        clFinish(cmdq);
-        status = sws_scale(conversionContext, &ptr, &stride, 0, height, videoFrame[0]->data, videoFrame[0]->linesize);
-        err = clEnqueueUnmapMemObject(cmdq, (cl_mem)mem[bufId], ptr, 0, nullptr, nullptr);
-        if (err < 0) {
-            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: clEnqueueUnmapMemObject() failed (%d)\n", err);
-            threadTerminated = true;
-            PushAck(-1);
-            return;
-        }
-        clFinish(cmdq);
-        if (status < 0) {
-            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: sws_scale() failed (%d)\n", status);
-            threadTerminated = true;
-            PushAck(-1);
-            return;
-        }
-#elif ENABLE_HIP
-        hipError_t err;
-        if (!hip_dev_prop.canMapHostMemory) {
-            err = hipMemcpyDtoH((void *)hostBuffer[bufId], ((uint8_t *)mem[bufId] + offset), height * stride);
+        if ( m_enableUserBufferGPU) {
+            int mapHeight = (inputFormat == AV_PIX_FMT_NV12)? (height + (height>>1)) : height;
+    #if ENABLE_OPENCL
+            cl_int err = -1;
+            uint8_t * ptr = (uint8_t *)clEnqueueMapBuffer(cmdq, (cl_mem)mem[bufId], CL_TRUE, CL_MAP_READ, offset, mapHeight * stride, 0, nullptr, nullptr, &err);
+            if (err < 0 || !ptr) {
+                vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: clEnqueueMapBuffer() failed (%d)\n", err);
+                threadTerminated = true;
+                PushAck(-1);
+                return;
+            }
+            clFinish(cmdq);
+            uint8_t *src_data[4] = {0};
+            int src_linesize[4] = {stride};
+            src_data[0] = ptr;
+            if (inputFormat == AV_PIX_FMT_NV12) src_data[1] = src_data[0] + height*stride;
+            status = sws_scale(conversionContext, src_data, src_linesize, 0, height, videoFrame[0]->data, videoFrame[0]->linesize);
+
+            err = clEnqueueUnmapMemObject(cmdq, (cl_mem)mem[bufId], ptr, 0, nullptr, nullptr);
+            if (err < 0) {
+                vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: clEnqueueUnmapMemObject() failed (%d)\n", err);
+                threadTerminated = true;
+                PushAck(-1);
+                return;
+            }
+            clFinish(cmdq);
+            if (status < 0) {
+                vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: sws_scale() failed (%d)\n", status);
+                threadTerminated = true;
+                PushAck(-1);
+                return;
+            }
+    #elif ENABLE_HIP
+            hipError_t err;
+            err = hipMemcpyDtoH((void *)hostBuffer, ((uint8_t *)mem[bufId] + offset), mapHeight * stride);
             if (err != hipSuccess) {
                 vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: hipMemcpyDtoH failed => %d\n", err);
                 threadTerminated = true;
                 PushAck(-1);
                 return;
             }
-        }
+            uint8_t *src_data[4] = {0};
+            int src_linesize[4] = {stride};
+            src_data[0] = hostBuffer;
+            if (inputFormat == AV_PIX_FMT_NV12) src_data[1] = src_data[0] + height*stride;
 
-        status = sws_scale(conversionContext, &hostBuffer[bufId], &stride, 0, height, videoFrame[0]->data, videoFrame[0]->linesize);
-
-        if (!hip_dev_prop.canMapHostMemory) {
-            err = hipMemcpyHtoD((void *)((uint8_t *)mem[bufId] + offset), hostBuffer[bufId], height * stride);
-            if (err != hipSuccess) {
-                vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: hipMemcpyHtoD(buf[%d]) failed (%d)\n", bufId, err);
+            status = sws_scale(conversionContext, src_data, src_linesize, 0, height, videoFrame[0]->data, videoFrame[0]->linesize);
+            if (status < 0) {
+                vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: sws_scale() failed (%d)\n", status);
                 threadTerminated = true;
                 PushAck(-1);
                 return;
             }
+    #endif
+            // reset bufId to zero because only videoFrame[0] is valid
+            bufId = 0;
         }
-
-        if (status < 0) {
-            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: sws_scale() failed (%d)\n", status);
-            threadTerminated = true;
-            PushAck(-1);
-            return;
-        }
-#endif
-        // reset bufId to zero because only videoFrame[0] is valid
-        bufId = 0;
-
-#endif
         // encode video frame and write output to file
         videoFrame[bufId]->pts = pts;
         status = avcodec_encode_video2(videoCodecContext, &pkt, videoFrame[bufId], &got_output);
@@ -608,19 +577,6 @@ void CLoomIoMediaEncoder::EncodeLoop()
     PushAck(-1);
 }
 
-#if ENCODE_ENABLE_GPU
-//! \brief The kernel execution.
-static vx_status VX_CALLBACK amd_media_encode_gpu_buffer_update_callback(vx_node node, const vx_reference parameters[], vx_uint32 num)
-{
-    // get encoder and input image
-    CLoomIoMediaEncoder * encoder = nullptr;
-    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &encoder, sizeof(encoder)));
-    if (!encoder) return VX_FAILURE;
-
-    return encoder->UpdateBufferGPU((vx_image)parameters[1], (vx_array)parameters[2]);
-}
-#endif
-
 //! \brief The kernel execution.
 static vx_status VX_CALLBACK amd_media_encode_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
@@ -628,13 +584,13 @@ static vx_status VX_CALLBACK amd_media_encode_kernel(vx_node node, const vx_refe
     CLoomIoMediaEncoder * encoder = nullptr;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &encoder, sizeof(encoder)));
     if (!encoder) return VX_FAILURE;
-
     return encoder->ProcessFrame((vx_image)parameters[1], (vx_array)parameters[2], (vx_array)parameters[3]);
 }
 
 //! \brief The kernel initializer.
 static vx_status VX_CALLBACK amd_media_encode_initialize(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+    vx_bool enableUserBufferGPU = false;
     // get input parameters
     char ioConfig[VX_MAX_STRING_BUFFER_SIZE_AMD];
     vx_uint32 width = 0, height = 0, stride = 0, offset = 0;
@@ -649,9 +605,19 @@ static vx_status VX_CALLBACK amd_media_encode_initialize(vx_node node, const vx_
     if (parameters[2]) {
         ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[2], VX_ARRAY_CAPACITY, &input_aux_data_max_size, sizeof(input_aux_data_max_size)));
     }
+    if (parameters[4]) {
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferGPU, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    }
+
     // create and initialize encoder
+    if (stride == 0) stride = width;    // stride can't be zero
     CLoomIoMediaEncoder * encoder = new CLoomIoMediaEncoder(node, ioConfig, width, height, format, stride, offset, input_aux_data_max_size);
     ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &encoder, sizeof(encoder)));
+    if (parameters[4]) {
+        printf("encoder: GPU mode : %d\n", enableUserBufferGPU);
+        encoder->SetEnableUserBufferGPUMode(enableUserBufferGPU);
+    }
+
     ERROR_CHECK_STATUS(encoder->Initialize());
 
     return VX_SUCCESS;
@@ -686,7 +652,7 @@ static vx_status VX_CALLBACK amd_media_encode_validate(vx_node node, const vx_re
     ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_WIDTH, &width, sizeof(width)));
     ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_HEIGHT, &height, sizeof(height)));
     ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_FORMAT, &format, sizeof(format)));
-    if (format != VX_DF_IMAGE_UYVY && format != VX_DF_IMAGE_YUYV && format != VX_DF_IMAGE_RGB)
+    if (format != VX_DF_IMAGE_UYVY && format != VX_DF_IMAGE_YUYV && format != VX_DF_IMAGE_RGB && format != VX_DF_IMAGE_NV12)
         return VX_ERROR_INVALID_FORMAT;
     // check input auxiliary data parameter
     if (parameters[2]) {
@@ -707,6 +673,17 @@ static vx_status VX_CALLBACK amd_media_encode_validate(vx_node node, const vx_re
         return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[3], VX_ARRAY_ITEMTYPE, &itemtype, sizeof(itemtype)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[3], VX_ARRAY_CAPACITY, &capacity, sizeof(capacity)));
+    vx_bool enableUserBufferGPU = false;
+    if (parameters[4]) {
+        vx_enum scalar_type;
+        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[4], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+        if(scalar_type != VX_TYPE_BOOL) return VX_ERROR_INVALID_TYPE;
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferGPU, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        // do we need to do the following?
+        ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU, &enableUserBufferGPU, sizeof(enableUserBufferGPU)));
+//        printf("decoder validate:: set enableUserBufferGPU: %d\n", enableUserBufferGPU);
+    }
+
     return VX_SUCCESS;
 }
 
@@ -715,21 +692,16 @@ vx_status amd_media_encode_publish(vx_context context)
 {
     // add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "com.amd.amd_media.encode", AMDOVX_KERNEL_AMD_MEDIA_ENCODE,
-                            amd_media_encode_kernel, 4, amd_media_encode_validate,
+                            amd_media_encode_kernel, 5, amd_media_encode_validate,
                             amd_media_encode_initialize, amd_media_encode_deinitialize);
     ERROR_CHECK_OBJECT(kernel);
 
     // set kernel parameters
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));  // media config+filename: "[{mbps,fps,bframes,gopsize},]filename.mp4"
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));  // media config+filename: "[mbps,fps,bframes,gopsize],filename.mp4"
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED));   // input image
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_OPTIONAL));   // input auxiliary data (optional)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_OUTPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));  // output auxiliary data
-
-#if ENCODE_ENABLE_GPU
-    // register amd_kernel_gpu_buffer_update_callback_f for input image
-    AgoKernelGpuBufferUpdateInfo info = { amd_media_encode_gpu_buffer_update_callback, 1 };
-    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_UPDATE_CALLBACK, &info, sizeof(info)));
-#endif
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input: to set enableUserBufferGPU flag
 
     // finalize and release kernel object
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
@@ -738,21 +710,24 @@ vx_status amd_media_encode_publish(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL amdMediaEncoderNode(vx_graph graph, const char *output_str, vx_image input, vx_array aux_data_in, vx_array aux_data_out)
+VX_API_ENTRY vx_node VX_API_CALL amdMediaEncoderNode(vx_graph graph, const char *output_str, vx_image input, vx_array aux_data_in, vx_array aux_data_out, vx_bool enable_gpu_input)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_scalar s_output = vxCreateScalar(context, VX_TYPE_STRING_AMD, output_str);
+        vx_scalar s_enable_gpu_input = vxCreateScalar(context, VX_TYPE_BOOL, &enable_gpu_input);
         vx_reference params[] = {
             (vx_reference)s_output,
             (vx_reference)input,
             (vx_reference)aux_data_in,
             (vx_reference)aux_data_out,
+            (vx_reference)s_enable_gpu_input,
         };
         if (vxGetStatus((vx_reference)s_output) == VX_SUCCESS) {
             node = createMediaNode(graph, "com.amd.amd_media.encode", params, sizeof(params) / sizeof(params[0])); // added node to graph
             vxReleaseScalar(&s_output);
+            vxReleaseScalar(&s_enable_gpu_input);
         }
     }
     return node;

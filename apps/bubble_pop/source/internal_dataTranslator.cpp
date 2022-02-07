@@ -220,7 +220,6 @@ int CV_to_VX_keypoints(vector<KeyPoint> key_points, vx_array array)
 	vx_status status = VX_SUCCESS;
 	vector<vx_keypoint_t> Keypoint_VX;
 
-	float X, Y, K_Size, K_Angle, K_Response;
 	int x, y, j = 0;
 	void *ptr = NULL;
 	vx_size size = 0;
@@ -236,6 +235,8 @@ int CV_to_VX_keypoints(vector<KeyPoint> key_points, vx_array array)
 
 	for (vector<KeyPoint>::const_iterator i = key_points.begin(); i != key_points.end(); ++i)
 	{
+		float X, Y, K_Size, K_Angle, K_Response;
+
 		X = key_points[j].pt.x;
 		Y = key_points[j].pt.y;
 		K_Size = key_points[j].size;
@@ -288,7 +289,7 @@ int CVPoints2f_to_VX_keypoints(vector<Point2f> key_points, vx_array array)
 {
 	vx_status status = VX_SUCCESS;
 	vector<vx_keypoint_t> Keypoint_VX;
-	float X, Y;
+
 	int x, y, j = 0;
 	void *ptr = NULL;
 	vx_size size = 0;
@@ -300,6 +301,7 @@ int CVPoints2f_to_VX_keypoints(vector<Point2f> key_points, vx_array array)
 
 	for (int i = 0; i < (int)key_points.size(); ++i)
 	{
+		float X, Y;
 		X = key_points[j].x;
 		Y = key_points[j].y;
 

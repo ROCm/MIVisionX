@@ -47,7 +47,7 @@ void open_video_context(const char *video_file_path, std::vector<unsigned> &prop
     int ret = avformat_open_input(&pFormatCtx, video_file_path, NULL, NULL);
     if (ret != 0)
     {
-        WRN("\nUnable to open video file:" + video_file_path + "\n")
+        WRN("Unable to open video file: " + STR(video_file_path))
         exit(0);
     }
 

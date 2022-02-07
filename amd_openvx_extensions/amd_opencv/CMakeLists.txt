@@ -23,7 +23,7 @@ project(amd_opencv)
 
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCV REQUIRED)
+find_package(OpenCV QUIET)
 
 include_directories(../../amd_openvx/openvx/include
 					include
@@ -102,6 +102,12 @@ target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
 
 install(TARGETS vx_opencv DESTINATION lib)
 install(FILES include/vx_ext_opencv.h DESTINATION include)
+
+if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=1)
+else()
+	target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=0)
+endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	target_link_libraries(vx_opencv OpenVX)

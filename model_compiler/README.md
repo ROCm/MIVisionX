@@ -378,13 +378,18 @@ Test code with preprocessing add / multiply values to normalize the input tensor
 |Dropout||||
 |Eltwise|&#9745; |||
 |Exp||&#9745; |&#9745; |
+|Equal||&#9745; ||
 |Flatten|&#9745; |||
 |Gather||&#9745; ||
 |GEMM|&#9745; |&#9745; |&#9745; |
 |GlobalAveragePool||&#9745; |&#9745; |
+|Greater||&#9745; ||
+|GreaterOrEqual||&#9745; ||
 |InnerProduct|&#9745; |||
 |Interp|&#9745; |||
 |LeakyRelu||&#9745; |&#9745; |
+|Less||&#9745; ||
+|LessOrEqual||&#9745; ||
 |Linear|||&#9745; |
 |Log||&#9745; |&#9745; |
 |LRN|&#9745; |&#9745; |&#9745; |

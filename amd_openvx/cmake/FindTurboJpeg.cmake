@@ -58,5 +58,5 @@ set(TurboJpeg_INCLUDE_DIRS ${TurboJpeg_INCLUDE_DIRS} CACHE INTERNAL "")
 set(TurboJpeg_LIBRARIES_DIR ${TurboJpeg_LIBRARIES_DIR} CACHE INTERNAL "")
 
 if( NOT TurboJpeg_FOUND )
-    message( "-- ${Yellow}FindTurboJpeg failed to find: turbojpeg${ColourReset}" )
+    message( "-- ${Yellow}NOTE: FindTurboJpeg failed to find -- turbojpeg${ColourReset}" )
 endif()

@@ -366,4 +366,24 @@ VX_API_ENTRY vx_node VX_API_CALL vxReduceMinLayer(vx_graph graph, vx_tensor data
  */
 VX_API_ENTRY vx_node VX_API_CALL vxTileLayer(vx_graph graph, vx_tensor input, vx_tensor repeats, vx_tensor output);
 
+/* \brief [Graph] Creates a Tensor Compare Node.
+ * \details Returns the tensor resulted from performing the comparison operation elementwise on the input tensors A and B
+ * This function supports 4D tensors as input and ouput.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The first input tensor data.
+ * \param [in] input2 The second input tensor data.
+ * \param [out] output The output tensor data with the same dimensions as the input tensor data. The type of the output is constraint to boolean.
+ * \param [in] mode The mode value for the comparison. 
+ *  Supports the following mode values:
+ *       0 - Less than (<)
+ *       1 - Greater than (>)
+ *       2 - Less than or equal to (<=)
+ *       3 - Greater than or equal to (>=)
+ *       4 - Equal to (==)
+ *       5 - Not equal to (!=)
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+ VX_API_ENTRY vx_node VX_API_CALL vxTensorCompareNode(vx_graph graph, vx_tensor input, vx_tensor input2, vx_tensor output)
+
 #endif

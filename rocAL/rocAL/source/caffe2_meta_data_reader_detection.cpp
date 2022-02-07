@@ -44,7 +44,7 @@ bool Caffe2MetaDataReaderDetection::exists(const std::string &_image_name)
     return _map_content.find(_image_name) != _map_content.end();
 }
 
-void Caffe2MetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels,ImgSizes image_size)
+void Caffe2MetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels, ImgSize image_size)
 {
     if (exists(image_name))
     {
@@ -75,7 +75,7 @@ void Caffe2MetaDataReaderDetection::lookup(const std::vector<std::string> &_imag
             THROW("ERROR: Given name not present in the map" + image_name)
         _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
         _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
-        _output->get_img_sizes_batch()[i] = it->second->get_img_sizes();
+        _output->get_img_sizes_batch()[i] = it->second->get_img_size();
     }
 }
 
@@ -165,7 +165,6 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
             BoundingBoxLabels bb_labels;
             BoundingBoxCord box;
 
-            ImgSizes img_sizes;
             ImgSize img_size;
 
              caffe2_protos::TensorProto image_proto = tens_protos.protos(0);
@@ -173,8 +172,6 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
             img_size.w= image_proto.dims(0);
             // Parsing height of image
             img_size.h = image_proto.dims(1);
-            
-            img_sizes.push_back(img_size);
 
             if (boundBox_size != 0)
             {
@@ -195,7 +192,7 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
 
                     bb_coords.push_back(box);
                     bb_labels.push_back(label);
-                    add(str_key.c_str(), bb_coords, bb_labels,img_sizes);
+                    add(str_key.c_str(), bb_coords, bb_labels, img_size);
                     bb_coords.clear();
                     bb_labels.clear();
                 }
@@ -206,7 +203,7 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
                 box.r = box.b = 1;
                 bb_coords.push_back(box);
                 bb_labels.push_back(0);
-                add(str_key.c_str(), bb_coords, bb_labels,img_sizes);
+                add(str_key.c_str(), bb_coords, bb_labels, img_size);
             }
         }
         else

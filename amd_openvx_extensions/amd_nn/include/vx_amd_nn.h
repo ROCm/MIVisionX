@@ -384,6 +384,6 @@ VX_API_ENTRY vx_node VX_API_CALL vxTileLayer(vx_graph graph, vx_tensor input, vx
  * \return <tt> vx_node</tt>.
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
- VX_API_ENTRY vx_node VX_API_CALL vxTensorCompareNode(vx_graph graph, vx_tensor input, vx_tensor input2, vx_tensor output)
+ VX_API_ENTRY vx_node VX_API_CALL vxTensorCompareNode(vx_graph graph, vx_tensor input, vx_tensor input2, vx_tensor output);
 
 #endif

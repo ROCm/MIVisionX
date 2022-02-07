@@ -96,10 +96,10 @@ int main(int argc, char **argv)
     ERROR_CHECK_OBJECT(output_canny_skinTone_image);
 
     // create threshold variable
-    vx_threshold hyst = vxCreateThreshold(context, VX_THRESHOLD_TYPE_RANGE, VX_TYPE_UINT8);
+    vx_threshold hyst = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_RANGE, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
     vx_int32 lower = 80, upper = 100;
-    vxSetThresholdAttribute(hyst, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, &lower, sizeof(lower));
-    vxSetThresholdAttribute(hyst, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, &upper, sizeof(upper));
+    vxSetThresholdAttribute(hyst, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, &lower, sizeof(vx_int32));
+    vxSetThresholdAttribute(hyst, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, &upper, sizeof(vx_int32));
     ERROR_CHECK_OBJECT(hyst);
     vx_int32 gradient_size = 3;
 
@@ -132,23 +132,23 @@ int main(int argc, char **argv)
     ERROR_CHECK_OBJECT(and3_image);
 
     // create threshold values
-    vx_threshold thresh95 = vxCreateThreshold(context, VX_THRESHOLD_TYPE_BINARY, VX_TYPE_UINT8);
+    vx_threshold thresh95 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
     vx_int32 thresValue95 = 95;
     vxSetThresholdAttribute(thresh95, VX_THRESHOLD_THRESHOLD_VALUE, &thresValue95, sizeof(vx_int32));
     ERROR_CHECK_OBJECT(thresh95);
-    vx_threshold thresh40 = vxCreateThreshold(context, VX_THRESHOLD_TYPE_BINARY, VX_TYPE_UINT8);
+    vx_threshold thresh40 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
     vx_int32 thresValue40 = 40;
     vxSetThresholdAttribute(thresh40, VX_THRESHOLD_THRESHOLD_VALUE, &thresValue40, sizeof(vx_int32));
     ERROR_CHECK_OBJECT(thresh40);
-    vx_threshold thresh20 = vxCreateThreshold(context, VX_THRESHOLD_TYPE_BINARY, VX_TYPE_UINT8);
+    vx_threshold thresh20 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
     vx_int32 thresValue20 = 20;
     vxSetThresholdAttribute(thresh20, VX_THRESHOLD_THRESHOLD_VALUE, &thresValue20, sizeof(vx_int32));
     ERROR_CHECK_OBJECT(thresh20);
-    vx_threshold thresh15 = vxCreateThreshold(context, VX_THRESHOLD_TYPE_BINARY, VX_TYPE_UINT8);
+    vx_threshold thresh15 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
     vx_int32 thresValue15 = 15;
     vxSetThresholdAttribute(thresh15, VX_THRESHOLD_THRESHOLD_VALUE, &thresValue15, sizeof(vx_int32));
     ERROR_CHECK_OBJECT(thresh15);
-    vx_threshold thresh0 = vxCreateThreshold(context, VX_THRESHOLD_TYPE_BINARY, VX_TYPE_UINT8);
+    vx_threshold thresh0 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
     vx_int32 thresValue0 = 0;
     vxSetThresholdAttribute(thresh0, VX_THRESHOLD_THRESHOLD_VALUE, &thresValue0, sizeof(vx_int32));
     ERROR_CHECK_OBJECT(thresh0);

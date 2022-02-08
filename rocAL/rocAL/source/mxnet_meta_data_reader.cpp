@@ -62,7 +62,7 @@ void MXNetMetaDataReader::lookup(const std::vector<std::string> &_image_names)
         WRN("No image names passed")
         return;
     }
-    if(_image_names.size() != (unsigned)_output->size())   
+    if(_image_names.size() != (unsigned)_output->size())
         _output->resize(_image_names.size());
 
     for(unsigned i = 0; i < _image_names.size(); i++)
@@ -159,14 +159,14 @@ void MXNetMetaDataReader::read_images()
         uint8_t* _data = new uint8_t[_data_size_to_read];
         uint8_t* _data_ptr = _data;
         _file_contents.read((char *)_data_ptr, _data_size_to_read);
-        memcpy(&_magic, _data_ptr, sizeof(_magic));
+        _magic = *((uint32_t *) _data_ptr);
         _data_ptr += sizeof(_magic);
         if(_magic != _kMagic)
             THROW("MXNetMetaDataReader ERROR: Invalid RecordIO: wrong magic number");
-        memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
+        _length_flag = *((uint32_t *) _data_ptr);
         _data_ptr += sizeof(_length_flag);
-        memcpy(&_hdr, _data_ptr, sizeof(_hdr));
-        
+        _hdr = *((ImageRecordIOHeader *) _data_ptr);
+
         if (_hdr.flag == 0)
         {
             add((to_string(_hdr.image_id[0])), _hdr.label);

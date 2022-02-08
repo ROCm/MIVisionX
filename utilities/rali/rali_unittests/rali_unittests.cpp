@@ -238,6 +238,13 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
                 input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
         }
         break;
+        case 11: //mxnet reader
+        {
+            std::cout << ">>>>>>> Running MXNET CLASSIFICATION READER" << std::endl;
+            meta_data = raliCreateMXNetReader(handle, path, true);
+            input1 = raliMXNetRecordSource(handle, path, color_format, num_threads, false, false, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+        }
+        break;
         default: //image pipeline
         {
             std::cout << ">>>>>>> Running IMAGE READER" << std::endl;

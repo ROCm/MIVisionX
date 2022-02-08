@@ -242,14 +242,14 @@ void MXNetRecordIOReader::read_image_names()
         uint8_t* _data = new uint8_t[_data_size_to_read];
         uint8_t* _data_ptr = _data;
         _file_contents.read((char *)_data_ptr, _data_size_to_read);
-        memcpy(&_magic, _data_ptr, sizeof(_magic));
+        _magic = *((uint32_t *) _data_ptr);
         _data_ptr += sizeof(_magic);
         if(_magic != _kMagic)
             THROW("MXNetRecordIOReader ERROR: Invalid MXNet RecordIO: wrong _magic number");
-        memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
+        _length_flag = *((uint32_t *) _data_ptr);
         _data_ptr += sizeof(_length_flag);
         uint32_t _clength =  DecodeLength(_length_flag);
-        memcpy(&_hdr, _data_ptr, sizeof(_hdr));
+        _hdr = *((ImageRecordIOHeader *) _data_ptr);
 
         if (_hdr.flag == 0)
             _image_key = to_string(_hdr.image_id[0]);
@@ -293,15 +293,15 @@ void MXNetRecordIOReader::read_image(unsigned char *buff, size_t read_size, int6
     uint8_t* _data = new uint8_t[_data_size_to_read];
     uint8_t* _data_ptr = _data;
     _file_contents.read((char *)_data_ptr, _data_size_to_read);
-    memcpy(&_magic, _data_ptr, sizeof(_magic));
+    _magic = *((uint32_t *) _data_ptr);
     _data_ptr += sizeof(_magic);
     if(_magic != _kMagic)
         THROW("MXNetRecordIOReader ERROR: Invalid RecordIO: wrong _magic number");
-    memcpy(&_length_flag, _data_ptr, sizeof(_length_flag));
+    _length_flag = *((uint32_t *) _data_ptr);
     _data_ptr += sizeof(_length_flag);
     uint32_t _cflag = DecodeFlag(_length_flag);
     uint32_t _clength =  DecodeLength(_length_flag);
-    memcpy(&_hdr, _data_ptr, sizeof(_hdr));
+    _hdr = *((ImageRecordIOHeader *) _data_ptr);
     _data_ptr += sizeof(_hdr);
 
     int64_t data_size = _clength - sizeof(ImageRecordIOHeader);

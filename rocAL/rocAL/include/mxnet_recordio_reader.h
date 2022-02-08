@@ -99,7 +99,7 @@ private:
     void incremenet_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
     void replicate_last_batch_to_pad_partial_shard();
-    void read_image(unsigned char* buff, size_t read_size, int64_t seek_position, int64_t data_size);
+    void read_image(unsigned char* buff, int64_t seek_position, int64_t data_size);
     void read_image_names();
     uint32_t DecodeFlag(uint32_t rec) {return (rec >> 29U) & 7U; };
     uint32_t DecodeLength(uint32_t rec) {return rec & ((1U << 29U) - 1U); };

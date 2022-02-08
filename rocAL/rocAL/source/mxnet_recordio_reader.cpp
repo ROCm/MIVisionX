@@ -106,7 +106,7 @@ size_t MXNetRecordIOReader::read_data(unsigned char *buf, size_t read_size)
 {
     auto it = _record_properties.find(_file_names[_curr_file_idx]);
     std::tie(_current_file_size, _seek_pos, _data_size_to_read) = it->second;
-    read_image(buf, read_size, _seek_pos, _data_size_to_read);
+    read_image(buf, _seek_pos, _data_size_to_read);
     incremenet_read_ptr();
     return read_size;
 }
@@ -241,7 +241,10 @@ void MXNetRecordIOReader::read_image_names()
         _file_contents.seekg(_seek_pos, ifstream::beg);
         uint8_t* _data = new uint8_t[_data_size_to_read];
         uint8_t* _data_ptr = _data;
-        _file_contents.read((char *)_data_ptr, _data_size_to_read);
+        auto ret = _file_contents.read((char *)_data_ptr, _data_size_to_read).gcount();
+        if(ret == -1 || ret != _data_size_to_read)
+            THROW("MXNetRecordIOReader ERROR:  Unable to read the data from the file ");
+
         _magic = *((uint32_t *) _data_ptr);
         _data_ptr += sizeof(_magic);
         if(_magic != _kMagic)
@@ -286,13 +289,15 @@ void MXNetRecordIOReader::read_image_names()
     }
 }
 
-void MXNetRecordIOReader::read_image(unsigned char *buff, size_t read_size, int64_t seek_position, int64_t _data_size_to_read)
+void MXNetRecordIOReader::read_image(unsigned char *buff, int64_t seek_position, int64_t _data_size_to_read)
 {
     uint32_t _magic, _length_flag;
     _file_contents.seekg(seek_position, ifstream::beg);
     uint8_t* _data = new uint8_t[_data_size_to_read];
     uint8_t* _data_ptr = _data;
-    _file_contents.read((char *)_data_ptr, _data_size_to_read);
+    auto ret = _file_contents.read((char *)_data_ptr, _data_size_to_read).gcount();
+    if(ret == -1 || ret != _data_size_to_read)
+        THROW("MXNetRecordIOReader ERROR:  Unable to read the data from the file ");
     _magic = *((uint32_t *) _data_ptr);
     _data_ptr += sizeof(_magic);
     if(_magic != _kMagic)

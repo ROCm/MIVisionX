@@ -158,7 +158,9 @@ void MXNetMetaDataReader::read_images()
         _file_contents.seekg(_seek_pos, ifstream::beg);
         uint8_t* _data = new uint8_t[_data_size_to_read];
         uint8_t* _data_ptr = _data;
-        _file_contents.read((char *)_data_ptr, _data_size_to_read);
+        auto ret = _file_contents.read((char *)_data_ptr, _data_size_to_read).gcount();
+        if(ret == -1 || ret != _data_size_to_read)
+            THROW("MXNetMetaDataReader ERROR:  Unable to read the data from the file ");
         _magic = *((uint32_t *) _data_ptr);
         _data_ptr += sizeof(_magic);
         if(_magic != _kMagic)

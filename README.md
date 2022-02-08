@@ -188,7 +188,7 @@ For the convenience of the developer, we here provide the setup script which wil
                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
                             --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
-                            --backend   [MIVisionX Dependency Backend - optional (default:OCL) [options:OCL/HIP]]
+                            --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:OCL/HIP]]
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
   ```
     **Note:**
@@ -252,34 +252,34 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
   **Note:** MIVisionX has support for two GPU backends: **OPENCL** and **HIP**:
 
-  + Instructions for building MIVisionX with **OPENCL** (i.e., default GPU backend):
-
-    * run the setup script to install all the dependencies required by the **OPENCL** GPU backend:
-  ```
-  python MIVisionX-setup.py
-  ```
-
-    * run the below commands to build MIVisionX with the **OPENCL** GPU backend:
-  ```
-  mkdir build
-  cd build
-  cmake ../
-  make -j8
-  sudo make install
-  ```
-
-  + Instructions for building MIVisionX with the **HIP** GPU backend:
+  + Instructions for building MIVisionX with the **HIP** GPU backend (i.e., default GPU backend):
 
     * run the setup script to install all the dependencies required by the **HIP** GPU backend:
   ```
-  python MIVisionX-setup.py --reinstall yes --backend HIP
+  python MIVisionX-setup.py
   ```
 
     * run the below commands to build MIVisionX with the **HIP** GPU backend:
   ```
   mkdir build-hip
   cd build-hip
-  cmake -DBACKEND=HIP ../
+  cmake ../
+  make -j8
+  sudo make install
+  ```
+
+  + Instructions for building MIVisionX with **OPENCL**:
+
+    * run the setup script to install all the dependencies required by the **OPENCL** GPU backend:
+  ```
+  python MIVisionX-setup.py --reinstall yes --backend OCL
+  ```
+
+    * run the below commands to build MIVisionX with the **OPENCL** GPU backend:
+  ```
+  mkdir build-ocl
+  cd build-ocl
+  cmake -DBACKEND=OPENCL ../
   make -j8
   sudo make install
   ```

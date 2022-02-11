@@ -148,6 +148,30 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    std::pair<py::array_t<float>, py::array_t<int>>  wrapper_get_encoded_bbox_label(RaliContext context, int batch_size, int num_anchors)
+    {
+        float* bboxes_buf_ptr; int* labels_buf_ptr;
+        // auto labels_buf = labels_array.request();
+        // int* labels_ptr = (int*) labels_buf.ptr;
+        // call pure C++ function
+        raliGetEncodedBoxesAndLables(context, &bboxes_buf_ptr, &labels_buf_ptr, num_anchors*batchsize);
+        // create numpy arrays for boxes and labels tensor from the returned ptr
+        // no need to free the memory as this is freed by c++ lib
+        py::array_t<float> bboxes_array = py::array_t<float>(
+                                                          {batch_size, num_anchors, 4},
+                                                          {4*sizeof(float)*num_anchors, 4*sizeof(float), sizeof(float)},
+                                                          bboxes_buf_ptr,
+                                                          py::cast<py::none>(Py_None));
+        py::array_t<int> lables_array = py::array_t<int>(
+                                                          {batch_size, num_anchors},
+                                                          {num_anchors*sizeof(int), sizeof(int)},
+                                                          labels_buf_ptr,
+                                                          py::cast<py::none>(Py_None));
+
+        return std::make_pair(bboxes_array, labels_array);
+    }
+
+
     py::object wrapper_BB_cord_copy(RaliContext context, py::array_t<float> array)
     {
         auto buf = array.request();

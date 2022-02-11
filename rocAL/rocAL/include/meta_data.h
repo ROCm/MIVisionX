@@ -181,6 +181,9 @@ struct BoundingBoxBatch: public MetaDataBatch
         return std::make_shared<BoundingBoxBatch>(*this);
     }
 };
+
+
+
 using ImageNameBatch = std::vector<std::string>;
 using pMetaData = std::shared_ptr<Label>;
 using pMetaDataBox = std::shared_ptr<BoundingBox>;

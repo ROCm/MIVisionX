@@ -405,20 +405,34 @@ RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_
         return;
     }
     unsigned sum = 0;
-    unsigned sum_bb_count[meta_data_batch_size];
+    unsigned bb_offset[meta_data_batch_size];
     for (unsigned i = 0; i < meta_data_batch_size; i++)
     {
-        sum_bb_count[i] = sum;
-        sum = sum + meta_data.second->get_bb_labels_batch()[i].size();
+        bb_offset[i] = sum;
+        sum += meta_data.second->get_bb_labels_batch()[i].size();
     }
     // copy labels buffer & bboxes buffer parallely
     #pragma omp parallel for
     for (unsigned i = 0; i < meta_data_batch_size; i++)
     {
         unsigned bb_count = meta_data.second->get_bb_labels_batch()[i].size();
-        int *temp_labels_buf = labels_buf + sum_bb_count[i];
-        float *temp_bbox_buf = boxes_buf + (sum_bb_count[i] * 4);
+        int *temp_labels_buf = labels_buf + bb_offset[i];
+        float *temp_bbox_buf = boxes_buf + (bb_offset[i] * 4);
         memcpy(temp_labels_buf, meta_data.second->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         memcpy(temp_bbox_buf, meta_data.second->get_bb_cords_batch()[i].data(), sizeof(BoundingBoxCord) * bb_count);
+    }
+}
+
+void 
+RALI_API_CALL raliGetEncodedBoxesAndLables(RaliContext p_context, float **boxes_buf_ptr, int **labels_buf_ptr, int num_encoded_boxes)
+{
+    if (!p_context) {
+        WRN("raliGetEncodedBoxesAndLables::Invalid context")
+    }
+    auto context = static_cast<Context *>(p_context);
+    context->master_graph->get_bbox_encoded_buffers(boxes_buf_ptr, labels_buf_ptr, num_encoded_boxes);
+    if (!*boxes_buf_ptr || !*labels_buf_ptr)
+    {
+        WRN("raliGetEncodedBoxesAndLables::Empty tensors returned from rocAL")
     }
 }

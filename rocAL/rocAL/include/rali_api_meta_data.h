@@ -162,6 +162,10 @@ extern "C" void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<
 /// \param labels_buf  user's buffer that will be filled with encoded labels . Its needs to be at least of size batch_size.
 extern "C" void RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_buf, int* labels_buf);
 
+/// \param boxes_buf  ptr to user's buffer that will be filled with encoded bounding boxes . Its needs to be at least of size batch_size.
+/// \param labels_buf  user's buffer that will be filled with encoded labels . Its needs to be at least of size batch_size.
+extern "C" void RALI_API_CALL raliGetEncodedBoxesAndLables(RaliContext p_context, float **boxes_buf_ptr, int **labels_buf_ptr, int num_encoded_boxes);
+
 ///
 /// \param rali_context
 /// \param buf The user's buffer that will be filled with image id info for the images in the output batch. 

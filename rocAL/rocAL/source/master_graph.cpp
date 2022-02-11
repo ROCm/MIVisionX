@@ -328,8 +328,12 @@ void MasterGraph::release()
     _image_map.clear();
     _ring_buffer.release_gpu_res();
     //shut_down loader:: required for releasing any allocated resourses
-    _loader_module->shut_down();
-
+#ifdef RALI_VIDEO
+    if(_is_video_loader)
+        _video_loader_module->shut_down();
+    else
+#endif
+        _loader_module->shut_down();
     // release all openvx resources.
     vx_status status;
     for(auto& image: _internal_images)

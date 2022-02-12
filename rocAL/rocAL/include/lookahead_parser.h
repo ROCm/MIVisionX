@@ -89,12 +89,12 @@ protected:
     static const int parseFlags = kParseDefaultFlags | kParseInsituFlag;
 };
 
-LookaheadParserHandler::LookaheadParserHandler(char* str) : v_(), st_(kInit), r_(), ss_(str) {
+inline LookaheadParserHandler::LookaheadParserHandler(char* str) : v_(), st_(kInit), r_(), ss_(str) {
     r_.IterativeParseInit();
     ParseNext();
 }
 
-void LookaheadParserHandler::ParseNext() {
+inline void LookaheadParserHandler::ParseNext() {
     if (r_.HasParseError()) {
         st_ = kError;
         return;
@@ -129,7 +129,7 @@ protected:
     void SkipOut(int depth);
 };
 
-bool LookaheadParser::EnterObject() {
+inline bool LookaheadParser::EnterObject() {
     if (st_ != kEnteringObject) {
         st_  = kError;
         return false;
@@ -139,7 +139,7 @@ bool LookaheadParser::EnterObject() {
     return true;
 }
 
-bool LookaheadParser::EnterArray() {
+inline bool LookaheadParser::EnterArray() {
     if (st_ != kEnteringArray) {
         st_  = kError;
         return false;
@@ -149,7 +149,7 @@ bool LookaheadParser::EnterArray() {
     return true;
 }
 
-const char* LookaheadParser::NextObjectKey() {
+inline const char* LookaheadParser::NextObjectKey() {
     if (st_ == kHasKey) {
         const char* result = v_.GetString();
         ParseNext();
@@ -165,7 +165,7 @@ const char* LookaheadParser::NextObjectKey() {
     return 0;
 }
 
-bool LookaheadParser::NextArrayValue() {
+inline bool LookaheadParser::NextArrayValue() {
     if (st_ == kExitingArray) {
         ParseNext();
         return false;
@@ -179,7 +179,7 @@ bool LookaheadParser::NextArrayValue() {
     return true;
 }
 
-int LookaheadParser::GetInt() {
+inline int LookaheadParser::GetInt() {
     if (st_ != kHasNumber || !v_.IsInt()) {
         st_ = kError;
         return 0;
@@ -190,7 +190,7 @@ int LookaheadParser::GetInt() {
     return result;
 }
 
-double LookaheadParser::GetDouble() {
+inline double LookaheadParser::GetDouble() {
     if (st_ != kHasNumber) {
         st_  = kError;
         return 0.;
@@ -201,7 +201,7 @@ double LookaheadParser::GetDouble() {
     return result;
 }
 
-bool LookaheadParser::GetBool() {
+inline bool LookaheadParser::GetBool() {
     if (st_ != kHasBool) {
         st_  = kError;
         return false;
@@ -212,7 +212,7 @@ bool LookaheadParser::GetBool() {
     return result;
 }
 
-void LookaheadParser::GetNull() {
+inline void LookaheadParser::GetNull() {
     if (st_ != kHasNull) {
         st_  = kError;
         return;
@@ -221,7 +221,7 @@ void LookaheadParser::GetNull() {
     ParseNext();
 }
 
-const char* LookaheadParser::GetString() {
+inline const char* LookaheadParser::GetString() {
     if (st_ != kHasString) {
         st_  = kError;
         return 0;
@@ -232,7 +232,7 @@ const char* LookaheadParser::GetString() {
     return result;
 }
 
-void LookaheadParser::SkipOut(int depth) {
+inline void LookaheadParser::SkipOut(int depth) {
     do {
         if (st_ == kEnteringArray || st_ == kEnteringObject) {
             ++depth;
@@ -249,19 +249,19 @@ void LookaheadParser::SkipOut(int depth) {
     while (depth > 0);
 }
 
-void LookaheadParser::SkipValue() {
+inline void LookaheadParser::SkipValue() {
     SkipOut(0);
 }
 
-void LookaheadParser::SkipArray() {
+inline void LookaheadParser::SkipArray() {
     SkipOut(1);
 }
 
-void LookaheadParser::SkipObject() {
+inline void LookaheadParser::SkipObject() {
     SkipOut(1);
 }
 
-Value* LookaheadParser::PeekValue() {
+inline Value* LookaheadParser::PeekValue() {
     if (st_ >= kHasNull && st_ <= kHasKey) {
         return &v_;
     }
@@ -269,7 +269,7 @@ Value* LookaheadParser::PeekValue() {
     return 0;
 }
 
-int LookaheadParser::PeekType() {
+inline int LookaheadParser::PeekType() {
     if (st_ >= kHasNull && st_ <= kHasKey) {
         return v_.GetType();
     }

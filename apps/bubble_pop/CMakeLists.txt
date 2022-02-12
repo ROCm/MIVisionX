@@ -39,10 +39,16 @@ else()
     include_directories (/opt/rocm/mivisionx/include)
 endif()
 
+set(SHARED_LIB_TYPE so)
+if(APPLE)
+  set(SHARED_LIB_TYPE dylib)
+endif()
+
 if(DEFINED OPENVX_LIBRARIES)
-    message(STATUS "OPENVX_LIBRARIES: \t${OPENVX_LIBRARIES}")
+    message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
 else()
-    set(OPENVX_LIBRARIES /opt/rocm/mivisionx/lib/libopenvx.so)
+    set(OPENVX_LIBRARIES /opt/rocm/mivisionx/lib/libopenvx.${SHARED_LIB_TYPE})
+	message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
 endif()
 
 list    (APPEND SOURCES
@@ -58,6 +64,14 @@ target_link_libraries(${PROJECT_NAME} ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(vxPop source/AMD_app.cpp)
 target_link_libraries(vxPop ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES} ${PROJECT_NAME})
+
+if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
+	target_compile_definitions(vxPop PUBLIC USE_OPENCV_4=1)
+else()
+	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
+	target_compile_definitions(vxPop PUBLIC USE_OPENCV_4=0)
+endif()
 
 file(COPY image DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY gdf DESTINATION ${CMAKE_BINARY_DIR})

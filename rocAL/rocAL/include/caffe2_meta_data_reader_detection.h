@@ -47,7 +47,7 @@ public :
 private:
     void read_files(const std::string& _path);
     bool exists(const std::string &image_name);
-    void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSizes image_size);
+    void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);
     bool _last_rec;
     void read_lmdb_record(std::string file_name, uint file_size);
     std::map<std::string, std::shared_ptr<BoundingBox>> _map_content;

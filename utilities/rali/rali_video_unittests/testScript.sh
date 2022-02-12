@@ -28,6 +28,7 @@ fi
 SAVE_FRAMES=1   # (save_frames:on/off)
 RGB=1           # (rgb:1/gray:0)
 DEVICE=0        # (cpu:0/gpu:1)
+HARDWARE_DECODE_MODE=0 # (hardware_decode_mode:on/off)
 SHUFFLE=0       # (shuffle:on/off)
 
 BATCH_SIZE=1         # Number of sequences per batch
@@ -44,10 +45,10 @@ ENABLE_TIMESTAMPS=0          # outputs timestamps of the frames in the batch
 ENABLE_SEQUENCE_REARRANGE=0  # rearranges the frames in the sequence NOTE: The order needs to be set in the rali_video_unittests.cpp
 
 echo "$INPUT_PATH"
-echo ./rali_video_unittests "$INPUT_PATH" $READER_CASE $DEVICE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
+echo ./rali_video_unittests "$INPUT_PATH" $READER_CASE $DEVICE $HARDWARE_DECODE_MODE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
 $RGB $SAVE_FRAMES $SHUFFLE $RESIZE_WIDTH $RESIZE_HEIGHT $FILELIST_FRAMENUM \
 $ENABLE_METADATA $ENABLE_FRAME_NUMBER $ENABLE_TIMESTAMPS $ENABLE_SEQUENCE_REARRANGE
 
-./rali_video_unittests "$INPUT_PATH" $READER_CASE $DEVICE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
+./rali_video_unittests "$INPUT_PATH" $READER_CASE $DEVICE $HARDWARE_DECODE_MODE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
 $RGB $SAVE_FRAMES $SHUFFLE $RESIZE_WIDTH $RESIZE_HEIGHT $FILELIST_FRAMENUM \
 $ENABLE_METADATA $ENABLE_FRAME_NUMBER $ENABLE_TIMESTAMPS $ENABLE_SEQUENCE_REARRANGE

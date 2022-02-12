@@ -6,15 +6,19 @@
 
 [MIVisionX Documentation](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/)
 
-## MIVisionX 2.0.1 (unreleased)
+## MIVisionX 2.0.1
 
 ### Added
 
 * Support for cmake 3.22.X
+* Support for OpenCV 4.X.X
+* Support for mv_compile with the HIP GPU backend
+* Support for tensor_compare node (less/greater/less_than/greater_than/equal onnx operators)
 
 ### Optimizations
 
 * Code Cleanup
+* Readme Updates
 
 ### Changed
 
@@ -23,6 +27,8 @@
 ### Fixed
 
 * Minor bugs and warnings
+* Inference server application - OpenCL Backend
+* vxCreateThreshold Fix - Apps & Sample
 
 ### Tested Configurations
 

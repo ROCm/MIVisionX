@@ -54,7 +54,7 @@ message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
 if(NOT DEFINED BACKEND)
-  set(BACKEND "OPENCL")   # set default backend to OPENCL
+  set(BACKEND "HIP")   # set default backend to HIP
 else()
   if("${BACKEND}" STREQUAL "OPENCL" OR "${BACKEND}" STREQUAL "OCL" OR "${BACKEND}" STREQUAL "OpenCL")
     set(BACKEND "OPENCL")
@@ -64,9 +64,9 @@ else()
     set(BACKEND "CPU")
     set(GPU_SUPPORT OFF)
   else()
-    message("-- ${Red} Warning: MIVisionX backend option unknown -- ${BACKEND}${ColourReset}")
-    message("-- ${Red} Warning: MIVisionX default backend will enforced${ColourReset}")
-    set(BACKEND "OPENCL")
+    message("-- ${Red}Warning: MIVisionX backend option unknown -- ${BACKEND}${ColourReset}")
+    message("-- ${Red}Warning: MIVisionX default backend will enforced${ColourReset}")
+    set(BACKEND "HIP")
   endif()
 endif()
 message("-- ${BoldBlue}MIVisionX Backend set to -- ${BACKEND}${ColourReset}")
@@ -92,7 +92,7 @@ message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:
 message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D BACKEND=HIP [select HIP for GPU backend [options:CPU/OPENCL/HIP](default:OPENCL)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=OPENCL [select OPENCL for GPU backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
@@ -130,6 +130,11 @@ The toolkit allows for rapid prototyping and deployment of optimized computer vi
 machine learning inference workloads on a wide range of computer hardware, including \
 small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.")
 set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+
+# set license information
+set(CPACK_RPM_PACKAGE_LICENSE    "MIT")
+set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION share/doc/)
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")

@@ -50,8 +50,13 @@ typedef struct VideoProperties
     std::vector<int> labels;
 } VideoProperties;
 
+typedef struct Properties
+{
+    unsigned width, height, frames_count, avg_frame_rate_num, avg_frame_rate_den;
+} Properties;
+
 void substring_extraction(std::string const &str, const char delim, std::vector<std::string> &out);
-void open_video_context(const char *video_file_path, std::vector<unsigned> &props);
+void open_video_context(const char *video_file_path, Properties &props);
 void get_video_properties_from_txt_file(VideoProperties &video_props, const char *file_path, bool file_list_frame_num);
 void find_video_properties(VideoProperties &video_props, const char *source_path, bool file_list_frame_num);
 #endif

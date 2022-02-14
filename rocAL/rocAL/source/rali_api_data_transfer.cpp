@@ -111,48 +111,5 @@ raliCopyToOutput(
     return RALI_OK;
 }
 
-RaliStatus RALI_API_CALL
-raliCopyToHipOutputTensor32(RaliContext p_context,  void *out_ptr, RaliTensorLayout tensor_format, float multiplier0,
-                       float multiplier1, float multiplier2, float offset0, float offset1, float offset2,
-                       bool reverse_channels)
-{
-    auto context = static_cast<Context*>(p_context);
-    try
-    {
-        auto tensor_layout = (tensor_format == RALI_NHWC) ?  RaliTensorFormat::NHWC : RaliTensorFormat::NCHW;
-        context->master_graph->copy_hip_out_tensor(out_ptr, tensor_layout, multiplier0, multiplier1, multiplier2,
-                offset0, offset1, offset2, reverse_channels, RaliTensorDataType::FP32);
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-        return RALI_RUNTIME_ERROR;
-    }
-    return RALI_OK;
-
-}
-
-RaliStatus RALI_API_CALL
-raliCopyToHipOutputTensor16(RaliContext p_context, void *out_ptr, RaliTensorLayout tensor_format, float multiplier0,
-                       float multiplier1, float multiplier2, float offset0, float offset1, float offset2,
-                       bool reverse_channels)
-{
-    auto context = static_cast<Context*>(p_context);
-    try
-    {
-        auto tensor_layout = (tensor_format == RALI_NHWC) ?  RaliTensorFormat::NHWC : RaliTensorFormat::NCHW;
-        context->master_graph->copy_hip_out_tensor(out_ptr, tensor_layout, multiplier0, multiplier1, multiplier2,
-                offset0, offset1, offset2, reverse_channels, RaliTensorDataType::FP16);
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-        return RALI_RUNTIME_ERROR;
-    }
-    return RALI_OK;
-
-}
 
 

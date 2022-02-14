@@ -179,13 +179,6 @@ class RALICOCOIterator(object):
         else:
             self.loader.copyToTensorNHWC(
                 self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        # else:
-        #     if(self.tensor_format == types.NCHW):
-        #         self.loader.copyToHipTensorNCHW(
-        #         self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        #     else:
-        #         self.loader.copyToHipTensorNHWC(
-        #         self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
 
 #Image id of a batch of images
         self.loader.GetImageId(self.image_id)

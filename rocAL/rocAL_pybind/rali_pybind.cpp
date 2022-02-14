@@ -35,7 +35,7 @@ namespace pybind11
 namespace rali{
     using namespace pybind11::literals; // NOLINT
     // PYBIND11_MODULE(rali_backend_impl, m) {
-        static void *ctypes_void_ptr(const py::object &object)
+    static void *ctypes_void_ptr(const py::object &object)
     {
         auto ptr_as_int = getattr(object, "value", py::none());
         if (ptr_as_int.is_none())
@@ -91,30 +91,6 @@ namespace rali{
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels);
         // std::cerr<<"\n Copy failed with status :: "<<status;
-        return py::cast<py::none>(Py_None);
-    }
-
-        py::object reflect_hip_copy_tensor32(RaliContext context, py::object p, RaliTensorLayout tensor_format,
-                                float multiplier0, float multiplier1, float multiplier2,
-                                float offset0, float offset1, float offset2,
-                                bool reverse_channels)
-    {
-        auto ptr = ctypes_void_ptr(p);
-        raliCopyToHipOutputTensor32(context, ptr, tensor_format, multiplier0,
-                                              multiplier1, multiplier2, offset0,
-                                              offset1, offset2, reverse_channels);
-        return py::cast<py::none>(Py_None);
-    }
-
-    py::object reflect_hip_copy_tensor16(RaliContext context, py::object p, RaliTensorLayout tensor_format,
-                                float multiplier0, float multiplier1, float multiplier2,
-                                float offset0, float offset1, float offset2,
-                                bool reverse_channels)
-    {
-        auto ptr = ctypes_void_ptr(p);
-        raliCopyToHipOutputTensor16(context, ptr, tensor_format, multiplier0,
-                                              multiplier1, multiplier2, offset0,
-                                              offset1, offset2, reverse_channels);
         return py::cast<py::none>(Py_None);
     }
 
@@ -325,8 +301,6 @@ namespace rali{
         m.def("raliCopyToOutput",&wrapper);
         m.def("raliCopyToOutputTensor32",&wrapper_tensor32);
         m.def("raliCopyToOutputTensor16",&wrapper_tensor16);
-        m.def("raliCopyToHipOutputTensor32",&reflect_hip_copy_tensor32);
-        m.def("raliCopyToHipOutputTensor16",&reflect_hip_copy_tensor16);
         // rali_api_data_loaders.h
          m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,

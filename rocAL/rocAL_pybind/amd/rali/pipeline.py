@@ -259,18 +259,18 @@ class Pipeline(object):
 
     def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, array, types.NHWC,
+            b.raliCopyToOutputTensor32(self._handle, ctypes.c_void_p(array.data_ptr()), types.NHWC,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
         elif tensor_dtype == types.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, array, types.NHWC,
+            b.raliCopyToOutputTensor16(self._handle, ctypes.c_void_p(array.data_ptr()), types.NHWC,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, array, types.NCHW,
+            b.raliCopyToOutputTensor32(self._handle, ctypes.c_void_p(array.data_ptr()), types.NCHW,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
         elif tensor_dtype == types.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, array, types.NCHW,
+            b.raliCopyToOutputTensor16(self._handle, ctypes.c_void_p(array.data_ptr()), types.NCHW,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def encode(self, bboxes_in, labels_in):

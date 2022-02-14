@@ -79,14 +79,13 @@ namespace rali{
         return py::bytes(s);
     }
 
-    py::object wrapper_tensor32(RaliContext context, py::array_t<float> array,
+    py::object wrapper_tensor32(RaliContext context, py::object p,
                                 RaliTensorLayout tensor_format, float multiplier0,
                                 float multiplier1, float multiplier2, float offset0,
                                 float offset1, float offset2,
                                 bool reverse_channels)
     {
-        auto buf = array.request();
-        float* ptr = (float*) buf.ptr;
+        auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
         int status = raliCopyToOutputTensor32(context, ptr, tensor_format, multiplier0,
                                               multiplier1, multiplier2, offset0,
@@ -119,14 +118,13 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_tensor16(RaliContext context, py::array_t<float16> array,
+    py::object wrapper_tensor16(RaliContext context, py::object p,
                                 RaliTensorLayout tensor_format, float multiplier0,
                                 float multiplier1, float multiplier2, float offset0,
                                 float offset1, float offset2,
                                 bool reverse_channels)
     {
-        auto buf = array.request();
-        float16* ptr = (float16*) buf.ptr;
+        auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
         int status = raliCopyToOutputTensor16(context, ptr, tensor_format, multiplier0,
                                               multiplier1, multiplier2, offset0,

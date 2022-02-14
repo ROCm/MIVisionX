@@ -28,7 +28,7 @@ THE SOFTWARE.
 #endif
 
 RaliStatus RALI_API_CALL
-raliCopyToOutputTensor32(RaliContext p_context, float *out_ptr, RaliTensorLayout tensor_format, float multiplier0,
+raliCopyToOutputTensor32(RaliContext p_context, void *out_ptr, RaliTensorLayout tensor_format, float multiplier0,
                        float multiplier1, float multiplier2, float offset0, float offset1, float offset2,
                        bool reverse_channels)
 {
@@ -50,7 +50,7 @@ raliCopyToOutputTensor32(RaliContext p_context, float *out_ptr, RaliTensorLayout
 }
 
 RaliStatus RALI_API_CALL
-raliCopyToOutputTensor16(RaliContext p_context, half *out_ptr, RaliTensorLayout tensor_format, float multiplier0,
+raliCopyToOutputTensor16(RaliContext p_context, void *out_ptr, RaliTensorLayout tensor_format, float multiplier0,
                        float multiplier1, float multiplier2, float offset0, float offset1, float offset2,
                        bool reverse_channels)
 {

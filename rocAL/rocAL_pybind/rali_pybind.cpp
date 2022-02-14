@@ -79,30 +79,16 @@ namespace rali{
         return py::bytes(s);
     }
 
-    py::object wrapper_tensor32(RaliContext context, py::object p,
-                                RaliTensorLayout tensor_format, float multiplier0,
+    py::object wrapper_tensor(RaliContext context, py::object p,
+                                RaliTensorLayout tensor_format, RaliTensorOutputType tensor_output_type, float multiplier0,
                                 float multiplier1, float multiplier2, float offset0,
                                 float offset1, float offset2,
                                 bool reverse_channels)
     {
         auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
-        int status = raliCopyToOutputTensor32(context, ptr, tensor_format, multiplier0,
-                                              multiplier1, multiplier2, offset0,
-                                              offset1, offset2, reverse_channels);
-        // std::cerr<<"\n Copy failed with status :: "<<status;
-        return py::cast<py::none>(Py_None);
-    }
 
-    py::object wrapper_tensor16(RaliContext context, py::object p,
-                                RaliTensorLayout tensor_format, float multiplier0,
-                                float multiplier1, float multiplier2, float offset0,
-                                float offset1, float offset2,
-                                bool reverse_channels)
-    {
-        auto ptr = ctypes_void_ptr(p);
-        // call pure C++ function
-        int status = raliCopyToOutputTensor16(context, ptr, tensor_format, multiplier0,
+        int status = raliCopyToOutputTensor(context, ptr, tensor_format, tensor_output_type, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels);
         // std::cerr<<"\n Copy failed with status :: "<<status;
@@ -299,8 +285,7 @@ namespace rali{
         m.def("UpdateFloatParameter", &raliUpdateFloatParameter);
         // rali_api_data_transfer.h
         m.def("raliCopyToOutput",&wrapper);
-        m.def("raliCopyToOutputTensor32",&wrapper_tensor32);
-        m.def("raliCopyToOutputTensor16",&wrapper_tensor16);
+        m.def("raliCopyToOutputTensor",&wrapper_tensor);
         // rali_api_data_loaders.h
          m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,

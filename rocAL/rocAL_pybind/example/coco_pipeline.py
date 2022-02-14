@@ -172,13 +172,8 @@ class RALICOCOIterator(object):
         self.lis = []  # Empty list for bboxes
         self.lis_lab = []  # Empty list of labels
 
-        # if (self.device == "cpu"):
-        if(types.NCHW == self.tensor_format):
-            self.loader.copyToTensorNCHW(
-                self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        else:
-            self.loader.copyToTensorNHWC(
-                self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+        self.loader.copyToTensor(
+            self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
 
 #Image id of a batch of images
         self.loader.GetImageId(self.image_id)

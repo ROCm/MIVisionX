@@ -125,6 +125,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
     RaliImage input1;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
+
     switch (reader_type)
     {
         RaliMetaData meta_data;
@@ -235,6 +236,13 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
                 input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false);
             else
                 input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+        }
+        break;
+        case 11: //mxnet reader
+        {
+            std::cout << ">>>>>>> Running MXNET CLASSIFICATION READER" << std::endl;
+            meta_data = raliCreateMXNetReader(handle, path, true);
+            input1 = raliMXNetRecordSource(handle, path, color_format, num_threads, false, false, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
         }
         break;
         default: //image pipeline

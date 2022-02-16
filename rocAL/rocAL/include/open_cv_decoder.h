@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <opencv2/opencv.hpp>
 
 #if USE_OPENCV_4
+using namespace cv;
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
 #define CV_LOAD_IMAGE_GRAYSCALE IMREAD_GRAYSCALE
 #endif

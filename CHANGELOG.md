@@ -10,6 +10,7 @@
 
 ### Added
 
+* `TBD`
 
 ### Optimizations
 
@@ -43,7 +44,7 @@
 
 ### Known issues
 
-* TBD
+* `TBD`
 
 ## MIVisionX 2.0.1
 

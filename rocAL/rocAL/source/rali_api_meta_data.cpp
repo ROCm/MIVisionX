@@ -225,22 +225,25 @@ RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
 unsigned
 RALI_API_CALL raliGetBoundingBoxCount(RaliContext p_context, int* buf)
 {
-    unsigned size = 0;
     if (!p_context)
         THROW("Invalid rali context passed to raliGetBoundingBoxCount")
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
+    if(!meta_data.second)
+        THROW("No label has been loaded for this output image")
     size_t meta_data_batch_size = meta_data.second->get_bb_labels_batch().size();
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
-    if(!meta_data.second)
-        THROW("No label has been loaded for this output image")
+    return context->master_graph->bounding_box_batch_count(buf, meta_data.second);
+#if 0
+    unsigned size = 0;
     for(unsigned i = 0; i < meta_data_batch_size; i++)
     {
         buf[i] = meta_data.second->get_bb_labels_batch()[i].size();
         size += buf[i];
     }
     return size;
+#endif    
 }
 
 void

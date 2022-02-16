@@ -150,7 +150,7 @@ namespace rali{
         // auto labels_buf = labels_array.request();
         // int* labels_ptr = (int*) labels_buf.ptr;
         // call pure C++ function
-        raliGetEncodedBoxesAndLables(context, &bboxes_buf_ptr, &labels_buf_ptr, num_anchors*batchsize);
+        raliGetEncodedBoxesAndLables(context, &bboxes_buf_ptr, &labels_buf_ptr, num_anchors*batch_size);
         // create numpy arrays for boxes and labels tensor from the returned ptr
         // no need to free the memory as this is freed by c++ lib
         py::array_t<float> bboxes_array = py::array_t<float>(
@@ -158,7 +158,7 @@ namespace rali{
                                                           {4*sizeof(float)*num_anchors, 4*sizeof(float), sizeof(float)},
                                                           bboxes_buf_ptr,
                                                           py::cast<py::none>(Py_None));
-        py::array_t<int> lables_array = py::array_t<int>(
+        py::array_t<int> labels_array = py::array_t<int>(
                                                           {batch_size, num_anchors},
                                                           {num_anchors*sizeof(int), sizeof(int)},
                                                           labels_buf_ptr,
@@ -286,6 +286,7 @@ namespace rali{
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
         m.def("raliCopyEncodedBoxesAndLables",&wrapper_encoded_bbox_label);
+        m.def("raliGetEncodedBoxesAndLables",&wrapper_get_encoded_bbox_label);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
         m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy );

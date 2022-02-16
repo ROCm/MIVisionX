@@ -1248,8 +1248,8 @@ void MasterGraph::box_encoder(std::vector<float> &anchors, float criteria, const
     // Intialize gpu box encoder if _mem_type is HIP
     if(_mem_type == RaliMemType::HIP) {
         _box_encoder_gpu = new BoxEncoderGpu(_user_batch_size, anchors, criteria, means, stds, offset, scale, _device.resources().hip_stream, _device.resources().dev_prop.canMapHostMemory);
+        return;
     }
-    return;
 #endif    
     _offset = offset;
     _anchors = anchors;
@@ -1312,6 +1312,18 @@ const std::pair<ImageNameBatch,pMetaDataBatch>& MasterGraph::meta_data()
         THROW("No meta data has been loaded")
     return _ring_buffer.get_meta_data();
 }
+
+size_t MasterGraph::bounding_box_batch_count(int *buf, pMetaDataBatch meta_data_batch)
+{
+    size_t size = 0;
+    for(unsigned i = 0; i < _user_batch_size; i++)
+    {
+        buf[i] = _is_box_encoder? _num_anchors: meta_data_batch->get_bb_labels_batch()[i].size();
+        size += buf[i];
+    }
+    return size;
+}
+
 
 size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, RaliAffinity affinity)
 {

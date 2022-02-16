@@ -194,19 +194,17 @@ void BoxEncoderGpu::prepare_anchors(const std::vector<float> &anchors) {
 
 void BoxEncoderGpu::WriteAnchorsToOutput(float* encoded_boxes) {
   // Device -> device copy for all the samples
-  HIP_ERROR_CHECK_STATUS(hipMemcpyDtoDAsync((void *)encoded_boxes, _anchors_as_center_wh_data_dev, 
-                        _cur_batch_size *_anchor_count * 4 * sizeof(float), _stream));
+  for (int i=0; i<_cur_batch_size; i++) {
+    HIP_ERROR_CHECK_STATUS(hipMemcpyDtoDAsync((void *)(encoded_boxes + i*_anchor_count*4), _anchors_as_center_wh_data_dev,
+                                            _anchor_count * 4 * sizeof(float), _stream));
+  }
 }
 
 
 std::pair<int *, float *> BoxEncoderGpu::ResetBuffers() {
-    hipError_t err;
-    auto best_box_idx_data = _best_box_idx.data();
-    auto best_box_iou_data = _best_box_iou.data();
-
-    HIP_ERROR_CHECK_STATUS(hipMemsetAsync(best_box_idx_data, 0, _cur_batch_size * _anchor_count * sizeof(int), _stream));
-    HIP_ERROR_CHECK_STATUS(hipMemsetAsync(best_box_iou_data, 0, _cur_batch_size * _anchor_count * sizeof(float), _stream));
-    return {best_box_idx_data, best_box_iou_data};
+    HIP_ERROR_CHECK_STATUS(hipMemsetAsync(_best_box_idx_dev, 0, _cur_batch_size * _anchor_count * sizeof(int), _stream));
+    HIP_ERROR_CHECK_STATUS(hipMemsetAsync(_best_box_iou_dev, 0, _cur_batch_size * _anchor_count * sizeof(float), _stream));
+    return std::make_pair(_best_box_idx_dev, _best_box_iou_dev);
 }
 
 void BoxEncoderGpu::ResetLabels(int *encoded_labels_out) {
@@ -225,14 +223,26 @@ void BoxEncoderGpu::Run(pMetaDataBatch full_batch_meta_data, float *encoded_boxe
     
     const auto buffers = ResetBuffers();    // reset temp buffers
 //    auto dims = CalculateDims(boxes_input);     // todo:: if we store output in tensorlist
-
+    int total_num_boxes = 0;
+    for (int i = 0; i < _cur_batch_size; i++) {
+        auto sample = &_samples_host_buf[i];
+        sample->in_box_count = full_batch_meta_data->get_bb_labels_batch()[i].size();
+        total_num_boxes += sample->in_box_count;
+    }
+    if (total_num_boxes > MAX_NUM_BOXES_TOTAL)
+        THROW("BoxEncoderGpu::Run total_num_boxes exceeds max");
+    float *boxes_in_temp = _boxes_in_dev; int *labels_in_temp = _labels_in_dev;
     for (int sample_idx = 0; sample_idx < _cur_batch_size; sample_idx++) {
         auto sample = &_samples_host_buf[sample_idx];
-        sample->in_box_count = full_batch_meta_data->get_bb_labels_batch()[sample_idx].size();
-        sample->boxes_in = reinterpret_cast<const float4 *>(full_batch_meta_data->get_bb_cords_batch()[sample_idx].data());
-        sample->labels_in = reinterpret_cast<const int *>(full_batch_meta_data->get_bb_labels_batch()[sample_idx].data());
+        //sample->in_box_count = full_batch_meta_data->get_bb_labels_batch()[sample_idx].size();
+        HIP_ERROR_CHECK_STATUS( hipMemcpyHtoDAsync((void *)boxes_in_temp, full_batch_meta_data->get_bb_cords_batch()[sample_idx].data(), sample->in_box_count*sizeof(float)*4, _stream));
+        HIP_ERROR_CHECK_STATUS( hipMemcpyHtoDAsync((void *)labels_in_temp, full_batch_meta_data->get_bb_labels_batch()[sample_idx].data(), sample->in_box_count*sizeof(int), _stream));
+        sample->boxes_in = reinterpret_cast<const float4 *>(boxes_in_temp);
+        sample->labels_in = reinterpret_cast<const int *>(labels_in_temp);
         sample->boxes_out = reinterpret_cast<float4 *>(encoded_boxes_data + sample_idx*_anchor_count*4);
         sample->labels_out = reinterpret_cast<int *>(encoded_labels_data + sample_idx*_anchor_count);
+        boxes_in_temp += sample->in_box_count*sizeof(float4);
+        labels_in_temp += sample->in_box_count*sizeof(int);
         _output_shape.push_back(std::vector<size_t>(1,_anchor_count));
     }
     const auto means_data = _means.data();
@@ -244,7 +254,8 @@ void BoxEncoderGpu::Run(pMetaDataBatch full_batch_meta_data, float *encoded_boxe
       ClearOutput(encoded_boxes_data);
     // if there is no mapped memory, do explicit copy from host to device
     if (!_pinnedMem)
-      HIP_ERROR_CHECK_STATUS(hipMemcpyHtoD(_samples_dev_buf, _samples_host_buf, _cur_batch_size*sizeof(BoxEncoderSampleDesc)));
+        HIP_ERROR_CHECK_STATUS(hipMemcpyHtoD(_samples_dev_buf, _samples_host_buf, _cur_batch_size*sizeof(BoxEncoderSampleDesc)));
+    HIP_ERROR_CHECK_STATUS(hipStreamSynchronize(_stream));
 
     // call the kernel for box encoding
     hipLaunchKernelGGL(BoxEncode<BlockSize>, dim3(_cur_batch_size), dim3(BlockSize), 0, _stream,

@@ -27,6 +27,8 @@ THE SOFTWARE.
 #include <vector>
 #include "meta_data.h"
 
+// assume total number of boxes per batch for device memory allocation
+#define MAX_NUM_BOXES_TOTAL     4096
 #define HIP_ERROR_CHECK_STATUS(call) { hipError_t err = (call); if(err != hipSuccess){ THROW("ERROR: Hip call failed with status " + TOSTR(err))}}
 
 struct BoxEncoderSampleDesc {
@@ -45,8 +47,8 @@ public:
     {
         if (criteria < 0.f || criteria > 1.f || means.size() != 4 || stds.size() != 4)
             THROW("BoxEncoder invalid input parameter");
-         prepare_anchors(_anchors);
          Initialize(batch_size);
+         prepare_anchors(_anchors);
     }
     void Run(pMetaDataBatch full_batch_meta_data, float *encoded_boxes_data, int *encoded_labels_data);
 
@@ -78,6 +80,10 @@ protected:
         {
             THROW("hipMalloc failed for BoxEncoderGPU" + TOSTR(err));
         }
+        HIP_ERROR_CHECK_STATUS(hipMalloc(&_labels_in_dev, MAX_NUM_BOXES_TOTAL*sizeof(int)));
+        HIP_ERROR_CHECK_STATUS(hipMalloc(&_boxes_in_dev, MAX_NUM_BOXES_TOTAL*sizeof(float)*4));
+        HIP_ERROR_CHECK_STATUS(hipMalloc(&_best_box_idx_dev, _best_box_idx.size()*sizeof(int)));
+        HIP_ERROR_CHECK_STATUS(hipMalloc(&_best_box_iou_dev, _best_box_iou.size()*sizeof(float)));
     }
 
     void UnInitialize() {
@@ -85,6 +91,10 @@ protected:
         if (!_pinnedMem) HIP_ERROR_CHECK_STATUS(hipFree(_samples_dev_buf));
         if (_anchors_data_dev) HIP_ERROR_CHECK_STATUS(hipFree(_anchors_data_dev));
         if (_anchors_as_center_wh_data_dev) HIP_ERROR_CHECK_STATUS(hipFree(_anchors_as_center_wh_data_dev));
+        if (_labels_in_dev) HIP_ERROR_CHECK_STATUS(hipFree(_labels_in_dev));
+        if (_boxes_in_dev) HIP_ERROR_CHECK_STATUS(hipFree(_boxes_in_dev));
+        if (_best_box_idx_dev) HIP_ERROR_CHECK_STATUS(hipFree(_best_box_idx_dev));
+        if (_best_box_iou_dev) HIP_ERROR_CHECK_STATUS(hipFree(_best_box_iou_dev));
     }
 
 private:
@@ -105,12 +115,15 @@ private:
     bool  _pinnedMem;
 
     int _anchor_count;
-    //float4 *_anchors;
+    int *_labels_in_dev;
+    float *_boxes_in_dev;
     std::vector<int>  _best_box_idx;
     std::vector<float> _best_box_iou;
+    int *_best_box_idx_dev;
+    float *_best_box_iou_dev;
     std::vector<BoxEncoderSampleDesc *> _samples;
     BoxEncoderSampleDesc *_samples_host_buf, *_samples_dev_buf;
     float4 *_anchors_data_dev, *_anchors_as_center_wh_data_dev;
     std::vector<std::vector<size_t>> _output_shape;
-    
+
 };

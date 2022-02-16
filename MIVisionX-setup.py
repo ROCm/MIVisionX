@@ -399,7 +399,7 @@ else:
                   ' install -t pattern devel_basis')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                   ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
-    # OpenCV 3.4.0
+    # OpenCV 4.5.5
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
               ' -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )')
     os.system('(cd '+deps_dir+'/build/OpenCV; make -j8 )')

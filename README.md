@@ -448,7 +448,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ## MIVisionX Dependency Map
 
-**Docker Image:** `docker pull kiritigowda/ubuntu-18.04:{TAGNAME}`
+**Docker Image:** `sudo docker build -f docker/ubuntu20/{DOCKER_LEVEL_FILE_NAME}.dockerfile -t {mivisionx-level-NUMBER} .`
 
 - ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `new component added to the level`
 - ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `existing component from the previous level`

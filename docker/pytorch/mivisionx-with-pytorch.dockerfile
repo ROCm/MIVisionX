@@ -35,10 +35,10 @@ RUN apt-get -y install libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm li
         git clone -b 2.0.6.2 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd ../../ && \
         git clone -b 0.92  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
-        cmake -DBACKEND=OCL ../ && make -j4 && sudo make install && cd
+        cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd
 
 WORKDIR /workspace
 
 # install MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
-        cmake ../MIVisionX && make -j8 && sudo make install && cd
+        cmake -DBACKEND=HIP ../MIVisionX && make -j8 && sudo make install && cd

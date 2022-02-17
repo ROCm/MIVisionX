@@ -41,7 +41,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install sqlite3 libsqlite3-dev lib
         wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.14.0.zip && unzip 2.14.0.zip && \
         cd MIOpen-2.14.0 && mkdir build && cd build && \
         #cd MIOpen-2.14.0 && sudo cmake -P install_deps.cmake --minimum && mkdir build && cd build && \ - deps install turned off
-        cmake -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && make -j8 && make MIOpenDriver && sudo make install && cd ../../ && \
+        CXX=/opt/rocm/llvm/bin/clang++ cmake -DMIOPEN_BACKEND=HIP ../ && make -j8 && make MIOpenDriver && sudo make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 # install MIVisionX rocAL dependency - Level 5

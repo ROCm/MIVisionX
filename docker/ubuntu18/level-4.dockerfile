@@ -15,8 +15,8 @@ RUN apt-get -y install libnuma-dev wget sudo gnupg2 kmod python3-dev &&  \
 # install OpenCV & FFMPEG - Level 3
 RUN apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \
         libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip && \
-        mkdir OpenCV && cd OpenCV && wget https://github.com/opencv/opencv/archive/3.4.0.zip && unzip 3.4.0.zip && \
-        mkdir build && cd build && cmake -DWITH_OPENCL=OFF ../opencv-3.4.0 && make -j8 && sudo make install && sudo ldconfig && cd
+        mkdir OpenCV && cd OpenCV && wget https://github.com/opencv/opencv/archive/4.5.5.zip && unzip 4.5.5.zip && \
+        mkdir build && cd build && cmake -DWITH_OPENCL=OFF ../opencv-4.5.5 && make -j8 && sudo make install && sudo ldconfig && cd
 RUN apt-get -y install autoconf automake build-essential cmake git-core libass-dev libfreetype6-dev libsdl2-dev libtool libva-dev \
         libvdpau-dev libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget zlib1g-dev \
         nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev && \

@@ -41,7 +41,7 @@ RUN apt-get -y install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python-dev p
         wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.14.0.zip && unzip 2.14.0.zip && \
         cd MIOpen-2.14.0 && mkdir build && cd build && \
         #cd MIOpen-2.14.0 && sudo cmake -P install_deps.cmake --minimum && mkdir build && cd build && \ - deps install turned off
-        cmake -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && make -j8 && make MIOpenDriver && sudo make install && cd ../../ && \
+        CXX=/opt/rocm/llvm/bin/clang++ cmake -DMIOPEN_BACKEND=HIP ../ && make -j8 && make MIOpenDriver && sudo make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 # install MIVisionX rocAL dependency - Level 5
@@ -50,10 +50,10 @@ RUN apt-get -y install libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm li
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd ../../ && \
         git clone -b 0.92  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
-        cmake -DBACKEND=OCL ../ && make -j4 && sudo make install && cd
+        cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd
 
 WORKDIR /workspace
 
 # install MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
-        cmake ../MIVisionX && make -j8 && make install
+        cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install

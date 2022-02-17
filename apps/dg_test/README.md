@@ -31,7 +31,7 @@ See the [OpenVX documentation](https://www.khronos.org/registry/OpenVX/specs/1.0
 ### Pre-requisites
 
 1. Build & Install [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx)
-2. [OpenCV 3.1](https://opencv.org/opencv-3-1.html) or higher
+2. [OpenCV 3.1](https://github.com/opencv/opencv/releases) or higher
 
 ### Build using Cmake on Linux (Ubuntu 16.04 64bit)
 

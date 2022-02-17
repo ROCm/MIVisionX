@@ -132,7 +132,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Visual Studio 2019 or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* Install [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
@@ -140,7 +140,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 * Install [Homebrew](https://brew.sh)
 * Install [CMake](https://cmake.org)
-* Install OpenCV 3.4
+* Install OpenCV `3`/`4`
 
   **Note:** macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
 
@@ -155,7 +155,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
-* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
   + FFMPEG is required for amd_media & mv_deploy modules
@@ -179,7 +179,7 @@ For the convenience of the developer, we here provide the setup script which wil
 
   ``` 
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                            --opencv    [OpenCV Version - optional (default:3.4.0)]
+                            --opencv    [OpenCV Version - optional (default:4.5.5)]
                             --miopen    [MIOpen Version - optional (default:2.14.0)]
                             --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
@@ -238,7 +238,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     + libraries into `/opt/rocm/mivisionx/lib`
     + OpenVX and module header files into `/opt/rocm/mivisionx/include`
     + model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
-  * Package (.deb & .rpm) install requires `OpenCV v3.4.0` to execute `AMD OpenCV extensions`
+  * Package (.deb & .rpm) install requires `OpenCV v3+` to execute `AMD OpenCV extensions`
 
 #### Using `MIVisionX-setup.py`
 
@@ -436,7 +436,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
-* OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
 * RPP - [0.92](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.92)
 * FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all the above packages
@@ -444,7 +444,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Known issues
 
-* Package install requires **OpenCV** `v3.4.X` to execute `AMD OpenCV extensions`
+* Package install requires **OpenCV** `V-3+` to execute `AMD OpenCV extensions`
 
 ## MIVisionX Dependency Map
 

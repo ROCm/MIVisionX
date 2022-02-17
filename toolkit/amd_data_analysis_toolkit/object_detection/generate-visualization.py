@@ -24,7 +24,7 @@ __credits__     = ["Mike Schmit"]
 __license__     = "MIT"
 __version__     = "0.9.0"
 __maintainer__  = "Kiriti Nagesh Gowda"
-__email__       = "Kiriti.NageshGowda@amd.com"
+__email__       = "mivisionx.support@amd.com"
 __status__      = "Alpha"
 
 import os

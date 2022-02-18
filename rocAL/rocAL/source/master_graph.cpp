@@ -1560,7 +1560,7 @@ MasterGraph::get_bbox_encoded_buffers(float **boxes_buf_ptr, int **labels_buf_pt
       if (num_encoded_boxes != _user_batch_size*_num_anchors) {
           THROW("num_encoded_boxes is not correct");
       }
-      auto encoded_boxes_and_lables = _ring_buffer.get_box_encode_write_buffers();
+      auto encoded_boxes_and_lables = _ring_buffer.get_box_encode_read_buffers();
       *boxes_buf_ptr = (float *) encoded_boxes_and_lables.first;
       *labels_buf_ptr = (int *) encoded_boxes_and_lables.second;
     }

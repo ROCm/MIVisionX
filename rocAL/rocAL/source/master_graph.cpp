@@ -328,8 +328,12 @@ void MasterGraph::release()
     _image_map.clear();
     _ring_buffer.release_gpu_res();
     //shut_down loader:: required for releasing any allocated resourses
-    _loader_module->shut_down();
-
+#ifdef RALI_VIDEO
+    if(_is_video_loader)
+        _video_loader_module->shut_down();
+    else
+#endif
+        _loader_module->shut_down();
     // release all openvx resources.
     vx_status status;
     for(auto& image: _internal_images)
@@ -1198,6 +1202,25 @@ MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, 
         THROW("Metadata can only have a single output")
     else
         _augmented_meta_data = _meta_data_reader->get_output();
+    return _meta_data_reader->get_output();
+}
+
+MetaDataBatch * MasterGraph::create_mxnet_label_reader(const char *source_path, bool is_output)
+{
+    if( _meta_data_reader)
+        THROW("A metadata reader has already been created")
+    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::MXNET_META_DATA_READER, source_path);
+    _meta_data_graph = create_meta_data_graph(config);
+    _meta_data_reader = create_meta_data_reader(config);
+    _meta_data_reader->init(config);
+    _meta_data_reader->read_all(source_path);
+    if(is_output)
+    {
+        if (_augmented_meta_data)
+            THROW("Metadata output already defined, there can only be a single output for metadata augmentation")
+        else
+            _augmented_meta_data = _meta_data_reader->get_output();
+    }
     return _meta_data_reader->get_output();
 }
 

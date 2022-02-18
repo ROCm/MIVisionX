@@ -57,8 +57,9 @@ Following is an example gdf to encode to .h264 stream from a YUV input file
 import vx_amd_media
 
 # read input sequences
-data yuvimg  = image:1920,1080,IYUV:read,input.yuv
-data vid1 = scalar:STRING,"{4, 30, 0, 15},<fname_with_full_path.264>"
+data yuvimg  = image:1920,1080,NV12:read,input.yuv
+data vid1 = scalar:STRING,"fname_with_full_path.264"
 data aux_output = array:UINT8,256
-node com.amd.amd_media.encode yuvimg vid1 NULL aux_output
+data gpu_mode = scalar:BOOL,FALSE
+node com.amd.amd_media.encode yuvimg vid1 NULL aux_output gpu_mode
 ```

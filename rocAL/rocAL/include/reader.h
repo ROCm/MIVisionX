@@ -40,7 +40,8 @@ enum class StorageType
     CAFFE_LMDB_RECORD = 3,
     CAFFE2_LMDB_RECORD = 4,
     COCO_FILE_SYSTEM = 5,
-    SEQUENCE_FILE_SYSTEM = 6
+    SEQUENCE_FILE_SYSTEM = 6,
+    MXNET_RECORDIO = 7,
 };
 
 struct ReaderConfig
@@ -94,6 +95,16 @@ private:
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
 };
 
+// MXNet image recordio struct - used to read the contents from the MXNet recordIO files.
+struct ImageRecordIOHeader {
+  uint32_t flag; //flag of the header
+  float label; //label field that returns label of images
+  uint64_t image_id[2]; /* unique image index
+     *  image_id[1] is always set to 0,
+     *  reserved for future purposes for 128bit id
+     *  image_id[0] is used to store image id
+     */
+};
 class Reader
 {
 public:

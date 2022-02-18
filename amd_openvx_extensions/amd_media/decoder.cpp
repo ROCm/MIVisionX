@@ -567,7 +567,9 @@ vx_status CLoomIoMediaDecoder::Initialize()
     #endif
         ERROR_CHECK_NULLPTR(cmdq);
         for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
-            mem[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, gpuOffset + gpuStride * height, nullptr, nullptr);
+            int buf_height = height;
+            if (outputFormat == AV_PIX_FMT_NV12)  buf_height = height + (height>>1);
+            mem[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, gpuOffset + gpuStride * buf_height, nullptr, nullptr);
             ERROR_CHECK_NULLPTR(mem[i]);
         }
 #elif ENABLE_HIP
@@ -583,7 +585,9 @@ vx_status CLoomIoMediaDecoder::Initialize()
     }
 
     for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
-        err = hipHostMalloc((void **)&decodeBuffer[i], gpuOffset + gpuStride * height);
+        int buf_height = height;
+        if (outputFormat == AV_PIX_FMT_NV12)  buf_height = height + (height>>1);
+        err = hipHostMalloc((void **)&decodeBuffer[i], gpuOffset + gpuStride * buf_height);
         if (err != hipSuccess) {
             vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipHostMalloc => %d (failed)\n", err);
             return VX_FAILURE;
@@ -595,7 +599,7 @@ vx_status CLoomIoMediaDecoder::Initialize()
                 return VX_FAILURE;
             }
         } else {
-            err = hipMalloc(&mem[i], gpuOffset + gpuStride * height);
+            err = hipMalloc(&mem[i], gpuOffset + gpuStride * buf_height);
             if (err != hipSuccess) {
                 vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipMalloc(%p) => %d (failed)\n", mem[i], err);
                 return VX_FAILURE;
@@ -933,6 +937,7 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
         ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferGPU, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
         ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE, &stride, sizeof(stride)));
         ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET, &offset, sizeof(offset)));
+        if (stride == 0) stride = width; // in case stride is not set for the buffer
     }
 
     // create and initialize decoder

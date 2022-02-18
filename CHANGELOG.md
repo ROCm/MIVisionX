@@ -6,7 +6,47 @@
 
 [MIVisionX Documentation](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/)
 
-## MIVisionX 2.0.1 (unreleased)
+## MIVisionX 2.1.0 (Unreleased)
+
+### Added
+
+* `TBD`
+
+### Optimizations
+
+* Readme Updates
+
+### Changed
+
+* **Backend** - Default Backend set to `HIP`
+
+### Fixed
+
+* Minor bugs and warnings
+
+### Tested Configurations
+
+* Windows 10
+* Linux distribution
+  + Ubuntu - `18.04` / `20.04`
+  + CentOS - `7` / `8`
+  + SLES - `15-SP2`
+* ROCm: rocm-dev - `4.5.2.40502-164`
+* rocm-cmake - [rocm-4.2.0](https://github.com/RadeonOpenCompute/rocm-cmake/releases/tag/rocm-4.2.0)
+* MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
+* MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
+* Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
+* OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* RPP - [0.92](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.92)
+* FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
+* Dependencies for all the above packages
+* MIVisionX Setup Script - `V2.0.0`
+
+### Known issues
+
+* `TBD`
+
+## MIVisionX 2.0.1
 
 ### Added
 
@@ -18,6 +58,7 @@
 ### Optimizations
 
 * Code Cleanup
+* Readme Updates
 
 ### Changed
 
@@ -26,6 +67,8 @@
 ### Fixed
 
 * Minor bugs and warnings
+* Inference server application - OpenCL Backend
+* vxCreateThreshold Fix - Apps & Sample
 
 ### Tested Configurations
 

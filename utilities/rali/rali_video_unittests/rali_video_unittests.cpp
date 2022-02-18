@@ -59,7 +59,7 @@ int main(int argc, const char **argv)
     const int MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT)
     {
-        printf("Usage: rali_video_unittests <video_file/video_dataset_folder/text file> <reader_case> <processing_device=1/cpu=0> <batch_size> <sequence_length> <frame_step> <frame_stride> <gray_scale/rgb> <display_on_off> <shuffle:0/1> <resize_width> <resize_height> <filelist_framenum:0/1> <enable_meta_data:0/1> <enable_framenumber:0/1> <enable_timestamps:0/1> <enable_sequence_rearrange:0/1>\n");
+        printf("Usage: rali_video_unittests <video_file/video_dataset_folder/text file> <reader_case> <processing_device=1/cpu=0> <hardware_decode_mode=0/1> <batch_size> <sequence_length> <frame_step> <frame_stride> <gray_scale/rgb> <display_on_off> <shuffle:0/1> <resize_width> <resize_height> <filelist_framenum:0/1> <enable_meta_data:0/1> <enable_framenumber:0/1> <enable_timestamps:0/1> <enable_sequence_rearrange:0/1>\n");
         return -1;
     }
 
@@ -84,14 +84,13 @@ int main(int argc, const char **argv)
     bool enable_timestamps = true;
     bool enable_sequence_rearrange = false;
     bool is_output = true;
-    unsigned video_mode = 0;
-    // auto decoder_mode = ((video_mode == 1) ? RaliDecodeDevice::RALI_HW_DECODE : RaliDecodeDevice::RALI_SW_DECODE); // Hardware decoder support will be added in future
-    auto decoder_mode = RaliDecodeDevice::RALI_SW_DECODE;
-
+    unsigned hardware_decode_mode = 0;
     if (argc >= argIdx + MIN_ARG_COUNT)
         reader_case = atoi(argv[++argIdx]);
     if (argc >= argIdx + MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
+    if (argc >= argIdx + MIN_ARG_COUNT)
+        hardware_decode_mode = atoi(argv[++argIdx]);
     if (argc >= argIdx + MIN_ARG_COUNT)
         input_batch_size = atoi(argv[++argIdx]);
     if (argc >= argIdx + MIN_ARG_COUNT)
@@ -121,6 +120,7 @@ int main(int argc, const char **argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         enable_sequence_rearrange = atoi(argv[++argIdx]) ? true : false;
 
+    auto decoder_mode = ((hardware_decode_mode == 1) ? RaliDecodeDevice::RALI_HW_DECODE : RaliDecodeDevice::RALI_SW_DECODE);
     if (!IsPathExist(source_path))
     {
         std::cout << "\nThe folder/file path does not exist\n";

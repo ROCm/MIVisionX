@@ -547,7 +547,7 @@ void CLoomIoMediaEncoder::EncodeLoop()
                 }
             }
         }
-        av_free_packet(&pkt);
+        av_packet_unref(&pkt);
         // update encode frame count and send ACK
         encodeFrameCount++;
         if (videoStream) {
@@ -570,7 +570,7 @@ void CLoomIoMediaEncoder::EncodeLoop()
         if (got_output && fpOutput && (pkt.size > 0)) {
             fwrite(pkt.data, 1, pkt.size, fpOutput);
         }
-        av_free_packet(&pkt);
+        av_packet_unref(&pkt);
     }
     // mark termination and send ACK
     threadTerminated = true;

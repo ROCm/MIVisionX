@@ -435,7 +435,7 @@ vx_status CLoomIoMediaDecoder::Initialize()
         const char * mediaFileName = inputMediaFileName[mediaIndex].c_str();
         AVFormatContext * formatContext = nullptr;
         AVInputFormat * inputFormat = nullptr;
-        AVCodec *decoder = NULL;
+        const AVCodec *decoder = NULL;
         AVStream *video = NULL;
         AVCodecContext * codecContext = nullptr;
         AVBufferRef *hw_device_ctx = NULL;

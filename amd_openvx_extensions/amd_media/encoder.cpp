@@ -90,7 +90,7 @@ private:
     AVFormatContext * formatContext;
     AVStream * videoStream;
     AVCodecContext * videoCodecContext;
-    AVCodec * videoCodec;
+    const AVCodec * videoCodec;
     SwsContext * conversionContext;
     void* mem[ENCODE_BUFFER_POOL_SIZE];
 #if ENABLE_OPENCL

@@ -525,9 +525,11 @@ void CLoomIoMediaEncoder::EncodeLoop()
         }
         // encode video frame and write output to file
         videoFrame[bufId]->pts = pts;
-        status = avcodec_encode_video2(videoCodecContext, &pkt, videoFrame[bufId], &got_output);
+        int status_send = avcodec_send_frame(videoCodecContext, videoFrame[bufId]);
+        got_output = avcodec_receive_packet(videoCodecContext, &pkt);
+        status = std::min(status_send, got_output);
         if (status < 0) {
-            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: avcodec_encode_video2() failed (%4.4s:0x%08x:%d) for frame:%d\n", &status, status, status, encodeFrameCount);
+            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: avcodec_send_frame/receive_packet() failed (%4.4s:0x%08x:%d) for frame:%d\n", &status, status, status, encodeFrameCount);
             threadTerminated = true;
             PushAck(-1);
             return;
@@ -560,9 +562,11 @@ void CLoomIoMediaEncoder::EncodeLoop()
     }
     // process the delayed frames
     for (int got_output = !0; got_output;) {
-        int status = avcodec_encode_video2(videoCodecContext, &pkt, nullptr, &got_output);
+        int status_send = avcodec_send_frame(videoCodecContext, nullptr);
+        got_output = avcodec_receive_packet(videoCodecContext, &pkt);
+        int status = std::min(status_send, got_output);
         if (status < 0) {
-            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: avcodec_encode_video2() failed (%4.4s:%d) at the end\n", &status, status);
+            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: avcodec_send_frame/receive_packet() failed (%4.4s:%d) at the end\n", &status, status);
             threadTerminated = true;
             PushAck(-1);
             return;

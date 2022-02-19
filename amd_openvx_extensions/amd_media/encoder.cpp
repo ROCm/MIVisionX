@@ -328,13 +328,15 @@ vx_status CLoomIoMediaEncoder::Initialize()
                 return VX_ERROR_INVALID_LINK;
             }
         }
-        videoStream->codec->width = width;
-        videoStream->codec->height = height;
-        videoStream->codec->codec_id = videoCodecContext->codec_id;
-        videoStream->codec->bit_rate = videoCodecContext->bit_rate;
-        videoStream->codec->time_base = videoCodecContext->time_base;
-        videoStream->codec->gop_size = videoCodecContext->gop_size;
-        videoStream->codec->max_b_frames = videoCodecContext->max_b_frames;
+        AVCodecContext * vsc;
+        avcodec_parameters_to_context(vsc, videoStream->codecpar);
+        vsc->width = width;
+        vsc->height = height;
+        vsc->codec_id = videoCodecContext->codec_id;
+        vsc->bit_rate = videoCodecContext->bit_rate;
+        vsc->time_base = videoCodecContext->time_base;
+        vsc->gop_size = videoCodecContext->gop_size;
+        vsc->max_b_frames = videoCodecContext->max_b_frames;
         ERROR_CHECK_STATUS(avformat_write_header(formatContext, nullptr));
     }
 
@@ -553,7 +555,9 @@ void CLoomIoMediaEncoder::EncodeLoop()
         // update encode frame count and send ACK
         encodeFrameCount++;
         if (videoStream) {
-            pts += av_rescale_q(1, videoStream->codec->time_base, videoStream->time_base);
+            AVCodecContext * vsc;
+            avcodec_parameters_to_context(vsc, videoStream->codecpar);
+            pts += av_rescale_q(1, vsc->time_base, videoStream->time_base);
         }
         else {
             pts += (int64_t)(60000.0f / fps);

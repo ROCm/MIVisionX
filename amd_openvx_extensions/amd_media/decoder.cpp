@@ -477,7 +477,8 @@ vx_status CLoomIoMediaDecoder::Initialize()
         if (!useVaapi[mediaIndex]) {
             unsigned int streamIndex = -1;
             for (unsigned int si = 0; si < formatContext->nb_streams; si++) {
-                AVCodecContext * vcc = formatContext->streams[si]->codec;
+                AVCodecContext * vcc;
+                avcodec_parameters_to_context(vcc, formatContext->streams[si]->codecpar);
                 if (vcc->codec_type == AVMEDIA_TYPE_VIDEO) {
                     // pick video stream index with larger dimensions
                     //printf("Using sw decoding: Found Video stream index:%d codecContext:%p\n", si, vcc);

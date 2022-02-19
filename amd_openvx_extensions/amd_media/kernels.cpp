@@ -95,7 +95,6 @@ vx_status initialize_ffmpeg()
 		initialized = true;
 		av_log_set_callback(av_log_callback);
 		av_log_set_level(AV_LOG_ERROR);
-		av_register_all();
 	}
 	return VX_SUCCESS;
 }

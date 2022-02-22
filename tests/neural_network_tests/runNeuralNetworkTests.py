@@ -31,7 +31,7 @@ __copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Neural Net Test Full Rep
 __license__ = "MIT"
 __version__ = "1.1.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
-__email__ = "Kiriti.NageshGowda@amd.com"
+__email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
 if sys.version_info[0] < 3:

@@ -19,23 +19,33 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "video_decoder_factory.h"
-#include <video_decoder.h>
-#include <ffmpeg_video_decoder.h>
-#include <hardware_video_decoder.h>
-#include "commons.h"
+
+#pragma once
+
+#include "video_decoder.h"
 
 #ifdef RALI_VIDEO
-std::shared_ptr<VideoDecoder> create_video_decoder(VideoDecoderConfig config)
+class HardWareVideoDecoder : public VideoDecoder
 {
-    switch (config.type())
-    {
-        case VideoDecoderType::FFMPEG_SOFTWARE_DECODE:
-            return std::make_shared<FFmpegVideoDecoder>();
-        case VideoDecoderType::FFMPEG_HARDWARE_DECODE:
-            return std::make_shared<HardWareVideoDecoder>();
-        default:
-            THROW("Unsupported decoder type " + TOSTR(config.type()));
-    }
-}
+public:
+    //! Default constructor
+    HardWareVideoDecoder();
+    VideoDecoder::Status Initialize(const char *src_filename) override;
+    VideoDecoder::Status Decode(unsigned char *output_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride, int out_width, int out_height, int out_stride, AVPixelFormat out_format) override;
+    int seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number) override;
+    void release() override;
+    ~HardWareVideoDecoder() override;
+private:
+    const char *_src_filename = NULL;
+    AVFormatContext *_fmt_ctx = NULL;
+    AVCodecContext *_video_dec_ctx = NULL;
+    AVCodec *_decoder = NULL;
+    AVStream *_video_stream = NULL;
+    int _video_stream_idx = -1;
+    AVPixelFormat _dec_pix_fmt;
+    int _codec_width, _codec_height;
+    AVHWDeviceType *hwDeviceType;
+    AVBufferRef *hw_device_ctx = NULL;
+    int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx);
+};
 #endif

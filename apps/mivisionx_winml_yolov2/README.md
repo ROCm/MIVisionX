@@ -14,7 +14,7 @@ This application shows how to run tiny yolov2 (20 classes) with MIVisionX RunTim
  - Visual Studio extension for C++/WinRT
 
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* [OpenCV 3.1](https://github.com/opencv/opencv/releases) or higher
 
  + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
  + Add `OpenCV_DIR\x64\vc14\bin` or `OpenCV_DIR\x64\vc15\bin` to your `PATH`

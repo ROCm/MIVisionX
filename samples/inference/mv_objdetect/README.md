@@ -138,4 +138,4 @@ The last bit (:0 / :1) chooses software or hardware mode for decoding.
 This project is licensed under the MIT License - see the LICENSE.md file for details
 
 # Author
-rrawther@amd.com
+Rajy Rawther - `mivisionx.support@amd.com`

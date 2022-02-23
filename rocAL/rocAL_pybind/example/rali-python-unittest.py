@@ -1,7 +1,4 @@
-import numpy as np
 import cv2
-from enum import Enum
-from amd.rali.plugin.pytorch import RALIClassificationIterator
 from amd.rali.plugin.pytorch import RALI_iterator
 from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
@@ -28,7 +25,7 @@ class HybridTrainPipe(Pipeline):
                 #self.resizeCrop = ops.CropResize(crop, crop)
                 self.exposure = ops.Exposure(exposure = 0.2)
                 self.rotate = ops.Rotate()
-                self.brightness = ops.Brightness()                
+                self.brightness = ops.Brightness()
                 self.gamma = ops.GammaCorrection()
                 self.contrast = ops.Contrast()
                 self.flip = ops.Flip()
@@ -42,7 +39,7 @@ class HybridTrainPipe(Pipeline):
                 self.snow = ops.Snow(snow=0.5)
                 self.rain = ops.Rain(rain=0.5)
                 self.fog = ops.Fog()
-                
+
                 self.pixelate = ops.Pixelate()
                 self.exposure = ops.Exposure()
                 self.hue = ops.Hue()
@@ -61,16 +58,15 @@ class HybridTrainPipe(Pipeline):
 
         def define_graph(self):
                 print("In define_graph function, augmentation = " + str(self.aug_num) + "\n")
-                rng = self.coin()
                 self.jpegs, self.labels = self.input(name="Reader")
                 images = self.decode(self.jpegs)
                 if self.aug_num != 0:
                     images = self.resize(images)
-                
-                
+
+
                 if self.aug_num == 0:
                     output = self.resize(images)
-                elif self.aug_num == 1:        
+                elif self.aug_num == 1:
                     output = self.resize(images)
                 elif self.aug_num == 2:
                     output = self.rotate(images)
@@ -122,9 +118,9 @@ class HybridTrainPipe(Pipeline):
                     output = self.colortwist(images)
                 elif self.aug_num == 25:
                     output = self.cropMirrorNormalize(images)
-                
-                
-                
+
+
+
                 return [output, self.labels]
 
 def main():
@@ -144,7 +140,6 @@ def main():
         crop_size = 224
         pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=_image_path, augmentation=augmentation_num, crop=crop_size, rali_cpu=_rali_cpu)
         pipe.build()
-        world_size=1
         imageIterator = RALI_iterator(pipe)
 
 
@@ -152,4 +147,4 @@ def main():
                 cv2.imwrite(output_img, cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
 
 if __name__ == '__main__':
-    main() 
+    main()

@@ -149,7 +149,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Linux distribution
   + **Ubuntu** - `18.04` / `20.04`
   + **CentOS** - `7` / `8`
-* Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html) 
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * CMake 3.0 or later
 * ROCm CMake, MIOpenGEMM & MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
@@ -165,7 +165,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
-  **NOTE:** This script only needs to be executed once. 
+  **NOTE:** This script only needs to be executed once.
 
 ###### Prerequisites for running the script
 
@@ -177,7 +177,7 @@ For the convenience of the developer, we here provide the setup script which wil
 
   **usage:**
 
-  ``` 
+  ```
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default:4.5.5)]
                             --miopen    [MIOpen Version - optional (default:2.14.0)]
@@ -193,7 +193,7 @@ For the convenience of the developer, we here provide the setup script which wil
   ```
     **Note:**
     * **ROCm upgrade** with `sudo apt upgrade` requires the setup script **rerun**.
-    * use `X Window` / `X11` for [remote GUI app control](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/X-Window-forwarding) 
+    * use `X Window` / `X11` for [remote GUI app control](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/X-Window-forwarding)
 
 ## Build & Install MIVisionX
 
@@ -222,11 +222,11 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 * [ROCm supported hardware](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * On `Ubuntu`
-  ``` 
+  ```
   sudo apt-get install mivisionx
   ```
 * On `CentOS`
-  ``` 
+  ```
   sudo yum install mivisionx
   ```
 
@@ -234,7 +234,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   * `vx_winml` is not supported on `Linux`
   * source code will not available with `apt-get` / `yum` install
   * the installer will copy
-    + executables into `/opt/rocm/mivisionx/bin` 
+    + executables into `/opt/rocm/mivisionx/bin`
     + libraries into `/opt/rocm/mivisionx/lib`
     + OpenVX and module header files into `/opt/rocm/mivisionx/include`
     + model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
@@ -245,7 +245,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * Use the below commands to set up and build MIVisionX
 
-  ``` 
+  ```
   git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
   cd MIVisionX
   ```
@@ -284,7 +284,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     sudo make install
     ```
 
-  **Note:** 
+  **Note:**
   + MIVisionX cannot be installed for both GPU backends in the same default folder (i.e., /opt/rocm/mivisionx)
   if an app interested in installing MIVisionX with both GPU backends, then add **-DCMAKE_INSTALL_PREFIX** in the cmake
   commands to install MIVisionX with OPENCL and HIP backends into two separate custom folders.
@@ -294,8 +294,8 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 ### Linux / macOS
 
-* The installer will copy 
-  + executables into `/opt/rocm/mivisionx/bin` 
+* The installer will copy
+  + executables into `/opt/rocm/mivisionx/bin`
   + libraries into `/opt/rocm/mivisionx/lib`
   + OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include`
   + Apps, Samples, Documents, Model Compiler, and Toolkit are placed into `/opt/rocm/mivisionx`
@@ -304,11 +304,11 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   **Canny Edge Detection**
 
   <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
-  
-  ``` 
+
+  ```
   export PATH=$PATH:/opt/rocm/mivisionx/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-  runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
+  runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
   ```
   **Note:** More samples are available [here](samples#samples)
 
@@ -317,7 +317,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 * MIVisionX.sln builds the libraries & executables in the folder `MIVisionX/x64`
 * Use RunVX to test the build
 
-  ``` 
+  ```
   ./runvx.exe PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
   ```
 
@@ -345,14 +345,14 @@ Docker files to build MIVisionX containers are [available](docker#mivisionx-dock
 
 * Step 1 - *Install rocm-dkms*
 
-``` 
+```
 sudo apt update
 sudo apt dist-upgrade
 sudo apt install libnuma-dev
 sudo reboot
 ```
 
-``` 
+```
 wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
 echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
 sudo apt update
@@ -362,7 +362,7 @@ sudo reboot
 
 * Step 2 - *Setup Docker*
 
-``` 
+```
 sudo apt-get install curl
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -374,37 +374,37 @@ sudo systemctl status docker
 
 * Step 3 - *Get Docker Image*
 
-``` 
+```
 sudo docker pull mivisionx/ubuntu-18.04
 ```
 
 * Step 4 - *Run the docker image*
 
-``` 
+```
 sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-18.04:latest
 ```
-  **Note:** 
+  **Note:**
   * Map host directory on the docker image
-  
+
     + map the localhost directory to be accessed on the docker image.
     + use `-v` option with docker run command: `-v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH}`
     + usage:
-    ``` 
+    ```
     sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-18.04:latest
     ```
-  
+
   * Display option with docker
     + Using host display
-    ``` 
+    ```
     xhost +local:root
     sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-18.04:latest
     ```
 
     + Test display with MIVisionX sample
-    ``` 
+    ```
     export PATH=$PATH:/opt/rocm/mivisionx/bin
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-    runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
+    runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
     ```
 
 ## Technical Support

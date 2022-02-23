@@ -91,5 +91,4 @@ after_success:
 
 notifications:
   email:
-    - kiriti.nageshgowda@amd.com
-    - pavel.tcherniaev@amd.com
+    - mivisionx.support@amd.com

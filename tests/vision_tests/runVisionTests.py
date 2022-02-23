@@ -31,7 +31,7 @@ __copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Vision Test Full Report"
 __license__ = "MIT"
 __version__ = "1.2.2"
 __maintainer__ = "Kiriti Nagesh Gowda"
-__email__ = "Kiriti.NageshGowda@amd.com"
+__email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
 

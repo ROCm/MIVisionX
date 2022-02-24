@@ -1,7 +1,6 @@
 # AMD Media Tests
 
-Change the line in the encoder.gdf to contain full path:<br>
-data yuvimg  = image:1280,720,NV12:read,FULL-PATH/MIVisionX/tests/amd_media_tests/test.yuv
+data yuvimg  = image:1280,720,NV12:read,test.yuv<br>
 
 <br>
 Run runvx -affinity:GPU file encoder.gdf<br>

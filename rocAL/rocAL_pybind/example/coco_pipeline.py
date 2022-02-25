@@ -123,6 +123,7 @@ class RALICOCOIterator(object):
         self.offset = offset if offset else [0.0, 0.0, 0.0]
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
+        self.tensor_layout = tensor_layout
         self.device = device
         self.device_id = self.loader._device_id
         self.bs = self.loader._batch_size
@@ -135,17 +136,31 @@ class RALICOCOIterator(object):
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
         self.hip_array = None
-        if self.device == "cpu":
-            if self.tensor_dtype == types.FLOAT:
-                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
-            elif self.tensor_dtype == types.FLOAT16:
-                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
-        else:
-            torch_gpu_device = torch.device('cuda', self.device_id)
-            if self.tensor_dtype == types.FLOAT:
-                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device=torch_gpu_device)
-            elif self.tensor_dtype == types.FLOAT16:
-                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device=torch_gpu_device)
+        if tensor_layout == types.NCHW:
+            if self.device == "cpu":
+                if self.tensor_dtype == types.FLOAT:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
+                elif self.tensor_dtype == types.FLOAT16:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
+            else:
+                torch_gpu_device = torch.device('cuda', self.device_id)
+                if self.tensor_dtype == types.FLOAT:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device = torch_gpu_device)
+                elif self.tensor_dtype == types.FLOAT16:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device = torch_gpu_device)
+        else: #NHWC
+            if self.device == "cpu":
+                if self.tensor_dtype == types.FLOAT:
+                    self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32)
+                elif self.tensor_dtype == types.FLOAT16:
+                    self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16)
+            else:
+                torch_gpu_device = torch.device('cuda', self.device_id)
+                if self.tensor_dtype == types.FLOAT:
+                    self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32, device=torch_gpu_device)
+                elif self.tensor_dtype == types.FLOAT16:
+                    self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16, device=torch_gpu_device)
+
 
         #Image id of a batch of images
         self.image_id = np.zeros(self.bs, dtype="int32")
@@ -174,7 +189,6 @@ class RALICOCOIterator(object):
 
         self.loader.copyToTensor(
             self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
-
 #Image id of a batch of images
         self.loader.GetImageId(self.image_id)
 # Count of labels/ bboxes in a batch
@@ -204,7 +218,7 @@ class RALICOCOIterator(object):
 
             if self.display:
                 img = self.out
-                draw_patches(img[i], self.image_id[i], actual_bboxes, self.device)
+                draw_patches(img[i], self.image_id[i], actual_bboxes, self.device, self.tensor_layout)
 
         return (self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
 
@@ -214,16 +228,21 @@ class RALICOCOIterator(object):
     def __iter__(self):
         return self
 
-def draw_patches(img, idx, bboxes, device):
+def draw_patches(img, idx, bboxes, device, tensor_layout):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     if device == "cpu":
         image = img.detach().numpy()
     else:
         image = img.cpu().numpy()
-    image = image.transpose([1, 2, 0])
+    if tensor_layout == types.NCHW:
+        _, htot, wtot = img.shape
+        image = image.transpose([1, 2, 0])
+    else:
+        htot, wtot , _ = img.shape
+
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    _, htot, wtot = img.shape
+
     for (xc, yc, w, h) in bboxes:
         l = xc - 0.5*(w)
         t = yc - 0.5*(h)
@@ -238,8 +257,8 @@ def draw_patches(img, idx, bboxes, device):
         cv2.imwrite(str(idx)+"_"+"train"+".png", image)
 
 def main():
-    if len(sys.argv) < 5:
-        print('Please pass the folder image_folder Annotation_file cpu/gpu batch_size display(True/False)')
+    if len(sys.argv) < 6:
+        print('Please pass the folder image_folder Annotation_file cpu/gpu batch_size NCHW/NHWC display(True/False)')
         exit(0)
 
     image_path = sys.argv[1]
@@ -249,7 +268,12 @@ def main():
     else:
         _rali_cpu = False
     bs = int(sys.argv[4])
-    display = sys.argv[5]
+    tensor_layout = sys.argv[5]
+    if tensor_layout == "NCHW":
+        tensor_layout_type=types.NCHW
+    else:
+        tensor_layout_type=types.NHWC
+    display = sys.argv[6]
     nt = 1
     di = 0
     crop_size = 300
@@ -294,10 +318,10 @@ def main():
     pipe.build()
     if(_rali_cpu):
         data_loader = RALICOCOIterator(
-            pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, device="cpu")
+            pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, tensor_layout=tensor_layout_type, device="cpu")
     else:
         data_loader = RALICOCOIterator(
-            pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, device="cuda")
+            pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, tensor_layout=tensor_layout_type,device="cuda")
     epochs = 2
     for epoch in range(int(epochs)):
         print("EPOCH:::::", epoch)

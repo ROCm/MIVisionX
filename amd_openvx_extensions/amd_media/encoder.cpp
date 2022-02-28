@@ -183,7 +183,6 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
         thread->join();
         delete thread;
     }
-
     // close output mediaFile
     if (fpOutput) {
         fclose(fpOutput);
@@ -192,7 +191,6 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
         av_write_trailer(formatContext);
         av_free(formatContext);
     }
-
     // release GPU and media resources
     if (outputBuffer) aligned_free(outputBuffer);
     if (m_enableUserBufferGPU) {
@@ -205,15 +203,12 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
 
     for (int i = 0; i < ENCODE_BUFFER_POOL_SIZE; i++) {
         if (videoFrame[i]) {
-            if (videoFrame[i]->data[0]) aligned_free(videoFrame[i]->data[0]);
-            if (videoFrame[i]->data[1]) aligned_free(videoFrame[i]->data[1]);
             av_frame_free(&videoFrame[i]);
         }
     }
     if (conversionContext) av_free(conversionContext);
     if (videoCodecContext) {
-        avcodec_close(videoCodecContext);
-        av_free(videoCodecContext);
+        avcodec_free_context(&videoCodecContext);
     }
     if (outputAuxBuffer) delete[] outputAuxBuffer;
 }
@@ -291,11 +286,10 @@ vx_status CLoomIoMediaEncoder::Initialize()
     ERROR_CHECK_NULLPTR(conversionContext = sws_getContext(width, height, inputFormat, width, height, videoCodecContext->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL));
     for (int i = 0; i < ENCODE_BUFFER_POOL_SIZE; i++) {
         ERROR_CHECK_NULLPTR(videoFrame[i] = av_frame_alloc());
-        videoFrame[i]->data[0] = aligned_alloc(width * height);
-        videoFrame[i]->data[1] = aligned_alloc(width * height / 2);
-        videoFrame[i]->linesize[0] = width;
-        videoFrame[i]->linesize[1] = width;
-        videoFrame[i]->format = AV_PIX_FMT_NV12;
+        videoFrame[i]->format = videoCodecContext->pix_fmt;
+        videoFrame[i]->width = width;
+        videoFrame[i]->height  = height;
+        ERROR_CHECK_STATUS(av_frame_get_buffer(videoFrame[i], 0));      // ffmpeg will allocate framebuffer here
         // just one videoFrame[0] is sufficient for GPU mode
         if (m_enableUserBufferGPU)
           break;
@@ -328,15 +322,8 @@ vx_status CLoomIoMediaEncoder::Initialize()
                 return VX_ERROR_INVALID_LINK;
             }
         }
-        AVCodecContext * vsc;
-        avcodec_parameters_to_context(vsc, videoStream->codecpar);
-        vsc->width = width;
-        vsc->height = height;
-        vsc->codec_id = videoCodecContext->codec_id;
-        vsc->bit_rate = videoCodecContext->bit_rate;
-        vsc->time_base = videoCodecContext->time_base;
-        vsc->gop_size = videoCodecContext->gop_size;
-        vsc->max_b_frames = videoCodecContext->max_b_frames;
+        //set parameters for the stream
+        ERROR_CHECK_STATUS(avcodec_parameters_from_context(videoStream->codecpar, videoCodecContext));
         ERROR_CHECK_STATUS(avformat_write_header(formatContext, nullptr));
     }
 
@@ -457,10 +444,10 @@ void CLoomIoMediaEncoder::EncodeLoop()
         PushAck(0);
 
     // initialize packet and start encoding
-    AVPacket pkt = { 0 };
-    av_init_packet(&pkt);
-    pkt.data = nullptr;
-    pkt.size = 0;
+    AVPacket *pkt;
+    pkt = av_packet_alloc();
+    if (!pkt) return;
+
     int64_t pts = 0;
     for (command cmd; !threadTerminated && ((cmd = PopCommand()) != cmd_abort);) {
         int status;
@@ -528,21 +515,25 @@ void CLoomIoMediaEncoder::EncodeLoop()
         // encode video frame and write output to file
         videoFrame[bufId]->pts = pts;
         int status_send = avcodec_send_frame(videoCodecContext, videoFrame[bufId]);
-        got_output = avcodec_receive_packet(videoCodecContext, &pkt);
+        got_output = avcodec_receive_packet(videoCodecContext, pkt);
         status = std::min(status_send, got_output);
+        if (status == AVERROR(EAGAIN)) {
+            PushAck(0);
+            continue;
+        }
         if (status < 0) {
             vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: avcodec_send_frame/receive_packet() failed (%4.4s:0x%08x:%d) for frame:%d\n", &status, status, status, encodeFrameCount);
             threadTerminated = true;
             PushAck(-1);
             return;
         }
-        if (got_output && (pkt.size > 0)) {
+        if (got_output && (pkt->size > 0)) {
             if (fpOutput) {
-                fwrite(pkt.data, 1, pkt.size, fpOutput);
+                fwrite(pkt->data, 1, pkt->size, fpOutput);
             }
             if (formatContext) {
-                pkt.stream_index = videoStream->index;
-                status = av_interleaved_write_frame(formatContext, &pkt);
+                pkt->stream_index = videoStream->index;
+                status = av_interleaved_write_frame(formatContext, pkt);
                 if (status < 0) {
                     vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: av_interleaved_write_frame() failed (%4.4s:0x%08x:%d) for frame:%d\n", &status, status, status, encodeFrameCount);
                     threadTerminated = true;
@@ -551,13 +542,13 @@ void CLoomIoMediaEncoder::EncodeLoop()
                 }
             }
         }
-        av_packet_unref(&pkt);
+        av_packet_unref(pkt);
         // update encode frame count and send ACK
         encodeFrameCount++;
         if (videoStream) {
-            AVCodecContext * vsc;
-            avcodec_parameters_to_context(vsc, videoStream->codecpar);
-            pts += av_rescale_q(1, vsc->time_base, videoStream->time_base);
+            //AVCodecContext * vsc;
+            //avcodec_parameters_to_context(vsc, videoStream->codecpar);
+            pts += av_rescale_q(1, videoStream->codec->time_base, videoStream->time_base);
         }
         else {
             pts += (int64_t)(60000.0f / fps);
@@ -567,7 +558,7 @@ void CLoomIoMediaEncoder::EncodeLoop()
     // process the delayed frames
     for (int got_output = !0; got_output;) {
         int status_send = avcodec_send_frame(videoCodecContext, nullptr);
-        got_output = avcodec_receive_packet(videoCodecContext, &pkt);
+        got_output = avcodec_receive_packet(videoCodecContext, pkt);
         int status = std::min(status_send, got_output);
         if (status < 0) {
             vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: avcodec_send_frame/receive_packet() failed (%4.4s:%d) at the end\n", &status, status);
@@ -575,13 +566,14 @@ void CLoomIoMediaEncoder::EncodeLoop()
             PushAck(-1);
             return;
         }
-        if (got_output && fpOutput && (pkt.size > 0)) {
-            fwrite(pkt.data, 1, pkt.size, fpOutput);
+        if (got_output && fpOutput && (pkt->size > 0)) {
+            fwrite(pkt->data, 1, pkt->size, fpOutput);
         }
-        av_packet_unref(&pkt);
+        av_packet_unref(pkt);
     }
     // mark termination and send ACK
     threadTerminated = true;
+    av_packet_free(&pkt);
     PushAck(-1);
 }
 

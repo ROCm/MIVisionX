@@ -31,7 +31,7 @@ CropNode::CropNode(const std::vector<Image *> &inputs, const std::vector<Image *
         _dest_width(_outputs[0]->info().width()),
         _dest_height(_outputs[0]->info().height_batch())
 {
-    _crop_param = std::make_shared<RaliCropParam>(_batch_size);
+    _crop_param = std::make_shared<RocalCropParam>(_batch_size);
 }
 
 void CropNode::create_node()
@@ -65,7 +65,7 @@ void CropNode::init(unsigned int crop_h, unsigned int crop_w, float x_drift_, fl
 {
     _crop_param->crop_w = crop_w;
     _crop_param->crop_h = crop_h;
-    _crop_param->x1     = x_drift_; 
+    _crop_param->x1     = x_drift_;
     _crop_param->y1     = y_drift_;
     FloatParam *x_drift  = ParameterFactory::instance()->create_single_value_float_param(x_drift_);
     FloatParam *y_drift  = ParameterFactory::instance()->create_single_value_float_param(y_drift_);
@@ -77,7 +77,7 @@ void CropNode::init(unsigned int crop_h, unsigned int crop_w)
 {
     _crop_param->crop_w = crop_w;
     _crop_param->crop_h = crop_h;
-    _crop_param->x1     = 0; 
+    _crop_param->x1     = 0;
     _crop_param->y1     = 0;
     FloatParam *x_drift  = ParameterFactory::instance()->create_single_value_float_param(0.5);
     FloatParam *y_drift  = ParameterFactory::instance()->create_single_value_float_param(0.5);

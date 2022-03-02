@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 #include "video_loader_sharded.h"
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 #if ENABLE_HIP
 VideoLoaderSharded::VideoLoaderSharded(DeviceResourcesHip dev_resources):
 #else
@@ -78,7 +78,7 @@ VideoLoaderModuleStatus VideoLoaderSharded::load_next()
     return ret;
 }
 
-void VideoLoaderSharded::initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type,
+void VideoLoaderSharded::initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RocalMemType mem_type,
                                     unsigned batch_size, bool keep_orig_size)
 {
     if (_initialized)

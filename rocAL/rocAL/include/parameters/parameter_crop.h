@@ -23,9 +23,9 @@ THE SOFTWARE.
 #pragma once
 #include <VX/vx_types.h>
 #include "parameter_factory.h"
-enum class RaliCropType
+enum class RocalCropType
 {
-    RALICROP = 0,
+    ROCALCROP = 0,
     RANDOMCROP,
 };
 

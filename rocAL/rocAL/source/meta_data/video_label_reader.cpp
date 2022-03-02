@@ -33,7 +33,7 @@ using namespace std;
 
 namespace filesys = boost::filesystem;
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 VideoLabelReader::VideoLabelReader()
 {
     _src_dir = nullptr;

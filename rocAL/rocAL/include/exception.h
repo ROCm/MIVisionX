@@ -25,11 +25,11 @@ THE SOFTWARE.
 #include <exception>
 #include <string>
 
-class RaliException : public std::exception
+class RocalException : public std::exception
 {
 public:
 
-    explicit RaliException(const std::string& message):_message(message)
+    explicit RocalException(const std::string& message):_message(message)
     {}
     virtual const char* what() const throw() override
     {
@@ -39,6 +39,6 @@ private:
     std::string _message;
 };
 
-#define THROW(X) throw RaliException(" { "+std::string(__func__)+" } " + X);
+#define THROW(X) throw RocalException(" { "+std::string(__func__)+" } " + X);
 
 

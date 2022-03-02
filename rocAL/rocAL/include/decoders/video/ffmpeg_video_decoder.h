@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 #include "video_decoder.h"
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 class FFmpegVideoDecoder : public VideoDecoder
 {
 public:

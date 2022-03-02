@@ -26,11 +26,11 @@ THE SOFTWARE.
 #include "parameter_vx.h"
 #include "graph.h"
 
-class RaliContrastNode : public Node
+class RocalContrastNode : public Node
 {
 public:
-    RaliContrastNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
-    RaliContrastNode() = delete;
+    RocalContrastNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
+    RocalContrastNode() = delete;
     void init(int min, int max);
     void init(IntParam *min, IntParam * max);
 

@@ -41,7 +41,7 @@ public:
 #endif
     ~ImageLoader() override;
     LoaderModuleStatus load_next() override;
-    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
+    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RocalMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
     void set_output_image (Image* output_image) override;
     void set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader) override;
     size_t remaining_count() override; // returns number of remaining items to be loaded
@@ -70,7 +70,7 @@ private:
     bool _internal_thread_running;
     size_t _batch_size;
     std::thread _load_thread;
-    RaliMemType _mem_type;
+    RocalMemType _mem_type;
     decoded_image_info _decoded_img_info;
     crop_image_info _crop_image_info;
     decoded_image_info _output_decoded_img_info;

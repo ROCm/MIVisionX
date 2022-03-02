@@ -25,19 +25,19 @@ THE SOFTWARE.
 
 namespace filesys = boost::filesystem;
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 std::tuple<VideoDecoder::ColorFormat, unsigned, AVPixelFormat>
-video_interpret_color_format(RaliColorFormat color_format)
+video_interpret_color_format(RocalColorFormat color_format)
 {
     switch (color_format)
     {
-        case RaliColorFormat::RGB24:
+        case RocalColorFormat::RGB24:
             return std::make_tuple(VideoDecoder::ColorFormat::RGB, 3, AV_PIX_FMT_RGB24);
 
-        case RaliColorFormat::BGR24:
+        case RocalColorFormat::BGR24:
             return std::make_tuple(VideoDecoder::ColorFormat::BGR, 3, AV_PIX_FMT_BGR24);
 
-        case RaliColorFormat::U8:
+        case RocalColorFormat::U8:
             return std::make_tuple(VideoDecoder::ColorFormat::GRAY, 1, AV_PIX_FMT_GRAY8);
 
         default:
@@ -154,7 +154,7 @@ VideoReadAndDecode::load(unsigned char *buff,
                          std::vector<uint32_t> &actual_height,
                          std::vector<std::vector<size_t>> &sequence_start_framenum_vec,
                          std::vector<std::vector<std::vector<float>>> &sequence_frame_timestamps_vec,
-                         RaliColorFormat output_color_format)
+                         RocalColorFormat output_color_format)
 {
     if (max_decoded_width == 0 || max_decoded_height == 0)
         THROW("Zero image dimension is not valid")
@@ -191,7 +191,7 @@ VideoReadAndDecode::load(unsigned char *buff,
         _sequence_video_path[i] = sequence_info.video_file_name;
         _decompressed_buff_ptrs[i] = buff + (i * image_size * _sequence_length);
 
-        // Check if the video file is already initialized otherwise use an existing decoder instance to initialize the video 
+        // Check if the video file is already initialized otherwise use an existing decoder instance to initialize the video
         // std::cerr << "\nThe source video is " << _sequence_video_path[i] << " MAP : "<<_video_file_name_map.find(_sequence_video_path[i])->second._video_map_idx << "\tThe start index is : " << _sequence_start_frame_num[i] << "\n";
         std::map<std::string, video_map>::iterator itr = _video_file_name_map.find(_sequence_video_path[i]);
         if (itr->second._is_decoder_instance == false)
@@ -221,7 +221,7 @@ VideoReadAndDecode::load(unsigned char *buff,
             continue;
         _sequence_video_idx.push_back(itr->second._video_map_idx);
 
-        // Check if the sequences are from same or different video file 
+        // Check if the sequences are from same or different video file
         video_index.push_back(_video_file_name_map[_sequence_video_path[i]]._video_map_idx);
         if (std::count(video_index.begin(), video_index.end(), video_index[i]) > 1)
         {

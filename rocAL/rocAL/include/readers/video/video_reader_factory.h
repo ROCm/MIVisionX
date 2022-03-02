@@ -25,6 +25,6 @@ THE SOFTWARE.
 #include <exception>
 #include "video_reader.h"
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 std::shared_ptr<VideoReader> create_video_reader(VideoReaderConfig config);
 #endif

@@ -24,10 +24,10 @@ THE SOFTWARE.
 #include <VX/vx.h>
 #include <VX/vx_compatibility.h>
 #include <graph.h>
-#include "parameter_rali_crop.h"
+#include "parameter_rocal_crop.h"
 #include "commons.h"
 
-void RaliCropParam::set_crop_height_factor(Parameter<float>* crop_h_factor)
+void RocalCropParam::set_crop_height_factor(Parameter<float>* crop_h_factor)
 {
     if(!crop_h_factor)
         return ;
@@ -35,7 +35,7 @@ void RaliCropParam::set_crop_height_factor(Parameter<float>* crop_h_factor)
     crop_height_factor = crop_h_factor;
 }
 
-void RaliCropParam::set_crop_width_factor(Parameter<float>* crop_w_factor)
+void RocalCropParam::set_crop_width_factor(Parameter<float>* crop_w_factor)
 {
     if(!crop_w_factor)
         return ;
@@ -43,13 +43,13 @@ void RaliCropParam::set_crop_width_factor(Parameter<float>* crop_w_factor)
     crop_width_factor = crop_w_factor;
 }
 
-void RaliCropParam::update_array()
+void RocalCropParam::update_array()
 {
     fill_crop_dims();
     update_crop_array();
 }
 
-void RaliCropParam::fill_crop_dims()
+void RocalCropParam::fill_crop_dims()
 {
     for(uint img_idx =0; img_idx < batch_size; img_idx++)
     {
@@ -67,7 +67,7 @@ void RaliCropParam::fill_crop_dims()
             crop_height_factor->renew();
             crop_h_factor_ = crop_height_factor->get();
             crop_width_factor->renew();
-            crop_w_factor_ = crop_width_factor->get();   
+            crop_w_factor_ = crop_width_factor->get();
             cropw_arr_val[img_idx] = static_cast<size_t> (crop_w_factor_ * in_width[img_idx]);
             croph_arr_val[img_idx] = static_cast<size_t> (crop_h_factor_ * in_height[img_idx]);
             x_drift_factor->renew();
@@ -80,19 +80,19 @@ void RaliCropParam::fill_crop_dims()
         }
         x2_arr_val[img_idx] = x1_arr_val[img_idx] + cropw_arr_val[img_idx];
         y2_arr_val[img_idx] = y1_arr_val[img_idx] + croph_arr_val[img_idx];
-        // Evaluating the crop 
+        // Evaluating the crop
         (x2_arr_val[img_idx] > in_width[img_idx]) ? x2_arr_val[img_idx] = in_width[img_idx] : x2_arr_val[img_idx] = x2_arr_val[img_idx];
         (y2_arr_val[img_idx] > in_height[img_idx]) ? y2_arr_val[img_idx] = in_height[img_idx] : y2_arr_val[img_idx] = y2_arr_val[img_idx];
-    } 
+    }
 }
 
-Parameter<float> *RaliCropParam::default_crop_height_factor()
+Parameter<float> *RocalCropParam::default_crop_height_factor()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_HEIGHT_FACTOR_RANGE[0],
                                                                          CROP_HEIGHT_FACTOR_RANGE[1])->core;
 }
 
-Parameter<float> *RaliCropParam::default_crop_width_factor()
+Parameter<float> *RocalCropParam::default_crop_width_factor()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_WIDTH_FACTOR_RANGE[0],
                                                                          CROP_WIDTH_FACTOR_RANGE[1])->core;

@@ -80,6 +80,6 @@ void DeviceManagerHip::init_hip(vx_context context)
     if (err != hipSuccess) {
         THROW("init_hip::initialize failed " + TOSTR(err))
     }
-    LOG("RALI HIP initialized ...")
+    LOG("ROCAL HIP initialized ...")
 }
 #endif

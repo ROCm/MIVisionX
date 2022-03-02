@@ -35,7 +35,7 @@ THE SOFTWARE.
 #include "timing_debug.h"
 #include "video_loader_module.h"
 #include "video_properties.h"
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 extern "C"
 {
 #include <libavutil/pixdesc.h>
@@ -77,7 +77,7 @@ public:
         std::vector<uint32_t> &actual_height,
         std::vector<std::vector<size_t>> &sequence_start_framenum_vec,
         std::vector<std::vector<std::vector<float>>> &sequence_frame_timestamps_vec,
-        RaliColorFormat output_color_format);
+        RocalColorFormat output_color_format);
 
     //! returns timing info or other status information
     Timing timing();

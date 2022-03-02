@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 #include "randombboxcrop_reader.h"
-#include "rali_api.h"
+#include "rocal_api.h"
 #include <iostream>
 #include <utility>
 #include <algorithm>
@@ -237,7 +237,7 @@ void RandomBBoxCropReader::read_all()
 
         // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
         add(image_name, crop_box);
-        
+
         sample++;
     }
 }
@@ -268,7 +268,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
     _crop_coords.clear();
     for (unsigned int i = 0; i < image_names.size(); i++)
     {
-        auto image_name = image_names[i]; 
+        auto image_name = image_names[i];
         auto elem = _meta_bbox_map_content.find(image_name);
         if (_meta_bbox_map_content.end() == elem)
             THROW("ERROR: Given name not present in the map" + image_name)

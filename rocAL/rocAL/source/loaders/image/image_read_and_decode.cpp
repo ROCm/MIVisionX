@@ -26,22 +26,22 @@ THE SOFTWARE.
 #include "decoder_factory.h"
 #include "image_read_and_decode.h"
 
-std::tuple<Decoder::ColorFormat, unsigned > 
-interpret_color_format(RaliColorFormat color_format ) 
+std::tuple<Decoder::ColorFormat, unsigned >
+interpret_color_format(RocalColorFormat color_format )
 {
     switch (color_format) {
-        case RaliColorFormat::RGB24:
+        case RocalColorFormat::RGB24:
             return  std::make_tuple(Decoder::ColorFormat::RGB, 3);
 
-        case RaliColorFormat::BGR24:
+        case RocalColorFormat::BGR24:
             return  std::make_tuple(Decoder::ColorFormat::BGR, 3);
 
-        case RaliColorFormat::U8:
+        case RocalColorFormat::U8:
             return  std::make_tuple(Decoder::ColorFormat::GRAY, 1);
 
         default:
             throw std::invalid_argument("Invalid color format\n");
-    }    
+    }
 }
 
 
@@ -65,7 +65,7 @@ ImageReadAndDecode::~ImageReadAndDecode()
 {
     _reader = nullptr;
     _decoder.clear();
-}   
+}
 
 void
 ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_config, int batch_size)
@@ -102,7 +102,7 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _reader = create_reader(reader_config);
 }
 
-void 
+void
 ImageReadAndDecode::reset()
 {
     // TODO: Reload images from the folder if needed
@@ -133,7 +133,7 @@ ImageReadAndDecode::set_batch_random_bbox_crop_coords(std::vector<std::vector<fl
     _crop_coords_batch = crop_coords;
 }
 
-LoaderModuleStatus 
+LoaderModuleStatus
 ImageReadAndDecode::load(unsigned char* buff,
                          std::vector<std::string>& names,
                          const size_t max_decoded_width,
@@ -142,7 +142,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                          std::vector<uint32_t> &roi_height,
                          std::vector<uint32_t> &actual_width,
                          std::vector<uint32_t> &actual_height,
-                         RaliColorFormat output_color_format,
+                         RocalColorFormat output_color_format,
                          bool decoder_keep_original )
 {
     if(max_decoded_width == 0 || max_decoded_height == 0 )
@@ -159,7 +159,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     const bool keep_original = decoder_keep_original;
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
-    // Decode with the height and size equal to a single image  
+    // Decode with the height and size equal to a single image
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start();// Debug timing
     if (_decoder_config._type == DecoderType::SKIP_DECODE) {
@@ -203,7 +203,7 @@ ImageReadAndDecode::load(unsigned char* buff,
             _compressed_image_size[file_counter] = fsize;
             file_counter++;
         }
-        
+
         if (_randombboxcrop_meta_data_reader)
         {
             //Fetch the crop co-ordinates for a batch of images
@@ -254,7 +254,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                                     decoder_color_format, _decoder_config, keep_original) != Decoder::Status::OK) {
                 // try decoding with OpenCV decoder:: seems like opencv also failing in those images
 #if 0//ENABLE_OPENCV
-                WRN("Using OpenCV for decode");                
+                WRN("Using OpenCV for decode");
                 if (_decoder_cv[i] && _decoder_cv[i]->decode(_compressed_buff[i].data(), _compressed_image_size[i], _decompressed_buff_ptrs[i],
                                         max_decoded_width, max_decoded_height,
                                         original_width, original_height,
@@ -270,7 +270,7 @@ ImageReadAndDecode::load(unsigned char* buff,
             _actual_decoded_height[i] = scaledh;
         }
         for (size_t i = 0; i < _batch_size; i++) {
-            names[i] = _image_names[i];           
+            names[i] = _image_names[i];
             roi_width[i] = _actual_decoded_width[i];
             roi_height[i] = _actual_decoded_height[i];
             actual_width[i] = _original_width[i];

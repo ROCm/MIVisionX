@@ -28,7 +28,7 @@ THE SOFTWARE.
 namespace filesys = boost::filesystem;
 
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 VideoFileSourceReader::VideoFileSourceReader() : _shuffle_time("shuffle_time", DBG_TIMING)
 {
     _curr_sequence_idx = 0;

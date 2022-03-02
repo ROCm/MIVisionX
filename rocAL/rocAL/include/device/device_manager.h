@@ -84,5 +84,5 @@ private:
     std::map<std::string, CLProgram> m_programs;
 };
 
-using pRaliOCL = std::shared_ptr<DeviceManager>;
+using pRocalOCL = std::shared_ptr<DeviceManager>;
 #endif

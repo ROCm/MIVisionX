@@ -40,7 +40,7 @@ public:
     DeviceManagerHip(){};
 
     hipError_t initialize();
-    
+
     DeviceResourcesHip resources();
 
     void init_hip(vx_context context);
@@ -53,6 +53,6 @@ private:
 
 };
 
-using pRaliHip = std::shared_ptr<DeviceManagerHip>;
+using pRocalHip = std::shared_ptr<DeviceManagerHip>;
 
 #endif

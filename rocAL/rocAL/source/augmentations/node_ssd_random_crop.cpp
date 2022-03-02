@@ -7,7 +7,7 @@ SSDRandomCropNode::SSDRandomCropNode(const std::vector<Image *> &inputs, const s
                                                                                                           _dest_width(_outputs[0]->info().width()),
                                                                                                           _dest_height(_outputs[0]->info().height_batch())
 {
-    _crop_param = std::make_shared<RaliRandomCropParam>(_batch_size);
+    _crop_param = std::make_shared<RocalRandomCropParam>(_batch_size);
     _is_ssd     = true;
 }
 
@@ -35,7 +35,7 @@ void SSDRandomCropNode::create_node()
         THROW("Error adding the crop resize node (vxExtrppNode_ResizeCropbatchPD    ) failed: " + TOSTR(status))
 }
 
-inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false) 
+inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false)
 {
     double iou;
     float xA = std::max(box1.l, box2.l);
@@ -67,7 +67,7 @@ void SSDRandomCropNode::update_node()
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, 6);
     const std::vector<std::pair<float, float>> IOU = {std::make_pair(0.0f, 1.0f), std::make_pair(0.1f, 1.0f), std::make_pair(0.3f, 1.0f),
-                                            std::make_pair(0.5f, 1.0f), std::make_pair(0.45f, 1.0f), std::make_pair(0.35f, 1.0f), std::make_pair(0.0f, 1.0f) };   
+                                            std::make_pair(0.5f, 1.0f), std::make_pair(0.45f, 1.0f), std::make_pair(0.35f, 1.0f), std::make_pair(0.0f, 1.0f) };
     int sample_option;
     std::pair<float, float> iou;
     float min_iou, max_iou;
@@ -114,7 +114,7 @@ void SSDRandomCropNode::update_node()
             float aspect_ratio;
             for (int j = 0; j < _num_of_attempts; j++)
             {
-                
+
                 // Setting width and height factor btw 0.3 and 1.0";
                 float w_factor = _float_dis(_rngs[sample]);
                 float h_factor = _float_dis(_rngs[sample]);
@@ -125,8 +125,8 @@ void SSDRandomCropNode::update_node()
             }
             if ((aspect_ratio < 0.5) || (aspect_ratio > 2.))
                 continue;
-            
-            
+
+
             // Setting width factor btw 0 and 1 - width_factor and height factor btw 0 and 1 - height_factor
             std::uniform_real_distribution<float> l_dis(0.0, 1.0 - w_factor), t_dis(0.0, 1.0-h_factor);
             float x_factor = l_dis(_rngs[sample]);
@@ -146,13 +146,13 @@ void SSDRandomCropNode::update_node()
                 jth_box.t = coords_buf[m + 1];
                 jth_box.r = coords_buf[m + 2];
                 jth_box.b = coords_buf[m + 3];
-                float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, _entire_iou); 
+                float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, _entire_iou);
                 if (bb_iou < min_iou || bb_iou > max_iou )
                 {
                     invalid_bboxes = true;
                     break;
                 }
-            }  
+            }
 
             if (invalid_bboxes)
                 continue;
@@ -182,7 +182,7 @@ void SSDRandomCropNode::update_node()
     vxCopyArrayRange((vx_array)_crop_param->croph_arr, 0, _batch_size, sizeof(uint), _crop_height_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_crop_param->x1_arr, 0, _batch_size, sizeof(uint), _x1_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_crop_param->y1_arr, 0, _batch_size, sizeof(uint), _y1_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    _outputs[0]->update_image_roi(_crop_width_val, _crop_height_val);  
+    _outputs[0]->update_image_roi(_crop_width_val, _crop_height_val);
 }
 
 void SSDRandomCropNode::init(FloatParam *crop_area_factor, FloatParam *crop_aspect_ratio, FloatParam *x_drift, FloatParam *y_drift, int num_of_attempts)

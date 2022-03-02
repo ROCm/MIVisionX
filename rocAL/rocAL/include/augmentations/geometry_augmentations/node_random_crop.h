@@ -34,7 +34,7 @@ public:
     void init(FloatParam *crop_area_factor, FloatParam *crop_aspect_ratio, FloatParam *x_drift, FloatParam *y_drift, int num_of_attempts);
     unsigned int get_dst_width() { return _outputs[0]->info().width(); }
     unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
-    std::shared_ptr<RaliRandomCropParam> get_crop_param() { return _crop_param; }
+    std::shared_ptr<RocalRandomCropParam> get_crop_param() { return _crop_param; }
     int get_num_of_attempts(){return _num_of_attempts;}
 
 protected:
@@ -45,6 +45,6 @@ private:
     size_t _dest_width;
     size_t _dest_height;
     int    _num_of_attempts = 20;
-    std::shared_ptr<RaliRandomCropParam> _crop_param;
+    std::shared_ptr<RocalRandomCropParam> _crop_param;
 };
 

@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <fstream>
 #include <tuple>
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 extern "C"
 {
 #include <libavformat/avformat.h>
@@ -38,7 +38,7 @@ extern "C"
 
 namespace filesys = boost::filesystem;
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 typedef struct VideoProperties
 {
     unsigned width, height, videos_count;

@@ -12,7 +12,7 @@ class SeededRNG {
   * @param state_size How many seed are used to initialize one RNG. Used to lower probablity of
   * collisions between seeds used to initialize RNGs in different operators.
   */
-public: 
+public:
   SeededRNG (int batch_size = 128) {
       std::random_device source;
       _batch_size = batch_size;
@@ -46,7 +46,7 @@ public:
     void init(FloatParam *crop_area_factor, FloatParam *crop_aspect_ratio, FloatParam *x_drift, FloatParam *y_drift, int num_of_attempts);
     unsigned int get_dst_width() { return _outputs[0]->info().width(); }
     unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
-    std::shared_ptr<RaliRandomCropParam> get_crop_param() { return _crop_param; }
+    std::shared_ptr<RocalRandomCropParam> get_crop_param() { return _crop_param; }
     float get_threshold(){return _threshold;}
     std::vector<std::pair<float,float>> get_iou_range(){return _iou_range;}
     bool is_entire_iou(){return _entire_iou;}
@@ -57,7 +57,7 @@ protected:
     void update_node() override;
 
 private:
-    std::shared_ptr<RaliRandomCropParam> _meta_crop_param;
+    std::shared_ptr<RocalRandomCropParam> _meta_crop_param;
     vx_array _crop_width, _crop_height, _x1, _y1, _x2, _y2;
     std::vector<uint> _crop_width_val, _crop_height_val, _x1_val, _y1_val, _x2_val, _y2_val;
     // unsigned int _dst_width, _dst_height;
@@ -68,7 +68,7 @@ private:
     std::vector<std::pair<float,float>> _iou_range;
     int _num_of_attempts = 20;
     bool _entire_iou = false;
-    std::shared_ptr<RaliRandomCropParam> _crop_param;
+    std::shared_ptr<RocalRandomCropParam> _crop_param;
     SeededRNG<std::mt19937, 4> _rngs;     // setting the state_size to 4 for 4 random parameters.
 
 };

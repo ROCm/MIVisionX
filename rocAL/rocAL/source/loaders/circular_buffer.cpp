@@ -52,7 +52,7 @@ void CircularBuffer::reset()
     _level = 0;
     while(!_circ_image_info.empty())
         _circ_image_info.pop();
-    if (random_bbox_crop_flag == true) 
+    if (random_bbox_crop_flag == true)
     {
         while(!_circ_crop_image_info.empty())
         _circ_crop_image_info.pop();
@@ -104,7 +104,7 @@ void CircularBuffer::sync()
         return;
 #if !ENABLE_HIP
     cl_int err = CL_SUCCESS;
-    if(_output_mem_type== RaliMemType::OCL)
+    if(_output_mem_type== RocalMemType::OCL)
     {
     #if 0
         if(clEnqueueWriteBuffer(_cl_cmdq, _dev_sub_buffer[_write_ptr], CL_TRUE, 0, _output_mem_size, _host_buffer_ptrs[_write_ptr], 0, NULL, NULL) != CL_SUCCESS)
@@ -129,7 +129,7 @@ void CircularBuffer::sync()
     #endif
     }
 #else
-    else if (_output_mem_type== RaliMemType::HIP){
+    else if (_output_mem_type== RocalMemType::HIP){
         // copy memory to host only if needed
         if (!_hip_canMapHostMemory) {
             hipError_t err = hipMemcpy((void *)(_dev_buffer[_write_ptr]), _host_buffer_ptrs[_write_ptr], _output_mem_size, hipMemcpyHostToDevice);
@@ -167,10 +167,10 @@ void CircularBuffer::pop()
     std::unique_lock<std::mutex> lock(_names_buff_lock);
     increment_read_ptr();
     _circ_image_info.pop();
-    if (random_bbox_crop_flag == true) 
+    if (random_bbox_crop_flag == true)
         _circ_crop_image_info.pop();
 }
-void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, size_t buffer_depth)
+void CircularBuffer::init(RocalMemType output_mem_type, size_t output_mem_size, size_t buffer_depth)
 {
     _buff_depth = buffer_depth;
     _dev_buffer.reserve(_buff_depth);
@@ -186,7 +186,7 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
 
     // Allocating buffers
 #if !ENABLE_HIP
-    if(_output_mem_type== RaliMemType::OCL)
+    if(_output_mem_type== RocalMemType::OCL)
     {
         if(_cl_cmdq == nullptr || _device_id == nullptr || _cl_context == nullptr)
             THROW("Error ocl structure needed since memory type is OCL");
@@ -196,7 +196,7 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
         for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
         {
             //NOTE: we don't need to use CL_MEM_ALLOC_HOST_PTR memory if this buffer is not going to be
-            // used in the host. But we cannot ensure which Rali's copy function is going to be called
+            // used in the host. But we cannot ensure which Rocal's copy function is going to be called
             // (copy to host or OCL) by the user
             _dev_buffer[buffIdx] = (void *)clCreateBuffer(  _cl_context,
                                                     CL_MEM_READ_ONLY|CL_MEM_ALLOC_HOST_PTR,
@@ -218,7 +218,7 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
         }
     }
 #else
-    if(_output_mem_type== RaliMemType::HIP)
+    if(_output_mem_type== RocalMemType::HIP)
     {
         if(!_hip_stream  || _hip_device_id == -1 )
             THROW("Error HIP device resource is not initialized");
@@ -263,7 +263,7 @@ void CircularBuffer::release()
     for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
     {
 #if !ENABLE_HIP
-        if(_output_mem_type== RaliMemType::OCL)
+        if(_output_mem_type== RocalMemType::OCL)
         {
             if(clEnqueueUnmapMemObject(_cl_cmdq, (cl_mem)_dev_buffer[buffIdx], _host_buffer_ptrs[buffIdx], 0, NULL, NULL) != CL_SUCCESS)
                 ERR("Could not unmap ocl memory")
@@ -271,7 +271,7 @@ void CircularBuffer::release()
                 ERR("Could not release ocl memory in the circular buffer")
         }
 #else
-        if (_output_mem_type == RaliMemType::HIP) {
+        if (_output_mem_type == RocalMemType::HIP) {
             if (_host_buffer_ptrs[buffIdx]) {
                 hipError_t err = hipHostFree((void *)_host_buffer_ptrs[buffIdx]);
 

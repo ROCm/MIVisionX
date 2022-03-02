@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include <cstddef>
 #include <iostream>
 #include <vector>
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 extern "C"
 {
 #include <libavutil/imgutils.h>
@@ -59,7 +59,7 @@ public:
     VideoDecoderType _type = VideoDecoderType::FFMPEG_SOFTWARE_DECODE;
 };
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 class VideoDecoder
 {
 public:

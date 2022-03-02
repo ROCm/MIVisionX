@@ -37,15 +37,15 @@ public:
     void init( FloatParam *crop_h_factor, FloatParam *crop_w_factor, IntParam *mirror);
     unsigned int get_dst_width() { return _outputs[0]->info().width(); }
     unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
-    std::shared_ptr<RaliCropParam> get_crop_param() { return _crop_param; }
+    std::shared_ptr<RocalCropParam> get_crop_param() { return _crop_param; }
     vx_array get_mirror() { return _mirror.default_array(); }
 protected:
     void create_node() override;
     void update_node() override;
 private:
-    std::shared_ptr<RaliCropParam> _crop_param;
+    std::shared_ptr<RocalCropParam> _crop_param;
     vx_array _dst_roi_width ,_dst_roi_height;
-    ParameterVX<int> _mirror; 
+    ParameterVX<int> _mirror;
     constexpr static int MIRROR_RANGE [2] =  {0, 1};
 };
 

@@ -29,15 +29,15 @@ THE SOFTWARE.
 
 
 #define DEFAULT_DBG_TIMING 1
-/*! \brief Debugging RaliDbgTiming class
-* 
-* Can be used anywhere in the code for adding RaliDbgTiming for debugging and profiling 
+/*! \brief Debugging RocalDbgTiming class
+*
+* Can be used anywhere in the code for adding RocalDbgTiming for debugging and profiling
 */
 class TimingDBG {
 public:
     //! Constrcutor
     /*!
-    \param name Name of the timer, 
+    \param name Name of the timer,
     \param enable enables the timer module, if not set, timer is disabled
     */
     explicit TimingDBG(std::string  name, bool enable = DEFAULT_DBG_TIMING):

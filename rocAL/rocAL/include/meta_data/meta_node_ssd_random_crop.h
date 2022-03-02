@@ -42,7 +42,7 @@ public:
     Parameter<float> *y_drift_factor;
 
 private:
-    std::shared_ptr<RaliRandomCropParam> _meta_crop_param;
+    std::shared_ptr<RocalRandomCropParam> _meta_crop_param;
     vx_array _crop_width, _crop_height, _x1, _y1;
     std::vector<uint> _crop_width_val, _crop_height_val, _x1_val, _y1_val;
     unsigned int _dst_width, _dst_height;

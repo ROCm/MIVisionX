@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include <sstream>
 #include <numeric>
 #include "node_video_loader.h"
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 #if ENABLE_HIP
 VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResourcesHip device_resources):
 #else
@@ -35,8 +35,8 @@ VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources
     _loader_module = std::make_shared<VideoLoaderSharded>(device_resources);
 }
 
-void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, VideoStorageType storage_type, VideoDecoderType decoder_type, DecodeMode decoder_mode, 
-                           unsigned sequence_length, unsigned step, unsigned stride, VideoProperties &video_prop, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type)
+void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, VideoStorageType storage_type, VideoDecoderType decoder_type, DecodeMode decoder_mode,
+                           unsigned sequence_length, unsigned step, unsigned stride, VideoProperties &video_prop, bool shuffle, bool loop, size_t load_batch_count, RocalMemType mem_type)
 {
     _decode_mode = decoder_mode;
     if (!_loader_module)

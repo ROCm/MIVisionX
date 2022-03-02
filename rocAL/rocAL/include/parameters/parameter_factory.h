@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include "parameter_simple.h"
 
 
-enum class RaliParameterType
+enum class RocalParameterType
 {
     DETERMINISTIC = 0,
     RANDOM_UNIFORM,
@@ -38,25 +38,25 @@ enum class RaliParameterType
 };
 
 struct IntParam
-{ 
+{
     IntParam(
             Parameter<int>* core,
-            RaliParameterType type):
+            RocalParameterType type):
             core(core),
             type(type){}
     Parameter<int>* core;
-    const RaliParameterType type;
+    const RocalParameterType type;
 };
 
 struct FloatParam
-{ 
+{
     FloatParam(
             Parameter<float>* core,
-            RaliParameterType type):
+            RocalParameterType type):
             core(core),
             type(type){}
     Parameter<float>* core;
-    const RaliParameterType type;
+    const RocalParameterType type;
 };
 
 Parameter<int>* core(IntParam* arg);
@@ -107,7 +107,7 @@ private:
     long long unsigned _seed;
     std::set<pParamCore> _parameters; //<! Keeps the random generators used to randomized the augmentation parameters
     static ParameterFactory* _instance;
-    static std::mutex _mutex; 
+    static std::mutex _mutex;
     ParameterFactory();
 };
 

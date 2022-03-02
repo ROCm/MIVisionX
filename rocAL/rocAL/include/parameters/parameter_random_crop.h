@@ -23,11 +23,11 @@ THE SOFTWARE.
 #pragma once
 #include "parameter_crop.h"
 
-class RaliRandomCropParam : public CropParam
+class RocalRandomCropParam : public CropParam
 {
 public:
-    RaliRandomCropParam() = delete;
-    RaliRandomCropParam(unsigned int batch_size): CropParam(batch_size)
+    RocalRandomCropParam() = delete;
+    RocalRandomCropParam(unsigned int batch_size): CropParam(batch_size)
     {
         area_factor   = default_area_factor();
         aspect_ratio  = default_aspect_ratio();
@@ -39,7 +39,7 @@ public:
     void update_array() override;
     void fill_crop_dims() override;
 private:
-    constexpr static float AREA_FACTOR_RANGE[2]  = {0.08, 0.99}; 
+    constexpr static float AREA_FACTOR_RANGE[2]  = {0.08, 0.99};
     constexpr static float ASPECT_RATIO_RANGE[2] = {0.7500, 1.333};
     Parameter<float>* default_area_factor();
     Parameter<float>* default_aspect_ratio();

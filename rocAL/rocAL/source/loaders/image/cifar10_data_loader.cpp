@@ -35,7 +35,7 @@ _file_load_time("file load time", DBG_TIMING),
 _swap_handle_time("Swap_handle_time", DBG_TIMING)
 {
     _output_image = nullptr;
-    _mem_type = RaliMemType::HOST;
+    _mem_type = RocalMemType::HOST;
     _output_mem_size = 0;
     _batch_size = 1;
     _is_initialized = false;
@@ -119,7 +119,7 @@ CIFAR10DataLoader::set_output_image (Image* output_image)
 }
 
 void
-CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size)
+CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RocalMemType mem_type, unsigned batch_size, bool keep_orig_size)
 {
     if(_is_initialized)
         WRN("initialize() function is already called and loader module is initialized")
@@ -261,7 +261,7 @@ CIFAR10DataLoader::update_output_image()
         return LoaderModuleStatus::OK;
 
     // _circ_buff.get_read_buffer_x() is blocking and puts the caller on sleep until new images are written to the _circ_buff
-    if(_mem_type== RaliMemType::OCL)
+    if(_mem_type== RocalMemType::OCL)
     {
         auto data_buffer =  _circ_buff.get_read_buffer_dev();
         _swap_handle_time.start();

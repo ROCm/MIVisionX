@@ -35,7 +35,7 @@ Cifar10LoaderNode::Cifar10LoaderNode(Image *output, DeviceResources device_resou
 }
 
 void Cifar10LoaderNode::init(const std::string &source_path, const std::string &json_path, StorageType storage_type,
-                           bool loop, size_t load_batch_count, RaliMemType mem_type, const std::string &file_prefix)
+                           bool loop, size_t load_batch_count, RocalMemType mem_type, const std::string &file_prefix)
 {
     if(!_loader_module)
         THROW("ERROR: loader module is not set for Cifar10LoaderNode, cannot initialize")

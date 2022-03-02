@@ -30,8 +30,8 @@ CropMirrorNormalizeNode::CropMirrorNormalizeNode(const std::vector<Image *> &inp
                                                  const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
         _mirror(MIRROR_RANGE[0], MIRROR_RANGE[1])
-{   
-        _crop_param = std::make_shared<RaliCropParam>(_batch_size);
+{
+        _crop_param = std::make_shared<RocalCropParam>(_batch_size);
 }
 
 void CropMirrorNormalizeNode::create_node()
@@ -41,7 +41,7 @@ void CropMirrorNormalizeNode::create_node()
 
     if(_crop_param->crop_h == 0 || _crop_param->crop_w == 0)
         THROW("Uninitialized destination dimension - Invalid Crop Sizes")
-        
+
     _crop_param->create_array(_graph);
     _mean_vx.resize(_batch_size);
     _std_dev_vx.resize(_batch_size);
@@ -57,11 +57,11 @@ void CropMirrorNormalizeNode::create_node()
     _mirror.create_array(_graph ,VX_TYPE_UINT32, _batch_size);
     if(status != 0)
         THROW(" vxAddArrayItems failed in the crop resize node (vxExtrppNode_CropMirrorNormalizeCropbatchPD    )  node: "+ TOSTR(status) + "  "+ TOSTR(status))
-    
+
     unsigned int chnShift = 0;
     vx_scalar  chnToggle = vxCreateScalar(vxGetContext((vx_reference)_graph->get()),VX_TYPE_UINT32,&chnShift);
     _node = vxExtrppNode_CropMirrorNormalizebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(),
-                                                    _crop_param->cropw_arr, _crop_param->croph_arr, _crop_param->x1_arr, _crop_param->y1_arr, 
+                                                    _crop_param->cropw_arr, _crop_param->croph_arr, _crop_param->x1_arr, _crop_param->y1_arr,
                                                     _mean_array, _std_dev_array, _mirror.default_array() , chnToggle , _batch_size);
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Error adding the crop resize node (vxExtrppNode_CropMirrorNormalizeCropbatchPD    ) failed: "+TOSTR(status))

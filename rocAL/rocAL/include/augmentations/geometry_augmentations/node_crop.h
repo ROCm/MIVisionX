@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include "node.h"
 #include "parameter_factory.h"
 #include "parameter_crop_factory.h"
-#include "parameter_rali_crop.h"
+#include "parameter_rocal_crop.h"
 
 class CropNode : public Node
 {
@@ -36,7 +36,7 @@ public:
     void init( FloatParam *crop_h_factor, FloatParam *crop_w_factor, FloatParam * x_drift, FloatParam * y_drift);
     unsigned int get_dst_width() { return _outputs[0]->info().width(); }
     unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
-    std::shared_ptr<RaliCropParam> get_crop_param() { return _crop_param; }
+    std::shared_ptr<RocalCropParam> get_crop_param() { return _crop_param; }
 protected:
     void create_node() override ;
     void update_node() override;
@@ -44,6 +44,6 @@ private:
 
     size_t _dest_width;
     size_t _dest_height;
-    std::shared_ptr<RaliCropParam> _crop_param;
+    std::shared_ptr<RocalCropParam> _crop_param;
 };
 

@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include "video_reader_factory.h"
 #include "video_file_source_reader.h"
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 std::shared_ptr<VideoReader> create_video_reader(VideoReaderConfig config) {
     switch(config.type()) {
         case VideoStorageType::VIDEO_FILE_SYSTEM:

@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "video_properties.h"
 #include <cmath>
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 void substring_extraction(std::string const &str, const char delim, std::vector<std::string> &out)
 {
     size_t start;
@@ -42,7 +42,7 @@ void open_video_context(const char *video_file_path, Properties &props)
     AVCodecContext *pCodecCtx = NULL;
     int videoStream = -1;
     unsigned int i = 0;
-    
+
     // open video file
     int ret = avformat_open_input(&pFormatCtx, video_file_path, NULL, NULL);
     if (ret != 0)

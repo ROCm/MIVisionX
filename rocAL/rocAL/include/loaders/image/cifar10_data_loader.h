@@ -37,7 +37,7 @@ public:
 #endif
     ~CIFAR10DataLoader() override;
     LoaderModuleStatus load_next() override;
-    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=true) override;
+    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RocalMemType mem_type, unsigned batch_size, bool keep_orig_size=true) override;
     void set_output_image (Image* output_image) override;
     void set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader) override;
     size_t remaining_count() override;
@@ -49,7 +49,7 @@ public:
     Timing timing() override;
     void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
     void shut_down() override;
-    
+
 private:
     void increment_loader_idx();
     bool is_out_of_data();
@@ -66,7 +66,7 @@ private:
     decoded_image_info _raw_img_info;       // image info to store the names. In this case the ID of image is stored in _roi_width field
     decoded_image_info _output_decoded_img_info;
     bool _initialized = false;
-    RaliMemType _mem_type;
+    RocalMemType _mem_type;
     size_t _output_mem_size;
     bool _internal_thread_running;
     size_t _batch_size;

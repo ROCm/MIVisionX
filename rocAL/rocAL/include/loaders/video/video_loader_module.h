@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 enum class VideoLoaderModuleStatus
 {
     OK = 0,
@@ -46,7 +46,7 @@ enum class VideoLoaderModuleStatus
 class VideoLoaderModule
 {
 public:
-    virtual void initialize(VideoReaderConfig reader_config, VideoDecoderConfig decoder_config, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size) = 0;
+    virtual void initialize(VideoReaderConfig reader_config, VideoDecoderConfig decoder_config, RocalMemType mem_type, unsigned batch_size, bool keep_orig_size) = 0;
     virtual void set_output_image(Image *output_image) = 0;
     virtual VideoLoaderModuleStatus load_next() = 0; // Loads the next sequence of frames into the buffer set by calling into the set_output_image
     virtual void reset() = 0;                        // Resets the loader to load from the beginning of the video files

@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include <commons.h>
 #include "hardware_video_decoder.h"
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 HardWareVideoDecoder::HardWareVideoDecoder(){};
 
 int HardWareVideoDecoder::seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number)
@@ -54,7 +54,7 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
 {
     VideoDecoder::Status status = Status::OK;
 
-    // Initialize the SwsContext 
+    // Initialize the SwsContext
     SwsContext *swsctx = nullptr;
     if ((out_width != _codec_width) || (out_height != _codec_height) || (out_pix_format != _dec_pix_fmt))
     {
@@ -148,7 +148,7 @@ VideoDecoder::Status HardWareVideoDecoder::Decode(unsigned char *out_buffer, uns
             ++frame_count;
             av_frame_unref(sw_frame);
             av_frame_unref(dec_frame);
-            if (frame_count == sequence_length * stride)  
+            if (frame_count == sequence_length * stride)
             {
                 sequence_filled = true;
                 break;
@@ -224,7 +224,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         return Status::FAILED;
     }
 
-    // find decoder for the stream 
+    // find decoder for the stream
     _decoder = avcodec_find_decoder(_video_stream->codecpar->codec_id);
     if (!_decoder)
     {
@@ -233,7 +233,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         return Status::FAILED;
     }
 
-    // Allocate a codec context for the decoder 
+    // Allocate a codec context for the decoder
     _video_dec_ctx = avcodec_alloc_context3(_decoder);
     if (!_video_dec_ctx)
     {
@@ -242,7 +242,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
         return Status::NO_MEMORY;
     }
 
-    // Copy codec parameters from input stream to output codec context 
+    // Copy codec parameters from input stream to output codec context
     if ((ret = avcodec_parameters_to_context(_video_dec_ctx, _video_stream->codecpar)) < 0)
     {
         ERR("HardWareVideoDecoder::Initialize Failed to copy " +
@@ -256,7 +256,7 @@ VideoDecoder::Status HardWareVideoDecoder::Initialize(const char *src_filename)
     }
     _dec_pix_fmt = AV_PIX_FMT_NV12; // nv12 for vaapi
 
-    // Init the decoders 
+    // Init the decoders
     if ((ret = avcodec_open2(_video_dec_ctx, _decoder, &opts)) < 0)
     {
         ERR("HardWareVideoDecoder::Initialize Failed to open " +

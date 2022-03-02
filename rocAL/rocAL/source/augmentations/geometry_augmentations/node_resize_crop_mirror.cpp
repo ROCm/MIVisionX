@@ -29,7 +29,7 @@ ResizeCropMirrorNode::ResizeCropMirrorNode(const std::vector<Image *> &inputs, c
          Node(inputs, outputs),
         _mirror(MIRROR_RANGE[0], MIRROR_RANGE[1])
 {
-    _crop_param = std::make_shared<RaliCropParam>(_batch_size);
+    _crop_param = std::make_shared<RocalCropParam>(_batch_size);
 }
 
 void ResizeCropMirrorNode::create_node()
@@ -70,7 +70,7 @@ void ResizeCropMirrorNode::init(unsigned int crop_h, unsigned int crop_w, IntPar
 {
     _crop_param->crop_w = crop_w;
     _crop_param->crop_h = crop_h;
-    _crop_param->x1     = 0; 
+    _crop_param->x1     = 0;
     _crop_param->y1     = 0;
     _mirror.set_param(core(mirror));
 }
@@ -80,7 +80,7 @@ void ResizeCropMirrorNode::init(FloatParam *crop_h_factor, FloatParam  *crop_w_f
 {
     _crop_param->set_crop_height_factor(core(crop_h_factor));
     _crop_param->set_crop_width_factor(core(crop_w_factor));
-    _crop_param->set_random();   
+    _crop_param->set_random();
     _mirror.set_param(core(mirror));
 }
 

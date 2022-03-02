@@ -86,7 +86,7 @@ LoaderModuleStatus ImageLoaderSharded::load_next()
     return ret;
 }
 void
-ImageLoaderSharded::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type,
+ImageLoaderSharded::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RocalMemType mem_type,
                                unsigned batch_size, bool keep_orig_size)
 {
     if(_initialized)

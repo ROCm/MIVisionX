@@ -30,7 +30,7 @@ CropResizeNode::CropResizeNode(const std::vector<Image *> &inputs, const std::ve
         _dest_width(_outputs[0]->info().width()),
         _dest_height(_outputs[0]->info().height_batch())
 {
-    _crop_param = std::make_shared<RaliRandomCropParam>(_batch_size);
+    _crop_param = std::make_shared<RocalRandomCropParam>(_batch_size);
 }
 
 void CropResizeNode::create_node()

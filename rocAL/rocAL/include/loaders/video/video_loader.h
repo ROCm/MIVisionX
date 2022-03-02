@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include "circular_buffer.h"
 #include "video_read_and_decode.h"
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 
 //
 // VideoLoader runs an internal thread for loading an decoding of sequences asynchronously
@@ -44,7 +44,7 @@ public:
 #endif
     ~VideoLoader() override;
     VideoLoaderModuleStatus load_next() override;
-    void initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size = false) override;
+    void initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RocalMemType mem_type, unsigned batch_size, bool keep_orig_size = false) override;
     void set_output_image(Image *output_image) override;
     size_t remaining_count() override; // returns number of remaining items to be loaded
     void reset() override;             // Resets the loader to load from the beginning
@@ -74,7 +74,7 @@ private:
     size_t _sequence_count;
     size_t _sequence_length;
     std::thread _load_thread;
-    RaliMemType _mem_type;
+    RocalMemType _mem_type;
     decoded_image_info _decoded_img_info;
     decoded_image_info _output_decoded_img_info;
     CircularBuffer _circ_buff;

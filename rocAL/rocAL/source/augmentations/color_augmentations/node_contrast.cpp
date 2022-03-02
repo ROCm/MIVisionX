@@ -24,14 +24,14 @@ THE SOFTWARE.
 #include "node_contrast.h"
 #include "exception.h"
 
-RaliContrastNode::RaliContrastNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
+RocalContrastNode::RocalContrastNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
         _min(CONTRAST_MIN_RANGE[0], CONTRAST_MIN_RANGE[1]),
         _max(CONTRAST_MAX_RANGE[0], CONTRAST_MAX_RANGE[1])
 {
 }
 
-void RaliContrastNode::create_node()
+void RocalContrastNode::create_node()
 {
 
     if(_node)
@@ -47,19 +47,19 @@ void RaliContrastNode::create_node()
         THROW("Adding the contrast (vxExtrppNode_contrast) node failed: "+ TOSTR(status))
 }
 
-void RaliContrastNode::init(int min, int max)
+void RocalContrastNode::init(int min, int max)
 {
     _min.set_param(min);
     _max.set_param(max);
 }
 
-void RaliContrastNode::init(IntParam *min, IntParam* max)
+void RocalContrastNode::init(IntParam *min, IntParam* max)
 {
     _min.set_param(core(min));
     _max.set_param(core(max));
 }
 
-void RaliContrastNode::update_node()
+void RocalContrastNode::update_node()
 {
     _min.update_array();
     _max.update_array();

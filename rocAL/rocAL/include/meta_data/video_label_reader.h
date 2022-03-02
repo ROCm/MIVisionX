@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include "meta_data_reader.h"
 #include "video_properties.h"
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 class VideoLabelReader : public MetaDataReader
 {
 public:

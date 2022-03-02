@@ -28,21 +28,21 @@ THE SOFTWARE.
 #include "commons.h"
 #include "image.h"
 
-vx_enum vx_mem_type(RaliMemType mem)
+vx_enum vx_mem_type(RocalMemType mem)
 {
     switch(mem)
     {
-        case RaliMemType::OCL:
+        case RocalMemType::OCL:
         {
             return VX_MEMORY_TYPE_OPENCL;
         }
         break;
-        case RaliMemType::HOST:
+        case RocalMemType::HOST:
         {
             return VX_MEMORY_TYPE_HOST;
         }
         break;
-        case RaliMemType::HIP:
+        case RocalMemType::HIP:
         {
             return VX_MEMORY_TYPE_HIP;
         }
@@ -117,16 +117,16 @@ ImageInfo::ImageInfo():
         _color_planes(1),
         _batch_size(1),
         _data_size(0),
-        _mem_type(RaliMemType::HOST),
-        _color_fmt(RaliColorFormat::U8){}
+        _mem_type(RocalMemType::HOST),
+        _color_fmt(RocalColorFormat::U8){}
 
 ImageInfo::ImageInfo(
     unsigned width_,
     unsigned height_,
     unsigned batches,
     unsigned planes,
-    RaliMemType mem_type_,
-    RaliColorFormat col_fmt_):
+    RocalMemType mem_type_,
+    RocalColorFormat col_fmt_):
         _type(Type::UNKNOWN),
         _width(width_),
         _height(height_),
@@ -180,22 +180,22 @@ Image::~Image()
     vxReleaseImage(&vx_handle);
 }
 
-//! Converts the Rali color format type to OpenVX
+//! Converts the Rocal color format type to OpenVX
 /*!
  * For OpenVX there is no BGR color format supported.
  * The input images loaded in GBR format should be
  * reordered before passed to OpenVX, and match RGB.
  */
-vx_df_image interpret_color_fmt(RaliColorFormat color_format)
+vx_df_image interpret_color_fmt(RocalColorFormat color_format)
 {
     switch(color_format){
 
-        case RaliColorFormat::RGB24:
-        case RaliColorFormat::BGR24:
-        case RaliColorFormat::RGB_PLANAR:           // not theoretically correct, but keeping it for the same memory allocation
+        case RocalColorFormat::RGB24:
+        case RocalColorFormat::BGR24:
+        case RocalColorFormat::RGB_PLANAR:           // not theoretically correct, but keeping it for the same memory allocation
             return VX_DF_IMAGE_RGB;
 
-        case RaliColorFormat::U8:
+        case RocalColorFormat::U8:
             return VX_DF_IMAGE_U8;
 
         default:
@@ -297,7 +297,7 @@ unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bo
                     _info.height_batch() *
                     _info.color_plane_count();
 
-    if(_info._mem_type == RaliMemType::OCL)
+    if(_info._mem_type == RocalMemType::OCL)
     {
 
         cl_int status;
@@ -331,7 +331,7 @@ unsigned Image::copy_data(hipStream_t stream, unsigned char* user_buffer, bool s
                     _info.height_batch() *
                     _info.color_plane_count();
 
-    if (_info._mem_type == RaliMemType::HIP)
+    if (_info._mem_type == RocalMemType::HIP)
     {
         // copy from device to host
         hipError_t status;

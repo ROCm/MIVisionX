@@ -28,17 +28,17 @@ THE SOFTWARE.
 
 AgoTargetAffinityInfo
 get_ago_affinity_info(
-        RaliAffinity rali_affinity,
+        RocalAffinity rocal_affinity,
         int cpu_id,
         int gpu_id)
 {
     AgoTargetAffinityInfo affinity;
-    switch(rali_affinity) {
-        case RaliAffinity::GPU:
+    switch(rocal_affinity) {
+        case RocalAffinity::GPU:
             affinity.device_type =  AGO_TARGET_AFFINITY_GPU;
             affinity.device_info = (gpu_id >=0 && gpu_id <=9)? gpu_id : 0;
             break;
-        case RaliAffinity::CPU:
+        case RocalAffinity::CPU:
             affinity.device_type = AGO_TARGET_AFFINITY_CPU;
             affinity.device_info = (cpu_id >=0 && cpu_id <=9)? cpu_id : 0;
             break;
@@ -48,8 +48,8 @@ get_ago_affinity_info(
     return affinity;
 }
 
-Graph::Graph(vx_context context, RaliAffinity affinity, int cpu_id, int gpu_id):
-_mem_type(((affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST)),
+Graph::Graph(vx_context context, RocalAffinity affinity, int cpu_id, int gpu_id):
+_mem_type(((affinity == RocalAffinity::GPU) ? RocalMemType::OCL : RocalMemType::HOST)),
 _context(context),
 _graph(nullptr),
 _affinity(affinity),
@@ -87,20 +87,20 @@ Graph::Status
 Graph::verify()
 {
     vx_status status;
-    if((status = vxVerifyGraph(_graph)) != VX_SUCCESS) 
+    if((status = vxVerifyGraph(_graph)) != VX_SUCCESS)
         THROW("vxVerifyGraph failed " + TOSTR(status))
 
-    return Status::OK;    
+    return Status::OK;
 }
 
 Graph::Status
 Graph::process()
 {
     vx_status status;
-    if((status = vxProcessGraph(_graph)) != VX_SUCCESS) 
+    if((status = vxProcessGraph(_graph)) != VX_SUCCESS)
          THROW("ERROR: vxProcessGraph failed " + TOSTR(status))
 
-    return  Status::OK;    
+    return  Status::OK;
 }
 
 Graph::Status
@@ -108,9 +108,9 @@ Graph::release()
 {
     vx_status status = VX_SUCCESS;
 
-    if(_graph && (status = vxReleaseGraph(&_graph)) != VX_SUCCESS) 
+    if(_graph && (status = vxReleaseGraph(&_graph)) != VX_SUCCESS)
         LOG ("Failed to call vxReleaseGraph " + TOSTR(status))
 
-    return  Status::OK;  
+    return  Status::OK;
 }
 

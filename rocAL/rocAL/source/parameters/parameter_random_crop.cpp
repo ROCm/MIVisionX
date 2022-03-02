@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include "parameter_random_crop.h"
 #include "commons.h"
 
-void RaliRandomCropParam::set_area_factor(Parameter<float>* crop_area_factor)
+void RocalRandomCropParam::set_area_factor(Parameter<float>* crop_area_factor)
 {
     if(!crop_area_factor)
         return ;
@@ -35,7 +35,7 @@ void RaliRandomCropParam::set_area_factor(Parameter<float>* crop_area_factor)
     area_factor = crop_area_factor;
 }
 
-void RaliRandomCropParam::set_aspect_ratio(Parameter<float>* crop_aspect_ratio)
+void RocalRandomCropParam::set_aspect_ratio(Parameter<float>* crop_aspect_ratio)
 {
     if(!crop_aspect_ratio)
         return ;
@@ -43,23 +43,23 @@ void RaliRandomCropParam::set_aspect_ratio(Parameter<float>* crop_aspect_ratio)
     aspect_ratio = crop_aspect_ratio;
 }
 
-void RaliRandomCropParam::update_array()
+void RocalRandomCropParam::update_array()
 {
     fill_crop_dims();
     update_crop_array();
 }
 
-void RaliRandomCropParam::fill_crop_dims()
+void RocalRandomCropParam::fill_crop_dims()
 {
     float crop_area_factor  = 1.0;
-    float crop_aspect_ratio = 1.0; 
+    float crop_aspect_ratio = 1.0;
     float in_ratio;
     unsigned short num_of_attempts = 5;
     float x_drift, y_drift;
     double target_area;
     auto is_valid_crop = [](uint h, uint w, uint height, uint width)
     {
-        return (h < height && w < width); 
+        return (h < height && w < width);
     };
     for(uint img_idx = 0; img_idx < batch_size; img_idx++)
     {
@@ -72,8 +72,8 @@ void RaliRandomCropParam::fill_crop_dims()
             crop_aspect_ratio = aspect_ratio->get();
             target_area = crop_area_factor * in_height[img_idx] * in_width[img_idx];
             cropw_arr_val[img_idx] = static_cast<size_t>(std::sqrt(target_area * crop_aspect_ratio));
-            croph_arr_val[img_idx] = static_cast<size_t>(std::sqrt(target_area * (1 / crop_aspect_ratio)));  
-            if(is_valid_crop(croph_arr_val[img_idx], cropw_arr_val[img_idx], in_height[img_idx], in_width[img_idx])) 
+            croph_arr_val[img_idx] = static_cast<size_t>(std::sqrt(target_area * (1 / crop_aspect_ratio)));
+            if(is_valid_crop(croph_arr_val[img_idx], cropw_arr_val[img_idx], in_height[img_idx], in_width[img_idx]))
             {
                 x_drift_factor->renew();
                 y_drift_factor->renew();
@@ -86,7 +86,7 @@ void RaliRandomCropParam::fill_crop_dims()
             }
         }
         // Fallback on Central Crop
-        if(!is_valid_crop(croph_arr_val[img_idx], cropw_arr_val[img_idx], in_height[img_idx], in_width[img_idx])) 
+        if(!is_valid_crop(croph_arr_val[img_idx], cropw_arr_val[img_idx], in_height[img_idx], in_width[img_idx]))
         {
             in_ratio = static_cast<float>(in_width[img_idx]) / in_height[img_idx];
             if(in_ratio < ASPECT_RATIO_RANGE[0])
@@ -98,7 +98,7 @@ void RaliRandomCropParam::fill_crop_dims()
             {
                 croph_arr_val[img_idx] = in_height[img_idx];
                 cropw_arr_val[img_idx] = croph_arr_val[img_idx] * ASPECT_RATIO_RANGE[1];
-            } 
+            }
             else
             {
                 croph_arr_val[img_idx] = in_height[img_idx];
@@ -109,16 +109,16 @@ void RaliRandomCropParam::fill_crop_dims()
         }
         x2_arr_val[img_idx] = x1_arr_val[img_idx] + cropw_arr_val[img_idx];
         y2_arr_val[img_idx] = y1_arr_val[img_idx] + croph_arr_val[img_idx];
-    }   
+    }
 }
 
-Parameter<float> *RaliRandomCropParam::default_area_factor()
+Parameter<float> *RocalRandomCropParam::default_area_factor()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(AREA_FACTOR_RANGE[0],
                                                                          AREA_FACTOR_RANGE[1])->core;
 }
 
-Parameter<float> *RaliRandomCropParam::default_aspect_ratio()
+Parameter<float> *RocalRandomCropParam::default_aspect_ratio()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(ASPECT_RATIO_RANGE[0],
                                                                          ASPECT_RATIO_RANGE[1])->core;

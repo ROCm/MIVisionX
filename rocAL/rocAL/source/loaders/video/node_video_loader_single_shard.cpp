@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #include "node_video_loader_single_shard.h"
 #include "exception.h"
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 #if ENABLE_HIP
 VideoLoaderSingleShardNode::VideoLoaderSingleShardNode(Image *output, DeviceResourcesHip device_resources):
 #else
@@ -34,7 +34,7 @@ VideoLoaderSingleShardNode::VideoLoaderSingleShardNode(Image *output, DeviceReso
 }
 
 void VideoLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, VideoStorageType storage_type, VideoDecoderType decoder_type, DecodeMode decoder_mode,
-                                      unsigned sequence_length, unsigned step, unsigned stride, VideoProperties &video_prop, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type)
+                                      unsigned sequence_length, unsigned step, unsigned stride, VideoProperties &video_prop, bool shuffle, bool loop, size_t load_batch_count, RocalMemType mem_type)
 {
     _decode_mode = decoder_mode; // for future use
     if (!_loader_module)

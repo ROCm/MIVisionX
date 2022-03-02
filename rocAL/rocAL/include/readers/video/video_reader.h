@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include "meta_data_reader.h"
 #include "video_properties.h"
 
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 enum class VideoStorageType
 {
     VIDEO_FILE_SYSTEM = 0
@@ -37,7 +37,7 @@ enum class VideoStorageType
 
 struct VideoReaderConfig
 {
-    explicit VideoReaderConfig(VideoStorageType type, std::string path = "", bool shuffle = false, bool loop = false) : 
+    explicit VideoReaderConfig(VideoStorageType type, std::string path = "", bool shuffle = false, bool loop = false) :
                             _type(type), _path(path), _shuffle(shuffle), _loop(loop) {}
     virtual VideoStorageType type() { return _type; };
     void set_path(const std::string &path) { _path = path; }
@@ -82,7 +82,7 @@ private:
     bool _loop = false;
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
 };
-struct SequenceInfo 
+struct SequenceInfo
 {
     size_t start_frame_number;
     std::string video_file_name;
@@ -100,7 +100,7 @@ public:
      \param desc  User provided descriptor containing the files' path.
     */
     virtual Status initialize(VideoReaderConfig desc) = 0;
-    
+
     //! Reads the next resource item
     virtual SequenceInfo get_sequence_info() = 0;
 

@@ -40,7 +40,7 @@ public :
     void release() override;
     bool set_timestamp_mode() override { return false; }
     void print_map_contents();
-    std::map<std::string, std::shared_ptr<MetaData>> get_map_content() override { return _map_content;}
+    std::map<std::string, std::shared_ptr<MetaData>> &get_map_content() override { return _map_content;}
     MetaDataBatch * get_output() override { return _output; }
     CaffeMetaDataReader();
     ~CaffeMetaDataReader() override { delete _output; }

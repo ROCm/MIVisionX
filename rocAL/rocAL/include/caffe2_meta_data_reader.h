@@ -42,7 +42,7 @@ public :
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
-    std::map<std::string, std::shared_ptr<MetaData>> get_map_content() override { return (_map_content);}
+    std::map<std::string, std::shared_ptr<MetaData>> &get_map_content() override { return (_map_content);}
     Caffe2MetaDataReader();
     ~Caffe2MetaDataReader() override { delete _output; }
 private:

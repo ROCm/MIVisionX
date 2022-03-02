@@ -43,6 +43,7 @@ public :
     void release() override;
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
+    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override { return _map_content;}
     MetaDataBatch * get_output() override { return _output; }
     MXNetMetaDataReader();
     ~MXNetMetaDataReader() override { delete _output; }
@@ -56,7 +57,7 @@ private:
     std::ifstream _file_contents;
     ImageRecordIOHeader _hdr;
     const uint32_t _kMagic = 0xced7230a;
-    std::map<std::string, std::shared_ptr<Label>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
     std::string _path;
     DIR *_src_dir;
     struct dirent *_entity;

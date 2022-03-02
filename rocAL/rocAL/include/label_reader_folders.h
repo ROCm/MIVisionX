@@ -37,7 +37,7 @@ public :
     void release() override;
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
-    std::map<std::string, std::shared_ptr<MetaData>> get_map_content() override { return _map_content;}
+    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override { return _map_content;}
     MetaDataBatch * get_output() override { return _output; }
     LabelReaderFolders();
     ~LabelReaderFolders() override { delete _output; }

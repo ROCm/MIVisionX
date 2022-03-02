@@ -150,7 +150,6 @@ COCOFileSourceReader::~COCOFileSourceReader()
 
 int COCOFileSourceReader::release()
 {
-    std::cerr<<"RELEASE CALLED";
 #if USE_STDIO_FILE
     if (!_current_fPtr)
         return 0;

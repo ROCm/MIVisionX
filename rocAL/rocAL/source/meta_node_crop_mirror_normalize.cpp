@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,7 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
         BoundingBoxCords coords_buf;
         coords_buf.resize(bb_count);
         memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
-        memcpy(coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        memcpy((void *)coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxCord temp_box = {0, 0, 1, 1};
         BoundingBoxLabels bb_labels;
@@ -71,10 +71,9 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
         crop_box.r = (_x1_val[i] + _width_val[i]) / _src_width_val[i];
         crop_box.b = (_y1_val[i] + _height_val[i]) / _src_height_val[i];
         // std::cout<<"CROP Co-ordinates in CMN: lxtxrxb::\t"<<crop_box.l<<"x"<<crop_box.t<<"x"<<crop_box.r<<"x"<<crop_box.b<<"x";
-        
         for(uint j = 0; j < bb_count; j++)
         {
-            // std::cout<<"\nIn BEFORE CMN: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
+            // std::cout<<"\nIn BEFORE CMN: Box Co-ordinates lxtxrxb::\t"<<coords_buf[j].l<<"x\t"<<coords_buf[j].t<<"x\t"<<coords_buf[j].r<<"x\t"<<coords_buf[j].b<<"x\t"<<std::endl;
             if (BBoxIntersectionOverUnion(coords_buf[j], crop_box) >= _iou_threshold)
             {
                 float xA = std::max(crop_box.l, coords_buf[j].l);

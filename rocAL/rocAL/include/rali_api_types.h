@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -42,6 +42,12 @@ typedef void * RaliContext;
 typedef void * RaliImage;
 typedef void * RaliMetaData;
 
+typedef std::vector<int> ImageIDBatch,AnnotationIDBatch;
+typedef std::vector<std::string> ImagePathBatch;
+typedef std::vector<float> ScoreBatch,RotationBatch;
+typedef std::vector<std::vector<float>> CenterBatch, ScaleBatch;
+typedef std::vector<std::vector<std::vector<float>>> JointsBatch, JointsVisibilityBatch;
+
 struct TimingInfo
 {
     long long unsigned load_time;
@@ -49,6 +55,21 @@ struct TimingInfo
     long long unsigned process_time;
     long long unsigned transfer_time;
 };
+
+//HRNet training expects meta data (joints_data) in below format, so added here as a type for exposing to user
+struct RaliJointsData
+{
+    ImageIDBatch image_id_batch;
+    AnnotationIDBatch annotation_id_batch;
+    ImagePathBatch image_path_batch;
+    CenterBatch center_batch;
+    ScaleBatch scale_batch;
+    JointsBatch joints_batch;
+    JointsVisibilityBatch joints_visibility_batch;
+    ScoreBatch score_batch;
+    RotationBatch rotation_batch;
+};
+
 enum RaliStatus
 {
     RALI_OK = 0,

@@ -14,5 +14,29 @@ fi
 sudo rm -r ./amd_rali.egg-info/
 sudo rm -r ./build
 sudo rm -r ./dist
-sudo "$DEFAULT_PYTHON" setup.py build
-sudo "$DEFAULT_PYTHON" setup.py install
+
+blue=`tput setaf 4`
+reset=`tput sgr0`
+
+if [[ $# -eq 1 ]]; then
+  # Either --backend_hip / --backend_ocl can be passed by the user
+  echo "${blue}Running setup.py with $1 ${reset}"
+
+  if [[ "$1" == "--backend_ocl" ]] || [[ "$1" == "--backend_hip" ]]; then
+    sudo "$DEFAULT_PYTHON" setup.py build $1
+    sudo "$DEFAULT_PYTHON" setup.py install $1
+  else
+    echo
+    echo "The run.sh bash script runs the setup.py with OCL / HIP backends"
+    echo
+    echo "Syntax : ./run.sh --backend_ocl / --backend_hip"
+    echo
+    exit
+  fi
+
+else
+  # Default Backend: --backend_hip
+  echo "${blue}Running setup.py with --backend_hip ${reset}"
+  sudo "$DEFAULT_PYTHON" setup.py build --backend_hip
+  sudo "$DEFAULT_PYTHON" setup.py install --backend_hip
+fi

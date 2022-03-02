@@ -1,4 +1,4 @@
-# Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,11 @@ endif()
 
 if(NOT OpenCL_FOUND)
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rocAL pybind requires OpenCL, Not Found${ColourReset}")
+    message("-- ${Yellow}NOTE: rocAL pybind requires OpenCL, Not Found${ColourReset}")
+endif()
+if(NOT HIP_FOUND)
+    set(BUILD_RALI_PYBIND false)
+    message("-- ${Yellow}rocAL pybind requires HIP, Not Found${ColourReset}")
 endif()
 if(NOT HIP_FOUND)
     set(BUILD_RALI_PYBIND false)
@@ -64,7 +68,7 @@ if(NOT HIP_FOUND)
 endif()
 if(NOT AMDRPP_FOUND)
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rocAL pybind requires AMDRPP, Not Found${ColourReset}")
+    message("-- ${Yellow}NOTE: rocAL pybind requires AMDRPP, Not Found${ColourReset}")
 else()
     #find the RPP backend type
     set(RPP_BACKEND_OPENCL_FOUND 0)
@@ -90,21 +94,21 @@ else()
         endif()
     else()
         set(BUILD_RALI_PYBIND false)
-        message("-- ${Red}WARNING:GPU support with OpenCL or HIP Not Found -- rocAL Pybind module excluded${ColourReset}")
+        message("-- ${Red}WARNING: GPU support with OpenCL or HIP Not Found -- rocAL Pybind module excluded${ColourReset}")
     endif()
 endif()
 
 if(NOT TurboJpeg_FOUND)
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rocAL pybind requires TurboJpeg, Not Found${ColourReset}")
+    message("-- ${Yellow}NOTE: rocAL pybind requires TurboJpeg, Not Found${ColourReset}")
 endif()
 if(CMAKE_VERSION VERSION_LESS ${MIN_CMAKE_VER_REQUIRED})
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rocAL pybind required CMake Version Not Found${ColourReset}")
+    message("-- ${Yellow}NOTE: rocAL pybind required CMake Version Not Found${ColourReset}")
 endif()
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${MIN_CXX_VER_REQUIRED})
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rocAL pybind required C++ Version Not Found${ColourReset}")
+    message("-- ${Yellow}NOTE: rocAL pybind required C++ Version Not Found${ColourReset}")
 endif()
 
 if(${BUILD_RALI_PYBIND})

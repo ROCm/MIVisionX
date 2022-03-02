@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,7 @@ public :
     void release(std::string image_name);
     void release() override;
     void print_map_contents();
+    std::map<std::string, std::shared_ptr<MetaData>> &get_map_content() override{ return _map_content;}
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
     Caffe2MetaDataReaderDetection();
@@ -47,11 +48,11 @@ public :
 private:
     void read_files(const std::string& _path);
     bool exists(const std::string &image_name);
-    void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSizes image_size);
+    void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);
     bool _last_rec;
     void read_lmdb_record(std::string file_name, uint file_size);
-    std::map<std::string, std::shared_ptr<BoundingBox>> _map_content;
-    std::map<std::string, std::shared_ptr<BoundingBox>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::string _path;
     BoundingBoxBatch* _output;
     DIR *_src_dir;

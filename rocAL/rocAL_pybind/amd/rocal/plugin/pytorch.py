@@ -21,7 +21,8 @@ class RALIGenericImageIterator(object):
         return self.__next__()
 
     def __next__(self):
-        if b.getRemainingImages(self.loader._handle) < self.bs:
+        if(self.loader.isEmpty()):
+            timing_info = self.loader.Timing_Info()
             raise StopIteration
 
         if self.loader.run() != 0:
@@ -34,7 +35,6 @@ class RALIGenericImageIterator(object):
                 size = b.getImageNameLen(self.loader._handle,i)
                 print(size)
                 self.array = np.empty([1, size], dtype="<U15")
-
                 self.out=np.frombuffer(self.array, dtype=(self.array).dtype)
 
                 b.getImageName(self.loader._handle, self.out ,i)
@@ -50,18 +50,20 @@ class RALIGenericImageIterator(object):
 
 
 class RALIGenericIterator(object):
-    def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
+    def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT, display=False):
         self.loader = pipeline
         self.tensor_format =tensor_layout
         self.multiplier = multiplier
         self.offset = offset
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
-
+        self.display = display
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
+        if self.loader._name ==None:
+            self.loader._name= self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
         if self.tensor_dtype == types.FLOAT:
@@ -84,13 +86,11 @@ class RALIGenericIterator(object):
     def __next__(self):
         if(b.isEmpty(self.loader._handle)):
             timing_info = b.getTimingInfo(self.loader._handle)
-            print("Load     time ::",timing_info.load_time)
-            print("Decode   time ::",timing_info.decode_time)
-            print("Process  time ::",timing_info.process_time)
-            print("Transfer time ::",timing_info.transfer_time)
+            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
+            self.reset()
             raise StopIteration
 
         if(types.NCHW == self.tensor_format):
@@ -128,6 +128,10 @@ class RALIGenericIterator(object):
                 self.lis_lab.append(self.label_2d_numpy)
                 self.lis.append(self.bb_2d_numpy)
 
+                if self.display:
+                    img = torch.from_numpy(self.out)
+                    draw_patches(img[i], i, self.bb_2d_numpy)
+
                 sum_count = sum_count +count
 
             self.target = self.lis
@@ -155,6 +159,10 @@ class RALIGenericIterator(object):
                 self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
                 self.labels_tensor = self.labels_tensor.view(-1, self.bs, self.loader._numOfClasses)
             else:
+                if self.display:
+                    for i in range(self.bs):
+                        img = torch.from_numpy(self.out)
+                        draw_patches(img[i], i, 0)
                 self.loader.getImageLabels(self.labels)
                 self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
 
@@ -240,10 +248,11 @@ class RALIClassificationIterator(RALIGenericIterator):
                  auto_reset=False,
                  fill_last_batch=True,
                  dynamic_shape=False,
-                 last_batch_padded=False):
+                 last_batch_padded=False,
+                 display=False):
         pipe = pipelines
         super(RALIClassificationIterator, self).__init__(pipe, tensor_layout = pipe._tensor_layout, tensor_dtype = pipe._tensor_dtype,
-                                                            multiplier=pipe._multiplier, offset=pipe._offset)
+                                                            multiplier=pipe._multiplier, offset=pipe._offset,display=display)
 
 
 class RALI_iterator(RALIGenericImageIterator):
@@ -261,3 +270,15 @@ class RALI_iterator(RALIGenericImageIterator):
                  last_batch_padded=False):
         pipe = pipelines
         super(RALI_iterator, self).__init__(pipe)
+
+
+def draw_patches(img,idx, bboxes):
+    #image is expected as a tensor, bboxes as numpy
+    import cv2
+    image = img.detach().numpy()
+    image = image.transpose([1,2,0])
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
+
+    _,htot ,wtot = img.shape
+    image = cv2.UMat(image).get()
+    cv2.imwrite(str(idx)+"_"+"train"+".png", image)

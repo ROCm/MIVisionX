@@ -1,4 +1,4 @@
-# Copyright (c) 2018 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ def generateLicenseForCPP(f):
 """/*
 MIT License
 
-Copyright (c) 2018 - 2021 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -76,7 +76,7 @@ def generateLicenseForScript(f):
 #
 # MIT License
 #
-# Copyright (c) 2018 - 2021 Advanced Micro Devices, Inc.
+# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1068,6 +1068,66 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 """
     { 
       vx_node node = vxTileLayer(graph, %s, %s, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'less':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 0);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'greater':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 1);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'less_equal':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 2);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'greater_equal':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 3);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'equal':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 4);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'not_equal':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTensorCompareLayer(graph, %s, %s, %s, 5);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }    

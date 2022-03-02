@@ -1,4 +1,4 @@
-# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -103,6 +103,11 @@ onnx2ir_op_type = {
     'TopK'               : 'topk',
     'ReduceMin'          : 'reduce_min',
     'Tile'               : 'tile',
+    'Less'               : 'less',
+    'Greater'            : 'greater',
+    'LessOrEqual'        : 'less_equal',
+    'GreaterOrEqual'     : 'greater_equal',
+    'Equal'              : 'equal'
 }
 
 onnx2ir_data_type = [

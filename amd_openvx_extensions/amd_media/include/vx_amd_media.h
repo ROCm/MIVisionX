@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -51,7 +51,7 @@ VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char 
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL amdMediaEncoderNode(vx_graph graph, const char *output_str, vx_image input, vx_array aux_data_in, vx_array aux_data_out);
+VX_API_ENTRY vx_node VX_API_CALL amdMediaEncoderNode(vx_graph graph, const char *output_str, vx_image input, vx_array aux_data_in, vx_array aux_data_out, vx_bool enable_gpu_input=false);
 
 #ifdef  __cplusplus
 }

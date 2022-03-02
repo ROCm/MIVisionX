@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,8 @@ THE SOFTWARE.
 */
 
 
-#include"internal_publishKernels.h"
-#include"vx_ext_winml.h"
+#include "internal_publishKernels.h"
+#include "vx_ext_winml.h"
 
 vx_node vxCreateNodeByStructure(vx_graph graph,
         vx_enum kernelenum,

@@ -10,9 +10,9 @@ class HybridPipe(Pipeline):
 		super(HybridPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
 		self.input = ops.TFRecordReader(path=data_dir, index_path = "", reader_type=tfrecordreader_type, user_feature_key_map=feature_key_map,
 			features={
-				'image/encoded':tf.FixedLenFeature((), tf.string, ""),
-				'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1),
-				'image/filename':tf.FixedLenFeature((), tf.string, "")
+				'image/encoded':tf.io.FixedLenFeature((), tf.string, ""),
+				'image/class/label':tf.io.FixedLenFeature([1], tf.int64,  -1),
+				'image/filename':tf.io.FixedLenFeature((), tf.string, "")
 			}
 		)
 		self._oneHotLabels = oneHotLabels
@@ -71,6 +71,7 @@ def main():
 	}
 	pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rali_cpu=raliCPU)
 	pipe.build()
+
 	imageIterator = RALIIterator(pipe)
 	for i, (images_array, labels_array) in enumerate(imageIterator, 0):
 		print("\n\n",i)

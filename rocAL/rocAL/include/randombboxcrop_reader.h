@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,15 @@ THE SOFTWARE.
 #include "parameter_crop_factory.h"
 #include "meta_data_reader.h"
 #include "coco_meta_data_reader.h"
+// #include "text_file_meta_data_reader.h"
+// #include "cifar10_meta_data_reader.h"
+// #include "tf_meta_data_reader.h"
+// #include "caffe_meta_data_reader.h"
+#include "caffe_meta_data_reader_detection.h"
+// #include "caffe2_meta_data_reader.h"
+#include "caffe2_meta_data_reader_detection.h"
+#include "tf_meta_data_reader_detection.h"
+// #include "video_label_reader.h"
 #include <random>
 
 // todo:: move this to common header
@@ -40,7 +49,7 @@ class SeededRNG {
   * @param state_size How many seed are used to initialize one RNG. Used to lower probablity of
   * collisions between seeds used to initialize RNGs in different operators.
   */
-public: 
+public:
   SeededRNG (int batch_size = 128) {
       std::random_device source;
       _batch_size = batch_size;
@@ -78,14 +87,14 @@ public:
     void update_meta_data();
     CropCordBatch * get_output() override { return _output; }
     bool is_entire_iou(){return _entire_iou;}
-    void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader) override;
+    void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader,MetaDataReaderType config_type ) override;
     pCropCord get_crop_cord(const std::string &image_names) override;
     RandomBBoxCropReader();
     ~RandomBBoxCropReader() override {}
 
 private:
-    std::shared_ptr<COCOMetaDataReader> _meta_data_reader = nullptr;
-    std::map<std::string, std::shared_ptr<BoundingBox>> _meta_bbox_map_content;
+    std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
+    std::map<std::string, std::shared_ptr<MetaData>> _meta_bbox_map_content;
     bool _all_boxes_overlap;
     bool _no_crop;
     bool _has_shape;

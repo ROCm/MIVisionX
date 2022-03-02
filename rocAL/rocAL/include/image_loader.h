@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -54,6 +54,7 @@ public:
     decoded_image_info get_decode_image_info() override;
     crop_image_info get_crop_image_info() override;
     void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
+    void shut_down() override;
 private:
     bool is_out_of_data();
     void de_init();

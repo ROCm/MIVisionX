@@ -1,5 +1,5 @@
 /* 
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
  
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -78,16 +78,20 @@ THE SOFTWARE.
 #endif
 
 #if ENABLE_HIP
-#define __HIP_PLATFORM_HCC__
+#define __HIP_PLATFORM_AMD__
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
 #endif
 
 #if ENABLE_OPENCV
-#include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include "opencv2/opencv.hpp"
 using namespace cv;
+#if USE_OPENCV_4
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#define CV_GRAY2RGB COLOR_GRAY2RGB
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FILLED FILLED
+#endif
 #endif
 
 using namespace std;

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@ THE SOFTWARE.
 #ifndef _WINML_TUNNEL_
 #define _WINML_TUNNEL_
 
-#include"vx_ext_winml.h"
-#include"vx_winml.h"
+#include "vx_ext_winml.h"
+#include "vx_winml.h"
 
 #include "winrt/Windows.Foundation.h"
 #include <winrt/Windows.AI.MachineLearning.h>

@@ -2,7 +2,7 @@
 # 
 # MIT License
 # 
-# Copyright (c) 2017 - 2020 Advanced Micro Devices, Inc.
+# Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,5 +58,5 @@ set(TurboJpeg_INCLUDE_DIRS ${TurboJpeg_INCLUDE_DIRS} CACHE INTERNAL "")
 set(TurboJpeg_LIBRARIES_DIR ${TurboJpeg_LIBRARIES_DIR} CACHE INTERNAL "")
 
 if( NOT TurboJpeg_FOUND )
-    message( "-- ${Yellow}FindTurboJpeg failed to find: turbojpeg${ColourReset}" )
+    message( "-- ${Yellow}NOTE: FindTurboJpeg failed to find -- turbojpeg${ColourReset}" )
 endif()

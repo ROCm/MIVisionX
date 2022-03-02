@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,47 +29,8 @@ void BoundingBoxGraph::process(MetaDataBatch *meta_data)
     }
 }
 
-//not required since the bbox are normalized in the very beggining -> remove the call in master graph also
-void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info)
-{
-    std::vector<uint32_t> original_height = decode_image_info._original_height;
-    std::vector<uint32_t> original_width = decode_image_info._original_width;
-    std::vector<uint32_t> roi_width = decode_image_info._roi_width;
-    std::vector<uint32_t> roi_height = decode_image_info._roi_height;
-    for (int i = 0; i < input_meta_data->size(); i++)
-    {
-        float _dst_to_src_width_ratio = roi_width[i] / float(original_width[i]);
-        float _dst_to_src_height_ratio = roi_height[i] / float(original_height[i]);
-        unsigned bb_count = input_meta_data->get_bb_labels_batch()[i].size();
-        std::vector<int> labels_buf(bb_count);
-        std::vector<float> coords_buf(bb_count * 4);
-        memcpy(labels_buf.data(), input_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
-        memcpy(coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
-        BoundingBoxCords bb_coords;
-        BoundingBoxCord temp_box;
-        temp_box.l = temp_box.t = temp_box.r = temp_box.b = 0;
-        BoundingBoxLabels bb_labels;
-        int m = 0;
-        for (uint j = 0; j < bb_count; j++)
-        {
-            BoundingBoxCord box;
-            float temp_l, temp_t;
-            temp_l = (coords_buf[m++] * _dst_to_src_width_ratio);
-            temp_t = (coords_buf[m++] * _dst_to_src_height_ratio);
-            box.l = std::max(temp_l,0.0f);
-            box.t = std::max(temp_t,0.0f);
-            box.r = (coords_buf[m++] * _dst_to_src_width_ratio);
-            box.b = (coords_buf[m++] * _dst_to_src_height_ratio);
-            bb_coords.push_back(box);
-        }
-        if (bb_coords.size() == 0)
-        {
-            bb_coords.push_back(temp_box);
-            bb_labels.push_back(0);
-        }
-        input_meta_data->get_bb_cords_batch()[i] = bb_coords;
-    }
-}
+//update_meta_data is not required since the bbox are normalized in the very beggining -> removed the call in master graph also except for MaskRCNN
+
 
 inline float ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const float &box1_area, const BoundingBoxCord &box2)
 {
@@ -97,7 +58,7 @@ void BoundingBoxGraph::update_random_bbox_meta_data(MetaDataBatch *input_meta_da
         coords_buf.resize(bb_count);
         labels_buf.resize(bb_count);
         memcpy(labels_buf.data(), input_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
-        memcpy(coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        memcpy((void *)coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
@@ -173,7 +134,7 @@ inline int find_best_box_for_anchor(unsigned anchor_idx, const std::vector<float
 
 void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors, pMetaDataBatch full_batch_meta_data, float criteria, bool offset, float scale, std::vector<float>& means, std::vector<float>& stds)
 {
-    #pragma omp parallel for 
+    #pragma omp parallel for
     for (int i = 0; i < full_batch_meta_data->size(); i++)
     {
         BoundingBoxCord *bbox_anchors = reinterpret_cast<BoundingBoxCord *>(anchors->data());

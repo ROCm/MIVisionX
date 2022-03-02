@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include"internal_publishKernels.h"
+#include "internal_publishKernels.h"
 
 /*!***********************************************************************************************************
 input parameter validator.
@@ -264,9 +264,17 @@ static vx_status VX_CALLBACK CV_orb_detector_Kernel(vx_node node, const vx_refer
     STATUS_ERROR_CHECK(VX_to_CV_Image(&mat, image_in));
     STATUS_ERROR_CHECK(VX_to_CV_Image(&mask_mat, mask));
 
+
+#if USE_OPENCV_4
+    ORB::ScoreType scoreTypeORB = (scoreType == 0 ? ORB::HARRIS_SCORE : ORB::FAST_SCORE);
+    //Compute using OpenCV
+    Ptr<Feature2D> orb = ORB::create(nFeatures, ScaleFactor, nLevels, edgeThreshold, firstLevel, WTA_K, scoreTypeORB, patchSize);
+    orb->detect(*mat, key_points, *mask_mat);
+#else
     //Compute using OpenCV
     Ptr<Feature2D> orb = ORB::create(nFeatures, ScaleFactor, nLevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize);
     orb->detect(*mat, key_points, *mask_mat);
+#endif
 
     //OpenCV 2.4 Call
     //ORB orb(nFeatures, ScaleFactor, nLevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize);

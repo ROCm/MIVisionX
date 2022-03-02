@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@ enum class MetaDataReaderType
     FOLDER_BASED_LABEL_READER = 0,// Used for imagenet-like dataset
     TEXT_FILE_META_DATA_READER,// Used when metadata is stored in a text file
     COCO_META_DATA_READER,
+    COCO_KEY_POINTS_META_DATA_READER,
     CIFAR10_META_DATA_READER,    // meta_data for cifar10 data which is store as part of bin file
     TF_META_DATA_READER,
     CAFFE_META_DATA_READER,
@@ -39,12 +40,14 @@ enum class MetaDataReaderType
     CAFFE2_META_DATA_READER,
     CAFFE2_DETECTION_META_DATA_READER,
     TF_DETECTION_META_DATA_READER,
-    VIDEO_LABEL_READER
+    VIDEO_LABEL_READER,
+    MXNET_META_DATA_READER
 };
 enum class MetaDataType
 {
     Label,
-    BoundingBox
+    BoundingBox,
+    KeyPoints
 };
 
 struct MetaDataConfig
@@ -53,11 +56,13 @@ private:
     MetaDataType _type;
     MetaDataReaderType _reader_type;
     std::string _path;
-    std::map<std::string, std::string> _feature_key_map; 
+    std::map<std::string, std::string> _feature_key_map;
     std::string _file_prefix;           // if we want to read only filenames with prefix (needed for cifar10 meta data)
     unsigned _sequence_length;
     unsigned _frame_step;
     unsigned _frame_stride;
+    unsigned _out_img_width;
+    unsigned _out_img_height;
 
 public:
     MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path, const std::map<std::string, std::string> &feature_key_map=std::map<std::string, std::string>(), const std::string file_prefix=std::string(), const unsigned& sequence_length = 3, const unsigned& frame_step = 3, const unsigned& frame_stride = 1)
@@ -71,6 +76,10 @@ public:
     unsigned sequence_length() const { return _sequence_length; }
     unsigned frame_step() const { return _frame_step; }
     unsigned frame_stride() const { return _frame_stride; }
+    unsigned out_img_width() const { return _out_img_width; }
+    unsigned out_img_height() const { return _out_img_height; }
+    void set_out_img_width(unsigned out_img_width) { _out_img_width = out_img_width; }
+    void set_out_img_height(unsigned out_img_height) { _out_img_height = out_img_height; }
 };
 
 
@@ -87,6 +96,7 @@ public:
     virtual void lookup(const std::vector<std::string>& image_names) = 0;// finds meta_data info associated with given names and fills the output
     virtual void release() = 0; // Deletes the loaded information
     virtual MetaDataBatch * get_output()= 0;
+    virtual const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content()=0;
     virtual bool exists(const std::string &image_name) = 0;
     virtual bool set_timestamp_mode() = 0;
 };

@@ -29,6 +29,7 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Slice|vxSliceLayer|com.amd.nn_extension.slice_layer |
 | Softmax|vxSoftmaxLayer|org.khronos.nn_extension.softmax_layer |
 | Tensor Add|vxTensorAddNode|org.khronos.openvx.tensor_add |
+| Tensor Compare|vxTensorCompareNode|com.amd.nn_extension.tensor_compare |
 | Tensor Convert Depth|vxTensorConvertDepthNode|org.khronos.openvx.tensor_convert_depth |
 | Tensor Convert from Image|vxConvertImageToTensorNode|com.amd.nn_extension.convert_image_to_tensor |
 | Tensor Convert to Image|vxConvertTensorToImageNode|com.amd.nn_extension.convert_tensor_to_image |

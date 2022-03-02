@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@ THE SOFTWARE.
 #include "video_decoder_factory.h"
 #include <video_decoder.h>
 #include <ffmpeg_video_decoder.h>
+#include <hardware_video_decoder.h>
 #include "commons.h"
 
 #ifdef RALI_VIDEO
@@ -29,8 +30,10 @@ std::shared_ptr<VideoDecoder> create_video_decoder(VideoDecoderConfig config)
 {
     switch (config.type())
     {
-        case VideoDecoderType::FFMPEG_VIDEO:
+        case VideoDecoderType::FFMPEG_SOFTWARE_DECODE:
             return std::make_shared<FFmpegVideoDecoder>();
+        case VideoDecoderType::FFMPEG_HARDWARE_DECODE:
+            return std::make_shared<HardWareVideoDecoder>();
         default:
             THROW("Unsupported decoder type " + TOSTR(config.type()));
     }

@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,9 @@ THE SOFTWARE.
 #include "opencv2/opencv.hpp"
 #if USE_OPENCV_CONTRIB
 #include "opencv2/xfeatures2d.hpp"
+#endif
+#if USE_OPENCV_4
+#define CV_DIST_L1 DIST_L1
 #endif
 
 #ifndef dimof

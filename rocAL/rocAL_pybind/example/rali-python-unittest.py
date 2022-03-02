@@ -16,12 +16,20 @@ class HybridTrainPipe(Pipeline):
                 device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
                 host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
                 self.decode = ops.ImageDecoderRandomCrop(device=decoder_device, output_type=types.RGB,
-                                                                                                        device_memory_padding=device_memory_padding,
-                                                                                                        host_memory_padding=host_memory_padding,
-                                                                                                        random_aspect_ratio=[0.8, 1.25],
-                                                                                                        random_area=[0.1, 1.0],
-                                                                                                        num_attempts=100)
+                                                            device_memory_padding=device_memory_padding,
+                                                            host_memory_padding=host_memory_padding,
+                                                            random_aspect_ratio=[0.8, 1.25],
+                                                            random_area=[0.1, 1.0],
+                                                            num_attempts=100)
                 self.resize = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
+                self.cmnp = ops.CropMirrorNormalize(device="gpu",
+                                                    output_dtype=types.FLOAT,
+                                                    output_layout=types.NCHW,
+                                                    crop=(crop, crop),
+                                                    image_type=types.RGB,
+                                                    mean=[0.485 * 255,0.456 * 255,0.406 * 255],
+                                                    std=[0.229 * 255,0.224 * 255,0.225 * 255])
+                self.coin = ops.CoinFlip(probability=0.5)
                 #self.resizeCrop = ops.CropResize(crop, crop)
                 self.exposure = ops.Exposure(exposure = 0.2)
                 self.rotate = ops.Rotate()
@@ -39,6 +47,7 @@ class HybridTrainPipe(Pipeline):
                 self.snow = ops.Snow(snow=0.5)
                 self.rain = ops.Rain(rain=0.5)
                 self.fog = ops.Fog()
+
                 self.pixelate = ops.Pixelate()
                 self.exposure = ops.Exposure()
                 self.hue = ops.Hue()
@@ -117,6 +126,9 @@ class HybridTrainPipe(Pipeline):
                     output = self.colortwist(images)
                 elif self.aug_num == 25:
                     output = self.cropMirrorNormalize(images)
+
+
+
                 return [output, self.labels]
 
 def main():

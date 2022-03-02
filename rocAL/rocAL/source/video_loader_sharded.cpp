@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -124,6 +124,13 @@ void VideoLoaderSharded::start_loading()
         _loaders[i]->set_cpu_affinity(cpuset);
 #endif
     }
+}
+
+void VideoLoaderSharded::shut_down()
+{
+    for (auto &loader : _loaders)
+      loader->shut_down();
+
 }
 
 void VideoLoaderSharded::set_output_image(Image *output_image)

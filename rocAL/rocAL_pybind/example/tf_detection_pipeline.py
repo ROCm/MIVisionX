@@ -13,14 +13,14 @@ class HybridPipe(Pipeline):
                                          device_id, seed=12 + device_id, rali_cpu=rali_cpu)
         self.input = ops.TFRecordReader(path=data_dir, index_path="", reader_type=tfrecordreader_type, user_feature_key_map=feature_key_map,
                                         features={
-                                            'image/encoded': tf.FixedLenFeature((), tf.string, ""),
-                                            'image/class/label': tf.FixedLenFeature([1], tf.int64,  -1),
-                                            'image/class/text': tf.FixedLenFeature([], tf.string, ''),
-                                            'image/object/bbox/xmin': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/object/bbox/ymin': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/object/bbox/xmax': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/object/bbox/ymax': tf.VarLenFeature(dtype=tf.float32),
-                                            'image/filename': tf.FixedLenFeature((), tf.string, "")
+                                            'image/encoded': tf.io.FixedLenFeature((), tf.string, ""),
+                                            'image/class/label': tf.io.FixedLenFeature([1], tf.int64,  -1),
+                                            'image/class/text': tf.io.FixedLenFeature([], tf.string, ''),
+                                            'image/object/bbox/xmin': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/object/bbox/ymin': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/object/bbox/xmax': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/object/bbox/ymax': tf.io.VarLenFeature(dtype=tf.float32),
+                                            'image/filename': tf.io.FixedLenFeature((), tf.string, "")
                                         }
                                         )
         rali_device = 'cpu' if rali_cpu else 'gpu'
@@ -80,6 +80,28 @@ def get_weights(num_bboxes):
 
     return weights_array
 
+def draw_patches(img, idx, bboxes):
+    #image is expected as a tensor, bboxes as numpy
+    import cv2
+    # image = img.detach().numpy()
+    image = img.transpose([0, 1, 2])
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    image = cv2.normalize(image, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
+    htot, wtot ,_ = img.shape
+    l, t, r, b  = bboxes
+        # l = xc - 0.5*(w)
+        # t = yc - 0.5*(h)
+        # r = xc + 0.5*(w)
+        # b = yc + 0.5*(h)
+    loc_ = [l, t, r, b]
+    color = (255, 0, 0)
+    thickness = 2
+    image = cv2.UMat(image).get()
+    image = cv2.rectangle(image, (int(loc_[0]*wtot), int(loc_[1] * htot)), (int(
+        (loc_[2] * wtot)), int((loc_[3] * htot))), color, thickness)
+    print(int(loc_[2] * wtot))
+    print(int((loc_[3] * htot)))
+    cv2.imwrite(str(idx)+"_"+"train"+".png", image)
 
 def main():
     if len(sys.argv) < 5:
@@ -113,11 +135,13 @@ def main():
 
     imageIterator = RALIIterator(pipe)
 
+    cnt = 0
     for i, (images_array, bboxes_array, labels_array, num_bboxes_array) in enumerate(imageIterator, 0):
         images_array = np.transpose(images_array, [0, 2, 3, 1])
         print("RALI augmentation pipeline - Processing batch %d....." % i)
 
         for element in list(range(bs)):
+            cnt = cnt + 1
             print("Processing image %d....." % element)
             features_dict = {
                 "image": images_array[element],
@@ -130,9 +154,12 @@ def main():
                 "groundtruth_weights": get_weights(num_bboxes_array[element])
             }
             processed_tensors = (features_dict, labels_dict)
-            print("\nPROCESSED_TENSORS:\n", processed_tensors)
+            # print("\nPROCESSED_TENSORS:\n", processed_tensors)
+            draw_patches(images_array[element],cnt,bboxes_array[element][0])
+
         print("\n\nPrinted first batch with", (bs), "images!")
-        break
+
+        # break
     imageIterator.reset()
 
 

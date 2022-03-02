@@ -35,6 +35,18 @@ namespace pybind11
 namespace rali{
     using namespace pybind11::literals; // NOLINT
     // PYBIND11_MODULE(rali_backend_impl, m) {
+    static void *ctypes_void_ptr(const py::object &object)
+    {
+        auto ptr_as_int = getattr(object, "value", py::none());
+        if (ptr_as_int.is_none())
+        {
+            return nullptr;
+        }
+        void *ptr = PyLong_AsVoidPtr(ptr_as_int.ptr());
+
+        return ptr;
+    }
+
     py::object wrapper(RaliContext context, py::array_t<unsigned char> array)
     {
         auto buf = array.request();
@@ -67,54 +79,16 @@ namespace rali{
         return py::bytes(s);
     }
 
-    py::object wrapper_tensor32(RaliContext context, py::array_t<float> array,
-                                RaliTensorLayout tensor_format, float multiplier0,
+    py::object wrapper_tensor(RaliContext context, py::object p,
+                                RaliTensorLayout tensor_format, RaliTensorOutputType tensor_output_type, float multiplier0,
                                 float multiplier1, float multiplier2, float offset0,
                                 float offset1, float offset2,
                                 bool reverse_channels)
     {
-        auto buf = array.request();
-        float* ptr = (float*) buf.ptr;
+        auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
-        int status = raliCopyToOutputTensor32(context, ptr, tensor_format, multiplier0,
-                                              multiplier1, multiplier2, offset0,
-                                              offset1, offset2, reverse_channels);
-        // std::cerr<<"\n Copy failed with status :: "<<status;
-        return py::cast<py::none>(Py_None);
-    }
 
-    py::object wrapper_hip_tensor32(RaliContext context, RaliTensorLayout tensor_format,
-                                float multiplier0, float multiplier1, float multiplier2,
-                                float offset0, float offset1, float offset2,
-                                bool reverse_channels)
-    {
-        auto out_void_ptr = raliCopyToGpuOutputTensor32(context, tensor_format, multiplier0,
-                                              multiplier1, multiplier2, offset0,
-                                              offset1, offset2, reverse_channels);
-        return py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(out_void_ptr));
-    }
-
-    py::object wrapper_hip_tensor16(RaliContext context, RaliTensorLayout tensor_format,
-                                float multiplier0, float multiplier1, float multiplier2,
-                                float offset0, float offset1, float offset2,
-                                bool reverse_channels)
-    {
-        auto out_void_ptr = raliCopyToGpuOutputTensor16(context, tensor_format, multiplier0,
-                                              multiplier1, multiplier2, offset0,
-                                              offset1, offset2, reverse_channels);
-        return py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(out_void_ptr));
-    }
-
-    py::object wrapper_tensor16(RaliContext context, py::array_t<float16> array,
-                                RaliTensorLayout tensor_format, float multiplier0,
-                                float multiplier1, float multiplier2, float offset0,
-                                float offset1, float offset2,
-                                bool reverse_channels)
-    {
-        auto buf = array.request();
-        float16* ptr = (float16*) buf.ptr;
-        // call pure C++ function
-        int status = raliCopyToOutputTensor16(context, ptr, tensor_format, multiplier0,
+        int status = raliCopyToOutputTensor(context, ptr, tensor_format, tensor_output_type, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels);
         // std::cerr<<"\n Copy failed with status :: "<<status;
@@ -315,14 +289,13 @@ namespace rali{
         m.def("UpdateFloatRand", &raliUpdateFloatUniformRand);
         m.def("UpdateIntParameter", &raliUpdateIntParameter);
         m.def("UpdateFloatParameter", &raliUpdateFloatParameter);
+        m.def("GetIntValue",&raliGetIntValue);
+        m.def("GetFloatValue",&raliGetFloatValue);
         // rali_api_data_transfer.h
         m.def("raliCopyToOutput",&wrapper);
-        m.def("raliCopyToOutputTensor32",&wrapper_tensor32);
-        m.def("raliCopyToOutputTensor16",&wrapper_tensor16);
-        m.def("raliCopyToGpuOutputTensor32",&wrapper_hip_tensor32);
-        m.def("raliCopyToGpuOutputTensor16",&wrapper_hip_tensor16);
+        m.def("raliCopyToOutputTensor",&wrapper_tensor);
         // rali_api_data_loaders.h
-         m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
+        m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -451,6 +424,7 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
+        m.def("Caffe_ImageDecoderPartialShard",&raliJpegCaffeLMDBRecordSourcePartialSingleShard);
         m.def("Caffe2_ImageDecoder",&raliJpegCaffe2LMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
             py::return_value_policy::reference,
             py::arg("p_context"),
@@ -476,6 +450,7 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
+        m.def("Caffe2_ImageDecoderPartialShard",&raliJpegCaffe2LMDBRecordSourcePartialSingleShard);
         m.def("FusedDecoderCrop",&raliFusedJpegCrop,"Reads file from the source and decodes them partially to output random crops",
             py::return_value_policy::reference,
             py::arg("context"),
@@ -677,13 +652,7 @@ namespace rali{
             py::arg("is_output"),
             py::arg("alpha") = NULL,
             py::arg("beta") = NULL);
-        m.def("LensCorrection",&raliLensCorrection,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input"),
-            py::arg("is_output"),
-            py::arg("strength") = NULL,
-            py::arg("zoom") = NULL);
+        m.def("Brightness",&raliBrightness);
         m.def("GammaCorrection",&raliGamma,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -792,13 +761,7 @@ namespace rali{
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"));
-        m.def("Blend",&raliBlend,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input1"),
-            py::arg("input2"),
-            py::arg("is_output"),
-            py::arg("ratio") = NULL);
+        m.def("Blend",&raliBlend);
         m.def("Flip",&raliFlip,
             py::return_value_policy::reference,
             py::arg("context"),

@@ -8,6 +8,8 @@ import sys
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
+from timeit import default_timer as timer
+from datetime import timedelta
 
 ############################### HYPER PARAMETERS FOR TRAINING ###############################
 learning_rate = 0.001
@@ -168,6 +170,7 @@ def train_mnist_rali(data_path, _rali_cpu, batch_size):
 			print("\nSUMMARY:\nMean Accuracy :: %.2f%% count: %d" % (mean_acc, j))
 
 def main():
+	train_start = timer()
 	if  len(sys.argv) < 4:
 		print ('Please pass mnistTFRecord_dir  cpu/gpu batch_size')
 		exit(0)
@@ -178,6 +181,8 @@ def main():
 		_rali_cpu = False
 	bs = int(sys.argv[3])
 	train_mnist_rali(image_path, _rali_cpu, bs)
+	train_end = timer()
+	print("Train dataloading time: ",timedelta(seconds=train_end-train_start))
 
 if __name__ == '__main__':
 	main()

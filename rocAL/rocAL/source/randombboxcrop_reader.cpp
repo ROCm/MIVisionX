@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -45,9 +45,35 @@ void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg)
     _seed = cfg.seed();
 }
 
-void RandomBBoxCropReader::set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader)
+
+void RandomBBoxCropReader::set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader,MetaDataReaderType type)
 {
-    _meta_data_reader = std::static_pointer_cast<COCOMetaDataReader>(meta_data_reader);
+
+    switch(type) {
+
+        case MetaDataReaderType::COCO_META_DATA_READER:
+        {
+        _meta_data_reader = std::static_pointer_cast<COCOMetaDataReader>(meta_data_reader);
+        }
+        break;
+        // case MetaDataReaderType::TF_DETECTION_META_DATA_READER:
+        // {
+        // _meta_data_reader = std::static_pointer_cast<TFMetaDataReaderDetection>(meta_data_reader);
+        // }
+        // break;
+        case MetaDataReaderType::CAFFE_DETECTION_META_DATA_READER:
+        {
+        _meta_data_reader = std::static_pointer_cast<CaffeMetaDataReaderDetection>(meta_data_reader);
+        }
+        break;
+        // case MetaDataReaderType::CAFFE2_DETECTION_META_DATA_READER:
+        // {
+        // _meta_data_reader = std::static_pointer_cast<Caffe2MetaDataReaderDetection>(meta_data_reader);
+        // }
+        // break;
+        default:
+            throw std::runtime_error ("Reader type is unsupported for setting meta data");
+    }
 }
 
 bool RandomBBoxCropReader::exists(const std::string &image_name)
@@ -237,7 +263,7 @@ void RandomBBoxCropReader::read_all()
 
         // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
         add(image_name, crop_box);
-        
+
         sample++;
     }
 }
@@ -263,18 +289,19 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
     BoundingBoxCord crop_box;
     uint bb_count;
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
+
     std::uniform_int_distribution<> option_dis(0, 6);
     std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
     _crop_coords.clear();
     for (unsigned int i = 0; i < image_names.size(); i++)
     {
-        auto image_name = image_names[i]; 
+        auto image_name = image_names[i];
         auto elem = _meta_bbox_map_content.find(image_name);
         if (_meta_bbox_map_content.end() == elem)
             THROW("ERROR: Given name not present in the map" + image_name)
         BoundingBoxCords bb_coords = elem->second->get_bb_cords();
-        ImgSizes img_sizes = elem->second->get_img_sizes();
-        int img_width = img_sizes[0].w;
+        ImgSize img_size = elem->second->get_img_size();
+        int img_width = img_size.w;
         bb_count = bb_coords.size();
         crop_success = false;
         while (!crop_success)
@@ -288,6 +315,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
                 crop_box.r = crop_box.b = 1;
                 break;
             }
+
             float min_iou = sample_options[sample_option];
             // If it has no shape, then area and aspect ratio thing should be provided
             for (int j = 0; j < 1; j++)

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -87,7 +87,7 @@ public:
     virtual void lookup(const std::vector<std::string>& image_names) = 0;// finds meta_data info associated with given names and fills the output
     virtual std::vector<std::vector <float>>  get_batch_crop_coords(const std::vector<std::string>& image_names) = 0; // returns the crop coords for a batch
     virtual void release() = 0; // Deletes the loaded information
-    virtual void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader) = 0;
+    virtual void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader,MetaDataReaderType config_type) = 0;
     virtual CropCordBatch * get_output() = 0;
     virtual pCropCord get_crop_cord(const std::string &image_names) = 0;
 };

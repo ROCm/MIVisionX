@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35,13 +35,15 @@ void CropMetaNode::update_parameters(MetaDataBatch* input_meta_data)
     {
         _batch_size = input_meta_data->size();
     }
-    _meta_crop_param = _node->get_crop_param();    
+    _meta_crop_param = _node->get_crop_param();
     _dst_width = _node->get_dst_width();
     _dst_height = _node->get_dst_height();
     _crop_width = _meta_crop_param->cropw_arr;
     _crop_height = _meta_crop_param->croph_arr;
     _x1 = _meta_crop_param->x1_arr;
     _y1 = _meta_crop_param->y1_arr;
+    _input_width_val = _meta_crop_param->in_width;
+    _input_height_val = _meta_crop_param->in_height;
     vxCopyArrayRange((vx_array)_crop_width, 0, _batch_size, sizeof(uint),_crop_width_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_crop_height, 0, _batch_size, sizeof(uint),_crop_height_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_x1, 0, _batch_size, sizeof(uint),_x1_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
@@ -53,15 +55,16 @@ void CropMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         BoundingBoxCords box_coords_buf;
         box_coords_buf.resize(bb_count);
         memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
-        memcpy(box_coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        memcpy((void *)box_coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxCord temp_box;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
-        crop_box.l = _x1_val[i];
-        crop_box.t = _y1_val[i];
-        crop_box.r = _x1_val[i] + _crop_width_val[i];
-        crop_box.b = _y1_val[i] + _crop_height_val[i];
+        crop_box.l = (float)_x1_val[i]/_input_width_val[i];
+        crop_box.t = (float)_y1_val[i]/_input_height_val[i];
+        crop_box.r = (float)(_x1_val[i] + _crop_width_val[i])/_input_width_val[i];
+        crop_box.b = (float)(_y1_val[i] + _crop_height_val[i])/_input_height_val[i];
+
         for(uint j = 0; j < bb_count; j++)
         {
             if (BBoxIntersectionOverUnion(box_coords_buf[j], crop_box) >= _iou_threshold)

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,13 @@ THE SOFTWARE.
 #include "decoder.h"
 #if ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
+
+#if USE_OPENCV_4
+using namespace cv;
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_LOAD_IMAGE_GRAYSCALE IMREAD_GRAYSCALE
+#endif
+
 class CVDecoder : public Decoder {
 public:
     //! Default constructor

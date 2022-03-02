@@ -45,6 +45,8 @@ class RALIGenericIteratorDetection(object):
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
+        if self.loader._name == None:
+            self.loader._name = self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
 
@@ -64,9 +66,11 @@ class RALIGenericIteratorDetection(object):
             print("Decode   time ::",timing_info.decode_time)
             print("Process  time ::",timing_info.process_time)
             print("Transfer time ::",timing_info.transfer_time)
+            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
+            self.reset()
             raise StopIteration
 
         if(types.NCHW == self.tensor_format):

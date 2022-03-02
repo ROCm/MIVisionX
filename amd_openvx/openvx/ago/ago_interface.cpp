@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1249,13 +1249,13 @@ vx_status agoVerifyNode(AgoNode * node)
         }
     }
 
-    // mark the kernels with VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK
+    // mark the kernels with VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_UPDATE_CALLBACK
     // with enableUserBufferGPU
     if (kernel->gpu_buffer_update_callback_f) {
-        AgoData * data = node->paramList[kernel->opencl_buffer_update_param_index];
+        AgoData * data = node->paramList[kernel->gpu_buffer_update_param_index];
         if (!data || !data->isVirtual || data->ref.type != VX_TYPE_IMAGE || data->u.img.planes != 1 || data->ownerOfUserBufferGPU || data->u.img.enableUserBufferGPU) {
             status = VX_ERROR_INVALID_PARAMETERS;
-            agoAddLogEntry(&kernel->ref, status, "ERROR: agoVerifyGraph: kernel %s: unexpected/unsupported argument#%d -- needs virtual image with single-plane\n", kernel->name, kernel->opencl_buffer_update_param_index);
+            agoAddLogEntry(&kernel->ref, status, "ERROR: agoVerifyGraph: kernel %s: unexpected/unsupported argument#%d -- needs virtual image with single-plane\n", kernel->name, kernel->gpu_buffer_update_param_index);
             return status;
         }
         // mark that the buffer gets initialized a node
@@ -1373,8 +1373,8 @@ vx_status agoVerifyNode(AgoNode * node)
                         data->u.img.rect_valid.end_y = data->u.img.height;
                     // check for VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU attribute
                     if (meta->data.u.img.enableUserBufferGPU) {
-                        // supports only virtual images with single color plane and without ROI
-                        if (!data->isVirtual || data->u.img.planes != 1 || data->u.img.isROI || data->ownerOfUserBufferGPU) {
+                        // supports only virtual images without ROI (planes commented out for accepting NV12 user buffer for amd_media)
+                        if (!data->isVirtual /*|| data->u.img.planes != 1 */|| data->u.img.isROI || data->ownerOfUserBufferGPU) {
                             agoAddLogEntry(&kernel->ref, VX_ERROR_NOT_SUPPORTED, "ERROR: agoVerifyGraph: kernel %s: VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU is not supported for argument#%d\n", kernel->name, arg);
                             return VX_ERROR_NOT_SUPPORTED;
                         }

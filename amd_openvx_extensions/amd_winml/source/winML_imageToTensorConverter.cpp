@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include"internal_publishKernels.h"
+#include "internal_publishKernels.h"
 
 static vx_status VX_CALLBACK validateImageToTensorKernel(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {

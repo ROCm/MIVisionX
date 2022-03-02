@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,11 @@ FILE *fpIn;
 #if __APPLE__
 #include <opencl.h>
 #else
-#include <CL/cl.h>
+#if ENABLE_OPENCL
+    #include <CL/cl.h>
+#elif ENABLE_HIP
+    #include "hip/hip_runtime.h"
+#endif
 #endif
 //#endif
 
@@ -70,7 +74,7 @@ public:
     vx_status Initialize();
     vx_status ProcessFrame(vx_image output, vx_array aux_data);
     vx_status SetRepeatMode(vx_int32 bRepeat);
-    vx_status SetEnableUserBufferOpenCLMode(vx_bool bEnable);
+    vx_status SetEnableUserBufferGPUMode(vx_bool bEnable);
 
 protected:
     typedef enum { cmd_abort, cmd_decode } command;
@@ -90,14 +94,18 @@ private:
     int height;
     vx_df_image format;
     int decoderImageHeight;
-    int clStride, clOffset;
+    int gpuStride, gpuOffset;
     int offset;
     AVPixelFormat outputFormat, decoderFormat;
     vx_uint8 * decodeBuffer[DECODE_BUFFER_POOL_SIZE];
-    vx_bool m_enableUserBufferOpenCL;
+    vx_bool m_enableUserBufferGPU;
 //#if DECODE_ENABLE_OPENCL
-    cl_mem mem[DECODE_BUFFER_POOL_SIZE];
+#if ENABLE_OPENCL
     cl_command_queue cmdq;
+#elif ENABLE_HIP
+    hipDeviceProp_t hip_dev_prop;
+#endif
+    void* mem[DECODE_BUFFER_POOL_SIZE];
 //#endif
     std::vector<std::string> inputMediaFileName;
     std::vector<int> useVaapi;
@@ -122,14 +130,50 @@ private:
 
 static enum AVPixelFormat hwPixelFormat;
 
-static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx)
+static inline bool exists (const char *name) {
+    if (FILE *file = fopen(name, "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+static inline int num_hw_devices() {
+    char device[128] = "";
+    int num_hw_devices = 0;
+    for (int i=0; i<10000; i++){
+        snprintf(device, sizeof(device), "/dev/dri/renderD%d", 128 + i);
+        // check  if the device file exists in the system: todo:: is there any other way to enumerate the device?
+        if (exists(device))
+            num_hw_devices++;
+        else
+            break;
+    }
+    return num_hw_devices;
+}
+
+static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx, int hw_device_id)
 {
     int err = 0;
-
-    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type,
-                                      NULL, NULL, 0)) < 0) {
+    char device[128] = "";
+    char* pdevice = NULL;
+    int num_devices = 1; // default;
+    if (type == AV_HWDEVICE_TYPE_VAAPI)
+      num_devices = num_hw_devices();
+    if (hw_device_id >= 0 && hw_device_id < 10000) {
+        if (type == AV_HWDEVICE_TYPE_VAAPI) {
+          snprintf(device, sizeof(device), "/dev/dri/renderD%d", (128 + (hw_device_id % num_devices)));
+        }else {
+          snprintf(device, sizeof(device), "%d", hw_device_id);
+        }
+        pdevice = device;
+    }
+    const char* device_name = pdevice? pdevice : NULL;
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, device_name, NULL, 0)) < 0) {
         return err;
     }
+    printf("VAAPI device created for device %s and stream %d\n", device_name, hw_device_id);
     ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
 
     return err;
@@ -213,7 +257,7 @@ AVFrame * CLoomIoMediaDecoder::PopFrame(int mediaIndex)
 
 CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, const char inputMediaFiles_[], vx_uint32 width_, vx_uint32 height_, vx_df_image format_, vx_uint32 stride_, vx_uint32 offset_)
     : node{ node_ }, inputMediaFiles(inputMediaFiles_), mediaCount{ static_cast<int>(mediaCount_) }, width{ static_cast<int>(width_) },
-      height{ static_cast<int>(height_) }, format{ format_ }, clStride{ static_cast<int>(stride_) }, clOffset{ static_cast<int>(offset_) },
+      height{ static_cast<int>(height_) }, format{ format_ }, gpuStride{ static_cast<int>(stride_) }, gpuOffset{ static_cast<int>(offset_) },
       decoderImageHeight{ static_cast<int>(height_ / ((mediaCount_ <= 1) ? 1 : mediaCount_)) }, outputFormat{ AV_PIX_FMT_UYVY422 }, outputFrameCount{ 0 },
       inputMediaFileName(mediaCount_), inputMediaFormatContext(mediaCount_), inputMediaFormat(mediaCount_),
       videoCodecContext(mediaCount_), conversionContext(mediaCount_), videoStreamIndex(mediaCount_),
@@ -227,9 +271,13 @@ CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, c
         inputMediaFormatContext[mediaIndex] = NULL;
         LoopDec[mediaIndex] = 0;
     }
-    m_enableUserBufferOpenCL = false;   // use host buffers by default
+    m_enableUserBufferGPU = false;   // use host buffers by default
     memset(mem, 0, sizeof(mem));
+
+#if ENABLE_OPENCL
     cmdq = nullptr;
+#endif
+
     // initialize freq inside GetTimeInMicroseconds()
     GetTimeInMicroseconds();    
 #if DUMP_DECODED_FRAME
@@ -253,12 +301,37 @@ CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
     }
 
     // release buffers
-    if (m_enableUserBufferOpenCL && cmdq) clReleaseCommandQueue(cmdq);
+#if ENABLE_OPENCL
+    if (m_enableUserBufferGPU && cmdq) clReleaseCommandQueue(cmdq);
 
     for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
-        if (m_enableUserBufferOpenCL && mem[i]) clReleaseMemObject(mem[i]);
+        if (m_enableUserBufferGPU && mem[i]) clReleaseMemObject((cl_mem)mem[i]);
         if (decodeBuffer[i]) aligned_free(decodeBuffer[i]);
     }
+
+#elif ENABLE_HIP
+    if (m_enableUserBufferGPU) {
+        hipError_t status;
+        for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
+            if (decodeBuffer[i]) {
+                status = hipHostFree(decodeBuffer[i]);
+                if (status != hipSuccess) {
+                    vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipHostFree(%p) failed (%d)\n", decodeBuffer[i], status);
+                }
+            }
+            if (mem[i]) {
+                if (hip_dev_prop.canMapHostMemory) {
+                    mem[i] = nullptr;
+                } else {
+                    status = hipFree(mem[i]);
+                    if (status != hipSuccess) {
+                        vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipFree(%p) failed (%d)\n", mem[i], status);
+                    }
+                }
+            }
+        }
+    }
+#endif
 
     // release media resources
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
@@ -282,9 +355,9 @@ vx_status CLoomIoMediaDecoder::SetRepeatMode(vx_int32 bRepeat)
     return VX_SUCCESS;
 }
 
-vx_status CLoomIoMediaDecoder::SetEnableUserBufferOpenCLMode(vx_bool bEnable)
+vx_status CLoomIoMediaDecoder::SetEnableUserBufferGPUMode(vx_bool bEnable)
 {
-    m_enableUserBufferOpenCL = bEnable;
+    m_enableUserBufferGPU = bEnable;
     return VX_SUCCESS;
 }
 
@@ -377,7 +450,7 @@ vx_status CLoomIoMediaDecoder::Initialize()
                 vxAddLogEntry((vx_reference)node, status, "ERROR: vaapi is not supported for this device\n");
                 return status;
             }
-            printf("Found vaapi device for %d\n", mediaIndex);
+            //printf("Found vaapi device for %d\n", mediaIndex);
         }
         int err = avformat_open_input(&formatContext, mediaFileName, inputFormat, nullptr);
         if (err) {
@@ -451,7 +524,7 @@ vx_status CLoomIoMediaDecoder::Initialize()
             return -1;
         if (useVaapi[mediaIndex]) {
             codecContext->get_format  = get_hw_format;
-            if (hw_decoder_init(codecContext, hw_type, hw_device_ctx) < 0) {
+            if (hw_decoder_init(codecContext, hw_type, hw_device_ctx, mediaIndex) < 0) {
                 vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Failed to create specified HW device.\n");
                 return VX_FAILURE;
             }
@@ -480,8 +553,9 @@ vx_status CLoomIoMediaDecoder::Initialize()
         vxAddLogEntry((vx_reference)node, VX_SUCCESS, "INFO: reading %dx%d into slice#%d from %s", width, decoderImageHeight, mediaIndex, mediaFileName);
     }
 
-    if (m_enableUserBufferOpenCL) {
-    // allocate OpenCL decode buffers
+    if (m_enableUserBufferGPU) {
+#if ENABLE_OPENCL
+        // allocate OpenCL decode buffers
         cl_context context = nullptr;
         ERROR_CHECK_STATUS(vxQueryContext(vxGetContext((vx_reference)node), VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
         cl_device_id device_id = nullptr;
@@ -493,9 +567,46 @@ vx_status CLoomIoMediaDecoder::Initialize()
     #endif
         ERROR_CHECK_NULLPTR(cmdq);
         for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
-            mem[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, clOffset + clStride * height, nullptr, nullptr);
+            int buf_height = height;
+            if (outputFormat == AV_PIX_FMT_NV12)  buf_height = height + (height>>1);
+            mem[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, gpuOffset + gpuStride * buf_height, nullptr, nullptr);
             ERROR_CHECK_NULLPTR(mem[i]);
         }
+#elif ENABLE_HIP
+    int hip_device = -1;
+    ERROR_CHECK_STATUS(vxQueryContext(vxGetContext((vx_reference)node), VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &hip_device, sizeof(hip_device)));
+    if (hip_device < 0) {
+        return VX_FAILURE;
+    }
+    hipError_t err;
+    err = hipGetDeviceProperties(&hip_dev_prop, hip_device);
+    if (err != hipSuccess) {
+        vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipGetDeviceProperties(%d) => %d (failed)\n", hip_device, err);
+    }
+
+    for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
+        int buf_height = height;
+        if (outputFormat == AV_PIX_FMT_NV12)  buf_height = height + (height>>1);
+        err = hipHostMalloc((void **)&decodeBuffer[i], gpuOffset + gpuStride * buf_height);
+        if (err != hipSuccess) {
+            vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipHostMalloc => %d (failed)\n", err);
+            return VX_FAILURE;
+        }
+        if (hip_dev_prop.canMapHostMemory) {
+            err = hipHostGetDevicePointer((void **)&mem[i], decodeBuffer[i], 0 );
+            if (err != hipSuccess) {
+                vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipHostGetDevicePointer => %d (failed)\n", err);
+                return VX_FAILURE;
+            }
+        } else {
+            err = hipMalloc(&mem[i], gpuOffset + gpuStride * buf_height);
+            if (err != hipSuccess) {
+                vxAddLogEntry(NULL, VX_FAILURE, "ERROR: hipMalloc(%p) => %d (failed)\n", mem[i], err);
+                return VX_FAILURE;
+            }
+        }
+    }
+#endif
     }
 
     // start decoder thread and wait until first frame is decoded
@@ -547,10 +658,15 @@ vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
         ERROR_CHECK_STATUS(vxTruncateArray(aux_data, 0));
         ERROR_CHECK_STATUS(vxAddArrayItems(aux_data, sizeof(haux), &haux, sizeof(uint8_t)));
     }
-    if (m_enableUserBufferOpenCL) {
-        // set the openCL buffer pointer for output buffer
+    if (m_enableUserBufferGPU) {
+        // set the GPU buffer pointer for output buffer
         int bufId = outputFrameCount % DECODE_BUFFER_POOL_SIZE; outputFrameCount++;
-        ERROR_CHECK_STATUS(vxSetImageAttribute(output, VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &mem[bufId], sizeof(cl_mem)));
+#if ENABLE_OPENCL
+        ERROR_CHECK_STATUS(vxSetImageAttribute(output, VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &mem[bufId], sizeof(void*)));
+#elif ENABLE_HIP
+        ERROR_CHECK_STATUS(vxSetImageAttribute(output, VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &mem[bufId], sizeof(void*)));
+#endif
+
     } else {
         for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
             AVFrame *frame = PopFrame(mediaIndex);       // assuming only one stream to decode
@@ -683,14 +799,16 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                 tmp_frame = frame;
                 av_frame_free(&sw_frame);
             }
-            if (m_enableUserBufferOpenCL) {
+            if (m_enableUserBufferGPU) {
             // do sw_scale for destination format
                 int bufId = decodeFrameCount[mediaIndex] % DECODE_BUFFER_POOL_SIZE;
                 if (conversionContext[mediaIndex] != NULL) {
-                    cl_int err;
                     uint8_t * ptr = nullptr;
                     int mapHeight = (outputFormat == AV_PIX_FMT_NV12)? (decoderImageHeight + (decoderImageHeight>>1)) : decoderImageHeight;
-                    void * mapped_ptr = (void *)clEnqueueMapBuffer(cmdq, mem[bufId], CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, clOffset + mediaIndex * mapHeight * clStride, mapHeight * clStride, 0, NULL, NULL, &err);
+#if ENABLE_OPENCL
+                    void * mapped_ptr = nullptr;
+                    cl_int err;
+                    mapped_ptr = (void *)clEnqueueMapBuffer(cmdq, (cl_mem)mem[bufId], CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, gpuOffset + mediaIndex * mapHeight * gpuStride, mapHeight * gpuStride, 0, NULL, NULL, &err);
                     if(err) {
                         fprintf(stderr,"map output for sw_scale: clEnqueueMapBuffer failed (%d)", err);
                         continue;
@@ -698,10 +816,10 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     uint8_t *dst_data[4] = {0};
                     int dst_linesize[4] = {0};
                     dst_data[0] = (uint8_t *)mapped_ptr;
-                    dst_linesize[0] = clStride;
+                    dst_linesize[0] = gpuStride;
                     if (outputFormat == AV_PIX_FMT_NV12) {
-                        dst_data[1] = (uint8_t *)mapped_ptr + decoderImageHeight*clStride;
-                        dst_linesize[1]  = clStride;
+                        dst_data[1] = (uint8_t *)mapped_ptr + decoderImageHeight*gpuStride;
+                        dst_linesize[1]  = gpuStride;
                     }
                     // do sws_scale
                     int ret = sws_scale(conversionContext[mediaIndex], tmp_frame->data, tmp_frame->linesize, 0, tmp_frame->height, dst_data, dst_linesize);
@@ -717,7 +835,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     }
                     #endif
                     // commit image patch
-                    err = clEnqueueUnmapMemObject(cmdq, mem[bufId], mapped_ptr, 0, NULL, NULL);
+                    err = clEnqueueUnmapMemObject(cmdq, (cl_mem)mem[bufId], mapped_ptr, 0, NULL, NULL);
                     if(err) {
                         fprintf(stderr,"map output for sw_scale: clEnqueueMapBuffer failed (%d)", err);
                         continue;
@@ -726,14 +844,55 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     if(err) {
                         fprintf(stderr,"map output for sw_scale: clFinish failed (%d)",  err);
                     }
+#elif ENABLE_HIP
+                    uint8_t *dst_data[4] = {0};
+                    int dst_linesize[4] = {0};
+                    dst_data[0] = decodeBuffer[bufId];
+                    dst_linesize[0] = gpuStride;
+                    if (outputFormat == AV_PIX_FMT_NV12) {
+                        dst_data[1] = decodeBuffer[bufId] + decoderImageHeight * gpuStride;
+                        dst_linesize[1]  = gpuStride;
+                    }
+                    // do sws_scale
+                    int ret = sws_scale(conversionContext[mediaIndex], tmp_frame->data, tmp_frame->linesize, 0, tmp_frame->height, dst_data, dst_linesize);
+                    if (ret < decoderImageHeight) {
+                        fprintf(stderr, "Error in output image scaling using sws_scale\n");
+                        continue;
+                    }
+                    #if DUMP_DECODED_FRAME
+                    if (fpIn) {
+                        fwrite(dst_data[0], 1, decoderImageHeight * dst_linesize[0], fpIn);
+                        if (outputFormat == AV_PIX_FMT_NV12)
+                            fwrite(dst_data[1], 1, (decoderImageHeight >> 1) * dst_linesize[1], fpIn);
+                    }
+                    #endif
+                    if (!hip_dev_prop.canMapHostMemory) {
+                        hipError_t err = hipMemcpyHtoD((void *)((uint8_t *)mem[bufId] + gpuOffset + mediaIndex * mapHeight * gpuStride), decodeBuffer[bufId], mapHeight * gpuStride);
+                        if (err != hipSuccess) {
+                            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: hipMemcpyHtoD(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
+                            continue;
+                        }
+                    }
+#endif
+
                 } else {
                     // copy AV frame to output
-                    cl_int err = clEnqueueWriteBuffer(cmdq, mem[bufId], CL_TRUE, clOffset + mediaIndex * decoderImageHeight * clStride, decoderImageHeight * clStride, tmp_frame->data, 0, nullptr, nullptr);
+#if ENABLE_OPENCL
+                    cl_int err = clEnqueueWriteBuffer(cmdq, (cl_mem)mem[bufId], CL_TRUE, gpuOffset + mediaIndex * decoderImageHeight * gpuStride, decoderImageHeight * gpuStride, tmp_frame->data, 0, nullptr, nullptr);
                     if (err < 0) {
                         vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: clEnqueueWriteBuffer(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
                         continue;
                     }
                     clFinish(cmdq);
+#elif ENABLE_HIP
+                    if (!hip_dev_prop.canMapHostMemory) {
+                        hipError_t err = hipMemcpyHtoD((void *)((uint8_t *)mem[bufId] + gpuOffset + mediaIndex * decoderImageHeight * gpuStride), tmp_frame->data, decoderImageHeight * gpuStride);
+                        if (err != hipSuccess) {
+                            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: hipMemcpyHtoD(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
+                            continue;
+                        }
+                    }
+#endif
                 }
             } else {
                 PushFrame(mediaIndex, tmp_frame);
@@ -778,6 +937,7 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
         ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferGPU, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
         ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE, &stride, sizeof(stride)));
         ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET, &offset, sizeof(offset)));
+        if (stride == 0) stride = width; // in case stride is not set for the buffer
     }
 
     // create and initialize decoder
@@ -799,7 +959,7 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
         ERROR_CHECK_STATUS(decoder->SetRepeatMode(loop));
     }
     if (parameters[4]) {
-        ERROR_CHECK_STATUS(decoder->SetEnableUserBufferOpenCLMode(enableUserBufferGPU));
+        ERROR_CHECK_STATUS(decoder->SetEnableUserBufferGPUMode(enableUserBufferGPU));
     }
     ERROR_CHECK_STATUS(decoder->Initialize());
 
@@ -888,26 +1048,26 @@ vx_status amd_media_decode_publish(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode, vx_bool enable_opencl_output)
+VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode, vx_bool enable_gpu_output)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_scalar s_input = vxCreateScalar(context, VX_TYPE_STRING_AMD, input_str);
         vx_scalar s_loop = vxCreateScalar(context, VX_TYPE_INT32, &loop_decode);
-        vx_scalar s_enable_cl_out = vxCreateScalar(context, VX_TYPE_BOOL, &enable_opencl_output);
+        vx_scalar s_enable_gpu_out = vxCreateScalar(context, VX_TYPE_BOOL, &enable_gpu_output);
         vx_reference params[] = {
             (vx_reference)s_input,
             (vx_reference)output,
             (vx_reference)aux_data,
             (vx_reference)s_loop,
-            (vx_reference)s_enable_cl_out,
+            (vx_reference)s_enable_gpu_out,
         };
         if (vxGetStatus((vx_reference)s_input) == VX_SUCCESS) {
             node = createMediaNode(graph, "com.amd.amd_media.decode", params, sizeof(params) / sizeof(params[0])); // added node to graph
             vxReleaseScalar(&s_input);
             vxReleaseScalar(&s_loop);
-            vxReleaseScalar(&s_enable_cl_out);
+            vxReleaseScalar(&s_enable_gpu_out);
         }
     }
     return node;

@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,10 @@ set(rocAL_HIP_SOURCES
     )
 
 set_source_files_properties(${rocAL_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-set(HIP_CXX_FLAGS -std=c++14)
+set(HIP_CXX_FLAGS -std=gnu++14)
 set(COMPILER_FOR_HIP ${ROCM_PATH}/bin/hipcc)
 set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")
 add_library(${PROJECT_NAME} OBJECT ${rocAL_HIP_SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_HCC__)
+target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)

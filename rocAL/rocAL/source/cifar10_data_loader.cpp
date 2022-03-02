@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -155,6 +155,12 @@ CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg
 void CIFAR10DataLoader::set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader)
 {
     _randombboxcrop_meta_data_reader = randombboxcrop_meta_data_reader;
+}
+
+void
+CIFAR10DataLoader::shut_down()
+{
+    _circ_buff.release();
 }
 
 void

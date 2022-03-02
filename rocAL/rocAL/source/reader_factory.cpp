@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "tf_record_reader.h"
 #include "caffe_lmdb_record_reader.h"
 #include "caffe2_lmdb_record_reader.h"
+#include "mxnet_recordio_reader.h"
 
 std::shared_ptr<Reader> create_reader(ReaderConfig config) {
     switch(config.type()) {
@@ -86,6 +87,14 @@ std::shared_ptr<Reader> create_reader(ReaderConfig config) {
             auto ret = std::make_shared<Caffe2LMDBRecordReader>();
             if(ret->initialize(config) != Reader::Status::OK)
                 throw std::runtime_error("Caffe2LMDBRecordReader cannot access the storage");
+            return ret;
+        }
+        break;
+        case StorageType::MXNET_RECORDIO:
+        {
+            auto ret = std::make_shared<MXNetRecordIOReader>();
+            if(ret->initialize(config) != Reader::Status::OK)
+                throw std::runtime_error("MXNetRecordIOReader cannot access the storage");
             return ret;
         }
         break;

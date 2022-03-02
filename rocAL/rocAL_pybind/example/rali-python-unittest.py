@@ -1,7 +1,4 @@
-import numpy as np
 import cv2
-from enum import Enum
-from amd.rali.plugin.pytorch import RALIClassificationIterator
 from amd.rali.plugin.pytorch import RALI_iterator
 from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
@@ -69,7 +66,6 @@ class HybridTrainPipe(Pipeline):
 
         def define_graph(self):
                 print("In define_graph function, augmentation = " + str(self.aug_num) + "\n")
-                rng = self.coin()
                 self.jpegs, self.labels = self.input(name="Reader")
                 images = self.decode(self.jpegs)
                 if self.aug_num != 0:
@@ -152,9 +148,7 @@ def main():
         crop_size = 224
         pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=_image_path, augmentation=augmentation_num, crop=crop_size, rali_cpu=_rali_cpu)
         pipe.build()
-        data_loader = RALIClassificationIterator(pipe)
-
-        world_size=1
+        data_loader = RALI_iterator(pipe)
         epochs = 2
         cnt=0
         import timeit

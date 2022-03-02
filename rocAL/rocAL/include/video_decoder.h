@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -36,13 +36,18 @@ extern "C"
 #include <libavutil/avutil.h>
 #include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
+#include <libavutil/hwcontext.h>
+#include <libavutil/opt.h>
+#include <libavutil/avassert.h>
+#include <libavutil/imgutils.h>
 }
 #endif
 #include "parameter_factory.h"
 
 enum class VideoDecoderType
 {
-    FFMPEG_VIDEO = 0, //!< Can decode video stream
+    FFMPEG_SOFTWARE_DECODE = 0,
+    FFMPEG_HARDWARE_DECODE = 1,
 };
 
 class VideoDecoderConfig
@@ -51,7 +56,7 @@ public:
     VideoDecoderConfig() {}
     explicit VideoDecoderConfig(VideoDecoderType type) : _type(type) {}
     virtual VideoDecoderType type() { return _type; };
-    VideoDecoderType _type = VideoDecoderType::FFMPEG_VIDEO;
+    VideoDecoderType _type = VideoDecoderType::FFMPEG_SOFTWARE_DECODE;
 };
 
 #ifdef RALI_VIDEO

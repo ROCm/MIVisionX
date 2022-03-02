@@ -2,7 +2,7 @@
 # 
 # MIT License
 # 
-# Copyright (c) 2017 - 2020 Advanced Micro Devices, Inc.
+# Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -159,7 +159,7 @@ else()
       message("-- ${White}AVUTIL   required min version - 56.14.100 Found:${_FFMPEG_AVUTIL_VERSION}${ColourReset}")
     endif()
     set(FFMPEG_FOUND FALSE)
-    message( "-- ${Yellow}FindFFmpeg failed to find: FFMPEG${ColourReset}" )
+    message( "-- ${Yellow}NOTE: FindFFmpeg failed to find -- FFMPEG${ColourReset}" )
   endif()
   
   if(FFMPEG_FOUND)
@@ -175,7 +175,7 @@ else()
 
   if(FFMPEG_FOUND)
     if(NOT FFMPEG_FIND_QUIETLY)
-      message("-- ${Blue}Using FFMPEG -- Libraries:${FFMPEG_LIBRARIES} Includes:${FFMPEG_INCLUDE_DIR}${ColourReset}")
+      message("-- ${White}Using FFMPEG -- Libraries:${FFMPEG_LIBRARIES} Includes:${FFMPEG_INCLUDE_DIR}${ColourReset}")
     endif()
   else()
     if(FFMPEG_FIND_REQUIRED)

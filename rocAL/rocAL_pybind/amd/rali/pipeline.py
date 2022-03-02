@@ -4,7 +4,7 @@ import rali_pybind as b
 import amd.rali.types as types
 import numpy as np
 import torch
-
+import ctypes
 
 
 class Pipeline(object):
@@ -86,6 +86,7 @@ class Pipeline(object):
             self._handle = b.raliCreate(
                 batch_size, types.CPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         else:
+            print("comes to gpu")
             self._handle = b.raliCreate(
                 batch_size, types.GPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         if(b.getStatus(self._handle) == types.OK):
@@ -253,23 +254,12 @@ class Pipeline(object):
         b.raliCopyToOutput(
             self._handle, np.ascontiguousarray(out, dtype=array.dtype))
 
-    def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
-        out = np.frombuffer(array, dtype=array.dtype)
-        if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
-                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
-        elif tensor_dtype == types.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
-                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
-    def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
-        out = np.frombuffer(array, dtype=array.dtype)
-        if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
-                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
-        elif tensor_dtype == types.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
-                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+
+    def copyToTensor(self, array,  multiplier, offset, reverse_channels, tensor_format, tensor_dtype):
+
+        b.raliCopyToOutputTensor(self._handle, ctypes.c_void_p(array.data_ptr()), tensor_format, tensor_dtype,
+                                    multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def encode(self, bboxes_in, labels_in):
         bboxes_tensor = torch.tensor(bboxes_in).float()
@@ -337,7 +327,6 @@ class Pipeline(object):
 
     def GetBBCords(self, array):
         return b.getBBCords(self._handle, array)
-
 
     def getImageLabels(self, array):
         b.getImageLabels(self._handle, array)

@@ -1,4 +1,4 @@
-# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,7 @@ def generateLicenseForCPP(f):
 """/*
 MIT License
 
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -82,7 +82,7 @@ def generateLicenseForScript(f):
 #
 # MIT License
 #
-# Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc.
+# Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -888,7 +888,7 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
             f.write( \
 """            vx_size inp_dim_%s[%d] = { %s };
             inp_stride[0] = %d, inp_stride[1] = %d, inp_stride[2] = %d, inp_stride[3] = %d;
-            cl_mem inp_mem = nullptr;
+            void *inp_mem = nullptr;
             if (g_mv_preprocess_callback != nullptr) {
                 input_tensor = vxCreateVirtualTensor(handle->graph, 4, inp_dim_%s, %s, 0);
                 preprocess_callback(handle, input_tensor);
@@ -898,7 +898,11 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
                     input_tensor = vxCreateTensorFromHandle(handle->context, 4, inp_dim_%s, %s, 0, inp_stride, inp_mem, VX_MEMORY_TYPE_HOST);
                 }
                 else {
+#if OPENVX_BACKEND_OPENCL_FOUND
                     input_tensor = vxCreateTensorFromHandle(handle->context, 4, inp_dim_%s, %s, 0, inp_stride, inp_mem, VX_MEMORY_TYPE_OPENCL);
+#elif OPENVX_BACKEND_HIP_FOUND
+                    input_tensor = vxCreateTensorFromHandle(handle->context, 4, inp_dim_%s, %s, 0, inp_stride, inp_mem, VX_MEMORY_TYPE_HIP);
+#endif
                 }
                 if ((status = vxGetStatus((vx_reference)input_tensor)) != VX_SUCCESS) {
                     printf("ERROR: vxCreateTensor(input:[%s]): failed (%%d)\\n", status);
@@ -909,7 +913,8 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
             }
 """ % (tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
         input_elm_size, tensor.shape[3]*input_elm_size, tensor.shape[2]*tensor.shape[3]*input_elm_size, tensor.shape[1]*tensor.shape[2]*tensor.shape[3]*input_elm_size, \
-        tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
+        tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor_type_nnir2openvx[tensor.type], \
+        tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
         for tensor in graph.outputs:
             f.write( \
 """            vx_size out_dim_%d[%d] = { %s };
@@ -1479,7 +1484,9 @@ def generateDeployH(graph,fileName):
 
 #include <VX/vx.h>
 #include "mvdeploy_api.h"
-#include <CL/cl.h>
+#if OPENVX_BACKEND_OPENCL_FOUND
+    #include <CL/cl.h>
+#endif
 #include <VX/vx_khr_nn.h>
 #include <vx_amd_nn.h>
 #include <vx_ext_amd.h>

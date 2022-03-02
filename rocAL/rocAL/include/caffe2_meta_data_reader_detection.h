@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,7 @@ public :
 private:
     void read_files(const std::string& _path);
     bool exists(const std::string &image_name);
-    void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSizes image_size);
+    void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);
     bool _last_rec;
     void read_lmdb_record(std::string file_name, uint file_size);
     std::map<std::string, std::shared_ptr<MetaData>> _map_content;

@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
-set(VERSION "2.0.0")
+set(VERSION "2.1.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -53,24 +53,8 @@ endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  message("-- ${BoldBlue}MIVisionX Build Type -- Debug${ColourReset}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -ffunction-sections")
-else()
-  message("-- ${BoldBlue}MIVisionX Build Type -- Release${ColourReset}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-  if(NOT APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
-  endif()
-ENDIF()
-
-option(NEURAL_NET  "Build MIVisionX with Neural Net Support"  ON)
-option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
-option(LOOM        "Build MIVisionX with LOOM Support"        ON)
-option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
-
 if(NOT DEFINED BACKEND)
-  set(BACKEND "OPENCL")   # set default backend to OPENCL
+  set(BACKEND "HIP")   # set default backend to HIP
 else()
   if("${BACKEND}" STREQUAL "OPENCL" OR "${BACKEND}" STREQUAL "OCL" OR "${BACKEND}" STREQUAL "OpenCL")
     set(BACKEND "OPENCL")
@@ -80,19 +64,35 @@ else()
     set(BACKEND "CPU")
     set(GPU_SUPPORT OFF)
   else()
-    message("-- ${Red} Warning: MIVisionX backend option unknown -- ${BACKEND}${ColourReset}")
-    message("-- ${Red} Warning: MIVisionX default backend will enforced${ColourReset}")
-    set(BACKEND "OPENCL")
+    message("-- ${Red}Warning: MIVisionX backend option unknown -- ${BACKEND}${ColourReset}")
+    message("-- ${Red}Warning: MIVisionX default backend will enforced${ColourReset}")
+    set(BACKEND "HIP")
   endif()
 endif()
 message("-- ${BoldBlue}MIVisionX Backend set to -- ${BACKEND}${ColourReset}")
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  message("-- ${BoldBlue}MIVisionX Build Type -- Debug${ColourReset}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -ffunction-sections")
+else()
+  message("-- ${BoldBlue}MIVisionX Build Type -- Release${ColourReset}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+  if(NOT APPLE AND (NOT "${BACKEND}" STREQUAL "HIP"))
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
+  endif()
+ENDIF()
+
+option(NEURAL_NET  "Build MIVisionX with Neural Net Support"  ON)
+option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
+option(LOOM        "Build MIVisionX with LOOM Support"        ON)
+option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D BACKEND=HIP [select HIP for GPU backend [options:CPU/OPENCL/HIP](default:OPENCL)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=OPENCL [select OPENCL for GPU backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
@@ -130,6 +130,11 @@ The toolkit allows for rapid prototyping and deployment of optimized computer vi
 machine learning inference workloads on a wide range of computer hardware, including \
 small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.")
 set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+
+# set license information
+set(CPACK_RPM_PACKAGE_LICENSE    "MIT")
+set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION share/doc/)
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")

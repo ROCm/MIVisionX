@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,7 @@ public:
     virtual void set_prefetch_queue_depth(size_t prefetch_queue_depth) = 0;
     // introduce meta data reader
     virtual void set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader) = 0;
+    virtual void shut_down() = 0;
 };
 
 using pLoaderModule = std::shared_ptr<LoaderModule>;

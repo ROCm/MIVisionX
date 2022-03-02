@@ -37,4 +37,4 @@ mv_compile   --model 	        <model_name: name of the trained model with path> 
 This project is licensed under the MIT License - see the LICENSE.md file for details
 
 # Author
-rrawther@amd.com
+Rajy Rawther - `mivisionx.support@amd.com`

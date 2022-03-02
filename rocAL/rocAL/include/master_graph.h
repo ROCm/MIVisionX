@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -79,11 +79,12 @@ public:
     Image *create_loader_output_image(const ImageInfo &info);
     MetaDataBatch *create_label_reader(const char *source_path, MetaDataReaderType reader_type);
     MetaDataBatch *create_video_label_reader(const char *source_path, MetaDataReaderType reader_type, unsigned sequence_length, unsigned frame_step, unsigned frame_stride, bool file_list_frame_num = true);
-    MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output);
+    MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type , MetaDataType label_type, float sigma = 0.0, unsigned pose_output_width = 0, unsigned pose_output_height = 0);
     MetaDataBatch *create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type, const std::map<std::string, std::string> feature_key_map);
     MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch *create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
+    MetaDataBatch *create_mxnet_label_reader(const char *source_path, bool is_output);
     void box_encoder(std::vector<float> &anchors, float criteria, const std::vector<float> &means, const std::vector<float> &stds, bool offset, float scale);
     void create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts, int64_t seed=0);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();

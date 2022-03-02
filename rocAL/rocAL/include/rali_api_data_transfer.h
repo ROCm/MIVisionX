@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,15 +32,9 @@ extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutput(RaliContext context, uns
 /*! \brief
  *
 */
-extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutputTensor32(RaliContext rali_context, float *out_ptr,
-                                                              RaliTensorLayout tensor_format, float multiplier0,
-                                                              float multiplier1, float multiplier2, float offset0,
-                                                              float offset1, float offset2,
-                                                              bool reverse_channels);
-
-extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutputTensor16(RaliContext rali_context, half *out_ptr,
-                                                              RaliTensorLayout tensor_format, float multiplier0,
-                                                              float multiplier1, float multiplier2, float offset0,
+extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutputTensor(RaliContext rali_context, void *out_ptr,
+                                                              RaliTensorLayout tensor_format, RaliTensorOutputType tensor_output_type,
+                                                              float multiplier0, float multiplier1, float multiplier2, float offset0,
                                                               float offset1, float offset2,
                                                               bool reverse_channels);
 ///

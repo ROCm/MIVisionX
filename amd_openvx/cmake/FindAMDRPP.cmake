@@ -2,7 +2,7 @@
 # 
 # MIT License
 # 
-# Copyright (c) 2017 - 2020 Advanced Micro Devices, Inc.
+# Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -60,5 +60,5 @@ set(AMDRPP_INCLUDE_DIRS ${AMDRPP_INCLUDE_DIRS} CACHE INTERNAL "")
 set(AMDRPP_LIBRARIES_DIR ${AMDRPP_LIBRARIES_DIR} CACHE INTERNAL "")
 
 if( NOT AMDRPP_FOUND )
-    message( "-- ${Yellow}FindAMDRPP failed to find: amd_rpp${ColourReset}" )
+    message( "-- ${Yellow}NOTE: FindAMDRPP failed to find -- amd_rpp${ColourReset}" )
 endif()

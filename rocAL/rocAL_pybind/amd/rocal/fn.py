@@ -1,6 +1,10 @@
 
 from amd.rocal import readers
 from amd.rocal import decoders
+from amd.rocal import random
+from amd.rocal import noise
+from amd.rocal import reductions
+
 import inspect
 import amd.rocal.types as types
 import rali_pybind as b

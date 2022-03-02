@@ -58,8 +58,6 @@ public:
     Status copy_output(void* out_ptr, size_t out_size);
     Status copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
                     float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
-    void *copy_hip_out_tensor(RaliTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
-                    float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
     size_t output_width();
     size_t output_height();
     size_t output_byte_size();

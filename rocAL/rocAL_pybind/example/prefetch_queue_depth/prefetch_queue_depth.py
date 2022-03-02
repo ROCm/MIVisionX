@@ -1,7 +1,7 @@
-from amd.rali.plugin.pytorch import RALI_iterator
-from amd.rali.pipeline import Pipeline
-import amd.rali.ops as ops
-import amd.rali.types as types
+from amd.rocal.plugin.pytorch import RALI_iterator
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.ops as ops
+import amd.rocal.types as types
 import sys
 import datetime
 

@@ -6,9 +6,9 @@ import torch
 import random
 import itertools
 
-from amd.rali.pipeline import Pipeline
-import amd.rali.fn as fn
-import amd.rali.types as types
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.fn as fn
+import amd.rocal.types as types
 import sys
 import numpy as np
 
@@ -25,7 +25,7 @@ class RALICOCOIterator(object):
 
     Parameters
     ----------
-    pipelines : list of amd.rali.pipeline.Pipeline
+    pipelines : list of amd.rocal.pipeline.Pipeline
                 List of pipelines to use
     size : int
            Epoch size.
@@ -53,14 +53,14 @@ class RALICOCOIterator(object):
         print('h:',self.h)
         print('w:',self.w)
         print('n:',self.n)
-        
+
         self.p = (1 if color_format is types.GRAY else 3)
         print('p:',self.p)
         #self.out = np.empty(
                 #(self.bs*self.n, self.p, int(self.h), self.w), dtype="uint8")
         self.out = np.empty(
                 (self.bs*self.n,int(self.h/self.bs), self.w,self.p), dtype="ubyte")
-        
+
 
 
     def next(self):
@@ -80,11 +80,11 @@ class RALICOCOIterator(object):
             raise StopIteration
         self.lis = []  # Empty list for bboxes
         self.lis_lab = []  # Empty list of labels
-        
-        
+
+
         #Copy output from buffer to numpy array
         self.loader.copyImage(self.out)
-        
+
         #draw_patches(img[1], 0, 0)
         #Image id of a batch of images
         self.image_id = np.zeros(self.bs, dtype="int32")
@@ -109,13 +109,13 @@ class RALICOCOIterator(object):
         image_id_tensor = torch.tensor(self.image_id)
         image_size_tensor = torch.tensor(self.img_size).view(-1, self.bs, 2)
         num_images,_,_,_=np.shape(self.out)
-        
+
         #Return images,bboxes,labels,image_id,image_size to the calling function
         if self.tensor_dtype == types.FLOAT:
             return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor,num_images
         elif self.tensor_dtype == types.FLOAT16:
             return torch.from_numpy(self.out.astype(np.float16)), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor,num_images
-        
+
 
     def reset(self):
         self.loader.raliResetLoaders()
@@ -130,7 +130,7 @@ def draw_patches(img,idx, bboxes,display):
     print('Shape is:',img.shape)
     image = image.transpose([0,1,2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
- 
+
     _,htot ,wtot = img.shape
     image = cv2.UMat(image).get()
 
@@ -180,7 +180,7 @@ def main():
         exit(0)
     image_path = sys.argv[1]
     ann_path=sys.argv[2]
-    
+
     if(sys.argv[3] == "cpu"):
         _rali_cpu = True
     else:
@@ -192,15 +192,15 @@ def main():
     display=int(sys.argv[5])
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     crop_size=300
-    
-    
+
+
     default_boxes = coco_anchors().numpy().flatten().tolist()
     pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=random_seed, rali_cpu=_rali_cpu)
     output_set=0
 
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(
-            file_root=image_path, annotations_file=ann_path, random_shuffle=False, seed=random_seed) 
+            file_root=image_path, annotations_file=ann_path, random_shuffle=False, seed=random_seed)
         decoded_images = fn.decoders.image(jpegs, output_type=types.RGB)
         images=fn.resize(decoded_images,resize_x=crop_size,resize_y=crop_size)
         flip_coin = fn.random.coin_flip(probability=0.5)
@@ -211,8 +211,8 @@ def main():
         images=fn.snow(images,snow=0.1)
         output=fn.jitter(images)
         pipe.set_outputs(output,bboxes,labels)
-        
-        
+
+
     #Create Iterator for COCO Pipeline
     data_loader = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display)

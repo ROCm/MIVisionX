@@ -6,11 +6,11 @@ import torch
 import random
 import itertools
 
-import amd.rali.fn as fn
-import amd.rali.types as types
+import amd.rocal.fn as fn
+import amd.rocal.types as types
 import sys
 import numpy as np
-from amd.rali.pipeline import Pipeline
+from amd.rocal.pipeline import Pipeline
 
 class RALICOCOIterator(object):
     """
@@ -18,7 +18,7 @@ class RALICOCOIterator(object):
 
     Parameters
     ----------
-    pipelines : list of amd.rali.pipeline.Pipeline
+    pipelines : list of amd.rocal.pipeline.Pipeline
                 List of pipelines to use
     size : int
            Epoch size.
@@ -96,7 +96,7 @@ def draw_patches(img,idx,epoch,batch):
     image = img.detach().numpy()
     image = image.transpose([0,1,2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
- 
+
     _,htot ,wtot = img.shape
     image = cv2.UMat(image).get()
     cv2.imwrite("epoch_"+str(epoch)+"_batch_"+str(batch)+"_idx_"+str(idx)+".png", image)
@@ -122,7 +122,7 @@ def main():
         fig_size = 300
         feat_size = [38, 19, 10, 5, 3, 1]
         steps = [8, 16, 32, 64, 100, 300]
-        
+
         # use the scales here: https://github.com/amdegroot/ssd.pytorch/blob/master/data/config.py
         scales = [21, 45, 99, 153, 207, 261, 315]
         aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
@@ -152,7 +152,7 @@ def main():
         dboxes_ltrb[:, 1] = dboxes[:, 1] - 0.5 * dboxes[:, 3]
         dboxes_ltrb[:, 2] = dboxes[:, 0] + 0.5 * dboxes[:, 2]
         dboxes_ltrb[:, 3] = dboxes[:, 1] + 0.5 * dboxes[:, 3]
-        
+
         return dboxes_ltrb
     default_boxes = coco_anchors().numpy().flatten().tolist()
     pipe = Pipeline(batch_size=bs, num_threads=1,device_id=0, seed=random_seed, rali_cpu=_rali_cpu)
@@ -190,7 +190,6 @@ if __name__ == '__main__':
     main()
 
 
-    
 
 
 

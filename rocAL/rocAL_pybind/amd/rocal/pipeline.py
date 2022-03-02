@@ -1,4 +1,3 @@
-from amd.rali.global_cfg import MetaDataNode, Node
 from numpy.core.fromnumeric import trace
 import rali_pybind as b
 import amd.rocal.types as types

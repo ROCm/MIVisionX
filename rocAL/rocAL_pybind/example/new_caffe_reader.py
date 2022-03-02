@@ -1,9 +1,9 @@
 import sys
-from amd.rali.plugin.pytorch import RALIClassificationIterator
-from amd.rali.pipeline import Pipeline
-import amd.rali.ops as ops
-import amd.rali.types as types
-import amd.rali.fn as fn
+from amd.rocal.plugin.pytorch import RALIClassificationIterator
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.ops as ops
+import amd.rocal.types as types
+import amd.rocal.fn as fn
 import os
 import random
 

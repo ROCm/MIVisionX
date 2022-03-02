@@ -200,11 +200,45 @@ def image_slice(*inputs,file_root='',path='',annotations_file='',shard_id = 0, n
             "shuffle": random_shuffle,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
+            "max_width": 1200, #TODO: what happens when we give user given size = multiplier * max_decoded_width
+            "max_height":1200, #TODO: what happens when we give user given size = multiplier * max_decoded_width
+            "area_factor": None,
+            "aspect_ratio": None,
+            "x_drift_factor": None,
+            "y_drift_factor": None}
+        image_decoder_slice = b.COCO_ImageDecoderSliceShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
+    elif (reader == "CaffeReader" or reader == "CaffeReaderDetection"):
+        kwargs_pybind = {
+            "source_path": path,
+            "color_format": output_type,
+            "shard_id": shard_id,
+            "num_shards": num_shards,
+            'is_output': False,
+            "shuffle": random_shuffle,
+            "loop": False,
+            "decode_size_policy": types.MAX_SIZE,
             "max_width": 1200,
             "max_height":1200,
             "area_factor": None,
             "aspect_ratio": None,
             "x_drift_factor": None,
             "y_drift_factor": None}
-        image_decoder_slice = b.COCO_ImageDecoderSliceShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
+        image_decoder_slice = b.Caffe_ImageDecoderPartialShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
+    elif (reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection"):
+        kwargs_pybind = {
+            "source_path": path,
+            "color_format": output_type,
+            "shard_id": shard_id,
+            "num_shards": num_shards,
+            'is_output': False,
+            "shuffle": random_shuffle,
+            "loop": False,
+            "decode_size_policy": types.MAX_SIZE,
+            "max_width": 1200,
+            "max_height":1200,
+            "area_factor": None,
+            "aspect_ratio": None,
+            "x_drift_factor": None,
+            "y_drift_factor": None}
+        image_decoder_slice = b.Caffe2_ImageDecoderPartialShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (image_decoder_slice)

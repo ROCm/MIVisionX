@@ -107,7 +107,7 @@ class RALICOCOIterator(object):
 
     Parameters
     ----------
-    pipelines : list of amd.rali.pipeline.Pipeline
+    pipelines : list of amd.rocal.pipeline.Pipeline
                 List of pipelines to use
     size : int
            Epoch size.

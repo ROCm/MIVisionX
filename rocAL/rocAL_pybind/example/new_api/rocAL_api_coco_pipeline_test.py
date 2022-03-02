@@ -5,12 +5,13 @@ from math import sqrt
 import torch
 import random
 import itertools
+import os
 
-import amd.rali.fn as fn
-import amd.rali.types as types
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.fn as fn
+import amd.rocal.types as types
 import sys
 import numpy as np
-from amd.rali.pipeline import Pipeline
 
 class RALICOCOIterator(object):
     """
@@ -18,7 +19,7 @@ class RALICOCOIterator(object):
 
     Parameters
     ----------
-    pipelines : list of amd.rali.pipeline.Pipeline
+    pipelines : list of amd.rocal.pipeline.Pipeline
                 List of pipelines to use
     size : int
            Epoch size.
@@ -41,6 +42,13 @@ class RALICOCOIterator(object):
         self.n = self.loader.getOutputImageCount()
         self.rim = self.loader.getRemainingImages()
         self.display = display
+        print(self.display)
+        if self.display!= "False":
+            try:
+                self.path= "OUTPUT_IMAGES_PYTHON/NEW_API/"+self.loader._reader+"/"
+                os.makedirs(self.path, exist_ok=True)
+            except OSError as error:
+                print(error)
         print("____________REMAINING IMAGES____________:", self.rim)
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
@@ -70,19 +78,48 @@ class RALICOCOIterator(object):
 #Image id of a batch of images
         self.image_id = np.zeros(self.bs, dtype="int32")
         self.loader.GetImageId(self.image_id)
+# Count of labels/ bboxes in a batch
+        self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
+        self.count_batch = self.loader.GetBoundingBoxCount(
+            self.bboxes_label_count)
+        print("Count Batch:", self.count_batch)
+# 1D labels & bboxes array
+        self.encoded_bboxes = np.zeros((self.count_batch*4), dtype="float32")
+        self.encoded_labels = np.zeros(self.count_batch, dtype="int32")
+        self.loader.copyEncodedBoxesAndLables(
+            self.encoded_bboxes, self.encoded_labels)
 # Image sizes of a batch
         self.img_size = np.zeros((self.bs * 2), dtype="int32")
         self.loader.GetImgSizes(self.img_size)
         print("Image sizes:", self.img_size)
 
+        encoded_bboxes_tensor = torch.tensor(self.encoded_bboxes).view(self.bs, -1, 4).contiguous()
+        encodded_labels_tensor=  torch.tensor(self.encoded_labels).long().view(self.bs, -1)
         image_id_tensor = torch.tensor(self.image_id)
         image_size_tensor = torch.tensor(self.img_size).view(-1, self.bs, 2)
-        num_images,_,_,_=np.shape(self.out)
+        for i in range(self.bs):
+            index_list =[ ]
+            actual_bboxes=[]
+            actual_labels =[]
+            for idx, x in enumerate(encodded_labels_tensor[i]):
+                if x!=0:
+                    index_list.append(idx)
+                    actual_bboxes.append(encoded_bboxes_tensor[i][idx].tolist())
+                    actual_labels.append(encodded_labels_tensor[i][idx].tolist())
+
+            if self.display!="False":
+                if self.n == 1:
+                    img = torch.from_numpy(self.out)
+                    draw_patches(img[i], self.image_id[i], actual_bboxes, self.path)
+                else:
+                    img = torch.from_numpy(self.out)
+                    for idx in range(self.n):
+                        draw_all_images(img[i],self.image_id[i],idx, self.path)
 
         if self.tensor_dtype == types.FLOAT:
-            return torch.from_numpy(self.out),image_id_tensor, image_size_tensor, num_images
+            return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
         elif self.tensor_dtype == types.FLOAT16:
-            return torch.from_numpy(self.out.astype(np.float16)),image_id_tensor, image_size_tensor, num_images
+            return torch.from_numpy(self.out.astype(np.float16)), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
 
     def reset(self):
         self.loader.raliResetLoaders()
@@ -90,17 +127,36 @@ class RALICOCOIterator(object):
     def __iter__(self):
         return self
 
-def draw_patches(img,idx,epoch,batch):
+def draw_patches(img,idx, bboxes, path_to_save_imgs):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     image = img.detach().numpy()
     image = image.transpose([0,1,2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
- 
-    _,htot ,wtot = img.shape
-    image = cv2.UMat(image).get()
-    cv2.imwrite("epoch_"+str(epoch)+"_batch_"+str(batch)+"_idx_"+str(idx)+".png", image)
 
+    wtot,htot ,_ = img.shape
+    for (xc, yc ,w,h) in bboxes:
+        l = xc - 0.5*(w)
+        t = yc - 0.5*(h)
+        r = xc + 0.5*(w)
+        b = yc + 0.5*(h)
+        loc_ = [l, t ,r, b]
+        color = (255, 0, 0)
+        thickness = 2
+        image = cv2.UMat(image).get()
+        image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)
+        cv2.imwrite(path_to_save_imgs+str(idx)+"_"+"train"+".png", image)
+
+def draw_all_images(img,id,idx):
+    #image is expected as a tensor, bboxes as numpy
+    import cv2
+    image = img.detach().numpy()
+    # image = image.transpose([0,1,2])
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
+
+    # wtot,htot ,_ = img.shape
+    image = cv2.UMat(image).get()
+    cv2.imwrite(str(id)+"_"+str(idx)+"_"+"train"+".png", image)
 def main():
     if len(sys.argv) < 5:
         print('Please pass the folder image_folder Annotation_file cpu/gpu batch_size display(True/False)')
@@ -122,7 +178,7 @@ def main():
         fig_size = 300
         feat_size = [38, 19, 10, 5, 3, 1]
         steps = [8, 16, 32, 64, 100, 300]
-        
+
         # use the scales here: https://github.com/amdegroot/ssd.pytorch/blob/master/data/config.py
         scales = [21, 45, 99, 153, 207, 261, 315]
         aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
@@ -152,45 +208,75 @@ def main():
         dboxes_ltrb[:, 1] = dboxes[:, 1] - 0.5 * dboxes[:, 3]
         dboxes_ltrb[:, 2] = dboxes[:, 0] + 0.5 * dboxes[:, 2]
         dboxes_ltrb[:, 3] = dboxes[:, 1] + 0.5 * dboxes[:, 3]
-        
+
         return dboxes_ltrb
     default_boxes = coco_anchors().numpy().flatten().tolist()
     pipe = Pipeline(batch_size=bs, num_threads=1,device_id=0, seed=random_seed, rali_cpu=_rali_cpu)
 
     with pipe:
-        jpegs_dummy , labels, bboxes= fn.readers.coco(
+        jpegs, bboxes, labels = fn.readers.coco(
             file_root=image_path, annotations_file=ann_path, random_shuffle=False, seed=random_seed)
-        images_decoded = fn.decoders.image(jpegs_dummy, file_root=image_path, annotations_file=ann_path ,output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True) # annotation path & source path has to be given as input to the decoder, shard_id & num_shards hads to be passed to the decoder
-        res_images = fn.resize(images_decoded, resize_x=640, resize_y=640)
-        fisheye_image = fn.fish_eye(res_images)
-        brightness_image = fn.brightness(fisheye_image)
-        pipe.set_outputs(images_decoded,res_images,fisheye_image,brightness_image)
-
+        crop_begin, crop_size, bboxes, labels = fn.random_bbox_crop(bboxes, labels,
+                                                                device="cpu",
+                                                                aspect_ratio=[0.5, 2.0],
+                                                                thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
+                                                                scaling=[0.3, 1.0],
+                                                                bbox_layout="xyXY",
+                                                                allow_no_crop=True,
+                                                                num_attempts=50)
+        images_decoded = fn.decoders.image_slice(jpegs, crop_begin, crop_size, device="mixed", output_type=types.RGB, file_root=image_path, annotations_file=ann_path, random_shuffle=False, seed=random_seed)
+        # images_decoded = fn.decoders.image(jpegs, output_type=types.RGB, file_root=image_path, annotations_file=ann_path, random_shuffle=False, seed=random_seed)
+        res_images = fn.resize(images_decoded, resize_x=300, resize_y=300)
+        saturation = fn.uniform(range=[0.5, 1.5])
+        contrast = fn.uniform(range=[0.5, 1.5])
+        brightness = fn.uniform(range=[0.875, 1.125])
+        hue = fn.uniform(range=[-0.5, 0.5])
+        ct_images = fn.color_twist(res_images, saturation=saturation, contrast=contrast, brightness=brightness, hue=hue)
+        flip_coin = fn.random.coin_flip(probability=0.5)
+        bboxes = fn.bb_flip(bboxes, ltrb=True, horizontal=flip_coin)
+        cmn_images = fn.crop_mirror_normalize(ct_images,
+                                        crop=(300, 300),
+                                        mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
+                                        std=[0.229 * 255, 0.224 * 255, 0.225 * 255],
+                                        mirror=flip_coin,
+                                        output_dtype=types.FLOAT,
+                                        output_layout=types.NCHW,
+                                        pad_output=False)
+        bboxes, labels = fn.box_encoder(bboxes, labels,
+                                    criteria=0.5,
+                                    anchors=default_boxes)
+        pipe.set_outputs(cmn_images)
     pipe.build()
     data_loader = RALICOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display)
     epochs = 2
+    import timeit
+    start = timeit.default_timer()
+
     for epoch in range(int(epochs)):
         print("EPOCH:::::",epoch)
         for i, it in enumerate(data_loader, 0):
             print("**************", i, "*******************")
             print("**************starts*******************")
             print("\n IMAGES : \n", it[0])
-            print("\nIMAGE ID:\n", it[1])
-            print("\nIMAGE SIZE:\n", it[2])
-            for ind in range(0,it[3]):
-                print('\nimage number is:',ind+i);
-                draw_patches(it[0][ind],it[3]*i+ind+1,epoch,i)
+            print("\nBBOXES:\n", it[1])
+            print("\nLABELS:\n", it[2])
+            print("\nIMAGE ID:\n", it[3])
+            print("\nIMAGE SIZE:\n", it[4])
             print("**************ends*******************")
             print("**************", i, "*******************")
         data_loader.reset()
+    #Your statements here
+    stop = timeit.default_timer()
+
+    print('\n Time: ', stop - start)
 
 
 if __name__ == '__main__':
     main()
 
 
-    
+
 
 
 

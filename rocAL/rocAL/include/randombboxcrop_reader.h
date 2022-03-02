@@ -30,15 +30,9 @@ THE SOFTWARE.
 #include "parameter_crop_factory.h"
 #include "meta_data_reader.h"
 #include "coco_meta_data_reader.h"
-// #include "text_file_meta_data_reader.h"
-// #include "cifar10_meta_data_reader.h"
-// #include "tf_meta_data_reader.h"
-// #include "caffe_meta_data_reader.h"
 #include "caffe_meta_data_reader_detection.h"
-// #include "caffe2_meta_data_reader.h"
 #include "caffe2_meta_data_reader_detection.h"
 #include "tf_meta_data_reader_detection.h"
-// #include "video_label_reader.h"
 #include <random>
 
 // todo:: move this to common header

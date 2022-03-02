@@ -31,7 +31,6 @@ void BoundingBoxGraph::process(MetaDataBatch *meta_data)
 
 //update_meta_data is not required since the bbox are normalized in the very beggining -> removed the call in master graph also except for MaskRCNN
 
-
 inline float ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const float &box1_area, const BoundingBoxCord &box2)
 {
     float xA = std::max(box1.l, box2.l);

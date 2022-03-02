@@ -6,13 +6,13 @@ import torch
 import random
 import itertools
 import os
-from amd.rali.plugin.pytorch import RALIClassificationIterator
+from amd.rocal.plugin.pytorch import RALIClassificationIterator
 import cv2
 
 
-from amd.rali.pipeline import Pipeline
-import amd.rali.fn as fn
-import amd.rali.types as types
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.fn as fn
+import amd.rocal.types as types
 import sys
 import numpy as np
 

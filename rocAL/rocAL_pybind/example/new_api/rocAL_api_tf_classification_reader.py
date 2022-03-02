@@ -1,9 +1,9 @@
-from amd.rali.plugin.tf import RALIIterator
-from amd.rali.pipeline import Pipeline
-import amd.rali.ops as ops
-import amd.rali.types as types
+from amd.rocal.plugin.tf import RALIIterator
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.ops as ops
+import amd.rocal.types as types
 import sys
-import amd.rali.fn as fn
+import amd.rocal.fn as fn
 import tensorflow as tf
 import numpy as np
 
@@ -13,7 +13,7 @@ def draw_patches(img,idx):
     image = img.transpose([0,1,2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
-    
+
 def main():
     if  len(sys.argv) < 5:
         print ('Please pass the <TensorFlowrecord> <cpu/gpu> <batch_size> <oneHotLabels=0/1> <display = True/False>')

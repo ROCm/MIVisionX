@@ -53,6 +53,8 @@ node com.amd.amd_media.decode vid1 nvimg NULL loop opencl_out
 
 Following is an example gdf to encode to .h264 stream from a YUV input file
 
+Sample command: runvx -frames:<#framestoencode> file <encoder.gdf>
+
 ``` 
 import vx_amd_media
 
@@ -61,5 +63,5 @@ data yuvimg  = image:1920,1080,NV12:read,input.yuv
 data vid1 = scalar:STRING,"fname_with_full_path.264"
 data aux_output = array:UINT8,256
 data gpu_mode = scalar:BOOL,FALSE
-node com.amd.amd_media.encode yuvimg vid1 NULL aux_output gpu_mode
+node com.amd.amd_media.encode vid1 yuvimg NULL aux_output gpu_mode
 ```

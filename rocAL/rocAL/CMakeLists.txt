@@ -134,24 +134,14 @@ if(${BUILD_RALI})
     set(CMAKE_CXX_STANDARD 17)
     message("-- ${Green}ROCm Augmentation Library -- rocAL module added${ColourReset}")
     install(FILES
-        ../python/rali.py
-        ../python/rali_lib.py
-        ../python/rali_common.py
-        ../python/rali_image.py
-        ../python/rali_parameter.py
-        ../python/rali_torch.py
-        ../python/rali_image_iterator.py
-        DESTINATION ./rali/python
-        )
-    install(FILES
-        include/rali_api.h
-        include/rali_api_info.h
-        include/rali_api_augmentation.h
-        include/rali_api_data_loaders.h
-        include/rali_api_types.h
-        include/rali_api_data_transfer.h
-        include/rali_api_parameters.h
-        include/rali_api_meta_data.h
+        include/api/rali_api.h
+        include/api/rali_api_info.h
+        include/api/rali_api_augmentation.h
+        include/api/rali_api_data_loaders.h
+        include/api/rali_api_types.h
+        include/api/rali_api_data_transfer.h
+        include/api/rali_api_parameters.h
+        include/api/rali_api_meta_data.h
         DESTINATION ./include
         )
     if(FFMPEG_FOUND)
@@ -175,6 +165,21 @@ if(${BUILD_RALI})
                 ../../amd_openvx_extensions/amd_rpp/include/
                 ../../amd_openvx_extensions/amd_media/include/
                 ../third_party/rapidjson/include/
+                ./include/api/
+                ./include/augmentations/color_augmentations/
+                ./include/augmentations/effects_augmentations/
+                ./include/augmentations/geometry_augmentations/
+                ./include/augmentations/
+                ./include/decoders/image/
+                ./include/decoders/video/
+                ./include/device/
+                ./include/loaders/
+                ./include/loaders/image/
+                ./include/loaders/video/
+                ./include/meta_data/
+                ./include/parameters/
+                ./include/readers/image/
+                ./include/readers/video/
                 include
                 )
     protobuf_generate_cpp(TF_PROTO_SRCS TF_PROTO_HEADERS proto/example.proto proto/feature.proto)
@@ -188,7 +193,7 @@ if(${BUILD_RALI})
         message("-- ${White}rocAL library is going to be built with HIP support ${ColourReset}")
     endif()
 
-    file(GLOB SOURCES "./source/*.cpp")
+    file(GLOB_RECURSE SOURCES "./source/*.cpp")
     add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS} ${CAFFE_PROTO_HEADERS} ${CAFFE_PROTO_SRCS} ${CAFFE2_PROTO_SRCS} ${CAFFE2_PROTO_HEADERS})
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)

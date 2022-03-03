@@ -91,6 +91,7 @@ private:
     AVStream * videoStream;
     AVCodecContext * videoCodecContext;
     const AVCodec * videoCodec;
+    const AVOutputFormat *outputFmt;
     SwsContext * conversionContext;
     void* mem[ENCODE_BUFFER_POOL_SIZE];
 #if ENABLE_OPENCL
@@ -281,7 +282,10 @@ vx_status CLoomIoMediaEncoder::Initialize()
     videoCodecContext->time_base.den = 60000;
     videoCodecContext->gop_size = gopsize;
     videoCodecContext->max_b_frames = bframes;
-    videoCodecContext->pix_fmt = AV_PIX_FMT_NV12;
+    videoCodecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+    if (videoCodec->id == AV_CODEC_ID_H264)
+        av_opt_set(videoCodecContext->priv_data, "preset", "slow", 0);
+
     ERROR_CHECK_STATUS(avcodec_open2(videoCodecContext, videoCodec, nullptr));
     ERROR_CHECK_NULLPTR(conversionContext = sws_getContext(width, height, inputFormat, width, height, videoCodecContext->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL));
     for (int i = 0; i < ENCODE_BUFFER_POOL_SIZE; i++) {
@@ -312,6 +316,8 @@ vx_status CLoomIoMediaEncoder::Initialize()
             return VX_ERROR_INVALID_LINK;
         }
         ERROR_CHECK_NULLPTR(videoStream = avformat_new_stream(formatContext, videoCodec));
+        videoStream->time_base = (AVRational){ 1, (int)fps };
+        videoCodecContext->time_base = videoStream->time_base;
         videoStream->id = formatContext->nb_streams - 1;
         if (formatContext->oformat->flags & AVFMT_GLOBALHEADER)
             videoCodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -414,15 +420,33 @@ vx_status CLoomIoMediaEncoder::ProcessFrame(vx_image input_image, vx_array input
     } else {
         // format convert input image into encode buffer
         int bufId = inputFrameCount % ENCODE_BUFFER_POOL_SIZE; inputFrameCount++;
+        int ret = av_frame_make_writable(videoFrame[bufId]);
+        if (ret < 0) {
+            vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::ProcessFrame failed to write data(%d)\n", ret);
+            return VX_FAILURE;
+        }
         vx_rectangle_t rect = { 0, 0, width, height };
-        vx_map_id map_id; vx_imagepatch_addressing_t addr;
+        vx_map_id map_id, map_id1;
+        vx_imagepatch_addressing_t addr;
         uint8_t * ptr = nullptr;
+        uint8_t *src_data[4] = {0};
+        int src_linesize[4] = {0};
         ERROR_CHECK_STATUS(vxMapImagePatch(input_image, &rect, 0, &map_id, &addr, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-        int status = sws_scale(conversionContext, &ptr, &addr.stride_y, 0, height, videoFrame[bufId]->data, videoFrame[bufId]->linesize);
-        ERROR_CHECK_STATUS(vxUnmapImagePatch(input_image, map_id));
+        src_data[0] = ptr;
+        src_linesize[0] = addr.stride_y;
+        if (inputFormat == AV_PIX_FMT_NV12) {
+            ERROR_CHECK_STATUS(vxMapImagePatch(input_image, &rect, 1, &map_id1, &addr, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+            src_data[1] = ptr;
+            src_linesize[1] = addr.stride_y;
+        }
+        int status = sws_scale(conversionContext, src_data, src_linesize, 0, height, videoFrame[bufId]->data, videoFrame[bufId]->linesize);
         if (status < 0) {
             vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::ProcessFrame: sws_scale() failed (%d)\n", status);
             return VX_FAILURE;
+        }
+        ERROR_CHECK_STATUS(vxUnmapImagePatch(input_image, map_id));
+        if (inputFormat == AV_PIX_FMT_NV12) {
+            ERROR_CHECK_STATUS(vxUnmapImagePatch(input_image, map_id1));
         }
         // submit encoding
         PushCommand(cmd_encode);
@@ -527,12 +551,13 @@ void CLoomIoMediaEncoder::EncodeLoop()
             PushAck(-1);
             return;
         }
-        if (got_output && (pkt->size > 0)) {
+        if (pkt->size > 0) {
             if (fpOutput) {
                 fwrite(pkt->data, 1, pkt->size, fpOutput);
             }
             if (formatContext) {
                 pkt->stream_index = videoStream->index;
+                av_packet_rescale_ts(pkt, videoCodecContext->time_base, videoStream->time_base);
                 status = av_interleaved_write_frame(formatContext, pkt);
                 if (status < 0) {
                     vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: av_interleaved_write_frame() failed (%4.4s:0x%08x:%d) for frame:%d\n", &status, status, status, encodeFrameCount);

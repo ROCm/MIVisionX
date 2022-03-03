@@ -101,8 +101,6 @@ private:
     uint8_t *hostBuffer;
 #endif
     AVFrame * videoFrame[ENCODE_BUFFER_POOL_SIZE];
-    uint8_t * outputBuffer;
-    int outputBufferSize;
     uint8_t * outputAuxBuffer;
     vx_size outputAuxLength;
     FILE * fpOutput;
@@ -157,7 +155,7 @@ CLoomIoMediaEncoder::CLoomIoMediaEncoder(vx_node node_, const char ioConfig_[], 
     : node{ node_ }, ioConfig(ioConfig_), width{ width_ }, height{ height_ }, format{ format_ },
       stride{ static_cast<int>(stride_) }, offset{ static_cast<int>(offset_) }, input_aux_data_max_size{ input_aux_data_max_size_ },
       inputFrameCount{ 0 }, encodeFrameCount{ 0 }, threadTerminated{ false }, inputFormat{ AV_PIX_FMT_UYVY422 }, 
-      outputBuffer{ nullptr }, outputBufferSize{ 1000000 }, fpOutput{ nullptr }, formatContext{ nullptr }, videoStream{ nullptr }, outputAuxBuffer{ nullptr }, outputAuxLength{ 0 },
+      fpOutput{ nullptr }, formatContext{ nullptr }, videoStream{ nullptr }, outputAuxBuffer{ nullptr }, outputAuxLength{ 0 },
       videoCodecContext{ nullptr }, videoCodec{ nullptr }, conversionContext{ nullptr }, thread{ nullptr },
       mbps{ DEFAULT_MBPS }, fps{ DEFAULT_FPS }, gopsize{ DEFAULT_GOPSIZE }, bframes{ DEFAULT_BFRAMES }
 {
@@ -193,7 +191,6 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
         av_free(formatContext);
     }
     // release GPU and media resources
-    if (outputBuffer) aligned_free(outputBuffer);
     if (m_enableUserBufferGPU) {
     #if ENABLE_OPENCL
         if (cmdq) clReleaseCommandQueue(cmdq);
@@ -207,7 +204,6 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
             av_frame_free(&videoFrame[i]);
         }
     }
-    if (conversionContext) av_free(conversionContext);
     if (videoCodecContext) {
         avcodec_free_context(&videoCodecContext);
     }
@@ -298,9 +294,6 @@ vx_status CLoomIoMediaEncoder::Initialize()
         if (m_enableUserBufferGPU)
           break;
     }
-    outputBufferSize = 1024*1024;
-    ERROR_CHECK_NULLPTR(outputBuffer = aligned_alloc(outputBufferSize));
-
     // open output file
     if (strlen(outFileName) > 4 && !strcmp(outFileName + strlen(outFileName) - 4, ".264")) {
         fpOutput = fopen(outFileName, "wb");
@@ -552,12 +545,9 @@ void CLoomIoMediaEncoder::EncodeLoop()
             return;
         }
         if (pkt->size > 0) {
-            if (fpOutput) {
-                fwrite(pkt->data, 1, pkt->size, fpOutput);
-            }
             if (formatContext) {
-                pkt->stream_index = videoStream->index;
                 av_packet_rescale_ts(pkt, videoCodecContext->time_base, videoStream->time_base);
+                pkt->stream_index = videoStream->index;
                 status = av_interleaved_write_frame(formatContext, pkt);
                 if (status < 0) {
                     vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: av_interleaved_write_frame() failed (%4.4s:0x%08x:%d) for frame:%d\n", &status, status, status, encodeFrameCount);
@@ -565,19 +555,14 @@ void CLoomIoMediaEncoder::EncodeLoop()
                     PushAck(-1);
                     return;
                 }
+            } else if (fpOutput)
+            {
+                fwrite(pkt->data, 1, pkt->size, fpOutput);
             }
+            pts++;
+            encodeFrameCount++;
         }
         av_packet_unref(pkt);
-        // update encode frame count and send ACK
-        encodeFrameCount++;
-        if (videoStream) {
-            //AVCodecContext * vsc;
-            //avcodec_parameters_to_context(vsc, videoStream->codecpar);
-            pts += av_rescale_q(1, videoStream->codec->time_base, videoStream->time_base);
-        }
-        else {
-            pts += (int64_t)(60000.0f / fps);
-        }
         PushAck(0);
     }
     // process the delayed frames
@@ -591,8 +576,21 @@ void CLoomIoMediaEncoder::EncodeLoop()
             PushAck(-1);
             return;
         }
-        if (got_output && fpOutput && (pkt->size > 0)) {
-            fwrite(pkt->data, 1, pkt->size, fpOutput);
+        if (pkt->size > 0) {
+            if (formatContext) {
+                pkt->stream_index = videoStream->index;
+                av_packet_rescale_ts(pkt, videoCodecContext->time_base, videoStream->time_base);
+                status = av_interleaved_write_frame(formatContext, pkt);
+                if (status < 0) {
+                    vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: CLoomIoMediaEncoder::EncodeLoop: av_interleaved_write_frame() failed (%4.4s:0x%08x:%d) for frame:%d\n", &status, status, status, encodeFrameCount);
+                    threadTerminated = true;
+                    PushAck(-1);
+                    return;
+                }
+            } else if (fpOutput)
+            {
+                fwrite(pkt->data, 1, pkt->size, fpOutput);
+            }
         }
         av_packet_unref(pkt);
     }

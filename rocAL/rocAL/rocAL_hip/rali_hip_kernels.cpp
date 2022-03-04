@@ -46,16 +46,21 @@ Hip_CopyInt8ToNHWC_fp32
     if ((x >= W) || (y >= H)) return;
     for (unsigned int n=0; n < nchw.x; n++) {
         unsigned int srcIdx =  (y*W + x) * C;     // src is RGB
-        unsigned int dstIdx =  y*W + x;
-        unsigned int srcIdx =  dstIdx * 3;
+        unsigned int dstIdx = ( y*W + x)*C;
         // copy float3  pixels to dst
         if (C == 3){
+                float3 dst;
+
             const uchar *inp_img = &inp_image_u8[n*img_offset + dst_buf_offset];
-            float3 *out_tensor = (float3 *)((float*)output_tensor + dst_buf_offset + n*img_offset);
+            float *out_tensor = (float *)((float*)output_tensor + dst_buf_offset + n*img_offset);
             if (reverse_channels)
-                out_tensor[dstIdx] = make_float3((float)inp_img[srcIdx+2], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx])*multiplier + offset;
+                dst = make_float3((float)inp_img[srcIdx+2], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx])*multiplier + offset;
             else
-                out_tensor[dstIdx] = make_float3((float)inp_img[srcIdx], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx+2])*multiplier + offset;
+                dst = make_float3((float)inp_img[srcIdx], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx+2])*multiplier + offset;
+            out_tensor[dstIdx] = dst.x;
+            out_tensor[dstIdx+1] = dst.y;
+            out_tensor[dstIdx+2] = dst.z;
+
         } else{
             const uchar *inp_img = &inp_image_u8[n*img_offset + dst_buf_offset];
             float *out_tensor = (float *)output_tensor + dst_buf_offset + n*img_offset;
@@ -127,7 +132,6 @@ Hip_CopyInt8ToNCHW_fp32
     for (unsigned int n=0; n < nchw.x; n++) {
         unsigned int srcIdx =  (y*W + x)*C;
         unsigned int dstIdx =  y*W + x;
-        unsigned int srcIdx =  dstIdx * 3;
         // copy float3  pixels to dst
         const uchar *inp_img = &inp_image_u8[n*img_offset+dst_buf_offset];
         float *out_tensor = (float *)output_tensor + n*img_offset + dst_buf_offset;

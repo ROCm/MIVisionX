@@ -73,6 +73,9 @@ parser.add_argument('--width',              type=int, default='1920',
                     help='Image width for Vision Performance tests - optional (default:1920) [range: 1 - 7680]')
 parser.add_argument('--height',             type=int, default='1080',
                     help='Image height for Vision Performance tests - optional (default:1080) [range: 1 - 7680]')
+parser.add_argument('--perf_counters',        type=str, default='no',
+                    help='Collect performance counters with rocprof - optional (default:no [options:yes/no])')
+
 
 args = parser.parse_args()
 
@@ -88,7 +91,7 @@ width = args.width
 height = args.height
 widthDiv2 = int(width / 2)
 heightDiv2 = int(height / 2)
-
+perfCounters = args.perf_counters
 
 # Vision Accuracy Tests
 visionTestConfig = [
@@ -435,6 +438,14 @@ if profilingOption not in ('no', 'yes'):
     print("ERROR: Profiling options supported - [no or yes]")
     exit()
 
+if perfCounters not in ('no', 'yes'):
+    print("ERROR: perf_counters options supported - [no or yes]")
+    exit()
+
+if profilingOption == "no" and perfCounters == "yes":
+    print("ERROR: To collect Performance counters both profiling and perfCounters must be yes")
+    exit()
+
 if not 0 <= testFilter <= len(openvxNodes):
     print(
         "\nERROR: Vision Performance Filter not in range - [1 - %d]\n" % (len(openvxNodes)))
@@ -532,10 +543,17 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
         os.system('echo '+echo1 +
                   ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
-        print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-              hardwareMode+' -dump-profile node '+nodeFormat)
-        os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-                  hardwareMode+' -dump-profile node '+nodeFormat)
+        if perfCounters == "yes":
+            print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+            os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+        else:
+            print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+            os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+
         print("\n")
 
     RESULTS_DIR = "rocprof_vision_tests_outputs"
@@ -589,10 +607,16 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
         os.system('echo '+echo1 +
                   ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
-        print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-              hardwareMode+' -dump-profile node '+nodeFormat)
-        os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-                  hardwareMode+' -dump-profile node '+nodeFormat)
+        if perfCounters == "yes":
+            print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+            os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+        else:
+            print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+            os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
         print("\n")
 
     RESULTS_DIR = "rocprof_vision_tests_outputs"

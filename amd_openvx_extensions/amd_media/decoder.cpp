@@ -1004,7 +1004,6 @@ static vx_status VX_CALLBACK amd_media_decode_validate(vx_node node, const vx_re
     if (parameters[4]) {
         ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferGPU, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
         ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU, &enableUserBufferGPU, sizeof(enableUserBufferGPU)));
-        printf("decoder validate:: set enableUserBufferGPU: %d\n", enableUserBufferGPU);
     }
 
     // check aux data parameter

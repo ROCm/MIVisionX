@@ -1,20 +1,13 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from math import sqrt
-import torch
 import random
-import itertools
-import os
 from amd.rocal.plugin.pytorch import RALIClassificationIterator
-import cv2
-
 
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
 import sys
-import numpy as np
 
 def draw_patches(img,idx):
     #image is expected as a tensor, bboxes as numpy
@@ -26,19 +19,18 @@ def draw_patches(img,idx):
 
 
 def main():
-    if  len(sys.argv) < 6:
-        print ('Please pass image_folder augmentation_number output_image cpu/gpu batch_size')
+    if  len(sys.argv) < 5:
+        print ('Please pass image_folder augmentation_number cpu/gpu batch_size')
         exit(0)
     data_path = sys.argv[1]
     augmentation_num = int(sys.argv[2])
-    output_img = sys.argv[3]
 
-    if(sys.argv[4] == "cpu"):
+    if(sys.argv[3] == "cpu"):
         _rali_cpu = True
     else:
         _rali_cpu = False
 
-    bs = int(sys.argv[5])
+    bs = int(sys.argv[4])
     nt = 1
     di = 0
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
@@ -53,13 +45,12 @@ def main():
     rali_cpu= True
     rali_device = 'cpu' if rali_cpu else 'gpu'
     decoder_device = 'cpu' if rali_cpu else 'mixed'
-    device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
-    host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
+
     crop_size = 300
 
     with pipe:
         jpegs, labels = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
-        images = fn.decoders.image(jpegs, file_root=data_path, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
+        images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
         # images = fn.decoders.image_random_crop(jpegs, device=decoder_device, output_type=types.RGB,
         #                                             device_memory_padding=device_memory_padding,
         #                                             host_memory_padding=host_memory_padding,

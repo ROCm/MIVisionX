@@ -114,9 +114,8 @@ def main():
         _rali_cpu = False
     bs = int(sys.argv[4])
     display = sys.argv[5]
-    nt = 1
-    di = 0
-    crop_size = 300
+    num_threads = 1
+    device_id = 0
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     def coco_anchors(): # Should be Tensor of floats in ltrb format - input - Mx4 where M="No of anchor boxes"
         fig_size = 300
@@ -155,7 +154,7 @@ def main():
 
         return dboxes_ltrb
     default_boxes = coco_anchors().numpy().flatten().tolist()
-    pipe = Pipeline(batch_size=bs, num_threads=1,device_id=0, seed=random_seed, rali_cpu=_rali_cpu)
+    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=device_id, seed=random_seed, rali_cpu=_rali_cpu)
 
     with pipe:
         jpegs_dummy , labels, bboxes= fn.readers.coco(

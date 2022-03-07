@@ -1,6 +1,5 @@
 from amd.rocal.plugin.tf import RALIIterator
 from amd.rocal.pipeline import Pipeline
-import amd.rocal.ops as ops
 import amd.rocal.types as types
 import sys
 import amd.rocal.fn as fn
@@ -15,8 +14,8 @@ def draw_patches(img,idx):
     cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
 
 def main():
-    if  len(sys.argv) < 5:
-        print ('Please pass the <TensorFlowrecord> <cpu/gpu> <batch_size> <oneHotLabels=0/1> <display = True/False>')
+    if  len(sys.argv) < 4:
+        print ('Please pass the <TensorFlowrecord> <cpu/gpu> <batch_size> <oneHotLabels=0/1>')
         exit(0)
     imagePath = sys.argv[1]
     if(sys.argv[2] == "cpu"):
@@ -25,10 +24,8 @@ def main():
         raliCPU = False
     bs = int(sys.argv[3])
     oneHotLabel = int(sys.argv[4])
-    display = sys.argv[5]
     nt = 1
     di = 0
-    cropSize = 224
     TFRecordReaderType = 0
     featureKeyMap = {
         'image/encoded':'image/encoded',

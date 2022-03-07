@@ -1,7 +1,6 @@
 import sys
 from amd.rocal.plugin.pytorch import RALIClassificationIterator
 from amd.rocal.pipeline import Pipeline
-import amd.rocal.ops as ops
 import amd.rocal.types as types
 import amd.rocal.fn as fn
 import os

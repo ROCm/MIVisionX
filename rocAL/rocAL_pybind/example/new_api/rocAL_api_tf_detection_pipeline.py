@@ -1,6 +1,5 @@
 from amd.rocal.plugin.tf import RALIIterator
 from amd.rocal.pipeline import Pipeline
-import amd.rocal.ops as ops
 import amd.rocal.types as types
 import sys
 import tensorflow as tf
@@ -60,7 +59,6 @@ def main():
     bs = int(sys.argv[4])
     nt = 1
     di = 0
-    cropSize = 320
     TFRecordReaderType = 1
     featureKeyMap = {
         'image/encoded': 'image/encoded',

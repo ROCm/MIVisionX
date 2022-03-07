@@ -22,7 +22,6 @@ class RALIGenericImageIterator(object):
 
     def __next__(self):
         if(self.loader.isEmpty()):
-            timing_info = self.loader.Timing_Info()
             raise StopIteration
 
         if self.loader.run() != 0:
@@ -62,14 +61,15 @@ class RALIGenericIterator(object):
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
-        if self.loader._name ==None:
+        if self.loader._name is None:
             self.loader._name= self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
         if self.tensor_dtype == types.FLOAT:
-            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float32")
+            self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
         elif self.tensor_dtype == types.FLOAT16:
-            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float16")
+            self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
+
         # self.labels = np.zeros((self.bs),dtype = "int32")
         if(self.loader._oneHotEncoding == True):
             self.labels = np.zeros((self.bs)*(self.loader._numOfClasses),dtype = "int32")
@@ -85,7 +85,6 @@ class RALIGenericIterator(object):
 
     def __next__(self):
         if(b.isEmpty(self.loader._handle)):
-            timing_info = b.getTimingInfo(self.loader._handle)
             self.reset()
             raise StopIteration
 
@@ -93,10 +92,8 @@ class RALIGenericIterator(object):
             self.reset()
             raise StopIteration
 
-        if(types.NCHW == self.tensor_format):
-            self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        else:
-            self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+        self.loader.copyToTensor(
+            self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
 
         if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):
             self.lis = []  # Empty list for bboxes
@@ -129,7 +126,7 @@ class RALIGenericIterator(object):
                 self.lis.append(self.bb_2d_numpy)
 
                 if self.display:
-                    img = torch.from_numpy(self.out)
+                    img = (self.out)
                     draw_patches(img[i], i, self.bb_2d_numpy)
 
                 sum_count = sum_count +count
@@ -148,10 +145,7 @@ class RALIGenericIterator(object):
             self.labels_padded = torch.LongTensor([row + [0] * (max_cols1 - len(row)) for batch in self.labels_padded for row in batch])
             self.labels_padded = self.labels_padded.view(-1, max_rows1, max_cols1)
 
-            if self.tensor_dtype == types.FLOAT:
-                return torch.from_numpy(self.out),self.bb_padded, self.labels_padded
-            elif self.tensor_dtype == types.FLOAT16:
-                return torch.from_numpy(self.out.astype(np.float16)),self.bb_padded, self.labels_padded
+            return self.out,self.bb_padded, self.labels_padded
 
         else:
             if(self.loader._oneHotEncoding == True):
@@ -166,10 +160,7 @@ class RALIGenericIterator(object):
                 self.loader.getImageLabels(self.labels)
                 self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
 
-            if self.tensor_dtype == types.FLOAT:
-                return torch.from_numpy(self.out), self.labels_tensor
-            elif self.tensor_dtype == types.FLOAT16:
-                return torch.from_numpy(self.out.astype(np.float16)), self.labels_tensor
+            return self.out, self.labels_tensor
 
     def reset(self):
         b.raliResetLoaders(self.loader._handle)

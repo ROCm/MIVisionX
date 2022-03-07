@@ -1,4 +1,3 @@
-from numpy.core.fromnumeric import trace
 import rali_pybind as b
 import amd.rocal.types as types
 import numpy as np

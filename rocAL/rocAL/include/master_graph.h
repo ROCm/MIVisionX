@@ -40,13 +40,14 @@ THE SOFTWARE.
 #include "meta_data_graph.h"
 #if ENABLE_HIP
 #include "device_manager_hip.h"
+#include "box_encoder_hip.h"
 #endif
 #include "randombboxcrop_meta_data_reader.h"
 #define MAX_STRING_LENGTH 100
 class MasterGraph
 {
 public:
-    enum class Status { OK = 0,  NOT_RUNNING = 1, NO_MORE_DATA = 2, NOT_IMPLEMENTED };
+    enum class Status { OK = 0,  NOT_RUNNING = 1, NO_MORE_DATA = 2, NOT_IMPLEMENTED = 3, INVALID_ARGUMENTS };
     MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads, size_t prefetch_queue_depth, RaliTensorDataType output_tensor_data_type);
     ~MasterGraph();
     Status reset();
@@ -107,6 +108,9 @@ public:
     void set_sequence_reader_output() { _is_sequence_reader_output = true; }
     void set_sequence_batch_size(size_t sequence_length) { _sequence_batch_size = _user_batch_size * sequence_length; }
     void set_sequence_batch_ratio() { _sequence_batch_ratio = _sequence_batch_size / _internal_batch_size; }
+    Status get_bbox_encoded_buffers(float **boxes_buf_ptr, int **labels_buf_ptr, size_t num_encoded_boxes);
+    size_t bounding_box_batch_count(int* buf, pMetaDataBatch meta_data_batch);
+
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -177,12 +181,16 @@ private:
     size_t _sequence_batch_ratio; //!< Indicates the _user_to_internal_batch_ratio when sequence reader outputs are required
     bool _is_sequence_reader_output = false; //!< Set to true if Sequence Reader is invoked.
     // box encoder variables
-    bool _is_box_encoder = false; //bool variable to set the box encoder
-    std::vector<float>_anchors; // Anchors to be used for encoding, as the array of floats is in the ltrb format of size 8732x4
+    BoxEncoderGpu *_box_encoder_gpu;
+    bool _is_box_encoder = false; //bool variable to set the box encoder 
+    std::vector<float> _anchors; // Anchors to be used for encoding, as the array of floats is in the ltrb format of size 8732x4
+    size_t _num_anchors;       // number of bbox anchors
     float _criteria = 0.5; // Threshold IoU for matching bounding boxes with anchors. The value needs to be between 0 and 1.
     float _scale; // Rescales the box and anchor values before the offset is calculated (for example, to return to the absolute values).
     bool _offset; // Returns normalized offsets ((encoded_bboxes*scale - anchors*scale) - mean) / stds in EncodedBBoxes that use std and the mean and scale arguments if offset="True"
+    size_t _encoded_labels_byte_size, encoded_bboxes_byte_size;
     std::vector<float> _means, _stds; //_means:  [x y w h] mean values for normalization _stds: [x y w h] standard deviations for offset normalization.
+    TimingDBG _rb_block_if_empty_time, _rb_block_if_full_time;
 };
 
 template <typename T>

@@ -284,6 +284,9 @@ class Pipeline(object):
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
         b.raliCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)
 
+    def getEncodedBoxesAndLables(self, batch_size, num_anchors):
+        return b.raliGetEncodedBoxesAndLables(self._handle, batch_size, num_anchors)
+
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
 

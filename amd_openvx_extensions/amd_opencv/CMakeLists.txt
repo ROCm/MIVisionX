@@ -101,7 +101,7 @@ target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
 target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
 
 install(TARGETS vx_opencv DESTINATION lib)
-install(FILES include/vx_ext_opencv.h DESTINATION include)
+install(FILES include/vx_ext_opencv.h DESTINATION include/mivisionx)
 
 if(${OpenCV_VERSION_MAJOR} EQUAL 4)
 	target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=1)

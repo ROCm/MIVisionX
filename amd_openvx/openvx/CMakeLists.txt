@@ -147,11 +147,11 @@ else()
 endif()
 
 configure_file("${PROJECT_SOURCE_DIR}/include/openvx_backend.h.in" "${PROJECT_BINARY_DIR}/include/openvx_backend.h")
-install(FILES ${PROJECT_BINARY_DIR}/include/openvx_backend.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+install(FILES ${PROJECT_BINARY_DIR}/include/openvx_backend.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/mivisionx)
 
 install(TARGETS openvx DESTINATION lib)
 install(TARGETS vxu DESTINATION lib)
-install(FILES include/vx_ext_amd.h DESTINATION include)
+install(FILES include/vx_ext_amd.h DESTINATION include/mivisionx)
 install (FILES
             include/VX/vx.h
             include/VX/vx_api.h
@@ -173,7 +173,7 @@ install (FILES
             include/VX/vx_types.h
             include/VX/vx_vendors.h
             include/VX/vxu.h
-         DESTINATION include/VX)
+         DESTINATION include/mivisionx/VX)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")

@@ -88,7 +88,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
 endif()
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
-install(FILES include/vx_amd_media.h DESTINATION include)
+install(FILES include/vx_amd_media.h DESTINATION include/mivisionx)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

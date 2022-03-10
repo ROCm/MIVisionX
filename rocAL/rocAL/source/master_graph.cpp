@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include "meta_data_reader_factory.h"
 #include "meta_data_graph_factory.h"
 #include "randombboxcrop_meta_data_reader_factory.h"
+#include "node_copy.h"
 
 using half_float::half;
 
@@ -121,6 +122,7 @@ MasterGraph::MasterGraph(size_t batch_size, RocalAffinity affinity, int gpu_id, 
         _cpu_threads(cpu_threads),
 #if ENABLE_HIP
         _mem_type ((_affinity == RocalAffinity::GPU) ? RocalMemType::HIP : RocalMemType::HOST),
+        _box_encoder_gpu(nullptr),
 #else
         _mem_type ((_affinity == RocalAffinity::GPU) ? RocalMemType::OCL : RocalMemType::HOST),
 #endif
@@ -131,7 +133,9 @@ MasterGraph::MasterGraph(size_t batch_size, RocalAffinity affinity, int gpu_id, 
         _internal_batch_size(compute_optimum_internal_batch_size(batch_size, affinity)),
         _user_to_internal_batch_ratio (_user_batch_size/_internal_batch_size),
         _prefetch_queue_depth(prefetch_queue_depth),
-        _out_data_type(output_tensor_data_type)
+        _out_data_type(output_tensor_data_type),
+        _rb_block_if_empty_time("Ring Buffer Block IF Empty Time"),
+        _rb_block_if_full_time("Ring Buffer Block IF Full Time")
 {
     try {
         vx_status status;
@@ -217,7 +221,9 @@ MasterGraph::run()
         return MasterGraph::Status::NO_MORE_DATA;
     }
 
+    _rb_block_if_empty_time.start();
     _ring_buffer.block_if_empty();// wait here if the user thread (caller of this function) is faster in consuming the processed images compare to th output routine in producing them
+    _rb_block_if_empty_time.end();
 
     if(_first_run)
     {
@@ -280,8 +286,10 @@ MasterGraph::build()
     allocate_output_tensor();
 #if ENABLE_HIP
     _ring_buffer.initHip(_mem_type, _device.resources(), output_byte_size(), _output_images.size());
+    if (_is_box_encoder) _ring_buffer.initBoxEncoderMetaData(_mem_type, _user_batch_size*_num_anchors*4*sizeof(float), _user_batch_size*_num_anchors*sizeof(int));
 #else
     _ring_buffer.init(_mem_type, _device.resources(), output_byte_size(), _output_images.size());
+    if (_is_box_encoder) _ring_buffer.initBoxEncoderMetaData(_mem_type, _user_batch_size*_num_anchors*4*sizeof(float), _user_batch_size*_num_anchors*sizeof(int));
 #endif
     create_single_graph();
     start_processing();
@@ -317,6 +325,23 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
     }
 
     return output;
+}
+
+void
+MasterGraph::set_output(Image* output_image)
+{
+    if(output_image->is_handle_set() == false)
+    {
+        if (output_image->create_from_handle(_context) != 0)
+                THROW("Cannot create the image from handle")
+        _output_images.push_back(output_image);
+    }
+    else
+    {
+        // Decoder case only
+        auto actual_output = create_image(output_image->info(), true);
+        add_node<CopyNode>({output_image}, {actual_output});
+    }
 }
 
 void MasterGraph::release()
@@ -856,7 +881,6 @@ MasterGraph::copy_output(unsigned char *out_ptr)
 
 void MasterGraph::output_routine()
 {
-    _process_time.start();
     INFO("Output routine started with "+TOSTR(_remaining_count) + " to load");
     size_t batch_ratio = _is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio;
     if(!_is_sequence_reader_output) // _sequence_batch_ratio and _user_to_internal_batch_ratio is different. Will be removed in TensorSupport.
@@ -887,9 +911,12 @@ void MasterGraph::output_routine()
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
+            _rb_block_if_full_time.start();
             // _ring_buffer.get_write_buffers() is blocking and blocks here until user uses processed image by calling run() and frees space in the ring_buffer
             auto write_buffers = _ring_buffer.get_write_buffers();
+            _rb_block_if_full_time.end();
 
+            _process_time.start();
             // When executing on CPU the internal batch count can be smaller than the user batch count
             // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
             // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
@@ -962,12 +989,22 @@ void MasterGraph::output_routine()
             _bencode_time.start();
             if(_is_box_encoder )
             {
-                _meta_data_graph->update_box_encoder_meta_data(&_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);
+#if ENABLE_HIP
+                if(_mem_type == RocalMemType::HIP){
+                    // get bbox encoder read buffers
+                    auto bbox_encode_write_buffers = _ring_buffer.get_box_encode_write_buffers();
+                    if (_box_encoder_gpu) _box_encoder_gpu->Run(full_batch_meta_data, (float *)bbox_encode_write_buffers.first, (int *)bbox_encode_write_buffers.second);
+                    //_meta_data_graph->update_box_encoder_meta_data_gpu(_anchors_gpu_buf, num_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);
+                }else
+#endif
+                    _meta_data_graph->update_box_encoder_meta_data(&_anchors, full_batch_meta_data, _criteria, _offset, _scale, _means, _stds);
             }
             _bencode_time.end();
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
             _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
         }
+        _process_time.end();
+
     }
     catch (const std::exception &e)
     {
@@ -975,7 +1012,6 @@ void MasterGraph::output_routine()
         _processing = false;
         _ring_buffer.release_all_blocked_calls();
     }
-    _process_time.end();
 }
 
 #ifdef ROCAL_VIDEO
@@ -1008,8 +1044,11 @@ void MasterGraph::output_routine_video()
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
+
             // _ring_buffer.get_write_buffers() is blocking and blocks here until user uses processed image by calling run() and frees space in the ring_buffer
+            _rb_block_if_full_time.start();
             auto write_buffers = _ring_buffer.get_write_buffers();
+            _rb_block_if_full_time.end();
 
             // When executing on CPU the internal batch count can be smaller than the user batch count
             // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
@@ -1139,6 +1178,7 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string());
+    _reader_config = config.reader_type();
     config.set_out_img_width(pose_output_width);
     config.set_out_img_height(pose_output_height);
     _meta_data_graph = create_meta_data_graph(config);
@@ -1160,6 +1200,7 @@ MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *sourc
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(label_type, reader_type, source_path, feature_key_map);
+    _reader_config = config.reader_type();
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -1176,6 +1217,7 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
+    _reader_config = config.reader_type();
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
@@ -1191,6 +1233,7 @@ MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, 
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(MetaDataType::Label, reader_type, source_path, std::map<std::string, std::string>(), std::string(), sequence_length, frame_step, frame_stride);
+    _reader_config = config.reader_type();
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     if(!file_list_frame_num)
@@ -1231,7 +1274,7 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
     _is_random_bbox_crop = true;
     RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts, seed);
     _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
-    _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
+    _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader, _reader_config);
     if (_random_bbox_crop_cords_data)
         THROW("Metadata can only have a single output")
     else
@@ -1241,12 +1284,21 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
 void MasterGraph::box_encoder(std::vector<float> &anchors, float criteria, const std::vector<float> &means, const std::vector<float> &stds, bool offset, float scale)
 {
     _is_box_encoder = true;
+    _num_anchors = anchors.size() / 4;
+    std::vector<float> inv_stds = {(float)(1./stds[0]), (float)(1./stds[1]), (float)(1./stds[2]), (float)(1./stds[3])};
+
+#if ENABLE_HIP
+    // Intialize gpu box encoder if _mem_type is HIP
+    if(_mem_type == RocalMemType::HIP) {
+        _box_encoder_gpu = new BoxEncoderGpu(_user_batch_size, anchors, criteria, means, inv_stds, offset, scale, _device.resources().hip_stream, _device.resources().dev_prop.canMapHostMemory);
+        return;
+    }
+#endif
     _offset = offset;
     _anchors = anchors;
     _scale = scale;
     _means = means;
     _stds = stds;
-
 }
 
 MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)
@@ -1254,6 +1306,7 @@ MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const ch
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(label_type, reader_type, source_path);
+    _reader_config = config.reader_type();
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -1270,6 +1323,7 @@ MetaDataBatch * MasterGraph::create_caffe_lmdb_record_meta_data_reader(const cha
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(label_type, reader_type, source_path);
+    _reader_config = config.reader_type();
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -1286,6 +1340,7 @@ MetaDataBatch * MasterGraph::create_cifar10_label_reader(const char *source_path
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, std::map<std::string, std::string>(), file_prefix);
+    _reader_config = config.reader_type();
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
@@ -1303,6 +1358,18 @@ const std::pair<ImageNameBatch,pMetaDataBatch>& MasterGraph::meta_data()
         THROW("No meta data has been loaded")
     return _ring_buffer.get_meta_data();
 }
+
+size_t MasterGraph::bounding_box_batch_count(int *buf, pMetaDataBatch meta_data_batch)
+{
+    size_t size = 0;
+    for(unsigned i = 0; i < _user_batch_size; i++)
+    {
+        buf[i] = _is_box_encoder? _num_anchors: meta_data_batch->get_bb_labels_batch()[i].size();
+        size += buf[i];
+    }
+    return size;
+}
+
 
 size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, RocalAffinity affinity)
 {
@@ -1529,5 +1596,19 @@ MasterGraph::copy_out_tensor_planar(void *out_ptr, RocalTensorFormat format, flo
         }
     }
     _convert_time.end();
+    return Status::OK;
+}
+
+MasterGraph::Status
+MasterGraph::get_bbox_encoded_buffers(float **boxes_buf_ptr, int **labels_buf_ptr, size_t num_encoded_boxes)
+{
+    if (_is_box_encoder) {
+      if (num_encoded_boxes != _user_batch_size*_num_anchors) {
+          THROW("num_encoded_boxes is not correct");
+      }
+      auto encoded_boxes_and_lables = _ring_buffer.get_box_encode_read_buffers();
+      *boxes_buf_ptr = (float *) encoded_boxes_and_lables.first;
+      *labels_buf_ptr = (int *) encoded_boxes_and_lables.second;
+    }
     return Status::OK;
 }

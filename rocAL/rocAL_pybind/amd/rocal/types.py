@@ -34,7 +34,9 @@ from rali_pybind.types import RGB_PLANAR
 from rali_pybind.types import NHWC
 from rali_pybind.types import NCHW
 
-
+#     RaliDecodeDevice
+from rali_pybind.types import HARDWARE_DECODE
+from rali_pybind.types import SOFTWARE_DECODE
 
 
 
@@ -65,7 +67,10 @@ _known_types={
 	BGR : ("BGR", BGR),
     RGB : ("RGB", RGB),
 	GRAY : ("GRAY", GRAY),
-    RGB_PLANAR : ("RGB_PLANAR", RGB_PLANAR)
+    RGB_PLANAR : ("RGB_PLANAR", RGB_PLANAR),
+
+    HARDWARE_DECODE : ("HARDWARE_DECODE", HARDWARE_DECODE),
+    SOFTWARE_DECODE : ("SOFTWARE_DECODE", SOFTWARE_DECODE)
 }
 
 

@@ -35,6 +35,7 @@ public:
     void release() override;
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
+    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override{ return _map_content;}
     TextFileMetaDataReader();
     ~TextFileMetaDataReader() override { delete _output; }
 private:
@@ -42,6 +43,6 @@ private:
     void read_files(const std::string& _path);
     bool exists(const std::string &image_name);
     void add(std::string image_name, int label);
-    std::map<std::string, std::shared_ptr<Label>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
     std::string _path;
 };

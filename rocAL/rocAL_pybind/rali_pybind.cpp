@@ -4,13 +4,13 @@
 #include <iostream>
 #include <pybind11/embed.h>
 #include <pybind11/eval.h>
-#include "rali_api_types.h"
-#include "rali_api.h"
-#include "rali_api_parameters.h"
-#include "rali_api_data_loaders.h"
-#include "rali_api_augmentation.h"
-#include "rali_api_data_transfer.h"
-#include "rali_api_info.h"
+#include "rocal_api_types.h"
+#include "rocal_api.h"
+#include "rocal_api_parameters.h"
+#include "rocal_api_data_loaders.h"
+#include "rocal_api_augmentation.h"
+#include "rocal_api_data_transfer.h"
+#include "rocal_api_info.h"
 namespace py = pybind11;
 
 using float16 = half_float::half;
@@ -32,9 +32,9 @@ namespace pybind11
         };
     }
 }  // namespace pybind11::detail
-namespace rali{
+namespace rocal{
     using namespace pybind11::literals; // NOLINT
-    // PYBIND11_MODULE(rali_backend_impl, m) {
+    // PYBIND11_MODULE(rocal_backend_impl, m) {
     static void *ctypes_void_ptr(const py::object &object)
     {
         auto ptr_as_int = getattr(object, "value", py::none());
@@ -47,40 +47,40 @@ namespace rali{
         return ptr;
     }
 
-    py::object wrapper(RaliContext context, py::array_t<unsigned char> array)
+    py::object wrapper(RocalContext context, py::array_t<unsigned char> array)
     {
         auto buf = array.request();
         unsigned char* ptr = (unsigned char*) buf.ptr;
         // call pure C++ function
-        int status = raliCopyToOutput(context,ptr,buf.size);
+        int status = rocalCopyToOutput(context,ptr,buf.size);
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_image_name_length(RaliContext context, py::array_t<int> array)
+    py::object wrapper_image_name_length(RocalContext context, py::array_t<int> array)
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        int length =raliGetImageNameLen(context,ptr);
+        int length =rocalGetImageNameLen(context,ptr);
 
         return py::cast(length);
     }
 
-    py::object wrapper_image_name(RaliContext context,  int array_len)
+    py::object wrapper_image_name(RocalContext context,  int array_len)
     {
         py::array_t<char> array;
         auto buf = array.request();
         char* ptr = (char*) buf.ptr;
         ptr = (char *)malloc(array_len * sizeof(char));
         // call pure C++ function
-        raliGetImageName(context,ptr);
+        rocalGetImageName(context,ptr);
         std::string s(ptr);
         free(ptr);
         return py::bytes(s);
     }
 
-    py::object wrapper_tensor(RaliContext context, py::object p,
-                                RaliTensorLayout tensor_format, RaliTensorOutputType tensor_output_type, float multiplier0,
+    py::object wrapper_tensor(RocalContext context, py::object p,
+                                RocalTensorLayout tensor_format, RocalTensorOutputType tensor_output_type, float multiplier0,
                                 float multiplier1, float multiplier2, float offset0,
                                 float offset1, float offset2,
                                 bool reverse_channels)
@@ -88,103 +88,103 @@ namespace rali{
         auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
 
-        int status = raliCopyToOutputTensor(context, ptr, tensor_format, tensor_output_type, multiplier0,
+        int status = rocalCopyToOutputTensor(context, ptr, tensor_format, tensor_output_type, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels);
         // std::cerr<<"\n Copy failed with status :: "<<status;
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_label_copy(RaliContext context, py::array_t<int> array)
+    py::object wrapper_label_copy(RocalContext context, py::array_t<int> array)
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        raliGetImageLabels(context,ptr);
+        rocalGetImageLabels(context,ptr);
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_image_id(RaliContext context, py::array_t<int> array)
+    py::object wrapper_image_id(RocalContext context, py::array_t<int> array)
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        raliGetImageId(context,ptr);
+        rocalGetImageId(context,ptr);
         return py::cast<py::none>(Py_None);
     }
-    py::object wrapper_labels_BB_count_copy(RaliContext context, py::array_t<int> array)
+    py::object wrapper_labels_BB_count_copy(RocalContext context, py::array_t<int> array)
 
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        int count =raliGetBoundingBoxCount(context,ptr);
+        int count =rocalGetBoundingBoxCount(context,ptr);
 
         return py::cast(count);
     }
 
 
-    py::object wrapper_BB_label_copy(RaliContext context, py::array_t<int> array)
+    py::object wrapper_BB_label_copy(RocalContext context, py::array_t<int> array)
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        raliGetBoundingBoxLabel(context,ptr);
+        rocalGetBoundingBoxLabel(context,ptr);
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_encoded_bbox_label(RaliContext context, py::array_t<float>bboxes_array, py::array_t<int>labels_array)
+    py::object wrapper_encoded_bbox_label(RocalContext context, py::array_t<float>bboxes_array, py::array_t<int>labels_array)
     {
         auto bboxes_buf = bboxes_array.request();
         float* bboxes_ptr = (float*) bboxes_buf.ptr;
         auto labels_buf = labels_array.request();
         int* labels_ptr = (int*) labels_buf.ptr;
         // call pure C++ function
-        raliCopyEncodedBoxesAndLables(context, bboxes_ptr , labels_ptr);
+        rocalCopyEncodedBoxesAndLables(context, bboxes_ptr , labels_ptr);
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_BB_cord_copy(RaliContext context, py::array_t<float> array)
+    py::object wrapper_BB_cord_copy(RocalContext context, py::array_t<float> array)
     {
         auto buf = array.request();
         float* ptr = (float*) buf.ptr;
         // call pure C++ function
-        raliGetBoundingBoxCords(context,ptr);
+        rocalGetBoundingBoxCords(context,ptr);
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_img_sizes_copy(RaliContext context, py::array_t<int> array)
+    py::object wrapper_img_sizes_copy(RocalContext context, py::array_t<int> array)
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        raliGetImageSizes(context,ptr);
+        rocalGetImageSizes(context,ptr);
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_one_hot_label_copy(RaliContext context, py::array_t<int> array , unsigned numOfClasses)
+    py::object wrapper_one_hot_label_copy(RocalContext context, py::array_t<int> array , unsigned numOfClasses)
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        raliGetOneHotImageLabels(context, ptr, numOfClasses);
+        rocalGetOneHotImageLabels(context, ptr, numOfClasses);
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_random_bbox_crop(RaliContext context, bool all_boxes_overlap, bool no_crop, RaliFloatParam p_aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attemps, RaliFloatParam p_scaling, int total_num_attempts )
+    py::object wrapper_random_bbox_crop(RocalContext context, bool all_boxes_overlap, bool no_crop, RocalFloatParam p_aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attemps, RocalFloatParam p_scaling, int total_num_attempts )
     {
         // auto buf = array.request();
         // int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        raliRandomBBoxCrop(context, all_boxes_overlap, no_crop, p_aspect_ratio, has_shape, crop_width, crop_height, num_attemps, p_scaling, total_num_attempts);
+        rocalRandomBBoxCrop(context, all_boxes_overlap, no_crop, p_aspect_ratio, has_shape, crop_width, crop_height, num_attemps, p_scaling, total_num_attempts);
         return py::cast<py::none>(Py_None);
     }
 
 
-    PYBIND11_MODULE(rali_pybind, m) {
-        m.doc() = "Python bindings for the C++ portions of RALI";
-        // rali_api.h
-        m.def("raliCreate",&raliCreate,"Creates context with the arguments sent and returns it",
+    PYBIND11_MODULE(rocal_pybind, m) {
+        m.doc() = "Python bindings for the C++ portions of ROCAL";
+        // rocal_api.h
+        m.def("rocalCreate",&rocalCreate,"Creates context with the arguments sent and returns it",
                 py::return_value_policy::reference,
                 py::arg("batch_size"),
                 py::arg("affinity"),
@@ -192,102 +192,110 @@ namespace rali{
                 py::arg("cpu_thread_count") = 1,
                 py::arg("prefetch_queue_depth") = 3,
                 py::arg("output_data_type") = 0);
-        m.def("raliVerify",&raliVerify);
-        m.def("raliRun",&raliRun);
-        m.def("raliRelease",&raliRelease);
-        // rali_api_types.h
+        m.def("rocalVerify",&rocalVerify);
+        m.def("rocalRun",&rocalRun);
+        m.def("rocalRelease",&rocalRelease);
+        // rocal_api_types.h
         py::class_<TimingInfo>(m, "TimingInfo")
             .def_readwrite("load_time",&TimingInfo::load_time)
             .def_readwrite("decode_time",&TimingInfo::decode_time)
             .def_readwrite("process_time",&TimingInfo::process_time)
             .def_readwrite("transfer_time",&TimingInfo::transfer_time);
         py::module types_m = m.def_submodule("types");
-        types_m.doc() = "Datatypes and options used by RALI";
-        py::enum_<RaliStatus>(types_m, "RaliStatus", "Status info")
-            .value("OK",RALI_OK)
-            .value("CONTEXT_INVALID",RALI_CONTEXT_INVALID)
-            .value("RUNTIME_ERROR",RALI_RUNTIME_ERROR)
-            .value("UPDATE_PARAMETER_FAILED",RALI_UPDATE_PARAMETER_FAILED)
-            .value("INVALID_PARAMETER_TYPE",RALI_INVALID_PARAMETER_TYPE)
+        types_m.doc() = "Datatypes and options used by ROCAL";
+        py::enum_<RocalStatus>(types_m, "RocalStatus", "Status info")
+            .value("OK",ROCAL_OK)
+            .value("CONTEXT_INVALID",ROCAL_CONTEXT_INVALID)
+            .value("RUNTIME_ERROR",ROCAL_RUNTIME_ERROR)
+            .value("UPDATE_PARAMETER_FAILED",ROCAL_UPDATE_PARAMETER_FAILED)
+            .value("INVALID_PARAMETER_TYPE",ROCAL_INVALID_PARAMETER_TYPE)
             .export_values();
-        py::enum_<RaliProcessMode>(types_m,"RaliProcessMode","Processing mode")
-            .value("GPU",RALI_PROCESS_GPU)
-            .value("CPU",RALI_PROCESS_CPU)
+        py::enum_<RocalProcessMode>(types_m,"RocalProcessMode","Processing mode")
+            .value("GPU",ROCAL_PROCESS_GPU)
+            .value("CPU",ROCAL_PROCESS_CPU)
             .export_values();
-        py::enum_<RaliTensorOutputType>(types_m,"RaliTensorOutputType","Tensor types")
-            .value("FLOAT",RALI_FP32)
-            .value("FLOAT16",RALI_FP16)
+        py::enum_<RocalTensorOutputType>(types_m,"RocalTensorOutputType","Tensor types")
+            .value("FLOAT",ROCAL_FP32)
+            .value("FLOAT16",ROCAL_FP16)
             .export_values();
-        py::enum_<RaliImageSizeEvaluationPolicy>(types_m,"RaliImageSizeEvaluationPolicy","Decode size policies")
-            .value("MAX_SIZE",RALI_USE_MAX_SIZE)
-            .value("USER_GIVEN_SIZE",RALI_USE_USER_GIVEN_SIZE)
-            .value("MOST_FREQUENT_SIZE",RALI_USE_MOST_FREQUENT_SIZE)
-            .value("MAX_SIZE_ORIG",RALI_USE_MAX_SIZE_RESTRICTED)
-            .value("USER_GIVEN_SIZE_ORIG",RALI_USE_USER_GIVEN_SIZE_RESTRICTED)
+        py::enum_<RocalImageSizeEvaluationPolicy>(types_m,"RocalImageSizeEvaluationPolicy","Decode size policies")
+            .value("MAX_SIZE",ROCAL_USE_MAX_SIZE)
+            .value("USER_GIVEN_SIZE",ROCAL_USE_USER_GIVEN_SIZE)
+            .value("MOST_FREQUENT_SIZE",ROCAL_USE_MOST_FREQUENT_SIZE)
+            .value("MAX_SIZE_ORIG",ROCAL_USE_MAX_SIZE_RESTRICTED)
+            .value("USER_GIVEN_SIZE_ORIG",ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED)
             .export_values();
-        py::enum_<RaliImageColor>(types_m,"RaliImageColor","Image type")
-            .value("RGB",RALI_COLOR_RGB24)
-            .value("BGR",RALI_COLOR_BGR24)
-            .value("GRAY",RALI_COLOR_U8)
-            .value("RGB_PLANAR", RALI_COLOR_RGB_PLANAR)
+        py::enum_<RocalImageColor>(types_m,"RocalLImageColor","Image type")
+            .value("RGB",ROCAL_COLOR_RGB24)
+            .value("BGR",ROCAL_COLOR_BGR24)
+            .value("GRAY",ROCAL_COLOR_U8)
+            .value("RGB_PLANAR", ROCAL_COLOR_RGB_PLANAR)
             .export_values();
-        py::enum_<RaliTensorLayout>(types_m,"RaliTensorLayout","Tensor layout type")
-            .value("NHWC",RALI_NHWC)
-            .value("NCHW",RALI_NCHW)
+        py::enum_<RocalTensorLayout>(types_m,"RocalTensorLayout","Tensor layout type")
+            .value("NHWC",ROCAL_NHWC)
+            .value("NCHW",ROCAL_NCHW)
             .export_values();
-        // rali_api_info.h
-        m.def("getOutputWidth",&raliGetOutputWidth);
-        m.def("getOutputHeight",&raliGetOutputHeight);
-        m.def("getOutputColorFormat",&raliGetOutputColorFormat);
-        m.def("getRemainingImages",&raliGetRemainingImages);
-        m.def("getOutputImageCount",&raliGetAugmentationBranchCount);
-        m.def("getImageWidth",&raliGetImageWidth);
-        m.def("getImageHeight",&raliGetImageHeight);
-        m.def("getImagePlanes",&raliGetImagePlanes);
+        py::enum_<RocalDecodeDevice>(types_m,"RocalDecodeDevice","Decode device type")
+            .value("HARDWARE_DECODE",ROCAL_HW_DECODE)
+            .value("SOFTWARE_DECODE",ROCAL_SW_DECODE)
+            .export_values();
+        // rocal_api_info.h
+        m.def("getOutputWidth",&rocalGetOutputWidth);
+        m.def("getOutputHeight",&rocalGetOutputHeight);
+        m.def("getOutputColorFormat",&rocalGetOutputColorFormat);
+        m.def("getRemainingImages",&rocalGetRemainingImages);
+        m.def("getOutputImageCount",&rocalGetAugmentationBranchCount);
+        m.def("getImageWidth",&rocalGetImageWidth);
+        m.def("getImageHeight",&rocalGetImageHeight);
+        m.def("getImagePlanes",&rocalGetImagePlanes);
         m.def("getImageName",&wrapper_image_name);
         m.def("getImageId", &wrapper_image_id);
         m.def("getImageNameLen",&wrapper_image_name_length);
-        m.def("getStatus",&raliGetStatus);
-        m.def("labelReader",&raliCreateLabelReader);
-        m.def("TFReader",&raliCreateTFReader);
-        m.def("TFReaderDetection",&raliCreateTFReaderDetection);
-        m.def("CaffeReader",&raliCreateCaffeLMDBLabelReader);
-        m.def("Caffe2Reader",&raliCreateCaffe2LMDBLabelReader);
-        m.def("CaffeReaderDetection",&raliCreateCaffeLMDBReaderDetection);
-        m.def("Caffe2ReaderDetection",&raliCreateCaffe2LMDBReaderDetection);
-        m.def("Cifar10LabelReader",&raliCreateTextCifar10LabelReader);
+        m.def("getStatus",&rocalGetStatus);
+        m.def("setOutputImages",&rocalSetOutputs);
+        m.def("labelReader",&rocalCreateLabelReader);
+        m.def("TFReader",&rocalCreateTFReader);
+        m.def("TFReaderDetection",&rocalCreateTFReaderDetection);
+        m.def("CaffeReader",&rocalCreateCaffeLMDBLabelReader);
+        m.def("Caffe2Reader",&rocalCreateCaffe2LMDBLabelReader);
+        m.def("CaffeReaderDetection",&rocalCreateCaffeLMDBReaderDetection);
+        m.def("Caffe2ReaderDetection",&rocalCreateCaffe2LMDBReaderDetection);
+        m.def("Cifar10LabelReader",&rocalCreateTextCifar10LabelReader);
         m.def("RandomBBoxCrop",&wrapper_random_bbox_crop);
-        m.def("COCOReader",&raliCreateCOCOReader);
+        m.def("COCOReader",&rocalCreateCOCOReader);
+        m.def("VideoMetaDataReader",&rocalCreateVideoLabelReader);
         m.def("getImageLabels",&wrapper_label_copy);
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
-        m.def("raliCopyEncodedBoxesAndLables",&wrapper_encoded_bbox_label);
+        m.def("rocalCopyEncodedBoxesAndLables",&wrapper_encoded_bbox_label);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
         m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy );
-        m.def("isEmpty",&raliIsEmpty);
-        m.def("BoxEncoder",&raliBoxEncoder);
-        m.def("getTimingInfo",raliGetTimingInfo);
-        // rali_api_parameter.h
-        m.def("setSeed",&raliSetSeed);
-        m.def("getSeed",&raliGetSeed);
-        m.def("CreateIntUniformRand",&raliCreateIntUniformRand);
-        m.def("CreateFloatUniformRand",&raliCreateFloatUniformRand);
+        m.def("isEmpty",&rocalIsEmpty);
+        m.def("BoxEncoder",&rocalBoxEncoder);
+        m.def("getTimingInfo",rocalGetTimingInfo);
+        // rocal_api_parameter.h
+        m.def("setSeed",&rocalSetSeed);
+        m.def("getSeed",&rocalGetSeed);
+        m.def("CreateIntUniformRand",&rocalCreateIntUniformRand);
+        m.def("CreateFloatUniformRand",&rocalCreateFloatUniformRand);
         m.def("CreateIntRand",[](std::vector<int> values, std::vector<double> frequencies){
-            return raliCreateIntRand(values.data(), frequencies.data(), values.size());
+            return rocalCreateIntRand(values.data(), frequencies.data(), values.size());
         });
-        m.def("CreateFloatRand",&raliCreateFloatRand);
-        m.def("CreateIntParameter",&raliCreateIntParameter);
-        m.def("CreateFloatParameter",&raliCreateFloatParameter);
-        m.def("UpdateIntRand", &raliUpdateIntUniformRand);
-        m.def("UpdateFloatRand", &raliUpdateFloatUniformRand);
-        m.def("UpdateIntParameter", &raliUpdateIntParameter);
-        m.def("UpdateFloatParameter", &raliUpdateFloatParameter);
-        // rali_api_data_transfer.h
-        m.def("raliCopyToOutput",&wrapper);
-        m.def("raliCopyToOutputTensor",&wrapper_tensor);
-        // rali_api_data_loaders.h
-         m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
+        m.def("CreateFloatRand",&rocalCreateFloatRand);
+        m.def("CreateIntParameter",&rocalCreateIntParameter);
+        m.def("CreateFloatParameter",&rocalCreateFloatParameter);
+        m.def("UpdateIntRand", &rocalUpdateIntUniformRand);
+        m.def("UpdateFloatRand", &rocalUpdateFloatUniformRand);
+        m.def("UpdateIntParameter", &rocalUpdateIntParameter);
+        m.def("UpdateFloatParameter", &rocalUpdateFloatParameter);
+        m.def("GetIntValue",&rocalGetIntValue);
+        m.def("GetFloatValue",&rocalGetFloatValue);
+        // rocal_api_data_transfer.h
+        m.def("rocalCopyToOutput",&wrapper);
+        m.def("rocalCopyToOutputTensor",&wrapper_tensor);
+        // rocal_api_data_loaders.h
+        m.def("COCO_ImageDecoderSlice",&rocalJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -297,7 +305,7 @@ namespace rali{
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0,
             py::arg("area_factor") = NULL,
@@ -305,7 +313,7 @@ namespace rali{
             py::arg("x_drift_factor") = NULL,
             py::arg("y_drift_factor") = NULL
             );
-         m.def("COCO_ImageDecoderSliceShard",&raliJpegCOCOFileSourcePartialSingleShard,"Reads file from the source given and decodes it according to the policy",
+         m.def("COCO_ImageDecoderSliceShard",&rocalJpegCOCOFileSourcePartialSingleShard,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -316,7 +324,7 @@ namespace rali{
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0,
             py::arg("area_factor") = NULL,
@@ -324,7 +332,7 @@ namespace rali{
             py::arg("x_drift_factor") = NULL,
             py::arg("y_drift_factor") = NULL
             );
-        m.def("ImageDecoder",&raliJpegFileSource,"Reads file from the source given and decodes it according to the policy",
+        m.def("ImageDecoder",&rocalJpegFileSource,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -333,11 +341,11 @@ namespace rali{
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0,
             py::arg("dec_type") = 0);
-        m.def("ImageDecoderShard",&raliJpegFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
+        m.def("ImageDecoderShard",&rocalJpegFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -347,10 +355,10 @@ namespace rali{
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("COCO_ImageDecoder",&raliJpegCOCOFileSource,"Reads file from the source given and decodes it according to the policy",
+        m.def("COCO_ImageDecoder",&rocalJpegCOCOFileSource,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -360,10 +368,10 @@ namespace rali{
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("COCO_ImageDecoderShard",&raliJpegCOCOFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
+        m.def("COCO_ImageDecoderShard",&rocalJpegCOCOFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -374,74 +382,76 @@ namespace rali{
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("TF_ImageDecoder",&raliJpegTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
+        m.def("TF_ImageDecoder",&rocalJpegTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
             py::return_value_policy::reference,
             py::arg("p_context"),
             py::arg("source_path"),
-            py::arg("rali_color_format"),
+            py::arg("rocal_color_format"),
             py::arg("internal_shard_count"),
             py::arg("is_output"),
             py::arg("user_key_for_encoded"),
             py::arg("user_key_for_filename"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("Caffe_ImageDecoder",&raliJpegCaffeLMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
+        m.def("Caffe_ImageDecoder",&rocalJpegCaffeLMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
             py::return_value_policy::reference,
             py::arg("p_context"),
             py::arg("source_path"),
-            py::arg("rali_color_format"),
+            py::arg("rocal_color_format"),
             py::arg("num_threads"),
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("Caffe_ImageDecoderShard",&raliJpegCaffeLMDBRecordSourceSingleShard, "Reads file from the source given and decodes it according to the shard id and number of shards",
+        m.def("Caffe_ImageDecoderShard",&rocalJpegCaffeLMDBRecordSourceSingleShard, "Reads file from the source given and decodes it according to the shard id and number of shards",
             py::return_value_policy::reference,
             py::arg("p_context"),
             py::arg("source_path"),
-            py::arg("rali_color_format"),
+            py::arg("rocal_color_format"),
             py::arg("shard_id"),
             py::arg("shard_count"),
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("Caffe2_ImageDecoder",&raliJpegCaffe2LMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
+        m.def("Caffe_ImageDecoderPartialShard",&rocalJpegCaffeLMDBRecordSourcePartialSingleShard);
+        m.def("Caffe2_ImageDecoder",&rocalJpegCaffe2LMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
             py::return_value_policy::reference,
             py::arg("p_context"),
             py::arg("source_path"),
-            py::arg("rali_color_format"),
+            py::arg("rocal_color_format"),
             py::arg("num_threads"),
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("Caffe2_ImageDecoderShard",&raliJpegCaffe2LMDBRecordSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
+        m.def("Caffe2_ImageDecoderShard",&rocalJpegCaffe2LMDBRecordSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
             py::return_value_policy::reference,
             py::arg("p_context"),
             py::arg("source_path"),
-            py::arg("rali_color_format"),
+            py::arg("rocal_color_format"),
             py::arg("shard_id"),
             py::arg("shard_count"),
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("FusedDecoderCrop",&raliFusedJpegCrop,"Reads file from the source and decodes them partially to output random crops",
+        m.def("Caffe2_ImageDecoderPartialShard",&rocalJpegCaffe2LMDBRecordSourcePartialSingleShard);
+        m.def("FusedDecoderCrop",&rocalFusedJpegCrop,"Reads file from the source and decodes them partially to output random crops",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -450,14 +460,14 @@ namespace rali{
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0,
             py::arg("area_factor") = NULL,
             py::arg("aspect_ratio") = NULL,
             py::arg("y_drift_factor") = NULL,
             py::arg("x_drift_factor") = NULL);
-        m.def("FusedDecoderCropShard",&raliFusedJpegCropSingleShard,"Reads file from the source and decodes them partially to output random crops",
+        m.def("FusedDecoderCropShard",&rocalFusedJpegCropSingleShard,"Reads file from the source and decodes them partially to output random crops",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -467,40 +477,82 @@ namespace rali{
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MAX_SIZE,
+            py::arg("decode_size_policy") = ROCAL_USE_MAX_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0,
             py::arg("area_factor") = NULL,
             py::arg("aspect_ratio") = NULL,
             py::arg("y_drift_factor") = NULL,
             py::arg("x_drift_factor") = NULL);
-        m.def("TF_ImageDecoderRaw",&raliRawTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
+        m.def("TF_ImageDecoderRaw",&rocalRawTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
               py::return_value_policy::reference,
               py::arg("p_context"),
               py::arg("source_path"),
               py::arg("user_key_for_encoded"),
               py::arg("user_key_for_filename"),
-              py::arg("rali_color_format"),
+              py::arg("rocal_color_format"),
               py::arg("is_output"),
               py::arg("shuffle") = false,
               py::arg("loop") = false,
               py::arg("out_width") = 0,
               py::arg("out_height") = 0,
               py::arg("record_name_prefix") = "");
-        m.def("Cifar10Decoder",&raliRawCIFAR10Source,"Reads file from the source given and decodes it according to the policy only for TFRecords",
+        m.def("Cifar10Decoder",&rocalRawCIFAR10Source,"Reads file from the source given and decodes it according to the policy only for TFRecords",
               py::return_value_policy::reference,
               py::arg("p_context"),
               py::arg("source_path"),
-              py::arg("rali_color_format"),
+              py::arg("rocal_color_format"),
               py::arg("is_output"),
               py::arg("out_width") = 0,
               py::arg("out_height") = 0,
               py::arg("file_name_prefix") = "",
               py::arg("loop") = false);
+        m.def("VideoDecoder",&rocalVideoFileSource,"Reads videos from the source given and decodes it according to the policy only for Videos as inputs",
+            py::return_value_policy::reference,
+            py::arg("p_context"),
+            py::arg("source_path"),
+            py::arg("color_format"),
+            py::arg("decoder_mode"),
+            py::arg("shard_count"),
+            py::arg("sequence_length"),
+            py::arg("shuffle") = false,
+            py::arg("is_output"),
+            py::arg("loop") = false,
+            py::arg("frame_step"),
+            py::arg("frame_stride"),
+            py::arg("file_list_frame_num") = false);
+        m.def("VideoDecoderResize",&rocalVideoFileResize,"Reads videos from the source given and decodes it according to the policy only for Videos as inputs. Resizes the decoded frames to the dest width and height.",
+            py::return_value_policy::reference,
+            py::arg("p_context"),
+            py::arg("source_path"),
+            py::arg("color_format"),
+            py::arg("decoder_mode"),
+            py::arg("shard_count"),
+            py::arg("sequence_length"),
+            py::arg("dest_width"),
+            py::arg("dest_height"),
+            py::arg("shuffle") = false,
+            py::arg("is_output"),
+            py::arg("loop") = false,
+            py::arg("frame_step"),
+            py::arg("frame_stride"),
+            py::arg("file_list_frame_num") = false);
+        m.def("SequenceReader",&rocalSequenceReader,"Creates JPEG image reader and decoder. Reads [Frames] sequences from a directory representing a collection of streams.",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+            py::arg("color_format"),
+            py::arg("shard_count"),
+            py::arg("sequence_length"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("frame_step"),
+            py::arg("frame_stride"));
 
-        m.def("raliResetLoaders",&raliResetLoaders);
-        // rali_api_augmentation.h
-        m.def("SSDRandomCrop",&raliSSDRandomCrop,
+        m.def("rocalResetLoaders",&rocalResetLoaders);
+        // rocal_api_augmentation.h
+        m.def("SSDRandomCrop",&rocalSSDRandomCrop,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -511,14 +563,14 @@ namespace rali{
             py::arg("crop_pos_x") = NULL,
             py::arg("crop_pos_y") = NULL,
             py::arg("num_of_attempts") = 20);
-        m.def("Resize",&raliResize,
+        m.def("Resize",&rocalResize,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("dest_width"),
             py::arg("dest_height"),
             py::arg("is_output"));
-        m.def("CropResize",&raliCropResize,
+        m.def("CropResize",&rocalCropResize,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -529,17 +581,17 @@ namespace rali{
             py::arg("aspect_ratio") = NULL,
             py::arg("x_center_drift") = NULL,
             py::arg("y_center_drift") = NULL);
-        m.def("raliCopy",&raliCopy,
+        m.def("rocalCopy",&rocalCopy,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"));
-        m.def("raliNop",&raliNop,
+        m.def("rocalNop",&rocalNop,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"));
-        m.def("ColorTwist",&raliColorTwist,
+        m.def("ColorTwist",&rocalColorTwist,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -548,8 +600,8 @@ namespace rali{
             py::arg("beta") = NULL,
             py::arg("hue") = NULL,
             py::arg("sat") = NULL);
-        m.def("ColorTwistFixed",&raliColorTwistFixed);
-        m.def("CropMirrorNormalize",&raliCropMirrorNormalize,
+        m.def("ColorTwistFixed",&rocalColorTwistFixed);
+        m.def("CropMirrorNormalize",&rocalCropMirrorNormalize,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -563,7 +615,7 @@ namespace rali{
             py::arg("std_dev"),
             py::arg("is_output"),
             py::arg("mirror") = NULL);
-        m.def("Crop",&raliCrop,
+        m.def("Crop",&rocalCrop,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -574,7 +626,7 @@ namespace rali{
             py::arg("crop_pox_x") = NULL,
             py::arg("crop_pos_y") = NULL,
             py::arg("crop_pos_z") = NULL);
-        m.def("CropFixed",&raliCropFixed,
+        m.def("CropFixed",&rocalCropFixed,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -585,7 +637,7 @@ namespace rali{
             py::arg("crop_pox_x"),
             py::arg("crop_pos_y"),
             py::arg("crop_pos_z"));
-        m.def("CenterCropFixed",&raliCropCenterFixed,
+        m.def("CenterCropFixed",&rocalCropCenterFixed,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -593,20 +645,21 @@ namespace rali{
             py::arg("crop_height"),
             py::arg("crop_depth"),
             py::arg("is_output"));
-        m.def("Brightness",&raliBrightness,
+        m.def("Brightness",&rocalBrightness,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("alpha") = NULL,
             py::arg("beta") = NULL);
-        m.def("GammaCorrection",&raliGamma,
+        m.def("Brightness",&rocalBrightness);
+        m.def("GammaCorrection",&rocalGamma,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("alpha") = NULL);
-        m.def("Rain",&raliRain,
+        m.def("Rain",&rocalRain,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -615,33 +668,33 @@ namespace rali{
             py::arg("rain_width") = NULL,
             py::arg("rain_height") = NULL,
             py::arg("rain_transparency") = NULL);
-        m.def("Snow",&raliSnow,
+        m.def("Snow",&rocalSnow,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("shift") = NULL);
-        m.def("Blur",&raliBlur,
+        m.def("Blur",&rocalBlur,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("sdev") = NULL);
-        m.def("Contrast",&raliContrast,
+        m.def("Contrast",&rocalContrast,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("min") = NULL,
             py::arg("max") = NULL);
-        m.def("Flip",&raliFlip);
-        m.def("Jitter",&raliJitter,
+        m.def("Flip",&rocalFlip);
+        m.def("Jitter",&rocalJitter,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("kernel_size") = NULL);
-        m.def("Rotate",&raliRotate,
+        m.def("Rotate",&rocalRotate,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -649,19 +702,19 @@ namespace rali{
             py::arg("angle") = NULL,
             py::arg("dest_width") = 0,
             py::arg("dest_height") = 0);
-        m.def("Hue",&raliHue,
+        m.def("Hue",&rocalHue,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("hue") = NULL);
-        m.def("Saturation",&raliSaturation,
+        m.def("Saturation",&rocalSaturation,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("sat") = NULL);
-        m.def("WarpAffine",&raliWarpAffine,
+        m.def("WarpAffine",&rocalWarpAffine,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -674,54 +727,48 @@ namespace rali{
             py::arg("y1") = NULL,
             py::arg("o0") = NULL,
             py::arg("o1") = NULL);
-        m.def("Fog",&raliFog,
+        m.def("Fog",&rocalFog,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("fog_value") = NULL);
-        m.def("FishEye",&raliFishEye,
+        m.def("FishEye",&rocalFishEye,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"));
-        m.def("Vignette",&raliVignette,
+        m.def("Vignette",&rocalVignette,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("sdev") = NULL);
-        m.def("SnPNoise",&raliSnPNoise,
+        m.def("SnPNoise",&rocalSnPNoise,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("sdev") = NULL);
-        m.def("Exposure",&raliExposure,
+        m.def("Exposure",&rocalExposure,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("shift") = NULL);
-        m.def("Pixelate",&raliPixelate,
+        m.def("Pixelate",&rocalPixelate,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"));
-        m.def("Blend",&raliBlend,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input1"),
-            py::arg("input2"),
-            py::arg("is_output"),
-            py::arg("ratio") = NULL);
-        m.def("Flip",&raliFlip,
+        m.def("Blend",&rocalBlend);
+        m.def("Flip",&rocalFlip,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"),
             py::arg("flip_axis") = NULL);
-        m.def("RandomCrop",&raliRandomCrop,
+        m.def("RandomCrop",&rocalRandomCrop,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -731,5 +778,11 @@ namespace rali{
             py::arg("crop_pos_x") = NULL,
             py::arg("crop_pos_y") = NULL,
             py::arg("num_of_attempts") = 20);
+        m.def("ColorTemp",&rocalColorTemp,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("adj_value_param") = NULL);
     }
 }

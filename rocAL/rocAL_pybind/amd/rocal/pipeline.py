@@ -1,5 +1,5 @@
 import rali_pybind as b
-import amd.rali.types as types
+import amd.rocal.types as types
 import numpy as np
 import torch
 import ctypes
@@ -73,11 +73,12 @@ class Pipeline(object):
           cpu_threads (default 1)
     This returns a context'''
     _handle = None
+    _current_pipeline = None
 
     def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=-1,
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
-                 rali_cpu=False, max_streams=-1, default_cuda_stream_priority=0):
+                 rali_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
         if(rali_cpu):
             # print("comes to cpu")
             self._handle = b.raliCreate(
@@ -106,10 +107,11 @@ class Pipeline(object):
         self._rali_cpu = rali_cpu
         self._max_streams = max_streams
         self._default_cuda_stream_priority = default_cuda_stream_priority
-        self._tensor_layout = None
-        self._tensor_dtype = None
-        self._multiplier = None
-        self._offset = None
+        self._tensor_layout = tensor_layout
+        self._tensor_dtype = tensor_dtype
+        self._multiplier = multiplier
+        self._reverse_channels = reverse_channels
+        self._offset = offset
         self._img_h = None
         self._img_w = None
         self._shuffle = None
@@ -120,6 +122,12 @@ class Pipeline(object):
         self._numOfClasses = None
         self._oneHotEncoding = False
         self._castLabels = False
+        self._prev_input_image = None
+        self._current_output_image = None
+        self._current_pipeline
+        self._reader = None
+        self._define_graph_set = False
+
 
     def store_values(self, operator):
         """
@@ -177,47 +185,11 @@ class Pipeline(object):
     def build(self):
         """Build the pipeline using raliVerify call
         """
-        outputs = self.define_graph()
-        self.process_calls(outputs[0])
-
-        #Checks for Casting "Labels" as last node & Box Encoder as last Prev node
-        if(len(outputs)==3):
-            if((isinstance(outputs[1],list)== False) & (isinstance(outputs[2],list)== False)):
-                if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
-                    if(outputs[2].prev.data == "Cast") :
-                        self._castLabels = True
-                        if(outputs[2].prev.prev.prev.data is not None):
-                            if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
-                                self._BoxEncoder = True
-                                self._anchors = outputs[2].prev.prev.data
-                                self._encode_tensor = outputs[2].prev.prev
-                                self._encode_tensor.prev.rali_c_func_call(self._handle )
-        #Checks for Box Encoding as the Last Node
-        if(len(outputs)==3):
-            if(isinstance(outputs[1],list)== False):
-                if(outputs[1].prev is not None):
-                    if(outputs[2].prev is not None):
-                        if(outputs[2].prev.data == "BoxEncoder"):
-                            self._BoxEncoder = True
-                            self._anchors = outputs[2].data
-                            self._encode_tensor = outputs[2]
-                            self._encode_tensor.prev.rali_c_func_call(self._handle )
-
-        #Checks for One Hot Encoding as the last Node
-        if(isinstance(outputs[1],list)== False):
-            if(len(outputs)==2):
-                if(outputs[1].prev is not None):
-                    print(type(outputs[1]))
-                    if(outputs[1].prev.data == "OneHotLabel"):
-                        self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
-                        self._oneHotEncoding = True
-
-
         status = b.raliVerify(self._handle)
         if(status != types.OK):
             print("Verify graph failed")
             exit(0)
-        return outputs
+        return self
 
     def run(self):
         """ Run the pipeline using raliRun call
@@ -231,7 +203,9 @@ class Pipeline(object):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
         It returns a list of outputs created by calling RALI Operators."""
+        print("define_graph NotImplemented")
         raise NotImplementedError
+
 
     def get_handle(self):
         return self._handle
@@ -240,8 +214,6 @@ class Pipeline(object):
         out = np.frombuffer(array, dtype=array.dtype)
         b.raliCopyToOutput(
             self._handle, np.ascontiguousarray(out, dtype=array.dtype))
-
-
 
     def copyToTensor(self, array,  multiplier, offset, reverse_channels, tensor_format, tensor_dtype):
 
@@ -256,13 +228,44 @@ class Pipeline(object):
     def GetOneHotEncodedLabels(self, array):
         return b.getOneHotEncodedLabels(self._handle, array, self._numOfClasses)
 
+    def set_outputs(self, *output_list):
+        self._output_list_length = len(output_list)
+        b.setOutputImages(self._handle,len(output_list),output_list)
+
+    def __enter__(self):
+        Pipeline._current_pipeline = self
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        pass
+
+    def set_seed(self,seed=0):
+        return b.setSeed(seed)
+
+    def create_int_param(self,value):
+        return b.CreateIntParameter(value)
+
+    def create_float_param(self,value):
+        return b.CreateFloatParameter(value)
+
+    def update_int_param(self,value,param):
+        b.UpdateIntParameter(value,param)
+
+    def update_float_param(self,value,param):
+        b.UpdateFloatParameter(value,param)
+
+    def get_int_value(self,param):
+        return b.GetIntValue(param)
+
+    def get_float_value(self,param):
+        return b.GetFloatValue(param)
 
     def GetImageNameLen(self, array):
         return b.getImageNameLen(self._handle, array)
 
     def GetImageName(self, array_len):
-
         return b.getImageName(self._handle,array_len)
+
     def GetImageId(self, array):
         b.getImageId(self._handle, array)
 
@@ -280,6 +283,10 @@ class Pipeline(object):
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
         b.raliCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)
+
+    def getEncodedBoxesAndLables(self, batch_size, num_anchors):
+        return b.raliGetEncodedBoxesAndLables(self._handle, batch_size, num_anchors)
+
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
 

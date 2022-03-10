@@ -37,6 +37,10 @@ extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor(RocalContext ro
                                                               float multiplier0, float multiplier1, float multiplier2, float offset0,
                                                               float offset1, float offset2,
                                                               bool reverse_channels);
+///
+/// \param rocal_context
+/// \param output_images The buffer that will be filled with output images with set_output = True
+extern "C" void ROCAL_API_CALL rocalSetOutputs(RocalContext p_context, unsigned int num_of_outputs, std::vector<RocalImage> &output_images);
 
 
 #endif //MIVISIONX_ROCAL_API_DATA_TRANSFER_H

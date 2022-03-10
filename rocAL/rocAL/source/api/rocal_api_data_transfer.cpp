@@ -90,5 +90,17 @@ rocalCopyToOutput(
     return ROCAL_OK;
 }
 
+void
+ROCAL_API_CALL rocalSetOutputs(RocalContext p_context, unsigned int num_of_outputs, std::vector<RocalImage> &output_images)
+{
+    if (!p_context)
+        THROW("Invalid rocal context passed to rocalSetOutputs")
+    auto context = static_cast<Context *>(p_context);
+    std::vector<Image*> output_images_vector ;
+    for (auto& it : output_images) {
+        auto img = static_cast<Image*>(it);
+        context->master_graph->set_output(img);
+    }
+}
 
 

@@ -112,7 +112,7 @@ if(${BUILD_RALI_PYBIND})
 
     link_directories(${ROCM_PATH}/rpp/lib ${ROCM_PATH}/mivisionx/lib)
 
-    include_directories(../rocAL/include/
+    include_directories(../rocAL/include/api/
                         third_party_lib/
                         ../../amd_openvx/openvx/include/)
 

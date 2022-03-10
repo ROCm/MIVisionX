@@ -50,6 +50,7 @@ ImageLoader::~ImageLoader()
 
 void ImageLoader::shut_down()
 {
+    stop_internal_thread();
     _circ_buff.release();
 }
 

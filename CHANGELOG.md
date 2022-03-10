@@ -10,11 +10,12 @@
 
 ### Added
 
-* `TBD`
+* New Tests - AMD_MEDIA
 
 ### Optimizations
 
 * Readme Updates
+* HIP Buffer Transfer - Eliminate cupy usage
 
 ### Changed
 
@@ -23,6 +24,7 @@
 ### Fixed
 
 * Minor bugs and warnings
+* AMD_MEDIA - Bug Fixes
 
 ### Tested Configurations
 

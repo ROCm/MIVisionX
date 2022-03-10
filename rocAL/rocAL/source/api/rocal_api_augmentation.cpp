@@ -1647,7 +1647,7 @@ ROCAL_API_CALL rocalCropMirrorNormalize(RocalContext p_context, RocalImage p_inp
         context->capture_error(e.what());
         ERR(e.what())
     }
-    return input; // Changed to input----------------IMPORTANT
+    return output;
 }
 
 

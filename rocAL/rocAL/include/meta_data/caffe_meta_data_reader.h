@@ -40,6 +40,7 @@ public :
     void release() override;
     bool set_timestamp_mode() override { return false; }
     void print_map_contents();
+    std::map<std::string, std::shared_ptr<MetaData>> &get_map_content() override { return _map_content;}
     MetaDataBatch * get_output() override { return _output; }
     CaffeMetaDataReader();
     ~CaffeMetaDataReader() override { delete _output; }
@@ -48,8 +49,8 @@ private:
     void read_lmdb_record(std::string _path, uint file_size);
     bool exists(const std::string &image_name);
     void add(std::string image_name, int label);
-    std::map<std::string, std::shared_ptr<Label>> _map_content;
-    std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::string _path;
     LabelBatch* _output;
     DIR *_src_dir, *_sub_dir;

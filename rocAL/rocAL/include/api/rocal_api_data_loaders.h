@@ -662,4 +662,56 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalRawCIFAR10Source(RocalContext contex
 /// \return
 extern "C"  RocalStatus  ROCAL_API_CALL rocalResetLoaders(RocalContext context);
 
+/// Creates JPEG image reader and partial decoder for Caffe LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe2 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
+/// \param rocal_context Rocal context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rocal_color_format The color format the images will be decoded to.
+/// \param shard_id Shard id for this loader
+/// \param shard_count Total shard count
+/// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle Determines if the user wants to shuffle the dataset or not.
+/// \param loop Determines if the user wants to indefinitely loops through images or not.
+/// \param decode_size_policy
+/// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
+/// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \return Reference to the output image
+extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffeLMDBRecordSourcePartialSingleShard(RocalContext p_context,
+                                                            const char* source_path,
+                                                            RocalImageColor rocal_color_format,
+                                                            unsigned shard_id,
+                                                            unsigned shard_count,
+                                                            bool is_output,
+                                                            bool shuffle = false,
+                                                            bool loop = false,
+                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
+                                                            RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
+
+/// Creates JPEG image reader and partial decoder for Caffe2 LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe22 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
+/// \param rocal_context Rocal context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rocal_color_format The color format the images will be decoded to.
+/// \param shard_id Shard id for this loader
+/// \param shard_count Total shard count
+/// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle Determines if the user wants to shuffle the dataset or not.
+/// \param loop Determines if the user wants to indefinitely loops through images or not.
+/// \param decode_size_policy
+/// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
+/// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \return Reference to the output image
+extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourcePartialSingleShard(RocalContext p_context,
+                                                            const char* source_path,
+                                                            RocalImageColor rocal_color_format,
+                                                            unsigned shard_id,
+                                                            unsigned shard_count,
+                                                            bool is_output,
+                                                            bool shuffle = false,
+                                                            bool loop = false,
+                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE,
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
+                                                            RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
+
 #endif //MIVISIONX_ROCAL_API_DATA_LOADERS_H

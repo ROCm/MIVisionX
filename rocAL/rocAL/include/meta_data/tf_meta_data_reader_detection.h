@@ -42,6 +42,7 @@ public :
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
+    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override{ return _map_content;}
     TFMetaDataReaderDetection();
     ~TFMetaDataReaderDetection() override { delete _output; }
 private:
@@ -52,14 +53,14 @@ private:
     void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);
     bool _last_rec;
     //std::shared_ptr<TF_Read> _TF_read = nullptr;
-    void read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &image_name, 
-        std::string user_label_key, std::string user_text_key, 
+    void read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &image_name,
+        std::string user_label_key, std::string user_text_key,
         std::string user_xmin_key, std::string user_ymin_key, std::string user_xmax_key, std::string user_ymax_key,
         std::string user_filename_key);    // std::map<std::string, std::shared_ptr<Label>> _map_content;
     // std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
     // //bbox map contents
-    std::map<std::string, std::shared_ptr<BoundingBox>> _map_content;
-    std::map<std::string, std::shared_ptr<BoundingBox>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::string _path;
     BoundingBoxBatch* _output;
     DIR *_src_dir;

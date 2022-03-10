@@ -122,6 +122,7 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _cpu_threads(cpu_threads),
 #if ENABLE_HIP
         _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::HIP : RaliMemType::HOST),
+        _box_encoder_gpu(nullptr),
 #else
         _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST),
 #endif
@@ -133,7 +134,6 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _user_to_internal_batch_ratio (_user_batch_size/_internal_batch_size),
         _prefetch_queue_depth(prefetch_queue_depth),
         _out_data_type(output_tensor_data_type),
-        _box_encoder_gpu(nullptr),
         _rb_block_if_empty_time("Ring Buffer Block IF Empty Time"),
         _rb_block_if_full_time("Ring Buffer Block IF Full Time")
 {

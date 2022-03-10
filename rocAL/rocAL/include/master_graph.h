@@ -181,8 +181,10 @@ private:
     size_t _sequence_batch_ratio; //!< Indicates the _user_to_internal_batch_ratio when sequence reader outputs are required
     bool _is_sequence_reader_output = false; //!< Set to true if Sequence Reader is invoked.
     // box encoder variables
+#if ENABLE_HIP
     BoxEncoderGpu *_box_encoder_gpu;
-    bool _is_box_encoder = false; //bool variable to set the box encoder 
+#endif
+    bool _is_box_encoder = false; //bool variable to set the box encoder
     std::vector<float> _anchors; // Anchors to be used for encoding, as the array of floats is in the ltrb format of size 8732x4
     size_t _num_anchors;       // number of bbox anchors
     float _criteria = 0.5; // Threshold IoU for matching bounding boxes with anchors. The value needs to be between 0 and 1.

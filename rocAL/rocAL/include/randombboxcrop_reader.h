@@ -81,7 +81,7 @@ public:
     void update_meta_data();
     CropCordBatch * get_output() override { return _output; }
     bool is_entire_iou(){return _entire_iou;}
-    void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader,MetaDataReaderType config_type ) override;
+    void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader, MetaDataReaderType config_type) override;
     pCropCord get_crop_cord(const std::string &image_names) override;
     RandomBBoxCropReader();
     ~RandomBBoxCropReader() override {}

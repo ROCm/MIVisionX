@@ -269,7 +269,5 @@ def draw_patches(img,idx, bboxes):
     image = img.detach().numpy()
     image = image.transpose([1,2,0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
-
-    _,htot ,wtot = img.shape
     image = cv2.UMat(image).get()
     cv2.imwrite(str(idx)+"_"+"train"+".png", image)

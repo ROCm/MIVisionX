@@ -6,11 +6,12 @@ import amd.rocal.fn as fn
 import os
 import random
 
-def draw_patches(img,idx):
+
+def draw_patches(img, idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     image = img.detach().numpy()
-    image = image.transpose([1,2,0])
+    image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
 
@@ -33,7 +34,7 @@ def main():
     crop_size_resize = 224
     image_path = sys.argv[1]
     rali_device = 'cpu' if _rali_cpu else 'gpu'
-    decoder_device = 'cpu' if _rali_cpu else 'mixed'
+    decoder_device = 'cpu' if _rali_cpu else 'gpu'
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     num_classes = len(next(os.walk(image_path))[1])
     print("num_classes:: ", num_classes)
@@ -72,7 +73,7 @@ def main():
                 print("Labels", labels)
                 for element in list(range(bs)):
                     cnt = cnt + 1
-                    draw_patches(image_batch[element],cnt)
+                    draw_patches(image_batch[element], cnt)
             data_loader.reset()
         else:
             for i, (image_batch, bboxes, labels) in enumerate(data_loader, 0):  # Detection
@@ -82,7 +83,7 @@ def main():
                 print("Labels", labels)
                 for element in list(range(bs)):
                     cnt = cnt + 1
-                    draw_patches(image_batch[element],cnt)
+                    draw_patches(image_batch[element], cnt)
             data_loader.reset()
     print('Finished Training')
     print('Finished !!')

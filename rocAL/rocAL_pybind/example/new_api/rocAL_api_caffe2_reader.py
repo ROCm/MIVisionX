@@ -7,11 +7,12 @@ import amd.rocal.fn as fn
 import os
 import random
 
-def draw_patches(img,idx):
+
+def draw_patches(img, idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     image = img.detach().numpy()
-    image = image.transpose([1,2,0])
+    image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
 
@@ -35,7 +36,7 @@ def main():
     crop_size = 224
     image_path = sys.argv[1]
     rali_device = 'cpu' if _rali_cpu else 'gpu'
-    decoder_device = 'cpu' if _rali_cpu else 'mixed'
+    decoder_device = 'cpu' if _rali_cpu else 'gpu'
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     num_classes = len(next(os.walk(image_path))[1])
     print("num_classes:: ", num_classes)
@@ -54,7 +55,7 @@ def main():
         images = fn.resize(images, resize_x=crop_size,
                            resize_y=crop_size, device=rali_device)
         pipe.set_outputs(images)
-    pipe.build() #TODO:Change required for the new API
+    pipe.build()
     data_loader = RALIClassificationIterator(pipe , display=True)
 
     # Training loop

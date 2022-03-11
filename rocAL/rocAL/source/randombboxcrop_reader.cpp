@@ -46,34 +46,11 @@ void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg)
 }
 
 
-void RandomBBoxCropReader::set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader,MetaDataReaderType type)
+void RandomBBoxCropReader::set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader)
 {
 
-    switch(type) {
+    _meta_data_reader = meta_data_reader;
 
-        case MetaDataReaderType::COCO_META_DATA_READER:
-        {
-        _meta_data_reader = std::static_pointer_cast<COCOMetaDataReader>(meta_data_reader);
-        }
-        break;
-        case MetaDataReaderType::TF_DETECTION_META_DATA_READER:
-        {
-        _meta_data_reader = std::static_pointer_cast<TFMetaDataReaderDetection>(meta_data_reader);
-        }
-        break;
-        case MetaDataReaderType::CAFFE_DETECTION_META_DATA_READER:
-        {
-        _meta_data_reader = std::static_pointer_cast<CaffeMetaDataReaderDetection>(meta_data_reader);
-        }
-        break;
-        case MetaDataReaderType::CAFFE2_DETECTION_META_DATA_READER:
-        {
-        _meta_data_reader = std::static_pointer_cast<Caffe2MetaDataReaderDetection>(meta_data_reader);
-        }
-        break;
-        default:
-            throw std::runtime_error ("Reader type is unsupported for setting meta data");
-    }
 }
 
 bool RandomBBoxCropReader::exists(const std::string &image_name)

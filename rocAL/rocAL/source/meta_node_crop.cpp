@@ -36,8 +36,6 @@ void CropMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         _batch_size = input_meta_data->size();
     }
     _meta_crop_param = _node->get_crop_param();
-    _dst_width = _node->get_dst_width();
-    _dst_height = _node->get_dst_height();
     _crop_width = _meta_crop_param->cropw_arr;
     _crop_height = _meta_crop_param->croph_arr;
     _x1 = _meta_crop_param->x1_arr;

@@ -12,9 +12,9 @@ import sys
 import numpy as np
 from amd.rocal.pipeline import Pipeline
 
-class RALICOCOIterator(object):
+class ROCALCOCOIterator(object):
     """
-    COCO RALI iterator for pyTorch.
+    COCO ROCAL iterator for pyTorch.
 
     Parameters
     ----------
@@ -85,7 +85,7 @@ class RALICOCOIterator(object):
             return torch.from_numpy(self.out.astype(np.float16)),image_id_tensor, image_size_tensor, num_images
 
     def reset(self):
-        self.loader.raliResetLoaders()
+        self.loader.rocalResetLoaders()
 
     def __iter__(self):
         return self
@@ -109,9 +109,9 @@ def main():
     image_path = sys.argv[1]
     ann_path = sys.argv[2]
     if(sys.argv[3] == "cpu"):
-        _rali_cpu = True
+        _rocal_cpu = True
     else:
-        _rali_cpu = False
+        _rocal_cpu = False
     bs = int(sys.argv[4])
     display = sys.argv[5]
     num_threads = 1
@@ -154,7 +154,7 @@ def main():
 
         return dboxes_ltrb
     default_boxes = coco_anchors().numpy().flatten().tolist()
-    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=device_id, seed=random_seed, rali_cpu=_rali_cpu)
+    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=device_id, seed=random_seed, rocal_cpu=_rocal_cpu)
 
     with pipe:
         jpegs_dummy , labels, bboxes= fn.readers.coco(
@@ -166,7 +166,7 @@ def main():
         pipe.set_outputs(images_decoded,res_images,fisheye_image,brightness_image)
 
     pipe.build()
-    data_loader = RALICOCOIterator(
+    data_loader = ROCALCOCOIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display)
     epochs = 2
     for epoch in range(int(epochs)):

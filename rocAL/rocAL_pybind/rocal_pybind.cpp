@@ -674,12 +674,7 @@ namespace rocal{
             py::arg("input"),
             py::arg("is_output"),
             py::arg("shift") = NULL);
-        m.def("Blur",&rocalBlur,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input"),
-            py::arg("is_output"),
-            py::arg("sdev") = NULL);
+        // m.def("Blur",&rocalBlur);
         m.def("Contrast",&rocalContrast,
             py::return_value_policy::reference,
             py::arg("context"),

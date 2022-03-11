@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import random
-from amd.rocal.plugin.pytorch import RALI_iterator
+from amd.rocal.plugin.pytorch import ROCAL_iterator
 
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
@@ -17,21 +17,21 @@ def main():
         exit(0)
     data_path = sys.argv[1]
     if(sys.argv[2] == "cpu"):
-        _rali_cpu = True
+        _rocal_cpu = True
     else:
-        _rali_cpu = False
+        _rocal_cpu = False
     batch_size = int(sys.argv[3])
     num_threads = 1
     device_id = 0
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     crop=300
 
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=device_id, seed=random_seed, rali_cpu=_rali_cpu)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=device_id, seed=random_seed, rocal_cpu=_rocal_cpu)
     local_rank = 0
     world_size = 1
-    rali_cpu= True
-    rali_device = 'cpu' if rali_cpu else 'gpu'
-    decoder_device = 'cpu' if rali_cpu else 'mixed'
+    rocal_cpu= True
+    rocal_device = 'cpu' if rocal_cpu else 'gpu'
+    decoder_device = 'cpu' if rocal_cpu else 'mixed'
     device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
     host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
 
@@ -44,13 +44,13 @@ def main():
                                                     random_area=[0.1, 1.0],
                                                     num_attempts=100,
                                                     file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
-        resized_images = fn.resize(decoded_images, device=rali_device, resize_x=crop, resize_y=crop)
+        resized_images = fn.resize(decoded_images, device=rocal_device, resize_x=crop, resize_y=crop)
         brightend_images = fn.brightness(resized_images)
         fish_eyed_image = fn.fish_eye(brightend_images)
         pipe.set_outputs(resized_images ,brightend_images, fish_eyed_image)
 
     pipe.build()
-    imageIterator = RALI_iterator(pipe)
+    imageIterator = ROCAL_iterator(pipe)
     epochs = 2
     import timeit
     start = timeit.default_timer() #Timer starts

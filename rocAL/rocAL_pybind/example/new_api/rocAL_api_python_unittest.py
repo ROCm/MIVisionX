@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import random
-from amd.rocal.plugin.pytorch import RALIClassificationIterator
+from amd.rocal.plugin.pytorch import ROCALClassificationIterator
 
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
@@ -26,9 +26,9 @@ def main():
     augmentation_num = int(sys.argv[2])
 
     if(sys.argv[3] == "cpu"):
-        _rali_cpu = True
+        _rocal_cpu = True
     else:
-        _rali_cpu = False
+        _rocal_cpu = False
 
     bs = int(sys.argv[4])
     nt = 1
@@ -36,15 +36,15 @@ def main():
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     crop=300
 
-    pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=random_seed, rali_cpu=_rali_cpu)
+    pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=random_seed, rocal_cpu=_rocal_cpu)
     output_set=0
     local_rank = 0
     world_size = 1
 
 
-    rali_cpu= True
-    rali_device = 'cpu' if rali_cpu else 'gpu'
-    decoder_device = 'cpu' if rali_cpu else 'mixed'
+    rocal_cpu= True
+    rocal_device = 'cpu' if rocal_cpu else 'gpu'
+    decoder_device = 'cpu' if rocal_cpu else 'mixed'
 
     crop_size = 300
 
@@ -58,7 +58,7 @@ def main():
         #                                             random_area=[0.1, 1.0],
         #                                             num_attempts=100,
         #                                             file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
-        images = fn.resize(images, device=rali_device, resize_x=crop, resize_y=crop)
+        images = fn.resize(images, device=rocal_device, resize_x=crop, resize_y=crop)
         # flip_coin = fn.random.coin_flip(probability=0.5)
         # images = fn.crop_mirror_normalize(images, device="gpu",
         #                                 output_dtype=types.FLOAT,
@@ -153,7 +153,7 @@ def main():
 
     pipe.build()
 
-    data_loader = RALIClassificationIterator(pipe)
+    data_loader = ROCALClassificationIterator(pipe)
     epochs = 1
     cnt=0
     import timeit

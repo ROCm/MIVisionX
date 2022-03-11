@@ -15,9 +15,9 @@ import amd.rocal.types as types
 import sys
 import numpy as np
 
-class RALICOCOIterator(object):
+class ROCALCOCOIterator(object):
     """
-    COCO RALI iterator for pyTorch.
+    COCO ROCAL iterator for pyTorch.
 
     Parameters
     ----------
@@ -157,7 +157,7 @@ class RALICOCOIterator(object):
             return dp.from_dlpack(dlpack_array), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
 
     def reset(self):
-        self.loader.raliResetLoaders()
+        self.loader.rocalResetLoaders()
 
     def __iter__(self):
         return self
@@ -200,9 +200,9 @@ def main():
     image_path = sys.argv[1]
     ann_path = sys.argv[2]
     if(sys.argv[3] == "cpu"):
-        _rali_cpu = True
+        _rocal_cpu = True
     else:
-        _rali_cpu = False
+        _rocal_cpu = False
     bs = int(sys.argv[4])
     display = sys.argv[5]
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
@@ -243,7 +243,7 @@ def main():
 
         return dboxes_ltrb
     default_boxes = coco_anchors().numpy().flatten().tolist()
-    pipe = Pipeline(batch_size=bs, num_threads=1,device_id=0, seed=random_seed, rali_cpu=_rali_cpu)
+    pipe = Pipeline(batch_size=bs, num_threads=1,device_id=0, seed=random_seed, rocal_cpu=_rocal_cpu)
 
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(
@@ -280,11 +280,11 @@ def main():
         pipe.set_outputs(cmn_images)
     pipe.build()
 
-    if( _rali_cpu):
-        data_loader = RALICOCOIterator(
+    if( _rocal_cpu):
+        data_loader = ROCALCOCOIterator(
             pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display, device="cpu")
     else:
-        data_loader = RALICOCOIterator(
+        data_loader = ROCALCOCOIterator(
             pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display, device="cuda")
     epochs = 2
     import timeit

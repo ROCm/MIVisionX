@@ -1,5 +1,5 @@
 import sys
-from amd.rocal.plugin.pytorch import RALIClassificationIterator
+from amd.rocal.plugin.pytorch import ROCALClassificationIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.ops as ops
 import amd.rocal.types as types
@@ -21,47 +21,47 @@ def main():
         print('Please pass image_folder cpu/gpu batch_size classification/detection')
         exit(0)
     if(sys.argv[2] == "cpu"):
-        _rali_cpu = True
+        _rocal_cpu = True
     else:
-        _rali_cpu = False
+        _rocal_cpu = False
     bs = int(sys.argv[3])
     if(sys.argv[4] == "detection"):
-        _rali_bbox = True
+        _rocal_bbox = True
     else:
-        _rali_bbox = False
+        _rocal_bbox = False
 
     nt = 1
     di = 0
     crop_size = 224
     image_path = sys.argv[1]
-    rali_device = 'cpu' if _rali_cpu else 'gpu'
-    decoder_device = 'cpu' if _rali_cpu else 'mixed'
+    rocal_device = 'cpu' if _rocal_cpu else 'gpu'
+    decoder_device = 'cpu' if _rocal_cpu else 'mixed'
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     num_classes = len(next(os.walk(image_path))[1])
     print("num_classes:: ", num_classes)
 
     pipe = Pipeline(batch_size=bs, num_threads=nt, device_id=di,
-                    seed=random_seed, rali_cpu=_rali_cpu)
-    # pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu, rali_type=_rali_type)
+                    seed=random_seed, rocal_cpu=_rocal_cpu)
+    # pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rocal_cpu=_rocal_cpu, rocal_type=_rocal_type)
     with pipe:  # TODO: Need to add oneHotLabels, CMN, CoinFlip
-        if _rali_bbox:
+        if _rocal_bbox:
             jpegs, labels, bboxes = fn.readers.caffe2(
-                path=image_path, bbox=_rali_bbox, random_shuffle=True)
+                path=image_path, bbox=_rocal_bbox, random_shuffle=True)
         else:
             jpegs, labels = fn.readers.caffe2(
-                path=image_path, bbox=_rali_bbox, random_shuffle=True)
+                path=image_path, bbox=_rocal_bbox, random_shuffle=True)
         images = fn.decoders.image(jpegs, output_type=types.RGB, path=image_path, random_shuffle=True)
         images = fn.resize(images, resize_x=crop_size,
-                           resize_y=crop_size, device=rali_device)
+                           resize_y=crop_size, device=rocal_device)
         pipe.set_outputs(images)
     pipe.build() #TODO:Change required for the new API
-    data_loader = RALIClassificationIterator(pipe , display=True)
+    data_loader = ROCALClassificationIterator(pipe , display=True)
 
     # Training loop
     cnt = 0
     for epoch in range(1):  # loop over the dataset multiple times
         print("epoch:: ", epoch)
-        if not _rali_bbox:
+        if not _rocal_bbox:
             for i, (image_batch, labels) in enumerate(data_loader, 0):  # Classification
                 sys.stdout.write("\r Mini-batch " + str(i))
                 print("Images", image_batch)

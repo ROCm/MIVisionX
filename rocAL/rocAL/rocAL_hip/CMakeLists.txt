@@ -22,7 +22,7 @@ cmake_minimum_required(VERSION 3.5)
 project(rocAL_hip CXX)
 
 set(rocAL_HIP_SOURCES
-    rali_hip_kernels.cpp
+    rocal_hip_kernels.cpp
     box_encoder_hip.cpp
     )
 

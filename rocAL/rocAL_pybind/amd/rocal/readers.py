@@ -1,4 +1,4 @@
-import rali_pybind as b
+import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
 
@@ -37,7 +37,7 @@ def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reade
         for key in features.keys():
             if key not in user_feature_key_map.keys():
                     print(
-                        "For Object Detection, RALI TFRecordReader needs all the following keys in the featureKeyMap:")
+                        "For Object Detection, ROCAL TFRecordReader needs all the following keys in the featureKeyMap:")
                     print("image/encoded\nimage/class/label\nimage/class/text\nimage/object/bbox/xmin\nimage/object/bbox/ymin\nimage/object/bbox/xmax\nimage/object/bbox/ymax\n")
                     exit()
         tf_meta_data = b.TFReaderDetection(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
@@ -48,7 +48,7 @@ def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reade
         for key in features.keys():
                 if key not in user_feature_key_map.keys():
                     print(
-                        "For Image Classification, RALI TFRecordReader needs all the following keys in the featureKeyMap:")
+                        "For Image Classification, ROCAL TFRecordReader needs all the following keys in the featureKeyMap:")
                     print("image/encoded\nimage/class/label\n")
                     exit()
         tf_meta_data = b.TFReader(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))

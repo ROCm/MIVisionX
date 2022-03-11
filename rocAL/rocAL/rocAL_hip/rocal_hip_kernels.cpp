@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 #include "hip/hip_fp16.h"
-#include "rali_hip_kernels.h"
+#include "rocal_hip_kernels.h"
 
 __global__ void __attribute__((visibility("default")))
 Hip_CopyInt8ToNHWC_fp32
@@ -46,7 +46,7 @@ Hip_CopyInt8ToNHWC_fp32
     if ((x >= W) || (y >= H)) return;
     for (unsigned int n=0; n < nchw.x; n++) {
         unsigned int srcIdx =  (y*W + x) * C;     // src is RGB
-        unsigned int dstIdx = ( y*W + x)*C;
+        unsigned int dstIdx =  (y*W + x) * C;
         // copy float3  pixels to dst
         if (C == 3){
                 float3 dst;

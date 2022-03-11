@@ -1,4 +1,4 @@
-from amd.rocal.plugin.tf import RALIIterator
+from amd.rocal.plugin.tf import ROCALIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
 import sys
@@ -19,9 +19,9 @@ def main():
         exit(0)
     imagePath = sys.argv[1]
     if(sys.argv[2] == "cpu"):
-        raliCPU = True
+        rocalCPU = True
     else:
-        raliCPU = False
+        rocalCPU = False
     bs = int(sys.argv[3])
     oneHotLabel = int(sys.argv[4])
     nt = 1
@@ -32,8 +32,8 @@ def main():
         'image/class/label':'image/class/label',
         'image/filename':'image/filename'
     }
-    pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=2, rali_cpu=raliCPU)
-    # pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rali_cpu=raliCPU)
+    pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=2, rocal_cpu=rocalCPU)
+    # pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rocal_cpu=rocalCPU)
     with pipe:
         inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
             features={
@@ -51,7 +51,7 @@ def main():
         pipe.set_outputs(resized)
 
     pipe.build()
-    imageIterator = RALIIterator(pipe)
+    imageIterator = ROCALIterator(pipe)
     cnt = 0
     for i, (images_array, labels_array) in enumerate(imageIterator, 0):
         images_array = np.transpose(images_array, [0, 2, 3, 1])

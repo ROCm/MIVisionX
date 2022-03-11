@@ -5,9 +5,6 @@ from math import sqrt
 import torch
 import random
 import itertools
-import os
-import cupy as cp
-import torch.utils.dlpack as dp
 
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
@@ -148,16 +145,6 @@ def draw_patches(img,idx, bboxes, path_to_save_imgs):
         image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)
         cv2.imwrite(path_to_save_imgs+str(idx)+"_"+"train"+".png", image)
 
-def draw_all_images(img,id,idx):
-    #image is expected as a tensor, bboxes as numpy
-    import cv2
-    image = img.detach().numpy()
-    # image = image.transpose([0,1,2])
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR )
-
-    # wtot,htot ,_ = img.shape
-    image = cv2.UMat(image).get()
-    cv2.imwrite(str(id)+"_"+str(idx)+"_"+"train"+".png", image)
 def main():
     if len(sys.argv) < 5:
         print('Please pass the folder image_folder Annotation_file cpu/gpu batch_size display(True/False)')

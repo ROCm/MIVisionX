@@ -47,7 +47,7 @@ def main():
         resized = fn.resize(images, resize_x=300, resize_y=300)
         if(oneHotLabel == 1):
             labels = inputs["image/class/label"]
-            labels = fn.one_hot(labels, num_classes=1000)
+            _ = fn.one_hot(labels, num_classes=1000)
         pipe.set_outputs(resized)
 
     pipe.build()

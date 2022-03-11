@@ -117,43 +117,6 @@ def main():
     num_threads = 1
     device_id = 0
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
-    def coco_anchors(): # Should be Tensor of floats in ltrb format - input - Mx4 where M="No of anchor boxes"
-        fig_size = 300
-        feat_size = [38, 19, 10, 5, 3, 1]
-        steps = [8, 16, 32, 64, 100, 300]
-
-        # use the scales here: https://github.com/amdegroot/ssd.pytorch/blob/master/data/config.py
-        scales = [21, 45, 99, 153, 207, 261, 315]
-        aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
-        default_boxes = []
-        fk = fig_size/np.array(steps)
-        # size of feature and number of feature
-        for idx, sfeat in enumerate(feat_size):
-
-            sk1 = scales[idx]/fig_size
-            sk2 = scales[idx+1]/fig_size
-            sk3 = sqrt(sk1*sk2)
-            all_sizes = [(sk1, sk1), (sk3, sk3)]
-
-            for alpha in aspect_ratios[idx]:
-                w, h = sk1*sqrt(alpha), sk1/sqrt(alpha)
-                all_sizes.append((w, h))
-                all_sizes.append((h, w))
-            for w, h in all_sizes:
-                for i, j in itertools.product(range(sfeat), repeat=2):
-                    cx, cy = (j+0.5)/fk[idx], (i+0.5)/fk[idx]
-                    default_boxes.append((cx, cy, w, h))
-        dboxes = torch.tensor(default_boxes, dtype=torch.float)
-        dboxes.clamp_(min=0, max=1)
-        # For IoU calculation
-        dboxes_ltrb = dboxes.clone()
-        dboxes_ltrb[:, 0] = dboxes[:, 0] - 0.5 * dboxes[:, 2]
-        dboxes_ltrb[:, 1] = dboxes[:, 1] - 0.5 * dboxes[:, 3]
-        dboxes_ltrb[:, 2] = dboxes[:, 0] + 0.5 * dboxes[:, 2]
-        dboxes_ltrb[:, 3] = dboxes[:, 1] + 0.5 * dboxes[:, 3]
-
-        return dboxes_ltrb
-    default_boxes = coco_anchors().numpy().flatten().tolist()
     pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=device_id, seed=random_seed, rali_cpu=_rali_cpu)
 
     with pipe:

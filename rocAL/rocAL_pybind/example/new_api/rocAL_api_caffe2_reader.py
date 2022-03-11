@@ -1,7 +1,6 @@
 import sys
 from amd.rocal.plugin.pytorch import RALIClassificationIterator
 from amd.rocal.pipeline import Pipeline
-import amd.rocal.ops as ops
 import amd.rocal.types as types
 import amd.rocal.fn as fn
 import os
@@ -36,7 +35,6 @@ def main():
     crop_size = 224
     image_path = sys.argv[1]
     rali_device = 'cpu' if _rali_cpu else 'gpu'
-    decoder_device = 'cpu' if _rali_cpu else 'gpu'
     random_seed = random.SystemRandom().randint(0, 2**32 - 1)
     num_classes = len(next(os.walk(image_path))[1])
     print("num_classes:: ", num_classes)

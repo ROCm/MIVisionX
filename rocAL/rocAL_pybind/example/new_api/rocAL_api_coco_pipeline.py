@@ -18,16 +18,15 @@ import numpy as np
 class RALICOCOIterator(object):
     """
     COCO RALI iterator for pyTorch.
-
     Parameters
     ----------
-    pipelines : list of amd.rocal.pipeline.Pipeline
+    pipelines : list of amd.rali.pipeline.Pipeline
                 List of pipelines to use
     size : int
            Epoch size.
     """
 
-    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=None, offset=None, tensor_dtype=types.FLOAT, display=False ,device = "cpu"):
+    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=None, offset=None, tensor_dtype=types.FLOAT, device="cpu", display=False):
 
         # self._num_gpus = len(pipelines)
         assert pipelines is not None, "Number of provided pipelines has to be at least 1"
@@ -39,56 +38,41 @@ class RALICOCOIterator(object):
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
         self.device = device
+        self.device_id = self.loader._device_id
         self.bs = self.loader._batch_size
         self.w = self.loader.getOutputWidth()
         self.h = self.loader.getOutputHeight()
         self.n = self.loader.getOutputImageCount()
         self.rim = self.loader.getRemainingImages()
         self.display = display
-        self.hip_array = None
-        print(self.display)
-        if self.display!= "False":
-            try:
-                self.path= "OUTPUT_IMAGES_PYTHON/NEW_API/"+self.loader._reader+"/"
-                os.makedirs(self.path, exist_ok=True)
-            except OSError as error:
-                print(error)
         print("____________REMAINING IMAGES____________:", self.rim)
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
-        self.out = np.empty(
-                (self.bs*self.n,int(self.h/self.bs), self.w,self.p), dtype="ubyte")
-
-    def get_cupy_array_from_address(self):
-        if(self.tensor_format == types.NCHW):
-            address = self.loader.CopyToGpuTensorNCHW(
-                self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-            print("Address : ",address)
-            mem = cp.cuda.memory.UnownedMemory(address, 0, None)
-            memptr = cp.cuda.memory.MemoryPointer(mem, 0)
+        self.hip_array = None
+        if self.device == "cpu":
             if self.tensor_dtype == types.FLOAT:
-                self.hip_array = cp.ndarray(
-                    (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), "float32", memptr)
-            else:
-                self.hip_array = cp.ndarray(
-                    (self.bs*self.n, self.p, int(self.h/self.bs), self.w,), "float16", memptr)
+                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
+            elif self.tensor_dtype == types.FLOAT16:
+                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
         else:
-            address = self.loader.CopyToGpuTensorNHWC(
-                self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-            mem = cp.cuda.memory.UnownedMemory(address, 0, None)
-            memptr = cp.cuda.memory.MemoryPointer(mem, 0)
+            torch_gpu_device = torch.device('cuda', self.device_id)
             if self.tensor_dtype == types.FLOAT:
-                self.hip_array = cp.ndarray(
-                    (self.bs*self.n, int(self.h/self.bs), self.w,  self.p), "float32", memptr)
-            else:
-                self.hip_array = cp.ndarray(
-                    (self.bs*self.n, int(self.h/self.bs), self.w,  self.p), "float16", memptr)
+                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device=torch_gpu_device)
+            elif self.tensor_dtype == types.FLOAT16:
+                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device=torch_gpu_device)
+
+        #Image id of a batch of images
+        self.image_id = np.zeros(self.bs, dtype="int32")
+        # Count of labels/ bboxes in a batch
+        self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
+        # Image sizes of a batch
+        self.img_size = np.zeros((self.bs * 2), dtype="int32")
+
 
     def next(self):
         return self.__next__()
 
     def __next__(self):
-        print("In the next routine of COCO Iterator")
         if(self.loader.isEmpty()):
             timing_info = self.loader.Timing_Info()
             print("Load     time ::", timing_info.load_time)
@@ -102,59 +86,41 @@ class RALICOCOIterator(object):
         self.lis = []  # Empty list for bboxes
         self.lis_lab = []  # Empty list of labels
 
-        if self.device == "cpu":
-            #Copy output from buffer to numpy array
-            self.loader.copyImage(self.out)
-        else:
-            self.get_cupy_array_from_address()
+        self.loader.copyToTensor(
+            self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
+
 #Image id of a batch of images
-        self.image_id = np.zeros(self.bs, dtype="int32")
         self.loader.GetImageId(self.image_id)
 # Count of labels/ bboxes in a batch
-        self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
-        self.count_batch = self.loader.GetBoundingBoxCount(
-            self.bboxes_label_count)
+        self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
         print("Count Batch:", self.count_batch)
 # 1D labels & bboxes array
         self.encoded_bboxes = np.zeros((self.count_batch*4), dtype="float32")
         self.encoded_labels = np.zeros(self.count_batch, dtype="int32")
-        self.loader.copyEncodedBoxesAndLables(
-            self.encoded_bboxes, self.encoded_labels)
+        self.loader.copyEncodedBoxesAndLables(self.encoded_bboxes, self.encoded_labels)
 # Image sizes of a batch
-        self.img_size = np.zeros((self.bs * 2), dtype="int32")
         self.loader.GetImgSizes(self.img_size)
         print("Image sizes:", self.img_size)
 
         encoded_bboxes_tensor = torch.tensor(self.encoded_bboxes).view(self.bs, -1, 4).contiguous()
-        encodded_labels_tensor=  torch.tensor(self.encoded_labels).long().view(self.bs, -1)
+        encodded_labels_tensor = torch.tensor(self.encoded_labels).long().view(self.bs, -1)
         image_id_tensor = torch.tensor(self.image_id)
         image_size_tensor = torch.tensor(self.img_size).view(-1, self.bs, 2)
         for i in range(self.bs):
-            index_list =[ ]
-            actual_bboxes=[]
-            actual_labels =[]
+            index_list = []
+            actual_bboxes = []
+            actual_labels = []
             for idx, x in enumerate(encodded_labels_tensor[i]):
-                if x!=0:
+                if x != 0:
                     index_list.append(idx)
                     actual_bboxes.append(encoded_bboxes_tensor[i][idx].tolist())
                     actual_labels.append(encodded_labels_tensor[i][idx].tolist())
 
-            if self.display!="False":
-                if self.n == 1:
-                    img = torch.from_numpy(self.out)
-                    draw_patches(img[i], self.image_id[i], actual_bboxes, self.path)
-                else:
-                    img = torch.from_numpy(self.out)
-                    for idx in range(self.n):
-                        draw_all_images(img[i],self.image_id[i],idx, self.path)
-        if self.device == "cpu":
-            if self.tensor_dtype == types.FLOAT:
-                return torch.from_numpy(self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
-            elif self.tensor_dtype == types.FLOAT16:
-                return torch.from_numpy(self.out.astype(np.float16)), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
-        if self.device == "cuda":
-            dlpack_array = self.hip_array.toDlpack()
-            return dp.from_dlpack(dlpack_array), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
+            if self.display:
+                img = self.out
+                draw_patches(img[i], self.image_id[i], actual_bboxes, self.device)
+
+        return (self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
 
     def reset(self):
         self.loader.raliResetLoaders()
@@ -274,7 +240,7 @@ def main():
                                         output_dtype=types.FLOAT,
                                         output_layout=types.NCHW,
                                         pad_output=False)
-        bboxes, labels = fn.box_encoder(bboxes, labels,
+        _, _ = fn.box_encoder(bboxes, labels,
                                     criteria=0.5,
                                     anchors=default_boxes)
         pipe.set_outputs(cmn_images)

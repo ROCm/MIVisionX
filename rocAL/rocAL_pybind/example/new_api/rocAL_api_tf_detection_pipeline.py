@@ -93,7 +93,7 @@ def main():
                                         }
         )
         jpegs = inputs["image/encoded"]
-        labels = inputs["image/class/label"]
+        _ = inputs["image/class/label"]
         decoded_images = fn.decoders.image_random_crop(jpegs,user_feature_key_map=featureKeyMap, output_type=types.RGB,
                                                       random_aspect_ratio=[0.8, 1.25],
                                                       random_area=[0.1, 1.0],

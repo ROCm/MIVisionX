@@ -245,7 +245,7 @@ def main():
                                         output_dtype=types.FLOAT,
                                         output_layout=types.NCHW,
                                         pad_output=False)
-        bboxes, labels = fn.box_encoder(bboxes, labels,
+        _, _ = fn.box_encoder(bboxes, labels,
                                     criteria=0.5,
                                     anchors=default_boxes)
         pipe.set_outputs(cmn_images)

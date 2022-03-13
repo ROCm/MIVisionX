@@ -1,11 +1,12 @@
 from amd.rocal.plugin.tf import RALIIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
-import sys
 import tensorflow as tf
 import amd.rocal.fn as fn
 import numpy as np
 import os
+from parse_config import parse_args
+
 
 
 def get_onehot(image_labels_array, numClasses):
@@ -43,22 +44,17 @@ def draw_patches(img, idx, bboxes):
         image = cv2.UMat(image).get()
         image = cv2.rectangle(image, (int(loc_[0]*wtot), int(loc_[1] * htot)), (int(
             (loc_[2] * wtot)), int((loc_[3] * htot))), color, thickness)
-        cv2.imwrite("OUTPUT_IMAGES_PYTHON/OLD_API/TF_READER/"+str(idx)+"_"+"train"+".png", image)
+        cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/DETECTION/"+str(idx)+"_"+"train"+".png", image)
 
 
 def main():
-    if len(sys.argv) < 5:
-        print('Please pass <TensorFlow record path> <Number of classes> <"cpu"/"gpu"> <batch_size>')
-        exit(0)
-    imagePath = sys.argv[1]
-    numClasses = int(sys.argv[2])
-    if(sys.argv[3] == "cpu"):
-        raliCPU = True
-    else:
-        raliCPU = False
-    bs = int(sys.argv[4])
-    nt = 1
-    di = 0
+    args = parse_args()
+    # Args
+    imagePath = args.image_dataset_path
+    numClasses = 91
+    raliCPU = False if args.rocal_gpu else True
+    batch_size = args.batch_size
+    num_threads = args.num_threads
     TFRecordReaderType = 1
     featureKeyMap = {
         'image/encoded': 'image/encoded',
@@ -71,14 +67,13 @@ def main():
         'image/filename': 'image/filename'
     }
     try:
-        path= "OUTPUT_IMAGES_PYTHON/OLD_API/TF_READER"
-        os.makedirs(path, exist_ok=True)
+        path= "OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/DETECTION"
+        os.makedirs(path)
     except OSError as error:
         print(error)
 
 
-    pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=2, rali_cpu=raliCPU)
-    # pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rali_cpu=raliCPU)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rali_cpu=raliCPU)
     with pipe:
         inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
             features={
@@ -108,7 +103,7 @@ def main():
         images_array = np.transpose(images_array, [0, 2, 3, 1])
         print("RALI augmentation pipeline - Processing batch %d....." % i)
 
-        for element in list(range(bs)):
+        for element in list(range(batch_size)):
             cnt = cnt + 1
             print("Processing image %d....." % element)
             features_dict = {
@@ -124,7 +119,7 @@ def main():
             processed_tensors = (features_dict, labels_dict)
             print("\nPROCESSED_TENSORS:\n", processed_tensors)
             draw_patches(images_array[element],cnt,bboxes_array[element])
-        print("\n\nPrinted first batch with", (bs), "images!")
+        print("\n\nPrinted first batch with", (batch_size), "images!")
 
     imageIterator.reset()
 

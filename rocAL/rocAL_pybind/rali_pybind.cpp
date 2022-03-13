@@ -126,7 +126,7 @@ namespace rali{
         // std::cerr<<"\n Copy failed with status :: "<<status;
         return py::cast<py::none>(Py_None);
     }
-    
+
     py::object wrapper_label_copy(RaliContext context, py::array_t<int> array)
     {
         auto buf = array.request();

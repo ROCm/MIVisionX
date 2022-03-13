@@ -1,14 +1,12 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import random
 from amd.rocal.plugin.pytorch import RALIClassificationIterator
-
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
-import sys
-
+from parse_config import parse_args
+import os
 
 def draw_patches(img, idx):
     #image is expected as a tensor, bboxes as numpy
@@ -16,45 +14,40 @@ def draw_patches(img, idx):
     image = img.detach().numpy()
     image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(str(idx)+"_"+"train"+".png", image)
+    cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + str(idx)+"_"+"train"+".png", image)
 
 
 def main():
-    if len(sys.argv) < 5:
-        print('Please pass image_folder augmentation_number cpu/gpu batch_size')
-        exit(0)
-    data_path = sys.argv[1]
-    augmentation_num = int(sys.argv[2])
-
-    if(sys.argv[3] == "cpu"):
-        _rali_cpu = True
-    else:
-        _rali_cpu = False
-
-    bs = int(sys.argv[4])
-    nt = 1
-    di = 0
-    random_seed = random.SystemRandom().randint(0, 2**32 - 1)
-    crop = 300
-
-    pipe = Pipeline(batch_size=bs, num_threads=nt, device_id=di, seed=random_seed, rali_cpu=_rali_cpu)
+    args = parse_args()
+    # Args
+    data_path = args.image_dataset_path
+    augmentation_num = args.augmentation_number
+    rali_cpu = False if args.rocal_gpu else True
+    batch_size = args.batch_size
+    num_threads = args.num_threads
+    random_seed = args.seed
+    local_rank =  args.local_rank
+    world_size =  args.world_size
+    display = True if args.display else False
+    try:
+        path= "OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/"
+        os.makedirs(path)
+    except OSError as error:
+        print(error)
+    # Create Pipeline instance
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rali_cpu=rali_cpu)
+    # Set Params
     output_set = 0
-    local_rank = 0
-    world_size = 1
-
-    rali_cpu = True
     rali_device = 'cpu' if rali_cpu else 'gpu'
     decoder_device = 'cpu' if rali_cpu else 'gpu'
-
-    crop_size = 300
-
+    # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
-        jpegs, labels = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
+        jpegs, _ = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
         images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
-        images = fn.resize(images, device=rali_device, resize_x=crop, resize_y=crop)
+        images = fn.resize(images, device=rali_device, resize_x=300, resize_y=300)
 
         if augmentation_num == 0 or augmentation_num == 1:
-            output = fn.resize(images, resize_x=crop_size, resize_y=crop_size)
+            output = fn.resize(images, resize_x=300, resize_y=300)
         elif augmentation_num == 2:
             output = fn.rotate(images)
         elif augmentation_num == 3:
@@ -101,7 +94,7 @@ def main():
             output = fn.crop_mirror_normalize(images, device="cpu",
                                               output_dtype=types.FLOAT,
                                               output_layout=types.NCHW,
-                                              crop=(crop, crop),
+                                              crop=(300, 300),
                                               image_type=types.RGB,
                                               mean=[0, 0, 0],
                                               std=[1, 1, 1])
@@ -120,7 +113,7 @@ def main():
             pipe.set_outputs(output1, output2, output3)
             output_set = 1
         elif augmentation_num == 28:
-            output1 = fn.resize(images, resize_x=crop_size, resize_y=crop_size)
+            output1 = fn.resize(images, resize_x=300, resize_y=300)
             output2 = fn.brightness(output1)
             output3 = fn.jitter(output2)
             pipe.set_outputs(output1, output2, output3)
@@ -133,15 +126,17 @@ def main():
 
         if output_set==0:
                 pipe.set_outputs(output)
-
+    # build the pipeline
     pipe.build()
-
+    # Dataloader
     data_loader = RALIClassificationIterator(pipe)
-    epochs = 1
     cnt = 0
+
     import timeit
     start = timeit.default_timer()
-    for epoch in range(int(epochs)):
+
+    # Enumerate over the Dataloader
+    for epoch in range(int(args.num_epochs)):
         print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):
             print("**************", i, "*******************")
@@ -150,7 +145,8 @@ def main():
             print("\nLABELS:\n", it[1])
             for img in it[0]:
                 cnt = cnt+1
-                draw_patches(img, cnt)
+                if display:
+                    draw_patches(img, cnt)
             print("**************ends*******************")
             print("**************", i, "*******************")
         data_loader.reset()

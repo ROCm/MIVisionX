@@ -4,45 +4,48 @@ from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
 import amd.rocal.fn as fn
 import os
-import random
+from parse_config import parse_args
 
 
 def draw_patches(img, idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
+    args = parse_args()
     image = img.detach().numpy()
     image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
+    if args.classification:
+            cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE2_READER/CLASSIFICATION/"+str(idx)+"_"+"train"+".png", image)
+    else:
+        cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE2_READER/DETECTION/"+str(idx)+"_"+"train"+".png", image)
 
 
 def main():
-    if len(sys.argv) < 4:
-        print('Please pass image_folder cpu/gpu batch_size classification/detection')
-        exit(0)
-    if(sys.argv[2] == "cpu"):
-        _rali_cpu = True
-    else:
-        _rali_cpu = False
-    bs = int(sys.argv[3])
-    if(sys.argv[4] == "detection"):
-        _rali_bbox = True
-    else:
-        _rali_bbox = False
-
-    nt = 1
-    di = 0
-    crop_size = 224
-    image_path = sys.argv[1]
-    rali_device = 'cpu' if _rali_cpu else 'gpu'
-    random_seed = random.SystemRandom().randint(0, 2**32 - 1)
+    args = parse_args()
+    # Args
+    image_path = args.image_dataset_path
+    _rali_cpu = False if args.rocal_gpu else True
+    batch_size = args.batch_size
+    _rali_bbox = False if args.classification else True
+    num_threads = args.num_threads
+    local_rank =  args.local_rank
+    world_size =  args.world_size
+    random_seed = args.seed
+    display = True if args.display else False
+    device = "gpu" if args.rocal_gpu else "cpu"
     num_classes = len(next(os.walk(image_path))[1])
     print("num_classes:: ", num_classes)
-
-    pipe = Pipeline(batch_size=bs, num_threads=nt, device_id=di,
+    try:
+        if args.classification:
+            path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE2_READER/CLASSIFICATION/"
+        else:
+            path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE2_READER/DETECTION/"
+        os.makedirs(path)
+    except OSError as error:
+        print(error)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=local_rank,
                     seed=random_seed, rali_cpu=_rali_cpu)
-    # pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu, rali_type=_rali_type)
-    with pipe:  # TODO: Need to add oneHotLabels, CMN, CoinFlip
+    with pipe:
         if _rali_bbox:
             jpegs, labels, bboxes = fn.readers.caffe2(
                 path=image_path, bbox=_rali_bbox, random_shuffle=True)
@@ -50,8 +53,7 @@ def main():
             jpegs, labels = fn.readers.caffe2(
                 path=image_path, bbox=_rali_bbox, random_shuffle=True)
         images = fn.decoders.image(jpegs, output_type=types.RGB, path=image_path, random_shuffle=True)
-        images = fn.resize(images, resize_x=crop_size,
-                           resize_y=crop_size, device=rali_device)
+        images = fn.resize(images, resize_x=224, resize_y=224)
         pipe.set_outputs(images)
     pipe.build()
     data_loader = RALIClassificationIterator(pipe , display=True)
@@ -65,7 +67,7 @@ def main():
                 sys.stdout.write("\r Mini-batch " + str(i))
                 print("Images", image_batch)
                 print("Labels", labels)
-                for element in list(range(bs)):
+                for element in list(range(batch_size)):
                     cnt = cnt + 1
                     draw_patches(image_batch[element],cnt)
             data_loader.reset()
@@ -75,7 +77,7 @@ def main():
                 print("Images", image_batch)
                 print("Bboxes", bboxes)
                 print("Labels", labels)
-                for element in list(range(bs)):
+                for element in list(range(batch_size)):
                     cnt = cnt + 1
                     draw_patches(image_batch[element],cnt)
             data_loader.reset()

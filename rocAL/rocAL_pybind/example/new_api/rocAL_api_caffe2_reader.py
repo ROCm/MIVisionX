@@ -29,7 +29,6 @@ def main():
     _rali_bbox = False if args.classification else True
     num_threads = args.num_threads
     local_rank =  args.local_rank
-    world_size =  args.world_size
     random_seed = args.seed
     display = True if args.display else False
     device = "gpu" if args.rocal_gpu else "cpu"
@@ -56,7 +55,7 @@ def main():
         images = fn.resize(images, resize_x=224, resize_y=224)
         pipe.set_outputs(images)
     pipe.build()
-    data_loader = RALIClassificationIterator(pipe , display=True)
+    data_loader = RALIClassificationIterator(pipe , display=display, device=device)
 
     # Training loop
     cnt = 0

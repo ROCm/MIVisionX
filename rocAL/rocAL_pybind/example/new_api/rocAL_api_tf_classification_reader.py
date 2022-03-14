@@ -21,7 +21,7 @@ def main():
     imagePath = args.image_dataset_path
     raliCPU = False if args.rocal_gpu else True
     batch_size = args.batch_size
-    oneHotLabel = 0
+    oneHotLabel = 1
     num_threads = args.num_threads
     TFRecordReaderType = 0
     featureKeyMap = {

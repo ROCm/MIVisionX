@@ -30,8 +30,8 @@ class RALICOCOIterator(object):
         # self._num_gpus = len(pipelines)
         try:
             assert pipelines is not None, "Number of provided pipelines has to be at least 1"
-        except :
-            print("Number of provided pipelines has to be at least 1")
+        except Exception as ex:
+            print(ex)
 
         self.loader = pipelines
         self.tensor_format = tensor_layout

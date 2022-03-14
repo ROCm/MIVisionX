@@ -28,7 +28,10 @@ class RALICOCOIterator(object):
     def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=None, offset=None, tensor_dtype=types.FLOAT, device="cpu", display=False, num_anchors=8732):
 
         # self._num_gpus = len(pipelines)
-        assert pipelines is not None, "Number of provided pipelines has to be at least 1"
+        try:
+            assert pipelines is not None, "Number of provided pipelines has to be at least 1"
+        except :
+            print("Number of provided pipelines has to be at least 1")
 
         self.loader = pipelines
         self.tensor_format = tensor_layout
@@ -323,9 +326,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
 
 
 

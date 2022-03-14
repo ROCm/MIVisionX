@@ -41,8 +41,8 @@ RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, 
         aspect_ratio = ParameterFactory::instance()->create_uniform_float_rand_param(1.0, 1.0);
     }
     else
-    {      
-    
+    {
+
         aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
     }
     if(p_scaling == NULL)
@@ -51,7 +51,7 @@ RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, 
     }
     else
     {
-        scaling = static_cast<FloatParam*>(p_scaling);        
+        scaling = static_cast<FloatParam*>(p_scaling);
     }
     context->master_graph->create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType::RandomBBoxCropReader, RandomBBoxCrop_MetaDataType::BoundingBox, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts, seed);
 }
@@ -96,7 +96,7 @@ RALI_API_CALL raliCreateCOCOReaderKeyPoints(RaliContext p_context, const char* s
 
 RaliMetaData
 RALI_API_CALL raliCreateTFReader(RaliContext p_context, const char* source_path, bool is_output,const char* user_key_for_label, const char* user_key_for_filename)
-{    
+{
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateTFReader")
     auto context = static_cast<Context*>(p_context);
@@ -112,10 +112,10 @@ RALI_API_CALL raliCreateTFReader(RaliContext p_context, const char* source_path,
 
 RaliMetaData
 RALI_API_CALL raliCreateTFReaderDetection(RaliContext p_context, const char* source_path, bool is_output,
-    const char* user_key_for_label, const char* user_key_for_text, 
-    const char* user_key_for_xmin, const char* user_key_for_ymin, const char* user_key_for_xmax, const char* user_key_for_ymax, 
+    const char* user_key_for_label, const char* user_key_for_text,
+    const char* user_key_for_xmin, const char* user_key_for_ymin, const char* user_key_for_xmax, const char* user_key_for_ymax,
     const char* user_key_for_filename)
-{    
+{
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateTFReaderDetection")
     auto context = static_cast<Context*>(p_context);
@@ -154,7 +154,7 @@ RALI_API_CALL raliCreateMXNetReader(RaliContext p_context, const char* source_pa
 
 RaliMetaData
 RALI_API_CALL raliCreateTextFileBasedLabelReader(RaliContext p_context, const char* source_path) {
-    
+
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateTextFileBasedLabelReader")
     auto context = static_cast<Context*>(p_context);
@@ -218,7 +218,7 @@ RALI_API_CALL raliGetImageId(RaliContext p_context,  int* buf)
 void
 RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
 {
-    
+
     if (!p_context)
         THROW("Invalid rali context passed to raliGetImageLabels")
     auto context = static_cast<Context*>(p_context);
@@ -246,15 +246,6 @@ RALI_API_CALL raliGetBoundingBoxCount(RaliContext p_context, int* buf)
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
     return context->master_graph->bounding_box_batch_count(buf, meta_data.second);
-#if 0
-    unsigned size = 0;
-    for(unsigned i = 0; i < meta_data_batch_size; i++)
-    {
-        buf[i] = meta_data.second->get_bb_labels_batch()[i].size();
-        size += buf[i];
-    }
-    return size;
-#endif    
 }
 
 void
@@ -273,7 +264,7 @@ RALI_API_CALL raliGetBoundingBoxLabel(RaliContext p_context, int* buf)
         return;
     }
     for(unsigned i = 0; i < meta_data_batch_size; i++)
-    { 
+    {
         unsigned bb_count = meta_data.second->get_bb_labels_batch()[i].size();
         memcpy(buf, meta_data.second->get_bb_labels_batch()[i].data(),  sizeof(int) * bb_count);
         buf += bb_count;
@@ -299,7 +290,7 @@ RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, int* buf, int numO
     int one_hot_encoded[meta_data_batch_size*numOfClasses];
     memset(one_hot_encoded, 0, sizeof(int) * meta_data_batch_size * numOfClasses);
     memcpy(labels_buf, meta_data.second->get_label_batch().data(),  sizeof(int)*meta_data_batch_size);
-    
+
     for(uint i = 0; i < meta_data_batch_size; i++)
     {
         int label_index =  labels_buf[i];
@@ -310,7 +301,7 @@ RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, int* buf, int numO
         }
         else if(label_index == 0)
         {
-          one_hot_encoded[(i*numOfClasses)+numOfClasses-1]=1;  
+          one_hot_encoded[(i*numOfClasses)+numOfClasses-1]=1;
         }
 
     }
@@ -335,7 +326,7 @@ RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf)
         return;
     }
     for(unsigned i = 0; i < meta_data_batch_size; i++)
-    { 
+    {
         unsigned bb_count = meta_data.second->get_bb_cords_batch()[i].size();
         memcpy(buf, meta_data.second->get_bb_cords_batch()[i].data(), bb_count * sizeof(BoundingBoxCord));
         buf += (bb_count * 4);
@@ -344,7 +335,7 @@ RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf)
 
 void
 RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
-{   
+{
     if (!p_context)
         THROW("Invalid rali context passed to raliGetImageSizes")
     auto context = static_cast<Context*>(p_context);
@@ -358,7 +349,7 @@ RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
         return;
     }
     for(unsigned i = 0; i < meta_data_batch_size; i++)
-    { 
+    {
         memcpy(buf, &(meta_data.second->get_img_sizes_batch()[i]), sizeof(ImgSize));
         buf += 2;
     }
@@ -366,7 +357,7 @@ RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
 
 RaliMetaData
 RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext p_context, const char* source_path, const char* file_prefix) {
-    
+
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateTextCifar10LabelReader")
     auto context = static_cast<Context*>(p_context);
@@ -411,7 +402,7 @@ void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<float>& anc
     context->master_graph->box_encoder(anchors, criteria, means, stds, offset, scale);
 }
 
-void 
+void
 RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_buf, int* labels_buf)
 {
     if (!p_context)
@@ -445,7 +436,7 @@ RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_
     }
 }
 
-void 
+void
 RALI_API_CALL raliGetEncodedBoxesAndLables(RaliContext p_context, float **boxes_buf_ptr, int **labels_buf_ptr, int num_encoded_boxes)
 {
     if (!p_context) {
@@ -461,7 +452,7 @@ RALI_API_CALL raliGetEncodedBoxesAndLables(RaliContext p_context, float **boxes_
 
 void
 RALI_API_CALL raliGetJointsDataPtr(RaliContext p_context, RaliJointsData **joints_data)
-{  
+{
     if (!p_context)
         THROW("Invalid rali context passed to raliGetBoundingBoxCords")
     auto context = static_cast<Context*>(p_context);

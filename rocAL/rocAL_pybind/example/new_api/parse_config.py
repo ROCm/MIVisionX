@@ -38,7 +38,7 @@ def parse_args():
                         help='number of examples for each iteration')
     add_bool_arg(common_group, 'display', default=True)
     add_bool_arg(common_group, 'classification', default=True)  # use --classification for Classification / --no-classification for Detection
-    
+
     common_group.add_argument('--rocal-gpu', action='store_true',
                         help='run input pipeline cpu')
     common_group.add_argument('--NHWC', action='store_true',
@@ -59,8 +59,8 @@ def parse_args():
 
     # rocAL_api_python_unittest.py related options
     python_unit_test = parser.add_argument_group('python-unittest', 'python-unittest-related options')
-    python_unit_test.add_argument('--augmentation-number', '-aug_num', type=int, default=0,
-                        help='augmentation number for python unit test')
+    python_unit_test.add_argument('--augmentation-name', '-aug_name', type=str, default="resize",
+                        help='refer python unit test for all augmentation names ')
     # rocAL_api_coco_pipeline.py related options
     coco_pipeline = parser.add_argument_group('coco-pipeline', 'coco-pipeline-related options')
     coco_pipeline.add_argument('--json-path', '-json-path', type=str,

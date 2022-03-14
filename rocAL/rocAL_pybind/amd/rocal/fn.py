@@ -17,12 +17,14 @@ def blend(*inputs,ratio=None):
 
 def snow(*inputs, snow=0.5, device=None):
     # pybind call arguments
+    snow = b.CreateFloatParameter(snow) if isinstance(snow, float) else snow
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": snow}
     snow_image = b.Snow(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (snow_image)
 
 def exposure(*inputs, exposure=0.5, device=None):
     # pybind call arguments
+    exposure = b.CreateFloatParameter(exposure) if isinstance(exposure, float) else exposure
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": exposure}
     exposure_image = b.Exposure(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (exposure_image)
@@ -35,6 +37,7 @@ def fish_eye(*inputs, device=None):
 
 def fog(*inputs, fog=0.5, device=None):
     # pybind call arguments
+    fog = b.CreateFloatParameter(fog) if isinstance(fog, float) else fog
     kwargs_pybind = {"input_image0": inputs[0],
                      "is_output": False, "fog_value": fog}
     fog_image = b.Fog(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))

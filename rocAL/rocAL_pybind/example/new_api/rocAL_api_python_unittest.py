@@ -11,17 +11,18 @@ import os
 def draw_patches(img, idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
+    args = parse_args()
     image = img.detach().numpy()
     image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + str(idx)+"_"+"train"+".png", image)
+    cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name + "/" + str(idx)+"_"+"train"+".png", image)
 
 
 def main():
     args = parse_args()
     # Args
     data_path = args.image_dataset_path
-    augmentation_num = args.augmentation_number
+    augmentation_name = args.augmentation_name
     rali_cpu = False if args.rocal_gpu else True
     batch_size = args.batch_size
     num_threads = args.num_threads
@@ -30,7 +31,7 @@ def main():
     world_size =  args.world_size
     display = True if args.display else False
     try:
-        path= "OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/"
+        path= "OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name
         os.makedirs(path)
     except OSError as error:
         print(error)
@@ -46,51 +47,51 @@ def main():
         images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
         images = fn.resize(images, device=rali_device, resize_x=300, resize_y=300)
 
-        if augmentation_num == 0 or augmentation_num == 1:
+        if augmentation_name == "resize":
             output = fn.resize(images, resize_x=300, resize_y=300)
-        elif augmentation_num == 2:
+        elif augmentation_name == "rotate":
             output = fn.rotate(images)
-        elif augmentation_num == 3:
+        elif augmentation_name == "brightness":
             output = fn.brightness(images)
-        elif augmentation_num == 4:
+        elif augmentation_name == "gamma_correction":
             output = fn.gamma_correction(images)
-        elif augmentation_num == 5:
+        elif augmentation_name == "contrast":
             output = fn.contrast(images)
-        elif augmentation_num == 6:
+        elif augmentation_name == "flip":
             output = fn.flip(images)
-        elif augmentation_num == 7:
+        elif augmentation_name == "blur":
             output = fn.blur(images)
-        elif augmentation_num == 8:
+        elif augmentation_name == "hue_rotate_blend":
             images_hue = fn.hue(images)
             images_rotate = fn.rotate(images)
             output = fn.blend(images_hue, images_rotate)
-        elif augmentation_num == 9:
+        elif augmentation_name == "warp_affine":
             output = fn.warp_affine(images)
-        elif augmentation_num == 10:
+        elif augmentation_name == "fish_eye":
             output = fn.fish_eye(images)
-        elif augmentation_num == 11:
+        elif augmentation_name == "vignette":
             output = fn.vignette(images)
-        elif augmentation_num == 12:
+        elif augmentation_name == "jitter":
             output = fn.jitter(images)
-        elif augmentation_num == 13:
+        elif augmentation_name == "snp_noise":
             output = fn.snp_noise(images)
-        elif augmentation_num == 14:
+        elif augmentation_name == "snow":
             output = fn.snow(images)
-        elif augmentation_num == 15:
+        elif augmentation_name =="rain":
             output = fn.rain(images)
-        elif augmentation_num == 16:
+        elif augmentation_name == "fog":
             output = fn.fog(images)
-        elif augmentation_num == 17:
+        elif augmentation_name == "pixelate":
             output = fn.pixelate(images)
-        elif augmentation_num == 18:
+        elif augmentation_name == "exposure":
             output = fn.exposure(images)
-        elif augmentation_num == 19:
+        elif augmentation_name == "hue":
             output = fn.hue(images)
-        elif augmentation_num == 20:
+        elif augmentation_name == "saturation":
             output = fn.saturation(images)
-        elif augmentation_num == 21:
+        elif augmentation_name == "color_twist":
             output = fn.color_twist(images)
-        elif augmentation_num == 22:
+        elif augmentation_name == "crop_mirror_normalize":
             output = fn.crop_mirror_normalize(images, device="cpu",
                                               output_dtype=types.FLOAT,
                                               output_layout=types.NCHW,
@@ -98,27 +99,27 @@ def main():
                                               image_type=types.RGB,
                                               mean=[0, 0, 0],
                                               std=[1, 1, 1])
-        elif augmentation_num == 23:
+        elif augmentation_name == "nop":
             output = fn.nop(images)
-        elif augmentation_num == 24:
+        elif augmentation_name == "centre_crop":
             output = fn.centre_crop(images)
-        elif augmentation_num == 25:
+        elif augmentation_name == "color_temp":
             output = fn.color_temp(images)
-        elif augmentation_num == 26:
+        elif augmentation_name == "copy":
             output = fn.copy(images)
-        elif augmentation_num == 27:
+        elif augmentation_name == "rotate_fisheye_fog":
             output1 = fn.rotate(images)
             output2 = fn.fish_eye(output1)
             output3 = fn.fog(output2)
             pipe.set_outputs(output1, output2, output3)
             output_set = 1
-        elif augmentation_num == 28:
+        elif augmentation_name == "resize_brightness_jitter":
             output1 = fn.resize(images, resize_x=300, resize_y=300)
             output2 = fn.brightness(output1)
             output3 = fn.jitter(output2)
             pipe.set_outputs(output1, output2, output3)
             output_set = 1
-        elif augmentation_num == 29:
+        elif augmentation_name == "vignetter_blur":
             output1 = fn.vignette(images)
             output2 = fn.blur(output1)
             pipe.set_outputs(output1, output2)

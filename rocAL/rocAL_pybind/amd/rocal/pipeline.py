@@ -260,21 +260,27 @@ class Pipeline(object):
     def set_seed(self,seed=0):
         return b.setSeed(seed)
 
-    def create_int_param(self,value):
+    @classmethod
+    def create_int_param(self,value=1):
         return b.CreateIntParameter(value)
 
-    def create_float_param(self,value):
+    @classmethod
+    def create_float_param(self,value=1):
         return b.CreateFloatParameter(value)
 
-    def update_int_param(self,value,param):
+    @classmethod
+    def update_int_param(self,value=1,param=1):
         b.UpdateIntParameter(value,param)
 
-    def update_float_param(self,value,param):
+    @classmethod
+    def update_float_param(self,value=1,param=1):
         b.UpdateFloatParameter(value,param)
 
+    @classmethod
     def get_int_value(self,param):
         return b.GetIntValue(param)
 
+    @classmethod
     def get_float_value(self,param):
         return b.GetFloatValue(param)
 

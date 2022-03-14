@@ -15,11 +15,11 @@ ver=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\.\2/')
 # USER TO MAKE CHANGES HERE FOR TEST
 # Make the respective " Pipeline " to test equal to 1
 rocAL_api_python_unittest=1
-rocAL_api_coco_pipeline=1
-rocAL_api_caffe_reader=1
-rocAL_api_caffe2_reader=1
-rocAL_api_tf_classification_reader=1
-rocAL_api_tf_detection_pipeline=1
+rocAL_api_coco_pipeline=0
+rocAL_api_caffe_reader=0
+rocAL_api_caffe2_reader=0
+rocAL_api_tf_classification_reader=0
+rocAL_api_tf_detection_pipeline=0
 ####################################################################################################################################
 
 
@@ -34,13 +34,13 @@ if [[ rocAL_api_python_unittest -eq 1 ]]; then
 
     # rocAL_api_python_unittest.py
     # By default : cpu backend, NCHW format , fp32
-    # Please pass image_folder augmentation_number in addition to other common args
-    # Augmentation number ranges from 0 to 29
+    # Please pass image_folder augmentation_nanme in addition to other common args
+    # Refer rocAL_api_python_unitest.py for all augmentation names
     python$ver rocAL_api_python_unittest.py \
         --image-dataset-path $data_dir \
-        --augmentation-number 0 \
+        --augmentation-name snow \
         --batch-size $batch_size \
-        --no-display \
+        --display \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \

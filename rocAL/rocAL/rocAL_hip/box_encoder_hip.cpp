@@ -254,8 +254,8 @@ void BoxEncoderGpu::Run(pMetaDataBatch full_batch_meta_data, float *encoded_boxe
         sample->labels_in = reinterpret_cast<const int *>(labels_in_temp);
         sample->boxes_out = reinterpret_cast<float4 *>(encoded_boxes_data + sample_idx*_anchor_count*4);
         sample->labels_out = reinterpret_cast<int *>(encoded_labels_data + sample_idx*_anchor_count);
-        boxes_in_temp += sample->in_box_count*sizeof(float4);
-        labels_in_temp += sample->in_box_count*sizeof(int);
+        boxes_in_temp += sample->in_box_count*4;
+        labels_in_temp += sample->in_box_count;
         _output_shape.push_back(std::vector<size_t>(1,_anchor_count));
     }
     const auto means_data = reinterpret_cast<const float *>(_means.data());

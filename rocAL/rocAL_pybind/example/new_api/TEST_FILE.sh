@@ -14,12 +14,13 @@ ver=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\.\2/')
 ####################################################################################################################################
 # USER TO MAKE CHANGES HERE FOR TEST
 # Make the respective " Pipeline " to test equal to 1
-rocAL_api_python_unittest=1
+rocAL_api_python_unittest=0
 rocAL_api_coco_pipeline=0
 rocAL_api_caffe_reader=0
 rocAL_api_caffe2_reader=0
 rocAL_api_tf_classification_reader=0
 rocAL_api_tf_detection_pipeline=0
+rocAL_api_video_pipeline=0
 ####################################################################################################################################
 
 
@@ -235,5 +236,25 @@ if [[ rocAL_api_tf_detection_pipeline -eq 1 ]]; then
         --num-threads 1 \
         --num-epochs 1
         # 2>&1 | tee -a run.log.rocAL_api_tf_detection_pipeline.${CURRENTDATE}.txt
+fi
+####################################################################################################################################
+
+
+####################################################################################################################################
+if [[ rocAL_api_video_pipeline -eq 1 ]]; then
+
+    # Mention dataset_path
+    # Detection
+    data_dir=/media/swetha/HIP_box_encoder_check/MIVisionX-data/video_and_sequence_samples/labelled_videos/
+    # rocAL_api_video_pipeline.py
+    # By default : cpu backend, NCHW format , fp32
+
+    python$ver rocAL_api_video_pipeline.py \
+        --video-path $data_dir \
+        --batch-size 10 \
+        --display \
+        --sequence-length 3 \
+        --num-epochs 1
+        # 2>&1 | tee -a run.log.rocAL_api_video_pipeline.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################

@@ -65,10 +65,16 @@ def parse_args():
     coco_pipeline = parser.add_argument_group('coco-pipeline', 'coco-pipeline-related options')
     coco_pipeline.add_argument('--json-path', '-json-path', type=str,
                         help='coco dataset json path')
-    # rocAL_api_caffe_readerpy related options
+    # rocAL_api_caffe_reader.py related options
     caffe_pipeline = parser.add_argument_group('caffe-pipeline', 'caffe-pipeline-related options')
     caffe_pipeline.add_argument('--detection', '-detection', type=str,
-                        help='coco dataset json path')
+                        help='detection')
+    # rocAL_api_video_pipeline.py related options
+    video_pipeline = parser.add_argument_group('video-pipeline', 'video-pipeline-related options')
+    video_pipeline.add_argument('--video-path', '-video-path', type=str,
+                        help='video path')
+    video_pipeline.add_argument('--sequence-length', '-sequence-length', type=int,
+                        help='video path')
 
     return parser.parse_args()
 

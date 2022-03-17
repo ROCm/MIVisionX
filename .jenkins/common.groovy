@@ -24,7 +24,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
             codeCovFlags = '-D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"'
         }
         else {
-            update = 'sudo yum -y --nogpgcheck update && sudo yum -y --nogpgcheck install zip && sudo alternatives --set python /usr/bin/python3'
+            update = 'sudo yum -y --nogpgcheck update && sudo yum -y --nogpgcheck install zip'
             installPackageDeps = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes --backend HIP'
             installPrefixOCL = '-D CMAKE_INSTALL_PREFIX=/opt/rocm/mivisionx/OCL'
             installPrefixHIP = ''

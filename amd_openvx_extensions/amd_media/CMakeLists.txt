@@ -104,6 +104,7 @@ if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
   # Generate wrapper for files to install in mivisionx/include/
   rocm_wrap_header_file(
     vx_amd_media.h
+    HEADER_LOCATION include/mivisionx
     GUARDS WRAPPER
     WRAPPER_LOCATIONS mivisionx/include
   )

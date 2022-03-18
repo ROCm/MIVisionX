@@ -191,12 +191,14 @@ if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
   # Generate wrapper for files to install in mivisionx/include/
   rocm_wrap_header_file(
     openvx_backend.h vx_ext_amd.h
+    HEADER_LOCATION include/mivisionx
     GUARDS WRAPPER
     WRAPPER_LOCATIONS mivisionx/include
   )
   # Generate wrapper for files to install in mivisionx/include/VX
   rocm_wrap_header_dir(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/VX
+    HEADER_LOCATION include/mivisionx
     PATTERNS "*.h"
     GUARDS WRAPPER
     WRAPPER_LOCATIONS mivisionx/include/VX

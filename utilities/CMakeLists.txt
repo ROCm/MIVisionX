@@ -86,3 +86,18 @@ else()
     message("-- ${Green}Utilities -- runvx module added with CPU support${ColourReset}")
     message("-- ${Red}WARNING: Utilities -- runcl, loom_shell, & mv_deploy modules excluded${ColourReset}")
 endif()
+
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  if(FFMPREG_FOUND)
+    #include(ROCMHeaderWrapper)
+    # Copy Header files to build directory
+    configure_file("./mv_deploy/mvdeploy_api.h" "${PROJECT_BINARY_DIR}/include/mivisionx/mvdeploy_api.h" COPYONLY)
+    # Generate wrapper for files to install in mivisionx/include/
+    rocm_wrap_header_file(
+      mvdeploy_api.h
+      GUARDS WRAPPER
+      WRAPPER_LOCATIONS mivisionx/include
+    )
+  endif()
+endif()
+

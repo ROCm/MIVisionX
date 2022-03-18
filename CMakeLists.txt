@@ -87,6 +87,43 @@ option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM        "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
 
+# FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
+option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+# ROCm cmake package
+find_package(ROCM 0.7.3 QUIET CONFIG PATHS ${CMAKE_PREFIX_PATH})
+if(NOT ROCM_FOUND)
+  set(PROJECT_EXTERN_DIR ${CMAKE_CURRENT_BINARY_DIR}/extern)
+  set(rocm_cmake_tag "master" CACHE STRING "rocm-cmake tag to download")
+  file(DOWNLOAD https://github.com/RadeonOpenCompute/rocm-cmake/archive/${rocm_cmake_tag}.zip
+       ${PROJECT_EXTERN_DIR}/rocm-cmake-${rocm_cmake_tag}.zip STATUS status LOG log)
+
+  list(GET status 0 status_code)
+  list(GET status 1 status_string)
+
+  if(NOT status_code EQUAL 0)
+    message(FATAL_ERROR "error: downloading
+    'https://github.com/RadeonOpenCompute/rocm-cmake/archive/${rocm_cmake_tag}.zip' failed
+    status_code: ${status_code}
+    status_string: ${status_string}
+    log: ${log}
+    ")
+  endif()
+
+  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${PROJECT_EXTERN_DIR}/rocm-cmake-${rocm_cmake_tag}.zip
+                  WORKING_DIRECTORY ${PROJECT_EXTERN_DIR})
+  execute_process( COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${PROJECT_EXTERN_DIR}/rocm-cmake .
+                  WORKING_DIRECTORY ${PROJECT_EXTERN_DIR}/rocm-cmake-${rocm_cmake_tag} )
+  execute_process( COMMAND ${CMAKE_COMMAND} --build rocm-cmake-${rocm_cmake_tag} --target install
+                  WORKING_DIRECTORY ${PROJECT_EXTERN_DIR})
+
+  find_package( ROCM 0.7.3 REQUIRED CONFIG PATHS ${PROJECT_EXTERN_DIR}/rocm-cmake )
+endif()
+include(ROCMHeaderWrapper)
+
+endif()
+
+
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
@@ -110,6 +147,18 @@ else()
 endif()
 
 install(DIRECTORY docs DESTINATION share/mivisionx)
+
+#install all wrapper files
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+
+install(
+    DIRECTORY
+       "${PROJECT_BINARY_DIR}/mivisionx"
+        DESTINATION . )
+
+message(STATUS "FILE_REORG - Install wrapper headers" )
+endif()
+
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})

@@ -5,7 +5,6 @@ from amd.rocal import random
 from amd.rocal import noise
 from amd.rocal import reductions
 
-import inspect
 import amd.rocal.types as types
 import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
@@ -17,12 +16,14 @@ def blend(*inputs,ratio=None):
 
 def snow(*inputs, snow=0.5, device=None):
     # pybind call arguments
+    snow = b.CreateFloatParameter(snow) if isinstance(snow, float) else snow
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": snow}
     snow_image = b.Snow(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (snow_image)
 
 def exposure(*inputs, exposure=0.5, device=None):
     # pybind call arguments
+    exposure = b.CreateFloatParameter(exposure) if isinstance(exposure, float) else exposure
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "shift": exposure}
     exposure_image = b.Exposure(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (exposure_image)
@@ -35,6 +36,7 @@ def fish_eye(*inputs, device=None):
 
 def fog(*inputs, fog=0.5, device=None):
     # pybind call arguments
+    fog = b.CreateFloatParameter(fog) if isinstance(fog, float) else fog
     kwargs_pybind = {"input_image0": inputs[0],
                      "is_output": False, "fog_value": fog}
     fog_image = b.Fog(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
@@ -376,23 +378,22 @@ def vignette(*inputs, vignette=0.5, device=None):
     vignette_outputcolor_temp_output = b.Vignette(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (vignette_outputcolor_temp_output)
 
-# TODO: Changes required
 def crop_mirror_normalize(*inputs, bytes_per_sample_hint=0, crop=[0, 0], crop_d=0, crop_h=0, crop_pos_x=0.5, crop_pos_y=0.5, crop_pos_z=0.5,
                           crop_w=0, image_type=0, mean=[0.0], mirror=1, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False,
                           preserve=False, seed=1, std=[1.0], device=None):
 
     if(len(crop) == 2):
-        crop_d = crop_d
-        crop_h = crop[0]
-        crop_w = crop[1]
+        crop_depth = crop_d
+        crop_height = crop[0]
+        crop_width = crop[1]
     elif(len(crop) == 3):
-        crop_d = crop[0]
-        crop_h = crop[1]
-        crop_w = crop[2]
+        crop_depth = crop[0]
+        crop_height = crop[1]
+        crop_width = crop[2]
     else:
-        crop_d = crop_d
-        crop_h = crop_h
-        crop_w = crop_w
+        crop_depth = crop_d
+        crop_height = crop_h
+        crop_width = crop_w
     #Set Seed
     b.setSeed(seed)
 
@@ -403,7 +404,7 @@ def crop_mirror_normalize(*inputs, bytes_per_sample_hint=0, crop=[0, 0], crop_d=
             mirror = b.CreateIntParameter(1)
 
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0], "crop_depth":crop_d, "crop_height":crop_h, "crop_width":crop_w, "start_x":1, "start_y":1, "start_z":1, "mean":mean, "std_dev":std,
+    kwargs_pybind = {"input_image0": inputs[0], "crop_depth":crop_depth, "crop_height":crop_height, "crop_width":crop_width, "start_x":1, "start_y":1, "start_z":1, "mean":mean, "std_dev":std,
                      "is_output": False, "mirror": mirror}
     b.setSeed(seed)
     cmn = b.CropMirrorNormalize(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
@@ -417,21 +418,21 @@ def centre_crop(*inputs, bytes_per_sample_hint=0, crop=[100, 100], crop_d=1, cro
                  crop_w=0, image_type=0, output_dtype=types.FLOAT, preserve = False, seed = 1, device = None):
 
     if(len(crop) == 2):
-        crop_d = crop_d
-        crop_h = crop[0]
-        crop_w = crop[1]
+        crop_depth = crop_d
+        crop_height = crop[0]
+        crop_width = crop[1]
     elif(len(crop) == 3):
-        crop_d = crop[0]
-        crop_h = crop[1]
-        crop_w = crop[2]
+        crop_depth = crop[0]
+        crop_height = crop[1]
+        crop_width = crop[2]
     else:
-        crop_d = crop_d
-        crop_h = crop_h
-        crop_w = crop_w
+        crop_depth = crop_d
+        crop_height = crop_h
+        crop_width = crop_w
     #Set Seed
     b.setSeed(seed)
     # pybind call arguments
-    kwargs_pybind = {"input_image0": inputs[0], "crop_width":crop_w, "crop_height":crop_h, "crop_depth":crop_d,
+    kwargs_pybind = {"input_image0": inputs[0], "crop_width":crop_width, "crop_height":crop_height, "crop_depth":crop_depth,
                      "is_output": False}
     centre_cropped_image = b.CenterCropFixed(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
@@ -441,26 +442,26 @@ def crop(*inputs, bytes_per_sample_hint=0, crop=[0.0, 0.0], crop_d=1, crop_h= 0,
                  crop_w=0, image_type=0, output_dtype=types.FLOAT, preserve = False, seed = 1, device = None):
 
     if(len(crop) == 2):
-        crop_d = crop_d
-        crop_h = crop[0]
-        crop_w = crop[1]
+        crop_depth = crop_d
+        crop_height = crop[0]
+        crop_width = crop[1]
     elif(len(crop) == 3):
-        crop_d = crop[0]
-        crop_h = crop[1]
-        crop_w = crop[2]
+        crop_depth = crop[0]
+        crop_height = crop[1]
+        crop_width = crop[2]
     else:
-        crop_d = crop_d
-        crop_h = crop_h
-        crop_w = crop_w
+        crop_depth = crop_d
+        crop_height = crop_h
+        crop_width = crop_w
     #Set Seed
     b.setSeed(seed)
-    if ((crop_w == 0) and (crop_h == 0)):
+    if ((crop_width == 0) and (crop_height == 0)):
         # pybind call arguments
         kwargs_pybind = {"input_image0": inputs[0],"is_output": False, "crop_width":None, "crop_height":None, "crop_depth":None ,"crop_pos_x": None, "crop_pos_y": None, "crop_pos_z": None }
         cropped_image = b.Crop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     else:
         # pybind call arguments
-        kwargs_pybind = {"input_image0": inputs[0], "crop_width":crop_w, "crop_height":crop_h, "crop_depth":crop_d ,"is_output": False,"crop_pos_x": crop_pos_x, "crop_pos_y": crop_pos_y, "crop_pos_z": crop_pos_z }
+        kwargs_pybind = {"input_image0": inputs[0], "crop_width":crop_width, "crop_height":crop_height, "crop_depth":crop_depth ,"is_output": False,"crop_pos_x": crop_pos_x, "crop_pos_y": crop_pos_y, "crop_pos_z": crop_pos_z }
         cropped_image = b.CropFixed(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (cropped_image)
 
@@ -468,7 +469,6 @@ def color_twist(*inputs, brightness=1.0, bytes_per_sample_hint=0, contrast=1.0, 
                 preserve=False, saturation=1.0, seed=-1, device=None):
     brightness = b.CreateFloatParameter(brightness) if isinstance(
         brightness, float) else brightness
-    bytes_per_sample_hint = bytes_per_sample_hint
     contrast = b.CreateFloatParameter(
         contrast) if isinstance(contrast, float) else contrast
     hue = b.CreateFloatParameter(hue) if isinstance(hue, float) else hue
@@ -488,17 +488,8 @@ def random_bbox_crop(*inputs,all_boxes_above_threshold = True, allow_no_crop =Tr
                 crop_shape = None, input_shape = None, ltrb = True, num_attempts = 1 ,scaling =  None,  preserve = False, seed = -1, shape_layout = "",
                 threshold_type ="iou", thresholds = None, total_num_attempts = 0, device = None, labels = None ):
     aspect_ratio = aspect_ratio if aspect_ratio else [1.0, 1.0]
-    if crop_shape is None:
-        crop_shape = []
-    else:
-        crop_shape = crop_shape
-    if input_shape is None:
-        input_shape = []
-    else:
-        input_shape = input_shape
+    crop_shape = [] if crop_shape is None else crop_shape
     scaling = scaling if scaling else [1.0, 1.0]
-    thresholds = thresholds if thresholds else [0.0]
-    crop_begin = []
     if(len(crop_shape) == 0):
         has_shape = False
         crop_width = 0

@@ -45,7 +45,7 @@ class ROCALGenericIteratorDetection(object):
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
-        if self.loader._name == None:
+        if self.loader._name is None:
             self.loader._name = self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)

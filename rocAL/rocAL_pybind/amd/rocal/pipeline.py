@@ -220,6 +220,24 @@ class Pipeline(object):
         b.rocalCopyToOutputTensor(self._handle, ctypes.c_void_p(array.data_ptr()), tensor_format, tensor_dtype,
                                     multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
+    def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
+        out = np.frombuffer(array, dtype=array.dtype)
+        if tensor_dtype == types.FLOAT:
+            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        elif tensor_dtype == types.FLOAT16:
+            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+
+    def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
+        out = np.frombuffer(array, dtype=array.dtype)
+        if tensor_dtype == types.FLOAT:
+            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        elif tensor_dtype == types.FLOAT16:
+            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+
     def encode(self, bboxes_in, labels_in):
         bboxes_tensor = torch.tensor(bboxes_in).float()
         labels_tensor=  torch.tensor(labels_in).long()
@@ -242,21 +260,27 @@ class Pipeline(object):
     def set_seed(self,seed=0):
         return b.setSeed(seed)
 
-    def create_int_param(self,value):
+    @classmethod
+    def create_int_param(self,value=1):
         return b.CreateIntParameter(value)
 
-    def create_float_param(self,value):
+    @classmethod
+    def create_float_param(self,value=1):
         return b.CreateFloatParameter(value)
 
-    def update_int_param(self,value,param):
+    @classmethod
+    def update_int_param(self,value=1,param=1):
         b.UpdateIntParameter(value,param)
 
-    def update_float_param(self,value,param):
+    @classmethod
+    def update_float_param(self,value=1,param=1):
         b.UpdateFloatParameter(value,param)
 
+    @classmethod
     def get_int_value(self,param):
         return b.GetIntValue(param)
 
+    @classmethod
     def get_float_value(self,param):
         return b.GetFloatValue(param)
 

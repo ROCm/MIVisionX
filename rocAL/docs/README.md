@@ -28,7 +28,7 @@ Follow the build instructions in [rocAL](../README.md)
 
 ## rocAL Python API
 
-### amd.rocal.ops
+### amd.rocal.fn
 *  Contains the image augmentations & file read and decode operations which are linked to rocAL C++ API
 *  All ops (listed below) are supported for the single input image and batched inputs.
 

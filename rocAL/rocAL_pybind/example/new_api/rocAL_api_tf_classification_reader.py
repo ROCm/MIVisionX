@@ -1,39 +1,42 @@
 from amd.rocal.plugin.tf import ROCALIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
-import sys
+import os
 import amd.rocal.fn as fn
 import tensorflow as tf
 import numpy as np
+from parse_config import parse_args
+
 
 def draw_patches(img,idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     image = img.transpose([0,1,2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite("OUTPUT_IMAGES_PYTHON/" + str(idx)+"_"+"train"+".png", image)
+    cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/CLASSIFICATION/" + str(idx)+"_"+"train"+".png", image)
 
 def main():
-    if  len(sys.argv) < 4:
-        print ('Please pass the <TensorFlowrecord> <cpu/gpu> <batch_size> <oneHotLabels=0/1>')
-        exit(0)
-    imagePath = sys.argv[1]
-    if(sys.argv[2] == "cpu"):
-        rocalCPU = True
-    else:
-        rocalCPU = False
-    bs = int(sys.argv[3])
-    oneHotLabel = int(sys.argv[4])
-    nt = 1
-    di = 0
+    args = parse_args()
+    # Args
+    imagePath = args.image_dataset_path
+    rocalCPU = False if args.rocal_gpu else True
+    batch_size = args.batch_size
+    oneHotLabel = 1
+    num_threads = args.num_threads
     TFRecordReaderType = 0
     featureKeyMap = {
         'image/encoded':'image/encoded',
         'image/class/label':'image/class/label',
         'image/filename':'image/filename'
     }
-    pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=2, rocal_cpu=rocalCPU)
-    # pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rocal_cpu=rocalCPU)
+    try:
+        path= "OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/CLASSIFICATION/"
+        os.makedirs(path)
+    except OSError as error:
+        print(error)
+    # Create Pipeline instance
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rocal_cpu=rocalCPU)
+    # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
             features={
@@ -47,19 +50,22 @@ def main():
         resized = fn.resize(images, resize_x=300, resize_y=300)
         if(oneHotLabel == 1):
             labels = inputs["image/class/label"]
-            labels = fn.one_hot(labels, num_classes=1000)
+            _ = fn.one_hot(labels, num_classes=1000)
         pipe.set_outputs(resized)
-
+    # Build the pipeline
     pipe.build()
+    # Dataloader
     imageIterator = ROCALIterator(pipe)
     cnt = 0
+    # Enumerate over the Dataloader
     for i, (images_array, labels_array) in enumerate(imageIterator, 0):
         images_array = np.transpose(images_array, [0, 2, 3, 1])
         print("\n",i)
-        for element in list(range(bs)):
+        print("lables_array",labels_array)
+        for element in list(range(batch_size)):
             cnt = cnt + 1
             draw_patches(images_array[element],cnt)
-        print("\n\nPrinted first batch with", (bs), "images!")
+        print("\n\nPrinted first batch with", (batch_size), "images!")
         break
     imageIterator.reset()
 

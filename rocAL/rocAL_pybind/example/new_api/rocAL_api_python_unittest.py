@@ -1,183 +1,162 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import random
 from amd.rocal.plugin.pytorch import ROCALClassificationIterator
-
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
-import sys
+from parse_config import parse_args
+import os
 
-def draw_patches(img,idx):
+def draw_patches(img, idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
+    args = parse_args()
     image = img.detach().numpy()
-    image = image.transpose([1,2,0])
+    image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(str(idx)+"_"+"train"+".png", image)
+    cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name + "/" + str(idx)+"_"+"train"+".png", image)
 
 
 def main():
-    if  len(sys.argv) < 5:
-        print ('Please pass image_folder augmentation_number cpu/gpu batch_size')
-        exit(0)
-    data_path = sys.argv[1]
-    augmentation_num = int(sys.argv[2])
-
-    if(sys.argv[3] == "cpu"):
-        _rocal_cpu = True
-    else:
-        _rocal_cpu = False
-
-    bs = int(sys.argv[4])
-    nt = 1
-    di = 0
-    random_seed = random.SystemRandom().randint(0, 2**32 - 1)
-    crop=300
-
-    pipe = Pipeline(batch_size=bs, num_threads=nt,device_id=di, seed=random_seed, rocal_cpu=_rocal_cpu)
-    output_set=0
-    local_rank = 0
-    world_size = 1
-
-
-    rocal_cpu= True
+    args = parse_args()
+    # Args
+    data_path = args.image_dataset_path
+    augmentation_name = args.augmentation_name
+    rocal_cpu = False if args.rocal_gpu else True
+    batch_size = args.batch_size
+    num_threads = args.num_threads
+    random_seed = args.seed
+    local_rank =  args.local_rank
+    world_size =  args.world_size
+    display = True if args.display else False
+    try:
+        path= "OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name
+        os.makedirs(path)
+    except OSError as error:
+        print(error)
+    # Create Pipeline instance
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu)
+    # Set Params
+    output_set = 0
     rocal_device = 'cpu' if rocal_cpu else 'gpu'
-    decoder_device = 'cpu' if rocal_cpu else 'mixed'
-
-    crop_size = 300
-
+    decoder_device = 'cpu' if rocal_cpu else 'gpu'
+    # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
-        jpegs, labels = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
+        jpegs, _ = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
         images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
-        # images = fn.decoders.image_random_crop(jpegs, device=decoder_device, output_type=types.RGB,
-        #                                             device_memory_padding=device_memory_padding,
-        #                                             host_memory_padding=host_memory_padding,
-        #                                             random_aspect_ratio=[0.8, 1.25],
-        #                                             random_area=[0.1, 1.0],
-        #                                             num_attempts=100,
-        #                                             file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
-        images = fn.resize(images, device=rocal_device, resize_x=crop, resize_y=crop)
-        # flip_coin = fn.random.coin_flip(probability=0.5)
-        # images = fn.crop_mirror_normalize(images, device="gpu",
-        #                                 output_dtype=types.FLOAT,
-        #                                 output_layout=types.NCHW,
-        #                                 crop=(crop, crop),
-        #                                 mirror=flip_coin,
-        #                                 image_type=types.RGB,
-        #                                 mean=[0,0,0],
-        #                                 std=[1,1,1])
+        images = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
 
-        if augmentation_num == 0 or augmentation_num == 1:
-                output = fn.resize(images,resize_x=crop_size,resize_y=crop_size)
-        elif augmentation_num == 2:
-                output = fn.rotate(images)
-        elif augmentation_num == 3:
-                output = fn.brightness(images)
-        elif augmentation_num == 4:
-                output = fn.gamma_correction(images)
-        elif augmentation_num == 5:
-                output = fn.contrast(images)
-        elif augmentation_num == 6:
-                output = fn.flip(images)
-        elif augmentation_num == 7:
-                output = fn.blur(images)
-        elif augmentation_num == 8:
-                images_hue = fn.hue(images)
-                images_rotate = fn.rotate(images)
-                output = fn.blend(images_hue, images_rotate)
-        elif augmentation_num == 9:
-                output = fn.warp_affine(images)
-        elif augmentation_num == 10:
-                output = fn.fish_eye(images)
-        elif augmentation_num == 11:
-                output = fn.vignette(images)
-        elif augmentation_num == 12:
-                output = fn.jitter(images)
-        elif augmentation_num == 13:
-                output = fn.snp_noise(images)
-        elif augmentation_num == 14:
-                output = fn.snow(images)
-        elif augmentation_num == 15:
-                output = fn.rain(images)
-        elif augmentation_num == 16:
-                output = fn.fog(images)
-        elif augmentation_num == 17:
-                output = fn.pixelate(images)
-        elif augmentation_num == 18:
-                output = fn.exposure(images)
-        elif augmentation_num == 19:
-                output = fn.hue(images)
-        elif augmentation_num == 20:
-                output = fn.saturation(images)
-        elif augmentation_num == 21:
-                output = fn.color_twist(images)
-        elif augmentation_num == 22:
-                output = fn.crop_mirror_normalize(images,device="cpu",
-                                        output_dtype=types.FLOAT,
-                                        output_layout=types.NCHW,
-                                        crop=(crop, crop),
-                                        image_type=types.RGB,
-                                        mean=[0,0,0],
-                                        std=[1,1,1])
-        elif augmentation_num == 23:
-                output = fn.nop(images)
-        elif augmentation_num == 24:
-                output = fn.centre_crop(images)
-        elif augmentation_num == 25:
-                output = fn.color_temp(images)
-        elif augmentation_num == 26:
-                output = fn.copy(images)
-        elif augmentation_num == 27:
-                output1 = fn.rotate(images)
-                output2 = fn.fish_eye(output1)
-                output3 = fn.fog(output2)
-                pipe.set_outputs(output1,output2,output3)
-                output_set=1
-        elif augmentation_num == 28:
-                output1 = fn.resize(images,resize_x=crop_size,resize_y=crop_size)
-                output2 = fn.brightness(output1)
-                output3 = fn.jitter(output2)
-                pipe.set_outputs(output1,output2,output3)
-                output_set=1
-        elif augmentation_num == 29:
-                output1 = fn.vignette(images)
-                output2 = fn.blur(output1)
-                pipe.set_outputs(output1,output2)
-                output_set=1
+        if augmentation_name == "resize":
+            output = fn.resize(images, resize_x=300, resize_y=300)
+        elif augmentation_name == "rotate":
+            output = fn.rotate(images)
+        elif augmentation_name == "brightness":
+            output = fn.brightness(images)
+        elif augmentation_name == "gamma_correction":
+            output = fn.gamma_correction(images)
+        elif augmentation_name == "contrast":
+            output = fn.contrast(images)
+        elif augmentation_name == "flip":
+            output = fn.flip(images)
+        elif augmentation_name == "blur":
+            output = fn.blur(images)
+        elif augmentation_name == "hue_rotate_blend":
+            images_hue = fn.hue(images)
+            images_rotate = fn.rotate(images)
+            output = fn.blend(images_hue, images_rotate)
+        elif augmentation_name == "warp_affine":
+            output = fn.warp_affine(images)
+        elif augmentation_name == "fish_eye":
+            output = fn.fish_eye(images)
+        elif augmentation_name == "vignette":
+            output = fn.vignette(images)
+        elif augmentation_name == "jitter":
+            output = fn.jitter(images)
+        elif augmentation_name == "snp_noise":
+            output = fn.snp_noise(images)
+        elif augmentation_name == "snow":
+            output = fn.snow(images)
+        elif augmentation_name =="rain":
+            output = fn.rain(images)
+        elif augmentation_name == "fog":
+            output = fn.fog(images)
+        elif augmentation_name == "pixelate":
+            output = fn.pixelate(images)
+        elif augmentation_name == "exposure":
+            output = fn.exposure(images)
+        elif augmentation_name == "hue":
+            output = fn.hue(images)
+        elif augmentation_name == "saturation":
+            output = fn.saturation(images)
+        elif augmentation_name == "color_twist":
+            output = fn.color_twist(images)
+        elif augmentation_name == "crop_mirror_normalize":
+            output = fn.crop_mirror_normalize(images, device="cpu",
+                                              output_dtype=types.FLOAT,
+                                              output_layout=types.NCHW,
+                                              crop=(300, 300),
+                                              image_type=types.RGB,
+                                              mean=[0, 0, 0],
+                                              std=[1, 1, 1])
+        elif augmentation_name == "nop":
+            output = fn.nop(images)
+        elif augmentation_name == "centre_crop":
+            output = fn.centre_crop(images)
+        elif augmentation_name == "color_temp":
+            output = fn.color_temp(images)
+        elif augmentation_name == "copy":
+            output = fn.copy(images)
+        elif augmentation_name == "rotate_fisheye_fog":
+            output1 = fn.rotate(images)
+            output2 = fn.fish_eye(output1)
+            output3 = fn.fog(output2)
+            pipe.set_outputs(output1, output2, output3)
+            output_set = 1
+        elif augmentation_name == "resize_brightness_jitter":
+            output1 = fn.resize(images, resize_x=300, resize_y=300)
+            output2 = fn.brightness(output1)
+            output3 = fn.jitter(output2)
+            pipe.set_outputs(output1, output2, output3)
+            output_set = 1
+        elif augmentation_name == "vignetter_blur":
+            output1 = fn.vignette(images)
+            output2 = fn.blur(output1)
+            pipe.set_outputs(output1, output2)
+            output_set = 1
 
         if output_set==0:
                 pipe.set_outputs(output)
-
-
+    # build the pipeline
     pipe.build()
-
+    # Dataloader
     data_loader = ROCALClassificationIterator(pipe)
-    epochs = 1
-    cnt=0
+    cnt = 0
+
     import timeit
     start = timeit.default_timer()
-    for epoch in range(int(epochs)):
-        print("EPOCH:::::",epoch)
+
+    # Enumerate over the Dataloader
+    for epoch in range(int(args.num_epochs)):
+        print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):
             print("**************", i, "*******************")
             print("**************starts*******************")
-            print("\nImages:\n",it[0])
+            print("\nImages:\n", it[0])
             print("\nLABELS:\n", it[1])
             for img in it[0]:
-                cnt=cnt+1
-                draw_patches(img,cnt)
+                cnt = cnt+1
+                if display:
+                    draw_patches(img, cnt)
             print("**************ends*******************")
             print("**************", i, "*******************")
         data_loader.reset()
-
 
     #Your statements here
     stop = timeit.default_timer()
 
     print('\n Time: ', stop - start)
-    print('Number of times loop iterates is:',cnt)
+    print('Number of times loop iterates is:', cnt)
 
 if __name__ == '__main__':
     main()

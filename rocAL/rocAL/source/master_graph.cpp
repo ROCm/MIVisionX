@@ -1178,7 +1178,6 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string());
-    _reader_config = config.reader_type();
     config.set_out_img_width(pose_output_width);
     config.set_out_img_height(pose_output_height);
     _meta_data_graph = create_meta_data_graph(config);
@@ -1200,7 +1199,6 @@ MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *sourc
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(label_type, reader_type, source_path, feature_key_map);
-    _reader_config = config.reader_type();
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -1217,7 +1215,6 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
-    _reader_config = config.reader_type();
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
@@ -1233,7 +1230,6 @@ MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, 
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(MetaDataType::Label, reader_type, source_path, std::map<std::string, std::string>(), std::string(), sequence_length, frame_step, frame_stride);
-    _reader_config = config.reader_type();
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     if(!file_list_frame_num)
@@ -1274,7 +1270,7 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
     _is_random_bbox_crop = true;
     RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts, seed);
     _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
-    _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader, _reader_config);
+    _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
     if (_random_bbox_crop_cords_data)
         THROW("Metadata can only have a single output")
     else
@@ -1306,7 +1302,6 @@ MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const ch
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(label_type, reader_type, source_path);
-    _reader_config = config.reader_type();
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -1323,7 +1318,6 @@ MetaDataBatch * MasterGraph::create_caffe_lmdb_record_meta_data_reader(const cha
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(label_type, reader_type, source_path);
-    _reader_config = config.reader_type();
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -1340,7 +1334,6 @@ MetaDataBatch * MasterGraph::create_cifar10_label_reader(const char *source_path
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, std::map<std::string, std::string>(), file_prefix);
-    _reader_config = config.reader_type();
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);

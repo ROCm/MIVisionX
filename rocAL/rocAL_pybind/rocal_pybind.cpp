@@ -95,6 +95,38 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_tensor32(RocalContext context, py::array_t<float> array,
+                                RocalTensorLayout tensor_format, float multiplier0,
+                                float multiplier1, float multiplier2, float offset0,
+                                float offset1, float offset2,
+                                bool reverse_channels)
+    {
+        auto buf = array.request();
+        float* ptr = (float*) buf.ptr;
+        // call pure C++ function
+        int status = rocalCopyToOutputTensor32(context, ptr, tensor_format, multiplier0,
+                                              multiplier1, multiplier2, offset0,
+                                              offset1, offset2, reverse_channels);
+        // std::cerr<<"\n Copy failed with status :: "<<status;
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_tensor16(RocalContext context, py::array_t<float16> array,
+                                RocalTensorLayout tensor_format, float multiplier0,
+                                float multiplier1, float multiplier2, float offset0,
+                                float offset1, float offset2,
+                                bool reverse_channels)
+    {
+        auto buf = array.request();
+        float16* ptr = (float16*) buf.ptr;
+        // call pure C++ function
+        int status = rocalCopyToOutputTensor16(context, ptr, tensor_format, multiplier0,
+                                              multiplier1, multiplier2, offset0,
+                                              offset1, offset2, reverse_channels);
+        // std::cerr<<"\n Copy failed with status :: "<<status;
+        return py::cast<py::none>(Py_None);
+    }
+
     py::object wrapper_label_copy(RocalContext context, py::array_t<int> array)
     {
         auto buf = array.request();
@@ -318,6 +350,8 @@ namespace rocal{
         // rocal_api_data_transfer.h
         m.def("rocalCopyToOutput",&wrapper);
         m.def("rocalCopyToOutputTensor",&wrapper_tensor);
+        m.def("rocalCopyToOutputTensor32",&wrapper_tensor32);
+        m.def("rocalCopyToOutputTensor16",&wrapper_tensor16);
         // rocal_api_data_loaders.h
         m.def("COCO_ImageDecoderSlice",&rocalJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,

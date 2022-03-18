@@ -24,14 +24,22 @@ THE SOFTWARE.
 #define MIVISIONX_ROCAL_API_DATA_TRANSFER_H
 #include "rocal_api_types.h"
 
-/*! \brief
- *
-*/
 extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutput(RocalContext context, unsigned char * out_ptr, size_t out_size);
 
-/*! \brief
- *
-*/
+extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor32(RocalContext rocal_context, float *out_ptr,
+                                                              RocalTensorLayout tensor_format, float multiplier0,
+                                                              float multiplier1, float multiplier2, float offset0,
+                                                              float offset1, float offset2,
+                                                              bool reverse_channels);
+
+extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor16(RocalContext rocal_context, half *out_ptr,
+                                                              RocalTensorLayout tensor_format, float multiplier0,
+                                                              float multiplier1, float multiplier2, float offset0,
+                                                              float offset1, float offset2,
+                                                              bool reverse_channels);
+
+extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutput(RocalContext context, unsigned char * out_ptr, size_t out_size);
+
 extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor(RocalContext rocal_context, void *out_ptr,
                                                               RocalTensorLayout tensor_format, RocalTensorOutputType tensor_output_type,
                                                               float multiplier0, float multiplier1, float multiplier2, float offset0,

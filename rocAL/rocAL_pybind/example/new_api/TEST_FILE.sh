@@ -30,7 +30,7 @@ rocAL_api_video_pipeline=0
 if [[ rocAL_api_python_unittest -eq 1 ]]; then
 
     # Mention dataset_path
-    data_dir=/home/neel/sample_test/coco/coco_10_samples/images
+    data_dir=$ROCAL_DATA_PATH/images_jpg/labels_folder/
 
 
     # rocAL_api_python_unittest.py
@@ -56,11 +56,11 @@ fi
 if [[ rocAL_api_coco_pipeline -eq 1 ]]; then
 
     # Mention dataset_path
-    data_dir=mini_db/coco/coco_10_img/val_10images_2017/
+    data_dir=$ROCAL_DATA_PATH/coco/coco_10_img/val_10images_2017/
 
 
     # Mention json path
-    json_path=mini_db/coco/coco_10_img/annotations/instances_val2017.json
+    json_path=$ROCAL_DATA_PATH/coco/coco_10_img/annotations/instances_val2017.json
 
     # rocAL_api_coco_pipeline.py
     # By default : cpu backend, NCHW format , fp32
@@ -87,7 +87,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
 
     # Mention dataset_path
     # Classification
-    data_dir=mini_db/caffe/caffe_classification/ilsvrc12_train_lmdb/
+    data_dir=$ROCAL_DATA_PATH/caffe/classification/ilsvrc12_train_lmdb/
 
     # rocAL_api_caffe_reader.py
     # By default : cpu backend, NCHW format , fp32
@@ -115,7 +115,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
 
     # Mention dataset_path
     # Detection
-    data_dir=mini_db/caffe/caffe_detection/lmdb_record/
+    data_dir=$ROCAL_DATA_PATH/caffe/detection/lmdb_record/
 
     # rocAL_api_caffe_reader.py
     # By default : cpu backend, NCHW format , fp32
@@ -143,7 +143,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
 
     # Mention dataset_path
     # Classification
-    data_dir=mini_db/caffe2/classfication/imagenet_val5_encode/
+    data_dir=$ROCAL_DATA_PATH/caffe2/classfication/imagenet_val5_encode/
 
     # rocAL_api_caffe2_reader.py
     # By default : cpu backend, NCHW format , fp32
@@ -169,7 +169,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
 
     # Mention dataset_path
     # Detection
-    data_dir=mini_db/caffe2/detection/lmdb_records/
+    data_dir=$ROCAL_DATA_PATH/caffe2/detection/lmdb_records/
 
     # rocAL_api_caffe2_reader.py
     # By default : cpu backend, NCHW format , fp32
@@ -195,7 +195,7 @@ if [[ rocAL_api_tf_classification_reader -eq 1 ]]; then
 
     # Mention dataset_path
     # Classification
-    data_dir=mini_db/tf/classification/
+    data_dir=$ROCAL_DATA_PATH/tf/classification/
     # rocAL_api_tf_classification_reader.py
     # By default : cpu backend, NCHW format , fp32
     # use --classification for Classification / --no-classification for Detection
@@ -220,7 +220,7 @@ if [[ rocAL_api_tf_detection_pipeline -eq 1 ]]; then
 
     # Mention dataset_path
     # Detection
-    data_dir=mini_db/tf/detection/
+    data_dir=$ROCAL_DATA_PATH/tf/detection/
     # rocAL_api_tf_detection_pipeline.py
     # By default : cpu backend, NCHW format , fp32
     # use --classification for Classification / --no-classification for Detection
@@ -245,7 +245,7 @@ if [[ rocAL_api_video_pipeline -eq 1 ]]; then
 
     # Mention dataset_path
     # Detection
-    data_dir=/media/swetha/HIP_box_encoder_check/MIVisionX-data/video_and_sequence_samples/labelled_videos/
+    data_dir=$ROCAL_DATA_PATH/../video_and_sequence_samples/labelled_videos/
     # rocAL_api_video_pipeline.py
     # By default : cpu backend, NCHW format , fp32
 

@@ -151,12 +151,41 @@ install(DIRECTORY docs DESTINATION share/mivisionx)
 #install all wrapper files
 if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
 
-install(
+#Install Wrapper Files
+  install(
     DIRECTORY
        "${PROJECT_BINARY_DIR}/mivisionx"
         DESTINATION . )
 
-message(STATUS "FILE_REORG - Install wrapper headers" )
+#Generating SymLimk for Library Files
+  install(
+      CODE "
+        set(PREFIX \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX})
+        set(SYMLINK_LOCATION \${PREFIX}/mivisionx/lib )
+	set(INPUT_FILES \${PREFIX}/lib/libopenvx.so \${PREFIX}/lib/libvxu.so \${PREFIX}/lib/libvx_opencv.so \${PREFIX}/lib/libvx_nn.so )
+        file(MAKE_DIRECTORY \${SYMLINK_LOCATION})
+	foreach(INPUT_FILE IN LISTS INPUT_FILES)
+          execute_process(COMMAND ln -sfr \${INPUT_FILE} \${SYMLINK_LOCATION})
+          message(STATUS \"Created symlink in \${SYMLINK_LOCATION} to \${INPUT_FILE}.\")
+	endforeach()
+        "
+  )
+
+#Generating SymLimk for Binary Files
+  install(
+      CODE "
+        set(PREFIX \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX})
+        set(SYMLINK_LOCATION \${PREFIX}/mivisionx/bin )
+	set(INPUT_FILES \${PREFIX}/bin/runvx \${PREFIX}/bin/caffe2openvx )
+        file(MAKE_DIRECTORY \${SYMLINK_LOCATION})
+	foreach(INPUT_FILE IN LISTS INPUT_FILES)
+          execute_process(COMMAND ln -sfr \${INPUT_FILE} \${SYMLINK_LOCATION})
+          message(STATUS \"Created symlink in \${SYMLINK_LOCATION} to \${INPUT_FILE}.\")
+	endforeach()
+        "
+  )
+
+  message(STATUS "FILE_REORG - Install wrapper headers/Symlink files" )
 endif()
 
 

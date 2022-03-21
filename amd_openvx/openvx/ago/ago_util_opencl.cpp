@@ -389,9 +389,8 @@ int agoGpuOclAllocBuffer(AgoData * data)
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clEnqueueFillBuffer() => %d\n", err);
                     return -1;
                 }
+                // make sure clEnqueueFillBuffer() is done before executing another node
                 clWaitForEvents(1, &event);
-                
-
             }
             if (dataMaster->u.img.isUniform) {
                 // make sure that CPU buffer is allocated
@@ -406,7 +405,6 @@ int agoGpuOclAllocBuffer(AgoData * data)
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclAllocBuffer: clEnqueueWriteBuffer() => %d\n", err);
                     return -1; 
                 }
-                
                 dataMaster->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
             }
         }

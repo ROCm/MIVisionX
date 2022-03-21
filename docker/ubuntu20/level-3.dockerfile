@@ -6,12 +6,12 @@ WORKDIR $MIVISIONX_DEPS_ROOT
 RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
-# install ROCm for mivisionx OpenCL dependency - Level 2
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libnuma-dev wget sudo gnupg2 kmod python3-dev &&  \
-        wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add - && \
-        echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list && \
+# install ROCm for mivisionx OpenCL/HIP dependency - Level 2
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libnuma-dev wget sudo &&  \
+        wget https://repo.radeon.com/amdgpu-install/21.50/ubuntu/focal/amdgpu-install_21.50.50000-1_all.deb && \
+        sudo apt-get install -y ./amdgpu-install_21.50.50000-1_all.deb && \
         sudo apt-get update -y && \
-        sudo apt-get -y install rocm-dev
+        sudo amdgpu-install -y --usecase=rocm
 # install OpenCV & FFMPEG - Level 3
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \
         libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip && \
@@ -29,4 +29,4 @@ WORKDIR /workspace
 
 # install MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
-        cmake ../MIVisionX && make -j8 && make install
+        cmake -D BACKEND=OCL ../MIVisionX && make -j8 && make install

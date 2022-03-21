@@ -294,7 +294,6 @@ def main():
     pipe.build()
     # Dataloader
     if(args.rocal_gpu):
-        print("gpu")
         data_loader = RALICOCOIterator(
             pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, tensor_layout=tensor_format, tensor_dtype=tensor_dtype, device="cuda", num_anchors = len(default_boxes)/4)
 

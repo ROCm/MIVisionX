@@ -75,7 +75,7 @@ rocAL_api_video_pipeline=1
 if [[ rocAL_api_python_unittest -eq 1 ]]; then
 
     # Mention dataset_path
-    data_dir=$ROCAL_DATA_PATH/rocal_data/images_jpg/labels_folder/
+    data_dir=$ROCAL_DATA_PATH/images_jpg/labels_folder/
 
 
     # rocAL_api_python_unittest.py

@@ -63,7 +63,7 @@ rocAL_api_python_unittest=1
 ####################################################################################################################################
 
     # Mention dataset_path
-    data_dir=$ROCAL_DATA_PATH/rocal_data/images_jpg/labels_folder/
+    data_dir=$ROCAL_DATA_PATH/images_jpg/labels_folder/
 
 
     # rocAL_api_python_unittest.py

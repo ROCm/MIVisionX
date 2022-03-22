@@ -1,3 +1,47 @@
+if [[ $# -gt 0 ]]; then
+    helpFunction()
+    {
+    echo ""
+    echo "Usage: $0 [-n number_of_gpus] [-d display_param<true/false>]"
+    echo -e "\t-n Description of what is the number of gpus to be used"
+    echo -e "\t-d Description of what is the display param"
+    exit 1 # Exit script after printing help
+    }
+
+    while getopts "n:d:" opt
+    do
+        echo "In while loop"
+        echo $opt
+        case "$opt" in
+            n ) number_of_gpus="$OPTARG" ;;
+            d ) display_param="$OPTARG" ;;
+            ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
+        esac
+    done
+
+    # Print helpFunction in case parameters are empty
+    if [ -z "$number_of_gpus" ] || [ -z "$display_param" ]
+    then
+        echo "Some or all of the parameters are empty";
+        helpFunction
+    fi
+
+    # Begin script in case all parameters are correct
+    echo "$number_of_gpus"
+    echo "$display_param"
+    gpus_per_node=$number_of_gpus
+    if [[ $display_param == "true" || $display_param == "True" ]]; then
+        display_arg=display
+    elif [[ $display_param == "false" || $display_param == "False" ]]; then
+        display_arg=no-display
+    fi
+    echo $display_arg
+
+else
+    #DEFAULT ARGS
+    gpus_per_node=1
+    display_arg=display
+fi
 
 CURRENTDATE=`date +"%Y-%m-%d-%T"`
 
@@ -19,7 +63,7 @@ rocAL_api_python_unittest=1
 ####################################################################################################################################
 
     # Mention dataset_path
-    data_dir=$ROCAL_DATA_PATH/images_jpg/labels_folder/
+    data_dir=$ROCAL_DATA_PATH/rocal_data/images_jpg/labels_folder/
 
 
     # rocAL_api_python_unittest.py

@@ -3,12 +3,19 @@
 
 ## EXPORT ROCAL_DATA_PATH
 export ROCAL_DATA_PATH=/Absolute/Path/Of/rocal_data/
+
 ### TESTING ALL THE AUGMENTATIONS IN A SINGLE SHOT
 
-./PYTHON_UNITTEST_TEST_FILE.sh
+./PYTHON_UNITTEST_TEST_FILE.sh (The default value of number of gpu's is "1" & display is "ON" by default)
+
+./PYTHON_UNITTEST_TEST_FILE.sh -n <number_of_gpus> -d <true/false>
+./PYTHON_UNITTEST_TEST_FILE.sh -n "1" -d "false"
 
 ### TO TEST MULTIPLE READER PIPELINE FROM READERS_TEST_FILE.sh
- ./READERS_TEST_FILE.h
+./READERS_TEST_FILE.sh (The default value of number of gpu's is "1" & display is "ON" by default)
+
+./READERS_TEST_FILE.sh -n <number_of_gpus> -d <true/false>
+./READERS_TEST_FILE.sh -n "1" -d "false"
 
 ### TO TEST A SINGLE READER PIPELINE FROM READERS_TEST_FILE.sh
 

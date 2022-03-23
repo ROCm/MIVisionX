@@ -42,13 +42,22 @@ enum class StorageType
     COCO_FILE_SYSTEM = 5,
     SEQUENCE_FILE_SYSTEM = 6,
     MXNET_RECORDIO = 7,
+    EXTERNAL_FILE_SOURCE = 8,   // to support reading from external source
+};
+
+enum FileMode
+{
+    FILENAME = 0,
+    RAWDATA_COMPRESSED = 1,
+    RAWDATA_UNCOMPRESSED = 2,
 };
 
 struct ReaderConfig
 {
     explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "",
                           const std::map<std::string, std::string> feature_key_map = std::map<std::string, std::string>(),
-                          bool shuffle = false, bool loop = false) : _type(type), _path(path), _json_path(json_path), _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop) {}
+                          bool shuffle = false, bool loop = false, FileMode mode = FileMode::FILENAME) : _type(type), _path(path), _json_path(json_path), 
+                          _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop), _mode(mode) {}
     virtual StorageType type() { return _type; };
     void set_path(const std::string &path) { _path = path; }
     void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
@@ -78,6 +87,7 @@ struct ReaderConfig
     void set_file_prefix(const std::string &prefix) { _file_prefix = prefix; }
     std::string file_prefix() { return _file_prefix; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
+    virtual FileMode mode() { return _mode; };
 private:
     StorageType _type = StorageType::FILE_SYSTEM;
     std::string _path = "";
@@ -93,6 +103,7 @@ private:
     bool _loop = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader and tf_record_reader
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
+    FileMode _mode;
 };
 
 // MXNet image recordio struct - used to read the contents from the MXNet recordIO files.
@@ -105,6 +116,7 @@ struct ImageRecordIOHeader {
      *  image_id[0] is used to store image id
      */
 };
+
 class Reader
 {
 public:
@@ -149,6 +161,12 @@ public:
     
     //! return shuffle_time if applicable
     virtual unsigned long long get_shuffle_time() = 0;
+
+    //! return feed_file_names: needed if an external_source is feeding into the reader 
+    virtual void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos=false) = 0;
+
+    //! return feed_data: use this for feeding raw data into the reader (mode specified compressed jpegs or raw) 
+    virtual void feed_data(const std::vector<char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width=0, int height=0, int channels=0) = 0;
 
     virtual ~Reader() = default;
 };

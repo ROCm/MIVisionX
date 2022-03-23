@@ -61,6 +61,8 @@ parser.add_argument('--backend', 	type=str, default='HIP',
                     help='MIVisionX Dependency Backend - optional (default:HIP) [options:OCL/HIP]')
 parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
                     help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
+parser.add_argument('--rocm-cmake', 	type=str, default='master',
+                    help='ROCm CMAKE Version - optional (default:master) - ROCm CMAKE Version minimum required 0.7.3')
 args = parser.parse_args()
 
 setupDir = args.directory
@@ -75,6 +77,7 @@ raliInstall = args.rocal
 reinstall = args.reinstall
 backend = args.backend
 ROCM_PATH = args.rocm_path
+rocmCmakeVersionTag = args.rocm-cmake
 
 if ffmpegInstall not in ('no', 'yes'):
     print(
@@ -240,7 +243,7 @@ else:
     os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
     if neuralNetInstall == 'yes':
         os.system(
-            '(cd '+deps_dir+'; git clone -b rocm-4.2.0 https://github.com/RadeonOpenCompute/rocm-cmake.git )')
+            '(cd '+deps_dir+'; git clone -b '+rocmCmakeVersionTag+' https://github.com/RadeonOpenCompute/rocm-cmake.git )')
         os.system(
             '(cd '+deps_dir+'; wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/'+MIOpenGEMMVersion+'.zip )')
         os.system('(cd '+deps_dir+'; unzip '+MIOpenGEMMVersion+'.zip )')

@@ -8,7 +8,7 @@ This application is a sample for developing windows application using MIVisionX 
 
 ### Pre-requisites
 
-* Windows 10, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
+* Windows `10` / `11`, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
 * Windows SDK, build `17763` or later
 * Visual Studio 2019, [version `16.11.5` or later](https://developer.microsoft.com/en-us/windows/downloads)
     - Visual Studio extension for C++/WinRT
@@ -17,7 +17,7 @@ This application is a sample for developing windows application using MIVisionX 
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   + Add `OpenCV_DIR\x64\vc14\bin` or `OpenCV_DIR\x64\vc15\bin` to your `PATH`
 
-### Build using `Visual Studio 2019` on 64-bit Windows 10
+### Build using `Visual Studio 2019` on 64-bit Windows `10` / `11`
 
 * Use `apps/mivisonx_winml_classifier/winml_classifier.sln` to build for x64 platform
 

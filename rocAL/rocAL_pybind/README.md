@@ -9,7 +9,7 @@ written primarily in C/C++ language can be used effectively in Python.
 ## Prerequisites
 * [rocAL C/C++ Library](../rocAL#prerequisites)
 * CMake Version 3.10 or higher
-* Python 3.6
+* Python 3.6 or higher
 * PIP3 - `sudo apt install python3-pip`
 
 ## Install

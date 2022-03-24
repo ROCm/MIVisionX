@@ -198,7 +198,9 @@ def main():
     tensor_dtype = types.FLOAT16 if args.fp16 else types.FLOAT
     try:
         path= "OUTPUT_IMAGES_PYTHON/NEW_API/COCO_READER/"
-        os.makedirs(path)
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
     # Anchors

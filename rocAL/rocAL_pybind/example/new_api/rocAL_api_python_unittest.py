@@ -8,11 +8,14 @@ import amd.rocal.types as types
 from parse_config import parse_args
 import os
 
-def draw_patches(img, idx):
+def draw_patches(img, idx, device):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     args = parse_args()
-    image = img.detach().numpy()
+    if device == "cpu":
+            image = img.detach().numpy()
+    else:
+        image = img.cpu().numpy()
     image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name + "/" + str(idx)+"_"+"train"+".png", image)
@@ -24,6 +27,7 @@ def main():
     data_path = args.image_dataset_path
     augmentation_name = args.augmentation_name
     rali_cpu = False if args.rocal_gpu else True
+    device = "cpu" if rali_cpu else "cuda"
     batch_size = args.batch_size
     num_threads = args.num_threads
     random_seed = args.seed
@@ -32,7 +36,9 @@ def main():
     display = True if args.display else False
     try:
         path= "OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name
-        os.makedirs(path)
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
     # Create Pipeline instance
@@ -130,7 +136,7 @@ def main():
     # build the pipeline
     pipe.build()
     # Dataloader
-    data_loader = RALIClassificationIterator(pipe)
+    data_loader = RALIClassificationIterator(pipe,device=device)
     cnt = 0
 
     import timeit
@@ -147,7 +153,7 @@ def main():
             for img in it[0]:
                 cnt = cnt+1
                 if display:
-                    draw_patches(img, cnt)
+                    draw_patches(img, cnt, device)
             print("**************ends*******************")
             print("**************", i, "*******************")
         data_loader.reset()

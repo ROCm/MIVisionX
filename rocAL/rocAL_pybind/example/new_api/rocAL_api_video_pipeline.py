@@ -60,20 +60,15 @@ class RALIVideoIterator(object):
             print("Process  time ::", timing_info.process_time)
             print("Transfer time ::", timing_info.transfer_time)
             raise StopIteration
-
         if self.loader.run() != 0:
             raise StopIteration
-
         #Copy output from buffer to numpy array
         self.loader.copyImage(self.out)
         img = torch.from_numpy(self.out)
-
         #Display Frames in a video sequence
         if self.display:
             for batch_i in range(self.batch_size):
                 draw_frames(img[batch_i], batch_i, self.iter_num)
-
-
         return img
 
     def reset(self):

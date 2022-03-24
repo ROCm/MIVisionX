@@ -31,7 +31,9 @@ def main():
     }
     try:
         path= "OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/CLASSIFICATION/"
-        os.makedirs(path)
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
     # Create Pipeline instance

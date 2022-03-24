@@ -43,7 +43,9 @@ def main():
             path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE_READER/CLASSIFICATION/"
         else:
             path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE_READER/DETECTION/"
-        os.makedirs(path)
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
     print("num_classes:: ", num_classes)

@@ -56,7 +56,7 @@ class RALIGenericIterator(object):
         self.offset = offset
         self.device= device
         self.device_id = device_id
-        print(self.device)
+        print("DEVICE ID: ",self.device)
         # exit(0)
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype

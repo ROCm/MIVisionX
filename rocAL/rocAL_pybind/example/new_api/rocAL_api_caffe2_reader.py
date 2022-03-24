@@ -39,7 +39,9 @@ def main():
             path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE2_READER/CLASSIFICATION/"
         else:
             path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE2_READER/DETECTION/"
-        os.makedirs(path)
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
     pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=local_rank,

@@ -29,7 +29,7 @@
 
 ### Tested Configurations
 
-* Windows `10/11`
+* Windows `10` / `11`
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`

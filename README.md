@@ -127,7 +127,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 #### Windows
 
-* Windows `10/11`
+* Windows `10` / `11`
 * Windows SDK
 * Visual Studio 2019 or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
@@ -426,7 +426,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Tested configurations
 
-* Windows `10/11`
+* Windows `10` / `11`
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`

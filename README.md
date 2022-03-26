@@ -437,10 +437,10 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
-* RPP - [0.92](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.92)
+* RPP - [0.93](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.93)
 * FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.1.0`
+* MIVisionX Setup Script - `V2.1.1`
 
 ### Known issues
 

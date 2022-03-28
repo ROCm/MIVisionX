@@ -61,7 +61,7 @@ parser.add_argument('--backend', 	type=str, default='HIP',
                     help='MIVisionX Dependency Backend - optional (default:HIP) [options:OCL/HIP]')
 parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
                     help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
-parser.add_argument('--rocm-cmake', 	type=str, default='master',
+parser.add_argument('--rocm_cmake_version', 	type=str, default='master',
                     help='ROCm CMAKE Version - optional (default:master) - ROCm CMAKE Version minimum required 0.7.3')
 args = parser.parse_args()
 
@@ -77,7 +77,7 @@ raliInstall = args.rocal
 reinstall = args.reinstall
 backend = args.backend
 ROCM_PATH = args.rocm_path
-rocmCmakeVersionTag = args.rocm-cmake
+rocmCmakeVersionTag = args.rocm_cmake_version
 
 if ffmpegInstall not in ('no', 'yes'):
     print(

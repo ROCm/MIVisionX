@@ -161,9 +161,19 @@ endif()
 
 add_executable(anntest anntest.cpp)
 if(OpenCV_FOUND)
-  target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=1)
-  include_directories(${OpenCV_INCLUDE_DIRS})
-  target_link_libraries(anntest ${OpenCV_LIBRARIES})
+    if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
+        target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=1)
+        include_directories(${OpenCV_INCLUDE_DIRS})
+        target_link_libraries(anntest ${OpenCV_LIBRARIES})
+        if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	        target_compile_definitions(anntest PUBLIC USE_OPENCV_4=1)
+        else()
+	        target_compile_definitions(anntest PUBLIC USE_OPENCV_4=0)
+        endif()
+    else()
+        target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=0)
+        message("-- NOTE: anntest -- OpenCV Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+    endif()
 else(OpenCV_FOUND)
   target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=0)
 endif(OpenCV_FOUND)
@@ -1980,6 +1990,14 @@ using half_float::half;
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 using namespace cv;
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_LOAD_IMAGE_GRAYSCALE IMREAD_GRAYSCALE
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#define CV_GRAY2RGB COLOR_GRAY2RGB
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FILLED FILLED
+#endif
 #endif
 
 #define ERROR_CHECK_OBJECT(obj) { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status     , "ERROR: failed with status = (%d) at " __FILE__ "#%d\\n", status, __LINE__); return status; } }

@@ -26,7 +26,7 @@
 
 cmake_minimum_required (VERSION 3.0)
 
-project (rali_dataloader)
+project (rocal_external_source)
 
 set (CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
@@ -38,12 +38,11 @@ include_directories ( ${OpenCV_INCLUDE_DIRS}  /opt/rocm/mivisionx/include/)
 
 link_directories    (/opt/rocm/mivisionx/lib/)
 
-add_executable(${PROJECT_NAME} ./rali_dataloader.cpp)
+add_executable(${PROJECT_NAME} ./rocal_external_source.cpp)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=1)
 include_directories(${OpenCV_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
 target_link_libraries(${PROJECT_NAME} rali ${OpenCV_LIBRARIES})
-
 
 
 install (TARGETS ${PROJECT_NAME} DESTINATION bin)

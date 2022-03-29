@@ -53,6 +53,7 @@ struct Context
     }
     size_t user_batch_size() { return _user_batch_size; }
     size_t internal_batch_size() { return _internal_batch_size; }
+    void   set_internal_batch_size(size_t batch_size) { _internal_batch_size = batch_size; }
 private:
     void clear_errors() { error = "";}
     std::string error;

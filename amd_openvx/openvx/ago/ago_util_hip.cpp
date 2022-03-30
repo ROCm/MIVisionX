@@ -719,7 +719,10 @@ int agoGpuHipSingleNodeLaunch(AgoGraph * graph, AgoNode * node) {
         status = kernel->kernel_f(node, (vx_reference *)node->paramList, node->paramCount);
     }
     if (status) {
-        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: kernel %s exec failed (%d:%s)\n", kernel->name, status, agoEnum2Name(status));
+        if (status == VX_ERROR_GRAPH_ABANDONED)
+            agoAddLogEntry((vx_reference)graph, VX_FAILURE, "INFO: kernel %s exec returned graph_stopped status: (this could mean EOS for amd_media extension (%d))\n", kernel->name, status);
+        else
+            agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: kernel %s exec failed (%d:%s)\n", kernel->name, status, agoEnum2Name(status));
         return -1;
     }
     if(graph->enable_node_level_gpu_flush) {

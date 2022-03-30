@@ -383,11 +383,14 @@ int agoGpuOclAllocBuffer(AgoData * data)
             }
             else {
                 vx_uint32 zero = 0;
-                err = clEnqueueFillBuffer(context->opencl_cmdq, dataMaster->opencl_buffer, &zero, sizeof(zero), 0, dataMaster->gpu_buffer_offset + dataMaster->size, 0, NULL, NULL);
+                cl_event event;
+                err = clEnqueueFillBuffer(context->opencl_cmdq, dataMaster->opencl_buffer, &zero, sizeof(zero), 0, dataMaster->gpu_buffer_offset + dataMaster->size, 0, NULL, &event);
                 if (err) {
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clEnqueueFillBuffer() => %d\n", err);
                     return -1;
                 }
+                // make sure clEnqueueFillBuffer() is done before executing another node
+                clWaitForEvents(1, &event);
             }
             if (dataMaster->u.img.isUniform) {
                 // make sure that CPU buffer is allocated

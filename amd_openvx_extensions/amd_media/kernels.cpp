@@ -90,14 +90,14 @@ void av_log_callback(void* ptr, int level, const char* fmt, va_list vl)
 
 vx_status initialize_ffmpeg()
 {
-	static bool initialized = false;
-	if (!initialized) { // make sure to initialize it only once
-		initialized = true;
-		av_log_set_callback(av_log_callback);
-		av_log_set_level(AV_LOG_ERROR);
-		av_register_all();
-	}
-	return VX_SUCCESS;
+  static bool initialized = false;
+  if (!initialized) { // make sure to initialize it only once
+    initialized = true;
+    av_log_set_callback(av_log_callback);
+    av_log_set_level(AV_LOG_ERROR);
+    av_register_all();
+  }
+  return VX_SUCCESS;
 }
 
 uint8_t * aligned_alloc(size_t size)

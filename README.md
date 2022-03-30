@@ -4,7 +4,7 @@
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
 
-MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade;</a> and OpenVX&trade; Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF&trade;</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade;</a> and OpenVX&trade; Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF&trade;</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
 #### Latest Release
 
@@ -55,7 +55,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 <p align="center"><img width="30%" src="docs/images/OpenVX_logo.png" /></p>
 
-[AMD OpenVX](amd_openvx#amd-openvx-amd_openvx) is a highly optimized open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+[AMD OpenVX](amd_openvx#amd-openvx-amd_openvx) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 <a href="https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html" target="_blank">Khronos OpenVX&trade; 1.0.1</a> conformant implementation is available in [MIVisionX Lite](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/openvx-1.0.1)
 
@@ -127,7 +127,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 #### Windows
 
-* Windows 10
+* Windows `10` / `11`
 * Windows SDK
 * Visual Studio 2019 or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
@@ -149,7 +149,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Linux distribution
   + **Ubuntu** - `18.04` / `20.04`
   + **CentOS** - `7` / `8`
-* Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
+* Install [ROCm](https://docs.amd.com)
 * CMake 3.0 or later
 * ROCm CMake, MIOpenGEMM & MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
@@ -172,8 +172,8 @@ For the convenience of the developer, we here provide the setup script which wil
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
-* [ROCm supported hardware](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
-* [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
+* [ROCm supported hardware](https://docs.amd.com)
+* [ROCm](https://docs.amd.com)
 
   **usage:**
 
@@ -219,8 +219,8 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 #### Using `apt-get` / `yum`
 
-* [ROCm supported hardware](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
-* Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
+* [ROCm supported hardware](https://docs.amd.com)
+* Install [ROCm](https://docs.amd.com)
 * On `Ubuntu`
   ```
   sudo apt-get install mivisionx
@@ -339,24 +339,24 @@ Docker files to build MIVisionX containers are [available](docker#mivisionx-dock
 #### Prerequisites
 
 * Ubuntu `18.04` / `20.04`
-* [rocm supported hardware](https://rocm.github.io/hardware.html)
+* [rocm supported hardware](https://docs.amd.com)
 
 #### Workflow
 
 * Step 1 - *Install rocm-dkms*
 
 ```
-sudo apt update
-sudo apt dist-upgrade
-sudo apt install libnuma-dev
+sudo apt update -y
+sudo apt dist-upgrade -y
+sudo apt install libnuma-dev wget
 sudo reboot
 ```
 
 ```
-wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
-echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
-sudo apt update
-sudo apt install rocm-dkms
+wget https://repo.radeon.com/amdgpu-install/21.50/ubuntu/focal/amdgpu-install_21.50.50000-1_all.deb
+sudo apt-get install -y ./amdgpu-install_21.50.50000-1_all.deb
+sudo apt-get update -y
+sudo amdgpu-install -y --usecase=rocm
 sudo reboot
 ```
 
@@ -426,21 +426,21 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Tested configurations
 
-* Windows 10
+* Windows `10` / `11`
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
-* ROCm: rocm-dev - `4.5.2.40502-164`
+* ROCm: rocm-core - `5.0.0.50000-49`
 * rocm-cmake - [rocm-4.2.0](https://github.com/RadeonOpenCompute/rocm-cmake/releases/tag/rocm-4.2.0)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
-* RPP - [0.92](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.92)
+* RPP - [0.93](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.93)
 * FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.0.0`
+* MIVisionX Setup Script - `V2.1.1`
 
 ### Known issues
 

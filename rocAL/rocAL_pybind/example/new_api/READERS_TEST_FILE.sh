@@ -59,13 +59,13 @@ ver=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\.\2/')
 ####################################################################################################################################
 # USER TO MAKE CHANGES HERE FOR TEST
 # Make the respective " Pipeline " to test equal to 1
-rocAL_api_python_unittest=1
-rocAL_api_coco_pipeline=1
+rocAL_api_python_unittest=0
+rocAL_api_coco_pipeline=0
 rocAL_api_caffe_reader=1
-rocAL_api_caffe2_reader=1
-rocAL_api_tf_classification_reader=1
-rocAL_api_tf_detection_pipeline=1
-rocAL_api_video_pipeline=1
+rocAL_api_caffe2_reader=0
+rocAL_api_tf_classification_reader=0
+rocAL_api_tf_detection_pipeline=0
+rocAL_api_video_pipeline=0
 ####################################################################################################################################
 
 
@@ -130,7 +130,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
 
     # Mention dataset_path
     # Classification
-    data_dir=$ROCAL_DATA_PATH/caffe/caffe_classification/ilsvrc12_train_lmdb/
+    data_dir=$ROCAL_DATA_PATH/caffe/classification/ilsvrc12_train_lmdb/
 
     # rocAL_api_caffe_reader.py
     # By default : cpu backend, NCHW format , fp32
@@ -157,7 +157,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
 
     # Mention dataset_path
     # Detection
-    data_dir=$ROCAL_DATA_PATH/caffe/caffe_detection/lmdb_record/
+    data_dir=$ROCAL_DATA_PATH/caffe/detection/lmdb_record/
 
     # rocAL_api_caffe_reader.py
     # By default : cpu backend, NCHW format , fp32

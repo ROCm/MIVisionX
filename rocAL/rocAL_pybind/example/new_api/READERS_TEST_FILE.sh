@@ -59,13 +59,13 @@ ver=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\.\2/')
 ####################################################################################################################################
 # USER TO MAKE CHANGES HERE FOR TEST
 # Make the respective " Pipeline " to test equal to 1
-rocAL_api_python_unittest=0
-rocAL_api_coco_pipeline=0
+rocAL_api_python_unittest=1
+rocAL_api_coco_pipeline=1
 rocAL_api_caffe_reader=1
-rocAL_api_caffe2_reader=0
-rocAL_api_tf_classification_reader=0
-rocAL_api_tf_detection_pipeline=0
-rocAL_api_video_pipeline=0
+rocAL_api_caffe2_reader=1
+rocAL_api_tf_classification_reader=1
+rocAL_api_tf_detection_pipeline=1
+rocAL_api_video_pipeline=1
 ####################################################################################################################################
 
 
@@ -91,7 +91,7 @@ if [[ rocAL_api_python_unittest -eq 1 ]]; then
         --local-rank 0 \
         --world-size $gpus_per_node \
         --num-threads 1 \
-        --num-epochs 2 2>&1 | tee -a run.log.rocAL_api_python_unittest.${CURRENTDATE}
+        --num-epochs 2 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################
 
@@ -120,7 +120,7 @@ if [[ rocAL_api_coco_pipeline -eq 1 ]]; then
         --local-rank 0 \
         --world-size $gpus_per_node \
         --num-threads 1 \
-        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_coco_pipeline.${CURRENTDATE}.txt
+        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################
 
@@ -146,7 +146,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
         --local-rank 0 \
         --world-size $gpus_per_node \
         --num-threads 1 \
-        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_caffe_reader_classification.${CURRENTDATE}.txt
+        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################
 
@@ -173,7 +173,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
         --local-rank 0 \
         --world-size $gpus_per_node \
         --num-threads 1 \
-        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_caffe_reader_detection.${CURRENTDATE}.txt
+        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################
 
@@ -199,7 +199,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
         --local-rank 0 \
         --world-size $gpus_per_node \
         --num-threads 1 \
-        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_caffe2_reader_classification.${CURRENTDATE}.txt
+        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################
 
@@ -224,7 +224,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
         --local-rank 0 \
         --world-size $gpus_per_node \
         --num-threads 1 \
-        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_caffe2_reader_detection.${CURRENTDATE}.txt
+        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################
 
@@ -248,7 +248,7 @@ if [[ rocAL_api_tf_classification_reader -eq 1 ]]; then
         --local-rank 0 \
         --world-size $gpus_per_node \
         --num-threads 1 \
-        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_tf_classification_reader.${CURRENTDATE}.txt
+        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################
 
@@ -272,7 +272,7 @@ if [[ rocAL_api_tf_detection_pipeline -eq 1 ]]; then
         --local-rank 0 \
         --world-size $gpus_per_node \
         --num-threads 1 \
-        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_tf_detection_pipeline.${CURRENTDATE}.txt
+        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################
 
@@ -291,6 +291,6 @@ if [[ rocAL_api_video_pipeline -eq 1 ]]; then
         --batch-size 10 \
         --$display_arg \
         --sequence-length 3 \
-        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_video_pipeline.${CURRENTDATE}.txt
+        --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi
 ####################################################################################################################################

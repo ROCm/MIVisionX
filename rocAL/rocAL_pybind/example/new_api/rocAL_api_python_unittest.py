@@ -26,6 +26,7 @@ def main():
     # Args
     data_path = args.image_dataset_path
     augmentation_name = args.augmentation_name
+    print("\n AUGMENTATION NAME: ", augmentation_name)
     rali_cpu = False if args.rocal_gpu else True
     device = "cpu" if rali_cpu else "cuda"
     batch_size = args.batch_size
@@ -156,6 +157,7 @@ def main():
                     draw_patches(img, cnt, device)
             print("**************ends*******************")
             print("**************", i, "*******************")
+            break
         data_loader.reset()
 
     #Your statements here
@@ -163,6 +165,12 @@ def main():
 
     print('\n Time: ', stop - start)
     print('Number of times loop iterates is:', cnt)
+
+
+    print("###############################################    FILE READER    ###############################################")
+    print("###############################################    SUCCESS        ###############################################")
+
+
 
 if __name__ == '__main__':
     main()

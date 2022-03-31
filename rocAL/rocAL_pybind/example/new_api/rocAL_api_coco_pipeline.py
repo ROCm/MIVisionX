@@ -309,20 +309,25 @@ def main():
     for epoch in range(int(args.num_epochs)):
         print("EPOCH:::::",epoch)
         for i, it in enumerate(data_loader, 0):
-            print("**************", i, "*******************")
-            print("**************starts*******************")
-            print("\n IMAGES : \n", it[0])
-            print("\nBBOXES:\n", it[1])
-            print("\nLABELS:\n", it[2])
-            print("\nIMAGE ID:\n", it[3])
-            print("\nIMAGE SIZE:\n", it[4])
-            print("**************ends*******************")
-            print("**************", i, "*******************")
+            if i==0:
+                print("**************", i, "*******************")
+                print("**************starts*******************")
+                print("\n IMAGES : \n", it[0])
+                print("\nBBOXES:\n", it[1])
+                print("\nLABELS:\n", it[2])
+                print("\nIMAGE ID:\n", it[3])
+                print("\nIMAGE SIZE:\n", it[4])
+                print("**************ends*******************")
+                print("**************", i, "*******************")
         data_loader.reset()
     #Your statements here
     stop = timeit.default_timer()
 
     print('\n Time: ', stop - start)
+
+    print("###############################################    COCO READER    ###############################################")
+    print("###############################################    SUCCESS        ###############################################")
+
 
 
 if __name__ == '__main__':

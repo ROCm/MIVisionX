@@ -122,9 +122,11 @@ def main():
             print("\nPROCESSED_TENSORS:\n", processed_tensors)
             draw_patches(images_array[element],cnt,bboxes_array[element])
         print("\n\nPrinted first batch with", (batch_size), "images!")
-
+        break
     imageIterator.reset()
 
+    print("###############################################    TF DETECTION    ###############################################")
+    print("###############################################    SUCCESS         ###############################################")
 
 if __name__ == '__main__':
     main()

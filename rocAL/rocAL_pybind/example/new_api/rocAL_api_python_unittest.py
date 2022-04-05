@@ -70,7 +70,7 @@ def main():
         elif augmentation_name == "blur":
             output = fn.blur(images)
         elif augmentation_name == "one_hot":
-            labels = fn.one_hot(num_classes=2)
+            _ = fn.one_hot(num_classes=2)
             output = fn.resize(images, device=rali_device, resize_x=300, resize_y=300)
         elif augmentation_name == "hue_rotate_blend":
             images_hue = fn.hue(images)

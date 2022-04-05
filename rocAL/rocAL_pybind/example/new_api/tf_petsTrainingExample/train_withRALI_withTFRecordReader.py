@@ -157,7 +157,6 @@ def main():
 				if i % EVAL_EVERY == 0 or is_final_step:
 					mean_acc = 0
 					mean_loss = 0
-					total_j = 0
 					print("\n\n-------------------------------------------------------------------------------- BEGIN VALIDATION --------------------------------------------------------------------------------")
 					for j, (val_image_ndArray, val_label_ndArray) in enumerate(valIterator, 0):
 						val_image_ndArray_transposed = np.transpose(val_image_ndArray, [0, 2, 3, 1])
@@ -168,7 +167,6 @@ def main():
 						mean_acc += val_accuracy
 						mean_loss += val_loss
 						num_correct_predicate = 0
-						# total_j += j
 						for predicate in correct_predicate:
 							if predicate == True:
 								num_correct_predicate += 1

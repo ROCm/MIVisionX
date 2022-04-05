@@ -116,14 +116,7 @@ def main():
 		images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=TRAIN_RECORDS_DIR)
 		resized = fn.resize(images, resize_x=crop_size[0], resize_y=crop_size[1])
 		flip_coin = fn.random.coin_flip(probability=0.5)
-		cmn_images = fn.crop_mirror_normalize(resized,
-													crop=(crop_size[1], crop_size[0]),
-													mean=[0,0,0],
-													std=[255,255,255],
-													mirror=flip_coin,
-													output_dtype=types.FLOAT,
-													output_layout=types.NCHW,
-													pad_output=False)
+		cmn_images = fn.crop_mirror_normalize(resized, crop=(crop_size[1], crop_size[0]), mean=[0,0,0], std=[255,255,255], mirror=flip_coin, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False)
 		trainPipe.set_outputs(cmn_images)
 	trainPipe.build()
 
@@ -140,14 +133,7 @@ def main():
 		images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=VAL_RECORDS_DIR)
 		resized = fn.resize(images, resize_x=crop_size[0], resize_y=crop_size[1])
 		flip_coin = fn.random.coin_flip(probability=0.5)
-		cmn_images = fn.crop_mirror_normalize(resized,
-													crop=(crop_size[1], crop_size[0]),
-													mean=[0,0,0],
-													std=[255,255,255],
-													mirror=flip_coin,
-													output_dtype=types.FLOAT,
-													output_layout=types.NCHW,
-													pad_output=False)
+		cmn_images = fn.crop_mirror_normalize(resized, crop=(crop_size[1], crop_size[0]), mean=[0,0,0], std=[255,255,255], mirror=flip_coin, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False)
 		valPipe.set_outputs(cmn_images)
 	valPipe.build()
 

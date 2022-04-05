@@ -480,8 +480,8 @@ def color_twist(*inputs, brightness=1.0, bytes_per_sample_hint=0, contrast=1.0, 
     color_twist_image = b.ColorTwist(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (color_twist_image)
 
-def uniform(*inputs,range=[-1, 1], device=None):
-    output_param = b.CreateFloatUniformRand(range[0], range[1])
+def uniform(*inputs,rng_range=[-1, 1], device=None):
+    output_param = b.CreateFloatUniformRand(rng_range[0], rng_range[1])
     return output_param
 
 def random_bbox_crop(*inputs,all_boxes_above_threshold = True, allow_no_crop =True, aspect_ratio = None, bbox_layout = "", bytes_per_sample_hint = 0,

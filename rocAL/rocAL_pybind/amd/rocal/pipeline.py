@@ -244,7 +244,7 @@ class Pipeline(object):
         return self._encode_tensor.prev.rali_c_func_call(self._handle, bboxes_tensor , labels_tensor )
 
     def GetOneHotEncodedLabels(self, array):
-        return b.getOneHotEncodedLabels(self._handle, array, self._numOfClasses)
+        return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses)
 
     def set_outputs(self, *output_list):
         self._output_list_length = len(output_list)
@@ -303,7 +303,7 @@ class Pipeline(object):
         return b.getBBCords(self._handle, array)
 
     def getImageLabels(self, array):
-        b.getImageLabels(self._handle, array)
+        b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
         b.raliCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)

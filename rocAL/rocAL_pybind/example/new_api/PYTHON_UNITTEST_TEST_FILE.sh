@@ -72,6 +72,7 @@ rocAL_api_python_unittest=1
     # Refer rocAL_api_python_unitest.py for all augmentation names
 
     python$ver rocAL_api_python_unittest.py --image-dataset-path $data_dir --augmentation-name resize --batch-size $batch_size --display --NHWC --local-rank 0 --world-size $gpus_per_node --num-threads 1 --num-epochs 2 2>&1 | tee -a run.rocAL_api_log.${CURRENTDATE}
+    python$ver rocAL_api_python_unittest.py --image-dataset-path $data_dir --augmentation-name one_hot --batch-size $batch_size --display --NHWC --local-rank 0 --world-size $gpus_per_node --num-threads 1 --num-epochs 2 2>&1 | tee -a run.rocAL_api_log.${CURRENTDATE}
     python$ver rocAL_api_python_unittest.py --image-dataset-path $data_dir --augmentation-name rotate --batch-size $batch_size --display --NHWC --local-rank 0 --world-size $gpus_per_node --num-threads 1 --num-epochs 2 2>&1 | tee -a run.rocAL_api_log.${CURRENTDATE}
     python$ver rocAL_api_python_unittest.py --image-dataset-path $data_dir --augmentation-name brightness --batch-size $batch_size --display --NHWC --local-rank 0 --world-size $gpus_per_node --num-threads 1 --num-epochs 2 2>&1 | tee -a run.rocAL_api_log.${CURRENTDATE}
     python$ver rocAL_api_python_unittest.py --image-dataset-path $data_dir --augmentation-name gamma_correction --batch-size $batch_size --display --NHWC --local-rank 0 --world-size $gpus_per_node --num-threads 1 --num-epochs 2 2>&1 | tee -a run.rocAL_api_log.${CURRENTDATE}

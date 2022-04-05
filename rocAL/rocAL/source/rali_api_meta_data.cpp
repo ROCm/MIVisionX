@@ -216,7 +216,7 @@ RALI_API_CALL raliGetImageId(RaliContext p_context,  int* buf)
 }
 
 void
-RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
+RALI_API_CALL raliGetImageLabels(RaliContext p_context, void* buf)
 {
 
     if (!p_context)
@@ -230,7 +230,15 @@ RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
     size_t meta_data_batch_size = meta_data.second->get_label_batch().size();
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
-    memcpy(buf, meta_data.second->get_label_batch().data(),  sizeof(int)*meta_data_batch_size);
+
+    if (context->affinity == RaliAffinity::CPU)
+        memcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size);
+    else
+    {
+        hipError_t err = hipMemcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size, hipMemcpyHostToDevice);
+        if (err != hipSuccess)
+            THROW("Invalid Data Pointer: Error copying to device memory")
+    }
 }
 
 unsigned
@@ -272,7 +280,7 @@ RALI_API_CALL raliGetBoundingBoxLabel(RaliContext p_context, int* buf)
 }
 
 void
-RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, int* buf, int numOfClasses)
+RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, void* buf, int numOfClasses)
 {
     if (!p_context)
         THROW("Invalid rali context passed to raliGetOneHotImageLabels")
@@ -305,8 +313,15 @@ RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, int* buf, int numO
         }
 
     }
-    memcpy(buf,one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses);
 
+    if (context->affinity == RaliAffinity::CPU)
+        memcpy(buf,one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses);
+    else
+    {
+        hipError_t err = hipMemcpy(buf, one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses, hipMemcpyHostToDevice);
+        if (err != hipSuccess)
+            THROW("Invalid Data Pointer: Error copying to device memory")
+    }
 }
 
 

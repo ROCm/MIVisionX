@@ -54,6 +54,7 @@ def main():
         images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
         images = fn.resize(images, device=rali_device, resize_x=300, resize_y=300)
 
+
         if augmentation_name == "resize":
             output = fn.resize(images, resize_x=300, resize_y=300)
         elif augmentation_name == "rotate":
@@ -68,6 +69,9 @@ def main():
             output = fn.flip(images)
         elif augmentation_name == "blur":
             output = fn.blur(images)
+        elif augmentation_name == "one_hot":
+            labels = fn.one_hot(num_classes=2)
+            output = fn.resize(images, device=rali_device, resize_x=300, resize_y=300)
         elif augmentation_name == "hue_rotate_blend":
             images_hue = fn.hue(images)
             images_rotate = fn.rotate(images)

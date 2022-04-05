@@ -69,34 +69,40 @@ class RALIGenericIterator(object):
             self.loader._name= self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
+        self.labels_size = ((self.bs*self.loader._numOfClasses) if (self.loader._oneHotEncoding == True) else self.bs)
         if tensor_layout == types.NCHW:
             if self.device == "cpu":
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32)
+
             else:
                 torch_gpu_device = torch.device('cuda', self.device_id)
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device = torch_gpu_device)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device = torch_gpu_device)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
+
         else: #NHWC
             if self.device == "cpu":
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
+
             else:
                 torch_gpu_device = torch.device('cuda', self.device_id)
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32, device=torch_gpu_device)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16, device=torch_gpu_device)
-        if(self.loader._oneHotEncoding == True):
-            self.labels = np.zeros((self.bs)*(self.loader._numOfClasses),dtype = "int32")
-        else:
-            self.labels = np.zeros((self.bs),dtype = "int32")
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
+
+
         if self.bs != 0:
             self.len = b.getRemainingImages(self.loader._handle)//self.bs
         else:
@@ -151,7 +157,7 @@ class RALIGenericIterator(object):
                     img = (self.out)
                     draw_patches(img[i], i, self.bb_2d_numpy)
 
-                sum_count = sum_count +count
+                sum_count = sum_count + count
 
             self.target = self.lis
             self.target1 = self.lis_lab
@@ -172,15 +178,16 @@ class RALIGenericIterator(object):
         else:
             if(self.loader._oneHotEncoding == True):
                 self.loader.GetOneHotEncodedLabels(self.labels)
-                self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
-                self.labels_tensor = self.labels_tensor.view(-1, self.bs, self.loader._numOfClasses)
+                # self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
+                self.labels_tensor = self.labels.view(-1, self.bs, self.loader._numOfClasses).long()
             else:
                 if self.display:
                     for i in range(self.bs):
                         img = (self.out)
                         draw_patches(img[i], i, 0)
                 self.loader.getImageLabels(self.labels)
-                self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
+                self.labels_tensor = self.labels.long()
+                # self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
 
             return self.out, self.labels_tensor
 

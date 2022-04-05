@@ -127,10 +127,11 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_label_copy(RaliContext context, py::array_t<int> array)
+    py::object wrapper_label_copy(RaliContext context, py::object p)
     {
-        auto buf = array.request();
-        int* ptr = (int*) buf.ptr;
+        // auto buf = array.request();
+        // int* ptr = (int*) buf.ptr;
+        auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
         raliGetImageLabels(context,ptr);
         return py::cast<py::none>(Py_None);
@@ -218,10 +219,11 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_one_hot_label_copy(RaliContext context, py::array_t<int> array , unsigned numOfClasses)
+    py::object wrapper_one_hot_label_copy(RaliContext context, py::object p , unsigned numOfClasses)
     {
-        auto buf = array.request();
-        int* ptr = (int*) buf.ptr;
+        // auto buf = array.request();
+        // int* ptr = (int*) buf.ptr;
+        auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
         raliGetOneHotImageLabels(context, ptr, numOfClasses);
         return py::cast<py::none>(Py_None);

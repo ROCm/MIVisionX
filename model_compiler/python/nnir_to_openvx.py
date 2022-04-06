@@ -151,7 +151,7 @@ link_directories(${ROCM_PATH}/mivisionx/lib)
 
 list(APPEND SOURCES annmodule.cpp)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
 
 if (OPENVX_BACKEND_OPENCL_FOUND)
     target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
@@ -185,7 +185,7 @@ else()
 endif()
 
 add_library(annpython SHARED annpython.cpp)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
 
 if (OPENVX_BACKEND_OPENCL_FOUND)
     target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
@@ -1987,8 +1987,6 @@ using half_float::half;
 
 #if ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
 using namespace cv;
 #if USE_OPENCV_4
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR

@@ -79,7 +79,6 @@ reinstall = args.reinstall
 backend = args.backend
 ROCM_PATH = args.rocm_path
 
-
 if ffmpegInstall not in ('no', 'yes'):
     print(
         "ERROR: FFMPEG Install Option Not Supported - [Supported Options: no or yes]")

@@ -36,7 +36,7 @@
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
 * ROCm: rocm-core - `5.0.0.50000-49`
-* rocm-cmake - [rocm-4.2.0](https://github.com/RadeonOpenCompute/rocm-cmake/releases/tag/rocm-4.2.0)
+* rocm-cmake - [rocm-5.1.0](https://github.com/RadeonOpenCompute/rocm-cmake/releases/tag/rocm-5.1.0)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)

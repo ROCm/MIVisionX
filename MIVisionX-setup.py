@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.1.1"
+__version__ = "2.2.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -53,8 +53,8 @@ parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG V4.0.4 Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
                     help='MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]')
-parser.add_argument('--rocm_cmake',	type=str, default='rocm-5.1.0',
-                    help='ROCm CMAKE Version - optional (default:rocm-5.1.0) - ROCm CMAKE Version minimum required 0.7.3')
+parser.add_argument('--rocm_cmake',	type=str, default='master',
+                    help='ROCm CMAKE Version - optional (default:master) - ROCm CMAKE Version minimum required 0.7.3')
 parser.add_argument('--rocal',	 	type=str, default='yes',
                     help='MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]')
 parser.add_argument('--reinstall', 	type=str, default='no',

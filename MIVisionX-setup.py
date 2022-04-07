@@ -53,6 +53,8 @@ parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG V4.0.4 Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
                     help='MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]')
+parser.add_argument('--rocm_cmake',	type=str, default='rocm-5.1.0',
+                    help='ROCm CMAKE Version - optional (default:rocm-5.1.0) - ROCm CMAKE Version minimum required 0.7.3')
 parser.add_argument('--rocal',	 	type=str, default='yes',
                     help='MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]')
 parser.add_argument('--reinstall', 	type=str, default='no',
@@ -61,8 +63,6 @@ parser.add_argument('--backend', 	type=str, default='HIP',
                     help='MIVisionX Dependency Backend - optional (default:HIP) [options:OCL/HIP]')
 parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
                     help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
-parser.add_argument('--rocm_cmake_version', 	type=str, default='master',
-                    help='ROCm CMAKE Version - optional (default:master) - ROCm CMAKE Version minimum required 0.7.3')
 args = parser.parse_args()
 
 setupDir = args.directory
@@ -72,12 +72,12 @@ MIOpenGEMMVersion = args.miopengemm
 ProtoBufVersion = args.protobuf
 rppVersion = args.rpp
 ffmpegInstall = args.ffmpeg
+rocmCmakeVersion = args.rocm_cmake
 neuralNetInstall = args.neural_net
 raliInstall = args.rocal
 reinstall = args.reinstall
 backend = args.backend
 ROCM_PATH = args.rocm_path
-rocmCmakeVersionTag = args.rocm_cmake_version
 
 if ffmpegInstall not in ('no', 'yes'):
     print(
@@ -243,7 +243,7 @@ else:
     os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
     if neuralNetInstall == 'yes':
         os.system(
-            '(cd '+deps_dir+'; git clone -b '+rocmCmakeVersionTag+' https://github.com/RadeonOpenCompute/rocm-cmake.git )')
+            '(cd '+deps_dir+'; git clone -b '+rocmCmakeVersion+' https://github.com/RadeonOpenCompute/rocm-cmake.git )')
         os.system(
             '(cd '+deps_dir+'; wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/'+MIOpenGEMMVersion+'.zip )')
         os.system('(cd '+deps_dir+'; unzip '+MIOpenGEMMVersion+'.zip )')

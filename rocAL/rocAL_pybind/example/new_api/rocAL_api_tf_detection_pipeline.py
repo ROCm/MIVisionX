@@ -7,8 +7,6 @@ import numpy as np
 import os
 from parse_config import parse_args
 
-
-
 def get_onehot(image_labels_array, numClasses):
     one_hot_vector_list = []
     for label in image_labels_array:
@@ -20,7 +18,6 @@ def get_onehot(image_labels_array, numClasses):
     one_hot_vector_array = np.array(one_hot_vector_list)
 
     return one_hot_vector_array
-
 
 def get_weights(num_bboxes):
     weights_array = np.zeros(100)
@@ -45,7 +42,6 @@ def draw_patches(img, idx, bboxes):
         image = cv2.rectangle(image, (int(loc_[0]*wtot), int(loc_[1] * htot)), (int(
             (loc_[2] * wtot)), int((loc_[3] * htot))), color, thickness)
         cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/DETECTION/"+str(idx)+"_"+"train"+".png", image)
-
 
 def main():
     args = parse_args()

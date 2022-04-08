@@ -43,7 +43,6 @@ namespace rali{
             return nullptr;
         }
         void *ptr = PyLong_AsVoidPtr(ptr_as_int.ptr());
-
         return ptr;
     }
 
@@ -62,7 +61,6 @@ namespace rali{
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
         int length =raliGetImageNameLen(context,ptr);
-
         return py::cast(length);
     }
 
@@ -129,8 +127,6 @@ namespace rali{
 
     py::object wrapper_label_copy(RaliContext context, py::object p)
     {
-        // auto buf = array.request();
-        // int* ptr = (int*) buf.ptr;
         auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
         raliGetImageLabels(context,ptr);
@@ -152,7 +148,6 @@ namespace rali{
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
         int count =raliGetBoundingBoxCount(context,ptr);
-
         return py::cast(count);
     }
 
@@ -180,8 +175,6 @@ namespace rali{
     std::pair<py::array_t<float>, py::array_t<int>>  wrapper_get_encoded_bbox_label(RaliContext context, int batch_size, int num_anchors)
     {
         float* bboxes_buf_ptr; int* labels_buf_ptr;
-        // auto labels_buf = labels_array.request();
-        // int* labels_ptr = (int*) labels_buf.ptr;
         // call pure C++ function
         raliGetEncodedBoxesAndLables(context, &bboxes_buf_ptr, &labels_buf_ptr, num_anchors*batch_size);
         // create numpy arrays for boxes and labels tensor from the returned ptr
@@ -221,8 +214,6 @@ namespace rali{
 
     py::object wrapper_one_hot_label_copy(RaliContext context, py::object p , unsigned numOfClasses)
     {
-        // auto buf = array.request();
-        // int* ptr = (int*) buf.ptr;
         auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
         raliGetOneHotImageLabels(context, ptr, numOfClasses);
@@ -231,8 +222,6 @@ namespace rali{
 
     py::object wrapper_random_bbox_crop(RaliContext context, bool all_boxes_overlap, bool no_crop, RaliFloatParam p_aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attemps, RaliFloatParam p_scaling, int total_num_attempts )
     {
-        // auto buf = array.request();
-        // int* ptr = (int*) buf.ptr;
         // call pure C++ function
         raliRandomBBoxCrop(context, all_boxes_overlap, no_crop, p_aspect_ratio, has_shape, crop_width, crop_height, num_attemps, p_scaling, total_num_attempts);
         return py::cast<py::none>(Py_None);

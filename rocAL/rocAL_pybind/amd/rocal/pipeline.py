@@ -122,65 +122,9 @@ class Pipeline(object):
         self._numOfClasses = None
         self._oneHotEncoding = False
         self._castLabels = False
-        self._prev_input_image = None
-        self._current_output_image = None
         self._current_pipeline
         self._reader = None
         self._define_graph_set = False
-
-
-    def store_values(self, operator):
-        """
-            Check if ops is one of those functionality to determine tensor_layout and tensor_dtype and crop.
-            If so preserve it in pipeline to use for dali iterator call.
-        """
-        if(operator.data in self._check_ops):
-            self._tensor_layout = operator._output_layout
-            self._tensor_dtype = operator._output_dtype
-            self._multiplier = list(map(lambda x: 1/x ,operator._std))
-            self._offset = list(map(lambda x,y: -(x/y), operator._mean, operator._std))
-            #changing operator std and mean to (1,0) to make sure there is no double normalization
-            operator._std = [1.0]
-            operator._mean = [0.0]
-            if operator._crop_h != 0 and operator._crop_w != 0:
-                self._img_w = operator._crop_w
-                self._img_h = operator._crop_h
-        elif(operator.data in self._check_crop_ops):
-            self._img_w = operator._resize_x
-            self._img_h = operator._resize_y
-
-    def process_calls(self, output_image):
-        last_operator = output_image.prev
-        temp = output_image
-        while(temp.prev is not None):
-            if(temp.data in (self._check_ops + self._check_crop_ops + self._check_ops_reader)):
-                self.store_values(temp)
-            temp = temp.prev
-        file_reader = temp
-        file_reader.rali_c_func_call(self._handle)
-        self._shuffle = file_reader._random_shuffle
-        self._shard_id = file_reader._shard_id
-        self._num_shards = file_reader._num_shards
-        self._name = file_reader.data
-        temp = temp.next
-        operator = temp.next
-        while(operator.next.next is not None):
-            tensor = operator.next
-            if(operator.data in self._check_ops_decoder):
-                tensor.data = operator.rali_c_func_call(
-                    self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, False)
-            else:
-                tensor.data = operator.rali_c_func_call(
-                    self._handle, operator.prev.data, False)
-            operator = operator.next.next
-        tensor = last_operator.next
-        if(operator.data in self._check_ops_decoder):
-            tensor.data = operator.rali_c_func_call(
-                self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, True)
-        else:
-            tensor.data = operator.rali_c_func_call(
-                self._handle, operator.prev.data, True)
-        return tensor.data
 
     def build(self):
         """Build the pipeline using raliVerify call
@@ -203,9 +147,8 @@ class Pipeline(object):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
         It returns a list of outputs created by calling RALI Operators."""
-        print("define_graph NotImplemented")
+        print("definegraph is deprecated")
         raise NotImplementedError
-
 
     def get_handle(self):
         return self._handle

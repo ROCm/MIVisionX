@@ -7,7 +7,6 @@ import tensorflow as tf
 import numpy as np
 from parse_config import parse_args
 
-
 def draw_patches(img,idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
@@ -73,8 +72,6 @@ def main():
 
     print("###############################################    TF CLASSIFICATION    ###############################################")
     print("###############################################    SUCCESS              ###############################################")
-
-
 
 if __name__ == '__main__':
     main()

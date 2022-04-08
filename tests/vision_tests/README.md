@@ -27,7 +27,7 @@ Arguments:
   --test_filter     Vision Performance Test Filter - optional (default:0 [range:1 - N])
   --num_frames      Run Test for X number of frames - optional (default:1000 [range:1 - N])
   --functionality   Vision Functionality Tests Enabled - optional (default:yes [options:no/yes])
-  --backend_type    OpenVX Backend type - optional (default:HOST [options:HOST/HIP/OCL])
+  --backend_type    OpenVX Backend type - optional (default:CPU [options:CPU/HIP/OCL])
   --profiling       Enable GPU profiling with ROCm profiler (rocprof) - optional (default:no [options:yes/no])
 ```
 

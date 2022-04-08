@@ -86,6 +86,7 @@ option(NEURAL_NET  "Build MIVisionX with Neural Net Support"  ON)
 option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM        "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
+option(MIGRAPHX    "Build MIVisionX with MIGraphX Support"    ON)
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
@@ -93,6 +94,7 @@ message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${Colo
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=OPENCL [select OPENCL for GPU backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
+message("-- ${Cyan}     -D MIGRAPHX=OFF [Turn OFF MIGraphX Module (default:ON)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)

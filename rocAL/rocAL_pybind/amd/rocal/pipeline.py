@@ -189,6 +189,9 @@ class Pipeline(object):
     def GetOneHotEncodedLabels(self, array):
         return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses)
 
+    def GetOneHotEncodedLabels_TF(self, array):
+        return b.getOneHotEncodedLabels_TF(self._handle, array, self._numOfClasses)
+
     def set_outputs(self, *output_list):
         self._output_list_length = len(output_list)
         b.setOutputImages(self._handle,len(output_list),output_list)

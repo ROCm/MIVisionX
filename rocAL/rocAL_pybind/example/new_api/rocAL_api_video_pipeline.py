@@ -52,7 +52,7 @@ class RALIVideoIterator(object):
 
     def __next__(self):
         self.iter_num +=1
-        print("In the next routine of COCO Iterator")
+        print("In the next routine of Video Iterator")
         if(self.loader.isEmpty()):
             timing_info = self.loader.Timing_Info()
             print("Load     time ::", timing_info.load_time)

@@ -220,6 +220,15 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_one_hot_label_tf(RaliContext context, py::array_t<int> array , unsigned numOfClasses)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliGetOneHotImageLabels(context, ptr, numOfClasses);
+        return py::cast<py::none>(Py_None);
+    }
+
     py::object wrapper_random_bbox_crop(RaliContext context, bool all_boxes_overlap, bool no_crop, RaliFloatParam p_aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attemps, RaliFloatParam p_scaling, int total_num_attempts )
     {
         // call pure C++ function
@@ -318,7 +327,8 @@ namespace rali{
         m.def("raliGetEncodedBoxesAndLables",&wrapper_get_encoded_bbox_label);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
-        m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy );
+        m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy);
+        m.def("getOneHotEncodedLabels_TF",&wrapper_one_hot_label_tf);
         m.def("isEmpty",&raliIsEmpty);
         m.def("BoxEncoder",&raliBoxEncoder);
         m.def("getTimingInfo",raliGetTimingInfo);

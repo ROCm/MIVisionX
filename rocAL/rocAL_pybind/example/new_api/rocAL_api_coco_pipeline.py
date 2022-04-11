@@ -259,10 +259,10 @@ def main():
         images_decoded = fn.decoders.image_slice(jpegs, crop_begin, crop_size, device="mixed", output_type=types.RGB, file_root=image_path,
                                                  annotations_file=annotation_path, random_shuffle=False, seed=random_seed, num_shards=world_size, shard_id=local_rank)
         res_images = fn.resize(images_decoded, resize_x=300, resize_y=300)
-        saturation = fn.uniform(range=[0.5, 1.5])
-        contrast = fn.uniform(range=[0.5, 1.5])
-        brightness = fn.uniform(range=[0.875, 1.125])
-        hue = fn.uniform(range=[-0.5, 0.5])
+        saturation = fn.uniform(rng_range=[0.5, 1.5])
+        contrast = fn.uniform(rng_range=[0.5, 1.5])
+        brightness = fn.uniform(rng_range=[0.875, 1.125])
+        hue = fn.uniform(rng_range=[-0.5, 0.5])
         ct_images = fn.color_twist(
             res_images, saturation=saturation, contrast=contrast, brightness=brightness, hue=hue)
         flip_coin = fn.random.coin_flip(probability=0.5)

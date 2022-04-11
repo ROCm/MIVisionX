@@ -113,11 +113,9 @@ class RALIGenericIterator(object):
 
     def __next__(self):
         if(b.isEmpty(self.loader._handle)):
-            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
-            self.reset()
             raise StopIteration
 
         self.loader.copyToTensor(
@@ -178,7 +176,6 @@ class RALIGenericIterator(object):
         else:
             if(self.loader._oneHotEncoding == True):
                 self.loader.GetOneHotEncodedLabels(self.labels)
-                # self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
                 self.labels_tensor = self.labels.view(-1, self.bs, self.loader._numOfClasses).long()
             else:
                 if self.display:
@@ -187,7 +184,6 @@ class RALIGenericIterator(object):
                         draw_patches(img[i], i, 0)
                 self.loader.getImageLabels(self.labels)
                 self.labels_tensor = self.labels.long()
-                # self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
 
             return self.out, self.labels_tensor
 

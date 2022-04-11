@@ -122,7 +122,7 @@ class Pipeline(object):
         self._numOfClasses = None
         self._oneHotEncoding = False
         self._castLabels = False
-        self._current_pipeline
+        self._current_pipeline = None
         self._reader = None
         self._define_graph_set = False
 

@@ -149,6 +149,16 @@ vbios = shell('(cd /opt/rocm/bin/; ./rocm-smi -v)')
 rocm_packages = shell('dpkg-query -W | grep rocm')
 rocm_packages = rocm_packages.splitlines()
 
+lib_type = '.so'
+dep_libs = 'rt'
+HIP_deps = '/opt/rocm/hip/lib/libamdhip64.so'
+LDD_Links = 'ldd'
+if platform.system() == 'Darwin':
+    lib_type = '.dylib'
+    dep_libs = ''
+    HIP_deps = ''
+    LDD_Links = 'otool -L'
+
 # Write Report
 with open(reportFilename, 'w') as f:
     f.write("MIVisionX - System Report\n")
@@ -168,41 +178,42 @@ with open(reportFilename, 'w') as f:
     write_formatted(board_info, f)
     write_formatted(memory_info, f)
 
-    f.write("\n\n\n")
-    f.write("ROCm Package and Version Report\n")
-    f.write("-------------\n")
-    f.write("\n")
-    write_lines_as_table(['Package', 'Version'], rocm_packages, f)
-    f.write("\n\n\n")
+    if platform.system() != 'Darwin':
+        f.write("\n\n\n")
+        f.write("ROCm Package and Version Report\n")
+        f.write("-------------\n")
+        f.write("\n")
+        write_lines_as_table(['Package', 'Version'], rocm_packages, f)
+        f.write("\n\n\n")
 
-    f.write("Vbios Report\n")
-    f.write("-------------\n")
-    f.write("\n")
-    write_formatted(vbios, f)
-    f.write("\n")
-    #f.write("ROCm Device Info Report\n")
-    # f.write("-------------\n")
-    # f.write("\n")
-    #write_formatted(rocmInfo, f)
-    f.write("\n")
+        f.write("Vbios Report\n")
+        f.write("-------------\n")
+        f.write("\n")
+        write_formatted(vbios, f)
+        f.write("\n")
+        #f.write("ROCm Device Info Report\n")
+        # f.write("-------------\n")
+        # f.write("\n")
+        #write_formatted(rocmInfo, f)
+    f.write("\n\n")
     f.write("OpenVX Shared Library Dependencies\n")
     f.write("-------------\n")
     f.write("\n")
     if backendType in ('ALL', 'HOST'):
-        openvx_host_lib = shell('ldd '+openvxHostLib+'/libopenvx.so')
+        openvx_host_lib = shell(LDD_Links+' '+openvxHostLib+'/libopenvx'+lib_type)
         f.write("* OpenVX HOST Library\n")
         write_formatted(openvx_host_lib, f)
     if backendType in ('ALL', 'OCL'):
-        openvx_ocl_lib = shell('ldd '+openvxOpenclLib+'/libopenvx.so')
+        openvx_ocl_lib = shell(LDD_Links+' '+openvxOpenclLib+'/libopenvx'+lib_type)
         f.write("* OpenVX OpenCL Library\n")
         write_formatted(openvx_ocl_lib, f)
     if backendType in ('ALL', 'HIP'):
-        openvx_hip_lib = shell('ldd '+openvxHipLib+'/libopenvx.so')
+        openvx_hip_lib = shell(LDD_Links+' '+openvxHipLib+'/libopenvx'+lib_type)
         f.write("* OpenVX HIP Library\n")
         write_formatted(openvx_hip_lib, f)
     f.write("\n")
 
-    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2021 -- runConformanceTests.py V-"+__version__+"**\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2022 -- runConformanceTests.py V-"+__version__+"**\n")
 
 # system report file
 reportFileDir = os.path.abspath(reportFilename)
@@ -215,17 +226,17 @@ os.system('(cd '+cts_dir+'/conformance_tests; mkdir -p build-cts-opencl && mkdir
 # Build CTS Host
 if backendType in ('ALL', 'HOST'):
     os.system('(cd '+ctsHost+' && cmake -DOPENVX_INCLUDES='+openvxIncludePath+' -DOPENVX_LIBRARIES='+openvxHostLib +
-              '/libopenvx.so\;'+openvxHostLib+'/libvxu.so\;pthread\;dl\;m\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts)')
+              '/libopenvx'+lib_type+'\;'+openvxHostLib+'/libvxu'+lib_type+'\;pthread\;dl\;m\;'+dep_libs+' -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts)')
     os.system('(cd '+ctsHost+' && cmake --build . )')
 # Build CTS OpenCL
 if backendType in ('ALL', 'OCL'):
     os.system('(cd '+ctsOpenCL+' && cmake -DOPENVX_INCLUDES='+openvxIncludePath+' -DOPENVX_LIBRARIES='+openvxOpenclLib +
-              '/libopenvx.so\;'+openvxOpenclLib+'/libvxu.so\;pthread\;dl\;m\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts)')
+              '/libopenvx'+lib_type+'\;'+openvxOpenclLib+'/libvxu'+lib_type+'\;pthread\;dl\;m\;'+dep_libs+' -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts)')
     os.system('(cd '+ctsOpenCL+' && cmake --build . )')
 # Build CTS HIP
 if backendType in ('ALL', 'HIP'):
-    os.system('(cd '+ctsHIP+' && cmake -DOPENVX_INCLUDES='+openvxIncludePath+' -DOPENVX_LIBRARIES='+openvxHipLib+'/libopenvx.so\;' +
-              openvxHipLib+'/libvxu.so\;/opt/rocm/hip/lib/libamdhip64.so\;pthread\;dl\;m\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts)')
+    os.system('(cd '+ctsHIP+' && cmake -DOPENVX_INCLUDES='+openvxIncludePath+' -DOPENVX_LIBRARIES='+openvxHipLib+'/libopenvx'+lib_type+'\;' +
+              openvxHipLib+'/libvxu'+lib_type+'\;'+HIP_deps+'\;pthread\;dl\;m\;'+dep_libs+' -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts)')
     os.system('(cd '+ctsHIP+' && cmake --build . )')
 
 # Run Host

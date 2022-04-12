@@ -47,12 +47,13 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
 
 int main(int argc, char **argv) {
 
-    if(argc < 2) {
-        std::cout << "missing image file" << std::endl;
+    if(argc < 3) {
+        std::cout << "Usage: \n ./migraphx_node_test <path-to-resnet50 ONNX model> <path to image>" << std::endl;
         return -1;
     }
     
-    std::string imageFileName = argv[1];
+    std::string modelFileName = argv[1];
+    std::string imageFileName = argv[2];
 
     vx_context context = vxCreateContext();
     ERROR_CHECK_OBJECT(context);
@@ -92,7 +93,7 @@ int main(int argc, char **argv) {
     }
     out.close();
 
-    status = amdMIGraphXcompile("../resnet50-v2-7.onnx", &prog,
+    status = amdMIGraphXcompile(modelFileName.c_str(), &prog,
     &input_num_of_dims, input_dims, &input_data_format,
     &output_num_of_dims, output_dims, &output_data_format, false, false);
 

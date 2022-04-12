@@ -4,52 +4,73 @@ if [[ $# -gt 0 ]]; then
     helpFunction()
     {
     echo ""
-    echo "Usage: $0 [-n number_of_gpus] [-d display_param<true/false>]"
+    echo "Usage: $0 [-n number_of_gpus] [-d dump_outputs<true/false>] [-b backend<cpu/gpu>]"
     echo -e "\t-n Description of what is the number of gpus to be used"
     echo -e "\t-d Description of what is the display param"
     exit 1 # Exit script after printing help
     }
 
-    while getopts "n:d:" opt
+    while getopts "n:d:b:" opt
     do
         echo "In while loop"
         echo $opt
         case "$opt" in
             n ) number_of_gpus="$OPTARG" ;;
-            d ) display_param="$OPTARG" ;;
+            d ) dump_outputs="$OPTARG" ;;
+            b ) backend="$OPTARG" ;;
             ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
         esac
     done
 
     # Print helpFunction in case parameters are empty
-    if [ -z "$number_of_gpus" ] || [ -z "$display_param" ]
+
+    if [ -z "$backend" ];
     then
-        echo "Some or all of the parameters are empty";
-        helpFunction
+        backend_arg=no-rocal-gpu
+    else
+        if [[ $backend == "cpu" || $backend == "CPU" ]]; then
+            backend_arg=no-rocal-gpu
+        elif [[ $backend == "gpu" || $backend == "GPU" ]]; then
+            backend_arg=rocal-gpu
+        fi
     fi
 
-    # Begin script in case all parameters are correct
-    echo "$number_of_gpus"
-    echo "$display_param"
-    gpus_per_node=$number_of_gpus
-    if [[ $display_param == "true" || $display_param == "True" ]]; then
-        display_arg=display
-    elif [[ $display_param == "false" || $display_param == "False" ]]; then
-        display_arg=no-display
+    if [ -z "$number_of_gpus" ];
+    then
+        gpus_per_node=1
+    else
+        gpus_per_node=$number_of_gpus
     fi
+
+
+    if [ -z "$dump_outputs" ];
+    then
+        display_arg=display #True by default
+    else
+        if [[ $dump_outputs == "true" || $dump_outputs == "True" ]]; then
+            display_arg=display
+        elif [[ $dump_outputs == "false" || $dump_outputs == "False" ]]; then
+            display_arg=no-display
+        fi
+    fi
+
+    echo "$number_of_gpus"
+    echo "$dump_outputs"
+    echo "$backend"
+
     echo $display_arg
+    echo $backend_arg
 
 else
     #DEFAULT ARGS
     gpus_per_node=1
     display_arg=display
+    backend_arg=no-rocal-gpu #CPU by default
+
 fi
 
 
 CURRENTDATE=`date +"%Y-%m-%d-%T"`
-
-# Mention the number of gpus
-gpus_per_node=4
 
 # Mention Batch Size
 batch_size=10
@@ -89,7 +110,7 @@ if [[ rocAL_api_python_unittest -eq 1 ]]; then
         --augmentation-name snow \
         --batch-size $batch_size \
         --$display_arg \
-        --rocal-gpu \
+        --$backend_arg \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -118,7 +139,7 @@ if [[ rocAL_api_coco_pipeline -eq 1 ]]; then
         --json-path $json_path \
         --batch-size $batch_size \
         --$display_arg \
-        --rocal-gpu \
+        --$backend_arg \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -144,7 +165,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
         --classification \
         --batch-size $batch_size \
         --$display_arg \
-        --rocal-gpu \
+        --$backend_arg \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -171,7 +192,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
         --no-classification \
         --batch-size $batch_size \
         --$display_arg \
-        --rocal-gpu \
+        --$backend_arg \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -198,7 +219,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
         --classification \
         --batch-size $batch_size \
         --$display_arg \
-        --rocal-gpu \
+        --$backend_arg \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -224,6 +245,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
         --no-classification \
         --batch-size $batch_size \
         --$display_arg \
+        --$backend_arg \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -248,7 +270,7 @@ if [[ rocAL_api_tf_classification_reader -eq 1 ]]; then
         --classification \
         --batch-size $batch_size \
         --$display_arg \
-        --rocal-gpu \
+        --$backend_arg \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -273,7 +295,7 @@ if [[ rocAL_api_tf_detection_pipeline -eq 1 ]]; then
         --no-classification \
         --batch-size 100 \
         --$display_arg \
-        --rocal-gpu \
+        --$backend_arg \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -294,7 +316,7 @@ if [[ rocAL_api_video_pipeline -eq 1 ]]; then
 
     python$ver rocAL_api_video_pipeline.py \
         --video-path $data_dir \
-        --rocal-gpu \
+        --$backend_arg \
         --batch-size 10 \
         --$display_arg \
         --sequence-length 3 \

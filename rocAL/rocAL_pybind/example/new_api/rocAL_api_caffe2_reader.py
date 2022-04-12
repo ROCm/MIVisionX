@@ -11,7 +11,10 @@ def draw_patches(img, idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     args = parse_args()
-    image = img.detach().numpy()
+    if args.rocal_gpu:
+        image = img.cpu().numpy()
+    else:
+        image = img.detach().numpy()
     image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     if args.classification:

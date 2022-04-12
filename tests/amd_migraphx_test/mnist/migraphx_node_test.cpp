@@ -57,6 +57,13 @@ void read_input_digit(const int n, std::vector<float>& input_digit)
 }
 
 int main(int argc, char **argv) {
+    
+    if(argc < 2) {
+        std::cout << "Usage: \n ./migraphx_node_test <path-to-resnet50 ONNX model>" << std::endl;
+        return -1;
+    }
+    
+    std::string modelFileName = argv[1];
 
     vx_context context = vxCreateContext();
     ERROR_CHECK_OBJECT(context);
@@ -79,7 +86,7 @@ int main(int argc, char **argv) {
     vx_status status = 0;
     migraphx::program prog;
 
-    status = amdMIGraphXcompile("../mnist-8.onnx", &prog,
+    status = amdMIGraphXcompile(modelFileName.c_str(), &prog,
     &input_num_of_dims, input_dims, &input_data_format,
     &output_num_of_dims, output_dims, &output_data_format, false, false);
 

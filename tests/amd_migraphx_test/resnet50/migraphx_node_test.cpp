@@ -74,9 +74,9 @@ int main(int argc, char **argv) {
 
     std::string line;
     std::ifstream out(labelFileName);
-    if(!out)
-    {
-      std::cout << "label file fails" << std::endl;
+    if(!out) {
+      std::cout << "label file failed to open" << std::endl;
+      return -1; 
     }
     int lineNum = 0;
     while(getline(out, line)) {
@@ -104,8 +104,7 @@ int main(int argc, char **argv) {
     //resizing
     int input_width = input_image.size().width;
     int input_height = input_image.size().height;
-    if(input_height > input_width)
-    {
+    if(input_height > input_width) {
       int dif = input_height - input_width;
       int bar = floor(dif / 2);
       cv::Range rows((bar + (dif % 2)), (input_height - bar));
@@ -113,8 +112,7 @@ int main(int argc, char **argv) {
       cv::Mat square = input_image(rows, cols);
       cv::resize(square, input_image_224x224, cv::Size(224,224));
     }
-    else if(input_width > input_height)
-    {
+    else if(input_width > input_height) {
       int dif = input_width - input_height;
       int bar = floor(dif / 2);
       cv::Range rows(0, input_height);
@@ -122,8 +120,7 @@ int main(int argc, char **argv) {
       cv::Mat square = input_image(rows, cols);
       cv::resize(square, input_image_224x224, cv::Size(224,224));
     }
-    else
-    {
+    else {
         cv::resize(input_image, input_image_224x224, cv::Size(224,224));
     }
 
@@ -135,7 +132,7 @@ int main(int argc, char **argv) {
     int total = RGB_input_image.total() * RGB_input_image.channels();
     unsigned char *input_image_vector = (RGB_input_image.data);
 
-	float *buf = (float *)malloc(total*sizeof(float));
+    float *buf = (float *)malloc(total*sizeof(float));
     float *R = buf;
     float *G = R + rows*cols;
     float *B = G + rows*cols;
@@ -145,8 +142,7 @@ int main(int argc, char **argv) {
     float preproc_mul[3] = { 1/(255*stddev_vec[0]), 1/(255*stddev_vec[1]), 1/(255*stddev_vec[2])};
     float preproc_add[3] = {(mean_vec[0]/stddev_vec[0]), (mean_vec[1]/stddev_vec[1]), (mean_vec[2]/stddev_vec[2])};
     
-    for(int i = 0; i < rows*cols; i++, input_image_vector+=3)
-    {
+    for(int i = 0; i < rows*cols; i++, input_image_vector+=3) {
         *R++ = ((float)input_image_vector[0]*preproc_mul[0]) - preproc_add[0]; 
         *G++ = ((float)input_image_vector[1]*preproc_mul[1]) - preproc_add[1]; 
         *B++ = ((float)input_image_vector[2]*preproc_mul[2]) - preproc_add[2]; 
@@ -178,7 +174,6 @@ int main(int argc, char **argv) {
     ERROR_CHECK_STATUS(vxVerifyGraph(graph));
     ERROR_CHECK_STATUS(vxProcessGraph(graph));
 
-
     status = vxMapTensorPatch(output_tensor, output_num_of_dims, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if (status) {
@@ -200,13 +195,12 @@ int main(int argc, char **argv) {
     }
 
     // release resources
+    ERROR_CHECK_STATUS(vxReleaseGraph(&graph));
     ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor));
     ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor));
-    ERROR_CHECK_STATUS(vxReleaseGraph(&graph));
-    /*ERROR_CHECK_STATUS(vxReleaseContext(&context));
+    ERROR_CHECK_STATUS(vxReleaseContext(&context));
     free(buf);
-    */
-
+	
     return 0;
 }
 

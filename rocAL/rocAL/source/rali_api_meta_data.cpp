@@ -280,7 +280,7 @@ RALI_API_CALL raliGetBoundingBoxLabel(RaliContext p_context, int* buf)
 }
 
 void
-RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, void* buf, int numOfClasses)
+RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, void* buf, int numOfClasses, int dest)
 {
     if (!p_context)
         THROW("Invalid rali context passed to raliGetOneHotImageLabels")
@@ -314,7 +314,7 @@ RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, void* buf, int num
 
     }
 
-    if (context->affinity == RaliAffinity::CPU)
+    if (dest == 0) // HOST DESTINATION
         memcpy(buf,one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses);
     else
     {

@@ -212,20 +212,11 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_one_hot_label_copy(RaliContext context, py::object p , unsigned numOfClasses)
+    py::object wrapper_one_hot_label_copy(RaliContext context, py::object p , unsigned numOfClasses, int dest)
     {
         auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
-        raliGetOneHotImageLabels(context, ptr, numOfClasses);
-        return py::cast<py::none>(Py_None);
-    }
-
-    py::object wrapper_one_hot_label_tf(RaliContext context, py::array_t<int> array , unsigned numOfClasses)
-    {
-        auto buf = array.request();
-        int* ptr = (int*) buf.ptr;
-        // call pure C++ function
-        raliGetOneHotImageLabels(context, ptr, numOfClasses);
+        raliGetOneHotImageLabels(context, ptr, numOfClasses, dest);
         return py::cast<py::none>(Py_None);
     }
 
@@ -328,7 +319,6 @@ namespace rali{
         m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
         m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy);
-        m.def("getOneHotEncodedLabels_TF",&wrapper_one_hot_label_tf);
         m.def("isEmpty",&raliIsEmpty);
         m.def("BoxEncoder",&raliBoxEncoder);
         m.def("getTimingInfo",raliGetTimingInfo);

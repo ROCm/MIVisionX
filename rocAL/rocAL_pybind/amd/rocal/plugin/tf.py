@@ -50,11 +50,7 @@ class RALIGenericIteratorDetection(object):
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
 
-        if self.tensor_dtype == types.FLOAT:
-            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float32")
-        elif self.tensor_dtype == types.FLOAT16:
-            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float16")
-        # self.labels = np.zeros((self.bs),dtype = "int32")
+        self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "uint8")
 
     def next(self):
         return self.__next__()
@@ -73,10 +69,7 @@ class RALIGenericIteratorDetection(object):
             self.reset()
             raise StopIteration
 
-        if(types.NCHW == self.tensor_format):
-            self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        else:
-            self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+        self.loader.copyImage(self.out)
 
         if(self.loader._name == "TFRecordReaderDetection"):
             self.bbox_list =[]

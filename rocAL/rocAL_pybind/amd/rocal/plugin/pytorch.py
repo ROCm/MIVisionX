@@ -175,7 +175,7 @@ class RALIGenericIterator(object):
 
         else:
             if(self.loader._oneHotEncoding == True):
-                self.loader.GetOneHotEncodedLabels(self.labels)
+                self.loader.GetOneHotEncodedLabels(self.labels, self.device)
                 self.labels_tensor = self.labels.view(-1, self.bs, self.loader._numOfClasses).long()
             else:
                 if self.display:

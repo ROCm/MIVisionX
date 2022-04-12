@@ -89,6 +89,7 @@ if [[ rocAL_api_python_unittest -eq 1 ]]; then
         --augmentation-name snow \
         --batch-size $batch_size \
         --$display_arg \
+        --rocal-gpu \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -197,6 +198,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
         --classification \
         --batch-size $batch_size \
         --$display_arg \
+        --rocal-gpu \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -246,6 +248,7 @@ if [[ rocAL_api_tf_classification_reader -eq 1 ]]; then
         --classification \
         --batch-size $batch_size \
         --$display_arg \
+        --rocal-gpu \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -270,6 +273,7 @@ if [[ rocAL_api_tf_detection_pipeline -eq 1 ]]; then
         --no-classification \
         --batch-size 100 \
         --$display_arg \
+        --rocal-gpu \
         --NHWC \
         --local-rank 0 \
         --world-size $gpus_per_node \
@@ -290,6 +294,7 @@ if [[ rocAL_api_video_pipeline -eq 1 ]]; then
 
     python$ver rocAL_api_video_pipeline.py \
         --video-path $data_dir \
+        --rocal-gpu \
         --batch-size 10 \
         --$display_arg \
         --sequence-length 3 \

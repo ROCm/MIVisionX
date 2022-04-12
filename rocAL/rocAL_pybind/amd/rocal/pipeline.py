@@ -186,11 +186,16 @@ class Pipeline(object):
         labels_tensor=  torch.tensor(labels_in).long()
         return self._encode_tensor.prev.rali_c_func_call(self._handle, bboxes_tensor , labels_tensor )
 
-    def GetOneHotEncodedLabels(self, array):
-        return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses)
+    def GetOneHotEncodedLabels(self, array, device):
+        if device=="cpu":
+            destination_device = 0 # Host destination
+        if device=="gpu":
+            destination_device = 1 # Device destination
+        return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, destination_device)
 
     def GetOneHotEncodedLabels_TF(self, array):
-        return b.getOneHotEncodedLabels_TF(self._handle, array, self._numOfClasses)
+        destination_device = 0 # Host destination
+        return b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, destination_device)
 
     def set_outputs(self, *output_list):
         self._output_list_length = len(output_list)

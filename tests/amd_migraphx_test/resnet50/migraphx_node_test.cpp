@@ -118,16 +118,14 @@ int main(int argc, char **argv) {
       cv::Range cols(0, input_width);
       cv::Mat square = input_image(rows, cols);
       cv::resize(square, input_image_224x224, cv::Size(224,224));
-    }
-    else if(input_width > input_height) {
+    } else if(input_width > input_height) {
       int dif = input_width - input_height;
       int bar = floor(dif / 2);
       cv::Range rows(0, input_height);
       cv::Range cols((bar + (dif % 2)), (input_width - bar));
       cv::Mat square = input_image(rows, cols);
       cv::resize(square, input_image_224x224, cv::Size(224,224));
-    }
-    else {
+    } else {
         cv::resize(input_image, input_image_224x224, cv::Size(224,224));
     }
 

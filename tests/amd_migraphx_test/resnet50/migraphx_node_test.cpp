@@ -47,6 +47,13 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
 
 int main(int argc, char **argv) {
 
+    if(argc < 2) {
+        std::cout << "missing image file" << std::endl;
+        return -1;
+    }
+    
+    std::string imageFileName = argv[1];
+
     vx_context context = vxCreateContext();
     ERROR_CHECK_OBJECT(context);
     vxRegisterLogCallback(context, log_callback, vx_false_e);
@@ -99,7 +106,7 @@ int main(int argc, char **argv) {
 
     //read an image and resize to correct dimensions -- opencv imread()
     cv::Mat input_image, input_image_224x224;
-    input_image = cv::imread("../AMD-tinyDataSet_0000.jpeg");
+    input_image = cv::imread(imageFileName);
     
     //resizing
     int input_width = input_image.size().width;

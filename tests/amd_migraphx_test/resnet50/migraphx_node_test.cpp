@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
     float preproc_mul[3] = { 1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])};
     float preproc_add[3] = {(mean_vec[0] / stddev_vec[0]), (mean_vec[1] / stddev_vec[1]), (mean_vec[2] / stddev_vec[2])};
     
-    for(int i = 0; i < rows*cols; i++, input_image_vector += 3) {
+    for(int i = 0; i < rows * cols; i++, input_image_vector += 3) {
         *R++ = ((float)input_image_vector[0] * preproc_mul[0]) - preproc_add[0]; 
         *G++ = ((float)input_image_vector[1] * preproc_mul[1]) - preproc_add[1]; 
         *B++ = ((float)input_image_vector[2] * preproc_mul[2]) - preproc_add[2]; 

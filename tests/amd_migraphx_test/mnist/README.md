@@ -6,7 +6,7 @@ cd <path-to-MIVisionX>/tests/amd_migraphx_test/mnist/
 wget https://github.com/onnx/models/blob/main/vision/classification/mnist/model/mnist-8.onnx?raw=true
 mkdir build
 cd build
-./migraphx_node_test <paht-to-model>
+./migraphx_node_test <path-to-model>
 ```
 
 * Example

@@ -118,16 +118,16 @@ int main(int argc, char **argv) {
       cv::Range rows((bar + (dif % 2)), (input_height - bar));
       cv::Range cols(0, input_width);
       cv::Mat square = input_image(rows, cols);
-      cv::resize(square, input_image_224x224, cv::Size(224,224));
+      cv::resize(square, input_image_224x224, cv::Size(224, 224));
     } else if(input_width > input_height) {
       int dif = input_width - input_height;
       int bar = floor(dif / 2);
       cv::Range rows(0, input_height);
       cv::Range cols((bar + (dif % 2)), (input_width - bar));
       cv::Mat square = input_image(rows, cols);
-      cv::resize(square, input_image_224x224, cv::Size(224,224));
+      cv::resize(square, input_image_224x224, cv::Size(224, 224));
     } else {
-        cv::resize(input_image, input_image_224x224, cv::Size(224,224));
+        cv::resize(input_image, input_image_224x224, cv::Size(224, 224));
     }
 
     //preprocess
@@ -140,18 +140,18 @@ int main(int argc, char **argv) {
 
     float *buf = (float *)malloc(total*sizeof(float));
     float *R = buf;
-    float *G = R + rows*cols;
-    float *B = G + rows*cols;
+    float *G = R + rows * cols;
+    float *B = G + rows * cols;
 
     float mean_vec[3] = {0.485, 0.456, 0.406};
     float stddev_vec[3] = {0.229, 0.224, 0.225};    
-    float preproc_mul[3] = { 1/(255*stddev_vec[0]), 1/(255*stddev_vec[1]), 1/(255*stddev_vec[2])};
-    float preproc_add[3] = {(mean_vec[0]/stddev_vec[0]), (mean_vec[1]/stddev_vec[1]), (mean_vec[2]/stddev_vec[2])};
+    float preproc_mul[3] = { 1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])};
+    float preproc_add[3] = {(mean_vec[0] / stddev_vec[0]), (mean_vec[1] / stddev_vec[1]), (mean_vec[2] / stddev_vec[2])};
     
-    for(int i = 0; i < rows*cols; i++, input_image_vector+=3) {
-        *R++ = ((float)input_image_vector[0]*preproc_mul[0]) - preproc_add[0]; 
-        *G++ = ((float)input_image_vector[1]*preproc_mul[1]) - preproc_add[1]; 
-        *B++ = ((float)input_image_vector[2]*preproc_mul[2]) - preproc_add[2]; 
+    for(int i = 0; i < rows*cols; i++, input_image_vector += 3) {
+        *R++ = ((float)input_image_vector[0] * preproc_mul[0]) - preproc_add[0]; 
+        *G++ = ((float)input_image_vector[1] * preproc_mul[1]) - preproc_add[1]; 
+        *B++ = ((float)input_image_vector[2] * preproc_mul[2]) - preproc_add[2]; 
     }
 
     ERROR_CHECK_STATUS(vxMapTensorPatch(input_tensor, input_num_of_dims, nullptr, nullptr, &map_id, stride,
@@ -176,7 +176,6 @@ int main(int argc, char **argv) {
     vx_node node = amdMIGraphXnode(graph, &prog, migraphx_prog_e, input_tensor, output_tensor);
     ERROR_CHECK_OBJECT(node);
 
-    ERROR_CHECK_STATUS(vxReleaseNode(&node));
     ERROR_CHECK_STATUS(vxVerifyGraph(graph));
     ERROR_CHECK_STATUS(vxProcessGraph(graph));
 
@@ -201,6 +200,7 @@ int main(int argc, char **argv) {
     }
 
     // release resources
+    ERROR_CHECK_STATUS(vxReleaseNode(&node));
     ERROR_CHECK_STATUS(vxReleaseGraph(&graph));
     ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor));
     ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor));

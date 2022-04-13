@@ -37,12 +37,6 @@ DeviceManagerHip::~DeviceManagerHip()
             LOG("hipStreamDestroy failed " + TOSTR(err))
         _resources.hip_stream = nullptr;
     }
-    if(_resources.device_id >= 0) {
-        err = hipDeviceReset();
-        if (err != hipSuccess)
-            LOG("hipDeviceReset failed " + TOSTR(err))
-        _resources.device_id = -1;
-    }
     LOG("HIP device resources released")
 }
 

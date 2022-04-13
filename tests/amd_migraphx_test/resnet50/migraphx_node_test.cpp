@@ -7,6 +7,17 @@
 
 using namespace std;
 
+#if ENABLE_OPENCV
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include "opencv2/opencv.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#define CVUI_IMPLEMENTATION
+
+using namespace cv;
+#endif
+
 #define ERROR_CHECK_STATUS(status) { \
     vx_status status_ = (status); \
     if (status_ != VX_SUCCESS) { \
@@ -34,36 +45,15 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
     }
 }
 
-void read_input_digit(const int n, std::vector<float>& input_digit)
-{
-    std::ifstream file("../digits.txt");
-    const int Digits = 10;
-    const int Height = 28;
-    const int Width  = 28;
-    if(!file.is_open()) {
-        return;
-    }
-    for(int d = 0; d < Digits; ++d) {
-        for(int i = 0; i < Height * Width; ++i) {
-            unsigned char temp = 0;
-            file.read((char*)&temp, sizeof(temp));
-            if(d == n) {
-                float data = temp / 255.0;
-                input_digit.push_back(data);
-            }
-        }
-    }
-    std::cout << std::endl;
-}
-
 int main(int argc, char **argv) {
-    
-    if(argc < 2) {
-        std::cout << "Usage: \n ./migraphx_node_test <path-to-resnet50 ONNX model>" << std::endl;
+
+    if(argc < 3) {
+        std::cout << "Usage: \n ./migraphx_node_test <path-to-resnet50 ONNX model> <path to image>" << std::endl;
         return -1;
     }
     
     std::string modelFileName = argv[1];
+    std::string imageFileName = argv[2];
 
     vx_context context = vxCreateContext();
     ERROR_CHECK_OBJECT(context);
@@ -86,6 +76,23 @@ int main(int argc, char **argv) {
     vx_status status = 0;
     migraphx::program prog;
 
+    //imagenet label file
+    std::string labelText[1000];
+    std::string labelFileName = ("../labels.txt");
+
+    std::string line;
+    std::ifstream out(labelFileName);
+    if(!out) {
+      std::cout << "label file failed to open" << std::endl;
+      return -1; 
+    }
+    int lineNum = 0;
+    while(getline(out, line)) {
+        labelText[lineNum] = line;
+        lineNum++;
+    }
+    out.close();
+
     status = amdMIGraphXcompile(modelFileName.c_str(), &prog,
     &input_num_of_dims, input_dims, &input_data_format,
     &output_num_of_dims, output_dims, &output_data_format, false, false);
@@ -98,11 +105,54 @@ int main(int argc, char **argv) {
     input_tensor = vxCreateTensor(context, input_num_of_dims, input_dims, input_data_format, 0);
     output_tensor = vxCreateTensor(context, output_num_of_dims, output_dims, output_data_format, 0);
 
-    std::vector<float> input_digit;
-    std::random_device rd;
-    std::uniform_int_distribution<int> dist(0, 9);
-    const int rand_digit = dist(rd);
-    read_input_digit(rand_digit, input_digit);
+    //read an image and resize to correct dimensions -- opencv imread()
+    cv::Mat input_image, input_image_224x224;
+    input_image = cv::imread(imageFileName);
+    
+    //resizing
+    int input_width = input_image.size().width;
+    int input_height = input_image.size().height;
+    if(input_height > input_width) {
+      int dif = input_height - input_width;
+      int bar = floor(dif / 2);
+      cv::Range rows((bar + (dif % 2)), (input_height - bar));
+      cv::Range cols(0, input_width);
+      cv::Mat square = input_image(rows, cols);
+      cv::resize(square, input_image_224x224, cv::Size(224, 224));
+    } else if(input_width > input_height) {
+      int dif = input_width - input_height;
+      int bar = floor(dif / 2);
+      cv::Range rows(0, input_height);
+      cv::Range cols((bar + (dif % 2)), (input_width - bar));
+      cv::Mat square = input_image(rows, cols);
+      cv::resize(square, input_image_224x224, cv::Size(224, 224));
+    } else {
+        cv::resize(input_image, input_image_224x224, cv::Size(224, 224));
+    }
+
+    //preprocess
+    cv::Mat RGB_input_image;
+    cv::cvtColor(input_image_224x224, RGB_input_image, cv::COLOR_BGR2RGB);  // cv::imread reads the image in order BGR. SO need to convert
+    
+    int rows = RGB_input_image.rows; int cols = RGB_input_image.cols; 
+    int total = RGB_input_image.total() * RGB_input_image.channels();
+    unsigned char *input_image_vector = (RGB_input_image.data);
+
+    float *buf = (float *)malloc(total*sizeof(float));
+    float *R = buf;
+    float *G = R + rows * cols;
+    float *B = G + rows * cols;
+
+    float mean_vec[3] = {0.485, 0.456, 0.406};
+    float stddev_vec[3] = {0.229, 0.224, 0.225};    
+    float preproc_mul[3] = { 1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])};
+    float preproc_add[3] = {(mean_vec[0] / stddev_vec[0]), (mean_vec[1] / stddev_vec[1]), (mean_vec[2] / stddev_vec[2])};
+    
+    for(int i = 0; i < rows * cols; i++, input_image_vector += 3) {
+        *R++ = ((float)input_image_vector[0] * preproc_mul[0]) - preproc_add[0]; 
+        *G++ = ((float)input_image_vector[1] * preproc_mul[1]) - preproc_add[1]; 
+        *B++ = ((float)input_image_vector[2] * preproc_mul[2]) - preproc_add[2]; 
+    }
 
     ERROR_CHECK_STATUS(vxMapTensorPatch(input_tensor, input_num_of_dims, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
@@ -111,7 +161,7 @@ int main(int argc, char **argv) {
         return status;
     }
 
-    memcpy(ptr, static_cast<void*>(input_digit.data()), input_digit.size() * sizeof(float));
+    memcpy(ptr, buf, total * sizeof(float));
 
     status = vxUnmapTensorPatch(input_tensor, map_id);
     if (status) {
@@ -129,7 +179,6 @@ int main(int argc, char **argv) {
     ERROR_CHECK_STATUS(vxVerifyGraph(graph));
     ERROR_CHECK_STATUS(vxProcessGraph(graph));
 
-
     status = vxMapTensorPatch(output_tensor, output_num_of_dims, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if (status) {
@@ -137,16 +186,12 @@ int main(int argc, char **argv) {
         return status;
     }
 
-    auto num_results = 10;
-    float* max = std::max_element((float*)ptr, (float*)ptr + num_results);
-    int answer = max - (float*)ptr;
+    //find the argmax
+    auto num_results = 1000;
+    int final_argmax_result = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results));
+    std::string output_label = labelText[final_argmax_result];
 
-    std::cout << std::endl
-              << "Randomly chosen digit: " << rand_digit << std::endl
-              << "Result from inference: " << answer << std::endl
-              << std::endl
-              << (answer == rand_digit ? "CORRECT" : "INCORRECT") << std::endl
-              << std::endl;
+    std::cout << "output index = " << final_argmax_result << "  && output label = " << output_label << std::endl;
 
     status = vxUnmapTensorPatch(output_tensor, map_id);
     if(status) {
@@ -160,7 +205,8 @@ int main(int argc, char **argv) {
     ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor));
     ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor));
     ERROR_CHECK_STATUS(vxReleaseContext(&context));
-
+    free(buf);
+	
     return 0;
 }
 

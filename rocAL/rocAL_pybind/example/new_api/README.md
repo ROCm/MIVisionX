@@ -9,14 +9,14 @@ export ROCAL_DATA_PATH=/Absolute/Path/Of/rocal_data/
 ./PYTHON_UNITTEST_TEST_FILE.sh (The default value of number of gpu's is "1" & display is "ON" by default)
 
 ./PYTHON_UNITTEST_TEST_FILE.sh -n <number_of_gpus> -d <true/false>
-./PYTHON_UNITTEST_TEST_FILE.sh -n "1" -d "false"
+./PYTHON_UNITTEST_TEST_FILE.sh -n "1" -d "false" -b "cpu"
 
 ### TO TEST MULTIPLE READER PIPELINE FROM READERS_TEST_FILE.sh
 
 ./READERS_TEST_FILE.sh (The default value of number of gpu's is "1" & display is "ON" by default)
 
 ./READERS_TEST_FILE.sh -n <number_of_gpus> -d <true/false>
-./READERS_TEST_FILE.sh -n "1" -d "false"
+./READERS_TEST_FILE.sh -n "1" -d "false" -b "cpu"
 
 ### TO TEST A SINGLE READER PIPELINE FROM READERS_TEST_FILE.sh
 

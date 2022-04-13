@@ -188,14 +188,13 @@ class Pipeline(object):
 
     def GetOneHotEncodedLabels(self, array, device):
         if device=="cpu":
-            destination_device = 0 # Host destination
+            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
         if device=="gpu":
-            destination_device = 1 # Device destination
-        return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, destination_device)
+            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
 
     def GetOneHotEncodedLabels_TF(self, array):
-        destination_device = 0 # Host destination
-        return b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, destination_device)
+        # Host destination only
+        return b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
 
     def set_outputs(self, *output_list):
         self._output_list_length = len(output_list)

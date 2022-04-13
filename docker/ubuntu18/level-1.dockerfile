@@ -11,4 +11,4 @@ WORKDIR /workspace
 
 # install MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
-        cmake ../MIVisionX && make -j8 && make install
+        cmake -DBACKEND=OCL ../MIVisionX && make -j8 && make install

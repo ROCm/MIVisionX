@@ -22,6 +22,7 @@ THE SOFTWARE.
 #include "video_decoder_factory.h"
 #include <video_decoder.h>
 #include <ffmpeg_video_decoder.h>
+#include <hardware_video_decoder.h>
 #include "commons.h"
 
 #ifdef RALI_VIDEO
@@ -29,8 +30,10 @@ std::shared_ptr<VideoDecoder> create_video_decoder(VideoDecoderConfig config)
 {
     switch (config.type())
     {
-        case VideoDecoderType::FFMPEG_VIDEO:
+        case VideoDecoderType::FFMPEG_SOFTWARE_DECODE:
             return std::make_shared<FFmpegVideoDecoder>();
+        case VideoDecoderType::FFMPEG_HARDWARE_DECODE:
+            return std::make_shared<HardWareVideoDecoder>();
         default:
             THROW("Unsupported decoder type " + TOSTR(config.type()));
     }

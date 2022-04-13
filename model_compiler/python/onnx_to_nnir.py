@@ -103,6 +103,11 @@ onnx2ir_op_type = {
     'TopK'               : 'topk',
     'ReduceMin'          : 'reduce_min',
     'Tile'               : 'tile',
+    'Less'               : 'less',
+    'Greater'            : 'greater',
+    'LessOrEqual'        : 'less_equal',
+    'GreaterOrEqual'     : 'greater_equal',
+    'Equal'              : 'equal'
 }
 
 onnx2ir_data_type = [

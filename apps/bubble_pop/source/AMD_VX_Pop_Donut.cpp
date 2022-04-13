@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 #include "internal_publishKernels.h"
-#include<string>
+#include <string>
 
 int poppedDonuts = 0;
 int globalDonutFlag = 0;
@@ -39,12 +39,18 @@ private:
 public:
 	AMD_donut_pop(int bX, int bY, int bW, int bH)
 	{
-		donutX = bX; donutY = bY; donutWidth = bW; donutHeight = bH;
+		donutX = bX;
+		donutY = bY;
+		donutWidth = bW;
+		donutHeight = bH;
 	}
 
 	~AMD_donut_pop()
 	{
-		donutX = 0; donutY = 0; donutWidth = 0; donutHeight = 0;
+		donutX = 0;
+		donutY = 0;
+		donutWidth = 0;
+		donutHeight = 0;
 	}
 
 	int update(int width, int height, Mat *Image)
@@ -63,19 +69,19 @@ public:
 
 			cv::threshold(diff_image, diff_image, 160, 255, 0);
 
-			unsigned char *input = (unsigned char*)(diff_image.data);
+			unsigned char *input = (unsigned char *)(diff_image.data);
 			int b;
 
 			for (int x = donutX; x <= (donutX + (donutWidth - 1)); x++)
-			for (int y = donutY; y <= (donutY + (donutWidth - 1)); y++)
-			{
-				if ((x < diff_image.cols && x > 0) && (y < diff_image.rows && y > 0))
+				for (int y = donutY; y <= (donutY + (donutWidth - 1)); y++)
 				{
-					b = input[diff_image.cols * y + x];
-					if (b == 255)
-						movementAmount++;
+					if ((x < diff_image.cols && x > 0) && (y < diff_image.rows && y > 0))
+					{
+						b = input[diff_image.cols * y + x];
+						if (b == 255)
+							movementAmount++;
+					}
 				}
-			}
 		}
 
 		if (movementAmount > 100)
@@ -110,18 +116,19 @@ public:
 	}
 };
 
-struct Linked_list_pop{
+struct Linked_list_pop
+{
 	AMD_donut_pop donut;
 	int data;
-	struct Linked_list_pop* next;
+	struct Linked_list_pop *next;
 };
 typedef struct Linked_list_pop donutNode;
 
-//Function Prototyping
-donutNode* donut_insert(donutNode* head, donutNode* x);
-donutNode* donut_position_delete(donutNode* head, int p);
-donutNode* donut_clean_node(donutNode* head);
-int draw_pop_donuts(int, int, Mat*);
+// Function Prototyping
+donutNode *donut_insert(donutNode *head, donutNode *x);
+donutNode *donut_position_delete(donutNode *head, int p);
+donutNode *donut_clean_node(donutNode *head);
+int draw_pop_donuts(int, int, Mat *);
 donutNode *PopDonuts = NULL;
 
 /************************************************************************************************************
@@ -134,7 +141,7 @@ int draw_pop_donuts(int width, int height, Mat *Image)
 	int randx = rand() % (width + 1);
 	AMD_donut_pop new_element = AMD_donut_pop(randx, 0, 20, 20);
 
-	donutNode * temp = (donutNode*)malloc(sizeof(donutNode));
+	donutNode *temp = (donutNode *)malloc(sizeof(donutNode));
 	temp->donut = new_element;
 	temp->next = NULL;
 	PopDonuts = donut_insert(PopDonuts, temp);
@@ -164,7 +171,6 @@ int draw_pop_donuts(int width, int height, Mat *Image)
 	}
 
 	return 0;
-
 }
 
 /************************************************************************************************************
@@ -212,7 +218,9 @@ vx_status VX_CALLBACK VX_bubbles_OutputValidator(vx_node node, vx_uint32 index, 
 	if (index == 1)
 	{
 		vx_parameter output_param = vxGetParameterByIndex(node, 1);
-		vx_image output; vx_uint32 width = 0, height = 0; vx_df_image format = VX_DF_IMAGE_VIRT;
+		vx_image output;
+		vx_uint32 width = 0, height = 0;
+		vx_df_image format = VX_DF_IMAGE_VIRT;
 
 		STATUS_ERROR_CHECK(vxQueryParameter(output_param, VX_PARAMETER_ATTRIBUTE_REF, &output, sizeof(vx_image)));
 		STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format)));
@@ -244,30 +252,42 @@ vx_status VX_CALLBACK VX_bubbles_Kernel(vx_node node, const vx_reference *parame
 	Mat *mat, bl;
 
 	// wait to restart - press any key
-	if(poppedDonuts >= 1015){ poppedDonuts = 0; waitKey(0);}
+	if (poppedDonuts >= 1015)
+	{
+		poppedDonuts = 0;
+		waitKey(0);
+	}
 
-	//Converting VX Image to OpenCV Mat
+	// Converting VX Image to OpenCV Mat
 	STATUS_ERROR_CHECK(VX_to_CV_Image(&mat, image_in));
 	Mat Image = *mat, clean_img;
 	flip(Image, Image, 1);
 
-	if (globalDonutFlag == 0){
+	if (globalDonutFlag == 0)
+	{
 		globalDonutRefImage = Image;
 	}
-	else{
-	 	clean_img = Image;
+	else
+	{
+		clean_img = Image;
 	}
 
 	// change donut size - press "d"
-	if(waitKey(2) == 100){if (globalDonutChange == 0) globalDonutChange = 1; else globalDonutChange = 0;} 
-	if(draw_pop_donuts(Image.cols, Image.rows, &Image))
+	if (waitKey(2) == 100)
+	{
+		if (globalDonutChange == 0)
+			globalDonutChange = 1;
+		else
+			globalDonutChange = 0;
+	}
+	if (draw_pop_donuts(Image.cols, Image.rows, &Image))
 		return VX_FAILURE;
 
 	std::ostringstream statusStr;
 	if (poppedDonuts >= 1000)
 	{
 		statusStr << "Congratulations! Click any Key to Contiue Popping!";
-		putText(Image, statusStr.str(), cvPoint(5, int(Image.rows/2)), FONT_HERSHEY_COMPLEX_SMALL, 1, cvScalar(200, 200, 250), 1, CV_AA);
+		putText(Image, statusStr.str(), cvPoint(5, int(Image.rows / 2)), FONT_HERSHEY_COMPLEX_SMALL, 1, cvScalar(200, 200, 250), 1, CV_AA);
 	}
 	else
 	{
@@ -275,10 +295,16 @@ vx_status VX_CALLBACK VX_bubbles_Kernel(vx_node node, const vx_reference *parame
 		putText(Image, statusStr.str(), cvPoint(30, 30), FONT_HERSHEY_COMPLEX_SMALL, 1.2, cvScalar(200, 200, 250), 1, CV_AA);
 	}
 
-	//Converting OpenCV Mat into VX Image
+	// Converting OpenCV Mat into VX Image
 	STATUS_ERROR_CHECK(CV_to_VX_Image(image_out, &Image));
 
-	if (globalDonutFlag == 0) globalDonutFlag++; else{ globalDonutRefImage = clean_img; globalDonutFlag++; }
+	if (globalDonutFlag == 0)
+		globalDonutFlag++;
+	else
+	{
+		globalDonutRefImage = clean_img;
+		globalDonutFlag++;
+	}
 
 	return status;
 }
@@ -290,14 +316,14 @@ vx_status VX_donut_pop_Register(vx_context context)
 {
 	vx_status status = VX_SUCCESS;
 	vx_kernel kernel = vxAddKernel(context,
-		"org.pop.donut_pop",
-		VX_KERNEL_EXT_POP_DONUT_POP,
-		VX_bubbles_Kernel,
-		2,
-		VX_bubbles_InputValidator,
-		VX_bubbles_OutputValidator,
-		nullptr,
-		nullptr);
+								   "org.pop.donut_pop",
+								   VX_KERNEL_EXT_POP_DONUT_POP,
+								   VX_bubbles_Kernel,
+								   2,
+								   VX_bubbles_InputValidator,
+								   VX_bubbles_OutputValidator,
+								   nullptr,
+								   nullptr);
 
 	if (kernel)
 	{
@@ -308,29 +334,33 @@ vx_status VX_donut_pop_Register(vx_context context)
 
 	if (status != VX_SUCCESS)
 	{
-	exit:	vxRemoveKernel(kernel); return VX_FAILURE;
+	exit:
+		vxRemoveKernel(kernel);
+		return VX_FAILURE;
 	}
 
 	return status;
 }
 
 /*
-* linked_list.c
-* Author: Kiriti Nagesh Gowda
-*/
+ * linked_list.c
+ * Author: Kiriti Nagesh Gowda
+ */
 
-//Insert a variable function
-donutNode* donut_insert(donutNode* head, donutNode* x)
+// Insert a variable function
+donutNode *donut_insert(donutNode *head, donutNode *x)
 {
-	donutNode* temp;
-	donutNode* temp1 = x;
+	donutNode *temp;
+	donutNode *temp1 = x;
 
 	if (head == NULL)
 		head = temp1;
 
-	else{
+	else
+	{
 		temp = head;
-		while (temp->next != NULL){
+		while (temp->next != NULL)
+		{
 			temp = temp->next;
 		}
 		temp->next = temp1;
@@ -338,25 +368,28 @@ donutNode* donut_insert(donutNode* head, donutNode* x)
 	return (head);
 }
 
-//Delete a node from the list
-donutNode* donut_position_delete(donutNode* head, int p)
+// Delete a node from the list
+donutNode *donut_position_delete(donutNode *head, int p)
 {
-	donutNode* temp;
-	donutNode* temp1;
+	donutNode *temp;
+	donutNode *temp1;
 	int count = 2;
 	temp = head;
 
-	if (temp == NULL || p <= 0){
+	if (temp == NULL || p <= 0)
+	{
 		printf("The List is empty or the position is invalid\n");
 		return (head);
 	}
 
-	if (p == 1){
+	if (p == 1)
+	{
 		head = temp->next;
 		free(temp);
 		return (head);
 	}
-	while (temp != NULL){
+	while (temp != NULL)
+	{
 		if (count == (p))
 		{
 			temp1 = temp->next;
@@ -366,21 +399,23 @@ donutNode* donut_position_delete(donutNode* head, int p)
 		}
 		temp = temp->next;
 
-		if (temp == NULL) break;
+		if (temp == NULL)
+			break;
 		++count;
 	}
 	return head;
 }
 
-//clean node
-donutNode *donut_clean_node(donutNode * head)
+// clean node
+donutNode *donut_clean_node(donutNode *head)
 {
 
 	donutNode *temp1;
-	while (head != NULL){
+	while (head != NULL)
+	{
 		temp1 = head->next;
 		free(head);
 		head = temp1;
 	}
-	return(head);
+	return (head);
 }

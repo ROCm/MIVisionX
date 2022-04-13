@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "meta_data_reader_factory.h"
 #include "exception.h"
 #include "coco_meta_data_reader.h"
+#include "coco_meta_data_reader_key_points.h"
 #include "text_file_meta_data_reader.h"
 #include "cifar10_meta_data_reader.h"
 #include "tf_meta_data_reader.h"
@@ -35,6 +36,7 @@ THE SOFTWARE.
 #include "caffe2_meta_data_reader_detection.h"
 #include "tf_meta_data_reader_detection.h"
 #include "video_label_reader.h"
+#include "mxnet_meta_data_reader.h"
 
 std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& config) {
     switch(config.reader_type()) {
@@ -94,6 +96,15 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             return ret;
         }
             break;
+        case MetaDataReaderType::COCO_KEY_POINTS_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::KeyPoints)
+                THROW("COCO_KEY_POINTS_META_DATA_READER can only be used to load keypoints")
+            auto ret = std::make_shared<COCOMetaDataReaderKeyPoints>();
+            ret->init(config);
+            return ret;
+        }
+            break;
         case MetaDataReaderType::CIFAR10_META_DATA_READER:
         {
             if(config.type() != MetaDataType::Label)
@@ -139,6 +150,15 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             return ret;
         }
 	    break;
+        case MetaDataReaderType::MXNET_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::Label)
+                THROW("MXNetMetaDataReader can only be used to load labels")
+            auto ret = std::make_shared<MXNetMetaDataReader>();
+            ret->init(config);
+            return ret;
+        }
+        break;
         default:
             THROW("MetaDataReader type is unsupported : "+ TOSTR(config.reader_type()));
     }

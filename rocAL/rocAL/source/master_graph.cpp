@@ -328,8 +328,12 @@ void MasterGraph::release()
     _image_map.clear();
     _ring_buffer.release_gpu_res();
     //shut_down loader:: required for releasing any allocated resourses
-    _loader_module->shut_down();
-
+#ifdef RALI_VIDEO
+    if(_is_video_loader)
+        _video_loader_module->shut_down();
+    else
+#endif
+        _loader_module->shut_down();
     // release all openvx resources.
     vx_status status;
     for(auto& image: _internal_images)
@@ -635,7 +639,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
 
             }else
             {
-                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, out_ptr, dest_buf_offset, n, c, h, w,
+                HipExecCopyInt8ToNCHW(_device.resources().hip_stream, (const void *)img_buffer, out_ptr, dest_buf_offset, n, c, h, w,
                                         multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
             }
             dest_buf_offset += single_output_image_size;
@@ -651,7 +655,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
         auto output_buffers =_ring_buffer.get_read_buffers();
         for( auto&& out_image: output_buffers)
         {
-            unsigned int single_image_size = w * c * h; 
+            unsigned int single_image_size = w * c * h;
             #pragma omp parallel for
             for(unsigned int batchCount = 0; batchCount < n; batchCount ++)
             {
@@ -694,7 +698,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                         if(c != 3)
                         {
                             for(unsigned i = 0; i < channel_size; i++)
-                                output_tensor_32[dest_buf_offset + i] = offset[0] + multiplier[0]*(float)in_buffer[c*i]; 
+                                output_tensor_32[dest_buf_offset + i] = offset[0] + multiplier[0]*(float)in_buffer[c*i];
                         }
                         else {
     #if (ENABLE_SIMD && __AVX2__)
@@ -757,7 +761,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                             for(unsigned channel_idx = 0; channel_idx < c; channel_idx++) {
                                 for(unsigned i = 0; i < channel_size; i++)
                                     output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
-                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[(c*i+c-channel_idx-1)]) : 
+                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[(c*i+c-channel_idx-1)]) :
                                             (float)(in_buffer[(c*i+channel_idx)]));
                             }
     #endif
@@ -946,10 +950,6 @@ void MasterGraph::output_routine()
                         {
                             _meta_data_graph->update_random_bbox_meta_data(_augmented_meta_data, decode_image_info, crop_image_info);
                         }
-                        else
-                        {
-                            _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
-                        }
                         _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
@@ -1068,7 +1068,6 @@ void MasterGraph::output_routine_video()
                 {
                     if (_meta_data_graph)
                     {
-                        _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
                         _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
@@ -1135,11 +1134,13 @@ void MasterGraph::stop_processing()
         _output_thread.join();
 }
 
-MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output)
+MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type, MetaDataType label_type, float sigma, unsigned pose_output_width, unsigned pose_output_height)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, source_path);
+    MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string());
+    config.set_out_img_width(pose_output_width);
+    config.set_out_img_height(pose_output_height);
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -1201,6 +1202,25 @@ MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, 
         THROW("Metadata can only have a single output")
     else
         _augmented_meta_data = _meta_data_reader->get_output();
+    return _meta_data_reader->get_output();
+}
+
+MetaDataBatch * MasterGraph::create_mxnet_label_reader(const char *source_path, bool is_output)
+{
+    if( _meta_data_reader)
+        THROW("A metadata reader has already been created")
+    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::MXNET_META_DATA_READER, source_path);
+    _meta_data_graph = create_meta_data_graph(config);
+    _meta_data_reader = create_meta_data_reader(config);
+    _meta_data_reader->init(config);
+    _meta_data_reader->read_all(source_path);
+    if(is_output)
+    {
+        if (_augmented_meta_data)
+            THROW("Metadata output already defined, there can only be a single output for metadata augmentation")
+        else
+            _augmented_meta_data = _meta_data_reader->get_output();
+    }
     return _meta_data_reader->get_output();
 }
 

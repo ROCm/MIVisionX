@@ -1373,8 +1373,8 @@ vx_status agoVerifyNode(AgoNode * node)
                         data->u.img.rect_valid.end_y = data->u.img.height;
                     // check for VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU attribute
                     if (meta->data.u.img.enableUserBufferGPU) {
-                        // supports only virtual images with single color plane and without ROI
-                        if (!data->isVirtual || data->u.img.planes != 1 || data->u.img.isROI || data->ownerOfUserBufferGPU) {
+                        // supports only virtual images without ROI (planes commented out for accepting NV12 user buffer for amd_media)
+                        if (!data->isVirtual /*|| data->u.img.planes != 1 */|| data->u.img.isROI || data->ownerOfUserBufferGPU) {
                             agoAddLogEntry(&kernel->ref, VX_ERROR_NOT_SUPPORTED, "ERROR: agoVerifyGraph: kernel %s: VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU is not supported for argument#%d\n", kernel->name, arg);
                             return VX_ERROR_NOT_SUPPORTED;
                         }
@@ -2435,7 +2435,10 @@ int agoExecuteGraph(AgoGraph * graph)
                     status = kernel->kernel_f(node, (vx_reference *)node->paramList, node->paramCount);
                 }
                 if (status) {
-                    agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: kernel %s exec failed (%d:%s)\n", kernel->name, status, agoEnum2Name(status));
+                    if (status == VX_ERROR_GRAPH_ABANDONED)
+                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "INFO: kernel %s exec returned graph_stopped status: (this could mean EOS for amd_media extension (%d))\n", kernel->name, status);
+                    else
+                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: kernel %s exec failed (%d:%s)\n", kernel->name, status, agoEnum2Name(status));
                     return status;
                 }
                 agoPerfCaptureStop(&node->perf);

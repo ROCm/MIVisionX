@@ -7,14 +7,14 @@ This application shows how to run tiny yolov2 (20 classes) with MIVisionX RunTim
 
 ## Pre-requisites
 
-* Windows 10, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
+* Windows `10` / `11`, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
 * Windows SDK, build `17763` or later
 * Visual Studio 2019, [version `16.11.5` or later](https://developer.microsoft.com/en-us/windows/downloads)
 
  - Visual Studio extension for C++/WinRT
 
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* [OpenCV 3.1](https://github.com/opencv/opencv/releases) or higher
 
  + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
  + Add `OpenCV_DIR\x64\vc14\bin` or `OpenCV_DIR\x64\vc15\bin` to your `PATH`

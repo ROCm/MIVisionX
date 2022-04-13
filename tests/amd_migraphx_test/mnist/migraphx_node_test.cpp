@@ -126,7 +126,6 @@ int main(int argc, char **argv) {
     vx_node node = amdMIGraphXnode(graph, &prog, migraphx_prog_e, input_tensor, output_tensor);
     ERROR_CHECK_OBJECT(node);
 
-    ERROR_CHECK_STATUS(vxReleaseNode(&node));
     ERROR_CHECK_STATUS(vxVerifyGraph(graph));
     ERROR_CHECK_STATUS(vxProcessGraph(graph));
 
@@ -156,6 +155,7 @@ int main(int argc, char **argv) {
     }
 
     // release resources
+    ERROR_CHECK_STATUS(vxReleaseNode(&node));
     ERROR_CHECK_STATUS(vxReleaseGraph(&graph));
     ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor));
     ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor));

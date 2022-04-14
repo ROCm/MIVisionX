@@ -47,6 +47,7 @@ _shuffle_time("shuffle_time", DBG_TIMING)
     _shuffle = false;
     _file_id = 0;
     _last_rec = false;
+    _file_count_all_shards = 0;
 }
 
 unsigned CaffeLMDBRecordReader::count_items()
@@ -69,7 +70,17 @@ Reader::Status CaffeLMDBRecordReader::initialize(ReaderConfig desc)
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
     _shuffle = desc.shuffle();
+    _meta_data_reader = desc.meta_data_reader();
     ret = folder_reading();
+     // the following code is required to make every shard the same size:: required for multi-gpu training
+    if (_shard_count > 1 && _batch_count > 1) {
+        int _num_batches = _file_names.size()/_batch_count;
+        int max_batches_per_shard = (_file_count_all_shards + _shard_count-1)/_shard_count;
+        max_batches_per_shard = (max_batches_per_shard + _batch_count-1)/_batch_count;
+        if (_num_batches < max_batches_per_shard) {
+            replicate_last_batch_to_pad_partial_shard();
+        }
+    }
     //shuffle dataset if set
     _shuffle_time.start();
     if( ret==Reader::Status::OK && _shuffle)
@@ -190,7 +201,7 @@ size_t CaffeLMDBRecordReader::get_file_shard_id()
 {
     if (_batch_count == 0 || _shard_count == 0)
         THROW("Shard (Batch) size cannot be set to 0")
-    return (_file_id / (_batch_count)) % _shard_count;
+    return (_file_id ) % _shard_count;
 }
 
 void CaffeLMDBRecordReader::read_image_names()
@@ -224,38 +235,54 @@ void CaffeLMDBRecordReader::read_image_names()
             datum = annotatedDatum_protos.datum(); // parse datum for detection
         else
             datum.ParseFromArray((const void *)_mdb_value.mv_data, _mdb_value.mv_size); //parse datum for classification
-
-        if (get_file_shard_id() != _shard_id)
-        {
+        if((!_meta_data_reader || _meta_data_reader->exists(string((char *)_mdb_key.mv_data).c_str())))
+       {
+           if (get_file_shard_id() != _shard_id)
+            {
+                _file_count_all_shards++;
+                incremenet_file_id();
+                continue;
+            }
+            _in_batch_read_count++;
+            _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
+            string image_key = string((char *)_mdb_key.mv_data);
+            _file_names.push_back(image_key.c_str());
+            _last_file_name = image_key.c_str();
+            _file_count_all_shards++;
             incremenet_file_id();
-            continue;
+            _last_file_size = datum.data().size();
+            _file_size.insert(pair<std::string, unsigned int>(_last_file_name, _last_file_size));
         }
-        _in_batch_read_count++;
-        _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
 
-        string image_key = string((char *)_mdb_key.mv_data);
-
-        _file_names.push_back(image_key.c_str());
-        _last_file_name = image_key.c_str();
-
-        incremenet_file_id();
-
-        _last_file_size = datum.data().size();
-        _file_size.insert(pair<std::string, unsigned int>(_last_file_name, _last_file_size));
     }
 
     release();
 }
 
-void CaffeLMDBRecordReader::open_env_for_read_image() 
+void CaffeLMDBRecordReader::replicate_last_batch_to_pad_partial_shard()
 {
-    // Creating an LMDB environment handle 
-    E(mdb_env_create(&_read_mdb_env)); 
-    // Setting the size of the memory map to use for this environment. 
+    if (_file_names.size() >=  _batch_count) {
+        for (size_t i = 0; i < _batch_count; i++)
+        {
+            _file_names.push_back(_file_names[i - _batch_count]);
+            auto file_name = _file_names[i - _batch_count];
+            auto it_file_size = _file_size.find(_file_names[i - _batch_count]);
+            if (_file_size.end() == it_file_size)
+            THROW("ERROR: Given name not present in the image size map" + _file_names[i - _batch_count])
+            _file_size[file_name] = it_file_size->second;
+        }
+    }
+}
+
+void CaffeLMDBRecordReader::open_env_for_read_image()
+{
+    // Creating an LMDB environment handle
+    E(mdb_env_create(&_read_mdb_env));
+    // Setting the size of the memory map to use for this environment.
     // The size of the memory map is also the maximum size of the database.
-    E(mdb_env_set_mapsize(_read_mdb_env, _file_byte_size)); 
+    E(mdb_env_set_mapsize(_read_mdb_env, _file_byte_size));
     // Opening an environment handle.
-    E(mdb_env_open(_read_mdb_env, _path.c_str(), MDB_RDONLY, 0664)); 
+    E(mdb_env_open(_read_mdb_env, _path.c_str(), MDB_RDONLY, 0664));
     // Creating a transaction for use with the environment
     E(mdb_txn_begin(_read_mdb_env, NULL, MDB_RDONLY, &_read_mdb_txn));
     // Opening a database in the environment.
@@ -279,7 +306,7 @@ void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_nam
 
     _read_mdb_key.mv_size = newStr.size();
     _read_mdb_key.mv_data = (char *)newStr.c_str();
-    
+
     int _mdb_status = mdb_cursor_get(_read_mdb_cursor, &_read_mdb_key, &_read_mdb_value, MDB_SET_RANGE);
     if(_mdb_status == MDB_NOTFOUND) {
         THROW("\nKey Not found");
@@ -297,11 +324,11 @@ void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_nam
             datum = annotatedDatum_protos.datum(); // parse datum for detection
         else
             datum.ParseFromArray((const void *)_read_mdb_value.mv_data, _read_mdb_value.mv_size); //parse datum for classification
-            
+
         memcpy(buff, datum.data().c_str(), datum.data().size());
 
     }
-    
+
     mdb_cursor_close(_read_mdb_cursor);
     _read_mdb_cursor = nullptr;
 }

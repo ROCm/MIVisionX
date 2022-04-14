@@ -29,10 +29,10 @@ import sys
 import numpy as np
 import cv2
 from enum import Enum
-from amd.rali.plugin.pytorch import RALIClassificationIterator
-from amd.rali.pipeline import Pipeline
-import amd.rali.ops as ops
-import amd.rali.types as types
+from amd.rocal.plugin.pytorch import RALIClassificationIterator
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.ops as ops
+import amd.rocal.types as types
 import os
 
 
@@ -69,7 +69,7 @@ class HybridTrainPipe(Pipeline):
 		images = self.decode(self.jpegs)
 		images = self.res(images)
 		output = self.cmnp(images, mirror=rng)
-		return [output, self.labels]	
+		return [output, self.labels]
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -117,7 +117,7 @@ def main():
 	di = 0
 	crop_size = 224
 	image_path = sys.argv[1]
-	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu)        
+	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu)
 	pipe.build()
 	imageIterator = RALIClassificationIterator(pipe)
 	num_classes = len(next(os.walk(image_path))[1])

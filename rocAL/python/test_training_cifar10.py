@@ -29,10 +29,10 @@ from rali_torch import *
 from rali import *
 
 #from enum import Enum
-#from amd.rali.plugin.pytorch import RALIClassificationIterator
-#from amd.rali.pipeline import Pipeline
-#import amd.rali.ops as ops
-#import amd.rali.types as types
+#from amd.rocal.plugin.pytorch import RALIClassificationIterator
+#from amd.rocal.pipeline import Pipeline
+#import amd.rocal.ops as ops
+#import amd.rocal.types as types
 PATH = '/home/rajy/pytorch_test/cifar_net_rali.pth'
 
 

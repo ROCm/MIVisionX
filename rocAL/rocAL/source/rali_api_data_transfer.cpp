@@ -28,6 +28,50 @@ THE SOFTWARE.
 #endif
 
 RaliStatus RALI_API_CALL
+raliCopyToOutputTensor32(RaliContext p_context, float *out_ptr, RaliTensorLayout tensor_format, float multiplier0,
+                       float multiplier1, float multiplier2, float offset0, float offset1, float offset2,
+                       bool reverse_channels)
+{
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+        auto tensor_layout = (tensor_format == RALI_NHWC) ?  RaliTensorFormat::NHWC : RaliTensorFormat::NCHW;
+        //auto tensor_output_data_type = (tensor_data_type == RALI_FP32) ? RaliTensorDataType::FP32 : RaliTensorDataType::FP16;
+        context->master_graph->copy_out_tensor(out_ptr, tensor_layout, multiplier0, multiplier1, multiplier2,
+                offset0, offset1, offset2, reverse_channels, RaliTensorDataType::FP32);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+        return RALI_RUNTIME_ERROR;
+    }
+    return RALI_OK;
+}
+
+RaliStatus RALI_API_CALL
+raliCopyToOutputTensor16(RaliContext p_context, half *out_ptr, RaliTensorLayout tensor_format, float multiplier0,
+                       float multiplier1, float multiplier2, float offset0, float offset1, float offset2,
+                       bool reverse_channels)
+{
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+        auto tensor_layout = (tensor_format == RALI_NHWC) ?  RaliTensorFormat::NHWC : RaliTensorFormat::NCHW;
+        //auto tensor_output_data_type = (tensor_data_type == RALI_FP32) ? RaliTensorDataType::FP32 : RaliTensorDataType::FP16;
+        context->master_graph->copy_out_tensor(out_ptr, tensor_layout, multiplier0, multiplier1, multiplier2,
+                offset0, offset1, offset2, reverse_channels, RaliTensorDataType::FP16);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+        return RALI_RUNTIME_ERROR;
+    }
+    return RALI_OK;
+}
+
+RaliStatus RALI_API_CALL
 raliCopyToOutputTensor(RaliContext p_context, void *out_ptr, RaliTensorLayout tensor_format, RaliTensorOutputType tensor_output_type, float multiplier0,
                        float multiplier1, float multiplier2, float offset0, float offset1, float offset2,
                        bool reverse_channels)
@@ -90,5 +134,17 @@ raliCopyToOutput(
     return RALI_OK;
 }
 
+void
+RALI_API_CALL raliSetOutputs(RaliContext p_context, unsigned int num_of_outputs, std::vector<RaliImage> &output_images)
+{
+    if (!p_context)
+        THROW("Invalid rali context passed to raliSetOutputs")
+    auto context = static_cast<Context *>(p_context);
+    std::vector<Image*> output_images_vector ;
+    for (auto& it : output_images) {
+        auto img = static_cast<Image*>(it);
+        context->master_graph->set_output(img);
+    }
+}
 
 

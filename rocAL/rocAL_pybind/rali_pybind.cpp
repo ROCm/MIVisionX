@@ -43,7 +43,6 @@ namespace rali{
             return nullptr;
         }
         void *ptr = PyLong_AsVoidPtr(ptr_as_int.ptr());
-
         return ptr;
     }
 
@@ -62,7 +61,6 @@ namespace rali{
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
         int length =raliGetImageNameLen(context,ptr);
-
         return py::cast(length);
     }
 
@@ -95,10 +93,41 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_label_copy(RaliContext context, py::array_t<int> array)
+    py::object wrapper_tensor32(RaliContext context, py::array_t<float> array,
+                                RaliTensorLayout tensor_format, float multiplier0,
+                                float multiplier1, float multiplier2, float offset0,
+                                float offset1, float offset2,
+                                bool reverse_channels)
     {
         auto buf = array.request();
-        int* ptr = (int*) buf.ptr;
+        float* ptr = (float*) buf.ptr;
+        // call pure C++ function
+        int status = raliCopyToOutputTensor32(context, ptr, tensor_format, multiplier0,
+                                              multiplier1, multiplier2, offset0,
+                                              offset1, offset2, reverse_channels);
+        // std::cerr<<"\n Copy failed with status :: "<<status;
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_tensor16(RaliContext context, py::array_t<float16> array,
+                                RaliTensorLayout tensor_format, float multiplier0,
+                                float multiplier1, float multiplier2, float offset0,
+                                float offset1, float offset2,
+                                bool reverse_channels)
+    {
+        auto buf = array.request();
+        float16* ptr = (float16*) buf.ptr;
+        // call pure C++ function
+        int status = raliCopyToOutputTensor16(context, ptr, tensor_format, multiplier0,
+                                              multiplier1, multiplier2, offset0,
+                                              offset1, offset2, reverse_channels);
+        // std::cerr<<"\n Copy failed with status :: "<<status;
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_label_copy(RaliContext context, py::object p)
+    {
+        auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
         raliGetImageLabels(context,ptr);
         return py::cast<py::none>(Py_None);
@@ -119,7 +148,6 @@ namespace rali{
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
         int count =raliGetBoundingBoxCount(context,ptr);
-
         return py::cast(count);
     }
 
@@ -144,6 +172,28 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    std::pair<py::array_t<float>, py::array_t<int>>  wrapper_get_encoded_bbox_label(RaliContext context, int batch_size, int num_anchors)
+    {
+        float* bboxes_buf_ptr; int* labels_buf_ptr;
+        // call pure C++ function
+        raliGetEncodedBoxesAndLables(context, &bboxes_buf_ptr, &labels_buf_ptr, num_anchors*batch_size);
+        // create numpy arrays for boxes and labels tensor from the returned ptr
+        // no need to free the memory as this is freed by c++ lib
+        py::array_t<float> bboxes_array = py::array_t<float>(
+                                                          {batch_size, num_anchors, 4},
+                                                          {4*sizeof(float)*num_anchors, 4*sizeof(float), sizeof(float)},
+                                                          bboxes_buf_ptr,
+                                                          py::cast<py::none>(Py_None));
+        py::array_t<int> labels_array = py::array_t<int>(
+                                                          {batch_size, num_anchors},
+                                                          {num_anchors*sizeof(int), sizeof(int)},
+                                                          labels_buf_ptr,
+                                                          py::cast<py::none>(Py_None));
+
+        return std::make_pair(bboxes_array, labels_array);
+    }
+
+
     py::object wrapper_BB_cord_copy(RaliContext context, py::array_t<float> array)
     {
         auto buf = array.request();
@@ -162,19 +212,16 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_one_hot_label_copy(RaliContext context, py::array_t<int> array , unsigned numOfClasses)
+    py::object wrapper_one_hot_label_copy(RaliContext context, py::object p , unsigned numOfClasses, int dest)
     {
-        auto buf = array.request();
-        int* ptr = (int*) buf.ptr;
+        auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
-        raliGetOneHotImageLabels(context, ptr, numOfClasses);
+        raliGetOneHotImageLabels(context, ptr, numOfClasses, dest);
         return py::cast<py::none>(Py_None);
     }
 
     py::object wrapper_random_bbox_crop(RaliContext context, bool all_boxes_overlap, bool no_crop, RaliFloatParam p_aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attemps, RaliFloatParam p_scaling, int total_num_attempts )
     {
-        // auto buf = array.request();
-        // int* ptr = (int*) buf.ptr;
         // call pure C++ function
         raliRandomBBoxCrop(context, all_boxes_overlap, no_crop, p_aspect_ratio, has_shape, crop_width, crop_height, num_attemps, p_scaling, total_num_attempts);
         return py::cast<py::none>(Py_None);
@@ -235,6 +282,10 @@ namespace rali{
             .value("NHWC",RALI_NHWC)
             .value("NCHW",RALI_NCHW)
             .export_values();
+        py::enum_<RaliDecodeDevice>(types_m,"RaliDecodeDevice","Decode device type")
+            .value("HARDWARE_DECODE",RALI_HW_DECODE)
+            .value("SOFTWARE_DECODE",RALI_SW_DECODE)
+            .export_values();
         // rali_api_info.h
         m.def("getOutputWidth",&raliGetOutputWidth);
         m.def("getOutputHeight",&raliGetOutputHeight);
@@ -248,6 +299,7 @@ namespace rali{
         m.def("getImageId", &wrapper_image_id);
         m.def("getImageNameLen",&wrapper_image_name_length);
         m.def("getStatus",&raliGetStatus);
+        m.def("setOutputImages",&raliSetOutputs);
         m.def("labelReader",&raliCreateLabelReader);
         m.def("TFReader",&raliCreateTFReader);
         m.def("TFReaderDetection",&raliCreateTFReaderDetection);
@@ -258,13 +310,15 @@ namespace rali{
         m.def("Cifar10LabelReader",&raliCreateTextCifar10LabelReader);
         m.def("RandomBBoxCrop",&wrapper_random_bbox_crop);
         m.def("COCOReader",&raliCreateCOCOReader);
+        m.def("VideoMetaDataReader",&raliCreateVideoLabelReader);
         m.def("getImageLabels",&wrapper_label_copy);
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
         m.def("raliCopyEncodedBoxesAndLables",&wrapper_encoded_bbox_label);
+        m.def("raliGetEncodedBoxesAndLables",&wrapper_get_encoded_bbox_label);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
-        m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy );
+        m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy);
         m.def("isEmpty",&raliIsEmpty);
         m.def("BoxEncoder",&raliBoxEncoder);
         m.def("getTimingInfo",raliGetTimingInfo);
@@ -283,11 +337,15 @@ namespace rali{
         m.def("UpdateFloatRand", &raliUpdateFloatUniformRand);
         m.def("UpdateIntParameter", &raliUpdateIntParameter);
         m.def("UpdateFloatParameter", &raliUpdateFloatParameter);
+        m.def("GetIntValue",&raliGetIntValue);
+        m.def("GetFloatValue",&raliGetFloatValue);
         // rali_api_data_transfer.h
         m.def("raliCopyToOutput",&wrapper);
         m.def("raliCopyToOutputTensor",&wrapper_tensor);
+        m.def("raliCopyToOutputTensor32",&wrapper_tensor32);
+        m.def("raliCopyToOutputTensor16",&wrapper_tensor16);
         // rali_api_data_loaders.h
-         m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
+        m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("source_path"),
@@ -416,6 +474,7 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
+        m.def("Caffe_ImageDecoderPartialShard",&raliJpegCaffeLMDBRecordSourcePartialSingleShard);
         m.def("Caffe2_ImageDecoder",&raliJpegCaffe2LMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
             py::return_value_policy::reference,
             py::arg("p_context"),
@@ -441,6 +500,7 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
+        m.def("Caffe2_ImageDecoderPartialShard",&raliJpegCaffe2LMDBRecordSourcePartialSingleShard);
         m.def("FusedDecoderCrop",&raliFusedJpegCrop,"Reads file from the source and decodes them partially to output random crops",
             py::return_value_policy::reference,
             py::arg("context"),
@@ -497,6 +557,48 @@ namespace rali{
               py::arg("out_height") = 0,
               py::arg("file_name_prefix") = "",
               py::arg("loop") = false);
+        m.def("VideoDecoder",&raliVideoFileSource,"Reads videos from the source given and decodes it according to the policy only for Videos as inputs",
+            py::return_value_policy::reference,
+            py::arg("p_context"),
+            py::arg("source_path"),
+            py::arg("color_format"),
+            py::arg("decoder_mode"),
+            py::arg("shard_count"),
+            py::arg("sequence_length"),
+            py::arg("shuffle") = false,
+            py::arg("is_output"),
+            py::arg("loop") = false,
+            py::arg("frame_step"),
+            py::arg("frame_stride"),
+            py::arg("file_list_frame_num") = false);
+        m.def("VideoDecoderResize",&raliVideoFileResize,"Reads videos from the source given and decodes it according to the policy only for Videos as inputs. Resizes the decoded frames to the dest width and height.",
+            py::return_value_policy::reference,
+            py::arg("p_context"),
+            py::arg("source_path"),
+            py::arg("color_format"),
+            py::arg("decoder_mode"),
+            py::arg("shard_count"),
+            py::arg("sequence_length"),
+            py::arg("dest_width"),
+            py::arg("dest_height"),
+            py::arg("shuffle") = false,
+            py::arg("is_output"),
+            py::arg("loop") = false,
+            py::arg("frame_step"),
+            py::arg("frame_stride"),
+            py::arg("file_list_frame_num") = false);
+        m.def("SequenceReader",&raliSequenceReader,"Creates JPEG image reader and decoder. Reads [Frames] sequences from a directory representing a collection of streams.",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+            py::arg("color_format"),
+            py::arg("shard_count"),
+            py::arg("sequence_length"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("frame_step"),
+            py::arg("frame_stride"));
 
         m.def("raliResetLoaders",&raliResetLoaders);
         // rali_api_augmentation.h
@@ -600,6 +702,7 @@ namespace rali{
             py::arg("is_output"),
             py::arg("alpha") = NULL,
             py::arg("beta") = NULL);
+        m.def("Brightness",&raliBrightness);
         m.def("GammaCorrection",&raliGamma,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -708,13 +811,7 @@ namespace rali{
             py::arg("context"),
             py::arg("input"),
             py::arg("is_output"));
-        m.def("Blend",&raliBlend,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input1"),
-            py::arg("input2"),
-            py::arg("is_output"),
-            py::arg("ratio") = NULL);
+        m.def("Blend",&raliBlend);
         m.def("Flip",&raliFlip,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -731,5 +828,11 @@ namespace rali{
             py::arg("crop_pos_x") = NULL,
             py::arg("crop_pos_y") = NULL,
             py::arg("num_of_attempts") = 20);
+        m.def("ColorTemp",&raliColorTemp,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("adj_value_param") = NULL);
     }
 }

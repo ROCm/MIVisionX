@@ -88,6 +88,6 @@ public:
     virtual std::vector<std::vector <float>>  get_batch_crop_coords(const std::vector<std::string>& image_names) = 0; // returns the crop coords for a batch
     virtual void release() = 0; // Deletes the loaded information
     virtual void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader) = 0;
-    virtual CropCordBatch * get_output() = 0;
+    virtual CropCordBatch *get_output() = 0;
     virtual pCropCord get_crop_cord(const std::string &image_names) = 0;
 };

@@ -30,6 +30,9 @@ THE SOFTWARE.
 #include "parameter_crop_factory.h"
 #include "meta_data_reader.h"
 #include "coco_meta_data_reader.h"
+#include "caffe_meta_data_reader_detection.h"
+#include "caffe2_meta_data_reader_detection.h"
+#include "tf_meta_data_reader_detection.h"
 #include <random>
 
 // todo:: move this to common header
@@ -40,7 +43,7 @@ class SeededRNG {
   * @param state_size How many seed are used to initialize one RNG. Used to lower probablity of
   * collisions between seeds used to initialize RNGs in different operators.
   */
-public: 
+public:
   SeededRNG (int batch_size = 128) {
       std::random_device source;
       _batch_size = batch_size;
@@ -84,8 +87,8 @@ public:
     ~RandomBBoxCropReader() override {}
 
 private:
-    std::shared_ptr<COCOMetaDataReader> _meta_data_reader = nullptr;
-    std::map<std::string, std::shared_ptr<BoundingBox>> _meta_bbox_map_content;
+    std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
+    std::map<std::string, std::shared_ptr<MetaData>> _meta_bbox_map_content;
     bool _all_boxes_overlap;
     bool _no_crop;
     bool _has_shape;

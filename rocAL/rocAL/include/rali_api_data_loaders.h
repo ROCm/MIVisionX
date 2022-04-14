@@ -393,7 +393,7 @@ extern "C"  RaliImage  RALI_API_CALL raliFusedJpegCrop(RaliContext context,
                                                         bool shuffle = false,
                                                         bool loop = false,
                                                         RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MAX_SIZE,
-                                                        unsigned max_width = 0, unsigned max_height = 0, 
+                                                        unsigned max_width = 0, unsigned max_height = 0,
                                                         RaliFloatParam area_factor = NULL, RaliFloatParam aspect_ratio = NULL,
                                                         RaliFloatParam y_drift_factor = NULL, RaliFloatParam x_drift_factor = NULL);
 
@@ -661,5 +661,57 @@ extern "C"  RaliImage  RALI_API_CALL raliRawCIFAR10Source(RaliContext context,
 /// \param context
 /// \return
 extern "C"  RaliStatus  RALI_API_CALL raliResetLoaders(RaliContext context);
+
+/// Creates JPEG image reader and partial decoder for Caffe LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe2 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
+/// \param rali_context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rali_color_format The color format the images will be decoded to.
+/// \param shard_id Shard id for this loader
+/// \param shard_count Total shard count
+/// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle Determines if the user wants to shuffle the dataset or not.
+/// \param loop Determines if the user wants to indefinitely loops through images or not.
+/// \param decode_size_policy
+/// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
+/// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \return Reference to the output image
+extern "C"  RaliImage  RALI_API_CALL raliJpegCaffeLMDBRecordSourcePartialSingleShard(RaliContext p_context,
+                                                            const char* source_path,
+                                                            RaliImageColor rali_color_format,
+                                                            unsigned shard_id,
+                                                            unsigned shard_count,
+                                                            bool is_output,
+                                                            bool shuffle = false,
+                                                            bool loop = false,
+                                                            RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RaliFloatParam area_factor = NULL, RaliFloatParam aspect_ratio = NULL,
+                                                            RaliFloatParam y_drift_factor = NULL, RaliFloatParam x_drift_factor = NULL );
+
+/// Creates JPEG image reader and partial decoder for Caffe2 LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe22 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
+/// \param rali_context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rali_color_format The color format the images will be decoded to.
+/// \param shard_id Shard id for this loader
+/// \param shard_count Total shard count
+/// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle Determines if the user wants to shuffle the dataset or not.
+/// \param loop Determines if the user wants to indefinitely loops through images or not.
+/// \param decode_size_policy
+/// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
+/// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \return Reference to the output image
+extern "C"  RaliImage  RALI_API_CALL raliJpegCaffe2LMDBRecordSourcePartialSingleShard(RaliContext p_context,
+                                                            const char* source_path,
+                                                            RaliImageColor rali_color_format,
+                                                            unsigned shard_id,
+                                                            unsigned shard_count,
+                                                            bool is_output,
+                                                            bool shuffle = false,
+                                                            bool loop = false,
+                                                            RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MAX_SIZE,
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RaliFloatParam area_factor = NULL, RaliFloatParam aspect_ratio = NULL,
+                                                            RaliFloatParam y_drift_factor = NULL, RaliFloatParam x_drift_factor = NULL );
 
 #endif //MIVISIONX_RALI_API_DATA_LOADERS_H

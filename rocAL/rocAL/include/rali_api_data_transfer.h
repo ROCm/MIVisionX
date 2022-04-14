@@ -27,6 +27,18 @@ THE SOFTWARE.
 /*! \brief
  *
 */
+extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutputTensor32(RaliContext rali_context, float *out_ptr,
+                                                              RaliTensorLayout tensor_format, float multiplier0,
+                                                              float multiplier1, float multiplier2, float offset0,
+                                                              float offset1, float offset2,
+                                                              bool reverse_channels);
+
+extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutputTensor16(RaliContext rali_context, half *out_ptr,
+                                                              RaliTensorLayout tensor_format, float multiplier0,
+                                                              float multiplier1, float multiplier2, float offset0,
+                                                              float offset1, float offset2,
+                                                              bool reverse_channels);
+                                                              
 extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutput(RaliContext context, unsigned char * out_ptr, size_t out_size);
 
 /*! \brief
@@ -37,6 +49,10 @@ extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutputTensor(RaliContext rali_c
                                                               float multiplier0, float multiplier1, float multiplier2, float offset0,
                                                               float offset1, float offset2,
                                                               bool reverse_channels);
+///
+/// \param rali_context
+/// \param output_images The buffer that will be filled with output images with set_output = True
+extern "C" void RALI_API_CALL raliSetOutputs(RaliContext p_context, unsigned int num_of_outputs, std::vector<RaliImage> &output_images);
 
 
 #endif //MIVISIONX_RALI_API_DATA_TRANSFER_H

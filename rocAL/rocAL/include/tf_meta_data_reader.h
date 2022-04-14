@@ -19,6 +19,7 @@ public :
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
+    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override{ return _map_content;}
     TFMetaDataReader();
     ~TFMetaDataReader() override { delete _output; }
 private:
@@ -30,8 +31,8 @@ private:
     //std::shared_ptr<TF_Read> _TF_read = nullptr;
     void read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &image_name, std::string user_label_key, std::string user_filename_key);
     void incremenet_file_id() { _file_id++; }
-    std::map<std::string, std::shared_ptr<Label>> _map_content;
-    std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::string _path;
     std::map<std::string, std::string> _feature_key_map;
     LabelBatch* _output;

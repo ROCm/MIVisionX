@@ -1,7 +1,7 @@
-from amd.rali.plugin.tf import RALIIterator
-from amd.rali.pipeline import Pipeline
-import amd.rali.ops as ops
-import amd.rali.types as types
+from amd.rocal.plugin.tf import RALIIterator
+from amd.rocal.pipeline import Pipeline
+import amd.rocal.fn as fn
+import amd.rocal.types as types
 import os
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
@@ -15,13 +15,13 @@ import tensorflow_hub as hub
 
 ############################### CHANGE THESE GLOBAL VARIABLES APPROPRIATELY ###############################
 
-RECORDS_DIR = './tfr/'
+RECORDS_DIR = 'tfr/'
 NUM_CLASSES = 37
 LEARNING_RATE = 0.005
 NUM_TRAIN_STEPS = 2775
 TRAIN_BATCH_SIZE = 8
 EVAL_EVERY = 100
-DATASET_DOWNLOAD_AND_PREPROCESS = True
+DATASET_DOWNLOAD_AND_PREPROCESS = False
 RUN_ON_HOST = True
 
 ############################### CHANGE THESE GLOBAL VARIABLES APPROPRIATELY ###############################
@@ -35,39 +35,6 @@ RUN_ON_HOST = True
 TRAIN_RECORDS_DIR = RECORDS_DIR + 'train/'
 VAL_RECORDS_DIR = RECORDS_DIR + 'val/'
 
-class HybridPipe(Pipeline):
-	def __init__(self, feature_key_map, tfrecordreader_type, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):
-		super(HybridPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
-		self.input = ops.TFRecordReader(path=data_dir, index_path = "", reader_type=tfrecordreader_type, user_feature_key_map=feature_key_map,
-			features={
-				'image/encoded':tf.FixedLenFeature((), tf.string, ""),
-				'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1),
-				'image/filename':tf.FixedLenFeature((), tf.string, "")
-			}
-		)
-		rali_device = 'cpu' if rali_cpu else 'gpu'
-		decoder_device = 'cpu' if rali_cpu else 'mixed'
-		self.decode = ops.ImageDecoder(user_feature_key_map=feature_key_map, device=decoder_device, output_type=types.RGB)
-		self.res = ops.Resize(device=rali_device, resize_x=crop[0], resize_y=crop[1])
-		self.cmnp = ops.CropMirrorNormalize(device="cpu",
-											output_dtype=types.FLOAT,
-											output_layout=types.NCHW,
-											crop=crop,
-											image_type=types.RGB,
-											mean=[0 ,0,0],
-											std=[255,255,255])
-		self.coin = ops.CoinFlip(probability=0.5)
-		print('rali "{0}" variant'.format(rali_device))
-
-	def define_graph(self):
-		inputs = self.input(name ="Reader")
-		images = inputs["image/encoded"]
-		labels = inputs["image/class/label"]
-		images = self.decode(images)
-		images = self.res(images)
-		rng = self.coin()
-		output = self.cmnp(images, mirror = rng)
-		return [output, labels]
 
 def download_images():
 	global TRAIN_RECORDS_DIR
@@ -135,12 +102,44 @@ def main():
 		'image/filename':'image/filename'
 	}
 
-	trainPipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=TRAIN_BATCH_SIZE, num_threads=1, device_id=0, data_dir=TRAIN_RECORDS_DIR, crop=crop_size, rali_cpu=RUN_ON_HOST)
-	valPipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=TRAIN_BATCH_SIZE, num_threads=1, device_id=0, data_dir=VAL_RECORDS_DIR, crop=crop_size, rali_cpu=RUN_ON_HOST)
+
+	trainPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rali_cpu=RUN_ON_HOST)
+	with trainPipe:
+		inputs = fn.readers.tfrecord(path=TRAIN_RECORDS_DIR, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
+		features={
+			'image/encoded':tf.io.FixedLenFeature((), tf.string, ""),
+			'image/class/label':tf.io.FixedLenFeature([1], tf.int64,  -1),
+			'image/filename':tf.io.FixedLenFeature((), tf.string, "")
+			}
+			)
+		jpegs = inputs["image/encoded"]
+		images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=TRAIN_RECORDS_DIR)
+		resized = fn.resize(images, resize_x=crop_size[0], resize_y=crop_size[1])
+		flip_coin = fn.random.coin_flip(probability=0.5)
+		cmn_images = fn.crop_mirror_normalize(resized, crop=(crop_size[1], crop_size[0]), mean=[0,0,0], std=[255,255,255], mirror=flip_coin, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False)
+		trainPipe.set_outputs(cmn_images)
 	trainPipe.build()
+
+	valPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rali_cpu=RUN_ON_HOST)
+	with valPipe:
+		inputs = fn.readers.tfrecord(path=VAL_RECORDS_DIR, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
+		features={
+			'image/encoded':tf.io.FixedLenFeature((), tf.string, ""),
+			'image/class/label':tf.io.FixedLenFeature([1], tf.int64,  -1),
+			'image/filename':tf.io.FixedLenFeature((), tf.string, "")
+			}
+			)
+		jpegs = inputs["image/encoded"]
+		images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=VAL_RECORDS_DIR)
+		resized = fn.resize(images, resize_x=crop_size[0], resize_y=crop_size[1])
+		flip_coin = fn.random.coin_flip(probability=0.5)
+		cmn_images = fn.crop_mirror_normalize(resized, crop=(crop_size[1], crop_size[0]), mean=[0,0,0], std=[255,255,255], mirror=flip_coin, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False)
+		valPipe.set_outputs(cmn_images)
 	valPipe.build()
+
 	trainIterator = RALIIterator(trainPipe)
 	valIterator = RALIIterator(valPipe)
+
 
 	i = 0
 	with tf.Session(graph = train_graph) as sess:
@@ -185,3 +184,4 @@ if __name__ == '__main__':
 	main()
 
 ######################################## NO CHANGES IN CODE NEEDED ########################################
+

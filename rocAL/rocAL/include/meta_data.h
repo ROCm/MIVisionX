@@ -35,7 +35,7 @@ THE SOFTWARE.
 #define SCALE_CONSTANT_CS 1.25
 #define SCALE_CONSTANT_HALF_BODY 1.5
 typedef struct BoundingBoxCord_
-{ 
+{
   float l; float t; float r; float b;
   BoundingBoxCord_() {}
   BoundingBoxCord_(float l_, float t_, float r_, float b_): l(l_), t(t_), r(r_), b(b_) {}   // constructor
@@ -87,6 +87,7 @@ struct MetaData
     BoundingBoxCords& get_bb_cords() { return _bb_cords; }
     BoundingBoxCords_xcycwh& get_bb_cords_xcycwh() { return _bb_cords_xcycwh; }
     BoundingBoxLabels& get_bb_labels() { return _bb_label_ids; }
+    void set_bb_labels(BoundingBoxLabels bb_label_ids) {_bb_label_ids = std::move(bb_label_ids); }
     ImgSize& get_img_size() { return _img_size; }
     const JointsData& get_joints_data(){ return _joints_data; }
 protected:

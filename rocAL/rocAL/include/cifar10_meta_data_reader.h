@@ -38,14 +38,15 @@ public :
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
+    std::map<std::string, std::shared_ptr<MetaData>> &get_map_content() override { return _map_content;}
     Cifar10MetaDataReader();
     ~Cifar10MetaDataReader() override { delete _output; }
 private:
     void read_files(const std::string& _path);
     bool exists(const std::string &image_name);
     void add(std::string image_name, int label);
-    std::map<std::string, std::shared_ptr<Label>> _map_content;
-    std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::string _path;
     std::string _file_prefix;
     size_t  _raw_file_size;

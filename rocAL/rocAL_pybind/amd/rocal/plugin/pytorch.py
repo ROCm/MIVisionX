@@ -56,8 +56,10 @@ class RALIGenericIterator(object):
         self.offset = offset
         self.device= device
         self.device_id = device_id
-        print("DEVICE ID: ",self.device)
-        # exit(0)
+        print("DEVICE: ",self.device)
+        print("DEVICE ID: ",self.device_id)
+        print("TENSOR LAYOUT: ",tensor_layout)
+        print("TENSOR DTYPE: ",tensor_dtype)
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
         self.display = display
@@ -92,7 +94,7 @@ class RALIGenericIterator(object):
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16)
-                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32)
 
             else:
                 torch_gpu_device = torch.device('cuda', self.device_id)

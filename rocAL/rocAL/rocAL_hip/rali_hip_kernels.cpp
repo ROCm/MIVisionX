@@ -51,7 +51,7 @@ Hip_CopyInt8ToNHWC_fp32
         if (C == 3){
                 float3 dst;
 
-            const uchar *inp_img = &inp_image_u8[n*img_offset + dst_buf_offset];
+            const uchar *inp_img = &inp_image_u8[n*img_offset];
             float *out_tensor = (float *)((float*)output_tensor + dst_buf_offset + n*img_offset);
             if (reverse_channels)
                 dst = make_float3((float)inp_img[srcIdx+2], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx])*multiplier + offset;
@@ -88,12 +88,12 @@ Hip_CopyInt8ToNHWC_fp16
 
     if ((x >= W) || (y >= H)) return;
     for (unsigned int n=0; n < nchw.x; n++) {
-        unsigned short *out_tensor = (unsigned short *)output_tensor + dst_buf_offset + n*img_offset;
+        __half *out_tensor = (__half *)output_tensor + dst_buf_offset + n*img_offset;
         unsigned int srcIdx =  (y*W + x) * C;
         // copy float3  pixels to dst
         if (C == 3){
             unsigned int dstIdx =  y*W + x*3;
-            const uchar *inp_img = &inp_image_u8[n*img_offset + dst_buf_offset];
+            const uchar *inp_img = &inp_image_u8[n*img_offset];
             float3 dst;
             if (reverse_channels)
                 dst = make_float3((float)inp_img[srcIdx+2], (float) inp_img[srcIdx+1], (float)inp_img[srcIdx])*multiplier + offset;
@@ -133,8 +133,8 @@ Hip_CopyInt8ToNCHW_fp32
         unsigned int srcIdx =  (y*W + x)*C;
         unsigned int dstIdx =  y*W + x;
         // copy float3  pixels to dst
-        const uchar *inp_img = &inp_image_u8[n*img_offset+dst_buf_offset];
-        float *out_tensor = (float *)output_tensor + n*img_offset + dst_buf_offset;
+        const uchar *inp_img = &inp_image_u8[n*img_offset];
+        float *out_tensor = (float *)output_tensor + n*img_offset + dst_buf_offset ;
         if (C == 3){
             float3 dst;
             if (reverse_channels)
@@ -169,8 +169,8 @@ Hip_CopyInt8ToNCHW_fp16
 
     if ((x >= W) || (y >= H)) return;
     for (unsigned int n=0; n < nchw.x; n++) {
-        unsigned short *out_tensor = (unsigned short *)output_tensor + n*img_offset+dst_buf_offset;
-        const uchar *inp_img = &inp_image_u8[n*img_offset+dst_buf_offset];
+        __half *out_tensor = (__half *)output_tensor + n*img_offset+dst_buf_offset;
+        const uchar *inp_img = &inp_image_u8[n*img_offset];
         unsigned int srcIdx =  (y*W + x)*C;
         // copy float3  pixels to dst
         unsigned int dstIdx =  y*W + x;

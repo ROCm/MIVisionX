@@ -659,12 +659,12 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
             auto img_buffer = out_image;
             if (format == RaliTensorFormat::NHWC)
             {
-                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, out_ptr, dest_buf_offset, n , c, h, w,
+                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, out_ptr, dest_buf_offset, n, c, h, w,
                                         multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
 
             }else
             {
-                HipExecCopyInt8ToNCHW(_device.resources().hip_stream, (const void *)img_buffer, out_ptr, dest_buf_offset, n , c, h, w,
+                HipExecCopyInt8ToNCHW(_device.resources().hip_stream, (const void *)img_buffer, out_ptr, dest_buf_offset, n, c, h, w,
                                         multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
             }
             dest_buf_offset += single_output_image_size;

@@ -16,11 +16,11 @@ def draw_patches(img, idx, device):
             image = img.detach().numpy()
     else:
         image = img.cpu().numpy()
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     if not args.NHWC:
         image = image.transpose([1, 2, 0])
     if args.fp16:
         image = (image).astype('uint8')
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name + "/" + str(idx)+"_"+"train"+".png", image)
 
 
@@ -46,7 +46,7 @@ def main():
     except OSError as error:
         print(error)
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rali_cpu=rali_cpu, tensor_layout=types.NHWC if args.NHWC else args.NCHW , tensor_dtype=types.FLOAT16 if args.fp16 else types.FLOAT)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rali_cpu=rali_cpu, tensor_layout=types.NHWC if args.NHWC else types.NCHW , tensor_dtype=types.FLOAT16 if args.fp16 else types.FLOAT)
     # Set Params
     output_set = 0
     rali_device = 'cpu' if rali_cpu else 'gpu'

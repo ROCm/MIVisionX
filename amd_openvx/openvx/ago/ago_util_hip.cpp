@@ -95,10 +95,6 @@ int agoGpuHipReleaseContext(AgoContext * context) {
         }
         context->hip_stream = NULL;
     }
-    if (!context->hip_context_imported) {
-        // reset the device
-        hipDeviceReset();
-    }
     return 0;
 }
 

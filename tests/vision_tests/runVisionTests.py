@@ -29,7 +29,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Vision Test Full Report"
 __license__ = "MIT"
-__version__ = "1.2.2"
+__version__ = "1.3.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -65,8 +65,8 @@ parser.add_argument('--num_frames',         type=int, default=1000,
                     help='Run Test for X number of frames - optional (default:1000 [range:1 - N])')
 parser.add_argument('--functionality',      type=str, default='yes',
                     help='Vision Functionality Tests Enabled - optional (default:yes [options:no/yes])')
-parser.add_argument('--backend_type',       type=str, default='HOST',
-                    help='Backend type - optional (default:HOST [options:HOST/HIP/OCL])')
+parser.add_argument('--backend_type',       type=str, default='CPU',
+                    help='Backend type - optional (default:CPU [options:CPU/HIP/OCL])')
 parser.add_argument('--profiling',          type=str, default='no',
                     help='GPU profiling with rocprof - optional (default:no [options:yes/no])')
 parser.add_argument('--width',              type=int, default='1920',
@@ -431,8 +431,8 @@ if listTest not in ('no', 'yes'):
 if functionalityTests not in ('no', 'yes'):
     print("ERROR: Vision functionality Tests option supported - [no or yes]")
     exit()
-if backendType not in ('HOST', 'HIP', 'OCL'):
-    print("ERROR: OpenVX Backends supported - HOST or HIP or OCL]")
+if backendType not in ('CPU', 'HIP', 'OCL'):
+    print("ERROR: OpenVX Backends supported - CPU or HIP or OCL]")
     exit()
 if profilingOption not in ('no', 'yes'):
     print("ERROR: Profiling options supported - [no or yes]")
@@ -463,11 +463,11 @@ if not 1 <= height <= 7680:
     exit()
 
 if hardwareMode == "CPU":
-    if backendType != "HOST" or profilingOption != "no":
-        print("For hardware_mode=CPU, the backend_type must be 'HOST' and profiling must be 'no'")
+    if backendType != "CPU" or profilingOption != "no":
+        print("For hardware_mode=CPU, the backend_type must be 'CPU' and profiling must be 'no'")
         exit()
 if hardwareMode == "GPU":
-    if backendType == "HOST":
+    if backendType == "CPU":
         print("For hardware_mode=GPU, the backend_type must be either 'HIP' or 'OCL'")
         exit()
 

@@ -50,10 +50,13 @@ public:
 #else
     void init(RaliMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
 #endif
+    void initBoxEncoderMetaData(RaliMemType mem_type, size_t encoded_bbox_size, size_t encoded_labels_size);
     void release_gpu_res();
     std::vector<void*> get_read_buffers() ;
     void* get_host_master_read_buffer();
     std::vector<void*> get_write_buffers();
+    std::pair<void*, void*> get_box_encode_write_buffers();
+    std::pair<void*, void*> get_box_encode_read_buffers();
     MetaDataNamePair& get_meta_data();
     void set_meta_data(ImageNameBatch names, pMetaDataBatch meta_data);
     void reset();
@@ -81,6 +84,8 @@ private:
     std::vector<std::vector<void*>> _dev_sub_buffer;
     std::vector<void*> _host_master_buffers;
     std::vector<std::vector<void*>> _host_sub_buffers;
+    std::vector<void *> _dev_bbox_buffer;
+    std::vector<void *> _dev_labels_buffer;
     bool _dont_block = false;
     RaliMemType _mem_type;
 #if ENABLE_HIP

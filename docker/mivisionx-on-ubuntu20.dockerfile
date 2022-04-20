@@ -34,7 +34,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install sqlite3 libsqlite3-dev lib
         sudo ./b2 install threading=multi link=shared --with-system --with-filesystem && \
         ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
         sudo ./b2 install threading=multi link=static --with-system --with-filesystem && cd ../ && \
-        git clone -b rocm-5.1.0 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \
+        git clone -b rocm-5.1.1 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \
         cmake ../ && make -j8 && sudo make install && cd ../../ && \
         #wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/1.1.5.zip && unzip 1.1.5.zip && \
         #cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake ../ && make -j8 && sudo make install && cd ../../ && \

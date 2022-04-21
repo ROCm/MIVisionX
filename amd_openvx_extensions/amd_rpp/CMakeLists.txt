@@ -159,7 +159,7 @@ else()
 endif()
 
 install(TARGETS vx_rpp DESTINATION lib)
-install(FILES include/vx_ext_rpp.h DESTINATION include)
+install(FILES include/vx_ext_rpp.h DESTINATION include/mivisionx)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     target_link_libraries(OpenVX)
@@ -169,3 +169,17 @@ else()
     target_link_libraries(openvx)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections")
 endif()
+
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  #include(ROCMHeaderWrapper)
+  # Copy Header files to build directory
+  configure_file("include/vx_ext_rpp.h" "${PROJECT_BINARY_DIR}/include/mivisionx/vx_ext_rpp.h" COPYONLY)
+  # Generate wrapper for files to install in mivisionx/include/
+  rocm_wrap_header_file(
+    vx_ext_rpp.h
+    HEADER_LOCATION include/mivisionx
+    GUARDS WRAPPER
+    WRAPPER_LOCATIONS mivisionx/include
+  )
+endif()
+

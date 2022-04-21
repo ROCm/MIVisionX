@@ -109,11 +109,12 @@ vx_status amd_vx_migraphx_node_publish(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL amdMIGraphXnode(vx_graph graph, migraphx::program *prog, vx_enum migraphx_prog_e, vx_tensor input, vx_tensor output)
+VX_API_ENTRY vx_node VX_API_CALL amdMIGraphXnode(vx_graph graph, migraphx::program *prog, vx_tensor input, vx_tensor output)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_enum migraphx_prog_e = vxRegisterUserStruct(context, sizeof(*prog));
         vx_scalar migraphx_prog = vxCreateScalarWithSize(context, migraphx_prog_e, prog, sizeof(*prog));
         if (vxGetStatus((vx_reference)migraphx_prog) == VX_SUCCESS) {
             vx_reference params[] = {

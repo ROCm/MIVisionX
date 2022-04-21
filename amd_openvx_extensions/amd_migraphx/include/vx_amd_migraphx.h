@@ -11,14 +11,13 @@ extern "C" {
 /*! \brief [Graph] Creates a MIGrpahX Node.
  * \param [in] graph The handle to the graph.
  * \param [in] prog The MIGraphX program
- * \param [in] migraphx_prog_e the data type of MIGraphX program
  * \param [in] input the input tensor
  * \param [out] output the output tensor
  * \return <tt> vx_node</tt>.
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL amdMIGraphXnode(vx_graph graph, migraphx::program *prog, vx_enum migraphx_prog_e, vx_tensor input, vx_tensor output);
+VX_API_ENTRY vx_node VX_API_CALL amdMIGraphXnode(vx_graph graph, migraphx::program *prog, vx_tensor input, vx_tensor output);
 
 /*! \brief [Graph] loads and compiles onnx models using the MIGraphX
  * \param [in] path The path to the onnx model for compilation

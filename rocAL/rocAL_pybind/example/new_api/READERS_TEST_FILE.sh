@@ -4,13 +4,14 @@ if [[ $# -gt 0 ]]; then
     helpFunction()
     {
     echo ""
-    echo "Usage: $0 [-n number_of_gpus] [-d dump_outputs<true/false>] [-b backend<cpu/gpu>]"
+    echo "Usage: $0 [-n number_of_gpus] [-d dump_outputs<true/false>] [-b backend<cpu/gpu>] [-p print_tensor<true/false>]"
     echo -e "\t-n Description of what is the number of gpus to be used"
     echo -e "\t-d Description of what is the display param"
+    echo -e "\t-d Description of what is the print tensor param"
     exit 1 # Exit script after printing help
     }
 
-    while getopts "n:d:b:" opt
+    while getopts "n:d:b:p:" opt
     do
         echo "In while loop"
         echo $opt
@@ -18,6 +19,7 @@ if [[ $# -gt 0 ]]; then
             n ) number_of_gpus="$OPTARG" ;;
             d ) dump_outputs="$OPTARG" ;;
             b ) backend="$OPTARG" ;;
+            p ) print_tensor="$OPTARG" ;;
             ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
         esac
     done
@@ -54,19 +56,29 @@ if [[ $# -gt 0 ]]; then
         fi
     fi
 
-    echo "$number_of_gpus"
-    echo "$dump_outputs"
-    echo "$backend"
+    if [ -z "$print_tensor" ];
+    then
+        print_tensor_arg=print_tensor #True by default
+    else
+        if [[ $print_tensor == "true" || $print_tensor == "True" ]]; then
+            print_tensor_arg=print_tensor
+        elif [[ $print_tensor == "false" || $print_tensor == "False" ]]; then
+            print_tensor_arg=no-print_tensor
+        fi
+    fi
+
 
     echo $display_arg
     echo $backend_arg
+    echo $print_tensor_arg
+
 
 else
     #DEFAULT ARGS
     gpus_per_node=1
     display_arg=display
     backend_arg=no-rocal-gpu #CPU by default
-
+    print_tensor_arg=no-print_tensor
 fi
 
 
@@ -113,6 +125,7 @@ if [[ rocAL_api_python_unittest -eq 1 ]]; then
         --$backend_arg \
         --NHWC \
         --local-rank 0 \
+        --$print_tensor_arg \
         --world-size $gpus_per_node \
         --num-threads 1 \
         --num-epochs 2 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
@@ -142,6 +155,7 @@ if [[ rocAL_api_coco_pipeline -eq 1 ]]; then
         --$backend_arg \
         --NHWC \
         --local-rank 0 \
+        --$print_tensor_arg \
         --world-size $gpus_per_node \
         --num-threads 1 \
         --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
@@ -168,6 +182,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
         --$backend_arg \
         --NHWC \
         --local-rank 0 \
+        --$print_tensor_arg \
         --world-size $gpus_per_node \
         --num-threads 1 \
         --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
@@ -195,6 +210,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
         --$backend_arg \
         --NHWC \
         --local-rank 0 \
+        --$print_tensor_arg \
         --world-size $gpus_per_node \
         --num-threads 1 \
         --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
@@ -222,6 +238,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
         --$backend_arg \
         --NHWC \
         --local-rank 0 \
+        --$print_tensor_arg \
         --world-size $gpus_per_node \
         --num-threads 1 \
         --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
@@ -248,6 +265,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
         --$backend_arg \
         --NHWC \
         --local-rank 0 \
+        --$print_tensor_arg \
         --world-size $gpus_per_node \
         --num-threads 1 \
         --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
@@ -273,6 +291,7 @@ if [[ rocAL_api_tf_classification_reader -eq 1 ]]; then
         --$backend_arg \
         --NHWC \
         --local-rank 0 \
+        --$print_tensor_arg \
         --world-size $gpus_per_node \
         --num-threads 1 \
         --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
@@ -298,6 +317,7 @@ if [[ rocAL_api_tf_detection_pipeline -eq 1 ]]; then
         --$backend_arg \
         --NHWC \
         --local-rank 0 \
+        --$print_tensor_arg \
         --world-size $gpus_per_node \
         --num-threads 1 \
         --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
@@ -319,6 +339,7 @@ if [[ rocAL_api_video_pipeline -eq 1 ]]; then
         --$backend_arg \
         --batch-size 10 \
         --$display_arg \
+        --$print_tensor_arg \
         --sequence-length 3 \
         --num-epochs 1 2>&1 | tee -a run.log.rocAL_api_log.${CURRENTDATE}.txt
 fi

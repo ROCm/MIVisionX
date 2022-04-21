@@ -103,7 +103,8 @@ def main():
 
         for element in list(range(batch_size)):
             cnt = cnt + 1
-            print("Processing image %d....." % element)
+            if args.print_tensor:
+                print("Processing image %d....." % element)
             features_dict = {
                 "image": images_array[element],
                 "true_image_shape": np.array([len(images_array[element]), len(images_array[element, 0]), len(images_array[element, 0, 0])])
@@ -115,7 +116,8 @@ def main():
                 "groundtruth_weights": get_weights(num_bboxes_array[element])
             }
             processed_tensors = (features_dict, labels_dict)
-            print("\nPROCESSED_TENSORS:\n", processed_tensors)
+            if args.print_tensor:
+                print("\nPROCESSED_TENSORS:\n", processed_tensors)
             draw_patches(images_array[element],cnt,bboxes_array[element])
         print("\n\nPrinted first batch with", (batch_size), "images!")
         break

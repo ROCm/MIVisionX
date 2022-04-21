@@ -154,16 +154,18 @@ def main():
     for epoch in range(int(args.num_epochs)):
         print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):
-            print("**************", i, "*******************")
-            print("**************starts*******************")
-            print("\nImages:\n", it[0])
-            print("\nLABELS:\n", it[1])
+            if args.print_tensor:
+                print("**************", i, "*******************")
+                print("**************starts*******************")
+                print("\nImages:\n", it[0])
+                print("\nLABELS:\n", it[1])
+                print("**************ends*******************")
+                print("**************", i, "*******************")
             for img in it[0]:
                 cnt = cnt+1
                 if display:
                     draw_patches(img, cnt, device)
-            print("**************ends*******************")
-            print("**************", i, "*******************")
+
             break
         data_loader.reset()
 
@@ -173,9 +175,8 @@ def main():
     print('\n Time: ', stop - start)
     print('Number of times loop iterates is:', cnt)
 
-
-    print("###############################################    FILE READER    ###############################################")
-    print("###############################################    SUCCESS        ###############################################")
+    print(f'###############################################                             {augmentation_name.upper()}                         ############################################')
+    print("###############################################                             SUCCESS                             ###############################################")
 
 
 

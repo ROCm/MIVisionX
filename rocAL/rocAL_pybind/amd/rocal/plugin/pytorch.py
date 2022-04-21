@@ -56,10 +56,6 @@ class RALIGenericIterator(object):
         self.offset = offset
         self.device= device
         self.device_id = device_id
-        print("DEVICE: ",self.device)
-        print("DEVICE ID: ",self.device_id)
-        print("TENSOR LAYOUT: ",tensor_layout)
-        print("TENSOR DTYPE: ",tensor_dtype)
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
         self.display = display
@@ -127,7 +123,7 @@ class RALIGenericIterator(object):
             self.lis = []  # Empty list for bboxes
             self.lis_lab = []  # Empty list of labels
 
-            #Count of labels/ bboxes in a batch
+            # Count of labels/ bboxes in a batch
             self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
             self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
             # 1D labels array in a batch

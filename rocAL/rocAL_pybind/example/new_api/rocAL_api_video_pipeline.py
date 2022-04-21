@@ -53,7 +53,6 @@ class RALIVideoIterator(object):
     def __next__(self):
         self.iter_num +=1
         if(self.loader.isEmpty()):
-            timing_info = self.loader.Timing_Info()
             raise StopIteration
         if self.loader.run() != 0:
             raise StopIteration

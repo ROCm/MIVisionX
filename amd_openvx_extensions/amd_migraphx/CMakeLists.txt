@@ -62,7 +62,18 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         add_library(${PROJECT_NAME} SHARED ${SOURCES})
         target_link_libraries(${PROJECT_NAME} openvx migraphx::c ${HIP_PATH}/lib/libamdhip64.so)
         install(TARGETS ${PROJECT_NAME} DESTINATION lib)
-        install(FILES include/vx_amd_migraphx.h DESTINATION include)
+        install(FILES include/vx_amd_migraphx.h DESTINATION include/mivisionx)
+
+	if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+	# Copy Header files to build directory
+	  configure_file("include/vx_amd_migraphx.h" "${PROJECT_BINARY_DIR}/include/mivisionx/vx_amd_migraphx.h" COPYONLY)
+	  # Generate wrapper for files to install in mivisionx/include/
+	  rocm_wrap_header_file(
+		vx_amd_migraphx.h
+		HEADER_LOCATION include/mivisionx
+		GUARDS WRAPPER
+		WRAPPER_LOCATIONS mivisionx/include)
+	endif()
     else()
         message("-- ${Red}WARNING: MIGraphX or HIP Not Found -- ${PROJECT_NAME} module excluded${ColourReset}")
     endif()

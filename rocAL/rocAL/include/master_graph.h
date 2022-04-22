@@ -110,7 +110,9 @@ public:
     void set_sequence_batch_ratio() { _sequence_batch_ratio = _sequence_batch_size / _internal_batch_size; }
     Status get_bbox_encoded_buffers(float **boxes_buf_ptr, int **labels_buf_ptr, size_t num_encoded_boxes);
     size_t bounding_box_batch_count(int* buf, pMetaDataBatch meta_data_batch);
-
+#if ENABLE_OPENCL
+    cl_command_queue get_ocl_cmd_q() {return _device.resources().cmd_queue}
+#endif
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();

@@ -68,9 +68,10 @@ def main():
         print("epoch:: ", epoch)
         if not _rali_bbox:
             for i, (image_batch, labels) in enumerate(data_loader, 0):  # Classification
-                sys.stdout.write("\r Mini-batch " + str(i))
-                print("Images", image_batch)
-                print("Labels", labels)
+                if args.print_tensor:
+                    sys.stdout.write("\r Mini-batch " + str(i))
+                    print("Images", image_batch)
+                    print("Labels", labels)
                 for element in list(range(batch_size)):
                     cnt = cnt + 1
                     draw_patches(image_batch[element],cnt)
@@ -78,10 +79,11 @@ def main():
         else:
             for i, (image_batch, bboxes, labels) in enumerate(data_loader, 0):  # Detection
                 if i == 0:
-                    sys.stdout.write("\r Mini-batch " + str(i))
-                    print("Images", image_batch)
-                    print("Bboxes", bboxes)
-                    print("Labels", labels)
+                    if args.print_tensor:
+                        sys.stdout.write("\r Mini-batch " + str(i))
+                        print("Images", image_batch)
+                        print("Bboxes", bboxes)
+                        print("Labels", labels)
                 for element in list(range(batch_size)):
                     cnt = cnt + 1
                     draw_patches(image_batch[element],cnt)

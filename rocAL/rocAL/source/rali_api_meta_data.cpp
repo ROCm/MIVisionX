@@ -240,7 +240,7 @@ RALI_API_CALL raliGetImageLabels(RaliContext p_context, void* buf)
         if (err != hipSuccess)
             THROW("Invalid Data Pointer: Error copying to device memory")
 #else
-        if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size, meta_data.second->get_label_batch().data(), 0, NULL, NULL) != CL_SUCCESS)
+        if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size, meta_data.second->get_label_batch().data(), 0, NULL, NULL) != CL_SUCCESS)
             THROW("Invalid Data Pointer: Error copying to device memory")
 #endif
     }
@@ -327,7 +327,7 @@ RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, void* buf, int num
         if (err != hipSuccess)
             THROW("Invalid Data Pointer: Error copying to device memory")
 #else
-        if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size * numOfClasses, one_hot_encoded, 0, NULL, NULL) != CL_SUCCESS)
+        if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size * numOfClasses, one_hot_encoded, 0, NULL, NULL) != CL_SUCCESS)
             THROW("Invalid Data Pointer: Error copying to device memory")
 
 #endif

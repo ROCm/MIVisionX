@@ -87,8 +87,6 @@ option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM        "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX    "Build MIVisionX with MIGraphX Support"    ON)
-<<<<<<< HEAD
-=======
 
 # FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
 option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
@@ -126,7 +124,6 @@ include(ROCMHeaderWrapper)
 
 endif()
 
->>>>>>> origin/develop
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")

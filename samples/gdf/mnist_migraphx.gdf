@@ -1,0 +1,9 @@
+import vx_amd_migraphx
+
+data input_tensor = tensor:4,{1,1,28,28},FLOAT32,0
+read input_tensor ../data/oneDigit.bin
+data prog = migraphx:onnx,mnist-8.onnx
+data output_tensor = tensor:2,{1,10},FLOAT32,0
+
+node com.amd.amd_migraphx_node prog input_tensor output_tensor
+write output_tensor out.bin

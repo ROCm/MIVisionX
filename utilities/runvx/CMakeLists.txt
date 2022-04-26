@@ -26,9 +26,11 @@ set(CMAKE_CXX_STANDARD 14)
 find_package(OpenCV QUIET)
 
 include_directories(../../amd_openvx/openvx/include)
+include_directories(../../amd_openvx_extensions/amd_migraphx/include)
 
 list(APPEND SOURCES
     runvx.cpp
+    amdMIGraphX.cpp
     vxArray.cpp
     vxConvolution.cpp
     vxDistribution.cpp
@@ -90,6 +92,12 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
             target_compile_definitions(runvx PUBLIC ENABLE_HIP=1)
             target_compile_options(runvx PUBLIC ${HIP_CXX_FLAGS})
             message("-- ${Green}runvx built with HIP Support${ColourReset}")
+            find_package(migraphx QUIET)
+                if(migraphx_FOUND)
+                    target_link_libraries(${PROJECT_NAME} migraphx::c openvx vx_amd_migraphx)
+                else()
+                    message("-- ERROR!: MIGraphX not Found, please install MIGrpahX!-- ${PROJECT_NAME} excluded${ColourReset}")
+                endif()
         else()
             message(FATAL_ERROR "unsupported hip compiler")
         endif()

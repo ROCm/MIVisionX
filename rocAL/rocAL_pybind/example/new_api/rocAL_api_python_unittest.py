@@ -166,6 +166,7 @@ def main():
                 if display:
                     draw_patches(img, cnt, device)
             break
+
         data_loader.reset()
 
     #Your statements here

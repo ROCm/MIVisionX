@@ -43,8 +43,7 @@ int CVxParamMIGraphX::Shutdown(void) {
 	return 0;
 }
 
-int CVxParamMIGraphX::Initialize(vx_context context, vx_graph graph, const char * desc)
-{
+int CVxParamMIGraphX::Initialize(vx_context context, vx_graph graph, const char * desc) {
 	// get object parameters and create object
 	const char * ioParams = desc;
     char objType[64], inputType[64], fileName[256];
@@ -70,7 +69,7 @@ int CVxParamMIGraphX::Initialize(vx_context context, vx_graph graph, const char 
     else ReportError("ERROR: unsupported migraphx type: %s\n", desc);
 
 	vx_status ovxStatus = vxGetStatus((vx_reference)migraphx_prog_scalar);
-	if (ovxStatus != VX_SUCCESS){
+	if (ovxStatus != VX_SUCCESS) {
 		printf("ERROR: scalar creation failed => %d (%s)\n", ovxStatus, ovxEnum2Name(ovxStatus));
 		if (migraphx_prog_scalar) vxReleaseScalar(&migraphx_prog_scalar);
 		throw - 1;
@@ -85,22 +84,18 @@ int CVxParamMIGraphX::InitializeIO(vx_context context, vx_graph graph, vx_refere
     return 0;
 }
 
-int CVxParamMIGraphX::Finalize()
-{
+int CVxParamMIGraphX::Finalize() {
 	return 0;
 }
 
-int CVxParamMIGraphX::ReadFrame(int frameNumber)
-{
+int CVxParamMIGraphX::ReadFrame(int frameNumber) {
 	return 0;
 }
 
-int CVxParamMIGraphX::WriteFrame(int frameNumber)
-{
+int CVxParamMIGraphX::WriteFrame(int frameNumber) {
 	return 0;
 }
 
-int CVxParamMIGraphX::CompareFrame(int frameNumber)
-{
+int CVxParamMIGraphX::CompareFrame(int frameNumber) {
 	return 0;
 }

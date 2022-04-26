@@ -342,8 +342,7 @@ CVxParameter * CreateDataObject(vx_context context, vx_graph graph, std::map<std
 			return NULL;
 		return this_tensor;
 	}
-	else if (!_strnicmp(desc, "migraphx:", 9))
-	{
+	else if (!_strnicmp(desc, "migraphx:", 9)) {
 		CVxParamMIGraphX *this_migraphx = new CVxParamMIGraphX();
 		this_migraphx->SetParamMap(m_paramMap);
 		this_migraphx->SetCaptureFrameStart(captureFrameStart);

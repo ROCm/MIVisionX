@@ -11,10 +11,6 @@ extern "C" {
 /*! \brief [Graph] Creates a MIGrpahX Node.
  * \param [in] graph The handle to the graph.
  * \param [in] prog The MIGraphX program
-<<<<<<< HEAD
- * \param [in] migraphx_prog_e the data type of MIGraphX program
-=======
->>>>>>> origin/develop
  * \param [in] input the input tensor
  * \param [out] output the output tensor
  * \return <tt> vx_node</tt>.

@@ -37,8 +37,6 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
 void read_input_digit(const int n, std::vector<float>& input_digit)
 {
     std::ifstream file("../digits.txt");
-    std::ofstream ofile;
-    ofile.open("oneDigit.bin", ios::app);
     const int Digits = 10;
     const int Height = 28;
     const int Width  = 28;
@@ -49,10 +47,6 @@ void read_input_digit(const int n, std::vector<float>& input_digit)
         for(int i = 0; i < Height * Width; ++i) {
             unsigned char temp = 0;
             file.read((char*)&temp, sizeof(temp));
-            if (d == 0)
-            {
-                ofile.write((char*)&temp, sizeof(float));
-            }
             if(d == n) {
                 float data = temp / 255.0;
                 input_digit.push_back(data);

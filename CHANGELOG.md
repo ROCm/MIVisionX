@@ -48,7 +48,7 @@
 
 ### Known issues
 
-* `TBD`
+* `CMakeList.txt Warnings` - With ROCm CMake Version MIVisionX will have cmake warnings 
 
 ## MIVisionX 2.0.1
 

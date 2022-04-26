@@ -55,7 +55,7 @@ add_library(vx_loomsl SHARED ${SOURCES})
 target_link_libraries(vx_loomsl ${OpenCL_LIBRARIES} openvx)
 
 install(TARGETS vx_loomsl DESTINATION lib)
-install(FILES live_stitch_api.h DESTINATION include)
+install(FILES live_stitch_api.h DESTINATION include/mivisionx)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
@@ -63,3 +63,17 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11")
 endif()
+
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  #include(ROCMHeaderWrapper)
+  # Copy Header files to build directory
+  configure_file("live_stitch_api.h" "${PROJECT_BINARY_DIR}/include/mivisionx/live_stitch_api.h" COPYONLY)
+  # Generate wrapper for files to install in mivisionx/include/
+  rocm_wrap_header_file(
+    live_stitch_api.h
+    HEADER_LOCATION include/mivisionx
+    GUARDS WRAPPER
+    WRAPPER_LOCATIONS mivisionx/include
+  )
+endif()
+

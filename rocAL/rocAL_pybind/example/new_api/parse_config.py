@@ -37,6 +37,7 @@ def parse_args():
     common_group.add_argument('--batch-size', '-b', type=int, default=10,
                         help='number of examples for each iteration')
     add_bool_arg(common_group, 'display', default=True)
+    add_bool_arg(common_group, 'print_tensor', default=True)
     add_bool_arg(common_group, 'classification', default=True)  # use --classification for Classification / --no-classification for Detection
     add_bool_arg(common_group,'rocal-gpu', default=True)
 

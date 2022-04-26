@@ -121,9 +121,7 @@ int main(int argc, char **argv) {
 
     ERROR_CHECK_STATUS(vxLoadKernels(context, "vx_amd_migraphx"));
 
-    vx_enum migraphx_prog_e = vxRegisterUserStruct(context, sizeof(prog));
-
-    vx_node node = amdMIGraphXnode(graph, &prog, migraphx_prog_e, input_tensor, output_tensor);
+    vx_node node = amdMIGraphXnode(graph, &prog, input_tensor, output_tensor);
     ERROR_CHECK_OBJECT(node);
 
     ERROR_CHECK_STATUS(vxVerifyGraph(graph));

@@ -2,7 +2,11 @@
 #include "kernels.h"
 
 struct migraphXLocalData {
+<<<<<<< HEAD
     migraphx::program prog;
+=======
+    unsigned char *prog;
+>>>>>>> origin/develop
     migraphx::program_parameters prog_params;
 };
 
@@ -12,7 +16,11 @@ static vx_status VX_CALLBACK amd_migraphx_node_kernel(vx_node node, const vx_ref
      migraphXLocalData *data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
+<<<<<<< HEAD
     auto outputs = data->prog.eval(data->prog_params);
+=======
+    auto outputs = reinterpret_cast<migraphx::program *>(data->prog)->eval(data->prog_params);
+>>>>>>> origin/develop
 
     return VX_SUCCESS;
 }
@@ -25,11 +33,19 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
     unsigned char *input_mem = NULL;
     unsigned char *output_mem = NULL;
 
+<<<<<<< HEAD
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[0], &data->prog, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
 
     auto param_shapes = data->prog.get_parameter_shapes();
+=======
+    ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[0], VX_SCALAR_BUFFER, &data->prog, sizeof(data->prog)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
+
+    auto param_shapes = reinterpret_cast<migraphx::program *>(data->prog)->get_parameter_shapes();
+>>>>>>> origin/develop
     auto input = param_shapes.names().back();
     auto output = param_shapes.names().front();
     data->prog_params.add(input, migraphx::argument(param_shapes[input], input_mem));
@@ -109,11 +125,19 @@ vx_status amd_vx_migraphx_node_publish(vx_context context)
     return VX_SUCCESS;
 }
 
+<<<<<<< HEAD
 VX_API_ENTRY vx_node VX_API_CALL amdMIGraphXnode(vx_graph graph, migraphx::program *prog, vx_enum migraphx_prog_e, vx_tensor input, vx_tensor output)
+=======
+VX_API_ENTRY vx_node VX_API_CALL amdMIGraphXnode(vx_graph graph, migraphx::program *prog, vx_tensor input, vx_tensor output)
+>>>>>>> origin/develop
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+<<<<<<< HEAD
+=======
+        vx_enum migraphx_prog_e = vxRegisterUserStruct(context, sizeof(*prog));
+>>>>>>> origin/develop
         vx_scalar migraphx_prog = vxCreateScalarWithSize(context, migraphx_prog_e, prog, sizeof(*prog));
         if (vxGetStatus((vx_reference)migraphx_prog) == VX_SUCCESS) {
             vx_reference params[] = {

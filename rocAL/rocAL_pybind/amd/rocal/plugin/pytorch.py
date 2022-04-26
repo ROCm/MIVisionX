@@ -56,8 +56,6 @@ class RALIGenericIterator(object):
         self.offset = offset
         self.device= device
         self.device_id = device_id
-        print("DEVICE ID: ",self.device)
-        # exit(0)
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
         self.display = display
@@ -92,7 +90,7 @@ class RALIGenericIterator(object):
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16)
-                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32)
 
             else:
                 torch_gpu_device = torch.device('cuda', self.device_id)
@@ -125,7 +123,7 @@ class RALIGenericIterator(object):
             self.lis = []  # Empty list for bboxes
             self.lis_lab = []  # Empty list of labels
 
-            #Count of labels/ bboxes in a batch
+            # Count of labels/ bboxes in a batch
             self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
             self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
             # 1D labels array in a batch

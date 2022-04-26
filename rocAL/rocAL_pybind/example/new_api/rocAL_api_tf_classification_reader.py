@@ -61,12 +61,13 @@ def main():
     # Enumerate over the Dataloader
     for i, (images_array, labels_array) in enumerate(imageIterator, 0):
         images_array = np.transpose(images_array, [0, 2, 3, 1])
-        print("\n",i)
-        print("lables_array",labels_array)
+        if args.print_tensor:
+            print("\n",i)
+            print("lables_array",labels_array)
+            print("\n\nPrinted first batch with", (batch_size), "images!")
         for element in list(range(batch_size)):
             cnt = cnt + 1
             draw_patches(images_array[element],cnt)
-        print("\n\nPrinted first batch with", (batch_size), "images!")
         break
     imageIterator.reset()
 

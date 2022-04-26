@@ -101,7 +101,7 @@ target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
 target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
 
 install(TARGETS vx_opencv DESTINATION lib)
-install(FILES include/vx_ext_opencv.h DESTINATION include)
+install(FILES include/vx_ext_opencv.h DESTINATION include/mivisionx)
 
 if(${OpenCV_VERSION_MAJOR} EQUAL 4)
 	target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=1)
@@ -117,3 +117,18 @@ else()
 	target_link_libraries(vx_opencv openvx)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections")
 endif()
+
+
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  #include(ROCMHeaderWrapper)
+  # Copy Header files to build directory
+  configure_file("include/vx_ext_opencv.h" "${PROJECT_BINARY_DIR}/include/mivisionx/vx_ext_opencv.h" COPYONLY)
+  # Generate wrapper for files to install in mivisionx/include/
+  rocm_wrap_header_file(
+    vx_ext_opencv.h
+    HEADER_LOCATION include/mivisionx
+    GUARDS WRAPPER
+    WRAPPER_LOCATIONS mivisionx/include
+  )
+endif()
+

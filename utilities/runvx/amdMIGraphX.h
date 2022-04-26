@@ -31,21 +31,21 @@ THE SOFTWARE.
 
 class CVxParamMIGraphX : public CVxParameter {
 public:
-	CVxParamMIGraphX();
-	virtual ~CVxParamMIGraphX();
-	virtual int Initialize(vx_context context, vx_graph graph, const char * desc);
-	virtual int InitializeIO(vx_context context, vx_graph graph, vx_reference ref, const char * io_params);
-	virtual int Finalize();
+    CVxParamMIGraphX();
+    virtual ~CVxParamMIGraphX();
+    virtual int Initialize(vx_context context, vx_graph graph, const char * desc);
+    virtual int InitializeIO(vx_context context, vx_graph graph, vx_reference ref, const char * io_params);
+    virtual int Finalize();
     virtual int ReadFrame(int frameNumber);
     virtual int WriteFrame(int frameNumber);
     virtual int CompareFrame(int frameNumber);
-	virtual int Shutdown();
+    virtual int Shutdown();
 
 private:
     //vx object
-	vx_scalar migraphx_prog_scalar;
-	// I/O configuration
-	std::string modelFileName;
+    vx_scalar migraphx_prog_scalar;
+    // I/O configuration
+    std::string modelFileName;
     vx_enum migraphx_prog_e;
     migraphx::program prog;
     migraphx::program_parameters prog_params;

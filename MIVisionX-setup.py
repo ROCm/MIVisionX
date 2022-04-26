@@ -359,6 +359,12 @@ else:
         os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; sudo ' +
                   linuxFlag+' make install )')
 
+        #install MIGraphX
+        if backend == 'HIP':
+            os.system('sudo -v')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y migraphx')
+
         # Install Packages for NN Apps - Apps Requirement to be installed by Developer
         # os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')
         # os.system('sudo -v')

@@ -165,8 +165,8 @@ def main():
                 cnt = cnt+1
                 if display:
                     draw_patches(img, cnt, device)
-            break
 
+            break
         data_loader.reset()
 
     #Your statements here

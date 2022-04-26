@@ -254,6 +254,15 @@ enum vx_df_image_amd_e {
     VX_DF_IMAGE_F32x3_AMD = VX_DF_IMAGE('F', '3', '3', '2'),  // AGO image with THREE 32-bit floating-point channels in one buffer
 };
 
+
+/*! \brief scalar data attributes.
+* \ingroup group_scalar
+*/
+enum vx_scalar_attribute_amd_e {
+    /*! \brief scalar's buffer */
+    VX_SCALAR_BUFFER = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_SCALAR) + 0x1,
+};
+
 /*! \brief The multidimensional data object (Tensor).
 * \see vxCreateTensor
 * \ingroup group_tensor

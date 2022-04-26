@@ -33,7 +33,7 @@ if [[ $# -eq 1 ]]; then
     echo
     exit
   fi
-  
+
 else
   # Default Backend: --backend_hip
   echo "${blue}Running setup.py with --backend_hip ${reset}"

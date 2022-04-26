@@ -45,9 +45,12 @@ void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg)
     _seed = cfg.seed();
 }
 
+
 void RandomBBoxCropReader::set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader)
 {
-    _meta_data_reader = std::static_pointer_cast<COCOMetaDataReader>(meta_data_reader);
+
+    _meta_data_reader = meta_data_reader;
+
 }
 
 bool RandomBBoxCropReader::exists(const std::string &image_name)
@@ -237,7 +240,7 @@ void RandomBBoxCropReader::read_all()
 
         // std::cout << image_name << " crop<l,t,r,b>: " << crop_box.l << " X " << crop_box.t << " X " << crop_box.r << " X " << crop_box.b << std::endl;
         add(image_name, crop_box);
-        
+
         sample++;
     }
 }
@@ -263,12 +266,13 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
     BoundingBoxCord crop_box;
     uint bb_count;
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
+
     std::uniform_int_distribution<> option_dis(0, 6);
     std::uniform_real_distribution<float> _float_dis(0.3, 1.0);
     _crop_coords.clear();
     for (unsigned int i = 0; i < image_names.size(); i++)
     {
-        auto image_name = image_names[i]; 
+        auto image_name = image_names[i];
         auto elem = _meta_bbox_map_content.find(image_name);
         if (_meta_bbox_map_content.end() == elem)
             THROW("ERROR: Given name not present in the map" + image_name)
@@ -288,6 +292,7 @@ RandomBBoxCropReader::get_batch_crop_coords(const std::vector<std::string> &imag
                 crop_box.r = crop_box.b = 1;
                 break;
             }
+
             float min_iou = sample_options[sample_option];
             // If it has no shape, then area and aspect ratio thing should be provided
             for (int j = 0; j < 1; j++)

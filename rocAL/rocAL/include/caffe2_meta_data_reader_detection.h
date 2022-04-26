@@ -40,6 +40,7 @@ public :
     void release(std::string image_name);
     void release() override;
     void print_map_contents();
+    std::map<std::string, std::shared_ptr<MetaData>> &get_map_content() override{ return _map_content;}
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
     Caffe2MetaDataReaderDetection();
@@ -50,8 +51,8 @@ private:
     void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);
     bool _last_rec;
     void read_lmdb_record(std::string file_name, uint file_size);
-    std::map<std::string, std::shared_ptr<BoundingBox>> _map_content;
-    std::map<std::string, std::shared_ptr<BoundingBox>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::string _path;
     BoundingBoxBatch* _output;
     DIR *_src_dir;

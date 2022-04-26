@@ -41,8 +41,8 @@ RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, 
         aspect_ratio = ParameterFactory::instance()->create_uniform_float_rand_param(1.0, 1.0);
     }
     else
-    {      
-    
+    {
+
         aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
     }
     if(p_scaling == NULL)
@@ -51,7 +51,7 @@ RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, 
     }
     else
     {
-        scaling = static_cast<FloatParam*>(p_scaling);        
+        scaling = static_cast<FloatParam*>(p_scaling);
     }
     context->master_graph->create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType::RandomBBoxCropReader, RandomBBoxCrop_MetaDataType::BoundingBox, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts, seed);
 }
@@ -96,7 +96,7 @@ RALI_API_CALL raliCreateCOCOReaderKeyPoints(RaliContext p_context, const char* s
 
 RaliMetaData
 RALI_API_CALL raliCreateTFReader(RaliContext p_context, const char* source_path, bool is_output,const char* user_key_for_label, const char* user_key_for_filename)
-{    
+{
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateTFReader")
     auto context = static_cast<Context*>(p_context);
@@ -112,10 +112,10 @@ RALI_API_CALL raliCreateTFReader(RaliContext p_context, const char* source_path,
 
 RaliMetaData
 RALI_API_CALL raliCreateTFReaderDetection(RaliContext p_context, const char* source_path, bool is_output,
-    const char* user_key_for_label, const char* user_key_for_text, 
-    const char* user_key_for_xmin, const char* user_key_for_ymin, const char* user_key_for_xmax, const char* user_key_for_ymax, 
+    const char* user_key_for_label, const char* user_key_for_text,
+    const char* user_key_for_xmin, const char* user_key_for_ymin, const char* user_key_for_xmax, const char* user_key_for_ymax,
     const char* user_key_for_filename)
-{    
+{
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateTFReaderDetection")
     auto context = static_cast<Context*>(p_context);
@@ -154,7 +154,7 @@ RALI_API_CALL raliCreateMXNetReader(RaliContext p_context, const char* source_pa
 
 RaliMetaData
 RALI_API_CALL raliCreateTextFileBasedLabelReader(RaliContext p_context, const char* source_path) {
-    
+
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateTextFileBasedLabelReader")
     auto context = static_cast<Context*>(p_context);
@@ -216,9 +216,9 @@ RALI_API_CALL raliGetImageId(RaliContext p_context,  int* buf)
 }
 
 void
-RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
+RALI_API_CALL raliGetImageLabels(RaliContext p_context, void* buf)
 {
-    
+
     if (!p_context)
         THROW("Invalid rali context passed to raliGetImageLabels")
     auto context = static_cast<Context*>(p_context);
@@ -230,28 +230,35 @@ RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
     size_t meta_data_batch_size = meta_data.second->get_label_batch().size();
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
-    memcpy(buf, meta_data.second->get_label_batch().data(),  sizeof(int)*meta_data_batch_size);
+
+    if (context->affinity == RaliAffinity::CPU)
+        memcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size);
+    else
+    {
+#if ENABLE_HIP
+        hipError_t err = hipMemcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size, hipMemcpyHostToDevice);
+        if (err != hipSuccess)
+            THROW("Invalid Data Pointer: Error copying to device memory")
+#else
+        if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size, meta_data.second->get_label_batch().data(), 0, NULL, NULL) != CL_SUCCESS)
+            THROW("Invalid Data Pointer: Error copying to device memory")
+#endif
+    }
 }
 
 unsigned
 RALI_API_CALL raliGetBoundingBoxCount(RaliContext p_context, int* buf)
 {
-    unsigned size = 0;
     if (!p_context)
         THROW("Invalid rali context passed to raliGetBoundingBoxCount")
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
+    if(!meta_data.second)
+        THROW("No label has been loaded for this output image")
     size_t meta_data_batch_size = meta_data.second->get_bb_labels_batch().size();
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
-    if(!meta_data.second)
-        THROW("No label has been loaded for this output image")
-    for(unsigned i = 0; i < meta_data_batch_size; i++)
-    {
-        buf[i] = meta_data.second->get_bb_labels_batch()[i].size();
-        size += buf[i];
-    }
-    return size;
+    return context->master_graph->bounding_box_batch_count(buf, meta_data.second);
 }
 
 void
@@ -270,7 +277,7 @@ RALI_API_CALL raliGetBoundingBoxLabel(RaliContext p_context, int* buf)
         return;
     }
     for(unsigned i = 0; i < meta_data_batch_size; i++)
-    { 
+    {
         unsigned bb_count = meta_data.second->get_bb_labels_batch()[i].size();
         memcpy(buf, meta_data.second->get_bb_labels_batch()[i].data(),  sizeof(int) * bb_count);
         buf += bb_count;
@@ -278,7 +285,7 @@ RALI_API_CALL raliGetBoundingBoxLabel(RaliContext p_context, int* buf)
 }
 
 void
-RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, int* buf, int numOfClasses)
+RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, void* buf, int numOfClasses, int dest)
 {
     if (!p_context)
         THROW("Invalid rali context passed to raliGetOneHotImageLabels")
@@ -296,7 +303,7 @@ RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, int* buf, int numO
     int one_hot_encoded[meta_data_batch_size*numOfClasses];
     memset(one_hot_encoded, 0, sizeof(int) * meta_data_batch_size * numOfClasses);
     memcpy(labels_buf, meta_data.second->get_label_batch().data(),  sizeof(int)*meta_data_batch_size);
-    
+
     for(uint i = 0; i < meta_data_batch_size; i++)
     {
         int label_index =  labels_buf[i];
@@ -307,12 +314,24 @@ RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, int* buf, int numO
         }
         else if(label_index == 0)
         {
-          one_hot_encoded[(i*numOfClasses)+numOfClasses-1]=1;  
+          one_hot_encoded[(i*numOfClasses)+numOfClasses-1]=1;
         }
 
     }
-    memcpy(buf,one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses);
+    if (dest == 0) // HOST DESTINATION
+        memcpy(buf, one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses);
+    else
+    {
+#if ENABLE_HIP
+        hipError_t err = hipMemcpy(buf, one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses, hipMemcpyHostToDevice);
+        if (err != hipSuccess)
+            THROW("Invalid Data Pointer: Error copying to device memory")
+#else
+        if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size * numOfClasses, one_hot_encoded, 0, NULL, NULL) != CL_SUCCESS)
+            THROW("Invalid Data Pointer: Error copying to device memory")
 
+#endif
+    }
 }
 
 
@@ -332,7 +351,7 @@ RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf)
         return;
     }
     for(unsigned i = 0; i < meta_data_batch_size; i++)
-    { 
+    {
         unsigned bb_count = meta_data.second->get_bb_cords_batch()[i].size();
         memcpy(buf, meta_data.second->get_bb_cords_batch()[i].data(), bb_count * sizeof(BoundingBoxCord));
         buf += (bb_count * 4);
@@ -341,7 +360,7 @@ RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf)
 
 void
 RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
-{   
+{
     if (!p_context)
         THROW("Invalid rali context passed to raliGetImageSizes")
     auto context = static_cast<Context*>(p_context);
@@ -355,7 +374,7 @@ RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
         return;
     }
     for(unsigned i = 0; i < meta_data_batch_size; i++)
-    { 
+    {
         memcpy(buf, &(meta_data.second->get_img_sizes_batch()[i]), sizeof(ImgSize));
         buf += 2;
     }
@@ -363,7 +382,7 @@ RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
 
 RaliMetaData
 RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext p_context, const char* source_path, const char* file_prefix) {
-    
+
     if (!p_context)
         THROW("Invalid rali context passed to raliCreateTextCifar10LabelReader")
     auto context = static_cast<Context*>(p_context);
@@ -408,7 +427,7 @@ void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<float>& anc
     context->master_graph->box_encoder(anchors, criteria, means, stds, offset, scale);
 }
 
-void 
+void
 RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_buf, int* labels_buf)
 {
     if (!p_context)
@@ -424,27 +443,41 @@ RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_
         return;
     }
     unsigned sum = 0;
-    unsigned sum_bb_count[meta_data_batch_size];
+    unsigned bb_offset[meta_data_batch_size];
     for (unsigned i = 0; i < meta_data_batch_size; i++)
     {
-        sum_bb_count[i] = sum;
-        sum = sum + meta_data.second->get_bb_labels_batch()[i].size();
+        bb_offset[i] = sum;
+        sum += meta_data.second->get_bb_labels_batch()[i].size();
     }
     // copy labels buffer & bboxes buffer parallely
     #pragma omp parallel for
     for (unsigned i = 0; i < meta_data_batch_size; i++)
     {
         unsigned bb_count = meta_data.second->get_bb_labels_batch()[i].size();
-        int *temp_labels_buf = labels_buf + sum_bb_count[i];
-        float *temp_bbox_buf = boxes_buf + (sum_bb_count[i] * 4);
+        int *temp_labels_buf = labels_buf + bb_offset[i];
+        float *temp_bbox_buf = boxes_buf + (bb_offset[i] * 4);
         memcpy(temp_labels_buf, meta_data.second->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         memcpy(temp_bbox_buf, meta_data.second->get_bb_cords_batch()[i].data(), sizeof(BoundingBoxCord) * bb_count);
     }
 }
 
 void
+RALI_API_CALL raliGetEncodedBoxesAndLables(RaliContext p_context, float **boxes_buf_ptr, int **labels_buf_ptr, int num_encoded_boxes)
+{
+    if (!p_context) {
+        WRN("raliGetEncodedBoxesAndLables::Invalid context")
+    }
+    auto context = static_cast<Context *>(p_context);
+    context->master_graph->get_bbox_encoded_buffers(boxes_buf_ptr, labels_buf_ptr, num_encoded_boxes);
+    if (!*boxes_buf_ptr || !*labels_buf_ptr)
+    {
+        WRN("raliGetEncodedBoxesAndLables::Empty tensors returned from rocAL")
+    }
+}
+
+void
 RALI_API_CALL raliGetJointsDataPtr(RaliContext p_context, RaliJointsData **joints_data)
-{  
+{
     if (!p_context)
         THROW("Invalid rali context passed to raliGetBoundingBoxCords")
     auto context = static_cast<Context*>(p_context);

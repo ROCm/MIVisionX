@@ -38,7 +38,7 @@ public:
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
-    const std::map<std::string, std::shared_ptr<KeyPoint>> & get_map_content() { return _map_content; }
+    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override { return _map_content; }
     COCOMetaDataReaderKeyPoints();
     ~COCOMetaDataReaderKeyPoints() override { delete _output; }
 private:
@@ -49,8 +49,8 @@ private:
     int meta_data_reader_type;
     void add(std::string image_name, ImgSize image_size, JointsData *joints_data);
     bool exists(const std::string &image_name);
-    std::map<std::string, std::shared_ptr<KeyPoint>> _map_content;
-    std::map<std::string, std::shared_ptr<KeyPoint>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<MetaData>> _map_content;
+    std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::map<std::string, ImgSize> _map_img_sizes;
     std::map<std::string, std::vector<ImgSize>> ::iterator itr;
     std::map<int, int> _label_info;

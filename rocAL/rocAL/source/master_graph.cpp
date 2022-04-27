@@ -122,7 +122,6 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _cpu_threads(cpu_threads),
 #if ENABLE_HIP
         _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::HIP : RaliMemType::HOST),
-        _box_encoder_gpu(nullptr),
 #else
         _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST),
 #endif

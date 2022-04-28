@@ -184,7 +184,7 @@ private:
     bool _is_sequence_reader_output = false; //!< Set to true if Sequence Reader is invoked.
     // box encoder variables
 #if ENABLE_HIP
-    BoxEncoderGpu *_box_encoder_gpu;
+    BoxEncoderGpu *_box_encoder_gpu = nullptr;
 #endif
     bool _is_box_encoder = false; //bool variable to set the box encoder
     std::vector<float> _anchors; // Anchors to be used for encoding, as the array of floats is in the ltrb format of size 8732x4

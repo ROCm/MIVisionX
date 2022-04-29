@@ -101,7 +101,7 @@ int main(int argc, const char ** argv)
         return -1;
     }
 
-    RaliDecoderType dec_type = (dec_mode==0)? RaliDecoderType::RALI_DECODER_TJPEG : RaliDecoderType::RALI_DECODER_OPENCV;
+    RaliDecoderType dec_type = (RaliDecoderType) dec_mode;
 
     /*>>>>>>>>>>>>>>>> Creating rocAL parameters  <<<<<<<<<<<<<<<<*/
 

@@ -2191,6 +2191,5 @@ int HipExec_Upsample_Nearest_layer(hipStream_t stream, dim3 globalThreads, dim3 
         hipLaunchKernelGGL(Hip_Upsample_Nearest_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             out, out_offset, out_stride);
     }
-
     return VX_SUCCESS;
 }

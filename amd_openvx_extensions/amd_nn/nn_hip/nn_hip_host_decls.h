@@ -3,7 +3,8 @@ Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+to use, copy, modify, merge, publi
+sh, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
@@ -70,4 +71,7 @@ int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 lo
     uint in_offset, uint4 in_stride, unsigned char* in2, uint in2_offset, uint4 in2_stride, unsigned char* out, uint out_offset,
     uint4 out_stride, uint mode);
 
+int HipExec_Upsample_Nearest_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, unsigned char* in, uint in_offset,
+    uint4 in_stride, unsigned char* out, uint out_offset, uint4 out_stride);
+    
 #endif //NN_HIP_HOST_DECLS_H

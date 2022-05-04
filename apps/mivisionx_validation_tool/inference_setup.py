@@ -9,6 +9,7 @@ from PyQt5 import QtCore
 from rali_setup import *
 import amd.rocal.types as types
 from amd.rocal.plugin.pytorch import RALI_iterator
+from amd.rocal.pipeline import Pipeline
 
 # AMD Neural Net python wrapper
 class AnnAPI:
@@ -82,8 +83,8 @@ class modelInference(QtCore.QObject):
                 modelBatchSize, outputDir, inputAdd, inputMultiply, verbose, fp16, replaceModel, loop, rali_mode, origQueue, augQueue, gui, totalImages, fps_file, parent=None):
 
         super(modelInference, self).__init__(parent)
-        self.modelCompilerPath = '/opt/rocm/mivisionx/model_compiler/python'
-        self.ADATPath= '/opt/rocm/mivisionx/toolkit/analysis_and_visualization/classification'
+        self.modelCompilerPath = '/home/lakshmi/work/lk/MIVisionX/model_compiler/python'
+        self.ADATPath= '/home/lakshmi/mivisionx/toolkit/analysis_and_visualization/classification'
         self.setupDir = '~/.mivisionx-validation-tool'
 
         self.analyzerDir = os.path.expanduser(self.setupDir)
@@ -238,24 +239,24 @@ class modelInference(QtCore.QObject):
             if(os.path.exists(self.modelDir)):
                 # convert to NNIR
                 if(self.modelFormat == 'caffe'):
-                    os.system('(cd '+self.modelDir+'; python3 '+self.modelCompilerPath+'/caffe_to_nnir.py '+self.trainedModel+' nnir-files --input-dims 1,' + self.modelInputDims + ')')
-                    os.system('(cd '+self.modelDir+'; python3 '+self.modelCompilerPath+'/nnir_update.py --batch-size ' + self.modelBatchSize + ' nnir-files nnir-files)')
+                    os.system('(cd '+self.modelDir+'; python3.8 '+self.modelCompilerPath+'/caffe_to_nnir.py '+self.trainedModel+' nnir-files --input-dims 1,' + self.modelInputDims + ')')
+                    os.system('(cd '+self.modelDir+'; python3.8 '+self.modelCompilerPath+'/nnir_update.py --batch-size ' + self.modelBatchSize + ' nnir-files nnir-files)')
                 elif(self.modelFormat == 'onnx'):
-                    os.system('(cd '+self.modelDir+'; python3 '+self.modelCompilerPath+'/onnx_to_nnir.py '+self.trainedModel+' nnir-files --input_dims 1,' + self.modelInputDims + ')')
-                    os.system('(cd '+self.modelDir+'; python3 '+self.modelCompilerPath+'/nnir_update.py --batch-size ' + self.modelBatchSize + ' nnir-files nnir-files)')
+                    os.system('(cd '+self.modelDir+'; python3.8 '+self.modelCompilerPath+'/onnx_to_nnir.py '+self.trainedModel+' nnir-files --input_dims 1,' + self.modelInputDims + ')')
+                    os.system('(cd '+self.modelDir+'; python3.8 '+self.modelCompilerPath+'/nnir_update.py --batch-size ' + self.modelBatchSize + ' nnir-files nnir-files)')
                 elif(self.modelFormat == 'nnef'):
-                    os.system('(cd '+self.modelDir+'; python3 '+self.modelCompilerPath+'/nnef_to_nnir.py '+self.trainedModel+' nnir-files --batch-size ' + self.modelBatchSize + ')')
-                    #os.system('(cd '+self.modelDir+'; python3 '+self.modelCompilerPath+'/nnir_update.py --batch-size ' + self.modelBatchSize + ' nnir-files nnir-files)')
+                    os.system('(cd '+self.modelDir+'; python3.8 '+self.modelCompilerPath+'/nnef_to_nnir.py '+self.trainedModel+' nnir-files --batch-size ' + self.modelBatchSize + ')')
+                    #os.system('(cd '+self.modelDir+'; python3.8 '+self.modelCompilerPath+'/nnir_update.py --batch-size ' + self.modelBatchSize + ' nnir-files nnir-files)')
                 else:
                     print("ERROR: Neural Network Format Not supported, use caffe/onnx/nnef in arugment --model_format")
                     quit()
                 # convert the model to FP16
                 if(self.FP16inference):
-                    os.system('(cd '+self.modelDir+'; python3 '+self.modelCompilerPath+'/nnir_update.py --convert-fp16 1 --fuse-ops 1 nnir-files nnir-files)')
+                    os.system('(cd '+self.modelDir+'; python3.8 '+self.modelCompilerPath+'/nnir_update.py --convert-fp16 1 --fuse-ops 1 nnir-files nnir-files)')
                     print("\nModel Quantized to FP16\n")
                 # convert to openvx
                 if(os.path.exists(self.nnirDir)):
-                    os.system('(cd '+self.modelDir+'; python3 '+self.modelCompilerPath+'/nnir_to_openvx.py nnir-files openvx-files)')
+                    os.system('(cd '+self.modelDir+'; python3.8 '+self.modelCompilerPath+'/nnir_to_openvx.py nnir-files openvx-files)')
                 else:
                     print("ERROR: Converting Pre-Trained model to NNIR Failed")
                     quit()
@@ -295,13 +296,16 @@ class modelInference(QtCore.QObject):
 
         # Setup rocAL Data Loader. 
         rali_batch_size = 1
-        self.raliEngine = InferencePipe(imageValidation, self.modelBatchSizeInt, self.rali_mode, self.c_i, 
+        world_size = 1
+        local_rank = 0
+        device_id = 0
+        self.pipe = Pipeline(batch_size=rali_batch_size, num_threads=1, device_id=0, seed=12 + device_id, rali_cpu=True, tensor_layout = types.NCHW, tensor_dtype=self.tensor_dtype)
+        self.raliEngine = InferencePipe(self.pipe, imageValidation, self.modelBatchSizeInt, self.rali_mode, self.c_i, 
                                     self.h_i, self.w_i, rali_batch_size, self.tensor_dtype, self.Mx, self.Ax, 
                                     tensor_layout = types.NCHW, num_threads=1, device_id=0, 
                                     data_dir=self.inputImageDir, crop=224, rali_cpu=True)
-        #TODO: check if I need verify graph
-        #self.raliEngine.verify_graph()
-        self.imageIterator = RALI_iterator(self.raliEngine)
+        self.imageIterator = RALI_iterator(self.pipe)
+        #self.imageIterator = RALI_iterator(self.raliEngine)
         self.raliList = self.raliEngine.get_rali_list(self.rali_mode, self.modelBatchSizeInt)
         for i in range(self.modelBatchSizeInt):
             self.augStats.append([0,0,0])
@@ -337,7 +341,8 @@ class modelInference(QtCore.QObject):
             while not self.pauseState:
                 msFrame = 0.0
                 start = time.time()
-                image_RGB, image_tensor = self.raliEngine.get_next_augmentation(self.imageIterator)
+                image_RGB_it, image_tensor = self.raliEngine.get_next_augmentation(self.imageIterator)
+                image_RGB = image_RGB_it[0].transpose([1,2,0])
                 image_batch = cv2.cvtColor(image_RGB, cv2.COLOR_RGB2BGR)
                 original_image = image_batch[0:self.h_i, 0:self.w_i]
                 cloned_image = np.copy(image_batch)

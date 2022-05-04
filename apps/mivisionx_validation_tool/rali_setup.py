@@ -1,11 +1,10 @@
 import sys
-#setup python path for RALI
-sys.path.append('/opt/rocm/mivisionx/rali/python/')
 
-from amd.rocal.pipeline import Pipeline
+#from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
 import numpy as np
+import cv2
 
 #batch size = 64
 raliList_mode1_64 = ['original', 'warpAffine', 'contrast', 'rain', 
@@ -111,10 +110,10 @@ raliList_mode5_16 = ['original', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop']
 
 # Class to initialize Rali and call the augmentations 
-# Class to initialize Rali and call the augmentations 
-class InferencePipe(Pipeline):
-    def __init__(self, image_validation, model_batch_size, raliMode, c_img, h_img, w_img, rali_batch_size, tensor_dtype, multiplier, offset, tensor_layout, num_threads, device_id, data_dir, crop, rali_cpu = True):
-        super(InferencePipe, self).__init__(rali_batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
+#class InferencePipe(Pipeline):
+class InferencePipe():
+    def __init__(self, pipe, image_validation, model_batch_size, raliMode, c_img, h_img, w_img, rali_batch_size, tensor_dtype, multiplier, offset, tensor_layout, num_threads, device_id, data_dir, crop, rali_cpu = True):
+        #super(InferencePipe, self).__init__(rali_batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
         #world_size = 1
         #local_rank = 0
         rali_device = 'cpu' if rali_cpu else 'gpu'
@@ -122,9 +121,10 @@ class InferencePipe(Pipeline):
         device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
         host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
         
+        self.pipe = pipe
         self.validation_dict = {}
         self.process_validation(image_validation)
-        self.set_seed(0)
+        self.pipe.set_seed(0)
         self.aug_strength = 0
         self.model_batch_size = model_batch_size
         self.raliMode =  raliMode
@@ -150,249 +150,233 @@ class InferencePipe(Pipeline):
         self.num_shards = 1
 
         #params for contrast
-        self.min_param = self.create_int_param(0)
-        self.max_param = self.create_int_param(255)
+        self.min_param = self.pipe.create_int_param(0)
+        self.max_param = self.pipe.create_int_param(255)
         #param for brightness
-        self.alpha_param = self.create_float_param(1.0)
-        self.beta_param = self.create_float_param(10)
+        self.alpha_param = self.pipe.create_float_param(1.0)
+        self.beta_param = self.pipe.create_float_param(10)
         #param for ColorTemperature     
-        self.adjustment_param = self.create_int_param(0)
-        self.adjustment_param_10 = self.create_int_param(10)
-        self.adjustment_param_20 = self.create_int_param(20)
+        self.adjustment_param = self.pipe.create_int_param(0)
+        self.adjustment_param_10 = self.pipe.create_int_param(10)
+        self.adjustment_param_20 = self.pipe.create_int_param(20)
         #param for exposure
-        self.shift_param = self.create_float_param(0.0)
+        self.shift_param = self.pipe.create_float_param(0.0)
         #param for SnPNoise
-        self.sdev_param = self.create_float_param(0.0)
+        self.sdev_param = self.pipe.create_float_param(0.0)
         #param for gamma
-        self.gamma_shift_param = self.create_float_param(0.0)
+        self.gamma_shift_param = self.pipe.create_float_param(0.0)
         #param for rotate
-        self.degree_param = self.create_float_param(0.0)
-        self.degree_param_150 = self.create_float_param(150.0)
-        self.degree_param_45 = self.create_float_param(45.0)
+        self.degree_param = self.pipe.create_float_param(0.0)
+        self.degree_param_150 = self.pipe.create_float_param(150.0)
+        self.degree_param_45 = self.pipe.create_float_param(45.0)
         #param for lens correction
-        self.strength_param = self.create_float_param(1.5)
-        self.zoom_param = self.create_float_param(2.0)
+        self.strength_param = self.pipe.create_float_param(1.5)
+        self.zoom_param = self.pipe.create_float_param(2.0)
         #params for flip
-        self.flip_param = self.create_int_param(1)
+        self.flip_param = self.pipe.create_int_param(1)
         #param for snow
-        self.snow_param = self.create_float_param(0.1)
+        self.snow_param = self.pipe.create_float_param(0.1)
         #param for rain
-        self.rain_param = self.create_float_param(0.1)
-        self.rain_width_param = self.create_int_param(2)
-        self.rain_height_param = self.create_int_param(15)
-        self.rain_transparency_param = self.create_float_param(0.25)
+        self.rain_param = self.pipe.create_float_param(0.1)
+        self.rain_width_param = self.pipe.create_int_param(2)
+        self.rain_height_param = self.pipe.create_int_param(15)
+        self.rain_transparency_param = self.pipe.create_float_param(0.25)
         #param for blur
-        self.blur_param = self.create_int_param(5)
+        self.blur_param = self.pipe.create_int_param(5)
         #param for jitter
-        self.kernel_size = self.create_int_param(3)
+        self.kernel_size = self.pipe.create_int_param(3)
         #param for warp affine
         self.affine_matrix_param = [0.35,0.25,0.75,1,1,1]
         self.affine_matrix_1_param = [0.5, 0 , 0, 2, 1, 1]
         self.affine_matrix_2_param = [2, 0, 0, 1, 1, 1]
         #param for vignette
-        self.vignette_param = self.create_float_param(50)
+        self.vignette_param = self.pipe.create_float_param(50)
         #param for blend
-        self.blend_param = self.create_float_param(0.5)
+        self.blend_param = self.pipe.create_float_param(0.5)
 
         #rali list of augmentation
         self.rali_list = None
 
         #read file and decode images - common for all rali modes
-        self.jpegs, self.labels = fn.readers.file(file_root=self.data_path)
-        self.decoded_images = fn.decoders.image(self.jpegs, device=decoder_device, output_type=types.RGB,
-                                            device_memory_padding=device_memory_padding,
-                                            host_memory_padding=host_memory_padding,
-                                            file_root=self.data_path, shard_id=self.shard_id, num_shards=self.num_shards, random_shuffle=self.random_shuffle)
-        self.input = fn.resize(self.decoded_images, device=rali_device, resize_x=crop, resize_y=crop)
-        if model_batch_size == 16:
-            if raliMode == 1:
-                self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
+        #pipe = Pipeline(batch_size=self.rali_batch_size, num_threads=num_threads, device_id=local_rank, seed=12 + device_id, rali_cpu=rali_cpu, tensor_layout=self.tensor_layout , tensor_dtype=self.tensor_dtype)
+        with self.pipe:
+            self.jpegs, self.labels = fn.readers.file(file_root=self.data_dir)
+            self.decoded_images = fn.decoders.image(self.jpegs, device=decoder_device, output_type=types.RGB,
+                                                device_memory_padding=device_memory_padding,
+                                                host_memory_padding=host_memory_padding,
+                                                file_root=self.data_dir, shard_id=self.shard_id, num_shards=self.num_shards, random_shuffle=self.random_shuffle)
+            self.input = fn.resize(self.decoded_images, device=rali_device, resize_x=crop, resize_y=crop)
+            if model_batch_size == 16:
+                if raliMode == 1:
+                    self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
+                    self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
+                    self.rain_img = fn.rain(self.input, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
+                    self.bright_img = fn.brightness_fixed(self.input, alpha=self.alpha_param, beta= self.beta_param)
+                    self.temp_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param)
+                    self.exposed_img = fn.exposure(self.input, exposure=self.shift_param)
+                    self.vignette_img = fn.vignette(self.input, vignette = self.vignette_param)
+                    self.blur_img = fn.blur(self.input, blur = self.blur_param)
+                    self.snow_img = fn.snow(self.input, snow=self.snow_param)
+                    self.pixelate_img = fn.pixelate(self.input)
+                    self.snp_img = fn.snp_noise(self.input, snpNoise=self.sdev_param)
+                    self.gamma_img = fn.gamma_correction(self.input, gamma=self.gamma_shift_param)
+                    self.rotate_img = fn.rotate(self.input, angle=self.degree_param)
+                    self.flip_img = fn.flip(self.input, flip=self.flip_param)
+                    self.blend_img = fn.blend(self.input, self.contrast_img)
 
-                self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
-                self.rain_img = fn.rain(self.input, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
+                    # set outputs for this mode
+                    self.pipe.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
+                                    self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
+                                    self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
+                elif raliMode == 2:
+                    self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
+                    self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
+                    self.rain_img = fn.rain(self.contrast_img, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
+                    self.bright_img = fn.brightness_fixed(self.input, alpha=self.alpha_param, beta= self.beta_param)
+                    self.temp_img = fn.color_temp(self.bright_img, adjustment_value=self.adjustment_param)
+                    self.exposed_img = fn.exposure(self.input, exposure=self.shift_param)
+                    self.vignette_img = fn.vignette(self.exposed_img, vignette = self.vignette_param)
+                    self.blur_img = fn.blur(self.input, blur = self.blur_param)
+                    self.snow_img = fn.snow(self.blur_img, snow=self.snow_param)
+                    self.pixelate_img = fn.pixelate(self.input)
+                    self.snp_img = fn.snp_noise(self.pixelate_img, snpNoise=self.sdev_param)
+                    self.gamma_img = fn.gamma_correction(self.input, gamma=self.gamma_shift_param)
+                    self.rotate_img = fn.rotate(self.input, angle=self.degree_param)
+                    self.flip_img = fn.flip(self.rotate_img, flip=self.flip_param)
+                    self.blend_img = fn.blend(self.input, self.contrast_img)
 
-                #TODO: check brightness params -- seems like no alpha & beta
-                self.bright_img = fn.brightness(self.input, alpha=self.alpha_param, beta= self.beta_param)
-                self.temp_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param)
+                    # set outputs for this mode
+                    self.pipe.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
+                                    self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
+                                    self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
+                elif raliMode == 3:
+                    self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
+                    self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
+                    self.rain_img = fn.rain(self.warped, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
+                    self.bright_img = fn.brightness_fixed(self.input, alpha=self.alpha_param, beta= self.beta_param)
+                    self.temp_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param)
+                    self.exposed_img = fn.exposure(self.input, exposure=self.shift_param)
+                    self.vignette_img = fn.vignette(self.input, vignette = self.vignette_param)
+                    self.blur_img = fn.blur(self.input, blur = self.blur_param)
+                    self.snow_img = fn.snow(self.vignette_img, snow=self.snow_param)
+                    self.pixelate_img = fn.pixelate(self.input)
+                    self.gamma_img = fn.gamma_correction(self.input, gamma=self.gamma_shift_param)
+                    self.snp_img = fn.snp_noise(self.gamma_img, snpNoise=self.sdev_param)
+                    self.rotate_img = fn.rotate(self.input, angle=self.degree_param)
+                    self.flip_img = fn.flip(self.pixelate_img, flip=self.flip_param)
+                    self.blend_img = fn.blend(self.input, self.contrast_img)
+                    
+                    # set outputs for this mode
+                    self.pipe.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
+                                    self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
+                                    self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
+                elif raliMode == 4:
+                    for i in range(15):
+                        self.copy_img = fn.copy(self.input)
+                    # set outputs for this mode
+                    self.pipe.set_outputs(self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
+                                    self.copy_img)
+                elif raliMode == 5:
+                    for i in range(15):
+                        self.nop_img = fn.nop(self.input, True)
+                    # set outputs for this mode
+                    self.pipe.set_outputs(self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img)
+            elif model_batch_size == 64:
+                if raliMode == 1:
+                    self.rot150_img = fn.rotate(self.input, angle=self.degree_param_150)
+                    self.flip_img = fn.flip(self.input, flip=self.flip_param)
+                    self.rot45_img = fn.rotate(self.input, angle=self.degree_param_45)
 
-                self.exposed_img = fn.exposure(self.input, exposure=self.shift_param)
-                self.vignette_img = fn.vignette(self.input, vignette = self.vignette_param)
-                self.blur_img = fn.blur(self.input, blur = self.blur_param)
-                self.snow_img = fn.snow(self.input, snow=self.snow_param)
+                    self.setof16_mode1(self.pipe, self.input)
+                    self.setof16_mode1(self.pipe, self.rot45_img)
+                    self.setof16_mode1(self.pipe, self.flip_img)
+                    self.setof16_mode1(self.pipe, self.rot150_img)
+                    
+                elif raliMode == 2:
+                    #self.warpAffine2_img = self.warpAffine(self.input, False, [[1.5,0],[0,1],[None,None]])
+                    self.warpAffine1_img = fn.warp_affine(self.input, matrix=self.affine_matrix_1_param) #squeeze
+                    self.fishEye_img = fn.fish_eye(self.input)
+                    self.lensCorrection_img = fn.lens_correction(self.input, strength = self.strength_param, zoom = self.zoom_param)
 
-                self.pixelate_img = fn.pixelate(self.input)
-                self.snp_img = fn.snp_noise(self.input, snpNoise=self.sdev_param)
-                self.gamma_img = fn.gamma_correction(self.input, gamma=self.gamma_shift_param)
-                self.rotate_img = fn.rotate(self.input, angle=self.degree_param)
-                self.flip_img = fn.flip(self.input, flip=self.flip_param)
+                    self.setof16_mode1(self.pipe, self.input)
+                    self.setof16_mode1(self.pipe, self.warpAffine1_img)
+                    self.setof16_mode1(self.pipe, self.fishEye_img)
+                    self.setof16_mode1(self.pipe, self.lensCorrection_img)
 
-                #TODO: blend parameter -- check
-                self.blend_img = fn.blend(self.input, self.contrast_img)
+                elif raliMode == 3:
+                    self.colorTemp1_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param_10)
+                    self.colorTemp2_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param_20)
+                    self.warpAffine2_img = fn.warp_affine(self.input, matrix=self.affine_matrix_2_param) #stretch
 
-                # set outputs for this mode
-                self.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
-                                self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
-                                self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
-            elif raliMode == 2:
-                self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
-
-                self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
-                self.rain_img = fn.rain(self.contrast_img, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
-
-                #TODO: check brightness params -- seems like no alpha & beta
-                self.bright_img = fn.brightness(self.input, alpha=self.alpha_param, beta= self.beta_param)
-                self.temp_img = fn.color_temp(self.bright_img, adjustment_value=self.adjustment_param)
-
-                self.exposed_img = fn.exposure(self.input, exposure=self.shift_param)
-                self.vignette_img = fn.vignette(self.exposed_img, vignette = self.vignette_param)
-                self.blur_img = fn.blur(self.input, blur = self.blur_param)
-                self.snow_img = fn.snow(self.blur_img, snow=self.snow_param)
-
-                self.pixelate_img = fn.pixelate(self.input)
-                self.snp_img = fn.snp_noise(self.pixelate_img, snpNoise=self.sdev_param)
-                self.gamma_img = fn.gamma_correction(self.input, gamma=self.gamma_shift_param)
-                self.rotate_img = fn.rotate(self.input, angle=self.degree_param)
-                self.flip_img = fn.flip(self.rotate_img, flip=self.flip_param)
-
-                #TODO: blend parameter -- check
-                self.blend_img = fn.blend(self.input, self.contrast_img)
-
-                # set outputs for this mode
-                self.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
-                                self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
-                                self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
-            elif raliMode == 3:
-                self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
-
-                self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
-                self.rain_img = fn.rain(self.warped, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
-
-                #TODO: check brightness params -- seems like no alpha & beta
-                self.bright_img = fn.brightness(self.input, alpha=self.alpha_param, beta= self.beta_param)
-                self.temp_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param)
-
-                self.exposed_img = fn.exposure(self.input, exposure=self.shift_param)
-                self.vignette_img = fn.vignette(self.input, vignette = self.vignette_param)
-                self.blur_img = fn.blur(self.input, blur = self.blur_param)
-                self.snow_img = fn.snow(self.vignette_img, snow=self.snow_param)
-
-                self.pixelate_img = fn.pixelate(self.input)
-                self.gamma_img = fn.gamma_correction(self.input, gamma=self.gamma_shift_param)
-                self.snp_img = fn.snp_noise(self.gamma_img, snpNoise=self.sdev_param)
-                self.rotate_img = fn.rotate(self.input, angle=self.degree_param)
-                self.flip_img = fn.flip(self.pixelate_img, flip=self.flip_param)
-
-                #TODO: blend parameter -- check
-                self.blend_img = fn.blend(self.input, self.contrast_img)
-                
-                # set outputs for this mode
-                self.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
-                                self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
-                                self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
-            elif raliMode == 4:
-                for i in range(15):
-                    self.copy_img = fn.copy(self.input)
-                # set outputs for this mode
-                self.set_outputs(self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
-                                self.copy_img)
-            elif raliMode == 5:
-                for i in range(15):
-                    self.nop_img = fn.nop(self.input, True)
-                # set outputs for this mode
-                self.set_outputs(self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img)
-        elif model_batch_size == 64:
-            if raliMode == 1:
-                self.rot150_img = fn.rotate(self.input, angle=self.degree_param_150)
-                self.flip_img = fn.flip(self.input, flip=self.flip_param)
-                self.rot45_img = fn.rotate(self.input, angle=self.degree_param_45)
-
-                self.setof16_mode1(self.input)
-                self.setof16_mode1(self.rot45_img)
-                self.setof16_mode1(self.flip_img)
-                self.setof16_mode1(self.rot150_img)
-                
-            elif raliMode == 2:
-                #self.warpAffine2_img = self.warpAffine(self.input, False, [[1.5,0],[0,1],[None,None]])
-                self.warpAffine1_img = fn.warp_affine(self.input, matrix=self.affine_matrix_1_param) #squeeze
-                self.fishEye_img = fn.fish_eye(self.input)
-                self.lensCorrection_img = fn.lens_correction(self.input, strength = self.strength_param, zoom = self.zoom_param)
-
-                self.setof16_mode1(self.input)
-                self.setof16_mode1(self.warpAffine1_img)
-                self.setof16_mode1(self.fishEye_img)
-                self.setof16_mode1(self.lensCorrection_img)
-
-            elif raliMode == 3:
-                self.colorTemp1_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param_10)
-                self.colorTemp2_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param_20)
-                self.warpAffine2_img = fn.warp_affine(self.input, matrix=self.affine_matrix_2_param) #stretch
-
-                self.setof16_mode1(self.input)
-                self.setof16_mode1(self.colorTemp1_img)
-                self.setof16_mode1(self.colorTemp2_img)
-                self.setof16_mode1(self.warpAffine2_img)
-            elif raliMode == 4:
-                for i in range(63):
-                    self.copy_img = fn.copy(self.input)
-                # set outputs for this mode
-                self.set_outputs(self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
-                                self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
-                                self.copy_img)
-            elif raliMode == 5:	
-                for i in range(63):
-                    self.nop_img = fn.nop(self.input, True)
-                # set outputs for this mode
-                self.set_outputs(self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
-                                self.nop_img)
+                    self.setof16_mode1(self.pipe, self.input)
+                    self.setof16_mode1(self.pipe, self.colorTemp1_img)
+                    self.setof16_mode1(self.pipe, self.colorTemp2_img)
+                    self.setof16_mode1(self.pipe, self.warpAffine2_img)
+                elif raliMode == 4:
+                    for i in range(63):
+                        self.copy_img = fn.copy(self.input)
+                    # set outputs for this mode
+                    self.pipe.set_outputs(self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
+                                    self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
+                                    self.copy_img)
+                elif raliMode == 5:	
+                    for i in range(63):
+                        self.nop_img = fn.nop(self.input, True)
+                    # set outputs for this mode
+                    self.pipe.set_outputs(self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
+                                    self.nop_img)
         #rali iterator
-        if self.build() != 0:
-            raise Exception('Failed to build the augmentation graph')
+        self.pipe.build()
         self.tensor_format =tensor_layout
         self.multiplier = multiplier
         self.offset = offset
         self.reverse_channels = False
         self.tensor_dtype = tensor_dtype
-        self.w = self.getOutputWidth()
-        self.h = self.getOutputHeight()
-        self.b = self.getBatchSize()
-        self.n = self.raliGetAugmentationBranchCount()
-        color_format = self.getOutputColorFormat()
-        self.p = (1 if color_format is ColorFormat.IMAGE_U8 else 3)
+        self.w = self.pipe.getOutputWidth()
+        self.h = self.pipe.getOutputHeight()
+        #TODO: getBatchSize function not available
+        self.b = self.pipe._batch_size
+        #self.b = self.rali_batch_size
+        #TODO: raliGetAugmentationBranchCount function not available
+        self.n = self.pipe.getOutputImageCount()
+        #self.n = self.model_batch_size
+        color_format = self.pipe.getOutputColorFormat()
+        self.p = (1 if color_format is types.GRAY else 3)
         height = self.h*self.n
         self.out_image = np.zeros((height, self.w, self.p), dtype = "uint8")
-        self.out_tensor = np.zeros(( self.b*self.n, self.p, self.h/self.b, self.w,), dtype = "float32")
+        self.out_tensor = np.zeros(( self.b*self.n, self.p, int(self.h/self.b), self.w,), dtype = "float32")
 
     def get_input_name(self):
         self.img_names_length = np.empty(self.rali_batch_size, dtype="int32")
-        self.img_names_size = self.GetImageNameLen(self.img_names_length)
+        self.img_names_size = self.pipe.GetImageNameLen(self.img_names_length)
         # Images names of a batch
-        self.Img_name = self.GetImageName(self.img_names_size)
+        self.Img_name = self.pipe.GetImageName(self.img_names_size)
         return self.Img_name.decode()
 
     def process_validation(self, validation_list):
@@ -407,9 +391,7 @@ class InferencePipe(Pipeline):
         self.warped = fn.warp_affine(input_image, matrix=self.affine_matrix_param)
         self.contrast_img = fn.contrast(input_image, min_contrast=self.min_param, max_contrast=self.max_param)
         self.rain_img = fn.rain(input_image, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
-
-        #TODO: check brightness params -- seems like no alpha & beta
-        self.bright_img = fn.brightness(input_image, alpha=self.alpha_param, beta= self.beta_param)
+        self.bright_img = fn.brightness_fixed(input_image, alpha=self.alpha_param, beta= self.beta_param)
         self.temp_img = fn.color_temp(input_image, adjustment_value=self.adjustment_param)
         self.exposed_img = fn.exposure(input_image, exposure=self.shift_param)
         self.vignette_img = fn.vignette(input_image, vignette = self.vignette_param)
@@ -420,12 +402,10 @@ class InferencePipe(Pipeline):
         self.gamma_img = fn.gamma_correction(input_image, gamma=self.gamma_shift_param)
         self.rotate_img = fn.rotate(input_image, angle=self.degree_param)
         self.flip_img = fn.flip(input_image, flip=self.flip_param)
-
-        #TODO: blend parameter -- check
         self.blend_img = fn.blend(input_image, self.contrast_img)
 
         # set outputs for this mode
-        self.set_outputs(input_image, self.warped, self.contrast_img, self.rain_img, self.bright_img,
+        self.pipe.set_outputs(input_image, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                         self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
                         self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
 
@@ -459,29 +439,32 @@ class InferencePipe(Pipeline):
         self.update_float_param(gamma_shift, self.gamma_shift_param)
 
     def renew_parameters(self):
-        curr_degree = self.get_float_value(self.degree_param)
+        curr_degree = self.pipe.get_float_value(self.degree_param)
         #values for rotation change
         degree = self.aug_strength * 100
-        self.update_float_param(curr_degree+degree, self.degree_param)
+        self.pipe.update_float_param(curr_degree+degree, self.degree_param)
 
     def start_iterator(self):
         #self.reset()
         self.raliResetLoaders()
         
     def get_next_augmentation(self, imageIterator):
-        if self.isEmpty() == 1:
+        if self.pipe.isEmpty() == 1:
             return -1
             #raise StopIteration
         self.renew_parameters()
+        #TODO: no next in RALI_iterator???
         self.out_image = imageIterator.next()
         # print(type(self.out_tensor))
         # print(self.out_tensor.dtype)
         # print(self.out_tensor.nbytes)
         # print (self.out_tensor.shape)
         if(types.NCHW == self.tensor_layout):
-            self.copyToTensorNCHW(self.out_tensor, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            self.pipe.copyToTensorNCHW(self.out_tensor, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
-            self.copyToTensorNHWC(self.out_tensor, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            self.pipe.copyToTensorNHWC(self.out_tensor, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+
+        #TODO: self.out_image not a numeric tuple error, unless it do out_image[0]
         return self.out_image, self.out_tensor
 
     def get_rali_list(self, raliMode, model_batch_size):

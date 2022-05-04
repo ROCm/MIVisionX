@@ -54,7 +54,7 @@ static inline int num_hw_devices() {
         if(line.find("card") != std::string::npos)
           num_hw_devices++;
     }
-    status = std::system("rm vapi_cmd.txt");
+    status = std::system("rm vaapi_cmd.txt");
     if (status < 0)
       WRN("HardwareJpegDecoder::Couldn't remove intermediate file");
 

@@ -22,7 +22,12 @@ THE SOFTWARE.
 #ifdef RALI_VIDEO
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <commons.h>
+#include <fstream>
+#include <string.h>
+//#include <sys/stat.h>
+
 #include "hw_jpeg_decoder.h"
 #include <boost/filesystem.hpp>
 
@@ -36,16 +41,23 @@ struct buffer_data {
 };
 
 static inline int num_hw_devices() {
-    char device[128] = "";
     int num_hw_devices = 0;
-    for (int i=0; i<10000; i++){
-        snprintf(device, sizeof(device), "/dev/dri/renderD%d", 128 + i);
-        // check  if the device file exists in the system: todo:: is there any other way to enumerate the device?
-        if (filesys::exists(device))
-            num_hw_devices++;
-        else
-            break;
+    std::string line;
+    int status = std::system("ls -l /dev/dri/by-path >vaapi_cmd.txt");
+    if (status < 0)
+      return num_hw_devices;
+
+    std::ifstream in_ifs("vaapi_cmd.txt");
+    if (in_ifs.fail()) return num_hw_devices;
+    while (std::getline(in_ifs, line))
+    {
+        if(line.find("card") != std::string::npos)
+          num_hw_devices++;
     }
+    status = std::system("rm vapi_cmd.txt");
+    if (status < 0)
+      WRN("HardwareJpegDecoder::Couldn't remove intermediate file");
+
     return num_hw_devices;
 }
 
@@ -57,7 +69,6 @@ static enum AVPixelFormat get_vaapi_format(AVCodecContext *ctx, const enum AVPix
         if (*p == AV_PIX_FMT_VAAPI)
             return *p;
     }
-    //vxAddLogEntry((vx_reference)node, VX_ERROR_NOT_SUPPORTED, "ERROR: Failed to create specified HW device.\n");
     WRN("HardwareJpegDecoder::Unable to decode using VA-API");
 
     return AV_PIX_FMT_NONE;
@@ -71,7 +82,7 @@ static int ReadFunc(void* ptr, uint8_t* buf, int buf_size)
 
     if (!buf_size)
         return AVERROR_EOF;
-    printf("ptr:%p size:%zu\n", bd->ptr, bd->size);
+    //printf("ptr:%p size:%zu\n", bd->ptr, bd->size);
 
     /* copy internal buffer data to buf */
     memcpy(buf, bd->ptr, buf_size);
@@ -87,7 +98,7 @@ void HWJpegDecoder::initialize(int dev_id){
     char* pdevice = NULL;
     int num_devices = 1; // default;
     num_devices = num_hw_devices();
-    if (dev_id >= 0 && dev_id < 10000) {
+    if (dev_id >= 0) {
         snprintf(device, sizeof(device), "/dev/dri/renderD%d", (128 + (dev_id % num_devices)));
         pdevice = device;
     }

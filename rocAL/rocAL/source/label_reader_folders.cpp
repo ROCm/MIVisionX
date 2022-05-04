@@ -91,7 +91,7 @@ void LabelReaderFolders::lookup(const std::vector<std::string>& image_names)
         WRN("No image names passed")
         return;
     }
-    if(image_names.size() != (unsigned)_output->size())   
+    if(image_names.size() != (unsigned)_output->size())
         _output->resize(image_names.size());
 
     for(unsigned i = 0; i < image_names.size(); i++)
@@ -113,7 +113,7 @@ void LabelReaderFolders::read_all(const std::string& _path)
     std::vector<std::string> entry_name_list;
     std::string _full_path = _folder_path;
 
-    while((_entity = readdir (_sub_dir)) != nullptr) 
+    while((_entity = readdir (_sub_dir)) != nullptr)
     {
         std::string entry_name(_entity->d_name);
         if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) continue;
@@ -121,7 +121,7 @@ void LabelReaderFolders::read_all(const std::string& _path)
     }
     std::sort(entry_name_list.begin(), entry_name_list.end());
     closedir(_sub_dir);
-
+    uint dir_counter = 0;
     for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
         std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
         filesys::path pathObj(subfolder_path);
@@ -142,14 +142,15 @@ void LabelReaderFolders::read_all(const std::string& _path)
         }
         else if(filesys::exists(pathObj) && filesys::is_directory(pathObj))
         {
+            dir_counter++;
             _folder_path = subfolder_path;
             _subfolder_file_names.clear();
             read_files(_folder_path);
             for(unsigned i = 0; i < _subfolder_file_names.size(); i++) {
-                add(_subfolder_file_names[i], dir_count);
+                add(_subfolder_file_names[i], dir_counter);
             }
         }
-    }  
+    }
 }
 
 void LabelReaderFolders::read_files(const std::string& _path)

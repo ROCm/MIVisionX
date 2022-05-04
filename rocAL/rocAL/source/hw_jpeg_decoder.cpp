@@ -26,12 +26,7 @@ THE SOFTWARE.
 #include <commons.h>
 #include <fstream>
 #include <string.h>
-//#include <sys/stat.h>
-
 #include "hw_jpeg_decoder.h"
-#include <boost/filesystem.hpp>
-
-namespace filesys = boost::filesystem;
 
 #define AVIO_CONTEXT_BUF_SIZE   32768     //32K
 

@@ -78,7 +78,6 @@ class InferenceViewer(QtWidgets.QMainWindow):
             self.rali_white_pixmap = QPixmap("./data/images/RALI-white.png")
             self.graph_image_pixmap = QPixmap("./data/images/Graph-image.png")
             self.graph_image_white_pixmap = QPixmap("./data/images/Graph-image-white.png")
-            
             self.initUI()
             self.updateTimer = QTimer()
             self.updateTimer.timeout.connect(self.update)
@@ -195,6 +194,8 @@ class InferenceViewer(QtWidgets.QMainWindow):
         top5 = totalStats[1]
         mis = totalStats[2]
         totalCount = top5 + mis
+        if totalCount == 0:
+            totalCount = totalCount + 1 # to avoid division by zero
         self.totalAccuracy = (float)(top5) / (totalCount+1) * 100
         self.total_progressBar.setValue(totalCount)
         self.total_progressBar.setMaximum(self.total_images*self.batch_size_int)
@@ -255,6 +256,7 @@ class InferenceViewer(QtWidgets.QMainWindow):
             self.origImage_layout.itemAt(self.lastIndex).widget().setStyleSheet("border: 0");
             self.imgCount += 1
             self.lastIndex = index
+        
 
     def showAugImage(self):
         if not self.augImageQueue.empty():

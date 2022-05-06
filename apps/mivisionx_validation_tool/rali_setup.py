@@ -227,7 +227,7 @@ class InferencePipe():
                     # set outputs for this mode
                     self.pipe.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                                     self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
-                                    self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
+                                    self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img, self.blend_img)
                 elif raliMode == 2:
                     self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
                     self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
@@ -248,7 +248,7 @@ class InferencePipe():
                     # set outputs for this mode
                     self.pipe.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                                     self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
-                                    self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
+                                    self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img, self.blend_img)
                 elif raliMode == 3:
                     self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
                     self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
@@ -269,7 +269,7 @@ class InferencePipe():
                     # set outputs for this mode
                     self.pipe.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                                     self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
-                                    self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
+                                    self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img, self.blend_img)
                 elif raliMode == 4:
                     for i in range(15):
                         self.copy_img = fn.copy(self.input)
@@ -366,6 +366,7 @@ class InferencePipe():
         #TODO: raliGetAugmentationBranchCount function not available
         self.n = self.pipe.getOutputImageCount()
         #self.n = self.model_batch_size
+        print("slef.b && self.n = ", self.b , self.n)
         color_format = self.pipe.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
         height = self.h*self.n

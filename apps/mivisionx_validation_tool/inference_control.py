@@ -175,10 +175,10 @@ class InferenceControl(QtWidgets.QMainWindow):
                         self.format_comboBox.setEnabled(False)
 
     def checkInput(self):
-        if not self.file_lineEdit.text().isEmpty() and not self.name_lineEdit.text().isEmpty() \
-            and not self.idims_lineEdit.text().isEmpty() \
-            and not self.odims_lineEdit.text().isEmpty() and not self.output_lineEdit.text().isEmpty() \
-            and not self.label_lineEdit.text().isEmpty() and not self.image_lineEdit.text().isEmpty():
+        if self.file_lineEdit.text() and self.name_lineEdit.text() \
+            and self.idims_lineEdit.text() and self.odims_lineEdit.text() \
+            and self.output_lineEdit.text() and self.label_lineEdit.text() \
+            and self.image_lineEdit.text():
                 self.run_pushButton.setEnabled(True)
                 self.run_pushButton.setStyleSheet("background-color: lightgreen")
         else:

@@ -84,7 +84,7 @@ class modelInference(QtCore.QObject):
 
         super(modelInference, self).__init__(parent)
         self.modelCompilerPath = '/home/lakshmi/work/lk/MIVisionX/model_compiler/python'
-        self.ADATPath= '/home/lakshmi/mivisionx/toolkit/analysis_and_visualization/classification'
+        self.ADATPath= '/home/lakshmi/mivisionx/toolkit/amd_data_analysis_toolkit/analysis_and_visualization/classification'
         self.setupDir = '~/.mivisionx-validation-tool'
 
         self.analyzerDir = os.path.expanduser(self.setupDir)
@@ -339,7 +339,7 @@ class modelInference(QtCore.QObject):
                 msFrame = 0.0
                 start = time.time()
                 image_RGB_it, image_tensor = self.raliEngine.get_next_augmentation(self.imageIterator)
-                image_RGB = image_RGB_it[0].transpose([1,2,0])
+                image_RGB = image_RGB_it[0]
                 image_batch = cv2.cvtColor(image_RGB, cv2.COLOR_RGB2BGR)
                 original_image = image_batch[0:self.h_i, 0:self.w_i]
                 cloned_image = np.copy(image_batch)

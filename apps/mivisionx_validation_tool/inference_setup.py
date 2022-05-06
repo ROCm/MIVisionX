@@ -305,7 +305,6 @@ class modelInference(QtCore.QObject):
                                     tensor_layout = types.NCHW, num_threads=1, device_id=0, 
                                     data_dir=self.inputImageDir, crop=224, rali_cpu=True)
         self.imageIterator = RALI_iterator(self.pipe)
-        #self.imageIterator = RALI_iterator(self.raliEngine)
         self.raliList = self.raliEngine.get_rali_list(self.rali_mode, self.modelBatchSizeInt)
         for i in range(self.modelBatchSizeInt):
             self.augStats.append([0,0,0])

@@ -110,12 +110,8 @@ raliList_mode5_16 = ['original', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop']
 
 # Class to initialize Rali and call the augmentations 
-#class InferencePipe(Pipeline):
 class InferencePipe():
     def __init__(self, pipe, image_validation, model_batch_size, raliMode, c_img, h_img, w_img, rali_batch_size, tensor_dtype, multiplier, offset, tensor_layout, num_threads, device_id, data_dir, crop, rali_cpu = True):
-        #super(InferencePipe, self).__init__(rali_batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
-        #world_size = 1
-        #local_rank = 0
         rali_device = 'cpu' if rali_cpu else 'gpu'
         decoder_device = 'cpu' if rali_cpu else 'mixed'
         device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
@@ -198,7 +194,6 @@ class InferencePipe():
         self.rali_list = None
 
         #read file and decode images - common for all rali modes
-        #pipe = Pipeline(batch_size=self.rali_batch_size, num_threads=num_threads, device_id=local_rank, seed=12 + device_id, rali_cpu=rali_cpu, tensor_layout=self.tensor_layout , tensor_dtype=self.tensor_dtype)
         with self.pipe:
             self.jpegs, self.labels = fn.readers.file(file_root=self.data_dir)
             self.decoded_images = fn.decoders.image(self.jpegs, device=decoder_device, output_type=types.RGB,
@@ -360,13 +355,8 @@ class InferencePipe():
         self.tensor_dtype = tensor_dtype
         self.w = self.pipe.getOutputWidth()
         self.h = self.pipe.getOutputHeight()
-        #TODO: getBatchSize function not available
         self.b = self.pipe._batch_size
-        #self.b = self.rali_batch_size
-        #TODO: raliGetAugmentationBranchCount function not available
         self.n = self.pipe.getOutputImageCount()
-        #self.n = self.model_batch_size
-        print("slef.b && self.n = ", self.b , self.n)
         color_format = self.pipe.getOutputColorFormat()
         self.p = (1 if color_format is types.GRAY else 3)
         height = self.h*self.n
@@ -446,7 +436,6 @@ class InferencePipe():
         self.pipe.update_float_param(curr_degree+degree, self.degree_param)
 
     def start_iterator(self):
-        #self.reset()
         self.raliResetLoaders()
         
     def get_next_augmentation(self, imageIterator):
@@ -454,18 +443,12 @@ class InferencePipe():
             return -1
             #raise StopIteration
         self.renew_parameters()
-        #TODO: no next in RALI_iterator???
         self.out_image = imageIterator.next()
-        # print(type(self.out_tensor))
-        # print(self.out_tensor.dtype)
-        # print(self.out_tensor.nbytes)
-        # print (self.out_tensor.shape)
         if(types.NCHW == self.tensor_layout):
             self.pipe.copyToTensorNCHW(self.out_tensor, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
             self.pipe.copyToTensorNHWC(self.out_tensor, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
 
-        #TODO: self.out_image not a numeric tuple error, unless it do out_image[0]
         return self.out_image, self.out_tensor
 
     def get_rali_list(self, raliMode, model_batch_size):

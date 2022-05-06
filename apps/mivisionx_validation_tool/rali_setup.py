@@ -1,10 +1,6 @@
-import sys
-
-#from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
 import numpy as np
-import cv2
 
 #batch size = 64
 raliList_mode1_64 = ['original', 'warpAffine', 'contrast', 'rain', 
@@ -287,10 +283,10 @@ class InferencePipe():
                     self.flip_img = fn.flip(self.input, flip=self.flip_param)
                     self.rot45_img = fn.rotate(self.input, angle=self.degree_param_45)
 
-                    self.setof16_mode1(self.pipe, self.input)
-                    self.setof16_mode1(self.pipe, self.rot45_img)
-                    self.setof16_mode1(self.pipe, self.flip_img)
-                    self.setof16_mode1(self.pipe, self.rot150_img)
+                    self.setof16_mode1(self.input)
+                    self.setof16_mode1(self.rot45_img)
+                    self.setof16_mode1(self.flip_img)
+                    self.setof16_mode1(self.rot150_img)
                     
                 elif raliMode == 2:
                     #self.warpAffine2_img = self.warpAffine(self.input, False, [[1.5,0],[0,1],[None,None]])
@@ -298,20 +294,20 @@ class InferencePipe():
                     self.fishEye_img = fn.fish_eye(self.input)
                     self.lensCorrection_img = fn.lens_correction(self.input, strength = self.strength_param, zoom = self.zoom_param)
 
-                    self.setof16_mode1(self.pipe, self.input)
-                    self.setof16_mode1(self.pipe, self.warpAffine1_img)
-                    self.setof16_mode1(self.pipe, self.fishEye_img)
-                    self.setof16_mode1(self.pipe, self.lensCorrection_img)
+                    self.setof16_mode1(self.input)
+                    self.setof16_mode1(self.warpAffine1_img)
+                    self.setof16_mode1(self.fishEye_img)
+                    self.setof16_mode1(self.lensCorrection_img)
 
                 elif raliMode == 3:
                     self.colorTemp1_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param_10)
                     self.colorTemp2_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param_20)
                     self.warpAffine2_img = fn.warp_affine(self.input, matrix=self.affine_matrix_2_param) #stretch
 
-                    self.setof16_mode1(self.pipe, self.input)
-                    self.setof16_mode1(self.pipe, self.colorTemp1_img)
-                    self.setof16_mode1(self.pipe, self.colorTemp2_img)
-                    self.setof16_mode1(self.pipe, self.warpAffine2_img)
+                    self.setof16_mode1(self.input)
+                    self.setof16_mode1(self.colorTemp1_img)
+                    self.setof16_mode1(self.colorTemp2_img)
+                    self.setof16_mode1(self.warpAffine2_img)
                 elif raliMode == 4:
                     for i in range(63):
                         self.copy_img = fn.copy(self.input)
@@ -398,7 +394,7 @@ class InferencePipe():
         # set outputs for this mode
         self.pipe.set_outputs(input_image, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                         self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
-                        self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img)
+                        self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img, self.blend_img)
 
     def updateAugmentationParameter(self, augmentation):
         #values for contrast

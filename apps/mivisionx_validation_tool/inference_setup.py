@@ -296,8 +296,6 @@ class modelInference(QtCore.QObject):
 
         # Setup rocAL Data Loader. 
         rali_batch_size = 1
-        world_size = 1
-        local_rank = 0
         device_id = 0
         self.pipe = Pipeline(batch_size=rali_batch_size, num_threads=1, device_id=0, seed=12 + device_id, rali_cpu=True, tensor_layout = types.NCHW, tensor_dtype=self.tensor_dtype)
         self.raliEngine = InferencePipe(self.pipe, imageValidation, self.modelBatchSizeInt, self.rali_mode, self.c_i, 

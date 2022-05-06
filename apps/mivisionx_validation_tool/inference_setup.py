@@ -84,7 +84,7 @@ class modelInference(QtCore.QObject):
 
         super(modelInference, self).__init__(parent)
         self.modelCompilerPath = '/home/lakshmi/work/lk/MIVisionX/model_compiler/python'
-        self.ADATPath= '/home/lakshmi/mivisionx/toolkit/amd_data_analysis_toolkit/analysis_and_visualization/classification'
+        self.ADATPath= '/home/lakshmi/work/lk/MIVisionX/toolkit/amd_data_analysis_toolkit/analysis_and_visualization/classification'
         self.setupDir = '~/.mivisionx-validation-tool'
 
         self.analyzerDir = os.path.expanduser(self.setupDir)

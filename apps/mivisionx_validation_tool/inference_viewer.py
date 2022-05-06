@@ -84,6 +84,7 @@ class InferenceViewer(QtWidgets.QMainWindow):
             self.updateTimer.timeout.connect(self.update)
             self.updateTimer.timeout.connect(self.plotGraph)
             self.updateTimer.timeout.connect(self.setProgressBar)
+            self.updateTimer.timeout.connect(self.displayFPS)
             self.updateTimer.start(40)
        
     def initUI(self):
@@ -152,7 +153,6 @@ class InferenceViewer(QtWidgets.QMainWindow):
     def paintEvent(self, event):
         self.showAugImage()
         self.showImage()
-        self.displayFPS()
         if self.imgCount == self.total_images:
             if self.loop == 'yes':
                 self.resetViewer()

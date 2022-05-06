@@ -401,29 +401,29 @@ class InferencePipe():
         self.aug_strength = augmentation
         min = int(augmentation*100)
         max = 150 + int((1-augmentation)*100)
-        self.update_int_param(min, self.min_param)
-        self.update_int_param(max, self.max_param)
+        self.pipe.update_int_param(min, self.min_param)
+        self.pipe.update_int_param(max, self.max_param)
 
         #values for brightness
         alpha = augmentation*1.95
-        self.update_float_param(alpha, self.alpha_param)
+        self.pipe.update_float_param(alpha, self.alpha_param)
 
         #values for ColorTemperature
         adjustment = (augmentation*99) if ((int(augmentation*100)) % 2 == 0) else (-1*augmentation*99)
         adjustment = int(adjustment)
-        self.update_int_param(adjustment, self.adjustment_param)
+        self.pipe.update_int_param(adjustment, self.adjustment_param)
 
         #values for exposure
         shift = augmentation*0.95
-        self.update_float_param(shift, self.shift_param)
+        self.pipe.update_float_param(shift, self.shift_param)
 
         #values for SnPNoise
         sdev = augmentation*0.7
-        self.update_float_param(sdev, self.sdev_param)
+        self.pipe.update_float_param(sdev, self.sdev_param)
 
         #values for gamma
         gamma_shift = augmentation*5.0
-        self.update_float_param(gamma_shift, self.gamma_shift_param)
+        self.pipe.update_float_param(gamma_shift, self.gamma_shift_param)
 
     def renew_parameters(self):
         curr_degree = self.pipe.get_float_value(self.degree_param)

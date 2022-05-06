@@ -21,12 +21,25 @@ THE SOFTWARE.
 */
 
 #pragma once
+
 #include "decoder.h"
-#include <turbojpeg.h>
-class FusedCropTJDecoder : public Decoder {
+#ifdef RALI_VIDEO
+extern "C"
+{
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libswscale/swscale.h>
+#include <libavutil/hwcontext.h>
+#include <libavformat/avio.h>
+#include <libavutil/file.h>
+}
+
+
+class HWJpegDecoder : public Decoder {
 public:
     //! Default constructor
-    FusedCropTJDecoder();
+    HWJpegDecoder() {};
     //! Decodes the header of the Jpeg compressed data and returns basic info about the compressed image
     /*!
      \param input_buffer  User provided buffer containig the encoded image
@@ -53,34 +66,27 @@ public:
                            size_t &actual_decoded_width, size_t &actual_decoded_height,
                            Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size=false) override;
 
-
-    ~FusedCropTJDecoder() override;
-    void initialize(int device_id) override {};
+    ~HWJpegDecoder() override;
+    void initialize(int device_id=0);
     bool is_partial_decoder() { return _is_partial_decoder; };
     void set_bbox_coords(std::vector <float> bbox_coord) override { _bbox_coord = bbox_coord;};
     std::vector <float> get_bbox_coords() { return _bbox_coord;}
 
 private:
-    tjhandle m_jpegDecompressor;
-    const static unsigned SCALING_FACTORS_COUNT =  16;
-    const tjscalingfactor SCALING_FACTORS[SCALING_FACTORS_COUNT] = {
-            { 2, 1 },
-            { 15, 8 },
-            { 7, 4 },
-            { 13, 8 },
-            { 3, 2 },
-            { 11, 8 },
-            { 5, 4 },
-            { 9, 8 },
-            { 1, 1 },
-            { 7, 8 },
-            { 3, 4 },
-            { 5, 8 },
-            { 1, 2 },
-            { 3, 8 },
-            { 1, 4 },
-            { 1, 8 }
-    };
-    bool _is_partial_decoder = true;
+    void release();
+    const char *_src_filename = NULL;
+    AVBufferRef *_hw_device_ctx = NULL;
+    AVIOContext *_io_ctx = NULL;
+    AVFormatContext *_fmt_ctx = NULL;
+    AVCodecContext *_video_dec_ctx = NULL;
+    AVCodec *_decoder = NULL;
+    AVStream *_video_stream = NULL;
+    int _video_stream_idx = -1;
+    AVPixelFormat _dec_pix_fmt;
+    size_t _codec_width, _codec_height;
+
+    bool _is_partial_decoder = false;
     std::vector <float> _bbox_coord;
 };
+
+#endif

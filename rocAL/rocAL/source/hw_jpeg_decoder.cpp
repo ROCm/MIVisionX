@@ -36,23 +36,22 @@ struct buffer_data {
 };
 
 static inline int num_hw_devices() {
+
     int num_hw_devices = 0;
-    std::string line;
-    int status = std::system("ls -l /dev/dri/by-path >vaapi_cmd.txt");
-    if (status < 0)
+    FILE *fp = popen("ls -l /dev/dri/by-path", "r");
+    if (fp == NULL)
       return num_hw_devices;
 
-    std::ifstream in_ifs("vaapi_cmd.txt");
-    if (in_ifs.fail()) return num_hw_devices;
-    while (std::getline(in_ifs, line))
+    char *path = NULL;
+    size_t length = 0;
+    std::string line;
+    while (getline(&path, &length, fp) >= 0)
     {
-        if(line.find("card") != std::string::npos)
+        line = std::string(path, length);
+        if(line.find("renderD") != std::string::npos)
           num_hw_devices++;
     }
-    status = std::system("rm vaapi_cmd.txt");
-    if (status < 0)
-      WRN("HardwareJpegDecoder::Couldn't remove intermediate file");
-
+    pclose(fp);
     return num_hw_devices;
 }
 

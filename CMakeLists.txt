@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
-set(VERSION "2.1.0")
+set(VERSION "2.2.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -34,7 +34,7 @@ find_program(DPKG_EXE dpkg)
 set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
 # need to do this to avoid setting the default path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default ROCm installation path" FORCE)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
@@ -87,9 +87,16 @@ option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM        "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX    "Build MIVisionX with MIGraphX Support"    ON)
+option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
+
+if(APPLE)
+  set(CMAKE_MACOSX_RPATH 1)
+  set(GPU_SUPPORT OFF)
+  set(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY OFF)
+  message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
+endif()
 
 # FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
-option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
 if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
 # ROCm cmake package
 find_package(ROCM 0.7.3 QUIET CONFIG PATHS ${CMAKE_PREFIX_PATH})
@@ -132,12 +139,6 @@ message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${Colour
 message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=OPENCL [select OPENCL for GPU backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=OFF [Turn OFF MIGraphX Module (default:ON)]${ColourReset}")
-
-if(APPLE)
-  set(CMAKE_MACOSX_RPATH 1)
-  set(GPU_SUPPORT OFF)
-  message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
-endif()
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

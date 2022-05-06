@@ -84,8 +84,10 @@ class InferenceViewer(QtWidgets.QMainWindow):
             self.updateTimer.timeout.connect(self.update)
             self.updateTimer.timeout.connect(self.plotGraph)
             self.updateTimer.timeout.connect(self.setProgressBar)
-            self.updateTimer.timeout.connect(self.displayFPS)
             self.updateTimer.start(40)
+            self.FPSTimer = QTimer()
+            self.FPSTimer.timeout.connect(self.displayFPS)
+            self.FPSTimer.start(3000)
        
     def initUI(self):
         uic.loadUi("inference_viewer.ui", self)

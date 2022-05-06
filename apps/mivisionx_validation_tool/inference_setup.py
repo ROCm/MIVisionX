@@ -83,8 +83,9 @@ class modelInference(QtCore.QObject):
                 modelBatchSize, outputDir, inputAdd, inputMultiply, verbose, fp16, replaceModel, loop, rali_mode, origQueue, augQueue, gui, totalImages, fps_file, parent=None):
 
         super(modelInference, self).__init__(parent)
-        self.modelCompilerPath = '/home/lakshmi/work/lk/MIVisionX/model_compiler/python'
-        self.ADATPath= '/home/lakshmi/work/lk/MIVisionX/toolkit/amd_data_analysis_toolkit/analysis_and_visualization/classification'
+        dirname = os.path.dirname(__file__)
+        self.modelCompilerPath = os.path.join(dirname, '../../model_compiler/python')
+        self.ADATPath = os.path.join(dirname, '../../toolkit/amd_data_analysis_toolkit/analysis_and_visualization/classification')
         self.setupDir = '~/.mivisionx-validation-tool'
 
         self.analyzerDir = os.path.expanduser(self.setupDir)

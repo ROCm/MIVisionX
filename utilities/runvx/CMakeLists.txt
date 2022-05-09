@@ -145,5 +145,7 @@ endif()
 if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     target_link_libraries(runvx ${hip_library_name})
 endif()
+# install MIVisionX executables -- {ROCM_PATH}/bin
 install(TARGETS runvx DESTINATION bin)
-install(DIRECTORY ../../samples DESTINATION share/mivisionx)
+# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+install(DIRECTORY ../../samples/gdf DESTINATION share/mivisionx/samples)

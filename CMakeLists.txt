@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
@@ -31,8 +30,8 @@ find_program(MAKE_NSIS_EXE makensis)
 find_program(RPMBUILD_EXE rpmbuild)
 find_program(DPKG_EXE dpkg)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
-# need to do this to avoid setting the default path to /usr/local
+set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+# avoid setting the default installation path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -60,7 +59,7 @@ else()
     set(BACKEND "OPENCL")
   elseif("${BACKEND}" STREQUAL "HIP" OR "${BACKEND}" STREQUAL "hip")
     set(BACKEND "HIP")
-  elseif("${BACKEND}" STREQUAL "CPU" OR "${BACKEND}" STREQUAL "cpu")
+  elseif("${BACKEND}" STREQUAL "host" OR "${BACKEND}" STREQUAL "CPU" OR "${BACKEND}" STREQUAL "cpu")
     set(BACKEND "CPU")
     set(GPU_SUPPORT OFF)
   else()
@@ -87,50 +86,12 @@ option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM        "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX    "Build MIVisionX with MIGraphX Support"    ON)
-option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
   set(GPU_SUPPORT OFF)
-  set(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY OFF)
   message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
 endif()
-
-# FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
-if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
-# ROCm cmake package
-find_package(ROCM 0.7.3 QUIET CONFIG PATHS ${CMAKE_PREFIX_PATH})
-if(NOT ROCM_FOUND)
-  set(PROJECT_EXTERN_DIR ${CMAKE_CURRENT_BINARY_DIR}/extern)
-  set(rocm_cmake_tag "master" CACHE STRING "rocm-cmake tag to download")
-  file(DOWNLOAD https://github.com/RadeonOpenCompute/rocm-cmake/archive/${rocm_cmake_tag}.zip
-       ${PROJECT_EXTERN_DIR}/rocm-cmake-${rocm_cmake_tag}.zip STATUS status LOG log)
-
-  list(GET status 0 status_code)
-  list(GET status 1 status_string)
-
-  if(NOT status_code EQUAL 0)
-    message(FATAL_ERROR "error: downloading
-    'https://github.com/RadeonOpenCompute/rocm-cmake/archive/${rocm_cmake_tag}.zip' failed
-    status_code: ${status_code}
-    status_string: ${status_string}
-    log: ${log}
-    ")
-  endif()
-
-  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${PROJECT_EXTERN_DIR}/rocm-cmake-${rocm_cmake_tag}.zip
-                  WORKING_DIRECTORY ${PROJECT_EXTERN_DIR})
-  execute_process( COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${PROJECT_EXTERN_DIR}/rocm-cmake .
-                  WORKING_DIRECTORY ${PROJECT_EXTERN_DIR}/rocm-cmake-${rocm_cmake_tag} )
-  execute_process( COMMAND ${CMAKE_COMMAND} --build rocm-cmake-${rocm_cmake_tag} --target install
-                  WORKING_DIRECTORY ${PROJECT_EXTERN_DIR})
-
-  find_package( ROCM 0.7.3 REQUIRED CONFIG PATHS ${PROJECT_EXTERN_DIR}/rocm-cmake )
-endif()
-include(ROCMHeaderWrapper)
-
-endif()
-
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
@@ -149,46 +110,8 @@ else()
   message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
 endif()
 
-install(DIRECTORY docs DESTINATION share/mivisionx)
-
-#install all wrapper files
-if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
-
-#Install Wrapper Files
-  install(
-    DIRECTORY
-       "${PROJECT_BINARY_DIR}/mivisionx"
-        DESTINATION . )
-
-#Generating SymLimk for Library Files
-  install(
-      CODE "
-        set(PREFIX \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX})
-        set(SYMLINK_LOCATION \${PREFIX}/mivisionx/lib )
-	set(INPUT_FILES \${PREFIX}/lib )
-	foreach(INPUT_FILE IN LISTS INPUT_FILES)
-          execute_process(COMMAND ln -sfr \${INPUT_FILE} \${SYMLINK_LOCATION})
-          message(STATUS \"Created symlink in \${SYMLINK_LOCATION} to \${INPUT_FILE}.\")
-	endforeach()
-        "
-  )
-
-#Generating SymLimk for Binary Files
-  install(
-      CODE "
-        set(PREFIX \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX})
-        set(SYMLINK_LOCATION \${PREFIX}/mivisionx/bin )
-	set(INPUT_FILES \${PREFIX}/bin )
-	foreach(INPUT_FILE IN LISTS INPUT_FILES)
-          execute_process(COMMAND ln -sfr \${INPUT_FILE} \${SYMLINK_LOCATION})
-          message(STATUS \"Created symlink in \${SYMLINK_LOCATION} to \${INPUT_FILE}.\")
-	endforeach()
-        "
-  )
-
-  message(STATUS "FILE_REORG - Install wrapper headers/Symlink files" )
-endif()
-
+# install MIVisionX docs -- {ROCM_PATH}/share/doc/mivisionx/
+install(DIRECTORY docs DESTINATION share/doc/mivisionx)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})

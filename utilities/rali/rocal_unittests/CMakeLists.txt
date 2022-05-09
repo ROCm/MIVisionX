@@ -34,9 +34,9 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
-include_directories ( ${OpenCV_INCLUDE_DIRS}  /opt/rocm/mivisionx/include/)
+include_directories ( ${OpenCV_INCLUDE_DIRS}  /opt/rocm/include/mivisionx)
 
-link_directories    (/opt/rocm/mivisionx/lib/)
+link_directories    (/opt/rocm/lib/)
 
 add_executable(${PROJECT_NAME} ./rocal_unittests.cpp)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=1)

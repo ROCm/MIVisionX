@@ -28,6 +28,7 @@ find_package(OpenCL QUIET)
 list(APPEND SOURCES runcl.cpp)
 
 add_executable(runcl ${SOURCES})
+# install MIVisionX executables -- {ROCM_PATH}/bin
 install (TARGETS runcl DESTINATION bin)
 
 if(OpenCL_FOUND)

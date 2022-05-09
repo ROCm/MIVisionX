@@ -149,8 +149,10 @@ endif()
 configure_file("${PROJECT_SOURCE_DIR}/include/openvx_backend.h.in" "${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h")
 install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/mivisionx)
 
+# install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS openvx DESTINATION lib)
 install(TARGETS vxu DESTINATION lib)
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_ext_amd.h DESTINATION include/mivisionx)
 install (FILES
             include/VX/vx.h
@@ -174,6 +176,11 @@ install (FILES
             include/VX/vx_vendors.h
             include/VX/vxu.h
          DESTINATION include/mivisionx/VX)
+# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+install(DIRECTORY ../../apps/bubble_pop DESTINATION share/mivisionx/apps)
+install(DIRECTORY ../../apps/optical_flow DESTINATION share/mivisionx/apps)
+install(DIRECTORY ../../samples/c_samples DESTINATION share/mivisionx/samples)
+install(DIRECTORY ../../samples/images DESTINATION share/mivisionx/samples)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
@@ -183,25 +190,3 @@ else()
     target_link_libraries(openvx dl m)
     target_link_libraries(vxu openvx)
 endif()
-
-if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
-  include(ROCMHeaderWrapper)
-  # Copy Header files to build directory
-  configure_file("${PROJECT_SOURCE_DIR}/include/vx_ext_amd.h" "${PROJECT_BINARY_DIR}/include/mivisionx/vx_ext_amd.h" COPYONLY)
-  # Generate wrapper for files to install in mivisionx/include/
-  rocm_wrap_header_file(
-    openvx_backend.h vx_ext_amd.h
-    HEADER_LOCATION include/mivisionx
-    GUARDS WRAPPER
-    WRAPPER_LOCATIONS mivisionx/include
-  )
-  # Generate wrapper for files to install in mivisionx/include/VX
-  rocm_wrap_header_dir(
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/VX
-    HEADER_LOCATION include/mivisionx/VX
-    PATTERNS "*.h"
-    GUARDS WRAPPER
-    WRAPPER_LOCATIONS mivisionx/include/VX
-  )
-endif()
-

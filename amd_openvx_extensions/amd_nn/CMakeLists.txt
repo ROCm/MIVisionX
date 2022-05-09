@@ -131,12 +131,20 @@ else()
     message("-- ${Red}WARNING: OpenCL/HIP Not Found -- amd_nn module excluded${ColourReset}")
 endif()
 
-
+# install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_nn DESTINATION lib)
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_amd_nn.h DESTINATION include/mivisionx)
-install(DIRECTORY ../../model_compiler DESTINATION share/mivisionx)
-install(DIRECTORY ../../toolkit DESTINATION share/mivisionx)
-install(DIRECTORY ../../apps DESTINATION share/mivisionx)
+# install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
+install(DIRECTORY ../../model_compiler DESTINATION libexec/mivisionx)
+install(DIRECTORY ../../toolkit DESTINATION libexec/mivisionx)
+# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+install(DIRECTORY ../../apps/cloud_inference DESTINATION share/mivisionx/apps)
+install(DIRECTORY ../../apps/dg_test DESTINATION share/mivisionx/apps)
+install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION share/mivisionx/apps)
+install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION share/mivisionx/apps)
+install(DIRECTORY ../../samples/inference DESTINATION share/mivisionx/samples)
+install(DIRECTORY ../../samples/model_compiler_samples DESTINATION share/mivisionx/samples)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
@@ -144,17 +152,3 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
 endif()
-
-if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
-  #include(ROCMHeaderWrapper)
-  # Copy Header files to build directory
-  configure_file("include/vx_amd_nn.h" "${PROJECT_BINARY_DIR}/include/mivisionx/vx_amd_nn.h" COPYONLY)
-  # Generate wrapper for files to install in mivisionx/include/
-  rocm_wrap_header_file(
-    vx_amd_nn.h
-    HEADER_LOCATION include/mivisionx
-    GUARDS WRAPPER
-    WRAPPER_LOCATIONS mivisionx/include
-  )
-endif()
-

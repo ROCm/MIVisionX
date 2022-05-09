@@ -133,6 +133,7 @@ if(${BUILD_RALI})
     # rocAL uses C++ 17 features
     set(CMAKE_CXX_STANDARD 17)
     message("-- ${Green}ROCm Augmentation Library -- rocAL module added${ColourReset}")
+    # install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
     install(FILES
         ../python/rali.py
         ../python/rali_lib.py
@@ -141,8 +142,9 @@ if(${BUILD_RALI})
         ../python/rali_parameter.py
         ../python/rali_torch.py
         ../python/rali_image_iterator.py
-        DESTINATION ./rali/python
+        DESTINATION libexec/mivisionx/rali/python
         )
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
     install(FILES
         include/rali_api.h
         include/rali_api_info.h
@@ -152,7 +154,7 @@ if(${BUILD_RALI})
         include/rali_api_data_transfer.h
         include/rali_api_parameters.h
         include/rali_api_meta_data.h
-        DESTINATION ./include
+        DESTINATION include/mivisionx
         )
     if(FFMPEG_FOUND)
         find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)
@@ -233,7 +235,7 @@ if(${BUILD_RALI})
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
         target_link_libraries(${PROJECT_NAME} $<TARGET_OBJECTS:rocAL_hip>)
     endif()
-
+    # install MIVisionX libs -- {ROCM_PATH)/lib
     install(TARGETS rali DESTINATION lib)
 else()
     message("-- ${Red}WARNING: rocAL module excluded ${ColourReset}")

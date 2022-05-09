@@ -1,6 +1,6 @@
 import sys
 #setup python path for RALI
-sys.path.append('/opt/rocm/mivisionx/rali/python/')
+sys.path.append('/opt/rocm/libexec/mivisionx/rali/python/')
 from rali import *
 from rali_image_iterator import *
 from rali_common import *

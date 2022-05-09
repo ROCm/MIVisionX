@@ -75,7 +75,7 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
 
     if (backend == OpenVX_Rocm_GPU) {
         printf("compiling model for backend OpenVX_Rocm_GPU\n");
-        std::string compiler_path = "/opt/rocm/mivisionx/model_compiler";       // default
+        std::string compiler_path = "/opt/rocm/libexec/mivisionx/model_compiler";       // default
         char *model_compiler_path = getenv("MIVISIONX_MODEL_COMPILER_PATH");
         std::string install_dir = std::string(install_folder).empty()? "mvdeploy_lib" : std::string(install_folder); 
         if (model_compiler_path != nullptr) {

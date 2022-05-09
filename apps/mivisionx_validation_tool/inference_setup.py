@@ -80,8 +80,8 @@ class modelInference(QtCore.QObject):
 				modelBatchSize, outputDir, inputAdd, inputMultiply, verbose, fp16, replaceModel, loop, rali_mode, origQueue, augQueue, gui, totalImages, fps_file, parent=None):
 
 		super(modelInference, self).__init__(parent)
-		self.modelCompilerPath = '/opt/rocm/mivisionx/model_compiler/python'
-		self.ADATPath= '/opt/rocm/mivisionx/toolkit/analysis_and_visualization/classification'
+		self.modelCompilerPath = '/opt/rocm/libexec/mivisionx/model_compiler/python'
+		self.ADATPath= '/opt/rocm/libexec/mivisionx/toolkit/analysis_and_visualization/classification'
 		self.setupDir = '~/.mivisionx-validation-tool'
 
 		self.analyzerDir = os.path.expanduser(self.setupDir)

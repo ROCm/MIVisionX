@@ -32,7 +32,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 % pip3 install pytz numpy future
 ```
 
-**Note:** MIVisionX installs model compiler scripts at `/opt/rocm/mivisionx/model_compiler/python/`
+**Note:** MIVisionX installs model compiler scripts at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
 **Note:** Model compiler supports Python3. Anyone using python2 might face an issue during the model conversion
 
 #### Caffe

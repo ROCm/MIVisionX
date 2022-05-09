@@ -2158,3 +2158,38 @@ int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 lo
     }
     return VX_SUCCESS;
 }
+
+
+template <typename T>
+__global__ void __attribute__((visibility("default")))
+Hip_Upsample_Nearest_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* out, uint out_offset, uint4 out_stride) {
+
+    uint x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    uint z = hipBlockDim_z * hipBlockIdx_z + hipThreadIdx_z;
+
+    T value = *(T*)&in[in_offset + x * in_stride.x + y * in_stride.y + z * in_stride.z];
+    out += out_offset + (x << 1) * out_stride.x + (y << 1) * out_stride.y + z * out_stride.z;
+    // read 1 value and write 2x2 output
+    *(T *)&out[0] = value;
+    *(T *)&out[out_stride.x] = value;
+    *(T *)&out[out_stride.y] = value;
+    *(T *)&out[out_stride.y + out_stride.x] = value;
+}
+
+int HipExec_Upsample_Nearest_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads, vx_enum type, uchar* in,
+    uint in_offset, uint4 in_stride, uchar* out, uint out_offset, uint4 out_stride) {
+
+    dim3 gridDim = dim3(ceil((float)globalThreads.x/localThreads.x),
+                        ceil((float)globalThreads.y/localThreads.y),
+                        ceil((float)globalThreads.z/localThreads.z));
+
+    if (type == VX_TYPE_FLOAT32) {
+        hipLaunchKernelGGL(Hip_Upsample_Nearest_layer<float>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+            out, out_offset, out_stride);
+    } else {
+        hipLaunchKernelGGL(Hip_Upsample_Nearest_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
+            out, out_offset, out_stride);
+    }
+    return VX_SUCCESS;
+}

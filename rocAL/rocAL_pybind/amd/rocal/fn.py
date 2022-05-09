@@ -480,13 +480,8 @@ def color_twist(*inputs, brightness=1.0, bytes_per_sample_hint=0, contrast=1.0, 
     color_twist_image = b.ColorTwist(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (color_twist_image)
 
-<<<<<<< HEAD
-def uniform(*inputs,range=[-1, 1], device=None):
-    output_param = b.CreateFloatUniformRand(range[0], range[1])
-=======
 def uniform(*inputs,rng_range=[-1, 1], device=None):
     output_param = b.CreateFloatUniformRand(rng_range[0], rng_range[1])
->>>>>>> 2d8cbb70444c0af7109f93e52405081c1dccf461
     return output_param
 
 def random_bbox_crop(*inputs,all_boxes_above_threshold = True, allow_no_crop =True, aspect_ratio = None, bbox_layout = "", bytes_per_sample_hint = 0,
@@ -541,21 +536,13 @@ def color_temp(*inputs, adjustment_value=50, device=None, preserve = False):
 def nop(*inputs, device=None, preserve = False):
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False }
-<<<<<<< HEAD
     nop_output = b.rocalNop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
-=======
-    nop_output = b.raliNop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
->>>>>>> 2d8cbb70444c0af7109f93e52405081c1dccf461
     return (nop_output)
 
 def copy(*inputs, device=None):
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False }
-<<<<<<< HEAD
     copied_image = b.rocalCopy(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
-=======
-    copied_image = b.raliCopy(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
->>>>>>> 2d8cbb70444c0af7109f93e52405081c1dccf461
     return (copied_image)
 
 def snp_noise(*inputs, snpNoise=None, device=None, preserve = False):

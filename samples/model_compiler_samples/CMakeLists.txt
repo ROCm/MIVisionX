@@ -58,10 +58,10 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
 endif()
 
 include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(/opt/rocm/include/mivisionx)
+include_directories(${ROCM_PATH}/include/mivisionx)
 include_directories(include)
 
-link_directories(/opt/rocm/lib)
+link_directories(${ROCM_PATH}/lib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
 list(APPEND SOURCES

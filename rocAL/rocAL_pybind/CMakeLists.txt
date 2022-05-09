@@ -22,7 +22,7 @@ cmake_minimum_required(VERSION 3.0)
 project(rali_pybind)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
-set(ROCM_PATH /opt/rocm)
+set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)

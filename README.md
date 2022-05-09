@@ -234,11 +234,12 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   * `vx_winml` is not supported on `Linux`
   * source code will not available with `apt-get` / `yum` install
   * the installer will copy
-    + executables into `/opt/rocm/bin`
-    + libraries into `/opt/rocm/lib`
+    + Executables into `/opt/rocm/bin`
+    + Libraries into `/opt/rocm/lib`
     + OpenVX and module header files into `/opt/rocm/include/mivisionx`
-    + model compiler, & toolkit placed in `/opt/rocm/libexec/mivisionx`
-    + model apps, & samples placed in `/opt/rocm/share/mivisionx`
+    + Model compiler, & toolkit folders into `/opt/rocm/libexec/mivisionx`
+    + Apps, & samples folder into `/opt/rocm/share/mivisionx`
+    + Docs folder into `/opt/rocm/share/doc/mivisionx`
   * Package (.deb & .rpm) install requires `OpenCV v3+` to execute `AMD OpenCV extensions`
 
 #### Using `MIVisionX-setup.py`
@@ -296,12 +297,12 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 ### Linux / macOS
 
 * The installer will copy
-  + executables into `/opt/rocm/bin`
-  + libraries into `/opt/rocm/lib`
+  + Executables into `/opt/rocm/bin`
+  + Libraries into `/opt/rocm/lib`
   + OpenVX and OpenVX module header files into `/opt/rocm/include/mivisionx`
-  + Apps, & Samples are placed into `/opt/rocm/share/mivisionx`
-  + Documents are placed into `/opt/rocm/share/doc/mivisionx`
-  + Model Compiler, and Toolkit are placed into `/opt/rocm/libexec/mivisionx`
+  + Apps, & Samples folder into `/opt/rocm/share/mivisionx`
+  + Documents folder into `/opt/rocm/share/doc/mivisionx`
+  + Model Compiler, and Toolkit folder into `/opt/rocm/libexec/mivisionx`
 * Run the below sample to verify the installation
 
   **Canny Edge Detection**

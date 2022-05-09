@@ -93,9 +93,7 @@ std::pair<void*, void*> RingBuffer::get_box_encode_write_buffers()
     block_if_full();
     if((_mem_type == RocalMemType::OCL) || (_mem_type == RocalMemType::HIP))
         return std::make_pair(_dev_bbox_buffer[_write_ptr], _dev_labels_buffer[_write_ptr]);
-    return std::make_pair(nullptr, nullptr);   // todo:: implement the same scheme for host as well
 }
-
 void RingBuffer::unblock_reader()
 {
     // Wake up the reader thread in case it's waiting for a load
@@ -223,6 +221,7 @@ void RingBuffer::initHip(RocalMemType mem_type, DeviceResourcesHip dev, unsigned
     }
 }
 #endif
+
 
 void RingBuffer::initBoxEncoderMetaData(RocalMemType mem_type, size_t encoded_bbox_size, size_t encoded_labels_size)
 {

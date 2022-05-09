@@ -43,7 +43,9 @@ def main():
             path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE_READER/CLASSIFICATION/"
         else:
             path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE_READER/DETECTION/"
-        os.makedirs(path)
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
     print("num_classes:: ", num_classes)
@@ -82,19 +84,22 @@ def main():
         print("epoch:: ", epoch)
         if not _rocal_bbox:
             for i, (image_batch, labels) in enumerate(data_loader, 0):  # Classification
-                sys.stdout.write("\r Mini-batch " + str(i))
-                print("Images", image_batch)
-                print("Labels", labels)
+                if args.print_tensor:
+                    sys.stdout.write("\r Mini-batch " + str(i))
+                    print("Images", image_batch)
+                    print("Labels", labels)
                 for element in list(range(batch_size)):
                     cnt = cnt + 1
                     draw_patches(image_batch[element], cnt)
             data_loader.reset()
         else:
             for i, (image_batch, bboxes, labels) in enumerate(data_loader, 0):  # Detection
-                sys.stdout.write("\r Mini-batch " + str(i))
-                print("Images", image_batch)
-                print("Bboxes", bboxes)
-                print("Labels", labels)
+                if i ==0 :
+                    if args.print_tensor:
+                        sys.stdout.write("\r Mini-batch " + str(i))
+                        print("Images", image_batch)
+                        print("Bboxes", bboxes)
+                        print("Labels", labels)
                 for element in list(range(batch_size)):
                     cnt = cnt + 1
                     draw_patches(image_batch[element], cnt)
@@ -102,6 +107,10 @@ def main():
     print('Finished Training')
     print('Finished !!')
 
+
+
+    print("###############################################    CAFFE READER (CLASSIFCATION/ DETECTION)    ###############################################")
+    print("###############################################    SUCCESS                                    ###############################################")
 
 if __name__ == '__main__':
     main()

@@ -50,15 +50,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--install_directory',    type=str, default='/opt/rocm/mivisionx',
                     help='MIVisionX Install Directory - optional')
 parser.add_argument('--backend_type',       type=str, default='OCL',
-                    help='Backend type - optional (default:HOST [options:HOST/HIP/OCL])')
+                    help='Backend type - optional (default:CPU [options:CPU/HIP/OCL])')
 args = parser.parse_args()
 
 installDir = args.install_directory
 backendType = args.backend_type
 
 # check arguments
-if backendType not in ('HOST', 'HIP', 'OCL'):
-    print("ERROR: Backends supported - HOST or HIP or OCL]")
+if backendType not in ('CPU', 'HIP', 'OCL'):
+    print("ERROR: Backends supported - CPU or HIP or OCL]")
     exit()
 
 # check install

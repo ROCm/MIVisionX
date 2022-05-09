@@ -7,8 +7,6 @@ import numpy as np
 import os
 from parse_config import parse_args
 
-
-
 def get_onehot(image_labels_array, numClasses):
     one_hot_vector_list = []
     for label in image_labels_array:
@@ -20,7 +18,6 @@ def get_onehot(image_labels_array, numClasses):
     one_hot_vector_array = np.array(one_hot_vector_list)
 
     return one_hot_vector_array
-
 
 def get_weights(num_bboxes):
     weights_array = np.zeros(100)
@@ -46,7 +43,6 @@ def draw_patches(img, idx, bboxes):
             (loc_[2] * wtot)), int((loc_[3] * htot))), color, thickness)
         cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/DETECTION/"+str(idx)+"_"+"train"+".png", image)
 
-
 def main():
     args = parse_args()
     # Args
@@ -68,7 +64,9 @@ def main():
     }
     try:
         path= "OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/DETECTION"
-        os.makedirs(path)
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
 
@@ -105,7 +103,8 @@ def main():
 
         for element in list(range(batch_size)):
             cnt = cnt + 1
-            print("Processing image %d....." % element)
+            if args.print_tensor:
+                print("Processing image %d....." % element)
             features_dict = {
                 "image": images_array[element],
                 "true_image_shape": np.array([len(images_array[element]), len(images_array[element, 0]), len(images_array[element, 0, 0])])
@@ -117,12 +116,15 @@ def main():
                 "groundtruth_weights": get_weights(num_bboxes_array[element])
             }
             processed_tensors = (features_dict, labels_dict)
-            print("\nPROCESSED_TENSORS:\n", processed_tensors)
+            if args.print_tensor:
+                print("\nPROCESSED_TENSORS:\n", processed_tensors)
             draw_patches(images_array[element],cnt,bboxes_array[element])
         print("\n\nPrinted first batch with", (batch_size), "images!")
-
+        break
     imageIterator.reset()
 
+    print("###############################################    TF DETECTION    ###############################################")
+    print("###############################################    SUCCESS         ###############################################")
 
 if __name__ == '__main__':
     main()

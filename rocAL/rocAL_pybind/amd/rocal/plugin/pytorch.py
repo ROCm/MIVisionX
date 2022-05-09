@@ -171,16 +171,15 @@ class ROCALGenericIterator(object):
 
         else:
             if(self.loader._oneHotEncoding == True):
-                self.loader.GetOneHotEncodedLabels(self.labels)
-                self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
-                self.labels_tensor = self.labels_tensor.view(-1, self.bs, self.loader._numOfClasses)
+                self.loader.GetOneHotEncodedLabels(self.labels, self.device)
+                self.labels_tensor = self.labels.view(-1, self.bs, self.loader._numOfClasses).long()
             else:
                 if self.display:
                     for i in range(self.bs):
                         img = (self.out)
                         draw_patches(img[i], i, 0)
                 self.loader.getImageLabels(self.labels)
-                self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
+                self.labels_tensor = self.labels.long()
 
             return self.out, self.labels_tensor
 

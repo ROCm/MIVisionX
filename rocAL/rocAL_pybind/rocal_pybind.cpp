@@ -43,7 +43,6 @@ namespace rocal{
             return nullptr;
         }
         void *ptr = PyLong_AsVoidPtr(ptr_as_int.ptr());
-
         return ptr;
     }
 
@@ -62,7 +61,6 @@ namespace rocal{
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
         int length =rocalGetImageNameLen(context,ptr);
-
         return py::cast(length);
     }
 
@@ -127,10 +125,9 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_label_copy(RocalContext context, py::array_t<int> array)
+    py::object wrapper_label_copy(RocalContext context, py::object p)
     {
-        auto buf = array.request();
-        int* ptr = (int*) buf.ptr;
+        auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
         rocalGetImageLabels(context,ptr);
         return py::cast<py::none>(Py_None);
@@ -151,7 +148,6 @@ namespace rocal{
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
         int count =rocalGetBoundingBoxCount(context,ptr);
-
         return py::cast(count);
     }
 
@@ -176,11 +172,9 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
-       std::pair<py::array_t<float>, py::array_t<int>>  wrapper_get_encoded_bbox_label(RocalContext context, int batch_size, int num_anchors)
+    std::pair<py::array_t<float>, py::array_t<int>>  wrapper_get_encoded_bbox_label(RocalContext context, int batch_size, int num_anchors)
     {
         float* bboxes_buf_ptr; int* labels_buf_ptr;
-        // auto labels_buf = labels_array.request();
-        // int* labels_ptr = (int*) labels_buf.ptr;
         // call pure C++ function
         rocalGetEncodedBoxesAndLables(context, &bboxes_buf_ptr, &labels_buf_ptr, num_anchors*batch_size);
         // create numpy arrays for boxes and labels tensor from the returned ptr
@@ -198,6 +192,7 @@ namespace rocal{
 
         return std::make_pair(bboxes_array, labels_array);
     }
+
 
     py::object wrapper_BB_cord_copy(RocalContext context, py::array_t<float> array)
     {
@@ -217,19 +212,16 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_one_hot_label_copy(RocalContext context, py::array_t<int> array , unsigned numOfClasses)
+    py::object wrapper_one_hot_label_copy(RocalContext context, py::object p , unsigned numOfClasses, int dest)
     {
-        auto buf = array.request();
-        int* ptr = (int*) buf.ptr;
+        auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
-        rocalGetOneHotImageLabels(context, ptr, numOfClasses);
+        rocalGetOneHotImageLabels(context, ptr, numOfClasses, dest);
         return py::cast<py::none>(Py_None);
     }
 
     py::object wrapper_random_bbox_crop(RocalContext context, bool all_boxes_overlap, bool no_crop, RocalFloatParam p_aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attemps, RocalFloatParam p_scaling, int total_num_attempts )
     {
-        // auto buf = array.request();
-        // int* ptr = (int*) buf.ptr;
         // call pure C++ function
         rocalRandomBBoxCrop(context, all_boxes_overlap, no_crop, p_aspect_ratio, has_shape, crop_width, crop_height, num_attemps, p_scaling, total_num_attempts);
         return py::cast<py::none>(Py_None);
@@ -280,7 +272,7 @@ namespace rocal{
             .value("MAX_SIZE_ORIG",ROCAL_USE_MAX_SIZE_RESTRICTED)
             .value("USER_GIVEN_SIZE_ORIG",ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED)
             .export_values();
-        py::enum_<RocalImageColor>(types_m,"RocalLImageColor","Image type")
+        py::enum_<RocalImageColor>(types_m,"RocalImageColor","Image type")
             .value("RGB",ROCAL_COLOR_RGB24)
             .value("BGR",ROCAL_COLOR_BGR24)
             .value("GRAY",ROCAL_COLOR_U8)
@@ -326,7 +318,7 @@ namespace rocal{
         m.def("rocalGetEncodedBoxesAndLables",&wrapper_get_encoded_bbox_label);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
-        m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy );
+        m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy);
         m.def("isEmpty",&rocalIsEmpty);
         m.def("BoxEncoder",&rocalBoxEncoder);
         m.def("getTimingInfo",rocalGetTimingInfo);
@@ -732,7 +724,12 @@ namespace rocal{
             py::arg("input"),
             py::arg("is_output"),
             py::arg("shift") = NULL);
-        // m.def("Blur",&rocalBlur);
+        m.def("Blur",&rocalBlur,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("sdev") = NULL);
         m.def("Contrast",&rocalContrast,
             py::return_value_policy::reference,
             py::arg("context"),

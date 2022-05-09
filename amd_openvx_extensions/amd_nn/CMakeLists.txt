@@ -133,14 +133,28 @@ endif()
 
 
 install(TARGETS vx_nn DESTINATION lib)
-install(FILES include/vx_amd_nn.h DESTINATION include)
-install(DIRECTORY ../../model_compiler DESTINATION .)
-install(DIRECTORY ../../toolkit DESTINATION .)
-install(DIRECTORY ../../apps DESTINATION .)
+install(FILES include/vx_amd_nn.h DESTINATION include/mivisionx)
+install(DIRECTORY ../../model_compiler DESTINATION share/mivisionx)
+install(DIRECTORY ../../toolkit DESTINATION share/mivisionx)
+install(DIRECTORY ../../apps DESTINATION share/mivisionx)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
 endif()
+
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  #include(ROCMHeaderWrapper)
+  # Copy Header files to build directory
+  configure_file("include/vx_amd_nn.h" "${PROJECT_BINARY_DIR}/include/mivisionx/vx_amd_nn.h" COPYONLY)
+  # Generate wrapper for files to install in mivisionx/include/
+  rocm_wrap_header_file(
+    vx_amd_nn.h
+    HEADER_LOCATION include/mivisionx
+    GUARDS WRAPPER
+    WRAPPER_LOCATIONS mivisionx/include
+  )
+endif()
+

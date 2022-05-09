@@ -52,28 +52,17 @@ class ROCALVideoIterator(object):
 
     def __next__(self):
         self.iter_num +=1
-        print("In the next routine of COCO Iterator")
         if(self.loader.isEmpty()):
-            timing_info = self.loader.Timing_Info()
-            print("Load     time ::", timing_info.load_time)
-            print("Decode   time ::", timing_info.decode_time)
-            print("Process  time ::", timing_info.process_time)
-            print("Transfer time ::", timing_info.transfer_time)
             raise StopIteration
-
         if self.loader.run() != 0:
             raise StopIteration
-
         #Copy output from buffer to numpy array
         self.loader.copyImage(self.out)
         img = torch.from_numpy(self.out)
-
         #Display Frames in a video sequence
         if self.display:
             for batch_i in range(self.batch_size):
                 draw_frames(img[batch_i], batch_i, self.iter_num)
-
-
         return img
 
     def reset(self):
@@ -133,11 +122,12 @@ def main():
     for epoch in range(int(args.num_epochs)):
         print("EPOCH:::::",epoch)
         for i, it in enumerate(data_loader, 0):
-            print("**************", i, "*******************")
-            print("**************starts*******************")
-            print("\n IMAGES : \n", it)
-            print("**************ends*******************")
-            print("**************", i, "*******************")
+            if args.print_tensor:
+                print("**************", i, "*******************")
+                print("**************starts*******************")
+                print("\n IMAGES : \n", it)
+                print("**************ends*******************")
+                print("**************", i, "*******************")
         data_loader.reset()
     #Your statements here
     stop = timeit.default_timer()

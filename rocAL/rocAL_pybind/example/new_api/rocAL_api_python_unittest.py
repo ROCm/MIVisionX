@@ -8,12 +8,18 @@ import amd.rocal.types as types
 from parse_config import parse_args
 import os
 
-def draw_patches(img, idx):
+def draw_patches(img, idx, device):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     args = parse_args()
-    image = img.detach().numpy()
-    image = image.transpose([1, 2, 0])
+    if device == "cpu":
+            image = img.detach().numpy()
+    else:
+        image = img.cpu().numpy()
+    if not args.NHWC:
+        image = image.transpose([1, 2, 0])
+    if args.fp16:
+        image = (image).astype('uint8')
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name + "/" + str(idx)+"_"+"train"+".png", image)
 
@@ -23,7 +29,9 @@ def main():
     # Args
     data_path = args.image_dataset_path
     augmentation_name = args.augmentation_name
+    print("\n AUGMENTATION NAME: ", augmentation_name)
     rocal_cpu = False if args.rocal_gpu else True
+    device = "cpu" if rocal_cpu else "cuda"
     batch_size = args.batch_size
     num_threads = args.num_threads
     random_seed = args.seed
@@ -32,11 +40,13 @@ def main():
     display = True if args.display else False
     try:
         path= "OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name
-        os.makedirs(path)
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu, tensor_layout=types.NHWC if args.NHWC else types.NCHW , tensor_dtype=types.FLOAT16 if args.fp16 else types.FLOAT)
     # Set Params
     output_set = 0
     rocal_device = 'cpu' if rocal_cpu else 'gpu'
@@ -46,6 +56,7 @@ def main():
         jpegs, _ = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
         images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
         images = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
+
 
         if augmentation_name == "resize":
             output = fn.resize(images, resize_x=300, resize_y=300)
@@ -61,6 +72,9 @@ def main():
             output = fn.flip(images)
         elif augmentation_name == "blur":
             output = fn.blur(images)
+        elif augmentation_name == "one_hot":
+            _ = fn.one_hot(num_classes=2)
+            output = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
         elif augmentation_name == "hue_rotate_blend":
             images_hue = fn.hue(images)
             images_rotate = fn.rotate(images)
@@ -93,8 +107,8 @@ def main():
             output = fn.color_twist(images)
         elif augmentation_name == "crop_mirror_normalize":
             output = fn.crop_mirror_normalize(images, device="cpu",
-                                              output_dtype=types.FLOAT,
-                                              output_layout=types.NCHW,
+                                              output_dtype=types.FLOAT16 if args.fp16 else types.FLOAT,
+                                              output_layout=types.NHWC if args.NHWC else types.NCHW,
                                               crop=(300, 300),
                                               image_type=types.RGB,
                                               mean=[0, 0, 0],
@@ -130,7 +144,7 @@ def main():
     # build the pipeline
     pipe.build()
     # Dataloader
-    data_loader = ROCALClassificationIterator(pipe)
+    data_loader = ROCALClassificationIterator(pipe,device=device)
     cnt = 0
 
     import timeit
@@ -140,16 +154,19 @@ def main():
     for epoch in range(int(args.num_epochs)):
         print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):
-            print("**************", i, "*******************")
-            print("**************starts*******************")
-            print("\nImages:\n", it[0])
-            print("\nLABELS:\n", it[1])
+            if args.print_tensor:
+                print("**************", i, "*******************")
+                print("**************starts*******************")
+                print("\nImages:\n", it[0])
+                print("\nLABELS:\n", it[1])
+                print("**************ends*******************")
+                print("**************", i, "*******************")
             for img in it[0]:
                 cnt = cnt+1
                 if display:
-                    draw_patches(img, cnt)
-            print("**************ends*******************")
-            print("**************", i, "*******************")
+                    draw_patches(img, cnt, device)
+
+            break
         data_loader.reset()
 
     #Your statements here
@@ -157,6 +174,11 @@ def main():
 
     print('\n Time: ', stop - start)
     print('Number of times loop iterates is:', cnt)
+
+    print(f'###############################################                             {augmentation_name.upper()}                         ############################################')
+    print("###############################################                             SUCCESS                             ###############################################")
+
+
 
 if __name__ == '__main__':
     main()

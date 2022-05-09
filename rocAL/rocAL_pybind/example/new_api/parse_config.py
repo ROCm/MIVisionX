@@ -37,10 +37,10 @@ def parse_args():
     common_group.add_argument('--batch-size', '-b', type=int, default=10,
                         help='number of examples for each iteration')
     add_bool_arg(common_group, 'display', default=True)
+    add_bool_arg(common_group, 'print_tensor', default=True)
     add_bool_arg(common_group, 'classification', default=True)  # use --classification for Classification / --no-classification for Detection
+    add_bool_arg(common_group,'rocal-gpu', default=True)
 
-    common_group.add_argument('--rocal-gpu', action='store_true',
-                        help='run input pipeline cpu')
     common_group.add_argument('--NHWC', action='store_true',
                         help='run input pipeline NHWC format')
     common_group.add_argument('--fp16', action='store_true',

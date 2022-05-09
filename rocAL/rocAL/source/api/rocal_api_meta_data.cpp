@@ -216,7 +216,7 @@ ROCAL_API_CALL rocalGetImageId(RocalContext p_context,  int* buf)
 }
 
 void
-ROCAL_API_CALL rocalGetImageLabels(RocalContext p_context, int* buf)
+ROCAL_API_CALL rocalGetImageLabels(RocalContext p_context, void* buf)
 {
 
     if (!p_context)
@@ -230,7 +230,20 @@ ROCAL_API_CALL rocalGetImageLabels(RocalContext p_context, int* buf)
     size_t meta_data_batch_size = meta_data.second->get_label_batch().size();
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
-    memcpy(buf, meta_data.second->get_label_batch().data(),  sizeof(int)*meta_data_batch_size);
+
+    if (context->affinity == RocalAffinity::CPU)
+        memcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size);
+    else
+    {
+#if ENABLE_HIP
+        hipError_t err = hipMemcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size, hipMemcpyHostToDevice);
+        if (err != hipSuccess)
+            THROW("Invalid Data Pointer: Error copying to device memory")
+#else
+        if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size, meta_data.second->get_label_batch().data(), 0, NULL, NULL) != CL_SUCCESS)
+            THROW("Invalid Data Pointer: Error copying to device memory")
+#endif
+    }
 }
 
 unsigned
@@ -272,7 +285,7 @@ ROCAL_API_CALL rocalGetBoundingBoxLabel(RocalContext p_context, int* buf)
 }
 
 void
-ROCAL_API_CALL rocalGetOneHotImageLabels(RocalContext p_context, int* buf, int numOfClasses)
+ROCAL_API_CALL rocalGetOneHotImageLabels(RocalContext p_context, void* buf, int numOfClasses, int dest)
 {
     if (!p_context)
         THROW("Invalid rocal context passed to rocalGetOneHotImageLabels")
@@ -305,8 +318,20 @@ ROCAL_API_CALL rocalGetOneHotImageLabels(RocalContext p_context, int* buf, int n
         }
 
     }
-    memcpy(buf,one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses);
+    if (dest == 0) // HOST DESTINATION
+        memcpy(buf, one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses);
+    else
+    {
+#if ENABLE_HIP
+        hipError_t err = hipMemcpy(buf, one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses, hipMemcpyHostToDevice);
+        if (err != hipSuccess)
+            THROW("Invalid Data Pointer: Error copying to device memory")
+#else
+        if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size * numOfClasses, one_hot_encoded, 0, NULL, NULL) != CL_SUCCESS)
+            THROW("Invalid Data Pointer: Error copying to device memory")
 
+#endif
+    }
 }
 
 

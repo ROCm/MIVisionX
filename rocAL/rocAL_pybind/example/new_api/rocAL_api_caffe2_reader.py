@@ -11,7 +11,10 @@ def draw_patches(img, idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     args = parse_args()
-    image = img.detach().numpy()
+    if args.rocal_gpu:
+        image = img.cpu().numpy()
+    else:
+        image = img.detach().numpy()
     image = image.transpose([1, 2, 0])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     if args.classification:
@@ -39,7 +42,9 @@ def main():
             path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE2_READER/CLASSIFICATION/"
         else:
             path= "OUTPUT_IMAGES_PYTHON/NEW_API/CAFFE2_READER/DETECTION/"
-        os.makedirs(path)
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
     pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=local_rank,
@@ -63,26 +68,29 @@ def main():
         print("epoch:: ", epoch)
         if not _rocal_bbox:
             for i, (image_batch, labels) in enumerate(data_loader, 0):  # Classification
-                sys.stdout.write("\r Mini-batch " + str(i))
-                print("Images", image_batch)
-                print("Labels", labels)
+                if args.print_tensor:
+                    sys.stdout.write("\r Mini-batch " + str(i))
+                    print("Images", image_batch)
+                    print("Labels", labels)
                 for element in list(range(batch_size)):
                     cnt = cnt + 1
                     draw_patches(image_batch[element],cnt)
             data_loader.reset()
         else:
             for i, (image_batch, bboxes, labels) in enumerate(data_loader, 0):  # Detection
-                sys.stdout.write("\r Mini-batch " + str(i))
-                print("Images", image_batch)
-                print("Bboxes", bboxes)
-                print("Labels", labels)
+                if i == 0:
+                    if args.print_tensor:
+                        sys.stdout.write("\r Mini-batch " + str(i))
+                        print("Images", image_batch)
+                        print("Bboxes", bboxes)
+                        print("Labels", labels)
                 for element in list(range(batch_size)):
                     cnt = cnt + 1
                     draw_patches(image_batch[element],cnt)
             data_loader.reset()
-    # print('Finished Training')
-    # print('Finished !!')
 
+    print("###############################################    CAFFE2 READER (CLASSIFCATION/ DETECTION)    ###############################################")
+    print("###############################################    SUCCESS                                    ###############################################")
 
 if __name__ == '__main__':
     main()

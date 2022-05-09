@@ -715,3 +715,4 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourcePartialSin
                                                             RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
 
 #endif //MIVISIONX_ROCAL_API_DATA_LOADERS_H
+

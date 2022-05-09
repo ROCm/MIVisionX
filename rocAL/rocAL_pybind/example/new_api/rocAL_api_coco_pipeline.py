@@ -27,7 +27,6 @@ class ROCALCOCOIterator(object):
 
     def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=None, offset=None, tensor_dtype=types.FLOAT, device="cpu", display=False, num_anchors=8732):
 
-        # self._num_gpus = len(pipelines)
         try:
             assert pipelines is not None, "Number of provided pipelines has to be at least 1"
         except Exception as ex:
@@ -60,9 +59,9 @@ class ROCALCOCOIterator(object):
             else:
                 torch_gpu_device = torch.device('cuda', self.device_id)
                 if self.tensor_dtype == types.FLOAT:
-                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device = torch_gpu_device)
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device=torch_gpu_device)
                 elif self.tensor_dtype == types.FLOAT16:
-                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device = torch_gpu_device)
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device=torch_gpu_device)
         else:
             if self.device == "cpu":
                 if self.tensor_dtype == types.FLOAT:
@@ -107,11 +106,9 @@ class ROCALCOCOIterator(object):
         self.loader.GetImageId(self.image_id)
         # Image sizes of a batch
         self.loader.GetImgSizes(self.img_size)
-        # print("Image sizes:", self.img_size)
-
         # Count of labels/ bboxes in a batch
-        self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
-        # print("Count Batch:", self.count_batch)
+        self.count_batch = self.loader.GetBoundingBoxCount(
+            self.bboxes_label_count)
         # 1D labels & bboxes array
         if self.device == "cpu":
           self.encoded_bboxes = np.zeros((self.count_batch*4), dtype="float32")
@@ -126,8 +123,6 @@ class ROCALCOCOIterator(object):
           self.encoded_labels = torch.as_tensor(labels_array, dtype=torch.int32, device=torch_gpu_device)
           encoded_bboxes_tensor = self.encoded_bboxes.cpu()
           encodded_labels_tensor = self.encoded_labels.cpu()
-          #encoded_bboxes_tensor = torch.tensor(self.encoded_bboxes.cpu).view(self.bs, -1, 4).contiguous()
-          #encodded_labels_tensor = torch.tensor(self.encoded_labels.cpu).long().view(self.bs, -1)
 
         image_id_tensor = torch.tensor(self.image_id)
         image_size_tensor = torch.tensor(self.img_size).view(-1, self.bs, 2)
@@ -143,7 +138,8 @@ class ROCALCOCOIterator(object):
 
             if self.display:
                 img = self.out
-                draw_patches(img[i], self.image_id[i], actual_bboxes, self.device)
+                draw_patches(img[i], self.image_id[i],
+                             actual_bboxes, self.device)
 
         return (self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
 
@@ -197,12 +193,15 @@ def main():
     tensor_format = types.NHWC if args.NHWC else types.NCHW
     tensor_dtype = types.FLOAT16 if args.fp16 else types.FLOAT
     try:
-        path= "OUTPUT_IMAGES_PYTHON/NEW_API/COCO_READER/"
-        os.makedirs(path)
+        path = "OUTPUT_IMAGES_PYTHON/NEW_API/COCO_READER/"
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
     except OSError as error:
         print(error)
     # Anchors
-    def coco_anchors(): # Should be Tensor of floats in ltrb format - input - Mx4 where M="No of anchor boxes"
+
+    def coco_anchors():  # Should be Tensor of floats in ltrb format - input - Mx4 where M="No of anchor boxes"
         fig_size = 300
         feat_size = [38, 19, 10, 5, 3, 1]
         steps = [8, 16, 32, 64, 100, 300]
@@ -240,92 +239,99 @@ def main():
         return dboxes_ltrb
     default_boxes = coco_anchors().numpy().flatten().tolist()
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,
+                    device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(
             file_root=image_path, annotations_file=annotation_path, random_shuffle=False, seed=random_seed)
         crop_begin, crop_size, bboxes, labels = fn.random_bbox_crop(bboxes, labels,
-                                                                device="cpu",
-                                                                aspect_ratio=[0.5, 2.0],
-                                                                thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
-                                                                scaling=[0.3, 1.0],
-                                                                bbox_layout="xyXY",
-                                                                allow_no_crop=True,
-                                                                num_attempts=50)
-        images_decoded = fn.decoders.image_slice(jpegs, crop_begin, crop_size, device="mixed", output_type=types.RGB, file_root=image_path, annotations_file=annotation_path, random_shuffle=False, seed=random_seed, num_shards=world_size, shard_id=local_rank)
-        # images_decoded = fn.decoders.image(jpegs, output_type=types.RGB, file_root=image_path, annotations_file=annotation_path, random_shuffle=False, seed=random_seed)
+                                                                    device="cpu",
+                                                                    aspect_ratio=[
+                                                                        0.5, 2.0],
+                                                                    thresholds=[
+                                                                        0, 0.1, 0.3, 0.5, 0.7, 0.9],
+                                                                    scaling=[
+                                                                        0.3, 1.0],
+                                                                    bbox_layout="xyXY",
+                                                                    allow_no_crop=True,
+                                                                    num_attempts=50)
+        images_decoded = fn.decoders.image_slice(jpegs, crop_begin, crop_size, device="mixed", output_type=types.RGB, file_root=image_path,
+                                                 annotations_file=annotation_path, random_shuffle=False, seed=random_seed, num_shards=world_size, shard_id=local_rank)
         res_images = fn.resize(images_decoded, resize_x=300, resize_y=300)
-        saturation = fn.uniform(range=[0.5, 1.5])
-        contrast = fn.uniform(range=[0.5, 1.5])
-        brightness = fn.uniform(range=[0.875, 1.125])
-        hue = fn.uniform(range=[-0.5, 0.5])
-        ct_images = fn.color_twist(res_images, saturation=saturation, contrast=contrast, brightness=brightness, hue=hue)
+        saturation = fn.uniform(rng_range=[0.5, 1.5])
+        contrast = fn.uniform(rng_range=[0.5, 1.5])
+        brightness = fn.uniform(rng_range=[0.875, 1.125])
+        hue = fn.uniform(rng_range=[-0.5, 0.5])
+        ct_images = fn.color_twist(
+            res_images, saturation=saturation, contrast=contrast, brightness=brightness, hue=hue)
         flip_coin = fn.random.coin_flip(probability=0.5)
         bboxes = fn.bb_flip(bboxes, ltrb=True, horizontal=flip_coin)
         if args.display:
             cmn_images = fn.crop_mirror_normalize(ct_images,
-                                            crop=(300, 300),
-                                            mean=[0,0,0],
-                                            std=[1,1,1],
-                                            mirror=flip_coin,
-                                            output_dtype=types.FLOAT,
-                                            output_layout=types.NCHW,
-                                            pad_output=False)
+                                                  crop=(300, 300),
+                                                  mean=[0, 0, 0],
+                                                  std=[1, 1, 1],
+                                                  mirror=flip_coin,
+                                                  output_dtype=types.FLOAT,
+                                                  output_layout=types.NCHW,
+                                                  pad_output=False)
             _, _ = fn.box_encoder(bboxes, labels,
-                                        criteria=0.5,
-                                        anchors=default_boxes)
+                                  criteria=0.5,
+                                  anchors=default_boxes)
         else:
             cmn_images = fn.crop_mirror_normalize(ct_images,
-                                            crop=(300, 300),
-                                            mean=[0.485*255,0.456*255 ,0.406*255 ],
-                                            std=[0.229*255 ,0.224*255 ,0.225*255 ],
-                                            mirror=flip_coin,
-                                            output_dtype=types.FLOAT,
-                                            output_layout=types.NCHW,
-                                            pad_output=False)
+                                                  crop=(300, 300),
+                                                  mean=[0.485*255,
+                                                        0.456*255, 0.406*255],
+                                                  std=[0.229*255, 0.224 *
+                                                       255, 0.225*255],
+                                                  mirror=flip_coin,
+                                                  output_dtype=types.FLOAT,
+                                                  output_layout=types.NCHW,
+                                                  pad_output=False)
             _, _ = fn.box_encoder(bboxes, labels,
-                                        criteria=0.5,
-                                        anchors=default_boxes,
-                                        offset=True, stds=[0.1, 0.1, 0.2, 0.2], scale=300)
+                                  criteria=0.5,
+                                  anchors=default_boxes,
+                                  offset=True, stds=[0.1, 0.1, 0.2, 0.2], scale=300)
 
         pipe.set_outputs(cmn_images)
     # Build the pipeline
     pipe.build()
     # Dataloader
     if(args.rocal_gpu):
-        print("gpu")
         data_loader = ROCALCOCOIterator(
-            pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, tensor_layout=tensor_format, tensor_dtype=tensor_dtype, device="cuda", num_anchors = len(default_boxes)/4)
+            pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, tensor_layout=tensor_format, tensor_dtype=tensor_dtype, device="cuda", num_anchors=len(default_boxes)/4)
 
     else:
         data_loader = ROCALCOCOIterator(
-            pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, tensor_layout=tensor_format, tensor_dtype=tensor_dtype, device="cpu", num_anchors = len(default_boxes)/4)
+            pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, tensor_layout=tensor_format, tensor_dtype=tensor_dtype, device="cpu", num_anchors=len(default_boxes)/4)
 
     import timeit
     start = timeit.default_timer()
     # Enumerate over the Dataloader
     for epoch in range(int(args.num_epochs)):
-        print("EPOCH:::::",epoch)
+        print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):
-            print("**************", i, "*******************")
-            print("**************starts*******************")
-            print("\n IMAGES : \n", it[0])
-            print("\nBBOXES:\n", it[1])
-            print("\nLABELS:\n", it[2])
-            print("\nIMAGE ID:\n", it[3])
-            print("\nIMAGE SIZE:\n", it[4])
-            print("**************ends*******************")
-            print("**************", i, "*******************")
+            if i == 0:
+                print("**************", i, "*******************")
+                print("**************starts*******************")
+                print("\n IMAGES : \n", it[0])
+                print("\nBBOXES:\n", it[1])
+                print("\nLABELS:\n", it[2])
+                print("\nIMAGE ID:\n", it[3])
+                print("\nIMAGE SIZE:\n", it[4])
+                print("**************ends*******************")
+                print("**************", i, "*******************")
         data_loader.reset()
     #Your statements here
     stop = timeit.default_timer()
 
     print('\n Time: ', stop - start)
 
+    print("###############################################    COCO READER    ###############################################")
+    print("###############################################    SUCCESS        ###############################################")
+
 
 if __name__ == '__main__':
     main()
-
-
-

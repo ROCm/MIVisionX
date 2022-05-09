@@ -122,65 +122,9 @@ class Pipeline(object):
         self._numOfClasses = None
         self._oneHotEncoding = False
         self._castLabels = False
-        self._prev_input_image = None
-        self._current_output_image = None
-        self._current_pipeline
+        self._current_pipeline = None
         self._reader = None
         self._define_graph_set = False
-
-
-    def store_values(self, operator):
-        """
-            Check if ops is one of those functionality to determine tensor_layout and tensor_dtype and crop.
-            If so preserve it in pipeline to use for dali iterator call.
-        """
-        if(operator.data in self._check_ops):
-            self._tensor_layout = operator._output_layout
-            self._tensor_dtype = operator._output_dtype
-            self._multiplier = list(map(lambda x: 1/x ,operator._std))
-            self._offset = list(map(lambda x,y: -(x/y), operator._mean, operator._std))
-            #changing operator std and mean to (1,0) to make sure there is no double normalization
-            operator._std = [1.0]
-            operator._mean = [0.0]
-            if operator._crop_h != 0 and operator._crop_w != 0:
-                self._img_w = operator._crop_w
-                self._img_h = operator._crop_h
-        elif(operator.data in self._check_crop_ops):
-            self._img_w = operator._resize_x
-            self._img_h = operator._resize_y
-
-    def process_calls(self, output_image):
-        last_operator = output_image.prev
-        temp = output_image
-        while(temp.prev is not None):
-            if(temp.data in (self._check_ops + self._check_crop_ops + self._check_ops_reader)):
-                self.store_values(temp)
-            temp = temp.prev
-        file_reader = temp
-        file_reader.rocal_c_func_call(self._handle)
-        self._shuffle = file_reader._random_shuffle
-        self._shard_id = file_reader._shard_id
-        self._num_shards = file_reader._num_shards
-        self._name = file_reader.data
-        temp = temp.next
-        operator = temp.next
-        while(operator.next.next is not None):
-            tensor = operator.next
-            if(operator.data in self._check_ops_decoder):
-                tensor.data = operator.rocal_c_func_call(
-                    self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, False)
-            else:
-                tensor.data = operator.rocal_c_func_call(
-                    self._handle, operator.prev.data, False)
-            operator = operator.next.next
-        tensor = last_operator.next
-        if(operator.data in self._check_ops_decoder):
-            tensor.data = operator.rocal_c_func_call(
-                self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, True)
-        else:
-            tensor.data = operator.rocal_c_func_call(
-                self._handle, operator.prev.data, True)
-        return tensor.data
 
     def build(self):
         """Build the pipeline using rocalVerify call
@@ -202,8 +146,8 @@ class Pipeline(object):
     def define_graph(self):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
-        It returns a list of outputs created by calling ROCAL Operators."""
-        print("define_graph NotImplemented")
+        It returns a list of outputs created by calling RALI Operators."""
+        print("definegraph is deprecated")
         raise NotImplementedError
 
 
@@ -243,8 +187,15 @@ class Pipeline(object):
         labels_tensor=  torch.tensor(labels_in).long()
         return self._encode_tensor.prev.rocal_c_func_call(self._handle, bboxes_tensor , labels_tensor )
 
-    def GetOneHotEncodedLabels(self, array):
-        return b.getOneHotEncodedLabels(self._handle, array, self._numOfClasses)
+    def GetOneHotEncodedLabels(self, array, device):
+        if device=="cpu":
+            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
+        if device=="gpu":
+            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
+
+    def GetOneHotEncodedLabels_TF(self, array):
+        # Host destination only
+        return b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
 
     def set_outputs(self, *output_list):
         self._output_list_length = len(output_list)
@@ -303,7 +254,7 @@ class Pipeline(object):
         return b.getBBCords(self._handle, array)
 
     def getImageLabels(self, array):
-        b.getImageLabels(self._handle, array)
+        b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
         b.rocalCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)

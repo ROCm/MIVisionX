@@ -50,6 +50,7 @@ public:
     void start_loading() override;
     LoaderModuleStatus set_cpu_affinity(cpu_set_t cpu_mask);
     LoaderModuleStatus set_cpu_sched_policy(struct sched_param sched_policy);
+    void set_gpu_device_id(int device_id);
     std::vector<std::string> get_id() override;
     decoded_image_info get_decode_image_info() override;
     crop_image_info get_crop_image_info() override;
@@ -62,6 +63,8 @@ private:
     std::shared_ptr<ImageReadAndDecode> _image_loader;
     LoaderModuleStatus update_output_image();
     LoaderModuleStatus load_routine();
+
+    std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
     Image* _output_image;
     std::vector<std::string> _output_names;//!< image name/ids that are stores in the _output_image
     size_t _output_mem_size;
@@ -84,6 +87,6 @@ private:
     size_t _image_counter = 0;//!< How many images have been loaded already
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
     bool _decoder_keep_original = false;
-    std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
+    int _device_id;
 };
 

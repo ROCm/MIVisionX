@@ -209,6 +209,7 @@ raliJpegFileSource(
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
         DecoderType decType = DecoderType::TURBO_JPEG; // default
         if (dec_type == RALI_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == RALI_DECODER_HW_JEPG) decType = DecoderType::HW_JPEG_DEC;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")

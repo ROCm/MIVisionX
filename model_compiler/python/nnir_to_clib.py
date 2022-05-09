@@ -1942,7 +1942,7 @@ int main(int argc, const char ** argv)
 def generateExtrasCPP(graph,extraFolder):
     print('copying mv_extras_postproc.cpp to ' + extraFolder + ' ...')
     file_dir = os.path.dirname(os.path.abspath(__file__))
-    cmd = "cp " + file_dir + "/../mv_extras_postproc.cpp " + "./" + extraFolder
+    cmd = "cp " + file_dir + "/../mv_deploy/mv_extras_postproc.cpp " + "./" + extraFolder
     ret = subprocess.call(cmd, shell=True)
     if ret:
         print(('ERROR: generateExtrasCPP', ret))
@@ -1952,7 +1952,7 @@ def generateExtrasCPP(graph,extraFolder):
 def generateExtrasH(graph,extraFolder):
     print('copying mv_extras_postproc.h to ' + extraFolder + ' ...')
     file_dir = os.path.dirname(os.path.abspath(__file__))
-    cmd = "cp " + file_dir + "/../mv_extras_postproc.h " + "./" + extraFolder
+    cmd = "cp " + file_dir + "/../mv_deploy/mv_extras_postproc.h " + "./" + extraFolder
     ret = subprocess.call(cmd, shell=True)
     if ret:
         print(('ERROR: generateExtrasCPP', ret))

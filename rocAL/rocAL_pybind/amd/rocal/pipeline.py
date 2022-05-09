@@ -1,5 +1,5 @@
 import rali_pybind as b
-import amd.rali.types as types
+import amd.rocal.types as types
 import numpy as np
 import torch
 import ctypes
@@ -73,11 +73,12 @@ class Pipeline(object):
           cpu_threads (default 1)
     This returns a context'''
     _handle = None
+    _current_pipeline = None
 
     def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=-1,
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
-                 rali_cpu=False, max_streams=-1, default_cuda_stream_priority=0):
+                 rali_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
         if(rali_cpu):
             # print("comes to cpu")
             self._handle = b.raliCreate(
@@ -106,10 +107,11 @@ class Pipeline(object):
         self._rali_cpu = rali_cpu
         self._max_streams = max_streams
         self._default_cuda_stream_priority = default_cuda_stream_priority
-        self._tensor_layout = None
-        self._tensor_dtype = None
-        self._multiplier = None
-        self._offset = None
+        self._tensor_layout = tensor_layout
+        self._tensor_dtype = tensor_dtype
+        self._multiplier = multiplier
+        self._reverse_channels = reverse_channels
+        self._offset = offset
         self._img_h = None
         self._img_w = None
         self._shuffle = None
@@ -120,104 +122,18 @@ class Pipeline(object):
         self._numOfClasses = None
         self._oneHotEncoding = False
         self._castLabels = False
-
-    def store_values(self, operator):
-        """
-            Check if ops is one of those functionality to determine tensor_layout and tensor_dtype and crop.
-            If so preserve it in pipeline to use for dali iterator call.
-        """
-        if(operator.data in self._check_ops):
-            self._tensor_layout = operator._output_layout
-            self._tensor_dtype = operator._output_dtype
-            self._multiplier = list(map(lambda x: 1/x ,operator._std))
-            self._offset = list(map(lambda x,y: -(x/y), operator._mean, operator._std))
-            #changing operator std and mean to (1,0) to make sure there is no double normalization
-            operator._std = [1.0]
-            operator._mean = [0.0]
-            if operator._crop_h != 0 and operator._crop_w != 0:
-                self._img_w = operator._crop_w
-                self._img_h = operator._crop_h
-        elif(operator.data in self._check_crop_ops):
-            self._img_w = operator._resize_x
-            self._img_h = operator._resize_y
-
-    def process_calls(self, output_image):
-        last_operator = output_image.prev
-        temp = output_image
-        while(temp.prev is not None):
-            if(temp.data in (self._check_ops + self._check_crop_ops + self._check_ops_reader)):
-                self.store_values(temp)
-            temp = temp.prev
-        file_reader = temp
-        file_reader.rali_c_func_call(self._handle)
-        self._shuffle = file_reader._random_shuffle
-        self._shard_id = file_reader._shard_id
-        self._num_shards = file_reader._num_shards
-        self._name = file_reader.data
-        temp = temp.next
-        operator = temp.next
-        while(operator.next.next is not None):
-            tensor = operator.next
-            if(operator.data in self._check_ops_decoder):
-                tensor.data = operator.rali_c_func_call(
-                    self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, False)
-            else:
-                tensor.data = operator.rali_c_func_call(
-                    self._handle, operator.prev.data, False)
-            operator = operator.next.next
-        tensor = last_operator.next
-        if(operator.data in self._check_ops_decoder):
-            tensor.data = operator.rali_c_func_call(
-                self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, True)
-        else:
-            tensor.data = operator.rali_c_func_call(
-                self._handle, operator.prev.data, True)
-        return tensor.data
+        self._current_pipeline = None
+        self._reader = None
+        self._define_graph_set = False
 
     def build(self):
         """Build the pipeline using raliVerify call
         """
-        outputs = self.define_graph()
-        self.process_calls(outputs[0])
-
-        #Checks for Casting "Labels" as last node & Box Encoder as last Prev node
-        if(len(outputs)==3):
-            if((isinstance(outputs[1],list)== False) & (isinstance(outputs[2],list)== False)):
-                if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
-                    if(outputs[2].prev.data == "Cast") :
-                        self._castLabels = True
-                        if(outputs[2].prev.prev.prev.data is not None):
-                            if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
-                                self._BoxEncoder = True
-                                self._anchors = outputs[2].prev.prev.data
-                                self._encode_tensor = outputs[2].prev.prev
-                                self._encode_tensor.prev.rali_c_func_call(self._handle )
-        #Checks for Box Encoding as the Last Node
-        if(len(outputs)==3):
-            if(isinstance(outputs[1],list)== False):
-                if(outputs[1].prev is not None):
-                    if(outputs[2].prev is not None):
-                        if(outputs[2].prev.data == "BoxEncoder"):
-                            self._BoxEncoder = True
-                            self._anchors = outputs[2].data
-                            self._encode_tensor = outputs[2]
-                            self._encode_tensor.prev.rali_c_func_call(self._handle )
-
-        #Checks for One Hot Encoding as the last Node
-        if(isinstance(outputs[1],list)== False):
-            if(len(outputs)==2):
-                if(outputs[1].prev is not None):
-                    print(type(outputs[1]))
-                    if(outputs[1].prev.data == "OneHotLabel"):
-                        self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
-                        self._oneHotEncoding = True
-
-
         status = b.raliVerify(self._handle)
         if(status != types.OK):
             print("Verify graph failed")
             exit(0)
-        return outputs
+        return self
 
     def run(self):
         """ Run the pipeline using raliRun call
@@ -231,6 +147,7 @@ class Pipeline(object):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
         It returns a list of outputs created by calling RALI Operators."""
+        print("definegraph is deprecated")
         raise NotImplementedError
 
     def get_handle(self):
@@ -241,28 +158,88 @@ class Pipeline(object):
         b.raliCopyToOutput(
             self._handle, np.ascontiguousarray(out, dtype=array.dtype))
 
-
-
     def copyToTensor(self, array,  multiplier, offset, reverse_channels, tensor_format, tensor_dtype):
 
         b.raliCopyToOutputTensor(self._handle, ctypes.c_void_p(array.data_ptr()), tensor_format, tensor_dtype,
                                     multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+
+    def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
+        out = np.frombuffer(array, dtype=array.dtype)
+        if tensor_dtype == types.FLOAT:
+            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        elif tensor_dtype == types.FLOAT16:
+            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+
+    def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
+        out = np.frombuffer(array, dtype=array.dtype)
+        if tensor_dtype == types.FLOAT:
+            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        elif tensor_dtype == types.FLOAT16:
+            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def encode(self, bboxes_in, labels_in):
         bboxes_tensor = torch.tensor(bboxes_in).float()
         labels_tensor=  torch.tensor(labels_in).long()
         return self._encode_tensor.prev.rali_c_func_call(self._handle, bboxes_tensor , labels_tensor )
 
-    def GetOneHotEncodedLabels(self, array):
-        return b.getOneHotEncodedLabels(self._handle, array, self._numOfClasses)
+    def GetOneHotEncodedLabels(self, array, device):
+        if device=="cpu":
+            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
+        if device=="gpu":
+            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
 
+    def GetOneHotEncodedLabels_TF(self, array):
+        # Host destination only
+        return b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
+
+    def set_outputs(self, *output_list):
+        self._output_list_length = len(output_list)
+        b.setOutputImages(self._handle,len(output_list),output_list)
+
+    def __enter__(self):
+        Pipeline._current_pipeline = self
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        pass
+
+    def set_seed(self,seed=0):
+        return b.setSeed(seed)
+
+    @classmethod
+    def create_int_param(self,value=1):
+        return b.CreateIntParameter(value)
+
+    @classmethod
+    def create_float_param(self,value=1):
+        return b.CreateFloatParameter(value)
+
+    @classmethod
+    def update_int_param(self,value=1,param=1):
+        b.UpdateIntParameter(value,param)
+
+    @classmethod
+    def update_float_param(self,value=1,param=1):
+        b.UpdateFloatParameter(value,param)
+
+    @classmethod
+    def get_int_value(self,param):
+        return b.GetIntValue(param)
+
+    @classmethod
+    def get_float_value(self,param):
+        return b.GetFloatValue(param)
 
     def GetImageNameLen(self, array):
         return b.getImageNameLen(self._handle, array)
 
     def GetImageName(self, array_len):
-
         return b.getImageName(self._handle,array_len)
+
     def GetImageId(self, array):
         b.getImageId(self._handle, array)
 
@@ -276,10 +253,14 @@ class Pipeline(object):
         return b.getBBCords(self._handle, array)
 
     def getImageLabels(self, array):
-        b.getImageLabels(self._handle, array)
+        b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
         b.raliCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)
+
+    def getEncodedBoxesAndLables(self, batch_size, num_anchors):
+        return b.raliGetEncodedBoxesAndLables(self._handle, batch_size, num_anchors)
+
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
 

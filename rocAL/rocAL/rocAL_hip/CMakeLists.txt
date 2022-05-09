@@ -23,6 +23,7 @@ project(rocAL_hip CXX)
 
 set(rocAL_HIP_SOURCES
     rali_hip_kernels.cpp
+    box_encoder_hip.cpp
     )
 
 set_source_files_properties(${rocAL_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)

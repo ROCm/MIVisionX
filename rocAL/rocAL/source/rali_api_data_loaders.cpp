@@ -149,7 +149,7 @@ raliJpegFileSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -209,6 +209,7 @@ raliJpegFileSource(
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
         DecoderType decType = DecoderType::TURBO_JPEG; // default
         if (dec_type == RALI_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == RALI_DECODER_HW_JEPG) decType = DecoderType::HW_JPEG_DEC;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -227,7 +228,7 @@ raliJpegFileSource(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -299,7 +300,7 @@ raliSequenceReader(
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
-        
+
         // Set default step and stride values if 0 is passed
         step = (step == 0)? 1 : step;
         stride = (stride == 0)? 1 : stride;
@@ -327,7 +328,7 @@ raliSequenceReader(
                                                                             context->master_graph->sequence_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            decoder_keep_original, "", 
+                                                                            decoder_keep_original, "",
                                                                             sequence_length,
                                                                             step, stride);
         context->master_graph->set_loop(loop);
@@ -385,7 +386,7 @@ raliSequenceReaderSingleShard(
 
         if(shard_id >= shard_count)
             THROW("Shard id should be smaller than shard count")
-        
+
         // Set default step and stride values if 0 is passed
         step = (step == 0)? 1 : step;
         stride = (stride == 0)? 1 : stride;
@@ -404,7 +405,7 @@ raliSequenceReaderSingleShard(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                        source_path, "", 
+                                                                                        source_path, "",
                                                                                         StorageType::SEQUENCE_FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
@@ -470,7 +471,7 @@ raliJpegCaffe2LMDBRecordSource(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -549,7 +550,7 @@ raliJpegCaffe2LMDBRecordSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -623,7 +624,7 @@ raliJpegCaffeLMDBRecordSource(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -703,7 +704,7 @@ raliJpegCaffeLMDBRecordSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -723,6 +724,179 @@ raliJpegCaffeLMDBRecordSourceSingleShard(
                                                                                         context->master_graph->mem_type(),
                                                                                         context->master_graph->meta_data_reader(),
                                                                                         decoder_keep_original);
+        context->master_graph->set_loop(loop);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(info, is_output);
+            context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
+
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return output;
+}
+
+
+RaliImage  RALI_API_CALL
+raliJpegCaffeLMDBRecordSourcePartialSingleShard(
+        RaliContext p_context,
+        const char* source_path,
+        RaliImageColor rali_color_format,
+        unsigned shard_id,
+        unsigned shard_count,
+        bool is_output,
+        bool shuffle,
+        bool loop,
+        RaliImageSizeEvaluationPolicy decode_size_policy,
+        unsigned max_width,
+        unsigned max_height,
+        RaliFloatParam p_area_factor,
+        RaliFloatParam p_aspect_ratio,
+        RaliFloatParam p_x_drift_factor,
+        RaliFloatParam p_y_drift_factor )
+{
+    Image* output = nullptr;
+    auto area_factor  = static_cast<FloatParam*>(p_area_factor);
+    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
+    auto x_drift_factor = static_cast<FloatParam*>(p_x_drift_factor);
+    auto y_drift_factor = static_cast<FloatParam*>(p_y_drift_factor);
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+        // bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
+
+        if(shard_count < 1 )
+            THROW("Shard count should be bigger than 0")
+
+        if(shard_id >= shard_count)
+            THROW("Shard id should be smaller than shard count")
+
+        if(use_input_dimension && (max_width == 0 || max_height == 0))
+        {
+            THROW("Invalid input max width and height");
+        }
+        else
+        {
+            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
+        }
+
+        auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
+                               evaluate_image_data_set(decode_size_policy, StorageType::CAFFE_LMDB_RECORD, DecoderType::FUSED_TURBO_JPEG,
+                                                       source_path, "");
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+
+        INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
+
+        auto info = ImageInfo(width, height,
+                              context->internal_batch_size(),
+                              num_of_planes,
+                              context->master_graph->mem_type(),
+                              color_format );
+        output = context->master_graph->create_loader_output_image(info);
+
+        context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
+                                                                            source_path, "",
+                                                                            StorageType::CAFFE_LMDB_RECORD,
+                                                                            DecoderType::FUSED_TURBO_JPEG,
+                                                                            shuffle,
+                                                                            loop,
+                                                                            context->user_batch_size(),
+                                                                            context->master_graph->mem_type(),
+                                                                            context->master_graph->meta_data_reader(),
+                                                                            area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+
+
+        context->master_graph->set_loop(loop);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(info, is_output);
+            context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
+
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliJpegCaffe2LMDBRecordSourcePartialSingleShard(
+        RaliContext p_context,
+        const char* source_path,
+        RaliImageColor rali_color_format,
+        unsigned shard_id,
+        unsigned shard_count,
+        bool is_output,
+        bool shuffle,
+        bool loop,
+        RaliImageSizeEvaluationPolicy decode_size_policy,
+        unsigned max_width,
+        unsigned max_height,
+        RaliFloatParam p_area_factor,
+        RaliFloatParam p_aspect_ratio,
+        RaliFloatParam p_x_drift_factor,
+        RaliFloatParam p_y_drift_factor )
+{
+    Image* output = nullptr;
+    auto area_factor  = static_cast<FloatParam*>(p_area_factor);
+    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
+    auto x_drift_factor = static_cast<FloatParam*>(p_x_drift_factor);
+    auto y_drift_factor = static_cast<FloatParam*>(p_y_drift_factor);
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+        // bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
+
+        if(shard_count < 1 )
+            THROW("Shard count should be bigger than 0")
+
+        if(shard_id >= shard_count)
+            THROW("Shard id should be smaller than shard count")
+
+        if(use_input_dimension && (max_width == 0 || max_height == 0))
+        {
+            THROW("Invalid input max width and height");
+        }
+        else
+        {
+            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
+        }
+
+        auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
+                               evaluate_image_data_set(decode_size_policy, StorageType::CAFFE2_LMDB_RECORD, DecoderType::FUSED_TURBO_JPEG,
+                                                       source_path, "");
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+
+        INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
+
+        auto info = ImageInfo(width, height,
+                              context->internal_batch_size(),
+                              num_of_planes,
+                              context->master_graph->mem_type(),
+                              color_format );
+        output = context->master_graph->create_loader_output_image(info);
+
+        context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
+                                                                            source_path, "",
+                                                                            StorageType::CAFFE2_LMDB_RECORD,
+                                                                            DecoderType::FUSED_TURBO_JPEG,
+                                                                            shuffle,
+                                                                            loop,
+                                                                            context->user_batch_size(),
+                                                                            context->master_graph->mem_type(),
+                                                                            context->master_graph->meta_data_reader(),
+                                                                            area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -940,7 +1114,7 @@ raliJpegCOCOFileSource(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1021,7 +1195,7 @@ raliJpegCOCOFileSourceSingleShard(
                                                        source_path, json_path);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1103,7 +1277,7 @@ raliFusedJpegCrop(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1185,7 +1359,7 @@ raliJpegCOCOFileSourcePartial(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1274,7 +1448,7 @@ raliJpegCOCOFileSourcePartialSingleShard(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1359,7 +1533,7 @@ raliJpegTFRecordSource(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1436,7 +1610,7 @@ raliJpegTFRecordSourceSingleShard(
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1581,7 +1755,7 @@ raliRawTFRecordSourceSingleShard(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(out_width)+ " height = "+ TOSTR(out_height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(out_width, out_height,
@@ -1666,7 +1840,7 @@ raliFusedJpegCropSingleShard(
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -1814,7 +1988,7 @@ raliVideoFileSourceSingleShard(
             THROW("Sequence length passed should be bigger than 0")
         // Set video loader flag in master_graph
         context->master_graph->set_video_loader_flag();
-        
+
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
 
@@ -2132,7 +2306,7 @@ raliRawCIFAR10Source(
         auto [width, height] = std::make_tuple(out_width, out_height);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
-        
+
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,

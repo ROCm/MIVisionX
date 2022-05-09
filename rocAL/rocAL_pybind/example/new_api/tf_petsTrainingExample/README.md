@@ -6,4 +6,3 @@ For subsequent runs, after the dataset has already been downloaded and preproces
 To run this example for the first run or subsequent runs, just execute:
 ```
 python3.6 train_withRALI_withTFRecordReader.py
-```

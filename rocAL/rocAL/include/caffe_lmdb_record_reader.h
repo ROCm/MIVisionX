@@ -102,8 +102,11 @@ private:
     void incremenet_read_ptr();
     int release();
     size_t get_file_shard_id();
+    //!< _file_count_all_shards total_number of files in to figure out the max_batch_size (usually needed for distributed training).
+    size_t  _file_count_all_shards;
     void incremenet_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
+    void replicate_last_batch_to_pad_partial_shard();
     void read_image(unsigned char* buff, std::string _file_name);
     void read_image_names();
     std::map <std::string, uint> _image_record_starting;
@@ -111,5 +114,6 @@ private:
     int _open_env = 1;
     int rc;
     void open_env_for_read_image();
+    std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
 };
 

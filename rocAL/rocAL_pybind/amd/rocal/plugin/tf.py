@@ -1,6 +1,6 @@
 import numpy as np
 import rali_pybind as b
-import amd.rali.types as types
+import amd.rocal.types as types
 class RALIGenericImageIterator(object):
     def __init__(self, pipeline):
         self.loader = pipeline
@@ -45,14 +45,12 @@ class RALIGenericIteratorDetection(object):
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
+        if self.loader._name is None:
+            self.loader._name = self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
 
-        if self.tensor_dtype == types.FLOAT:
-            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float32")
-        elif self.tensor_dtype == types.FLOAT16:
-            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float16")
-        # self.labels = np.zeros((self.bs),dtype = "int32")
+        self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "uint8")
 
     def next(self):
         return self.__next__()
@@ -64,16 +62,15 @@ class RALIGenericIteratorDetection(object):
             print("Decode   time ::",timing_info.decode_time)
             print("Process  time ::",timing_info.process_time)
             print("Transfer time ::",timing_info.transfer_time)
+            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
+            self.reset()
             raise StopIteration
 
-        if(types.NCHW == self.tensor_format):
-            self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        else:
-            self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        
+        self.loader.copyImage(self.out)
+
         if(self.loader._name == "TFRecordReaderDetection"):
             self.bbox_list =[]
             self.label_list=[]
@@ -128,17 +125,17 @@ class RALIGenericIteratorDetection(object):
         elif (self.loader._name == "TFRecordReaderClassification"):
             if(self.loader._oneHotEncoding == True):
                 self.labels = np.zeros((self.bs)*(self.loader._numOfClasses),dtype = "int32")
-                self.loader.GetOneHotEncodedLabels(self.labels)
+                self.loader.GetOneHotEncodedLabels_TF(self.labels)
                 self.labels = np.reshape(self.labels, (-1, self.bs, self.loader._numOfClasses))
             else:
                 self.labels = np.zeros((self.bs),dtype = "int32")
                 self.loader.getImageLabels(self.labels)
-        
+
             if self.tensor_dtype == types.FLOAT:
                 return self.out.astype(np.float32), self.labels
             elif self.tensor_dtype == types.TensorDataType.FLOAT16:
                 return self.out.astype(np.float16), self.labels
-        
+
     def reset(self):
         b.raliResetLoaders(self.loader._handle)
 
@@ -176,7 +173,7 @@ class RALI_iterator(RALIGenericImageIterator):
     """
     RALI iterator for classification tasks for PyTorch. It returns 2 outputs
     (data and label) in the form of PyTorch's Tensor.
-   
+
     """
     def __init__(self,
                  pipelines,

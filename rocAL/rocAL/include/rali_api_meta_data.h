@@ -53,8 +53,8 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateTFReader(RaliContext rali_contex
 /// \param source_path path to the coco json file
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
 extern "C" RaliMetaData RALI_API_CALL raliCreateTFReaderDetection(RaliContext rali_context, const char* source_path, bool is_output,
-    const char* user_key_for_label, const char* user_key_for_text, 
-    const char* user_key_for_xmin, const char* user_key_for_ymin, const char* user_key_for_xmax, const char* user_key_for_ymax, 
+    const char* user_key_for_label, const char* user_key_for_text,
+    const char* user_key_for_xmin, const char* user_key_for_ymin, const char* user_key_for_xmax, const char* user_key_for_ymax,
     const char* user_key_for_filename);
 
 ///
@@ -123,7 +123,7 @@ extern "C" unsigned RALI_API_CALL raliGetImageNameLen(RaliContext rali_context, 
 
 /// \param meta_data RaliMetaData object that contains info about the images and labels
 /// \param buf user's buffer that will be filled with labels. Its needs to be at least of size batch_size.
-extern "C" void RALI_API_CALL raliGetImageLabels(RaliContext rali_context, int* buf);
+extern "C" void RALI_API_CALL raliGetImageLabels(RaliContext rali_context, void* buf);
 
 ///
 /// \param rali_context
@@ -149,7 +149,8 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateTextCifar10LabelReader(RaliConte
 /// \param meta_data RaliMetaData object that contains info about the images and labels
 /// \param numOfClasses the number of classes for a image dataset
 /// \param buf user's buffer that will be filled with labels. Its needs to be at least of size batch_size.
-extern "C" void RALI_API_CALL raliGetOneHotImageLabels(RaliContext rali_context,int *buf, int numOfClasses);
+/// \param dest destination can be host=0 / device=1
+extern "C" void RALI_API_CALL raliGetOneHotImageLabels(RaliContext rali_context,void *buf, int numOfClasses, int dest);
 
 extern "C" void RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, bool no_crop, RaliFloatParam aspect_ratio = NULL, bool has_shape = false, int crop_width = 0, int crop_height = 0, int num_attempts = 1, RaliFloatParam scaling = NULL, int total_num_attempts = 0, int64_t seed = 0);
 
@@ -177,9 +178,13 @@ extern "C" void RALI_API_CALL raliBoxEncoder(RaliContext p_context, std::vector<
 /// \param labels_buf  user's buffer that will be filled with encoded labels . Its needs to be at least of size batch_size.
 extern "C" void RALI_API_CALL raliCopyEncodedBoxesAndLables(RaliContext p_context, float* boxes_buf, int* labels_buf);
 
+/// \param boxes_buf  ptr to user's buffer that will be filled with encoded bounding boxes . Its needs to be at least of size batch_size.
+/// \param labels_buf  user's buffer that will be filled with encoded labels . Its needs to be at least of size batch_size.
+extern "C" void RALI_API_CALL raliGetEncodedBoxesAndLables(RaliContext p_context, float **boxes_buf_ptr, int **labels_buf_ptr, int num_encoded_boxes);
+
 ///
 /// \param rali_context
-/// \param buf The user's buffer that will be filled with image id info for the images in the output batch. 
+/// \param buf The user's buffer that will be filled with image id info for the images in the output batch.
 extern "C" void RALI_API_CALL raliGetImageId(RaliContext p_context,  int* buf);
 
 ///

@@ -16,8 +16,8 @@ MIVisionX samples using [RunVX](../utilities/runvx#amd-runvx)
 * To run the samples we need to put MIVisionX executables and libraries into the system path
 
 ``` 
-export PATH=$PATH:/opt/rocm/mivisionx/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
+export PATH=$PATH:/opt/rocm/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 ```
 
 * To get help on RunVX, use `-h` option
@@ -114,8 +114,8 @@ MIVisionX samples using [LoomShell](../utilities/loom_shell#radeon-loomshell)
 * To run the samples we need to put MIVisionX executables and libraries into the system path
 
 ``` 
-export PATH=$PATH:/opt/rocm/mivisionx/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
+export PATH=$PATH:/opt/rocm/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 ```
 
 * To get help on loom_shell, use `-help` option

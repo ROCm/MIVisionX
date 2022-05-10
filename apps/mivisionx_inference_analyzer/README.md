@@ -61,9 +61,9 @@ MIVisionX provides developers with [docker images](https://hub.docker.com/u/mivi
 * Test display with MIVisionX sample
 
   ``` 
-  % export PATH=$PATH:/opt/rocm/mivisionx/bin
-  % export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-  % runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
+  % export PATH=$PATH:/opt/rocm/bin
+  % export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
+  % runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
   ```
 
 * Run [Samples](#samples)
@@ -147,7 +147,7 @@ usage: python3 mivisionx_inference_analyzer.py
   **Note:**
 
   + MIVisionX needs to be pre-installed
-  + MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/mivisionx/model_compiler/python/`
+  + MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
   + ONNX model conversion requires ONNX install using `pip install onnx` 	
 
 * **Step 2:** Download pre-trained SqueezeNet ONNX model from [ONNX Model Zoo](https://github.com/onnx/models#open-neural-network-exchange-onnx-model-zoo) - [SqueezeNet Model](https://s3.amazonaws.com/download.onnx/models/opset_8/squeezenet.tar.gz)
@@ -197,7 +197,7 @@ usage: python3 mivisionx_inference_analyzer.py
   **Note:**
 
   + MIVisionX needs to be pre-installed
-  + MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/mivisionx/model_compiler/python/`
+  + MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
  
 * **Step 2:** Download pre-trained VGG 16 caffe model - [VGG_ILSVRC_16_layers.caffemodel](http://www.robots.ox.ac.uk/~vgg/software/very_deep/caffe/VGG_ILSVRC_16_layers.caffemodel)
 
@@ -239,7 +239,7 @@ usage: python3 mivisionx_inference_analyzer.py
   **Note:**
 
   + MIVisionX needs to be pre-installed
-  + MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/mivisionx/model_compiler/python/`
+  + MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
   + NNEF model conversion requires [NNEF python parser](https://github.com/KhronosGroup/NNEF-Tools/tree/master/parser#nnef-parser-project) installed
 
 * **Step 2:** Download pre-trained VGG 16 NNEF model

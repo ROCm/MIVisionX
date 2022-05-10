@@ -130,7 +130,7 @@ parser.add_argument('--test_info',          type=str, default='no',
                     help='Show test info - optional (default:no [options:no/yes])')
 parser.add_argument('--backend_type',       type=str, default='OCL',
                     help='Backend type - optional (default:HOST [options:HOST/HIP/OCL])')
-parser.add_argument('--install_directory',    type=str, default='/opt/rocm/mivisionx',
+parser.add_argument('--install_directory',    type=str, default='/opt/rocm',
                     help='MIVisionX Install Directory - optional')
 args = parser.parse_args()
 
@@ -187,7 +187,7 @@ print("\nMIVisionX runNeuralNetworkTests V-"+__version__+"\n")
 # check for Scripts
 scriptPath = os.path.dirname(os.path.realpath(__file__))
 modelCompilerDir = os.path.expanduser(
-    installDir+'/model_compiler/python')
+    installDir+'/libexec/mivisionx/model_compiler/python')
 pythonScript = modelCompilerDir+'/caffe_to_nnir.py'
 modelCompilerScript = os.path.abspath(pythonScript)
 if(os.path.isfile(modelCompilerScript)):

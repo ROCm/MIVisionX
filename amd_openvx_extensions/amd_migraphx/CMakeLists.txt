@@ -61,28 +61,18 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         link_directories(${HIP_PATH}/lib)
         add_library(${PROJECT_NAME} SHARED ${SOURCES})
         target_link_libraries(${PROJECT_NAME} openvx migraphx::c ${HIP_PATH}/lib/libamdhip64.so)
+        # install MIVisionX libs -- {ROCM_PATH}/lib
         install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
         install(FILES include/vx_amd_migraphx.h DESTINATION include/mivisionx)
-
-	if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
-	# Copy Header files to build directory
-	  configure_file("include/vx_amd_migraphx.h" "${PROJECT_BINARY_DIR}/include/mivisionx/vx_amd_migraphx.h" COPYONLY)
-	  # Generate wrapper for files to install in mivisionx/include/
-	  rocm_wrap_header_file(
-		vx_amd_migraphx.h
-		HEADER_LOCATION include/mivisionx
-		GUARDS WRAPPER
-		WRAPPER_LOCATIONS mivisionx/include)
-	endif()
     else()
         message("-- ${Red}WARNING: MIGraphX or HIP Not Found -- ${PROJECT_NAME} module excluded${ColourReset}")
     endif()
 
-endif()
-
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-else()
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
+    endif()
 endif()

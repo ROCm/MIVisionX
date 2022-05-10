@@ -151,7 +151,7 @@ rocm_packages = rocm_packages.splitlines()
 
 lib_type = '.so'
 dep_libs = 'rt'
-HIP_deps = '/opt/rocm/hip/lib/libamdhip64.so'
+HIP_deps = '/opt/rocm/lib/libamdhip64.so'
 LDD_Links = 'ldd'
 if platform.system() == 'Darwin':
     lib_type = '.dylib'

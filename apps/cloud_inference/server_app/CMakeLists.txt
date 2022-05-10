@@ -24,7 +24,7 @@ project(inference_server_app)
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm Installation Path")
 # need to do this to avoid setting the default path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "mivisionx default ROCm installation path" FORCE)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
@@ -43,7 +43,7 @@ include_directories(../../../amd_openvx/openvx/include
   					${OpenCL_INCLUDE_DIRS}
 					../../../amd_openvx_extensions/amd_nn
 				   )
-link_directories(${ROCM_PATH}/mivisionx/lib)
+link_directories(${ROCM_PATH}/lib)
 
 list(APPEND SOURCES
 		common.cpp
@@ -61,6 +61,7 @@ list(APPEND SOURCES
 
 add_executable(inference_server_app ${SOURCES})
 target_link_libraries(inference_server_app vx_nn openvx pthread dl)
+# install MIVisionX executables -- {ROCM_PATH)/bin
 install(TARGETS inference_server_app DESTINATION bin)
 
 if(OpenCL_FOUND)

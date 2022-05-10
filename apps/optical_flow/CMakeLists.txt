@@ -30,6 +30,8 @@ project(opticalFlow)
 
 set(CMAKE_CXX_STANDARD 11)
 
+set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
+
 find_package(OpenCV REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -37,16 +39,21 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 if(DEFINED OPENVX_INCLUDES)
     message(STATUS "OPENVX_INCLUDES: \t${OPENVX_INCLUDES}")
 else()
-    set(OPENVX_INCLUDES /opt/rocm/mivisionx/include)
-    message(STATUS "OPENVX_INCLUDES: \t<empty> \t Default:/opt/rocm/mivisionx/include")
+    set(OPENVX_INCLUDES ${ROCM_PATH}/include/mivisionx)
+    message(STATUS "OPENVX_INCLUDES: \t<empty> \t Default:${OPENVX_INCLUDES}")
 endif()
 include_directories(${OPENVX_INCLUDES})
 
+set(SHARED_LIB_TYPE so)
+if(APPLE)
+  set(SHARED_LIB_TYPE dylib)
+endif()
+
 if(DEFINED OPENVX_LIBRARIES)
-    message(STATUS "OPENVX_LIBRARIES: \t${OPENVX_LIBRARIES}")
+    message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
 else()
-    set(OPENVX_LIBRARIES /opt/rocm/mivisionx/lib/libopenvx.so)
-    message(STATUS "OPENVX_LIBRARIES: \t<empty> \t Default:/opt/rocm/mivisionx/lib/libopenvx.so")
+    set(OPENVX_LIBRARIES ${ROCM_PATH}/lib/libopenvx.${SHARED_LIB_TYPE})
+	message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
 endif()
 
 add_executable(${PROJECT_NAME} source/optical_flow.cpp)

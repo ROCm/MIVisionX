@@ -57,14 +57,13 @@ enum vx_amd_migraphx_type_e {
 #define ERROR_CHECK_OBJECT(obj)  { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS){ printf("ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; }}
 //! \brief The macro for error checking NULL object.
 #define ERROR_CHECK_NULLPTR(obj)  { if(!(obj)){ printf("ERROR: found nullptr at " __FILE__ "#%d\n", __LINE__); return VX_FAILURE; }}
-
+//! \brief The macro for error message and return error code
+#define ERRMSG(status, format, ...) printf("ERROR: " format, __VA_ARGS__), status
 //////////////////////////////////////////////////////////////////////
+
 //! \brief The kernel registration functions.
 vx_status amd_vx_migraphx_node_publish(vx_context context);
 vx_node createMIGraphXNode(vx_graph graph, const char * kernelName, vx_reference params[], vx_uint32 num);
 
 //////////////////////////////////////////////////////////////////////
-//! \brief The utility functions.
-vx_enum get_vx_type(migraphx_shape_datatype_t migraphx_type);
-
 #endif // __VX_AMD_MIGRAPHX_KERNEL_H__

@@ -143,7 +143,7 @@ install(DIRECTORY ../../apps/cloud_inference DESTINATION share/mivisionx/apps)
 install(DIRECTORY ../../apps/dg_test DESTINATION share/mivisionx/apps)
 install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION share/mivisionx/apps)
 install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION share/mivisionx/apps)
-install(DIRECTORY ../../samples/inference DESTINATION share/mivisionx/samples)
+install(DIRECTORY ../../samples/inference/mv_objdetect DESTINATION share/mivisionx/samples)
 install(DIRECTORY ../../samples/model_compiler_samples DESTINATION share/mivisionx/samples)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

@@ -34,7 +34,6 @@ THE SOFTWARE.
 #include "vxScalar.h"
 #include "vxThreshold.h"
 #include "vxTensor.h"
-#include "amdMIGraphX.h"
 
 #define VX_MAX_FILE_NAME 128
 
@@ -341,15 +340,6 @@ CVxParameter * CreateDataObject(vx_context context, vx_graph graph, std::map<std
 		if (status)
 			return NULL;
 		return this_tensor;
-	}
-	else if (!_strnicmp(desc, "migraphx:", 9)) {
-		CVxParamMIGraphX *this_migraphx = new CVxParamMIGraphX();
-		this_migraphx->SetParamMap(m_paramMap);
-		this_migraphx->SetCaptureFrameStart(captureFrameStart);
-		int status = this_migraphx->Initialize(context, graph, desc);
-		if (status)
-			return NULL;
-		return this_migraphx;
 	}
 	else return nullptr;
 }

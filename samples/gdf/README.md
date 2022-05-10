@@ -1,6 +1,6 @@
 ## GDF - Graph Description Format
 
-MIVisionX samples using [RunVX](../../utilities/runvx#amd-runvx)
+MIVisionX samples using [RunVX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/utilities/runvx#amd-runvx)
 
 **Note:** 
 

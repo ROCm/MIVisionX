@@ -172,7 +172,7 @@ def runTestCommand (platform, project) {
                 export VX_TEST_DATA_PATH=\$(pwd)/OpenVX-cts/test_data/
                 mkdir build-cts
                 cd build-cts
-                cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;/opt/rocm/lib/libamdhip64.so\\;/opt/rocm/hip/lib/libamdhip64.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
+                cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;/opt/rocm/lib/libamdhip64.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
                 cmake --build .
                 echo MIVisionX OpenVX 1.3 Conformance - CPU - HIP Backend Build
                 ${conformaceCPU_HIP}

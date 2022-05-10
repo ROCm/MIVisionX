@@ -16,7 +16,7 @@ This application demonstrates the basic usage of rocAL's C API to load JPEG imag
 ### build
 
 ``` 
- export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
+ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/rpp/lib
  mkdir build
  cd build

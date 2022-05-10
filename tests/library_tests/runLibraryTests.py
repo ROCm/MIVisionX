@@ -47,7 +47,7 @@ def write_formatted(output, f):
 
 # Import arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--install_directory',    type=str, default='/opt/rocm/mivisionx',
+parser.add_argument('--install_directory',    type=str, default='/opt/rocm',
                     help='MIVisionX Install Directory - optional')
 parser.add_argument('--backend_type',       type=str, default='OCL',
                     help='Backend type - optional (default:CPU [options:CPU/HIP/OCL])')

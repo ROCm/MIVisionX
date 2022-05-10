@@ -9,7 +9,7 @@
 Arguments::Arguments()
         : workFolder{ "~" }, modelFileDownloadCounter{ 0 },
           password{ "radeon" },
-          modelCompilerPath{ "/opt/rocm/mivisionx/model_compiler/python" },
+          modelCompilerPath{ "/opt/rocm/libexec/mivisionx/model_compiler/python" },
           port{ 28282 }, batchSize{ 64 }, maxPendingBatches{ 4 }, numGPUs{ 1 }, gpuIdList{ 0 },
           maxGpuId{ 0 }, platform_id{ NULL }, num_devices{ 0 }, device_id{ NULL }, deviceUseCount{ 0 }
 {
@@ -241,7 +241,7 @@ static void show_usage()
     printf("\tinference_server_app");
     printf("\t[-p \t<port>\t\t\t\t default:26262]\n");
     printf("\t\t\t\t[-b \t<batch size>\t\t\t default:64]\n");
-    printf("\t\t\t\t[-n \t<model compiler path>\t\t default:/opt/rocm/mivisionx/model_compiler/python]\n");
+    printf("\t\t\t\t[-n \t<model compiler path>\t\t default:/opt/rocm/libexec/mivisionx/model_compiler/python]\n");
     printf("\t\t\t\t[-fp16 \t<ON:1 or OFF:0>\t\t\t default:0]\n");
     printf("\t\t\t\t[-w \t<server working directory>\t default:~/]\n");
     printf("\t\t\t\t[-t \t<num cpu decoder threads [2-64]> default:1]\n");

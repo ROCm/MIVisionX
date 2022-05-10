@@ -12,8 +12,8 @@ The sample has two .cpp files, ``mvobjdetect.cpp and visualize.cpp``. But it nee
 	* AMD Radeon GPU or APU required
 * [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 * Build & Install [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#linux-1)
-	* MIVisionX installs model compiler at `/opt/rocm/mivisionx`
-  * mv_compile installs at `/opt/rocm/mivisionx/bin` and mvdeploy_api.h installs at `/opt/rocm/mivisionx/include` 
+	* MIVisionX installs model compiler at `/opt/rocm/libexec/mivisionx`
+  * mv_compile installs at `/opt/rocm/bin` and mvdeploy_api.h installs at `/opt/rocm/include/mivisionx` 
 
 
 ### Step 1. Download pre-trained YoloV2 caffe model - [yoloV2Tiny20.caffemodel](https://github.com/kiritigowda/YoloV2NCS/raw/master/models/caffemodels/yoloV2Tiny20.caffemodel) 

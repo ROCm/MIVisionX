@@ -32,7 +32,7 @@ set (CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenCV REQUIRED)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
+set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 #find the OPENVX backend type
 set(OPENVX_BACKEND_OPENCL_FOUND 0)
 set(OPENVX_BACKEND_HIP_FOUND 0)
@@ -49,7 +49,7 @@ elseif(EXISTS ${ROCM_PATH}/mivisionx/include/openvx_backend.h)
     string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
     set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
 else()
-    message("-- ${Red}WARNING: ${ROCM_PATH}/mivisionx/include/openvx_backend.h file Not Found. please install the latest mivisionx! ${ColourReset}")
+    message("-- ${Red}WARNING: ${ROCM_PATH}/include/mivisionx/openvx_backend.h file Not Found. please install the latest mivisionx! ${ColourReset}")
 endif()
 
 if (OPENVX_BACKEND_OPENCL_FOUND)
@@ -58,10 +58,10 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
 endif()
 
 include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(/opt/rocm/include /opt/rocm/mivisionx/include)
+include_directories(${ROCM_PATH}/include/mivisionx)
 include_directories(include)
 
-link_directories(/opt/rocm/lib /opt/rocm/mivisionx/lib)
+link_directories(${ROCM_PATH}/lib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
 

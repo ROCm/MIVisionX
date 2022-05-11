@@ -83,8 +83,8 @@ vx_graph annCreateGraphWithInputImageWithArgmaxImageWithLut(
 Make sure that all executables and libraries are in `PATH` and `LD_LIBRARY_PATH` environment variables.
 
 ```
-% export PATH=$PATH:/opt/rocm/mivisionx/bin
-% export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
+% export PATH=$PATH:/opt/rocm/bin
+% export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 ```
 
 Below log outlines a simple use-case with inference generator.

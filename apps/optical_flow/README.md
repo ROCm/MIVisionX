@@ -45,7 +45,7 @@ Build OpenVX on Linux
 * **Step - 2:** Export OpenVX Directory Path
 
 ```
-export OPENVX_DIR=/opt/rocm/mivisionx
+export OPENVX_DIR=/opt/rocm/
 ```
 
 
@@ -53,7 +53,7 @@ export OPENVX_DIR=/opt/rocm/mivisionx
 
 ```
 mkdir opticalFlow-build && cd opticalFlow-build
-cmake -DOPENVX_INCLUDES=$OPENVX_DIR/include -DOPENVX_LIBRARIES=$OPENVX_DIR/lib/libopenvx.so ../optical_flow
+cmake -DOPENVX_INCLUDES=$OPENVX_DIR/include/mivisionx -DOPENVX_LIBRARIES=$OPENVX_DIR/lib/libopenvx.so ../optical_flow
 make
 ```
 

@@ -48,6 +48,7 @@ list(APPEND SOURCES decoder.cpp encoder.cpp vx_loomio_media.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARIES} ${AVUTIL_LIBRARY} ${AVCODEC_LIBRARY} ${SWSCALE_LIBRARY} ${AVFORMAT_LIBRARY} openvx)
+# install MIVisionX libs -- {ROCM_PATH}/lib
 install (TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

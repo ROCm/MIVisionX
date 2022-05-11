@@ -28,6 +28,8 @@ project(vx_pop)
 
 set(CMAKE_CXX_STANDARD 11)
 
+set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+
 find_package(OpenCV REQUIRED)
 
 include_directories(include)
@@ -36,7 +38,7 @@ if(DEFINED OPENVX_INCLUDES)
     message(STATUS "OPENVX_INCLUDES: \t${OPENVX_INCLUDES}")
     include_directories(${OPENVX_INCLUDES})
 else()
-    include_directories (/opt/rocm/mivisionx/include)
+    include_directories (${ROCM_PATH}/include/mivisionx)
 endif()
 
 set(SHARED_LIB_TYPE so)
@@ -47,7 +49,7 @@ endif()
 if(DEFINED OPENVX_LIBRARIES)
     message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
 else()
-    set(OPENVX_LIBRARIES /opt/rocm/mivisionx/lib/libopenvx.${SHARED_LIB_TYPE})
+    set(OPENVX_LIBRARIES ${ROCM_PATH}/lib/libopenvx.${SHARED_LIB_TYPE})
 	message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
 endif()
 

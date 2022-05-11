@@ -1,6 +1,68 @@
-* To run the mnist_migraphx GDF, 
-** Download the mnist model to this directory, then run the sample.
+## GDF - Graph Description Format
+
+MIVisionX samples using [RunVX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/utilities/runvx#amd-runvx)
+
+**Note:** 
+
+* To run the samples we need to put MIVisionX executables and libraries into the system path
+
+``` 
+export PATH=$PATH:/opt/rocm/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 ```
-wget https://github.com/onnx/models/blob/main/vision/classification/mnist/model/mnist-8.onnx?raw=true
-/opt/rocm/bin/runvx mnist_migraphx.gdf
+
+* To get help on RunVX, use `-h` option
+
+``` 
+runvx -h
+```
+
+### skintonedetect.gdf
+
+<p align="center"><img width="90%" src="../images/skinToneDetect_image.PNG" /></p>
+
+usage:
+
+``` 
+runvx skintonedetect.gdf
+```
+
+### canny.gdf
+
+<p align="center"><img width="90%" src="../images/canny_image.PNG" /></p>
+
+usage:
+
+``` 
+runvx canny.gdf
+```
+
+### skintonedetect-LIVE.gdf
+
+Using a live camera
+
+usage:
+
+``` 
+runvx -frames:live skintonedetect-LIVE.gdf
+```
+
+### canny-LIVE.gdf
+
+Using a live camera
+
+usage:
+
+``` 
+runvx -frames:live canny-LIVE.gdf
+```
+
+### OpenCV_orb-LIVE.gdf
+
+Using a live camera
+
+usage:
+
+``` 
+runvx -frames:live OpenCV_orb-LIVE.gdf
 ```

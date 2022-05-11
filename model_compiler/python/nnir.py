@@ -675,6 +675,9 @@ class IrGraph(object):
                     elif input.format == 'NHWC' and order == [0, 3, 1, 2]:
                         format = 'NCHW'
                         shape = [input.shape[0], input.shape[3], input.shape[1], input.shape[2]]
+                    elif input.format == 'NCHW' and order == [3, 2, 1, 0]:
+                        format = 'WHCN'
+                        shape = [input.shape[3], input.shape[2], input.shape[1], input.shape[0]]
                     else:
                         raise ValueError("permute: unsupported permute: " + input.toString() + " " + str(axes))
                     local = IrTensor()

@@ -88,6 +88,7 @@ option(LOOM        "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX    "Build MIVisionX with MIGraphX Support"    ON)
 
+
 # FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
 option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
 if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
@@ -123,6 +124,7 @@ endif()
 include(ROCMHeaderWrapper)
 
 endif()
+
 
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")

@@ -1,7 +1,17 @@
 import vx_amd_migraphx
+import vx_nn
+
+data input = image:28,28,U008
+read input image.jpg
+data a = scalar:FLOAT32,1.0
+data b = scalar:FLOAT32,0.0
+data reverse_channel_order = scalar:BOOL,0
+data image_tensor = tensor:4,{1,1,28,28},VX_TYPE_FLOAT32,0
+node com.amd.nn_extension.convert_image_to_tensor input image_tensor a b reverse_channel_order
+# write output output.f32
 
 data input_tensor = tensor:4,{1,1,28,28},FLOAT32,0
-read input_tensor ../data/oneDigit.bin
+init input_tensor image_tensor
 data model = scalar:STRING,"mnist-8.onnx"
 data output_tensor = tensor:2,{1,10},FLOAT32,0
 

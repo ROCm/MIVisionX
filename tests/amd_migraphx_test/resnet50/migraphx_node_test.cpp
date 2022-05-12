@@ -65,9 +65,9 @@ int main(int argc, char **argv) {
     // initialize variables
     vx_tensor input_tensor, output_tensor;
     vx_size input_num_of_dims = 4;
-    vx_size input_dims[4] = {1, 3, 224, 224}; //input dimensions for the resnet50 model
+    vx_size input_dims[4] = {224, 224, 3, 1}; //input dimensions for the resnet50 model
     vx_size output_num_of_dims = 2;
-    vx_size output_dims[2] = {1, 1000}; //output dimensions for the resnet50 model
+    vx_size output_dims[2] = {1000, 1}; //output dimensions for the resnet50 model
     vx_size stride[4];
     vx_map_id map_id;
     void *ptr = nullptr;

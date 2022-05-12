@@ -87,7 +87,7 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
     for (auto i = 0; i < inputDims.size(); i++) {
         tensorDims << input_dims[i];
         expectedTensorDims << inputDims[i];
-        if (input_dims[i] != inputDims[i]) {
+        if (input_dims[i] != inputDims[in_num_dims - 1 - i]) {
             isDimWrong = true;
             break;
         }
@@ -97,7 +97,7 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
     if (isDimWrong) {
         for (auto i = 0; i < inputDims.size(); i++) {
             tensorDims << input_dims[i] << " ";
-            expectedTensorDims << inputDims[i] << " ";
+            expectedTensorDims << inputDims[in_num_dims - 1 - i] << " ";
         }
         delete data;
         return ERRMSG(VX_ERROR_INVALID_VALUE, "the input tensor dimension passed to the node is [%s] which is worng. \
@@ -115,7 +115,7 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
     expectedTensorDims.str("");
     isDimWrong = false;
     for (auto i = 0; i < outputDims.size(); i++) {
-        if (output_dims[i] != outputDims[i]) {
+        if (output_dims[i] != outputDims[out_num_dims - 1 - i]) {
             isDimWrong = true;
             break;
         }
@@ -124,7 +124,7 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
     if (isDimWrong) {
         for (auto i = 0; i < outputDims.size(); i++) {
             tensorDims << output_dims[i] << " ";
-            expectedTensorDims << outputDims[i] << " ";
+            expectedTensorDims << outputDims[out_num_dims - 1 - i] << " ";
         }
         delete data;
         return ERRMSG(VX_ERROR_INVALID_VALUE, "the output tensor dimension passed to the node is [%s] which is wrong. \

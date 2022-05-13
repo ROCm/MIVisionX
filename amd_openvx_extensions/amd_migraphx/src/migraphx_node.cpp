@@ -83,25 +83,31 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     std::stringstream tensorDims;
     std::stringstream expectedTensorDims;
+    std::stringstream expectedTensorDimsInv;
     bool isDimWrong = false;
     for (auto i = 0; i < inputDims.size(); i++) {
         tensorDims << input_dims[i];
         expectedTensorDims << inputDims[i];
-        if (input_dims[i] != inputDims[in_num_dims - 1 - i]) {
+        if ((input_dims[i] != inputDims[i]) && (input_dims[i] != inputDims[in_num_dims - 1 - i])) {
             isDimWrong = true;
             break;
         }
     }
     tensorDims.str("");
     expectedTensorDims.str("");
+    expectedTensorDimsInv.str("");
     if (isDimWrong) {
+        tensorDims << " ";
+        expectedTensorDims << " ";
+        expectedTensorDimsInv << " ";
         for (auto i = 0; i < inputDims.size(); i++) {
             tensorDims << input_dims[i] << " ";
-            expectedTensorDims << inputDims[in_num_dims - 1 - i] << " ";
+            expectedTensorDims << inputDims[i] << " ";
+            expectedTensorDimsInv << inputDims[in_num_dims - 1 - i] << " ";
         }
         delete data;
-        return ERRMSG(VX_ERROR_INVALID_VALUE, "the input tensor dimension passed to the node is [%s] which is worng. \
-            It must be[%s]! \n", tensorDims.str().c_str(), expectedTensorDims.str().c_str());
+        return ERRMSG(VX_ERROR_INVALID_VALUE, "the input tensor dimension passed to the node is [%s] which is worng. It must be either [%s] or [%s]. \n",
+            tensorDims.str().c_str(), expectedTensorDims.str().c_str(), expectedTensorDimsInv.str().c_str());
     }
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &out_num_dims, sizeof(out_num_dims)));
@@ -113,22 +119,27 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     tensorDims.str("");
     expectedTensorDims.str("");
+    expectedTensorDimsInv.str("");
     isDimWrong = false;
     for (auto i = 0; i < outputDims.size(); i++) {
-        if (output_dims[i] != outputDims[out_num_dims - 1 - i]) {
+        if ((output_dims[i] != outputDims[i]) && (output_dims[i] != outputDims[out_num_dims - 1 - i])) {
             isDimWrong = true;
             break;
         }
     }
 
     if (isDimWrong) {
+        tensorDims << " ";
+        expectedTensorDims << " ";
+        expectedTensorDimsInv << " ";
         for (auto i = 0; i < outputDims.size(); i++) {
             tensorDims << output_dims[i] << " ";
-            expectedTensorDims << outputDims[out_num_dims - 1 - i] << " ";
+            expectedTensorDims << outputDims[i] << " ";
+            expectedTensorDimsInv << outputDims[out_num_dims - 1 - i] << " ";
         }
         delete data;
-        return ERRMSG(VX_ERROR_INVALID_VALUE, "the output tensor dimension passed to the node is [%s] which is wrong. \
-            It must be [%s]! \n", tensorDims.str().c_str(), expectedTensorDims.str().c_str());
+        return ERRMSG(VX_ERROR_INVALID_VALUE, "the output tensor dimension passed to the node is [%s] which is wrong. It must be either [%s] or [%s]. \n",
+            tensorDims.str().c_str(), expectedTensorDims.str().c_str(), expectedTensorDimsInv.str().c_str());
     }
 
     data->prog_params.add(input, migraphx::argument(param_shapes[input], input_mem));

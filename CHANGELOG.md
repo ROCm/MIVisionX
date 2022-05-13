@@ -6,7 +6,7 @@
 
 [MIVisionX Documentation](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/)
 
-## MIVisionX 2.3.0 (Unreleased)
+## MIVisionX 2.2.0 (Unreleased)
 
 ### Added
 

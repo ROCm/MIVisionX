@@ -75,19 +75,19 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 	* Caffe Models
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
 	````
 	
 	* ONNX Models
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/onnx_to_nnir.py <onnxModel> <nnirOutputFolder> [--input_dims n,c,h,w (optional)]
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/onnx_to_nnir.py <onnxModel> <nnirOutputFolder> [--input_dims n,c,h,w (optional)]
 	````
 	
 	* NNEF Models
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnef_to_nnir.py <nnefInputFolder> <outputFolder>
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/nnef_to_nnir.py <nnefInputFolder> <outputFolder>
 	````
 	
 * Convert an AMD NNIR model into OpenVX C code:
@@ -95,7 +95,7 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 <p align="center"><img width="80%" src="images/flow-3-openvx-b.png" /></p>
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
 	````
 
 ### Build - Inference Application
@@ -197,13 +197,13 @@ Run inference on the live camera feed with this option.
 	* Convert .onnx to NNIR
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/onnx_to_nnir.py squeezenet/model.onnx squeezenet-nnir
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/onnx_to_nnir.py squeezenet/model.onnx squeezenet-nnir
 	````
 
 	* Convert NNIR to OpenVX
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py squeezenet-nnir/ squeezenet-openvx
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py squeezenet-nnir/ squeezenet-openvx
 	````
 	**Note:** 
 	* annmodule.cpp & annmodule.h generated in squeezenet-openvx folder
@@ -265,13 +265,13 @@ Run inference on the live camera feed with this option.
 	* Convert .caffemodel to NNIR
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/caffe_to_nnir.py yoloV2Tiny20.caffemodel yoloV2-nnir --input-dims 1,3,416,416
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/caffe_to_nnir.py yoloV2Tiny20.caffemodel yoloV2-nnir --input-dims 1,3,416,416
 	````
 
 	* Convert NNIR to OpenVX
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py yoloV2-nnir yoloV2-openvx
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py yoloV2-nnir yoloV2-openvx
 	````
 	**Note:** 
 	* annmodule.cpp & annmodule.h generated in yoloV2-openvx folder
@@ -342,13 +342,13 @@ Run inference on the live camera feed with this option.
 	* Convert .nnef to NNIR
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnef_to_nnir.py vgg16/ vgg16-nnir
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/nnef_to_nnir.py vgg16/ vgg16-nnir
 	````
 	
 	* Convert NNIR to OpenVX
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py vgg16-nnir/ vgg16-openvx
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py vgg16-nnir/ vgg16-openvx
 	````
 	**Note:** 
 	* annmodule.cpp & annmodule.h generated in vgg16-openvx folder
@@ -411,13 +411,13 @@ Run inference on the live camera feed with this option.
 	* Convert .caffemodel to NNIR
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel vgg16-nnir --input-dims 1,3,224,224
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel vgg16-nnir --input-dims 1,3,224,224
 	````
 	
 	* Convert NNIR to OpenVX
 
 	````
-	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py vgg16-nnir vgg16-openvx
+	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py vgg16-nnir vgg16-openvx
 	````
 	**Note:** 
 	* annmodule.cpp & annmodule.h generated in vgg16-openvx folder

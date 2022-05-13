@@ -13,4 +13,4 @@ data model = scalar:STRING,"mnist-8.onnx"
 data output_tensor = tensor:2,{10,1},VX_TYPE_FLOAT32,0
 
 node com.amd.amd_migraphx_node model image_tensor output_tensor
-write output_tensor out.f32
+write output_tensor out_mnist.f32

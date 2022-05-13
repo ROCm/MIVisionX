@@ -56,8 +56,6 @@ class ROCALGenericIterator(object):
         self.offset = offset
         self.device= device
         self.device_id = device_id
-        print(self.device)
-        # exit(0)
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
         self.display = display
@@ -69,34 +67,40 @@ class ROCALGenericIterator(object):
             self.loader._name= self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
+        self.labels_size = ((self.bs*self.loader._numOfClasses) if (self.loader._oneHotEncoding == True) else self.bs)
         if tensor_layout == types.NCHW:
             if self.device == "cpu":
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32)
+
             else:
                 torch_gpu_device = torch.device('cuda', self.device_id)
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device = torch_gpu_device)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device = torch_gpu_device)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
+
         else: #NHWC
             if self.device == "cpu":
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32)
+
             else:
                 torch_gpu_device = torch.device('cuda', self.device_id)
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32, device=torch_gpu_device)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16, device=torch_gpu_device)
-        if(self.loader._oneHotEncoding == True):
-            self.labels = np.zeros((self.bs)*(self.loader._numOfClasses),dtype = "int32")
-        else:
-            self.labels = np.zeros((self.bs),dtype = "int32")
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
+
+
         if self.bs != 0:
             self.len = b.getRemainingImages(self.loader._handle)//self.bs
         else:
@@ -107,11 +111,9 @@ class ROCALGenericIterator(object):
 
     def __next__(self):
         if(b.isEmpty(self.loader._handle)):
-            self.reset()
             raise StopIteration
 
         if self.loader.run() != 0:
-            self.reset()
             raise StopIteration
 
         self.loader.copyToTensor(
@@ -121,7 +123,7 @@ class ROCALGenericIterator(object):
             self.lis = []  # Empty list for bboxes
             self.lis_lab = []  # Empty list of labels
 
-            #Count of labels/ bboxes in a batch
+            # Count of labels/ bboxes in a batch
             self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
             self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
             # 1D labels array in a batch
@@ -151,7 +153,7 @@ class ROCALGenericIterator(object):
                     img = (self.out)
                     draw_patches(img[i], i, self.bb_2d_numpy)
 
-                sum_count = sum_count +count
+                sum_count = sum_count + count
 
             self.target = self.lis
             self.target1 = self.lis_lab

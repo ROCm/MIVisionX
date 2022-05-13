@@ -119,7 +119,7 @@ if(${BUILD_ROCAL_PYBIND})
     add_subdirectory(third_party_lib/pybind11)
 
     pybind11_add_module(rocal_pybind rocal_pybind.cpp)
-    target_link_libraries(rocal_pybind PRIVATE rali vx_rpp amd_rpp)
+    target_link_libraries(rocal_pybind PRIVATE rocal  vx_rpp amd_rpp)
 
     install(TARGETS rocal_pybind DESTINATION lib)
     message("-- ${Green}Radeon Augmentation Library Python Binding - rocal_pybind module added ${ColourReset}")

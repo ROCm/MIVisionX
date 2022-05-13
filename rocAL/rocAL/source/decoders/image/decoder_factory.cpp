@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <turbo_jpeg_decoder.h>
 #include <fused_crop_decoder.h>
 #include <open_cv_decoder.h>
+#include <hw_jpeg_decoder.h>
 #include "decoder_factory.h"
 #include "commons.h"
 
@@ -40,6 +41,11 @@ std::shared_ptr<Decoder> create_decoder(DecoderConfig config) {
 #if ENABLE_OPENCV
         case DecoderType::OPENCV_DEC:
             return std::make_shared<CVDecoder>();
+            break;
+#endif
+#if RALI_VIDEO
+        case DecoderType::HW_JPEG_DEC:
+            return std::make_shared<HWJpegDecoder>();
             break;
 #endif
         default:

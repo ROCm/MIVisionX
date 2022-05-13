@@ -1,4 +1,4 @@
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib:/opt/rocm/rpp/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
 rm -rf RALI-CPU-RESULTS
 mkdir RALI-CPU-RESULTS
 

@@ -101,7 +101,7 @@ int main(int argc, const char ** argv)
         return -1;
     }
 
-    RocalDecoderType dec_type = (dec_mode==0)? RocalDecoderType::ROCAL_DECODER_TJPEG : RocalDecoderType::ROCAL_DECODER_OPENCV;
+    RaliDecoderType dec_type = (RocalDecoderType) dec_mode;
 
     /*>>>>>>>>>>>>>>>> Creating rocAL parameters  <<<<<<<<<<<<<<<<*/
 

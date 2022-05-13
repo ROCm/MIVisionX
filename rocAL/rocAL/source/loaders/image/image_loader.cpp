@@ -41,6 +41,7 @@ _swap_handle_time("Swap_handle_time", DBG_TIMING)
     _batch_size = 1;
     _is_initialized = false;
     _remaining_image_count = 0;
+    _device_id = 0;
 }
 
 ImageLoader::~ImageLoader()
@@ -63,6 +64,12 @@ void ImageLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
     _prefetch_queue_depth = prefetch_queue_depth;
 }
 
+void ImageLoader::set_gpu_device_id(int device_id)
+{
+    if(device_id < 0)
+        THROW("invalid device_id passed to loader");
+    _device_id = device_id;
+}
 
 size_t
 ImageLoader::remaining_count()

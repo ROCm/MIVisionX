@@ -26,14 +26,16 @@ THE SOFTWARE.
 #include <iostream>
 #include <vector>
 #include "parameter_factory.h"
+
 enum class DecoderType
 {
     TURBO_JPEG = 0,//!< Can only decode
     FUSED_TURBO_JPEG = 1, //!< FOR PARTIAL DECODING
     OPENCV_DEC = 2, //!< for back_up decoding
-    SKIP_DECODE  = 3, //!< For skipping decoding in case of uncompressed data from reader
+    HW_JPEG_DEC  = 3,
+    SKIP_DECODE  = 4, //!< For skipping decoding in case of uncompressed data from reader
+    OVX_FFMPEG,//!< Uses FFMPEG to decode video streams, can decode up to 4 video streams simultaneously
 };
-
 
 
 class DecoderConfig
@@ -68,7 +70,8 @@ public:
         OK = 0,
         HEADER_DECODE_FAILED,
         CONTENT_DECODE_FAILED,
-        UNSUPPORTED
+        UNSUPPORTED,
+        NO_MEMORY
     };
 
     enum class ColorFormat {
@@ -107,6 +110,7 @@ public:
                                    Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original) = 0;
 
     virtual ~Decoder() = default;
+    virtual void initialize(int device_id) = 0;
     virtual bool is_partial_decoder() = 0;
     virtual void set_bbox_coords(std::vector <float> bbox_coords) = 0;
     virtual std::vector <float> get_bbox_coords() = 0;

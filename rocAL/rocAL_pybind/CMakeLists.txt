@@ -22,7 +22,7 @@ cmake_minimum_required(VERSION 3.0)
 project(rocal_pybind)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
-set(ROCM_PATH /opt/rocm)
+set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
@@ -110,7 +110,7 @@ endif()
 if(${BUILD_ROCAL_PYBIND})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
-    link_directories(${ROCM_PATH}/rpp/lib ${ROCM_PATH}/mivisionx/lib)
+    link_directories(${ROCM_PATH}/rpp/lib ${ROCM_PATH}/lib)
 
     include_directories(../rocAL/include/api/
                         third_party_lib/

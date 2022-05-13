@@ -69,7 +69,7 @@ namespace rocal{
         py::array_t<char> array;
         auto buf = array.request();
         char* ptr = (char*) buf.ptr;
-        ptr = (char *)malloc(array_len * sizeof(char));
+        ptr = (char *)calloc(array_len, sizeof(char));
         // call pure C++ function
         rocalGetImageName(context,ptr);
         std::string s(ptr);

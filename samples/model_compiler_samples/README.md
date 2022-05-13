@@ -1,6 +1,6 @@
 ## MIVisionX Model Compiler Samples
 
-<p align="center"><img width="80%" src="../../docs/images/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/images/modelCompilerWorkflow.png" /></p>
 
 In this sample, we will learn how to run inference efficiently using [OpenVX](https://www.khronos.org/openvx/) and [OpenVX Extensions](https://www.khronos.org/registry/OpenVX/extensions/vx_khr_nn/1.2/html/index.html). The sample will go over each step required to convert a pre-trained neural net model into an OpenVX Graph and run this graph efficiently on any target hardware. In this sample, we will also learn about AMD MIVisionX which delivers open source implementation of OpenVX and OpenVX Extensions along with MIVisionX Neural Net Model Compiler & Optimizer.
 
@@ -18,11 +18,11 @@ In this sample, we will learn how to run inference efficiently using [OpenVX](ht
 
 [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/model_compiler#neural-net-model-compiler--optimizer) converts pre-trained neural network models to MIVisionX runtime code for optimized inference.
 
-<p align="center"><img width="100%" src="../../docs/images/frameworks.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/images/frameworks.png" /></p>
 
 Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/nnef), & [Caffe](http://caffe.berkeleyvision.org/) formats are supported by the model compiler & optimizer. The model compiler first converts the pre-trained models to AMD Neural Net Intermediate Representation (NNIR), once the model has been translated into AMD NNIR (AMD's internal open format), the Optimizer goes through the NNIR and applies various optimizations which would allow the model to be deployed on to target hardware most efficiently. Finally, AMD NNIR is converted into OpenVX C code, which could be compiled and deployed on any targeted hardware.
 
-<p align="center"><img width="100%" src="../../docs/images/runtime.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/images/runtime.png" /></p>
 
 ### Prerequisites
 
@@ -48,9 +48,9 @@ MIVisionX provides developers with [docker images](https://hub.docker.com/u/mivi
 ````
 * Test display with MIVisionX sample
 ````
-% export PATH=$PATH:/opt/rocm/mivisionx/bin
-% export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-% runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
+% export PATH=$PATH:/opt/rocm/bin
+% export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
+% runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
 ````
 
 ## Usage
@@ -65,7 +65,7 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 
 2. Use [MIVisionX Model Compiler](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/model_compiler#neural-net-model-compiler--optimizer) to generate OpenVX C Code from the pre-trained models.
 
-	**Note:** MIVisionX installs all the model compiler scripts in `/opt/rocm/mivisionx/model_compiler/python/` folder
+	**Note:** MIVisionX installs all the model compiler scripts in `/opt/rocm/libexec/mivisionx/model_compiler/python/` folder
 
 * Convert the pre-trained models into AMD NNIR model:
 
@@ -75,19 +75,19 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 	* Caffe Models
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
 	````
 	
 	* ONNX Models
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/onnx_to_nnir.py <onnxModel> <nnirOutputFolder> [--input_dims n,c,h,w (optional)]
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/onnx_to_nnir.py <onnxModel> <nnirOutputFolder> [--input_dims n,c,h,w (optional)]
 	````
 	
 	* NNEF Models
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/nnef_to_nnir.py <nnefInputFolder> <outputFolder>
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnef_to_nnir.py <nnefInputFolder> <outputFolder>
 	````
 	
 * Convert an AMD NNIR model into OpenVX C code:
@@ -95,7 +95,7 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 <p align="center"><img width="80%" src="images/flow-3-openvx-b.png" /></p>
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
 	````
 
 ### Build - Inference Application
@@ -164,7 +164,7 @@ Run inference on the live camera feed with this option.
 * NNEF
 * ONNX
 
-<p align="center"><img width="70%" src="../../docs/images/modelTrainedFrameWorks.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/images/modelTrainedFrameWorks.png" /></p>
 
 ## Sample 1 - Classification Using Pre-Trained ONNX Model
 
@@ -181,7 +181,7 @@ Run inference on the live camera feed with this option.
 
 	**Note:**
 	* MIVisionX needs to be pre-installed
-	* MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/mivisionx/model_compiler/python/`
+	* MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
 	* ONNX model conversion requires ONNX install using `pip install onnx`	
 
 * **Step 2:** Download pre-trained SqueezeNet ONNX model from [ONNX Model Zoo](https://github.com/onnx/models#open-neural-network-exchange-onnx-model-zoo) - [SqueezeNet Model](https://s3.amazonaws.com/download.onnx/models/opset_8/squeezenet.tar.gz)
@@ -197,13 +197,13 @@ Run inference on the live camera feed with this option.
 	* Convert .onnx to NNIR
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/onnx_to_nnir.py squeezenet/model.onnx squeezenet-nnir
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/onnx_to_nnir.py squeezenet/model.onnx squeezenet-nnir
 	````
 
 	* Convert NNIR to OpenVX
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py squeezenet-nnir/ squeezenet-openvx
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py squeezenet-nnir/ squeezenet-openvx
 	````
 	**Note:** 
 	* annmodule.cpp & annmodule.h generated in squeezenet-openvx folder
@@ -253,7 +253,7 @@ Run inference on the live camera feed with this option.
 
 	**Note:**
 	* MIVisionX needs to be pre-installed
-	* MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/mivisionx/model_compiler/python/`
+	* MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
 
 * **Step 2:** Download pre-trained Tiny YoloV2 caffe model - [yoloV2Tiny20.caffemodel](https://github.com/kiritigowda/YoloV2NCS/raw/master/models/caffemodels/yoloV2Tiny20.caffemodel)
 	````
@@ -265,13 +265,13 @@ Run inference on the live camera feed with this option.
 	* Convert .caffemodel to NNIR
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py yoloV2Tiny20.caffemodel yoloV2-nnir --input-dims 1,3,416,416
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/caffe_to_nnir.py yoloV2Tiny20.caffemodel yoloV2-nnir --input-dims 1,3,416,416
 	````
 
 	* Convert NNIR to OpenVX
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py yoloV2-nnir yoloV2-openvx
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py yoloV2-nnir yoloV2-openvx
 	````
 	**Note:** 
 	* annmodule.cpp & annmodule.h generated in yoloV2-openvx folder
@@ -325,7 +325,7 @@ Run inference on the live camera feed with this option.
 
 	**Note:**
 	* MIVisionX needs to be pre-installed
-	* MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/mivisionx/model_compiler/python/`
+	* MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
 	* NNEF model conversion requires [NNEF python parser](https://github.com/KhronosGroup/NNEF-Tools/tree/master/parser#nnef-parser-project) installed
 
 * **Step 2:** Download pre-trained VGG 16 NNEF model
@@ -342,13 +342,13 @@ Run inference on the live camera feed with this option.
 	* Convert .nnef to NNIR
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/nnef_to_nnir.py vgg16/ vgg16-nnir
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnef_to_nnir.py vgg16/ vgg16-nnir
 	````
 	
 	* Convert NNIR to OpenVX
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py vgg16-nnir/ vgg16-openvx
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py vgg16-nnir/ vgg16-openvx
 	````
 	**Note:** 
 	* annmodule.cpp & annmodule.h generated in vgg16-openvx folder
@@ -398,7 +398,7 @@ Run inference on the live camera feed with this option.
 
 	**Note:**
 	* MIVisionX needs to be pre-installed
-	* MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/mivisionx/model_compiler/python/`
+	* MIVisionX Model Compiler & Optimizer scripts are at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
 
 * **Step 2:** Download pre-trained VGG 16 caffe model - [VGG_ILSVRC_16_layers.caffemodel](http://www.robots.ox.ac.uk/~vgg/software/very_deep/caffe/VGG_ILSVRC_16_layers.caffemodel)
 	````
@@ -411,13 +411,13 @@ Run inference on the live camera feed with this option.
 	* Convert .caffemodel to NNIR
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel vgg16-nnir --input-dims 1,3,224,224
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel vgg16-nnir --input-dims 1,3,224,224
 	````
 	
 	* Convert NNIR to OpenVX
 
 	````
-	% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py vgg16-nnir vgg16-openvx
+	% python /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py vgg16-nnir vgg16-openvx
 	````
 	**Note:** 
 	* annmodule.cpp & annmodule.h generated in vgg16-openvx folder

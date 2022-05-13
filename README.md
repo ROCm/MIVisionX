@@ -234,10 +234,12 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   * `vx_winml` is not supported on `Linux`
   * source code will not available with `apt-get` / `yum` install
   * the installer will copy
-    + executables into `/opt/rocm/mivisionx/bin`
-    + libraries into `/opt/rocm/mivisionx/lib`
-    + OpenVX and module header files into `/opt/rocm/mivisionx/include`
-    + model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
+    + Executables into `/opt/rocm/bin`
+    + Libraries into `/opt/rocm/lib`
+    + OpenVX and module header files into `/opt/rocm/include/mivisionx`
+    + Model compiler, & toolkit folders into `/opt/rocm/libexec/mivisionx`
+    + Apps, & samples folder into `/opt/rocm/share/mivisionx`
+    + Docs folder into `/opt/rocm/share/doc/mivisionx`
   * Package (.deb & .rpm) install requires `OpenCV v3+` to execute `AMD OpenCV extensions`
 
 #### Using `MIVisionX-setup.py`
@@ -285,7 +287,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     ```
 
   **Note:**
-  + MIVisionX cannot be installed for both GPU backends in the same default folder (i.e., /opt/rocm/mivisionx)
+  + MIVisionX cannot be installed for both GPU backends in the same default folder (i.e., /opt/rocm/)
   if an app interested in installing MIVisionX with both GPU backends, then add **-DCMAKE_INSTALL_PREFIX** in the cmake
   commands to install MIVisionX with OPENCL and HIP backends into two separate custom folders.
   + vx_winml is not supported on Linux
@@ -295,10 +297,12 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 ### Linux / macOS
 
 * The installer will copy
-  + executables into `/opt/rocm/mivisionx/bin`
-  + libraries into `/opt/rocm/mivisionx/lib`
-  + OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include`
-  + Apps, Samples, Documents, Model Compiler, and Toolkit are placed into `/opt/rocm/mivisionx`
+  + Executables into `/opt/rocm/bin`
+  + Libraries into `/opt/rocm/lib`
+  + OpenVX and OpenVX module header files into `/opt/rocm/include/mivisionx`
+  + Apps, & Samples folder into `/opt/rocm/share/mivisionx`
+  + Documents folder into `/opt/rocm/share/doc/mivisionx`
+  + Model Compiler, and Toolkit folder into `/opt/rocm/libexec/mivisionx`
 * Run the below sample to verify the installation
 
   **Canny Edge Detection**
@@ -306,9 +310,9 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
 
   ```
-  export PATH=$PATH:/opt/rocm/mivisionx/bin
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-  runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
+  export PATH=$PATH:/opt/rocm/bin
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
+  runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
   ```
   **Note:** More samples are available [here](samples#samples)
 
@@ -402,9 +406,9 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 
     + Test display with MIVisionX sample
     ```
-    export PATH=$PATH:/opt/rocm/mivisionx/bin
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-    runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
+    export PATH=$PATH:/opt/rocm/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
+    runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
     ```
 
 ## Technical Support

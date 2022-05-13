@@ -68,7 +68,7 @@ ImageReadAndDecode::~ImageReadAndDecode()
 }
 
 void
-ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_config, int batch_size)
+ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_config, int batch_size, int device_id)
 {
     // Can initialize it to any decoder types if needed
     _batch_size = batch_size;
@@ -82,21 +82,12 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _actual_decoded_height.resize(_batch_size);
     _original_height.resize(_batch_size);
     _original_width.resize(_batch_size);
-    _decoder_cv.resize(batch_size);
     _decoder_config = decoder_config;
-    _decoder_config_cv =  decoder_config;
-    _decoder_config_cv._type = DecoderType::OPENCV_DEC;
     if ((_decoder_config._type != DecoderType::SKIP_DECODE)) {
         for (int i = 0; i < batch_size; i++) {
-            _compressed_buff[i].resize(
-                    MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
+            _compressed_buff[i].resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
             _decoder[i] = create_decoder(decoder_config);
-            _decoder_cv[i] = nullptr;
-#if ENABLE_OPENCV
-            // create backup decoder if decoding fails on TJpeg
-            if (_decoder_config._type != DecoderType::OPENCV_DEC)
-                _decoder_cv[i] = create_decoder(_decoder_config_cv);
-#endif
+            _decoder[i]->initialize(device_id);
         }
     }
     _reader = create_reader(reader_config);
@@ -188,9 +179,9 @@ ImageReadAndDecode::load(unsigned char* buff,
         }
         //_file_load_time.end();// Debug timing
         //return LoaderModuleStatus::OK;
-    }else {
+    }
+    else {
         while ((file_counter != _batch_size) && _reader->count_items() > 0) {
-
             size_t fsize = _reader->open();
             if (fsize == 0) {
                 WRN("Opened file " + _reader->id() + " of size 0");
@@ -228,16 +219,7 @@ ImageReadAndDecode::load(unsigned char* buff,
             int original_width, original_height, jpeg_sub_samp;
             if (_decoder[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height,
                                          &jpeg_sub_samp) != Decoder::Status::OK) {
-                // try open_cv decoder
-#if 0//ENABLE_OPENCV
-                WRN("Using OpenCV for decode_info");
-                if (_decoder_cv[i] && _decoder_cv[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height,
-                                         &jpeg_sub_samp) != Decoder::Status::OK) {
-#endif
                     continue;
-#if 0//ENABLE_OPENCV
-                }
-#endif
             }
             _original_height[i] = original_height;
             _original_width[i] = original_width;
@@ -252,19 +234,6 @@ ImageReadAndDecode::load(unsigned char* buff,
                                     original_width, original_height,
                                     scaledw, scaledh,
                                     decoder_color_format, _decoder_config, keep_original) != Decoder::Status::OK) {
-                // try decoding with OpenCV decoder:: seems like opencv also failing in those images
-#if 0//ENABLE_OPENCV
-                WRN("Using OpenCV for decode");
-                if (_decoder_cv[i] && _decoder_cv[i]->decode(_compressed_buff[i].data(), _compressed_image_size[i], _decompressed_buff_ptrs[i],
-                                        max_decoded_width, max_decoded_height,
-                                        original_width, original_height,
-                                        scaledw, scaledh,
-                                        decoder_color_format, _decoder_config, keep_original) != Decoder::Status::OK) {
-
-                    continue;
-
-                }
-#endif
             }
             _actual_decoded_width[i] = scaledw;
             _actual_decoded_height[i] = scaledh;

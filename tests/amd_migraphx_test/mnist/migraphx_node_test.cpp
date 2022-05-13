@@ -34,8 +34,7 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
     }
 }
 
-void read_input_digit(const int n, std::vector<float>& input_digit)
-{
+void read_input_digit(const int n, std::vector<float>& input_digit) {
     std::ifstream file("../digits.txt");
     const int Digits = 10;
     const int Height = 28;
@@ -74,29 +73,17 @@ int main(int argc, char **argv) {
 
     // initialize variables
     vx_tensor input_tensor, output_tensor;
-    vx_size input_num_of_dims;
-    vx_enum input_data_format;
-    vx_size input_dims[4];
-    vx_size output_num_of_dims;
-    vx_enum output_data_format;
-    vx_size output_dims[4];
+    vx_size input_num_of_dims = 4;
+    vx_size input_dims[5] = {1, 1, 28, 28}; //input dimensions for the mnist model
+    vx_size output_num_of_dims = 2;
+    vx_size output_dims[2] = {1, 10};  //output dimensions for the mnist model
     vx_size stride[4];
     vx_map_id map_id;
     void *ptr = nullptr;
     vx_status status = 0;
-    migraphx::program prog;
 
-    status = amdMIGraphXcompile(modelFileName.c_str(), &prog,
-    &input_num_of_dims, input_dims, &input_data_format,
-    &output_num_of_dims, output_dims, &output_data_format, false, false);
-
-    if (status) {
-        std::cerr << "ERROR: amdMIGraphXcompile failed " << std::endl;
-        return status;
-    }
-
-    input_tensor = vxCreateTensor(context, input_num_of_dims, input_dims, input_data_format, 0);
-    output_tensor = vxCreateTensor(context, output_num_of_dims, output_dims, output_data_format, 0);
+    input_tensor = vxCreateTensor(context, input_num_of_dims, input_dims, VX_TYPE_FLOAT32, 0);
+    output_tensor = vxCreateTensor(context, output_num_of_dims, output_dims, VX_TYPE_FLOAT32, 0);
 
     std::vector<float> input_digit;
     std::random_device rd;
@@ -121,7 +108,7 @@ int main(int argc, char **argv) {
 
     ERROR_CHECK_STATUS(vxLoadKernels(context, "vx_amd_migraphx"));
 
-    vx_node node = amdMIGraphXnode(graph, &prog, input_tensor, output_tensor);
+    vx_node node = amdMIGraphXnode(graph, modelFileName.c_str(), input_tensor, output_tensor);
     ERROR_CHECK_OBJECT(node);
 
     ERROR_CHECK_STATUS(vxVerifyGraph(graph));

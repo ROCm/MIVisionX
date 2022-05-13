@@ -156,7 +156,55 @@ static vx_status VX_CALLBACK opencl_codegen(
 //! \brief The kernel execution.
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+#if ENABLE_HIP
+    //get tensor dimensions
+    vx_size input_dims[4] = {1, 1, 1, 1};
+    vx_size num_of_dims;
+    vx_enum type;
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+
+    dim3 globalThreads = dim3(1);
+    globalThreads.x = input_dims[0];
+    globalThreads.y = input_dims[1];
+    globalThreads.z = input_dims[2] * input_dims[3];
+
+    vx_size temp[4] = {0};
+    uint4 input_stride, output_stride;
+    vx_size input_offset, output_offset;
+    unsigned char *input_mem = NULL;
+    unsigned char *output_mem = NULL;
+    hipStream_t hip_stream;
+
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &hip_stream, sizeof(hip_stream)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &input_offset, sizeof(input_offset)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_GPU, &output_offset, sizeof(output_offset)));
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    input_stride.x = temp[0];
+    input_stride.y = temp[1];
+    input_stride.z = temp[2];
+    input_stride.w = temp[3];
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_GPU, temp, sizeof(temp)));
+    output_stride.x = temp[0];
+    output_stride.y = temp[1];
+    output_stride.z = temp[2];
+    output_stride.w = temp[3];
+
+    if (HipExec_Upsample_Nearest_layer(hip_stream, globalThreads, dim3(1), type, input_mem, input_offset, input_stride,
+        output_mem, output_offset, output_stride)) {
+        return VX_FAILURE;
+    }
+
+    return VX_SUCCESS;
+#elif ENABLE_OPENCL
     return VX_ERROR_NOT_IMPLEMENTED;
+#endif
 }
 
 //! \brief The kernel publisher.

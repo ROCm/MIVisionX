@@ -62,9 +62,10 @@ if(OpenCL_FOUND AND BUILD_OPENCL)
     if(FFMPEG_FOUND)
         add_subdirectory(mv_deploy)
         message("-- ${Green}Utilities -- runvx, runcl, loom_shell, & mv_deploy modules added${ColourReset}")
+        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
         install (FILES ./mv_deploy/mvdeploy_api.h DESTINATION include/mivisionx)
-        install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION share/mivisionx/model_compiler)
-        install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION share/mivisionx/model_compiler)
+        install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION libexec/mivisionx/model_compiler/mv_deploy)
+        install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION libexec/mivisionx/model_compiler/mv_deploy)
     else()
         message("-- ${Green}Utilities -- runcl modules added${ColourReset}")
         message("-- ${Red}WARNING: FFMPEG Not Found -- mv_deploy module excluded${ColourReset}")
@@ -74,9 +75,10 @@ elseif (HIP_FOUND)
     if(FFMPEG_FOUND)
         add_subdirectory(mv_deploy)
         message("-- ${Green}Utilities -- runvx and mv_deploy modules added${ColourReset}")
+        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
         install (FILES ./mv_deploy/mvdeploy_api.h DESTINATION include/mivisionx)
-        install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION share/mivisionx/model_compiler)
-        install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION share/mivisionx/model_compiler)
+        install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION libexec/mivisionx/model_compiler/mv_deploy)
+        install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION libexec/mivisionx/model_compiler/mv_deploy)
     else()
         message("-- ${Green}Utilities -- runvx module added with HIP support${ColourReset}")
         message("-- ${Red}WARNING: FFMPEG Not Found -- mv_deploy module excluded${ColourReset}")
@@ -86,19 +88,3 @@ else()
     message("-- ${Green}Utilities -- runvx module added with CPU support${ColourReset}")
     message("-- ${Red}WARNING: Utilities -- runcl, loom_shell, & mv_deploy modules excluded${ColourReset}")
 endif()
-
-if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
-  if(FFMPREG_FOUND)
-    #include(ROCMHeaderWrapper)
-    # Copy Header files to build directory
-    configure_file("./mv_deploy/mvdeploy_api.h" "${PROJECT_BINARY_DIR}/include/mivisionx/mvdeploy_api.h" COPYONLY)
-    # Generate wrapper for files to install in mivisionx/include/
-    rocm_wrap_header_file(
-      mvdeploy_api.h
-      HEADER_LOCATION include/mivisionx
-      GUARDS WRAPPER
-      WRAPPER_LOCATIONS mivisionx/include
-    )
-  endif()
-endif()
-

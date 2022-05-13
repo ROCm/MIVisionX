@@ -1,11 +1,12 @@
 import pyqtgraph as pg
-import Queue
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QPixmap
-from PyQt4.QtCore import QTime, QTimer, QThread
+import queue
+from PyQt5 import QtGui, uic
+from PyQt5.QtGui import QPixmap
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import QTime, QTimer, QThread
 from inference_setup import *
 
-class InferenceViewer(QtGui.QMainWindow):
+class InferenceViewer(QtWidgets.QMainWindow):
     def __init__(self, model_name, model_format, image_dir, model_location, label, hierarchy, image_val, input_dims, output_dims, batch_size, output_dir, 
                                         add, multiply, verbose, fp16, replace, loop, rali_mode, gui, container_logo, fps_file, cpu_name, gpu_name, parent):
         super(InferenceViewer, self).__init__(parent)
@@ -33,8 +34,8 @@ class InferenceViewer(QtGui.QMainWindow):
         self.rali_mode = rali_mode
         inputImageDir = os.path.expanduser(image_dir)
         self.total_images = len(os.listdir(inputImageDir))
-        self.origImageQueue = Queue.Queue()
-        self.augImageQueue = Queue.Queue()
+        self.origImageQueue = queue.Queue()
+        self.augImageQueue = queue.Queue()
         self.fps_file = fps_file
         self.inferenceEngine = None
         self.receiver_thread = None
@@ -77,13 +78,15 @@ class InferenceViewer(QtGui.QMainWindow):
             self.rali_white_pixmap = QPixmap("./data/images/RALI-white.png")
             self.graph_image_pixmap = QPixmap("./data/images/Graph-image.png")
             self.graph_image_white_pixmap = QPixmap("./data/images/Graph-image-white.png")
-            
             self.initUI()
             self.updateTimer = QTimer()
             self.updateTimer.timeout.connect(self.update)
             self.updateTimer.timeout.connect(self.plotGraph)
             self.updateTimer.timeout.connect(self.setProgressBar)
             self.updateTimer.start(40)
+            self.FPSTimer = QTimer()
+            self.FPSTimer.timeout.connect(self.displayFPS)
+            self.FPSTimer.start(3000)
        
     def initUI(self):
         uic.loadUi("inference_viewer.ui", self)
@@ -151,7 +154,6 @@ class InferenceViewer(QtGui.QMainWindow):
     def paintEvent(self, event):
         self.showAugImage()
         self.showImage()
-        self.displayFPS()
         if self.imgCount == self.total_images:
             if self.loop == 'yes':
                 self.resetViewer()
@@ -192,6 +194,8 @@ class InferenceViewer(QtGui.QMainWindow):
         top5 = totalStats[1]
         mis = totalStats[2]
         totalCount = top5 + mis
+        if totalCount == 0:
+            totalCount = totalCount + 1 # to avoid division by zero
         self.totalAccuracy = (float)(top5) / (totalCount+1) * 100
         self.total_progressBar.setValue(totalCount)
         self.total_progressBar.setMaximum(self.total_images*self.batch_size_int)
@@ -252,6 +256,7 @@ class InferenceViewer(QtGui.QMainWindow):
             self.origImage_layout.itemAt(self.lastIndex).widget().setStyleSheet("border: 0");
             self.imgCount += 1
             self.lastIndex = index
+        
 
     def showAugImage(self):
         if not self.augImageQueue.empty():

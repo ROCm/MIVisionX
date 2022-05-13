@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     // initialize variables
     vx_tensor input_tensor, output_tensor;
     vx_size input_num_of_dims = 4;
-    vx_size input_dims[5] = {1, 1, 28, 28}; //input dimensions for the mnist model
+    vx_size input_dims[4] = {1, 1, 28, 28}; //input dimensions for the mnist model
     vx_size output_num_of_dims = 2;
     vx_size output_dims[2] = {1, 10};  //output dimensions for the mnist model
     vx_size stride[4];

@@ -44,7 +44,7 @@
 
 ### Known issues
 
-* `CMakeList.txt Warnings` - With ROCm CMake Version MIVisionX will have cmake warnings 
+* 
 
 ## MIVisionX 2.1.0
 

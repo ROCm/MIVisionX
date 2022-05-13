@@ -25,9 +25,9 @@ RUN apt-get -y install autoconf automake build-essential cmake git-core libass-d
         ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree && \
         make -j8 && sudo make install && cd
 # install MIVisionX neural net dependency - Level 4
-RUN apt-get -y install rocblas miopen-hip migraphx && \
+RUN apt-get -y install miopen-hip migraphx && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
-        unzip half-1.12.0.zip -d half-files && sudo cp half-files/include/half.hpp /usr/local/include/ && \
+        unzip half-1.12.0.zip -d half-files && sudo cp half-files/include/half.hpp /usr/local/include/ && cd 
 # install MIVisionX rocAL dependency - Level 5
 RUN apt-get -y install libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm libjsoncpp-dev clang && \
         git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \

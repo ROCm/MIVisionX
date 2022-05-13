@@ -47,5 +47,5 @@ RUN apt-get -y install libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm li
 WORKDIR /workspace
 
 # install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
-        cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+        #mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install

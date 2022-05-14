@@ -180,8 +180,6 @@ For the convenience of the developer, we here provide the setup script which wil
   ```
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default:4.5.5)]
-                            --miopen    [MIOpen Version - optional (default:2.14.0)]
-                            --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
                             --rpp       [RPP Version - optional (default:0.91)]
                             --ffmpeg    [FFMPEG V4.0.4 Installation - optional (default:no) [options:yes/no]]
@@ -435,16 +433,16 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
-* ROCm: rocm-core - `5.0.0.50000-49`
-* rocm-cmake - [rocm-5.1.1](https://github.com/RadeonOpenCompute/rocm-cmake/releases/tag/rocm-5.1.1)
-* MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
+* ROCm: rocm-core - `5.1.1.50101-48 `
+* miopen-hip - [2.16.0.50101-48]
+* miopen-opencl - [2.16.0.50101-48]
+* migraphx - [2.1.0.50101-48]
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
 * RPP - [0.93](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.93)
 * FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.2.0`
+* MIVisionX Setup Script - `V2.3.0`
 
 ### Known issues
 

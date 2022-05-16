@@ -87,7 +87,9 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     target_link_libraries(${PROJECT_NAME} ${HIP_LIBRARY})
 endif()
 
+# install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_amd_media.h DESTINATION include/mivisionx)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -96,17 +98,3 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations -msse4.2 -std=c++11")
 endif()
-
-if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
-  #include(ROCMHeaderWrapper)
-  # Copy Header files to build directory
-  configure_file("include/vx_amd_media.h" "${PROJECT_BINARY_DIR}/include/mivisionx/vx_amd_media.h" COPYONLY)
-  # Generate wrapper for files to install in mivisionx/include/
-  rocm_wrap_header_file(
-    vx_amd_media.h
-    HEADER_LOCATION include/mivisionx
-    GUARDS WRAPPER
-    WRAPPER_LOCATIONS mivisionx/include
-  )
-endif()
-

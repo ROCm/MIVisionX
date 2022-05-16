@@ -208,8 +208,8 @@ if __name__ == '__main__':
         FP16inference = True
 
     # set paths
-    modelCompilerPath = '/opt/rocm/mivisionx/model_compiler/python'
-    ADATPath= '/opt/rocm/mivisionx/toolkit/amd_data_analysis_toolkit/classification'
+    modelCompilerPath = '/opt/rocm/libexec/mivisionx/model_compiler/python'
+    ADATPath= '/opt/rocm/libexec/mivisionx/toolkit/amd_data_analysis_toolkit/classification'
     setupDir = '~/.mivisionx-inference-analyzer'
     analyzerDir = os.path.expanduser(setupDir)
     modelDir = analyzerDir+'/'+modelName+'_dir'

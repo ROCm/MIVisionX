@@ -11,7 +11,7 @@ Arguments::Arguments()
           password{ "radeon" },
           modelCompilerPath{ "/opt/rocm/mivisionx/model_compiler/python" },
           port{ 28282 }, batchSize{ 64 }, maxPendingBatches{ 4 }, numGPUs{ 1 }, gpuIdList{ 0 },
-          maxGpuId{ 0 }, platform_id{ NULL }, num_devices{ 0 }, device_id{ NULL }, deviceUseCount{ 0 }
+          maxGpuId{ 0 }, platform_id{ NULL }, num_devices{ 0 },  deviceUseCount{ 0 }
 {
     ////////
     /// \brief set default configuration file
@@ -19,6 +19,7 @@ Arguments::Arguments()
     configurationFile = getenv("HOME");
     configurationFile += "/.inference_server_app.txt";
 
+#if ENABLE_OPENCL
     ////////
     /// \brief get AMD OpenCL platform (if available)
     ///
@@ -65,7 +66,9 @@ Arguments::Arguments()
         fatal("clGetDeviceIDs(*,CL_DEVICE_TYPE_GPU,%d,...) => %d", MAX_NUM_GPU, status);
     }
     info("using OpenCL platform#%d with %d GPU devices ...", platform_index, num_devices);
-
+#else
+    //todo:: for HIP
+#endif
     // set default config to use all GPUs
     numGPUs = num_devices;
     for(int gpuId = 0; gpuId < num_devices; gpuId++) {
@@ -83,12 +86,16 @@ Arguments::Arguments()
 
 Arguments::~Arguments()
 {
+#if ENABLE_OPENCL
     // release OpenCL resources
     for(int gpuId = 0; gpuId < num_devices; gpuId++) {
         if(device_id[gpuId]) {
             clReleaseDevice(device_id[gpuId]);
         }
     }
+#else
+    //todo for hip
+#endif
 }
 
 void Arguments::setConfigurationDir()
@@ -360,6 +367,7 @@ int Arguments::initializeConfig(int argc, char * argv[])
     return 0;
 }
 
+#if ENABLE_OPENCL
 int Arguments::lockGpuDevices(int GPUs, cl_device_id * device_id_)
 {
     std::lock_guard<std::mutex> lock(mutex);
@@ -388,7 +396,6 @@ int Arguments::lockGpuDevices(int GPUs, cl_device_id * device_id_)
 
     return 0;
 }
-
 void Arguments::releaseGpuDevices(int GPUs, const cl_device_id * device_id_)
 {
     std::lock_guard<std::mutex> lock(mutex);
@@ -402,3 +409,49 @@ void Arguments::releaseGpuDevices(int GPUs, const cl_device_id * device_id_)
         }
     }
 }
+
+#else
+int Arguments::lockGpuDevices(int GPUs, int * device_id_)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+
+    // make sure number of devices are available
+    if(GPUs > numGPUs)
+        return -1;
+    int deviceAvail = 0;
+    for(int i = 0; i < num_devices; i++) {
+        if(deviceUseCount[i] < MAX_DEVICE_USE_LIMIT)
+            deviceAvail++;
+    }
+    if(deviceAvail < GPUs)
+            return -1;
+
+    // allocate devices
+    for(int i = 0; i < GPUs; i++) {
+        int gpuId = 0;
+        for(int j = 1; j < num_devices; j++) {
+            if(deviceUseCount[gpuId] > deviceUseCount[j])
+                gpuId = j;
+        }
+        deviceUseCount[gpuId]++;
+        device_id_[i] = device_id[gpuId];
+    }
+
+    return 0;
+}
+
+
+void Arguments::releaseGpuDevices(int GPUs, const int * device_id_)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+
+    for(int i = 0; i < GPUs; i++) {
+        for(int gpuId = 0; gpuId < num_devices; gpuId++) {
+            if(device_id_[i] == device_id[gpuId]) {
+                deviceUseCount[gpuId]--;
+                break;
+            }
+        }
+    }
+}
+#endif

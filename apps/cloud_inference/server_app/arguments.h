@@ -9,7 +9,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <cl.h>
+#if ENABLE_OPENCL
+#include <CL/cl.h>
+#else
+#ifndef __HIP_PLATFORM_AMD__
+#define __HIP_PLATFORM_AMD__
+#endif
+#include "hip/hip_runtime_api.h"
+#include "hip/hip_runtime.h"
+#endif
 
 #define MAX_DEVICE_USE_LIMIT     1   // number of parallel sessions allowed per device
 
@@ -32,9 +40,13 @@ public:
     const std::string& getConfigurationDir() {
         return configurationDir;
     }
+#if ENABLE_OPENCL
     cl_platform_id getPlatformId() {
         return platform_id;
     }
+#else
+    // todo: for hip
+#endif    
     const std::string& getlocalShadowRootDir() {
         return localShadowRootDir;
     }
@@ -114,10 +126,15 @@ public:
     {
         return numDecThreads;
     }
-
+#if ENABLE_OPENCL
     // device resources
     int lockGpuDevices(int GPUs, cl_device_id * device_id_);
     void releaseGpuDevices(int GPUs, const cl_device_id * device_id_);
+#else
+    // device resources
+    int lockGpuDevices(int GPUs, int * device_id_);
+    void releaseGpuDevices(int GPUs, const int * device_id_);
+#endif
 
 protected:
     void setConfigurationDir();
@@ -139,10 +156,16 @@ private:
     std::string password;
     // derived configuration
     int maxGpuId;
-    cl_uint num_devices;
     int deviceUseCount[MAX_NUM_GPU];
+#if ENABLE_OPENCL    
+    cl_uint num_devices;
     cl_device_id device_id[MAX_NUM_GPU];
     cl_platform_id platform_id;
+#else
+    int num_devices;
+    void *platform_id;
+    int device_id[MAX_NUM_GPU];
+#endif
     std::string configurationFile;
     std::string configurationDir;
     std::string localShadowRootDir;

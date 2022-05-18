@@ -146,7 +146,7 @@ class Pipeline(object):
     def define_graph(self):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
-        It returns a list of outputs created by calling RALI Operators."""
+        It returns a list of outputs created by calling ROCAL Operators."""
         print("definegraph is deprecated")
         raise NotImplementedError
 

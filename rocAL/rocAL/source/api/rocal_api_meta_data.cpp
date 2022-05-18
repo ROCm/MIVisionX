@@ -77,12 +77,12 @@ ROCAL_API_CALL rocalCreateVideoLabelReader(RocalContext p_context, const char* s
 }
 
 RocalMetaData
-ROCAL_API_CALL rocalCreateCOCOReader(RocalContext p_context, const char* source_path, bool is_output){
+ROCAL_API_CALL rocalCreateCOCOReader(RocalContext p_context, const char* source_path, bool is_output, bool mask){
     if (!p_context)
         THROW("Invalid rocal context passed to rocalCreateCOCOReader")
     auto context = static_cast<Context*>(p_context);
 
-    return context->master_graph->create_coco_meta_data_reader(source_path, is_output, MetaDataReaderType::COCO_META_DATA_READER,  MetaDataType::BoundingBox);
+    return context->master_graph->create_coco_meta_data_reader(source_path, is_output, mask, MetaDataReaderType::COCO_META_DATA_READER,  MetaDataType::BoundingBox);
 }
 
 RocalMetaData
@@ -91,7 +91,7 @@ ROCAL_API_CALL rocalCreateCOCOReaderKeyPoints(RocalContext p_context, const char
         THROW("Invalid rocal context passed to rocalCreateCOCOReaderKeyPoints")
     auto context = static_cast<Context*>(p_context);
 
-    return context->master_graph->create_coco_meta_data_reader(source_path, is_output, MetaDataReaderType::COCO_KEY_POINTS_META_DATA_READER, MetaDataType::KeyPoints, sigma, pose_output_width, pose_output_height);
+    return context->master_graph->create_coco_meta_data_reader(source_path, is_output, false, MetaDataReaderType::COCO_KEY_POINTS_META_DATA_READER, MetaDataType::KeyPoints, sigma, pose_output_width, pose_output_height);
 }
 
 RocalMetaData
@@ -358,6 +358,61 @@ ROCAL_API_CALL rocalGetBoundingBoxCords(RocalContext p_context, float* buf)
     }
 }
 
+unsigned
+ROCAL_API_CALL rocalGetMaskCount(RocalContext p_context, int* buf)
+{
+    if (p_context == nullptr)
+        THROW("Invalid rocal context passed to rocalGetMaskCount")
+    unsigned size = 0, count = 0;
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_mask_cords_batch().size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    if(!meta_data.second)
+        THROW("No mask has been loaded for this output image")
+    for(unsigned i = 0; i < meta_data_batch_size; i++)
+    {
+        unsigned object_count = meta_data.second->get_mask_cords_batch()[i].size();
+        for(unsigned int j = 0; j < object_count; j++) {
+            unsigned polygon_count = meta_data.second->get_mask_cords_batch()[i][j].size();
+            buf[count++] = polygon_count;
+            size += polygon_count;
+        }
+    }
+    return size;
+}
+
+void
+ROCAL_API_CALL rocalGetMaskCoordinates(RocalContext p_context, int *bufcount, float *buf)
+{
+    if (p_context == nullptr)
+        THROW("Invalid rocal context passed to rocalGetMaskCoordinates")
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_mask_cords_batch().size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    if(!meta_data.second)
+        THROW("No mask has been loaded for this output image")
+    int size = 0;
+    auto ptr = buf;
+    for(unsigned image_idx = 0; image_idx < meta_data_batch_size; image_idx++)
+    {
+        unsigned object_count = meta_data.second->get_mask_cords_batch()[image_idx].size();
+        for(unsigned int i = 0; i < object_count; i++)
+        {
+            unsigned polygon_count = meta_data.second->get_mask_cords_batch()[image_idx][i].size();
+            for(unsigned int j = 0; j < polygon_count; j++)
+            {
+                unsigned polygon_size = meta_data.second->get_mask_cords_batch()[image_idx][i][j].size();
+                bufcount[size++] = polygon_size;
+                memcpy(ptr, meta_data.second->get_mask_cords_batch()[image_idx][i][j].data(), sizeof(float) * meta_data.second->get_mask_cords_batch()[image_idx][i][j].size());
+                ptr += polygon_size;
+            }
+        }
+    }
+}
 void
 ROCAL_API_CALL rocalGetImageSizes(RocalContext p_context, int* buf)
 {

@@ -429,6 +429,24 @@ MasterGraph::sequence_frame_timestamps(std::vector<std::vector<float>> &sequence
     _sequence_frame_timestamps_vec.pop_back();
 }
 
+std::vector<uint32_t>
+MasterGraph::output_resize_width()
+{
+    std::vector<uint32_t> resize_width_vector;
+    resize_width_vector = _resize_width.back();
+    _resize_width.pop_back();
+    return resize_width_vector;
+}
+
+std::vector<uint32_t>
+MasterGraph::output_resize_height()
+{
+    std::vector<uint32_t> resize_height_vector;
+    resize_height_vector = _resize_height.back();
+    _resize_height.pop_back();
+    return resize_height_vector;
+}
+
 MasterGraph::Status
 MasterGraph::allocate_output_tensor()
 {
@@ -515,6 +533,8 @@ MasterGraph::reset()
     // restart processing of the images
     _first_run = true;
     _output_routine_finished_processing = false;
+    _resize_width.clear();
+    _resize_height.clear();
     start_processing();
     return Status::OK;
 }
@@ -977,13 +997,23 @@ void MasterGraph::output_routine()
                         {
                             _meta_data_graph->update_random_bbox_meta_data(_augmented_meta_data, decode_image_info, crop_image_info);
                         }
-                        _meta_data_graph->process(_augmented_meta_data);
+                        _meta_data_graph->process(_augmented_meta_data, _is_segmentation);
                     }
                     if (full_batch_meta_data)
                         full_batch_meta_data->concatenate(_augmented_meta_data);
                     else
                         full_batch_meta_data = _augmented_meta_data->clone();
                 }
+                // get roi width and height of output image
+                std::vector<uint32_t> temp_width_arr;
+                std::vector<uint32_t> temp_height_arr;
+                for (unsigned int i = 0; i < _internal_batch_size; i++)
+                {
+                    temp_width_arr.push_back(_output_image_info.get_roi_width()[i]);
+                    temp_height_arr.push_back(_output_image_info.get_roi_height()[i]);
+                }
+                _resize_width.insert(_resize_width.begin(), temp_width_arr);
+                _resize_height.insert(_resize_height.begin(), temp_height_arr);
                 _graph->process();
             }
             _bencode_time.start();
@@ -1107,7 +1137,7 @@ void MasterGraph::output_routine_video()
                 {
                     if (_meta_data_graph)
                     {
-                        _meta_data_graph->process(_augmented_meta_data);
+                        _meta_data_graph->process(_augmented_meta_data, _is_segmentation);
                     }
                     if (full_batch_meta_data)
                         full_batch_meta_data->concatenate(_augmented_meta_data);
@@ -1173,11 +1203,13 @@ void MasterGraph::stop_processing()
         _output_thread.join();
 }
 
-MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type, MetaDataType label_type, float sigma, unsigned pose_output_width, unsigned pose_output_height)
+MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, bool mask, MetaDataReaderType reader_type, MetaDataType label_type, float sigma, unsigned pose_output_width, unsigned pose_output_height)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string());
+    if(mask)
+        _is_segmentation = true;
+    MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string(), mask);
     config.set_out_img_width(pose_output_width);
     config.set_out_img_height(pose_output_height);
     _meta_data_graph = create_meta_data_graph(config);

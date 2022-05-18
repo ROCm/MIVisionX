@@ -27,7 +27,7 @@ void RotateMetaNode::initialize()
     _src_width_val.resize(_batch_size);
     _angle_val.resize(_batch_size);
 }
-void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data)
+void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data, bool segmentation)
 {
     initialize();
     if(_batch_size != input_meta_data->size())

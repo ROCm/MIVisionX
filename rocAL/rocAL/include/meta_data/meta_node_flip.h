@@ -34,7 +34,7 @@ class FlipMetaNode:public MetaNode
 {
     public:
         FlipMetaNode() {};
-        void update_parameters(MetaDataBatch* input_meta_data)override;
+        void update_parameters(MetaDataBatch* input_meta_data, bool segmentation)override;
         std::shared_ptr<FlipNode> _node = nullptr;
     private:
         void initialize();

@@ -113,6 +113,7 @@ list(APPEND SOURCES
         source/image/ResizebatchPD.cpp
         source/image/ResizeCropbatchPD.cpp
         source/image/ResizeCropMirrorPD.cpp
+        source/image/ResizeMirrorNormalizePD.cpp
         source/image/RotatebatchPD.cpp
         source/image/SaturationbatchPD.cpp
         source/image/ScalebatchPD.cpp

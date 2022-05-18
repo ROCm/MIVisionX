@@ -52,6 +52,27 @@ int ROCAL_API_CALL rocalGetOutputHeight(RocalContext p_context)
     return context->master_graph->output_height();
 }
 
+void ROCAL_API_CALL rocalGetOutputResizeWidth(RocalContext p_context, unsigned int *buf)
+{
+    auto context = static_cast<Context *>(p_context);
+    std::vector<uint32_t> resize_width_vec = context->master_graph->output_resize_width();
+    for (unsigned int i = 0; i < context->user_batch_size(); i++)
+    {
+        buf[i] = resize_width_vec[i];
+    }
+}
+
+void ROCAL_API_CALL rocalGetOutputResizeHeight(RocalContext p_context, unsigned int *buf)
+{
+    auto context = static_cast<Context *>(p_context);
+    std::vector<uint32_t> resize_height_vec = context->master_graph->output_resize_height();
+    for (unsigned int i = 0; i < context->user_batch_size(); i++)
+    {
+        buf[i] = resize_height_vec[i];
+    }
+}
+
+
 int ROCAL_API_CALL rocalGetOutputColorFormat(RocalContext p_context)
 {
     auto context = static_cast<Context*>(p_context);

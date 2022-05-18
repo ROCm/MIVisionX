@@ -7,7 +7,7 @@ if [[ $# -gt 0 ]]; then
     echo "Usage: $0 [-n number_of_gpus] [-d dump_outputs<true/false>] [-b backend<cpu/gpu>] [-p print_tensor<true/false>]"
     echo -e "\t-n Description of what is the number of gpus to be used"
     echo -e "\t-d Description of what is the display param"
-    echo -e "\t-d Description of what is the print tensor param"
+    echo -e "\t-p Description of what is the print tensor param"
     exit 1 # Exit script after printing help
     }
 

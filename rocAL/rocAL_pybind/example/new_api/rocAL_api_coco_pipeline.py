@@ -12,13 +12,14 @@ import amd.rocal.types as types
 import numpy as np
 from parse_config import parse_args
 
-class RALICOCOIterator(object):
+
+class ROCALCOCOIterator(object):
     """
-    COCO RALI iterator for pyTorch.
+    COCO ROCAL iterator for pyTorch.
 
     Parameters
     ----------
-    pipelines : list of amd.rali.pipeline.Pipeline
+    pipelines : list of amd.rocal.pipeline.Pipeline
                 List of pipelines to use
     size : int
            Epoch size.
@@ -143,11 +144,10 @@ class RALICOCOIterator(object):
         return (self.out), encoded_bboxes_tensor, encodded_labels_tensor, image_id_tensor, image_size_tensor
 
     def reset(self):
-        self.loader.raliResetLoaders()
+        self.loader.rocalResetLoaders()
 
     def __iter__(self):
         return self
-
 
 def draw_patches(img, idx, bboxes, device):
     args = parse_args()
@@ -183,7 +183,7 @@ def main():
     # Args
     image_path = args.image_dataset_path
     annotation_path = args.json_path
-    rali_cpu = False if args.rocal_gpu else True
+    rocal_cpu = False if args.rocal_gpu else True
     batch_size = args.batch_size
     display = args.display
     num_threads = args.num_threads
@@ -240,7 +240,7 @@ def main():
     default_boxes = coco_anchors().numpy().flatten().tolist()
     # Create Pipeline instance
     pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,
-                    device_id=args.local_rank, seed=random_seed, rali_cpu=rali_cpu)
+                    device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(
@@ -300,11 +300,11 @@ def main():
     pipe.build()
     # Dataloader
     if(args.rocal_gpu):
-        data_loader = RALICOCOIterator(
+        data_loader = ROCALCOCOIterator(
             pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, tensor_layout=tensor_format, tensor_dtype=tensor_dtype, device="cuda", num_anchors=len(default_boxes)/4)
 
     else:
-        data_loader = RALICOCOIterator(
+        data_loader = ROCALCOCOIterator(
             pipe, multiplier=pipe._multiplier, offset=pipe._offset, display=display, tensor_layout=tensor_format, tensor_dtype=tensor_dtype, device="cpu", num_anchors=len(default_boxes)/4)
 
     import timeit

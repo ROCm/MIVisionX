@@ -46,11 +46,11 @@ public:
     ///\param sub_buffer_size
     ///\param sub_buffer_count
 #if ENABLE_HIP
-    void initHip(RaliMemType mem_type, DeviceResourcesHip dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
+    void initHip(RocalMemType mem_type, DeviceResourcesHip dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
 #else
-    void init(RaliMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
+    void init(RocalMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
 #endif
-    void initBoxEncoderMetaData(RaliMemType mem_type, size_t encoded_bbox_size, size_t encoded_labels_size);
+    void initBoxEncoderMetaData(RocalMemType mem_type, size_t encoded_bbox_size, size_t encoded_labels_size);
     void release_gpu_res();
     std::vector<void*> get_read_buffers() ;
     void* get_host_master_read_buffer();
@@ -65,7 +65,7 @@ public:
     void unblock_reader();
     void unblock_writer();
     void release_all_blocked_calls();
-    RaliMemType mem_type() { return _mem_type; }
+    RocalMemType mem_type() { return _mem_type; }
     void block_if_empty();
     void block_if_full();
     void release_if_empty();
@@ -87,7 +87,7 @@ private:
     std::vector<void *> _dev_bbox_buffer;
     std::vector<void *> _dev_labels_buffer;
     bool _dont_block = false;
-    RaliMemType _mem_type;
+    RocalMemType _mem_type;
 #if ENABLE_HIP
     DeviceResourcesHip _devhip;
 #else

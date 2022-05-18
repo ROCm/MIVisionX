@@ -33,26 +33,26 @@ THE SOFTWARE.
 #include "log.h"
 
 
-enum class RaliTensorFormat
+enum class RocalTensorFormat
 {
     NHWC = 0,
     NCHW
 };
-enum class RaliTensorDataType
+enum class RocalTensorDataType
 {
     FP32 = 0,
     FP16
 };
-enum class RaliAffinity
+enum class RocalAffinity
 {
     GPU = 0,
     CPU
 };
 
-/*! \brief Color formats currently supported by Rali SDK as input/output
+/*! \brief Color formats currently supported by Rocal SDK as input/output
  *
  */
-enum class RaliColorFormat 
+enum class RocalColorFormat
 {
     RGB24 = 0,
     BGR24,
@@ -61,10 +61,10 @@ enum class RaliColorFormat
 };
 
 /*! \brief Memory type, host or device
- * 
+ *
  *  Currently supports HOST and OCL, will support HIP in future
  */
-enum class RaliMemType 
+enum class RocalMemType
 {
     HOST = 0,
     OCL,
@@ -72,7 +72,7 @@ enum class RaliMemType
 };
 
 /*! \brief Decoder mode for Video decoding
- * 
+ *
  *  Currently supports Software decoding, will support Hardware decoding in future
  */
 enum class DecodeMode

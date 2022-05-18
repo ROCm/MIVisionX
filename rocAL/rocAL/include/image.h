@@ -38,12 +38,12 @@ THE SOFTWARE.
 #include "commons.h"
 
 
-/*! \brief Converts Rali Memory type to OpenVX memory type
+/*! \brief Converts Rocal Memory type to OpenVX memory type
  *
- * @param mem input Rali type
+ * @param mem input Rocal type
  * @return the OpenVX type associated with input argument
  */
-vx_enum vx_mem_type(RaliMemType mem);
+vx_enum vx_mem_type(RocalMemType mem);
 struct Point
 {
     unsigned x; // Along the width
@@ -93,8 +93,8 @@ struct ImageInfo
         unsigned height,
         unsigned batch_size,
         unsigned color_planes_count,
-        RaliMemType mem_type,
-        RaliColorFormat color_format);
+        RocalMemType mem_type,
+        RocalColorFormat color_format);
 
     unsigned width() const { return _width; }
     unsigned height_batch() const {return _height * _batch_size; }
@@ -104,9 +104,9 @@ struct ImageInfo
     void height(unsigned height) { _height = height; }
     Type type() const { return _type; }
     unsigned batch_size() const {return _batch_size;}
-    RaliMemType mem_type() const { return _mem_type; }
+    RocalMemType mem_type() const { return _mem_type; }
     unsigned data_size() const { return _data_size; }
-    RaliColorFormat color_format() const {return _color_fmt; }
+    RocalColorFormat color_format() const {return _color_fmt; }
     unsigned get_roi_width(int image_batch_idx) const;
     unsigned get_roi_height(int image_batch_idx) const;
     uint32_t * get_roi_width() const;
@@ -120,8 +120,8 @@ private:
     unsigned _color_planes;//!< number of color planes
     unsigned _batch_size;//!< the batch size (images in the batch are stacked on top of each other)
     unsigned _data_size;//!< total size of the memory needed to keep the image's data in bytes including all planes
-    RaliMemType _mem_type;//!< memory type, currently either OpenCL or Host
-    RaliColorFormat _color_fmt;//!< color format of the image
+    RocalMemType _mem_type;//!< memory type, currently either OpenCL or Host
+    RocalColorFormat _color_fmt;//!< color format of the image
     std::shared_ptr<std::vector<uint32_t>> _roi_width;//!< The actual image width stored in the buffer, it's always smaller than _width/_batch_size. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one and observed for all.
     std::shared_ptr<std::vector<uint32_t>> _roi_height;//!< The actual image height stored in the buffer, it's always smaller than _height. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one changes can be observed for all.
 

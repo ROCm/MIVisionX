@@ -1,3 +1,14 @@
+### TESTING ALL THE READER PIPELINES ON PYTHON IN SINGLE SHOT
+
+./TEST_FILE.sh
+
+### TO TEST A SINGLE READER / MULTIPLE READER PIPELINE FROM TEST_FILE.sh
+
+####################################################################################################################################
+# Make the respective " Pipeline " to test equal to "1"
+rocAL_api_python_unittest=1
+rocAL_api_coco_pipeline=0
+
 ## INSTALL PYBIND TO RUN ANY TESTS
 * [rocAL Pybind Installation](../../README.md)
 
@@ -8,7 +19,7 @@ export ROCAL_DATA_PATH=/Absolute/Path/Of/rocal_data/
 
 ./PYTHON_UNITTEST_TEST_FILE.sh (The default value of number of gpu's is "1" & display is "ON" by default)
 
-./PYTHON_UNITTEST_TEST_FILE.sh -n <number_of_gpus> -d <true/false>
+./PYTHON_UNITTEST_TEST_FILE.sh -n <number_of_gpus> -d <true/false> -b backend<cpu/gpu> -p print_tensor<true/false>
 ./PYTHON_UNITTEST_TEST_FILE.sh -n "1" -d "false" -b "cpu"
 
 ### TO TEST MULTIPLE READER PIPELINE FROM READERS_TEST_FILE.sh

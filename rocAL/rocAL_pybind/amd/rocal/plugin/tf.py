@@ -1,7 +1,7 @@
 import numpy as np
-import rali_pybind as b
+import rocal_pybind as b
 import amd.rocal.types as types
-class RALIGenericImageIterator(object):
+class ROCALGenericImageIterator(object):
     def __init__(self, pipeline):
         self.loader = pipeline
         self.w = b.getOutputWidth(self.loader._handle)
@@ -28,12 +28,12 @@ class RALIGenericImageIterator(object):
         return self.out_image , self.out_tensor
 
     def reset(self):
-        b.raliResetLoaders(self.loader._handle)
+        b.rocalResetLoaders(self.loader._handle)
 
     def __iter__(self):
         return self
 
-class RALIGenericIteratorDetection(object):
+class ROCALGenericIteratorDetection(object):
     def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
         self.loader = pipeline
         self.tensor_format =tensor_layout
@@ -137,22 +137,22 @@ class RALIGenericIteratorDetection(object):
                 return self.out.astype(np.float16), self.labels
 
     def reset(self):
-        b.raliResetLoaders(self.loader._handle)
+        b.rocalResetLoaders(self.loader._handle)
 
     def __iter__(self):
         return self
 
 
-class RALIIterator(RALIGenericIteratorDetection):
+class ROCALIterator(ROCALGenericIteratorDetection):
     """
-    RALI iterator for detection and classification tasks for PyTorch. It returns 2 or 3 outputs
+    ROCAL iterator for detection and classification tasks for PyTorch. It returns 2 or 3 outputs
     (data and label) or (data , bbox , labels) in the form of PyTorch's Tensor.
     Calling
     .. code-block:: python
-       RALIIterator(pipelines, size)
+       ROCALIterator(pipelines, size)
     is equivalent to calling
     .. code-block:: python
-       RALIGenericIteratorDetection(pipelines, ["data", "label"], size)
+       ROCALGenericIteratorDetection(pipelines, ["data", "label"], size)
 
 
     """
@@ -164,14 +164,14 @@ class RALIIterator(RALIGenericIteratorDetection):
                  dynamic_shape=False,
                  last_batch_padded=False):
         pipe = pipelines
-        super(RALIIterator, self).__init__(pipe, tensor_layout = pipe._tensor_layout, tensor_dtype = pipe._tensor_dtype,
+        super(ROCALIterator, self).__init__(pipe, tensor_layout = pipe._tensor_layout, tensor_dtype = pipe._tensor_dtype,
                                                             multiplier=pipe._multiplier, offset=pipe._offset)
 
 
 
-class RALI_iterator(RALIGenericImageIterator):
+class ROCAL_iterator(ROCALGenericImageIterator):
     """
-    RALI iterator for classification tasks for PyTorch. It returns 2 outputs
+    ROCAL iterator for classification tasks for PyTorch. It returns 2 outputs
     (data and label) in the form of PyTorch's Tensor.
 
     """
@@ -183,4 +183,4 @@ class RALI_iterator(RALIGenericImageIterator):
                  dynamic_shape=False,
                  last_batch_padded=False):
         pipe = pipelines
-        super(RALI_iterator, self).__init__(pipe)
+        super(ROCAL_iterator, self).__init__(pipe)

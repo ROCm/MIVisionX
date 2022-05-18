@@ -1,5 +1,5 @@
 import amd.rocal.types as types
-import rali_pybind as b
+import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
 
 def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotations_file= '', shard_id = 0, num_shards = 1, random_shuffle = False, affine=True, bytes_per_sample_hint=0, cache_batch_copy= True, cache_debug = False, cache_size = 0, cache_threshold = 0,

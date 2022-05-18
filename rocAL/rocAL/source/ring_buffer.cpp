@@ -57,14 +57,14 @@ void RingBuffer:: block_if_full()
 std::vector<void*> RingBuffer::get_read_buffers()
 {
     block_if_empty();
-    if((_mem_type == RaliMemType::OCL) || (_mem_type == RaliMemType::HIP))
+    if((_mem_type == RocalMemType::OCL) || (_mem_type == RocalMemType::HIP))
         return _dev_sub_buffer[_read_ptr];
     return _host_sub_buffers[_read_ptr];
 }
 
 void *RingBuffer::get_host_master_read_buffer() {
     block_if_empty();
-    if((_mem_type == RaliMemType::OCL) || (_mem_type == RaliMemType::HIP))
+    if((_mem_type == RocalMemType::OCL) || (_mem_type == RocalMemType::HIP))
         return nullptr;
 
     return _host_master_buffers[_read_ptr];
@@ -74,7 +74,7 @@ void *RingBuffer::get_host_master_read_buffer() {
 std::pair<void*, void*> RingBuffer::get_box_encode_read_buffers()
 {
     block_if_empty();
-    if((_mem_type == RaliMemType::OCL) || (_mem_type == RaliMemType::HIP))
+    if((_mem_type == RocalMemType::OCL) || (_mem_type == RocalMemType::HIP))
         return std::make_pair(_dev_bbox_buffer[_read_ptr], _dev_labels_buffer[_read_ptr]);
     return std::make_pair(nullptr, nullptr);   // todo:: implement the same scheme for host as well
 }
@@ -82,7 +82,7 @@ std::pair<void*, void*> RingBuffer::get_box_encode_read_buffers()
 std::vector<void*> RingBuffer::get_write_buffers()
 {
     block_if_full();
-    if((_mem_type == RaliMemType::OCL) || (_mem_type == RaliMemType::HIP))
+    if((_mem_type == RocalMemType::OCL) || (_mem_type == RocalMemType::HIP))
         return _dev_sub_buffer[_write_ptr];
 
     return _host_sub_buffers[_write_ptr];
@@ -91,11 +91,9 @@ std::vector<void*> RingBuffer::get_write_buffers()
 std::pair<void*, void*> RingBuffer::get_box_encode_write_buffers()
 {
     block_if_full();
-    if((_mem_type == RaliMemType::OCL) || (_mem_type == RaliMemType::HIP))
+    if((_mem_type == RocalMemType::OCL) || (_mem_type == RocalMemType::HIP))
         return std::make_pair(_dev_bbox_buffer[_write_ptr], _dev_labels_buffer[_write_ptr]);
-    return std::make_pair(nullptr, nullptr);   // todo:: implement the same scheme for host as well
 }
-
 void RingBuffer::unblock_reader()
 {
     // Wake up the reader thread in case it's waiting for a load
@@ -121,7 +119,7 @@ void RingBuffer::unblock_writer()
 }
 
 #if !ENABLE_HIP
-void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count)
+void RingBuffer::init(RocalMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count)
 {
     _mem_type = mem_type;
     _dev = dev;
@@ -131,7 +129,7 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
         THROW ("Error internal buffer size for the ring buffer should be greater than one")
 
     // Allocating buffers
-    if(mem_type== RaliMemType::OCL)
+    if(mem_type== RocalMemType::OCL)
     {
         if(_dev.cmd_queue == nullptr || _dev.device_id == nullptr || _dev.context == nullptr)
             THROW("Error ocl structure needed since memory type is OCL");
@@ -175,7 +173,7 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
 }
 
 #else
-void RingBuffer::initHip(RaliMemType mem_type, DeviceResourcesHip dev, unsigned sub_buffer_size, unsigned sub_buffer_count)
+void RingBuffer::initHip(RocalMemType mem_type, DeviceResourcesHip dev, unsigned sub_buffer_size, unsigned sub_buffer_count)
 {
     _mem_type = mem_type;
     _devhip = dev;
@@ -185,7 +183,7 @@ void RingBuffer::initHip(RaliMemType mem_type, DeviceResourcesHip dev, unsigned 
         THROW ("Error internal buffer size for the ring buffer should be greater than one")
 
     // Allocating buffers
-    if(_mem_type == RaliMemType::HIP)
+    if(_mem_type == RocalMemType::HIP)
     {
         if(_devhip.hip_stream == nullptr || _devhip.device_id == -1 )
             THROW("Error Hip Device is not initialzed");
@@ -224,10 +222,11 @@ void RingBuffer::initHip(RaliMemType mem_type, DeviceResourcesHip dev, unsigned 
 }
 #endif
 
-void RingBuffer::initBoxEncoderMetaData(RaliMemType mem_type, size_t encoded_bbox_size, size_t encoded_labels_size)
+
+void RingBuffer::initBoxEncoderMetaData(RocalMemType mem_type, size_t encoded_bbox_size, size_t encoded_labels_size)
 {
 #if ENABLE_HIP
-    if(_mem_type == RaliMemType::HIP)
+    if(_mem_type == RocalMemType::HIP)
     {
         if(_devhip.hip_stream == nullptr || _devhip.device_id == -1 )
             THROW("initBoxEncoderMetaData::Error Hip Device is not initialzed");
@@ -249,7 +248,7 @@ void RingBuffer::initBoxEncoderMetaData(RaliMemType mem_type, size_t encoded_bbo
         }
     }
 #else
-    if(mem_type== RaliMemType::OCL)
+    if(mem_type== RocalMemType::OCL)
     {
         if(_dev.cmd_queue == nullptr || _dev.device_id == nullptr || _dev.context == nullptr)
             THROW("Error ocl structure needed since memory type is OCL");
@@ -309,12 +308,12 @@ void RingBuffer::reset()
 void RingBuffer::release_gpu_res()
 {
 #if ENABLE_HIP
-    if (_mem_type == RaliMemType::HIP) {
+    if (_mem_type == RocalMemType::HIP) {
         for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++){
             for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++){
                 if (_dev_sub_buffer[buffIdx][sub_buf_idx])
                     if ( hipFree((void *)_dev_sub_buffer[buffIdx][sub_buf_idx]) != hipSuccess ) {
-                        //printf("Error Freeing device buffer <%d, %d, %p>\n", buffIdx, sub_buf_idx, _dev_sub_buffer[buffIdx][sub_buf_idx]);                        
+                        //printf("Error Freeing device buffer <%d, %d, %p>\n", buffIdx, sub_buf_idx, _dev_sub_buffer[buffIdx][sub_buf_idx]);
                         ERR("Could not release hip memory in the ring buffer")
                     }
             }
@@ -322,7 +321,7 @@ void RingBuffer::release_gpu_res()
         _dev_sub_buffer.clear();
     }
 #elif ENABLE_OPENCL
-    if (_mem_type == RaliMemType::OCL) {
+    if (_mem_type == RocalMemType::OCL) {
         for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++)
             for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
                 if (_dev_sub_buffer[buffIdx][sub_buf_idx])
@@ -335,7 +334,7 @@ void RingBuffer::release_gpu_res()
 
 RingBuffer::~RingBuffer()
 {
-    if (_mem_type == RaliMemType::HOST) {
+    if (_mem_type == RocalMemType::HOST) {
         for (unsigned idx = 0; idx < _host_master_buffers.size(); idx++)
             if (_host_master_buffers[idx]) {
                 free(_host_master_buffers[idx]);

@@ -21,7 +21,7 @@ Follow the build instructions in [rocAL](../README.md)
 ## rocAL Python
 *   rocAL Python package has been created using Pybind11 which enables data transfer between rocAL C++ API and Python API.
 *   Module imports are made similar to other data loaders like NVidia's DALI.
-*   rali_pybind package has both PyTorch and TensorFlow framework support.
+*   rocal_pybind package has both PyTorch and TensorFlow framework support.
 *   Various reader format support including FileReader, COCOReader, and TFRecordReader.
 *   example folder contains sample implementations for each reader variation as well as sample training script for PyTorch
 *   rocAL is integrated into MLPerf Resnet-50 Pytorch classification example on the ImageNet dataset.
@@ -68,7 +68,7 @@ rali.types are enums exported from C++ API to python. Some examples include CPU,
 ### installing rocAL python plugin (Python 3.6)
 *  Build and install RPP
 *  Build and install MIVisionX which installs rocAL c++ lib
-*  Go to [rali_pybind](../rali_pybind) folder
+*  Go to [rocal_pybind](../rocal_pybind) folder
 *  sudo ./run.sh
 
 ### Steps to run MLPerf Resnet50 classification training with rocAL on a system with MI50 and ROCm

@@ -25,32 +25,24 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
         ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree && \
         make -j8 && sudo make install && cd
 # install MIVisionX neural net dependency - Level 4
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python-dev python3-dev autoconf automake libtool curl make g++ unzip && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget miopen-opencl && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
-        unzip half-1.12.0.zip -d half-files && sudo cp half-files/include/half.hpp /usr/local/include/ && \
+        unzip half-1.12.0.zip -d half-files && sudo cp half-files/include/half.hpp /usr/local/include/ && cd
+# install MIVisionX rocAL dependency - Level 5
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev python-dev python3-dev libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm libjsoncpp-dev clang && \
+        git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \
+        cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
+        -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd ../../ && \
         wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 && tar xjvf boost_1_72_0.tar.bz2 && \
         cd boost_1_72_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
         ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11" && \
         sudo ./b2 install threading=multi link=shared --with-system --with-filesystem && \
         ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
         sudo ./b2 install threading=multi link=static --with-system --with-filesystem && cd ../ && \
-        git clone -b rocm-5.1.1 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \
-        cmake ../ && make -j8 && sudo make install && cd ../../ && \
-        wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/1.1.5.zip && unzip 1.1.5.zip && \
-        cd MIOpenGEMM-1.1.5 && mkdir build && cd build && cmake ../ && make -j8 && sudo make install && cd ../../ && \
-        wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/2.14.0.zip && unzip 2.14.0.zip && \
-        cd MIOpen-2.14.0 && mkdir build && cd build && \
-        #cd MIOpen-2.14.0 && sudo cmake -P install_deps.cmake --minimum && mkdir build && cd build && \ - deps install turned off
-        cmake -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../ && make -j8 && make MIOpenDriver && sudo make install && cd ../../ && \
+        git clone -b 0.93  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
+        cmake -DBACKEND=OCL ../ && make -j4 && sudo make install && cd ../../ && \
         git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
-# install MIVisionX rocAL dependency - Level 5
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm libjsoncpp-dev clang && \
-        git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \
-        cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
-        -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd ../../ && \
-        git clone -b 0.93  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
-        cmake -DBACKEND=OCL ../ && make -j4 && sudo make install && cd
 
 WORKDIR /workspace
 

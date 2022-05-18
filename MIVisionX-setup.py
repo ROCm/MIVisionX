@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.2.0"
+__version__ = "2.3.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -41,10 +41,6 @@ parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
                     help='Setup home directory - optional (default:~/)')
 parser.add_argument('--opencv',    	type=str, default='4.5.5',
                     help='OpenCV Version - optional (default:4.5.5)')
-parser.add_argument('--miopen',    	type=str, default='2.14.0',
-                    help='MIOpen Version - optional (default:2.14.0)')
-parser.add_argument('--miopengemm',	type=str, default='1.1.5',
-                    help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',
                     help='ProtoBuf Version - optional (default:3.12.0)')
 parser.add_argument('--rpp',   		type=str, default='0.93',
@@ -53,8 +49,6 @@ parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG V4.0.4 Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
                     help='MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]')
-parser.add_argument('--rocm_cmake',	type=str, default='rocm-5.1.1',
-                    help='ROCm CMAKE Version - optional (default:rocm-5.1.1) - ROCm CMAKE Version minimum required 0.7.3')
 parser.add_argument('--rocal',	 	type=str, default='yes',
                     help='MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]')
 parser.add_argument('--reinstall', 	type=str, default='no',
@@ -67,12 +61,9 @@ args = parser.parse_args()
 
 setupDir = args.directory
 opencvVersion = args.opencv
-MIOpenVersion = args.miopen
-MIOpenGEMMVersion = args.miopengemm
 ProtoBufVersion = args.protobuf
 rppVersion = args.rpp
 ffmpegInstall = args.ffmpeg
-rocmCmakeVersion = args.rocm_cmake
 neuralNetInstall = args.neural_net
 rocALInstall = args.rocal
 reinstall = args.reinstall
@@ -187,21 +178,17 @@ if os.path.exists(deps_dir):
                   linuxFlag+' make install -j8)')
 
     if neuralNetInstall == 'yes' and backend != 'CPU':
-        # rocm-cmake
-        if os.path.exists(deps_dir+'/build/rocm-cmake'):
+        if backend == 'OCL':
             os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
-                      linuxFlag+' make install -j8)')
-        # MIOpenGEMM
-        if os.path.exists(deps_dir+'/build/MIOpenGEMM'):
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
-                      linuxFlag+' make install -j8)')
-        # MIOpen
-        if os.path.exists(deps_dir+'/build/MIOpen*'):
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/build/MIOpen*; sudo ' +
-                      linuxFlag+' make install -j8)')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                      linuxSystemInstall_check+' autoremove miopen-hip migraphx')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y miopen-opencl')
+        else:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                      linuxSystemInstall_check+' autoremove miopen-opencl')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y miopen-hip migraphx')
 
     if (rocALInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
         # ProtoBuf
@@ -322,48 +309,17 @@ else:
             os.system('sudo rm -rf '+ROCM_PATH+'/miopen*')
 
         if backend == 'OCL':
+            os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' remove miopen-hip')
-        else:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' remove miopen-opencl')
-
-        os.system(
-            '(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen-'+backend+')')
-        # Install ROCm-CMake
-        os.system('(cd '+deps_dir+'/build/rocm-cmake; ' +
-                  linuxCMake+' ../../rocm-cmake )')
-        os.system('(cd '+deps_dir+'/build/rocm-cmake; make -j8 )')
-        os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
-                  linuxFlag+' make install )')
-        if backend == 'OCL':
-            # Install MIOpenGEMM
-            os.system('(cd '+deps_dir+'/build/MIOpenGEMM; '+linuxCMake +
-                      ' ../../MIOpenGEMM-'+MIOpenGEMMVersion+' )')
-            os.system('(cd '+deps_dir+'/build/MIOpenGEMM; make -j8 )')
-            os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
-                      linuxFlag+' make install )')
-        # Install MIOpen
-        os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo ' +
-                  linuxFlag+' '+linuxCMake+' -P install_deps.cmake --minimum )')
-        if backend == 'OCL':
-            os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; '+linuxCMake +
-                      ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
+                      linuxSystemInstall_check+' autoremove -y miopen-hip migraphx')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y miopen-opencl')
         else:
             os.system('sudo -v')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                      linuxSystemInstall_check+' autoremove -y miopen-opencl')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install rocblas')
-            os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; CXX=/opt/rocm/llvm/bin/clang++ '+linuxCMake +
-                      ' -DMIOPEN_BACKEND=HIP ../../MIOpen-'+MIOpenVersion+' )')
-        os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; make -j8 )')
-        os.system('(cd '+deps_dir+'/build/MIOpen-'+backend+'; sudo ' +
-                  linuxFlag+' make install )')
-
-        #install MIGraphX
-        if backend == 'HIP':
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y migraphx')
+                      ' '+linuxSystemInstall_check+' install -y miopen-hip migraphx')
 
         # Install Packages for NN Apps - Apps Requirement to be installed by Developer
         # os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')

@@ -28,6 +28,7 @@ class BoundingBoxGraph : public MetaDataGraph
 {
 public:
     void process(MetaDataBatch* meta_data, bool segmentation) override;
+    void update_meta_data(MetaDataBatch* meta_data, decoded_image_info decode_image_info, bool segmentation) override;
     void update_random_bbox_meta_data(MetaDataBatch* meta_data, decoded_image_info decoded_image_info,crop_image_info crop_image_info) override;
     void update_box_encoder_meta_data(std::vector<float> *anchors, pMetaDataBatch full_batch_meta_data ,float criteria, bool offset , float scale, std::vector<float>& means, std::vector<float>& stds) override;
 };

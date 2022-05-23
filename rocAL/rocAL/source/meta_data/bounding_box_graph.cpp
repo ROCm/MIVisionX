@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 #include "bounding_box_graph.h"
+#define MAX_BUFFER 10000
 
 void BoundingBoxGraph::process(MetaDataBatch *meta_data, bool segmentation)
 {
@@ -30,6 +31,92 @@ void BoundingBoxGraph::process(MetaDataBatch *meta_data, bool segmentation)
 }
 
 //update_meta_data is not required since the bbox are normalized in the very beggining -> removed the call in master graph also except for MaskRCNN
+void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info, bool segmentation)
+{
+    std::vector<uint32_t> original_height = decode_image_info._original_height;
+    std::vector<uint32_t> original_width = decode_image_info._original_width;
+    std::vector<uint32_t> roi_width = decode_image_info._roi_width;
+    std::vector<uint32_t> roi_height = decode_image_info._roi_height;
+    for (int i = 0; i < input_meta_data->size(); i++)
+    {
+        float _dst_to_src_width_ratio = roi_width[i] / float(original_width[i]);
+        float _dst_to_src_height_ratio = roi_height[i] / float(original_height[i]);
+        unsigned bb_count = input_meta_data->get_bb_labels_batch()[i].size();
+        BoundingBoxCords coords_buf;
+        BoundingBoxLabels labels_buf;
+        coords_buf.resize(bb_count);
+        labels_buf.resize(bb_count);
+        memcpy(labels_buf.data(), input_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
+        memcpy((void *)coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        BoundingBoxCords bb_coords;
+        BoundingBoxCord temp_box;
+        temp_box.l = temp_box.t = temp_box.r = temp_box.b = 0;
+        BoundingBoxLabels bb_labels;
+        float mask_data[MAX_BUFFER];
+        int poly_count[bb_count];
+        std::vector<int> poly_size;
+        MaskCords mask_coords;
+        coords mask_cord;
+        std::vector<float> mask;
+        int idx = 0, index = 1;
+        if (segmentation)
+        {
+            auto ptr = mask_data;
+            for (unsigned int object_index = 0; object_index < bb_count; object_index++)
+            {
+                unsigned polygon_count = input_meta_data->get_mask_cords_batch()[i][object_index].size();
+                poly_count[object_index] = polygon_count;
+                for (unsigned int polygon_index = 0; polygon_index < polygon_count; polygon_index++)
+                {
+                    unsigned polygon_size = input_meta_data->get_mask_cords_batch()[i][object_index][polygon_index].size();
+                    poly_size.push_back(polygon_size);
+                    memcpy(ptr, input_meta_data->get_mask_cords_batch()[i][object_index][polygon_index].data(), sizeof(float) * input_meta_data->get_mask_cords_batch()[i][object_index][polygon_index].size());
+                    ptr += polygon_size;
+                }
+            }
+            for (unsigned int loop_index_1 = 0, k = 0; loop_index_1 < poly_size.size(); loop_index_1++)
+            {
+                for (int loop_idx_2 = 0; loop_idx_2 < poly_size[loop_index_1]; loop_idx_2 += 2, idx += 2)
+                {
+                    mask.push_back(mask_data[idx] * _dst_to_src_width_ratio);
+                    mask.push_back(mask_data[idx + 1] * _dst_to_src_height_ratio);
+                }
+                mask_cord.push_back(mask);
+                mask.clear();
+                if (poly_count[k] == index++)
+                {
+                    mask_coords.push_back(mask_cord);
+                    mask_cord.clear();
+                    k++;
+                    index = 1;
+                }
+            }
+        }
+
+        for (uint j = 0; j < bb_count; j++)
+        {
+            coords_buf[j].l = coords_buf[j].l * _dst_to_src_width_ratio;
+            coords_buf[j].t = coords_buf[j].t * _dst_to_src_height_ratio;
+            coords_buf[j].r = coords_buf[j].r * _dst_to_src_width_ratio;
+            coords_buf[j].b = coords_buf[j].b * _dst_to_src_height_ratio;
+            bb_coords.push_back(coords_buf[j]);
+            bb_labels.push_back(labels_buf[j]);
+        }
+        if (bb_coords.size() == 0)
+        {
+            bb_coords.push_back(temp_box);
+            bb_labels.push_back(0);
+        }
+        input_meta_data->get_bb_cords_batch()[i] = bb_coords;
+        input_meta_data->get_bb_labels_batch()[i] = bb_labels;
+        if (segmentation)
+        {
+            input_meta_data->get_mask_cords_batch()[i] = mask_coords;
+            mask_coords.clear();
+            poly_size.clear();
+        }
+    }
+}
 
 inline float ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const float &box1_area, const BoundingBoxCord &box2)
 {

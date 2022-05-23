@@ -997,6 +997,10 @@ void MasterGraph::output_routine()
                         {
                             _meta_data_graph->update_random_bbox_meta_data(_augmented_meta_data, decode_image_info, crop_image_info);
                         }
+                        else
+                        {
+                            _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info, _is_segmentation);
+                        }
                         _meta_data_graph->process(_augmented_meta_data, _is_segmentation);
                     }
                     if (full_batch_meta_data)

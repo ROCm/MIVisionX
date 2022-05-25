@@ -64,17 +64,14 @@ int main(int argc, char **argv) {
 
     // initialize variables
     vx_tensor input_tensor, output_tensor;
-    vx_size input_num_of_dims;
-    vx_enum input_data_format;
-    vx_size input_dims[4];
-    vx_size output_num_of_dims;
-    vx_enum output_data_format;
-    vx_size output_dims[4];
+    vx_size input_num_of_dims = 4;
+    vx_size input_dims[4] = {1, 3, 224, 224}; //input dimensions for the resnet50 model
+    vx_size output_num_of_dims = 2;
+    vx_size output_dims[2] = {1, 1000}; //output dimensions for the resnet50 model
     vx_size stride[4];
     vx_map_id map_id;
     void *ptr = nullptr;
     vx_status status = 0;
-    migraphx::program prog;
 
     //imagenet label file
     std::string labelText[1000];
@@ -93,17 +90,8 @@ int main(int argc, char **argv) {
     }
     out.close();
 
-    status = amdMIGraphXcompile(modelFileName.c_str(), &prog,
-    &input_num_of_dims, input_dims, &input_data_format,
-    &output_num_of_dims, output_dims, &output_data_format, false, false);
-
-    if (status) {
-        std::cerr << "ERROR: amdMIGraphXcompile failed " << std::endl;
-        return status;
-    }
-
-    input_tensor = vxCreateTensor(context, input_num_of_dims, input_dims, input_data_format, 0);
-    output_tensor = vxCreateTensor(context, output_num_of_dims, output_dims, output_data_format, 0);
+    input_tensor = vxCreateTensor(context, input_num_of_dims, input_dims, VX_TYPE_FLOAT32, 0);
+    output_tensor = vxCreateTensor(context, output_num_of_dims, output_dims, VX_TYPE_FLOAT32, 0);
 
     //read an image and resize to correct dimensions -- opencv imread()
     cv::Mat input_image, input_image_224x224;
@@ -171,7 +159,7 @@ int main(int argc, char **argv) {
 
     ERROR_CHECK_STATUS(vxLoadKernels(context, "vx_amd_migraphx"));
 
-    vx_node node = amdMIGraphXnode(graph, &prog, input_tensor, output_tensor);
+    vx_node node = amdMIGraphXnode(graph, modelFileName.c_str(), input_tensor, output_tensor);
     ERROR_CHECK_OBJECT(node);
 
     ERROR_CHECK_STATUS(vxVerifyGraph(graph));

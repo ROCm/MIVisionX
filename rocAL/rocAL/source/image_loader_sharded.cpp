@@ -104,6 +104,7 @@ ImageLoaderSharded::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cf
     {
         _loaders[idx]->set_output_image(_output_image);
         _loaders[idx]->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
+        _loaders[idx]->set_gpu_device_id(idx);
         reader_cfg.set_shard_count(_shard_count);
         reader_cfg.set_shard_id(idx);
         _loaders[idx]->initialize(reader_cfg, decoder_cfg, mem_type, batch_size, keep_orig_size);

@@ -29,14 +29,14 @@ cmake_minimum_required (VERSION 3.0)
 project (rali_dataloader_mt)
 
 set (CMAKE_CXX_STANDARD 11)
+set(ROCM_PATH /opt/rocm CACHE PATH " default ROCm installation path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
-include_directories ( ${OpenCV_INCLUDE_DIRS}  /opt/rocm/mivisionx/include/)
-
-link_directories    (/opt/rocm/mivisionx/lib/)
+include_directories ( ${OpenCV_INCLUDE_DIRS} ${ROCM_PATH}/include/mivisionx)
+link_directories    (${ROCM_PATH}/lib/)
 
 add_executable(${PROJECT_NAME} ./rali_dataloader_mt.cpp)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=1)

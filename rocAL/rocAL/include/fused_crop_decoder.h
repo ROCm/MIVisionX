@@ -55,6 +55,7 @@ public:
 
 
     ~FusedCropTJDecoder() override;
+    void initialize(int device_id) override {};
     bool is_partial_decoder() { return _is_partial_decoder; };
     void set_bbox_coords(std::vector <float> bbox_coord) override { _bbox_coord = bbox_coord;};
     std::vector <float> get_bbox_coords() { return _bbox_coord;}

@@ -253,6 +253,7 @@ bool ImageLoader::is_out_of_data()
 LoaderModuleStatus
 ImageLoader::update_output_image()
 {
+    // std::cerr<<"\n LoaderModuleStatus ImageLoader::update_output_image()";
     LoaderModuleStatus status = LoaderModuleStatus::OK;
 
     if (is_out_of_data())
@@ -285,6 +286,7 @@ ImageLoader::update_output_image()
       _output_cropped_img_info = _circ_buff.get_cropped_image_info();
     }
     _output_names = _output_decoded_img_info._image_names;
+    // std::cerr<<"\n Gonna update Loader's output image info";
     _output_image->update_image_roi(_output_decoded_img_info._roi_width, _output_decoded_img_info._roi_height);
 
     _circ_buff.pop();

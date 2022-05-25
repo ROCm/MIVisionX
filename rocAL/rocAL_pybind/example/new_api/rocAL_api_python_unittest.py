@@ -25,6 +25,7 @@ def draw_patches(img, idx, device):
 
 
 def main():
+    print("*****************************")
     args = parse_args()
     # Args
     data_path = args.image_dataset_path
@@ -55,11 +56,20 @@ def main():
     with pipe:
         jpegs, _ = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
         images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
-        images = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
+        # images = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
+        # images = fn.resize_single_param(images, resize_size=256)
 
 
         if augmentation_name == "resize":
-            output = fn.resize(images, resize_x=300, resize_y=300)
+            images = fn.resize_single_param(images, resize_size=256)
+            images = fn.centre_crop(images,crop=(224, 224))
+            output = fn.crop_mirror_normalize(images, device="cpu",
+                                              output_dtype=types.FLOAT16 if args.fp16 else types.FLOAT,
+                                              output_layout=types.NHWC if args.NHWC else types.NCHW,
+                                              crop=(224, 224),
+                                              image_type=types.RGB,
+                                              mean=[0, 0, 0],
+                                              std=[1, 1, 1])
         elif augmentation_name == "rotate":
             output = fn.rotate(images)
         elif augmentation_name == "brightness":

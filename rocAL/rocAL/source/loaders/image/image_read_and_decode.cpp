@@ -136,6 +136,9 @@ ImageReadAndDecode::load(unsigned char* buff,
                          RocalColorFormat output_color_format,
                          bool decoder_keep_original )
 {
+    // std::cerr<<"Image Read & Decode : Max decoded width :"<< max_decoded_width<<std::endl;
+    // std::cerr<<"Image Read & Decode : Max decoded height:"<< max_decoded_height<<std::endl;
+
     if(max_decoded_width == 0 || max_decoded_height == 0 )
         THROW("Zero image dimension is not valid")
     if(!buff)
@@ -237,6 +240,7 @@ ImageReadAndDecode::load(unsigned char* buff,
             }
             _actual_decoded_width[i] = scaledw;
             _actual_decoded_height[i] = scaledh;
+
         }
         for (size_t i = 0; i < _batch_size; i++) {
             names[i] = _image_names[i];
@@ -244,6 +248,15 @@ ImageReadAndDecode::load(unsigned char* buff,
             roi_height[i] = _actual_decoded_height[i];
             actual_width[i] = _original_width[i];
             actual_height[i] = _original_height[i];
+            if(roi_width[i] > max_decoded_width)
+                std::cerr<<"\n Decoded width is greater than the max_decoded_width "<<roi_width[i]<<" max:: "<<max_decoded_width;
+            if(roi_height[i] > max_decoded_height)
+                std::cerr<<"\n Decoded height is greater than the max_decoded_height "<<roi_height[i]<<" max:: "<<max_decoded_height;
+            // std::cerr<<"***************************************";
+            // std::cerr<<"roi_width :: "<<roi_width[i]<<std::endl;
+            // std::cerr<<"roi_height :: "<<roi_height[i]<<std::endl;
+            // std::cerr<<"actual_width :: "<<actual_width[i]<<std::endl;
+            // std::cerr<<"actual_height :: "<<actual_height[i]<<std::endl;
         }
     }
     _bbox_coords.clear();

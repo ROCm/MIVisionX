@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "node_fused_jpeg_crop.h"
 #include "node_fused_jpeg_crop_single_shard.h"
 #include "node_resize.h"
+#include "node_resize_single_param.h"
 #include "meta_node_resize.h"
 
 namespace filesys = boost::filesystem;

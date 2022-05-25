@@ -164,7 +164,7 @@ void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vect
 
         if(height[i] > _info.height_single())
         {
-            ERR("Given ROI height is larger than buffer with for image[" + TOSTR(i) + "] " + TOSTR(height[i]) +" > " + TOSTR(_info.height_single()))
+            ERR("Given ROI height is larger than buffer height for image[" + TOSTR(i) + "] " + TOSTR(height[i]) +" > " + TOSTR(_info.height_single()))
             _info._roi_height->at(i) = _info.height_single();
         }
         else

@@ -48,7 +48,7 @@ void ResizeNode::create_node()
     height_status = vxAddArrayItems(_dst_roi_height, _batch_size, dst_roi_height.data(), sizeof(vx_uint32));
      if(width_status != 0 || height_status != 0)
         THROW(" vxAddArrayItems failed in the resize (vxExtrppNode_ResizebatchPD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
-
+    
    _node = vxExtrppNode_ResizebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height, _batch_size);
 
     vx_status status;
@@ -59,5 +59,5 @@ void ResizeNode::create_node()
 
 void ResizeNode::update_node()
 {
-  
+
 }

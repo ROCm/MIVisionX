@@ -261,6 +261,13 @@ def resize(*inputs, bytes_per_sample_hint=0, image_type=0, interp_type=1, mag_fi
     resized_image = b.Resize(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (resized_image)
 
+def resize_single_param(*inputs, resize_size=0):
+    # pybind call arguments
+    kwargs_pybind = {"input_image0": inputs[0], "resize_size": resize_size,
+                     "is_output": False}
+    resized_image = b.ResizeSingleParam(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
+    return (resized_image)
+
 def random_crop(*inputs, crop_area_factor=[0.08, 1], crop_aspect_ratio=[0.75, 1.333333],
             crop_pox_x=0, crop_pox_y=0, device = None):
     # pybind call arguments

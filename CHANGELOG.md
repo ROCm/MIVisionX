@@ -10,11 +10,11 @@
 
 ### Added
 
-* 
+*
 
 ### Optimizations
 
-* 
+*
 
 ### Changed
 
@@ -22,7 +22,7 @@
 
 ### Fixed
 
-* 
+*
 
 ### Tested Configurations
 
@@ -32,9 +32,9 @@
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
 * ROCm: rocm-core - `5.1.1.50101-48 `
-* miopen-hip - [2.16.0.50101-48]
-* miopen-opencl - [2.16.0.50101-48]
-* migraphx - [2.1.0.50101-48]
+* miopen-hip - `2.16.0.50101-48`
+* miopen-opencl - `2.16.0.50101-48`
+* migraphx - `2.1.0.50101-48`
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
 * RPP - [0.93](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.93)
@@ -44,7 +44,7 @@
 
 ### Known issues
 
-* 
+*
 
 ## MIVisionX 2.1.0
 
@@ -88,7 +88,7 @@
 
 ### Known issues
 
-* `CMakeList.txt Warnings` - With ROCm CMake Version MIVisionX will have cmake warnings 
+* `CMakeList.txt Warnings` - With ROCm CMake Version MIVisionX will have cmake warnings
 
 ## MIVisionX 2.0.1
 
@@ -151,7 +151,7 @@
 
 ### Changed
 
-- Docker Build Files 
+- Docker Build Files
 
 ### Fixed
 

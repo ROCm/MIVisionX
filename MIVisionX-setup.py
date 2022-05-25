@@ -228,15 +228,6 @@ else:
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
     os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
-    if neuralNetInstall == 'yes' and backend != 'CPU':
-        os.system(
-            '(cd '+deps_dir+'; git clone -b '+rocmCmakeVersion+' https://github.com/RadeonOpenCompute/rocm-cmake.git )')
-        os.system(
-            '(cd '+deps_dir+'; wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/'+MIOpenGEMMVersion+'.zip )')
-        os.system('(cd '+deps_dir+'; unzip '+MIOpenGEMMVersion+'.zip )')
-        os.system(
-            '(cd '+deps_dir+'; wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/'+MIOpenVersion+'.zip )')
-        os.system('(cd '+deps_dir+'; unzip '+MIOpenVersion+'.zip )')
     if (rocALInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
         os.system(
             '(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v'+ProtoBufVersion+'.zip )')

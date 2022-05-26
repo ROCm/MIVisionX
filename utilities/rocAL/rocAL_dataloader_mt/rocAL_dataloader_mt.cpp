@@ -127,6 +127,7 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
     int counter = 0;
     std::vector<std::vector<char>> names;
     std::vector<int> labels;
+    int ImageNameLen[batch_size];
     names.resize(batch_size);
     labels.resize(batch_size);
 #if 1
@@ -143,13 +144,13 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
         if(display)
             rocalCopyToOutput(handle, mat_input.data, h*w*p);
         else
-            rocalCopyToOutputTensor32(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
+            rocalCopyToOutputTensor(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW,RocalTensorOutputType::ROCAL_FP32, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += batch_size;
         rocalGetImageLabels(handle, labels.data());
         for(int i = 0; i < batch_size; i++)
         {
-            names[i] = std::move(std::vector<char>(rocalGetImageNameLen(handle, 0), '\n'));
-            rocalGetImageName(handle, names[i].data(), i);
+            names[i] = std::move(std::vector<char>(rocalGetImageNameLen(handle, ImageNameLen), '\n'));
+            rocalGetImageName(handle, names[i].data());
             std::string id(names[i].begin(), names[i].end());
          //   std::cout << "name "<< id << " label "<< labels[i] << " - ";
         }
@@ -160,8 +161,7 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
             continue;
         mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
         cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-        //cv::imshow("output",mat_color);
-        //cv::waitKey(1);
+        cv::imwrite("output.jpg",mat_color);
         col_counter = (col_counter+1)%number_of_cols;
     }
 #endif

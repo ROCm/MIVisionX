@@ -692,7 +692,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
                 rocalGetImageName(handle, img_name);
                 if (num_of_classes != 0)
                 {
-                    rocalGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
+                    rocalGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses,0);
                 }
                 std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
                 for (unsigned int i = 0; i < inputBatchSize; i++)

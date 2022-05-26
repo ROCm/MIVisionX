@@ -65,7 +65,7 @@ ProtoBufVersion = args.protobuf
 rppVersion = args.rpp
 ffmpegInstall = args.ffmpeg
 neuralNetInstall = args.neural_net
-rocALInstall = args.rocal
+rocalInstall = args.rocal
 reinstall = args.reinstall
 backend = args.backend
 ROCM_PATH = args.rocm_path
@@ -78,7 +78,7 @@ if neuralNetInstall not in ('no', 'yes'):
     print(
         "ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
     exit()
-if rocALInstall not in ('no', 'yes'):
+if rocalInstall not in ('no', 'yes'):
     print(
         "ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
     exit()
@@ -102,7 +102,7 @@ else:
     print("WARNING: Only OpenCV will be installed\n")
     ffmpegInstall = 'no'
     neuralNetInstall = 'no'
-    rocALInstall = 'no'
+    rocalInstall = 'no'
 
 # get platfrom info
 platfromInfo = platform.platform()
@@ -190,14 +190,14 @@ if os.path.exists(deps_dir):
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y miopen-hip migraphx')
 
-    if (rocALInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
+    if (rocalInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
         # ProtoBuf
         if os.path.exists(deps_dir+'/protobuf-'+ProtoBufVersion):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                       '; sudo '+linuxFlag+' make install -j8)')
 
-    if rocALInstall == 'yes' and backend != 'CPU':
+    if rocalInstall == 'yes' and backend != 'CPU':
         # RPP
         if os.path.exists(deps_dir+'/rpp/build-'+backend):
             os.system('sudo -v')
@@ -228,7 +228,7 @@ else:
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
     os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
-    if (rocALInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
+    if (rocalInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
         os.system(
             '(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v'+ProtoBufVersion+'.zip )')
         os.system('(cd '+deps_dir+'; unzip v'+ProtoBufVersion+'.zip )')
@@ -237,7 +237,7 @@ else:
             '(cd '+deps_dir+'; wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.0.4.zip && unzip n4.0.4.zip )')
 
     # Install
-    if (rocALInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
+    if (rocalInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
         # package dependencies
         os.system('sudo -v')
         if "centos" in platfromInfo or "redhat" in platfromInfo:
@@ -364,7 +364,7 @@ else:
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
 
-    if rocALInstall == 'yes' and backend != 'CPU':
+    if rocalInstall == 'yes' and backend != 'CPU':
         # Install RPP
         if "Ubuntu" in platfromInfo:
             # Install Packages for rocAL

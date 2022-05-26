@@ -23,6 +23,8 @@ The Vision Conformance Feature Set includes all the functions and objects in the
 The purpose is to define a minimal subset of OpenVX features that enable the construction and execution of OpenVX graphs, but it does not contain any specific vision-processing operations.
 
 **Basic framework objects**
+| <!-- -->    | <!-- -->    | <!-- -->    | <!-- -->    |
+|-------------|-------------|-------------|-------------|
 | [vx_reference](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_reference) | [vx_context](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_context) | [vx_graph](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_graph) | [vx_kernel](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_kernel) | 
 | [vx_node](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_node) | [vx_parameter](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_parameter) | [vx_meta_format](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_meta_format) | [vx_delay](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_delay) |
 
@@ -31,11 +33,15 @@ The purpose is to define a minimal subset of OpenVX features that enable the con
 To provide a basic set of vision processing functions. This set of functions is roughly equivalent to the set of functions available in version 1.1 of the OpenVX specification. In addition to the framework objects included in the Base Feature Set, the Vision Conformance Feature Set includes a set of data objects that the Vision functions operate upon and produce.
 
 **Vision Conformance required data objects**
+| <!-- -->    | <!-- -->    | <!-- -->    | <!-- -->    |
+|-------------|-------------|-------------|-------------|
 | vx_array | vx_convolution | vx_distribution | vx_image |
 | vx_lut | vx_matrix | vx_pyramid | vx_remap |
 | vx_scalar | vx_threshold | vx_object_array| |
 
 **Vision Conformance required functions**
+| <!-- -->    | <!-- -->    | <!-- -->    | <!-- -->    | <!-- -->    | <!-- -->    |
+|-------------|-------------|-------------|-------------|-------------|-------------|
 | AbsDiff | Add | And | Box3x3 | CannyEdgeDetector | ChannelCombine | 
 | ChannelExtract | ColorConvert | ConvertDepth | Convolve | Dilate3x3 | EqualizeHist |
 | Erode3x3 | FastCorners | Gaussian3x3 | GaussianPyramid | HarrisCorners | HalfScaleGaussian |

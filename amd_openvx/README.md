@@ -2,17 +2,47 @@
 
 # AMD OpenVX
 
-The Khronos OpenVX API offers a set of optimized primitives for low-level image processing, computer vision, and neural net operators. The API provides a simple method to write optimized code that is portable across multiple hardware vendors and platforms.
+* The Khronos OpenVX API offers a set of optimized primitives for low-level image processing, computer vision, and neural net operators. The API provides a simple method to write optimized code that is portable across multiple hardware vendors and platforms.
 
-OpenVX allows for resource and execution abstractions, which enable hardware vendors to optimize their implementation for their platform. Performance portability across CPUs, GPUs, and special-function hardware are one of the design goals of the OpenVX specification.
+* OpenVX allows for resource and execution abstractions, which enable hardware vendors to optimize their implementation for their platform. Performance portability across CPUs, GPUs, and special-function hardware are one of the design goals of the OpenVX specification.
 
-OpenVX is used to build, verify, and coordinate computer vision and neural network graph executions. The graph abstraction enables OpenVX implementation to optimize execution for the underlying hardware.  Using optimized OpenVX conformant implementation, software developers can spend more time on algorithmic innovations without worrying about the performance and portability of their applications.
+* OpenVX is used to build, verify, and coordinate computer vision and neural network graph executions. The graph abstraction enables OpenVX implementation to optimize execution for the underlying hardware.  Using optimized OpenVX conformant implementation, software developers can spend more time on algorithmic innovations without worrying about the performance and portability of their applications.
 
-The standard defines graph conventions and execution semantics to address the needs of the developers. The advantage of the graphical interface is the ability of the underlying conformant implementation to optimize the whole graph pipeline instead of specific functions.
+* The standard defines graph conventions and execution semantics to address the needs of the developers. The advantage of the graphical interface is the ability of the underlying conformant implementation to optimize the whole graph pipeline instead of specific functions.
 
-OpenVX specification also defines the VXU or the immediate function library. VXU operators allow developers to use all the OpenVX operators as a directly callable C function without creating a graph first. Applications built using the VXU library do not benefit from the optimizations enabled by graph execution. The VXU library can be the simplest way to use OpenVX and is the first step in porting existing vision applications.
+* OpenVX specification also defines the VXU or the immediate function library. VXU operators allow developers to use all the OpenVX operators as a directly callable C function without creating a graph first. Applications built using the VXU library do not benefit from the optimizations enabled by graph execution. The VXU library can be the simplest way to use OpenVX and is the first step in porting existing vision applications.
 
-AMD OpenVX is a highly optimized conformant open-source implementation of the [Khronos OpenVX 1.3](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+* AMD OpenVX is a highly optimized conformant open-source implementation of the [Khronos OpenVX 1.3](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+
+## AMD OpenVX - Vision Feature Set Conformant Implementation
+
+The Vision Conformance Feature Set includes all the functions and objects in the Base Feature Set, plus the vision data objects and vision functions.
+
+### The Base Feature Set
+
+The purpose is to define a minimal subset of OpenVX features that enable the construction and execution of OpenVX graphs, but it does not contain any specific vision-processing operations.
+
+**Basic framework objects**
+| [vx_reference](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_reference) | [vx_context](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_context) | [vx_graph](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_graph) | [vx_kernel](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_kernel) | 
+| [vx_node](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_node) | [vx_parameter](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_parameter) | [vx_meta_format](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_meta_format) | [vx_delay](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_delay) |
+
+### The Vision Conformance Feature Set
+
+To provide a basic set of vision processing functions. This set of functions is roughly equivalent to the set of functions available in version 1.1 of the OpenVX specification. In addition to the framework objects included in the Base Feature Set, the Vision Conformance Feature Set includes a set of data objects that the Vision functions operate upon and produce.
+
+**Vision Conformance required data objects**
+| vx_array | vx_convolution | vx_distribution | vx_image |
+| vx_lut | vx_matrix | vx_pyramid | vx_remap |
+| vx_scalar | vx_threshold | vx_object_array| |
+
+**Vision Conformance required functions**
+| AbsDiff | Add | And | Box3x3 | CannyEdgeDetector | ChannelCombine | 
+| ChannelExtract | ColorConvert | ConvertDepth | Convolve | Dilate3x3 | EqualizeHist |
+| Erode3x3 | FastCorners | Gaussian3x3 | GaussianPyramid | HarrisCorners | HalfScaleGaussian |
+| Histogram | IntegralImage | LaplacianPyramid | LaplacianReconstruct | Magnitude | MeanStdDev |
+| Median3x3 | MinMaxLoc | Multiply | NonLinearFilter | Not | OpticalFlowPyrLK |
+| Or | Phase | Remap | ScaleImage | Sobel3x3 | Subtract |
+| TableLookup | Threshold | WarpAffine | WarpPerspective | Xor | WeightedAverage |
 
 The amd_openvx project consists of the following components:
 

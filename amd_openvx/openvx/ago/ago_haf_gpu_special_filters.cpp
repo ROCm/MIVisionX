@@ -1444,7 +1444,7 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 		)
 		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, LMemSize, (width + 3) / 4, height);
 	node->opencl_code = item;
-	int srcImageBufferSize = node->paramList[1]->size;
+	int srcImageBufferSize = (int) node->paramList[1]->size;
 	// load input image into local
 	if (HafGpu_Load_Local_ImageSize(work_group_width, work_group_height, LMemStride, work_group_height * 2 - 1 + LMemSideTB * 2, LMemSideLR, LMemSideTB, node->opencl_code, srcImageBufferSize) < 0) {
 		return -1;

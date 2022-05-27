@@ -31,18 +31,20 @@ The purpose is to define a minimal subset of OpenVX features that enable the con
 **Basic Framework Objects**
 <table>
   <tr>
-    <th>[vx_reference](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_reference)</th>
-    <th>[vx_context](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_context)</th> 
-    <th>vx_graph](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_graph)</th>
-    <th>[vx_kernel](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_kernel)</th>
+    <th>vx_reference</th>
+    <th>vx_context</th> 
+    <th>vx_graph</th>
+    <th>vx_kernel</th>
   </tr>
   <tr>
-    <th>[vx_node](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_node)</th>
-    <th>[vx_parameter](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_parameter)</th> 
-    <th>[vx_meta_format](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_meta_format)</th>
-    <th>[vx_delay](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#_vx_delay)</th>
+    <th>vx_node</th>
+    <th>vx_parameter</th> 
+    <th>vx_meta_format</th>
+    <th>vx_delay</th>
   </tr>
 </table>
+
+**Note:** Details about [Framework Objects](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#sec_framework_objects)
 
 ### The Vision Conformance Feature Set
 
@@ -69,6 +71,7 @@ To provide a basic set of vision processing functions. This set of functions is 
     <th>&nbsp; </th>
   </tr>
 </table>
+
 **NOTE:** Details of the [Data Objects](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#sec_data_objects)
 
 **Vision Conformance Functions**
@@ -130,6 +133,7 @@ To provide a basic set of vision processing functions. This set of functions is 
     <th>Xor</th>
   </tr>
 </table>
+
 **Note:** Details of the [Functions](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#group_vision_functions)
 
 **NOTE:** The amd_openvx project consists of the following components:

@@ -8,7 +8,7 @@
 
 * OpenVX is used to build, verify, and coordinate computer vision and neural network graph executions. The graph abstraction enables OpenVX implementation to optimize execution for the underlying hardware.  Using optimized OpenVX conformant implementation, software developers can spend more time on algorithmic innovations without worrying about the performance and portability of their applications.
 
-<p align="center"><img width="80%" src="https://www.khronos.org/assets/uploads/apis/2019-openvx-lp-layered-vision.png" style="background-color:black;" /></p>
+<p align="center"><img width="80%" src="../docs/images/openvx_software_layers.png" style="background-color:black;" /></p>
 
 * The standard defines graph conventions and execution semantics to address the needs of the developers. The advantage of the graphical interface is the ability of the underlying conformant implementation to optimize the whole graph pipeline instead of specific functions.
 
@@ -72,7 +72,7 @@ To provide a basic set of vision processing functions. This set of functions is 
   </tr>
 </table>
 
-**NOTE:** Details of the [Data Objects](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#sec_data_objects)
+**NOTE:** Details about [Data Objects](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#sec_data_objects)
 
 **Vision Conformance Functions**
 <table>
@@ -134,7 +134,15 @@ To provide a basic set of vision processing functions. This set of functions is 
   </tr>
 </table>
 
-**Note:** Details of the [Functions](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#group_vision_functions)
+**Note:** Details about [Functions](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#group_vision_functions)
+
+## AMD OpenVX - Features
+
+* The code is highly optimized for both x86 CPU and OpenCL/HIP for GPU
+* Supported hardware spans the range from low power embedded APUs, laptops, desktops, and workstation graphics
+* Supports `Windows` , `Linux` , and `macOS`
+* Includes a “graph optimizer” that looks at the entire processing pipeline and removes/replaces/merges functions to improve performance and minimize bandwidth at runtime 
+* Scripting support with [RunVX](../utilities/runvx/README.md) allows for rapid prototyping, without re-compiling at production performance levels
 
 **NOTE:** The amd_openvx project consists of the following components:
   * [OpenVX](openvx/README.md): AMD OpenVX library
@@ -145,14 +153,6 @@ To provide a basic set of vision processing functions. This set of functions is 
   * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels
   * **vx_rpp**: OpenVX extension providing an interface to some of the Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) functions. This extension is used to enable [rocAL](../rocAL/README.md) to perform image augmentation.
   * **vx_winml**: OpenVX module that implemented a mechanism to access Windows Machine Learning(WinML) functionality as OpenVX kernels
-
-## AMD OpenVX - Features
-
-* The code is highly optimized for both x86 CPU and OpenCL/HIP for GPU
-* Supported hardware spans the range from low power embedded APUs, laptops, desktops, and workstation graphics
-* Supports `Windows` , `Linux` , and `macOS`
-* Includes a “graph optimizer” that looks at the entire processing pipeline and removes/replaces/merges functions to improve performance and minimize bandwidth at runtime 
-* Scripting support with [RunVX](../utilities/runvx/README.md) allows for rapid prototyping, without re-compiling at production performance levels
 
 ## Pre-requisites
 

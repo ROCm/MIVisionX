@@ -117,9 +117,9 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ### Hardware
 
-* **CPU**: [64-bit SSE4.2 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
-* **GPU**: [GFX7 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
-* **APU**: [Carrizo or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
+* **CPU**: [AMD64](https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html)
+* **GPU**: [AMD Radeon&trade; Graphics](https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html) [optional]
+* **APU**: [AMD Radeon&trade; `Mobile`/`Embedded`](https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html) [optional]
 
   **Note:** Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
 

@@ -85,8 +85,8 @@ for(uint i = 0; i < _batch_size; i++)
         new_w = (w <= h) ?  new_short : new_long;
         new_h = (w <= h) ?  new_long : new_short;
 
-    _dest_height_val[i] = new_w;
-    _dest_width_val[i] = new_h;
+    _dest_height_val[i] = new_h;
+    _dest_width_val[i] = new_w;
     }
     vxCopyArrayRange((vx_array)_dst_roi_width, 0, _batch_size, sizeof(uint), _dest_width_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_dst_roi_height, 0, _batch_size, sizeof(uint), _dest_height_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);

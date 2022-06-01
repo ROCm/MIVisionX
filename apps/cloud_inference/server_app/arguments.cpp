@@ -415,7 +415,7 @@ void Arguments::releaseGpuDevices(int GPUs, const cl_device_id * device_id_)
 int Arguments::lockGpuDevices(int GPUs, int * device_id_)
 {
     std::lock_guard<std::mutex> lock(mutex);
-
+    printf("locking gpu %d and %d\n", GPUs, numGPUs);
     // make sure number of devices are available
     if(GPUs > numGPUs)
         return -1;
@@ -437,7 +437,7 @@ int Arguments::lockGpuDevices(int GPUs, int * device_id_)
         deviceUseCount[gpuId]++;
         device_id_[i] = device_id[gpuId];
     }
-
+    printf("lockign gpu num %d\n", devic)
     return 0;
 }
 

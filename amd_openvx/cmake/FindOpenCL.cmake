@@ -42,9 +42,10 @@ else()
     find_path(OPENCL_INCLUDE_DIRS
         NAMES OpenCL/cl.h CL/cl.h
         HINTS
-        ${OPENCL_ROOT}/include
+        $ENV{OPENCL_ROOT}/include
         $ENV{AMDAPPSDKROOT}/include
         $ENV{CUDA_PATH}/include
+        $ENV{OCL_ROOT}/include
         PATHS
         ${ROCM_PATH}/opencl/include
         /usr/include
@@ -59,9 +60,10 @@ else()
         find_library( OPENCL_LIBRARIES
             NAMES OpenCL
             HINTS
-            ${OPENCL_ROOT}/lib
+            $ENV{OPENCL_ROOT}/lib
             $ENV{AMDAPPSDKROOT}/lib
             $ENV{CUDA_PATH}/lib
+            $ENV{OCL_ROOT}/lib
             DOC "OpenCL dynamic library path"
             PATH_SUFFIXES x86_64 x64 x86_64/sdk
             PATHS
@@ -74,9 +76,10 @@ else()
         find_library( OPENCL_LIBRARIES
             NAMES OpenCL
             HINTS
-            ${OPENCL_ROOT}/lib
+            $ENV{OPENCL_ROOT}/lib
             $ENV{AMDAPPSDKROOT}/lib
             $ENV{CUDA_PATH}/lib
+            $ENV{OCL_ROOT}/lib
             DOC "OpenCL dynamic library path"
             PATH_SUFFIXES x86 Win32
             PATHS
@@ -104,10 +107,10 @@ else()
             set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")
         endif()
     else()
-        message("-- ${White}ROCm OpenCL Not Found${ColourReset}")
+        message("-- ${White}AMD ROCm OpenCL Not Found${ColourReset}")
     endif()
 
-    if(OpenCL_FOUND)
+    if(OpenCL_FOUND AND NOT WIN32)
         execute_process(
             COMMAND bash -c "nm -gDC ${OpenCL_LIBRARIES} | grep OPENCL_2.2"
             OUTPUT_VARIABLE outVar
@@ -116,6 +119,18 @@ else()
             set(CL_TARGET_OpenCL_VERSION 220 CACHE INTERNAL "")
         else()
             message( "-- ${Yellow}NOTE: FindOpenCL failed to find -- OpenCL 2.2${ColourReset}" )
+            set(CL_TARGET_OpenCL_VERSION 120 CACHE INTERNAL "")
+        endif()
+        add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION})
+        message("-- ${White}OpenCL - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION}${ColourReset}")
+    endif()
+
+    if(OpenCL_FOUND AND WIN32)
+        if("${OPENCL_LIBRARIES}" MATCHES "OCL_SDK_Light")
+            set(CL_TARGET_OpenCL_VERSION 200 CACHE INTERNAL "")
+            message("-- ${White}AMD OCL Light SDK OpenCL Found${ColourReset}")
+        else()
+            message( "-- ${Yellow}NOTE: FindOpenCL failed to find -- OpenCL 2.0 for Windows${ColourReset}" )
             set(CL_TARGET_OpenCL_VERSION 120 CACHE INTERNAL "")
         endif()
         add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OpenCL_VERSION})

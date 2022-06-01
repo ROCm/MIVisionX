@@ -8,8 +8,8 @@ RUN apt-get update -y
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libnuma-dev wget sudo &&  \
-        wget https://repo.radeon.com/amdgpu-install/22.10.1/ubuntu/focal/amdgpu-install_22.10.1.50101-1_all.deb && \
-        sudo apt-get install -y ./amdgpu-install_22.10.1.50101-1_all.deb && \
+        wget https://repo.radeon.com/amdgpu-install/22.10.3/ubuntu/focal/amdgpu-install_22.10.3.50103-1_all.deb && \
+        sudo apt-get install -y ./amdgpu-install_22.10.3.50103-1_all.deb && \
         sudo apt-get update -y && \
         sudo amdgpu-install -y --usecase=rocm
 # install OpenCV & FFMPEG - Level 3
@@ -41,7 +41,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev
         sudo ./b2 install threading=multi link=static --with-system --with-filesystem && cd ../ && \
         git clone -b 0.93  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd ../../ && \
-        git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
+        git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 
 WORKDIR /workspace

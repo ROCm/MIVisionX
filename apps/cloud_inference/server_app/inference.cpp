@@ -5,7 +5,7 @@
 #include <chrono>
 #include <dlfcn.h>
 #include <opencv2/opencv.hpp>
-#include <opencv/highgui.h>
+#include <opencv2/highgui.hpp>
 #include <numeric>
 
 #if USE_SSE_OPTIMIZATION

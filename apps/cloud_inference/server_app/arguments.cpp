@@ -68,6 +68,7 @@ Arguments::Arguments()
     info("using OpenCL platform#%d with %d GPU devices ...", platform_index, num_devices);
 #else
     //todo:: for HIP
+    printf("inference server app running on HIP\n");
 #endif
     // set default config to use all GPUs
     numGPUs = num_devices;

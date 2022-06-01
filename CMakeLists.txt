@@ -104,6 +104,7 @@ message("-- ${Cyan}     -D MIGRAPHX=OFF [Turn OFF MIGraphX Module (default:ON)]$
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
 add_subdirectory(utilities)
+add_subdirectory(apps)
 if(ROCAL)
   add_subdirectory(rocAL)
 else()

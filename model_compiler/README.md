@@ -55,9 +55,10 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
   ```
   pip3 install pytz numpy future
   ```
-
-**Note:** MIVisionX installs model compiler scripts at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
-**Note:** Model compiler supports Python3. Anyone using python2 might face an issue during the model conversion
+*
+**Note:**
+* MIVisionX installs model compiler scripts at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
+* Model compiler supports Python3. Anyone using python2 might face an issue during the model conversion
 
 #### Caffe
 
@@ -75,8 +76,9 @@ pip3 install google protobuf
 ``` 
 pip3 install protobuf onnx
 ```
-**Note:** For Ubuntu `18.04` use `pip3 install protobuf==3.12.4 onnx`
-**Note:** ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)
+**Note:** 
+* For Ubuntu `18.04` use `pip3 install protobuf==3.12.4 onnx`
+* ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)
 
 #### NNEF
 
@@ -90,8 +92,9 @@ make
 cd ../../../python
 sudo python3 setup.py install
 ```
-**Note:** NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
-**Note:** NNEF Parser is compatible with python3. Anyone using python2 might face an issue during the model conversion
+**Note:** 
+* NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo
+* NNEF Parser is compatible with python3. Anyone using python2 might face an issue during the model conversion
 
 ## Model Compiler Samples - Run Efficient Inference
 
@@ -365,9 +368,7 @@ Test code with preprocessing add / multiply values to normalize the input tensor
 |Yolo-V3|&#9745; |||			
 |ZFNet||&#9745; ||
 
-**Note:**
-
-* Currently supporting [ONNX models](https://github.com/onnx/models) with `release 1.1` and `release 1.3` tags
+**Note:** Currently supporting [ONNX models](https://github.com/onnx/models) with `release 1.1` and `release 1.3` tags
 
 ### Operators
 

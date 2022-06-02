@@ -37,7 +37,7 @@ RUN yum -y install --nogpgcheck libsqlite3x-devel python-devel python3-devel pyt
         ./b2 install threading=multi link=shared --with-system --with-filesystem && \
         ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
         ./b2 install threading=multi link=static --with-system --with-filesystem && cd ../ && \
-        git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
+        git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && make install
 RUN git clone -b rocm-5.1.1 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \
         cmake3 ../ && make -j8 && make install && cd ../../ && \

@@ -224,9 +224,19 @@ if not os.path.exists(modelCompilerDeps):
             linuxCMake = 'cmake3'
             os.system(linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install cmake3')
-    elif "Ubuntu" in platfromInfo:
+    elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
         linuxSystemInstall = 'apt-get -y'
         linuxSystemInstall_check = '--allow-unauthenticated'
+        if not "Ubuntu" in platfromInfo:
+            platfromInfo = platfromInfo+'-Ubuntu'
+    elif os.path.exists('/usr/bin/zypper'):
+        linuxSystemInstall = 'zypper -n'
+        linuxSystemInstall_check = '--no-gpg-checks'
+        platfromInfo = platfromInfo+'-SLES'
+    else:
+        print("\nMIVisionX runNeuralNetworkTests.py on "+platfromInfo+" is unsupported\n")
+        print("\nrunNeuralNetworkTests.py Supported on: Ubuntu 18/20; CentOS 7/8; RedHat 7/8; & SLES 15-SP2\n")
+        exit()
 
     if userName == 'root':
         os.system(linuxSystemInstall+' update')
@@ -244,7 +254,7 @@ if not os.path.exists(modelCompilerDeps):
             linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
     os.system('pip3 install future pytz numpy')
     # Install CAFFE Deps
-    os.system('pip3 install google protobuf')
+    os.system('pip3 install google protobuf==3.12.4')
     # Install ONNX Deps
     os.system('pip3 install onnx')
     # Install NNEF Deps

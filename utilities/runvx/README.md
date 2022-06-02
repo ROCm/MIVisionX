@@ -6,12 +6,12 @@ If available, this project uses OpenCV for camera capture and image display.
 
 ## Prerequisites
 
-* **CPU**: 64-bit SSE4.2 or above
-* **GPU**: GFX7 or later [optional]
+* **CPU**: AMD64
+* **GPU**: AMD Radeon&trade; Graphics [optional]
 * Windows: install the latest drivers and OpenCL SDK download [optional]
 * Linux: install ROCm [optional]
 * OpenCV `3.4+` [optional]
-  + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+  + `Windows`:Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * Install `libssl-dev` on Linux [optional]
 
 ## RunVX Usage and GDF Syntax

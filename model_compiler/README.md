@@ -4,13 +4,27 @@
 
 Neural Net Model Compiler & Optimizer converts pre-trained neural network models to MIVisionX runtime code for optimized inference.
 
-* [MIVisionX RunTime](#mivisionx-runtime)
-* [Pre-requisites](#pre-requisites)
-* [Model Compiler & Optimizer Usage](#model-compiler--optimizer-usage)
-* [Sample workflow for Model Compiler](#sample-workflow-for-model-compiler)
-* [Examples for OpenVX C code generation](#examples-for-openvx-c-code-generation)
-* [Models & Operators currently supported](#models--operators-currently-supported)
-* [Contributing to Model Compiler](#contributing-to-model-compiler)
+- [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
+  - [MIVisionX RunTime](#mivisionx-runtime)
+    - [Pre-requisites](#pre-requisites)
+      - [Caffe](#caffe)
+      - [ONNX](#onnx)
+      - [NNEF](#nnef)
+  - [Model Compiler Samples - Run Efficient Inference](#model-compiler-samples---run-efficient-inference)
+  - [Model Compiler & Optimizer Usage](#model-compiler--optimizer-usage)
+    - [Step 1 - Convert Pre-trained model to AMD NNIR](#step-1---convert-pre-trained-model-to-amd-nnir)
+      - [Caffe](#caffe-1)
+      - [ONNX](#onnx-1)
+      - [NNEF](#nnef-1)
+    - [Step 2 - Apply Optimizations](#step-2---apply-optimizations)
+    - [Step 3 - Convert AMD NNIR to OpenVX C code](#step-3---convert-amd-nnir-to-openvx-c-code)
+  - [Sample workflow for Model Compiler](#sample-workflow-for-model-compiler)
+    - [Trained Caffe Model conversion to AMD NNIR to OpenVX Graph](#trained-caffe-model-conversion-to-amd-nnir-to-openvx-graph)
+  - [Examples for OpenVX C code generation](#examples-for-openvx-c-code-generation)
+  - [Models & Operators currently supported](#models--operators-currently-supported)
+    - [Models](#models)
+    - [Operators](#operators)
+  - [Contributing to Model Compiler](#contributing-to-model-compiler)
 
 Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/nnef), & [Caffe](http://caffe.berkeleyvision.org/) formats are supported by the model compiler & optimizer. The model compiler first converts the pre-trained models to AMD Neural Net Intermediate Representation (NNIR), once the model has been translated into AMD NNIR (AMD's internal open format), the Optimizer goes through the NNIR and applies various optimizations which would allow the model to be deployed on to target hardware most efficiently. Finally, AMD NNIR is converted into OpenVX C code, which could be compiled and deployed on any targeted AMD hardware.
 
@@ -24,57 +38,60 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 
 ### Pre-requisites
 
-* Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6`
-* [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Install MIVisionX 
-* python3
-```
-% apt-get install protobuf-compiler libprotoc-dev
-% pip3 install pytz numpy future
-```
+* Linux
+  + Ubuntu `18.04` / `20.04`
+  + CentOS `7` / `8`
+* [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) installed
+* Linux Packages
+  + Ubuntu
+  ```
+  sudo apt-get -y install python3 python3-pip protobuf-compiler libprotoc-dev
+  ```
+  + CentOS
+  ```
+  sudo yum -y python3-devel python3-pip protobuf python3-protobuf
+  ```
+* PIP3 Packages
+  ```
+  pip3 install pytz numpy future
+  ```
 
 **Note:** MIVisionX installs model compiler scripts at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
 **Note:** Model compiler supports Python3. Anyone using python2 might face an issue during the model conversion
 
 #### Caffe
 
-* python3
-* numpy
 * protobuf
 * google
-
 ```
-% pip3 install google
-% pip3 install protobuf
-% pip3 install numpy
+pip3 install google protobuf
 ```
-
+**Note:** For Ubuntu `18.04` use `pip3 install google protobuf==3.12.4`
 
 #### ONNX
 
-* python3
-* numpy
+* protobuf
 * onnx
-
 ``` 
-% pip3 install onnx 
-% pip3 install numpy
+pip3 install protobuf onnx
 ```
-
+**Note:** For Ubuntu `18.04` use `pip3 install protobuf==3.12.4 onnx`
 **Note:** ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)
 
 #### NNEF
 
-* python3
-* numpy
 * [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools) - Build the nnef python module
-
-``` 
-% pip3 install numpy
 ```
-
+git clone https://github.com/KhronosGroup/NNEF-Tools.git
+cd NNEF-Tools/parser/cpp
+mkdir -p build && cd build
+cmake ../
+make
+cd ../../../python
+sudo python3 setup.py install
+```
 **Note:** NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
 **Note:** NNEF Parser is compatible with python3. Anyone using python2 might face an issue during the model conversion
-
 
 ## Model Compiler Samples - Run Efficient Inference
 

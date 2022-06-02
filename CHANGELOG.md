@@ -10,11 +10,11 @@
 
 ### Added
 
-* 
+* Docker Support for ROCm `5.1.3`
 
 ### Optimizations
 
-* 
+* MIGraphX - Implementation & Samples
 
 ### Changed
 
@@ -22,7 +22,7 @@
 
 ### Fixed
 
-* 
+* Minor bugs in setup & test scripts
 
 ### Tested Configurations
 
@@ -31,7 +31,7 @@
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
-* ROCm: rocm-core - `5.1.1.50101-48 `
+* ROCm: rocm-core - `5.1.3.50103-66`
 * miopen-hip - `2.16.0.50101-48`
 * miopen-opencl - `2.16.0.50101-48`
 * migraphx - `2.1.0.50101-48`
@@ -40,11 +40,11 @@
 * RPP - [0.93](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.93)
 * FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.3.0`
+* MIVisionX Setup Script - `V2.3.1`
 
 ### Known issues
 
-* 
+* OpenCV 4.X support for some apps missing
 
 ## MIVisionX 2.1.0
 

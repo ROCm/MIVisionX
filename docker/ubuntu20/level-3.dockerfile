@@ -7,9 +7,9 @@ RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libnuma-dev wget sudo &&  \
-        wget https://repo.radeon.com/amdgpu-install/22.10.1/ubuntu/focal/amdgpu-install_22.10.1.50101-1_all.deb && \
-        sudo apt-get install -y ./amdgpu-install_22.10.1.50101-1_all.deb && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo &&  \
+        wget https://repo.radeon.com/amdgpu-install/22.10.3/ubuntu/focal/amdgpu-install_22.10.3.50103-1_all.deb && \
+        sudo apt-get install -y ./amdgpu-install_22.10.3.50103-1_all.deb && \
         sudo apt-get update -y && \
         sudo amdgpu-install -y --usecase=rocm
 # install OpenCV & FFMPEG - Level 3

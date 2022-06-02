@@ -55,7 +55,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
   ```
   pip3 install pytz numpy future
   ```
-*
+
 **Note:**
 * MIVisionX installs model compiler scripts at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
 * Model compiler supports Python3. Anyone using python2 might face an issue during the model conversion
@@ -93,7 +93,7 @@ cd ../../../python
 sudo python3 setup.py install
 ```
 **Note:** 
-* NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo
+* NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
 * NNEF Parser is compatible with python3. Anyone using python2 might face an issue during the model conversion
 
 ## Model Compiler Samples - Run Efficient Inference

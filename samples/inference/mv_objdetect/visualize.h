@@ -5,9 +5,15 @@
 #include <vector>
 #include "mv_extras_postproc.h"
 #include <stdarg.h>
+
 #include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+using namespace cv;
+
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define cvWaitKey waitKey
+#endif
 
 static const int colors[20][3] = {
 			{160,82,45},        // aeroplane

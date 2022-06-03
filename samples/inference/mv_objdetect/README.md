@@ -32,11 +32,11 @@ The mv_compile utility generates deployment library, header files, and .cpp file
 * Usage:
 ```
 mv_compile  --model 	        <model_name: name of the trained model with path> 		[required]
-	     	--install_folder   <install_folder:  the location for compiled model> 		[required]
-	     	--input_dims 	<input_dims: n,c,h,w - batch size, channels, height, width> [required]
-	     	--backend 	        <backend: name of the backend for compilation> 	  		[optional - default:OpenVX_Rocm_GPU]
-	     	--fuse_cba 	<fuse_cba: enable or disable Convolution_bias_activation fuse mode (0/1)> [optional - default: 0]
-	     	--quant_mode       <quant_mode: fp32/fp16 - quantization_mode for the model: if enabled the model and weights would be converted [optional -default: fp32]
+	    --install_folder   <install_folder:  the location for compiled model> 		[required]
+	    --input_dims 	<input_dims: n,c,h,w - batch size, channels, height, width> 	[required]
+	    --backend 	        <backend: name of the backend for compilation> 	  		[optional - default:OpenVX_Rocm_GPU]
+	    --fuse_cba 	<fuse_cba: enable or disable Convolution_bias_activation fuse mode (0/1)> 				[optional - default: 0]
+	    --quant_mode       <quant_mode: fp32/fp16 - quantization mode: if enabled the model and weights are converted> 	[optional -default: fp32]
 ```
 
 * Sample:
@@ -53,10 +53,10 @@ mvtestdeploy is a pre-generated application built in Step 3 which shows how to d
 
 * Usage:
 ```
-./bin/mvtestdeploy 	<input data file: image/video>			[required]
-					<output file - (.bin)>					[required]
-					--install_folder <folder name or '.' for current folder>	[required]
-					--t <N: number of iterations>								[required]
+./bin/mvtestdeploy 	<input data file: image/video>					[required]
+			<output file - (.bin)>						[required]
+			--install_folder <folder name or '.' for current folder>	[required]
+			--t <N: number of iterations>					[required]
 ```
 
 * Sample:

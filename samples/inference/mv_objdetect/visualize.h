@@ -6,8 +6,6 @@
 #include "mv_extras_postproc.h"
 #include <stdarg.h>
 #include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
 
 static const int colors[20][3] = {
 			{160,82,45},        // aeroplane

@@ -12,6 +12,7 @@ using namespace cv;
 #if USE_OPENCV_4
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
 #define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define cvWaitKey waitKey
 #endif
 
 static const int colors[20][3] = {

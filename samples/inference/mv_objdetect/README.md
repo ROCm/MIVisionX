@@ -83,7 +83,10 @@ cd mvdeploy
 * Copy all files in cloned sample folder (mvobjdetect.cpp, visualize.cpp, visualize.h and CMakeLists.txt) into mvdeploy folder. This  brings all the files into a single folder to build and run the sample.
 
 ```
-cp ../mvobjdetect.cpp ../visualize.cpp ../visualize.h ../CMakeLists.txt .
+cp /opt/rocm/share/mivisionx/samples/mv_objdetect/mvobjdetect.cpp .
+cp /opt/rocm/share/mivisionx/samples/mv_objdetect/visualize.cpp .
+cp /opt/rocm/share/mivisionx/samples/mv_objdetect/visualize.h .
+cp /opt/rocm/share/mivisionx/samples/mv_objdetect/CMakeLists.txt .
 ```
 
 ### Step 5. cmake and make mvobjdetect

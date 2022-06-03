@@ -16,7 +16,12 @@ The sample has two .cpp files, ``mvobjdetect.cpp and visualize.cpp``. But it nee
 * [ROCm](https://docs.amd.com)
 * Build & Install [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#linux-1)
   * MIVisionX installs model compiler at `/opt/rocm/libexec/mivisionx`
-  * mv_compile installs at `/opt/rocm/bin` and mvdeploy_api.h installs at `/opt/rocm/include/mivisionx` 
+  * mv_compile installs at `/opt/rocm/bin` and mvdeploy_api.h installs at `/opt/rocm/include/mivisionx`
+* Add MIVisionX libraries & executables to PATH
+```
+export PATH=$PATH:/opt/rocm/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
+```
 
 ## Sample - Detection Using Pre-Trained CAFFE Model
 

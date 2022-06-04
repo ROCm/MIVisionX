@@ -159,9 +159,9 @@ else()
 endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS vx_rpp DESTINATION lib)
+install(TARGETS vx_rpp DESTINATION ${CMAKE_INSTALL_LIBDIR})
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_ext_rpp.h DESTINATION include/mivisionx)
+install(FILES include/vx_ext_rpp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     target_link_libraries(OpenVX)

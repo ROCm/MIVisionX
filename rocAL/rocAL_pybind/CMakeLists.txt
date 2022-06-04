@@ -121,7 +121,7 @@ if(${BUILD_RALI_PYBIND})
     pybind11_add_module(rali_pybind rali_pybind.cpp)
     target_link_libraries(rali_pybind PRIVATE rali vx_rpp amd_rpp)
 
-    install(TARGETS rali_pybind DESTINATION lib)
+    install(TARGETS rali_pybind DESTINATION ${CMAKE_INSTALL_LIBDIR})
     message("-- ${Green}Radeon Augmentation Library Python Binding - rali_pybind module added ${ColourReset}")
 else()
     message("-- ${Red}WARNING: rocAL Pybind module excluded ${ColourReset}")

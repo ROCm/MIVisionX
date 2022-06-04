@@ -122,7 +122,7 @@ endif()
 if (PYBIND11_INSTALL)
   install(DIRECTORY ${PYBIND11_INCLUDE_DIR}/pybind11 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
   # GNUInstallDirs "DATADIR" wrong here; CMake search path wants "share".
-  set(PYBIND11_CMAKECONFIG_INSTALL_DIR "share/cmake/${PROJECT_NAME}" CACHE STRING "install path for pybind11Config.cmake")
+  set(PYBIND11_CMAKECONFIG_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}" CACHE STRING "install path for pybind11Config.cmake")
 
   configure_package_config_file(tools/${PROJECT_NAME}Config.cmake.in
                                 "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"

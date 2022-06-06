@@ -130,11 +130,11 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
 #endif
 
     RaliImage input1;
+    RaliMetaData meta_data;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     switch (reader_type)
     {
-        RaliMetaData meta_data;
         case 1: //image_partial decode
         {
             std::cout << ">>>>>>> Running PARTIAL DECODE" << std::endl;
@@ -254,6 +254,12 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
                 input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
         }
         break;
+    }
+
+    if(meta_data == NULL)
+    {
+        std::cout << "ERROR -- META DATA NULL" << std::endl;
+        return -1;   
     }
 
     if (raliGetStatus(handle) != RALI_OK)

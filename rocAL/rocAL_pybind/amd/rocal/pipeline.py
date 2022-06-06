@@ -150,7 +150,6 @@ class Pipeline(object):
         print("definegraph is deprecated")
         raise NotImplementedError
 
-
     def get_handle(self):
         return self._handle
 

@@ -474,7 +474,6 @@ rocalJpegCaffe2LMDBRecordSource(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
 
-
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -554,7 +553,6 @@ rocalJpegCaffe2LMDBRecordSourceSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
 
-
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
@@ -627,7 +625,6 @@ rocalJpegCaffeLMDBRecordSource(
                                evaluate_image_data_set(decode_size_policy, StorageType::CAFFE_LMDB_RECORD, DecoderType::TURBO_JPEG,
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
-
 
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
@@ -708,7 +705,6 @@ rocalJpegCaffeLMDBRecordSourceSingleShard(
                                evaluate_image_data_set(decode_size_policy, StorageType::CAFFE_LMDB_RECORD, DecoderType::TURBO_JPEG,
                                                        source_path, "");
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
-
 
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))

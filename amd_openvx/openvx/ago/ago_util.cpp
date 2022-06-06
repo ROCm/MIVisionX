@@ -899,7 +899,7 @@ void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * dat
         }
         else
             sprintf(desc + strlen(desc), "objectarray%s:UNSUPPORTED,NULL", virt);*/
-        sprintf(desc + strlen(desc), "objectarray%s:%lu,[", virt, data->u.objarr.numitems);
+        sprintf(desc + strlen(desc), "objectarray%s:%zu,[", virt, data->u.objarr.numitems);
         agoGetDescriptionFromData(acontext, desc + strlen(desc), data->children[0]);
         sprintf(desc + strlen(desc), "]");
     }
@@ -1389,7 +1389,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         else desc += 12;
         // get configuration
         data->ref.type = VX_TYPE_OBJECT_ARRAY;
-        if (sscanf(desc, "%lu", &data->u.objarr.numitems) != 1) return -1;
+        if (sscanf(desc, "%zu", &data->u.objarr.numitems) != 1) return -1;
         if (data->u.objarr.numitems < 1) return -1;
         while (*desc && *desc != '[') desc++;
         vx_uint32 epos = (vx_uint32)strlen(desc) - 1;
@@ -1508,7 +1508,8 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         // get configuration
         data->ref.type = VX_TYPE_THRESHOLD;
         const char *s = strstr(desc, ","); if (!s) return -1;
-        char thresh_type[64], data_type[64];
+        char thresh_type[64];
+        //char data_type[64];
         uint32_t input_format, output_format;
         memcpy(thresh_type, desc, s - desc); thresh_type[s - desc] = 0;
         s = strstr(s, ",");

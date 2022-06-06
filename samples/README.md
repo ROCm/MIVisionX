@@ -6,6 +6,7 @@ MIVisionX samples using OpenVX and OpenVX extensions. In the samples below we wi
 * [GDF - Graph Description Format Samples](#gdf---graph-description-format)
 * [Loom 360 Stitch - Radeon Loom 360 Stitch Samples](#loom-360-stitch---radeon-loom-360-stitch-samples)
 * [Model Compiler Samples - Run Efficient Inference](#model-compiler-samples---run-efficient-inference)
+* [MIVisionX Inference Deploy Samples](inference/mv_objdetect/)
 
 ## GDF - Graph Description Format
 

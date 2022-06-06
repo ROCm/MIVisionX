@@ -23,7 +23,7 @@ RUN apt-get -y install libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm li
         apt-get -y install libbz2-dev libssl-dev python-dev python3-dev autoconf automake libtool curl make g++ unzip && \
         wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && sudo cp half-files/include/half.hpp /usr/local/include/ && \
-        git clone -b v3.12.0 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
+        git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd && \
         wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 && tar xjvf boost_1_72_0.tar.bz2 && \
         export CPLUS_INCLUDE_PATH=/usr/include/python3.6 && cd boost_1_72_0 && \

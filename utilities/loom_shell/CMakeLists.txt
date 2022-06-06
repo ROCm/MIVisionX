@@ -35,16 +35,17 @@ add_executable(loom_shell ${SOURCES})
 # install MIVisionX executables -- {ROCM_PATH}/bin
 install(TARGETS loom_shell DESTINATION bin)
 
-target_link_libraries(loom_shell vx_loomsl openvx pthread)
+target_link_libraries(loom_shell vx_loomsl openvx)
 
 if (OpenCL_FOUND)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(loom_shell ${OpenCL_LIBRARIES})
 endif(OpenCL_FOUND)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+if (WIN32)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+	target_link_libraries(loom_shell pthread)
 endif()

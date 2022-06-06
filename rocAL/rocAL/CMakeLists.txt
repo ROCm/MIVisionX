@@ -181,6 +181,7 @@ if(${BUILD_ROCAL})
                 ./include/parameters/
                 ./include/readers/image/
                 ./include/readers/video/
+                ./include/pipeline/
                 include
                 )
     protobuf_generate_cpp(TF_PROTO_SRCS TF_PROTO_HEADERS proto/example.proto proto/feature.proto)

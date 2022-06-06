@@ -145,7 +145,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         case 2: //coco detection
         {
             std::cout << ">>>>>>> Running COCO READER" << std::endl;
-            char *json_path[] = "";
+            char json_path[] = "";
             if (strcmp(json_path, "") == 0)
             {
                 std::cout << "\n json_path has to be set in rali_unit test manually";
@@ -161,7 +161,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         case 3: //coco detection partial
         {
             std::cout << ">>>>>>> Running COCO READER PARTIAL" << std::endl;
-            char *json_path[] = "";
+            char json_path[] = "";
             if (strcmp(json_path, "") == 0)
             {
                 std::cout << "\n json_path has to be set in rali_unit test manually";
@@ -230,7 +230,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         case 10: //coco reader keypoints
         {
             std::cout << ">>>>>>> Running COCO KEYPOINTS READER" << std::endl;
-            char *json_path[] = "";
+            char json_path[] = "";
             if (strcmp(json_path, "") == 0)
             {
                 std::cout << "\n json_path has to be set in rali_unit test manually";

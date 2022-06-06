@@ -41,6 +41,8 @@ using namespace cv;
 #define CV_RGB2BGR COLOR_RGB2BGR
 #define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
 #define CV_FILLED FILLED
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
+#define cvDestroyWindow destroyWindow
 #endif
 
 #define DISPLAY

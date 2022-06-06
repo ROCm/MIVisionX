@@ -35,17 +35,32 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
-include_directories ( ${OpenCV_INCLUDE_DIRS} ${ROCM_PATH}/include/mivisionx)
+include_directories (${ROCM_PATH}/include/mivisionx)
 link_directories    (${ROCM_PATH}/lib/)
 
 add_executable(${PROJECT_NAME} ./rali_dataloader_mt.cpp)
-target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=1)
-include_directories(${OpenCV_INCLUDE_DIRS})
+if(OpenCV_FOUND)
+    if(${OpenCV_VERSION_MAJOR} GREATER_EQUAL 3 )
+        message("-- OpenCV Found -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Supported")
+        target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=1)
+        include_directories(${OpenCV_INCLUDE_DIRS})
+        target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES})
+        if(${OpenCV_VERSION_MAJOR} GREATER_EQUAL 4)
+	        target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
+        else()
+	        target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
+        endif()
+    else()
+        message("-- WARNING: OpenCV Found -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+        target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
+    endif()
+else()
+    message("-- WARNING: OpenCV Not Found -- No Display Support")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
+endif()
+
+target_link_libraries(${PROJECT_NAME} rali)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall -pthread")
-target_link_libraries(${PROJECT_NAME} rali ${OpenCV_LIBRARIES})
-
-
-
 install (TARGETS ${PROJECT_NAME} DESTINATION bin)
 
 

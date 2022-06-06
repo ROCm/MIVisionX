@@ -29,11 +29,17 @@ THE SOFTWARE.
 #include <cstdio>
 
 #include <opencv2/opencv.hpp>
+using namespace cv;
+
+#if USE_OPENCV_4
+#define  CV_FONT_HERSHEY_DUPLEX    FONT_HERSHEY_DUPLEX
+#define  CV_WINDOW_AUTOSIZE        WINDOW_AUTOSIZE
+#define  CV_RGB2BGR                cv::COLOR_BGR2RGB
+#else
 #include <opencv/highgui.h>
+#endif
 
 #include "rali_api.h"
-
-using namespace cv;
 
 #define DISPLAY
 using namespace std::chrono;
@@ -44,7 +50,8 @@ int main(int argc, const char ** argv)
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if(argc < MIN_ARG_COUNT) {
-        printf( "Usage: image_augmentation <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height video_mode gray_scale/rgb display_on_off decode_shard_count  <shuffle:0/1> <jpeg_dec_mode<0(tjpeg)/1(opencv)>\n" );
+        printf( "Usage: image_augmentation <image_dataset_folder/video_file> <processing_device=1/cpu=0>  \
+              decode_width decode_height video_mode gray_scale/rgb display_on_off decode_shard_count  <shuffle:0/1> <jpeg_dec_mode<0(tjpeg)/1(opencv)/2(hwdec)>\n" );
         return -1;
     }
     int argIdx = 0;
@@ -141,7 +148,7 @@ int main(int argc, const char ** argv)
          if(decode_height <= 0 || decode_width <= 0)
              input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, shuffle, false);
         else
-             input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, shuffle, false,  RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height, dec_type);
+             input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, shuffle, false, RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height, dec_type);
 
     }
 

@@ -84,8 +84,8 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
 {
     size_t num_threads = 1;
     int inputBatchSize = 1;
-    int decode_max_width = 0;
-    int decode_max_height = 0;
+    int decode_max_width = width;
+    int decode_max_height = height;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , "<< (rgb ? " Color ":" Grayscale ")<< std::endl;
 
@@ -127,7 +127,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
     if (decode_max_height <= 0 || decode_max_width <= 0)
         inputImage = rocalJpegFileSource(handle, path, color_format, num_threads, false, true);
     else
-        inputImage = rocalJpegFileSource(handle, path, color_format, num_threads, false, true,
+        inputImage = rocalJpegFileSource(handle, path, color_format, num_threads, false, true,false,
                                     ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 
     if (rocalGetStatus(handle) != ROCAL_OK) {
@@ -168,7 +168,8 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
             for(int j = 0; j < batch_size; j++){
                 image0 = inputImage;
                 for(int k = 0; k < graph_depth; k++){
-                    image0 = rocalCropResizeFixed(handle, image0, resize_w, resize_h, true,  0.8, 0.6, -0.4);
+                    image0 = rocalCropResizeFixed(handle, image0, resize_w, resize_h, true, 0.25, 1.2, 0.6, 0.4);
+
                 }
             }
         }
@@ -258,7 +259,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
             for(int j = 0; j < batch_size; j++){
                 image0 = inputImage;
                 for(int k = 0; k < graph_depth; k++){
-                    image0 = rocalFlip(handle, image0, axis_h, true);
+                    image0 = rocalFlip(handle, image0, true);
                 }
             }
         }
@@ -268,7 +269,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
             for(int j = 0; j < batch_size; j++){
                 image0 = inputImage;
                 for(int k = 0; k < graph_depth; k++){
-                    image0 = rocalFlip(handle, image0, axis_v, true);
+                    image0 = rocalFlip(handle, image0, true);
                 }
             }
         }
@@ -443,7 +444,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
             for(int j = 0; j < batch_size; j++){
                 image0 = inputImage;
                 for(int k = 0; k < graph_depth; k++){
-                    image0 = rocalRainFixed(handle, image0, 0.5, true);
+                    image0 = rocalRainFixed(handle, image0, 0.5, 2, 16, 0.25, true);
                 }
             }
         }
@@ -553,11 +554,11 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
 
 
 
-    printf("Augmented copies count %d\n", rocalGetOutputImageCount(handle));
+    printf("Augmented copies count %d\n",  rocalGetAugmentationBranchCount(handle));
 
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
-    int h = rocalGetOutputImageCount(handle) * rocalGetOutputHeight(handle);
+    int h =  rocalGetAugmentationBranchCount(handle) * rocalGetOutputHeight(handle);
     int w = rocalGetOutputWidth(handle);
     int p = ((color_format == RocalImageColor::ROCAL_COLOR_RGB24) ? 3 : 1);
     const unsigned number_of_cols = 1;//1920 / w;

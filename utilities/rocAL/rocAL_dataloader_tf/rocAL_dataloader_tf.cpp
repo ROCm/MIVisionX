@@ -112,13 +112,13 @@ int main(int argc, const char ** argv)
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
     RocalImage input1;
     //hardcoding the following for mnist tfrecords
-    std::string feature_map_image = "image_raw";
-    std::string feature_map_filename = "";
-    std::string feature_map_label = "label";
-    //create mnist tfrecord meta data reader: need to do this first before starting loader thread
-    //rocalCreateTFReader(handle, folderPath1, 0, feature_map_label.c_str(), feature_map_filename.c_str());
+    std::string feature_map_image = "image/encoded";
+    std::string feature_map_filename = "image/filename";
+    std::string feature_map_label = "image/class/label";
 
-    input1 = rocalRawTFRecordSource(handle, folderPath1,  feature_map_image.c_str(), feature_map_filename.c_str(), color_format, true, shuffle, false, decode_width, decode_height, record_prefix);
+    rocalCreateTFReader(handle, folderPath1, 1, feature_map_label.c_str(), feature_map_filename.c_str());
+   
+    input1 = rocalJpegTFRecordSource(handle, folderPath1, ROCAL_COLOR_RGB24, 1, true, feature_map_image.c_str(), feature_map_filename.c_str(), false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height);
 
     if(rocalGetStatus(handle) != ROCAL_OK)
     {
@@ -164,7 +164,7 @@ int main(int argc, const char ** argv)
     RocalImage image0;
     image0 = input1;
     // just do one augmentation to test
-    //rocalExposure(handle, image0, true);
+    // rocalExposure(handle, image0, true);
 #endif
 
     if(rocalGetStatus(handle) != ROCAL_OK)
@@ -195,13 +195,13 @@ int main(int argc, const char ** argv)
     const unsigned number_of_cols = 1;    // no augmented case
     printf("Before memalloc\n");
 
-    float out_tensor[h*w*p*inputBatchSize];
+    float out_tensor[(h*w*p)];
     auto cv_color_format = ((p==3) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w*number_of_cols, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);
     int col_counter = 0;
    // cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
-
+   
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
     std::vector<std::vector<char>> names;
@@ -223,7 +223,7 @@ int main(int argc, const char ** argv)
         if(display)
             rocalCopyToOutput(handle, mat_input.data, h*w*p);
         else
-            rocalCopyToOutputTensor32(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
+            rocalCopyToOutputTensor(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW,RocalTensorOutputType::ROCAL_FP32, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += inputBatchSize;
 #if 0
         rocalGetImageLabels(handle, labels.data());
@@ -237,7 +237,6 @@ int main(int argc, const char ** argv)
         //std::cout << std::endl;
 #endif
         iter_cnt ++;
-
         if(!display)
             continue;
 

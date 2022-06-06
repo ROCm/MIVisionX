@@ -94,7 +94,7 @@ int main(int argc, const char ** argv)
     if(decode_height <= 0 || decode_width <= 0)
         input1 = rocalJpegFileSource(handle, folderPath1,  color_format, decode_shard_counts, false, false);
     else
-        input1 = rocalJpegFileSource(handle, folderPath1,  color_format, decode_shard_counts, false, false,
+        input1 = rocalJpegFileSource(handle, folderPath1,  color_format, decode_shard_counts, false, false, false,
                                     ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height);
     if(strcmp(label_text_file_path, "") == 0)
         rocalCreateLabelReader(handle, folderPath1);
@@ -136,6 +136,7 @@ int main(int argc, const char ** argv)
 
     const int total_tests = 4;
     int test_id = -1;
+    int ImageNameLen[inputBatchSize];
     int run_len[] = {2*inputBatchSize,4*inputBatchSize,1*inputBatchSize, 50*inputBatchSize};
 
     std::vector<std::vector<char>> names;
@@ -171,8 +172,8 @@ int main(int argc, const char ** argv)
             rocalGetImageLabels(handle, labels.data());
             for(int i = 0; i < inputBatchSize; i++)
             {
-                names[i] = std::move(std::vector<char>(rocalGetImageNameLen(handle, 0), '\n'));
-                rocalGetImageName(handle, names[i].data(), i);
+                names[i] = std::move(std::vector<char>(rocalGetImageNameLen(handle, ImageNameLen), '\n'));
+                rocalGetImageName(handle, names[i].data());
                 std::string id(names[i].begin(), names[i].end());
                 std::cout << "name "<< id << " label "<< labels[i] << " - ";
             }

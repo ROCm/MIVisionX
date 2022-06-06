@@ -23,13 +23,13 @@
 # SOFTWARE.
 #
 ################################################################################
+cmake_minimum_required(VERSION 3.0)
 
-cmake_minimum_required (VERSION 3.0)
-
-project (rocal_unittests)
+project(rocal_unittests)
 
 set(CMAKE_CXX_STANDARD 11)
-set(ROCM_PATH /opt/rocm CACHE PATH " default ROCm installation path")
+set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)
@@ -37,9 +37,8 @@ find_package(AMDRPP QUIET)
 
 include_directories(${ROCM_PATH}/include/mivisionx)
 link_directories(${ROCM_PATH}/lib/)
-
-add_executable(${PROJECT_NAME} ./rocal_unittests.cpp)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
+file(GLOB My_Source_Files ./*.cpp)
+add_executable(${PROJECT_NAME} ${My_Source_Files})
 
 if(OpenCV_FOUND)
     if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
@@ -59,5 +58,6 @@ else()
 endif()
 
 target_link_libraries(${PROJECT_NAME} rali)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)

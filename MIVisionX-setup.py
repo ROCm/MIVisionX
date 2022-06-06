@@ -312,12 +312,6 @@ else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y miopen-hip migraphx')
 
-        #install MIGraphX
-        if backend == 'HIP':
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y migraphx')
-
         # Install Packages for NN Apps - Apps Requirement to be installed by Developer
         # os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')
         # os.system('sudo -v')

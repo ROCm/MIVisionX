@@ -2282,8 +2282,8 @@ int ovxKernel_LaplacianPyramid(AgoNode * node, AgoKernelCommand cmd)
         vx_size levels = node->paramList[1]->u.pyr.levels;
 
         while (levels--) {
-            width *= scale;
-            height *= scale;
+            width *= (vx_uint32) scale;
+            height *= (vx_uint32) scale;
         }
 
         // set output image sizes same as input image size
@@ -2331,8 +2331,8 @@ int ovxKernel_LaplacianReconstruct(AgoNode * node, AgoKernelCommand cmd)
         vx_float32 scale = node->paramList[0]->u.pyr.scale;
         vx_size levels = node->paramList[0]->u.pyr.levels;
         while (levels--) {
-            width /= scale;
-            height /= scale;
+            width /= (vx_uint32) scale;
+            height /= (vx_uint32) scale;
         }
         // set output image sizes same as input image size
         vx_meta_format meta;
@@ -22526,8 +22526,8 @@ int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand c
         vx_float32 scale = node->paramList[2]->u.pyr.scale;
         vx_size levels = node->paramList[2]->u.pyr.levels;
         while (levels--) {
-            width *= scale;
-            height *= scale;
+            width *= (vx_uint32) scale;
+            height *= (vx_uint32) scale;
         }
 
         // set output image sizes same as input image size
@@ -22587,8 +22587,8 @@ int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelComma
         vx_size levels = node->paramList[1]->u.pyr.levels;
 
         while (levels--) {
-            width /= scale;
-            height /= scale;
+            width /= (vx_uint32) scale;
+            height /= (vx_uint32) scale;
         }
         // set output image sizes same as input image size
         vx_meta_format meta;

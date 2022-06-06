@@ -97,7 +97,7 @@ list(APPEND SOURCES
 add_library(vx_opencv SHARED ${SOURCES})
 
 include_directories(${OpenCV_INCLUDE_DIRS})
-target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
+target_link_libraries(vx_opencv ${OpenCV_LIBRARIES} openvx)
 target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
@@ -111,8 +111,7 @@ else()
 	target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=0)
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	target_link_libraries(vx_opencv OpenVX)
+if(WIN32)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()

@@ -4,7 +4,6 @@
 
 ### TO TEST A SINGLE READER / MULTIPLE READER PIPELINE FROM TEST_FILE.sh
 
-
 # Make the respective " Pipeline " to test equal to "1"
 rocAL_api_python_unittest=1
 rocAL_api_coco_pipeline=0

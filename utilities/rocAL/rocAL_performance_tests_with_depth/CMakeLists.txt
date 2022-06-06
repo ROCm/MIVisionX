@@ -47,26 +47,3 @@ target_link_libraries(${PROJECT_NAME} rocal ${OpenCV_LIBRARIES})
 
 
 install (TARGETS ${PROJECT_NAME} DESTINATION bin)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

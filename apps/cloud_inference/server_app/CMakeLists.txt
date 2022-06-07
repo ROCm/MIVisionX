@@ -47,7 +47,7 @@ list(APPEND SOURCES
 		configure.cpp
 		compiler.cpp
 		inference.cpp
-    inference_hip.cpp
+    	inference_hip.cpp
 		server.cpp
 		main.cpp
 		profiler.cpp

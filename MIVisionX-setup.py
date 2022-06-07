@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -41,8 +41,8 @@ parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
                     help='Setup home directory - optional (default:~/)')
 parser.add_argument('--opencv',    	type=str, default='4.5.5',
                     help='OpenCV Version - optional (default:4.5.5)')
-parser.add_argument('--protobuf',  	type=str, default='3.12.0',
-                    help='ProtoBuf Version - optional (default:3.12.0)')
+parser.add_argument('--protobuf',  	type=str, default='3.12.4',
+                    help='ProtoBuf Version - optional (default:3.12.4)')
 parser.add_argument('--rpp',   		type=str, default='0.93',
                     help='RPP Version - optional (default:0.93)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',

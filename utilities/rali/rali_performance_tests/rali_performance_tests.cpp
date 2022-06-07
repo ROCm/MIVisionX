@@ -28,13 +28,22 @@ THE SOFTWARE.
 #include <chrono>
 #include <cstdio>
 #include <unistd.h>
-#include <opencv2/opencv.hpp>
-#include <opencv/highgui.h>
 #include <vector>
 
 #include "rali_api.h"
 
+#include "opencv2/opencv.hpp"
 using namespace cv;
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#define CV_GRAY2RGB COLOR_GRAY2RGB
+#define CV_RGB2BGR COLOR_RGB2BGR
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FILLED FILLED
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
+#define cvDestroyWindow destroyWindow
+#endif
 
 #define DISPLAY
 using namespace std::chrono;

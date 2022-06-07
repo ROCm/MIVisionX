@@ -27,14 +27,21 @@ THE SOFTWARE.
 #include <chrono>
 #include <cstdio>
 #include <unistd.h>
-#include <opencv2/opencv.hpp>
-#include <opencv/highgui.h>
 #include <vector>
 #include<string>
 
 #include "rali_api.h"
 
+#include "opencv2/opencv.hpp"
 using namespace cv;
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#define CV_GRAY2RGB COLOR_GRAY2RGB
+#define CV_RGB2BGR COLOR_RGB2BGR
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FILLED FILLED
+#endif
 
 //#define RANDOMBBOXCROP
 
@@ -123,11 +130,11 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
 #endif
 
     RaliImage input1;
+    RaliMetaData meta_data;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     switch (reader_type)
     {
-        RaliMetaData meta_data;
         case 1: //image_partial decode
         {
             std::cout << ">>>>>>> Running PARTIAL DECODE" << std::endl;
@@ -138,7 +145,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         case 2: //coco detection
         {
             std::cout << ">>>>>>> Running COCO READER" << std::endl;
-            char *json_path = "";
+            char json_path[] = "";
             if (strcmp(json_path, "") == 0)
             {
                 std::cout << "\n json_path has to be set in rali_unit test manually";
@@ -154,7 +161,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         case 3: //coco detection partial
         {
             std::cout << ">>>>>>> Running COCO READER PARTIAL" << std::endl;
-            char *json_path = "";
+            char json_path[] = "";
             if (strcmp(json_path, "") == 0)
             {
                 std::cout << "\n json_path has to be set in rali_unit test manually";
@@ -223,7 +230,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         case 10: //coco reader keypoints
         {
             std::cout << ">>>>>>> Running COCO KEYPOINTS READER" << std::endl;
-            char *json_path = "";
+            char json_path[] = "";
             if (strcmp(json_path, "") == 0)
             {
                 std::cout << "\n json_path has to be set in rali_unit test manually";
@@ -247,6 +254,12 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
                 input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false, false, RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
         }
         break;
+    }
+
+    if(meta_data == NULL)
+    {
+        std::cout << "ERROR -- META DATA NULL" << std::endl;
+        return -1;   
     }
 
     if (raliGetStatus(handle) != RALI_OK)
@@ -692,7 +705,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
                 raliGetImageName(handle, img_name);
                 if (num_of_classes != 0)
                 {
-                    raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
+                    raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses, 1);
                 }
                 std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
                 for (unsigned int i = 0; i < inputBatchSize; i++)

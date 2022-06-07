@@ -633,10 +633,6 @@ static int frame_num = 0;
 
 vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
 {
-    // continue decoding another frame
-    for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
-        PushCommand(mediaIndex, cmd_decode);
-    }
     // wait until next frame is available
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
         int ack = PopAck(mediaIndex);
@@ -644,6 +640,10 @@ vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
             // nothing to process, so abandon the graph execution
             return VX_ERROR_GRAPH_ABANDONED;
         }
+    }
+    // issue command to decode next frame
+    for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
+        PushCommand(mediaIndex, cmd_decode);
     }
     // set aux data
     if (aux_data) {

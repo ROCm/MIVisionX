@@ -66,9 +66,16 @@ Arguments::Arguments()
         fatal("clGetDeviceIDs(*,CL_DEVICE_TYPE_GPU,%d,...) => %d", MAX_NUM_GPU, status);
     }
     info("using OpenCL platform#%d with %d GPU devices ...", platform_index, num_devices);
-#else
-    //todo:: for HIP
-    printf("inference server app running on HIP\n");
+#elif ENABLE_HIP
+    hipError_t status;
+    status = hipGetDeviceCount(&num_devices);
+    if (status != hipSuccess) {
+        fatal("ERROR: hipGetDeviceCount => %d (failed)\n", status);
+    }
+    if (num_devices < 1) {
+        fatal("ERROR: didn't find any GPU!\n", status);
+    }
+    info("using HIP with %d GPU devices ...", num_devices);
 #endif
     // set default config to use all GPUs
     numGPUs = num_devices;
@@ -94,7 +101,7 @@ Arguments::~Arguments()
             clReleaseDevice(device_id[gpuId]);
         }
     }
-#else
+#elif ENABLE_HIP
     //todo for hip
 #endif
 }
@@ -411,7 +418,7 @@ void Arguments::releaseGpuDevices(int GPUs, const cl_device_id * device_id_)
     }
 }
 
-#else
+#elif ENABLE_HIP
 int Arguments::lockGpuDevices(int GPUs, int * device_id_)
 {
     std::lock_guard<std::mutex> lock(mutex);
@@ -440,7 +447,6 @@ int Arguments::lockGpuDevices(int GPUs, int * device_id_)
 
     return 0;
 }
-
 
 void Arguments::releaseGpuDevices(int GPUs, const int * device_id_)
 {

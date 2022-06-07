@@ -283,7 +283,7 @@ int InferenceEngineHip::run()
 #elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
     info("InferenceEngine: using LIBRE_INFERENCE_SCHEDULER");
     //////
-    /// allocate OpenVX and OpenCL resources
+    /// allocate OpenVX and HIP resources
     /// 
     for(int gpu = 0; gpu < GPUs; gpu++) {
         //////
@@ -328,7 +328,7 @@ int InferenceEngineHip::run()
         queueDeviceOutputMemIdle[gpu] = new MessageQueue<void *>();
         queueDeviceOutputMemBusy[gpu] = new MessageQueue<void *>();
 
-        // create OpenCL buffers for input/output and add them to queueDeviceInputMemIdle/queueDeviceOutputMemIdle
+        // create HIP buffers for input/output and add them to queueDeviceInputMemIdle/queueDeviceOutputMemIdle
         void* memInput, *hostmem, *memOutput;
         for(int i = 0; i < INFERENCE_PIPE_QUEUE_DEPTH; i++) {
             memInput = nullptr, hostmem = nullptr, memOutput = nullptr;
@@ -341,7 +341,7 @@ int InferenceEngineHip::run()
             {
                 fatal("InferenceEngine:hipHostGetDevicePointer of size %d failed \n", inputSizeInBytes);
             }
-            if(hipMalloc((void **)&memOutput, outputSizeInBytes) != hipSuccess) {
+            if(hipHostMalloc((void **)&memOutput, outputSizeInBytes) != hipSuccess) {
                 fatal("InferenceEngine: hipMalloc(#%d,%d) [#%d] failed (%d)", gpu, outputSizeInBytes, i, err);
             }
             queueDeviceInputMemIdle[gpu]->enqueue(std::make_pair(memInput, hostmem));
@@ -776,7 +776,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
     info("workDeviceInputCopy: GPU#%d started for %s", gpu, clientName.c_str());
     args->unlock();
 
-    // create OpenCL command-queue
+    // create HIP stream
     hipStream_t stream;
     hipError_t err;
     if(hipSuccess != hipStreamCreate(&stream))
@@ -785,15 +785,15 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
     int totalBatchCounter = 0, totalImageCounter = 0;
     for(bool endOfSequenceReached = false; !endOfSequenceReached; ) {
         PROFILER_START(inference_server_app, workDeviceInputCopyBatch);
-        // get an empty OpenCL buffer and lock the buffer for writing
+        // get an empty HIP buffer and lock the buffer for writing
         std::pair<void *, void*> input;
         queueDeviceInputMemIdle[gpu]->dequeue(input);
         if(input.first == nullptr) {
-            fatal("workDeviceInputCopy: unexpected nullptr in queueDeviceInputMemIdle[%d]", gpu);
+            fatal("workDeviceInputCopy: unexpected nullptr in queueDeviceInputMemIdle[%d] buffer", gpu);
         }
         void * mapped_ptr = input.second;
-        if(err) {
-            fatal("workDeviceInputCopy: clEnqueueMapBuffer(#%d) failed (%d)", gpu, err);
+        if(mapped_ptr == nullptr) {
+            fatal("workDeviceInputCopy: unexpected nullptr in queueDeviceInputMemIdle[%d] mapped_ptr", gpu);
         }
 
         // get next batch of inputs and convert them into tensor and release input byteStream
@@ -860,7 +860,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
                     endOfSequenceReached = true;
                     break;
                 }
-                // decode, scale, and format convert into the OpenCL buffer
+                // decode, scale, and format convert into the HIP buffer
                 float *buf;
                 if (useFp16)
                     buf = (float *) ((unsigned short *)mapped_ptr + dimInput[0] * dimInput[1] * dimInput[2] * inputCount);
@@ -891,7 +891,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
         }
         PROFILER_STOP(inference_server_app, workDeviceInputCopyBatch);
     }
-    // release OpenCL command queue
+    // release HIP stream
     hipStreamDestroy(stream);
 
     // add the endOfSequenceMarker to next stage
@@ -911,20 +911,18 @@ void InferenceEngineHip::workDeviceProcess(int gpu)
 
     int processCounter = 0;
     for(;;) {
-        // get a busy OpenCL buffer for input and check for end of sequence marker
+        // get a busy HIP buffer for input and check for end of sequence marker
         std::pair<void *, void*> input;
         queueDeviceInputMemBusy[gpu]->dequeue(input);
         if(!input.first) {
             break;
         }
-
-        // get an empty OpenCL buffer for output and a busy OpenCL buffer for input
+        // get an empty HIP buffer for output and a busy HIP buffer for input
         void *output = nullptr;
         queueDeviceOutputMemIdle[gpu]->dequeue(output);
-        if(input.first == nullptr) {
+        if(output == nullptr) {
             fatal("workDeviceProcess: unexpected nullptr in queueDeviceOutputMemIdle[%d]", gpu);
         }
-
         // process the graph
         vx_status status;
         status = vxSwapTensorHandle(openvx_input[gpu], input.first, nullptr);
@@ -967,7 +965,7 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
     info("workDeviceOutputCopy: GPU#%d started for %s", gpu, clientName.c_str());
     args->unlock();
 
-    // create OpenCL command-queue
+    // create HIP stream
     hipStream_t stream;
     if(hipStreamCreate(&stream) != hipSuccess) {
         fatal("workDeviceOutputCopy: hipStreamCreate(device_id[%d]) failed", gpu);
@@ -975,14 +973,15 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
 
     int totalBatchCounter = 0, totalImageCounter = 0;
     for(bool endOfSequenceReached = false; !endOfSequenceReached; ) {
-        // get an output OpenCL buffer and lock the buffer for reading
-        void * mem = nullptr, *host_ptr = nullptr;
+        // get an output HIP buffer and lock the buffer for reading
+        void * mem = nullptr, * host_ptr = malloc(outputSizeInBytes);
         queueDeviceOutputMemBusy[gpu]->dequeue(mem);
-        if(mem == nullptr) {
+        if(mem == nullptr || host_ptr == nullptr) {
             break;
         }
+        
         PROFILER_START(inference_server_app, workDeviceOutputCopy);
-        hipError_t err = hipMemcpyDtoH(mem, host_ptr, outputSizeInBytes);
+        hipError_t err = hipMemcpyDtoH(host_ptr, mem, outputSizeInBytes);
         if(err) {
             fatal("workDeviceOutputCopy: hipMemcpyDtoH(#%d) failed (%d)", gpu, err);
         }
@@ -999,7 +998,7 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
                 break;
             }
 
-            // decode, scale, and format convert into the OpenCL buffer
+            // decode, scale, and format convert into the HIP buffer
             void *buf;
             if (!useFp16)
                 buf = (float *)host_ptr + dimOutput[0] * dimOutput[1] * dimOutput[2] * outputCount;
@@ -1065,8 +1064,11 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
                 }
             }
         }
+
         // add the output back to idle queue
         queueDeviceOutputMemIdle[gpu]->enqueue(mem);
+
+        free(host_ptr);
         PROFILER_STOP(inference_server_app, workDeviceOutputCopy);
 
         // update counter
@@ -1076,7 +1078,7 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
         }
     }
 
-    // release OpenCL command queue
+    // release HIP stream
     hipStreamDestroy(stream);
 
     // send end of sequence marker to next stage

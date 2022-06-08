@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,11 +28,13 @@ THE SOFTWARE.
 // header file to include OpenVX Modules
 #include <vx_ext_amd.h>
 #include <vx_amd_nn.h>
+#include "cvui.h"
 
 // c/c++ includes
 #include <chrono>
 #include <thread>
 #include <functional>
+#include <fstream>
 
 //header file for different mode
 #include "detection.h"

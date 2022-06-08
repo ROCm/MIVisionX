@@ -42,8 +42,6 @@ THE SOFTWARE.
 
 #if ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
 #define CVUI_IMPLEMENTATION
 #include "cvui.h"
 using namespace cv;

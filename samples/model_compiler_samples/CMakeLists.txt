@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2019 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,40 +30,25 @@ project (classification)
 set (CMAKE_CXX_STANDARD 11)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+find_package(OpenCL REQUIRED)
 find_package(OpenCV REQUIRED)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
-#find the OPENVX backend type
-set(OPENVX_BACKEND_OPENCL_FOUND 0)
-set(OPENVX_BACKEND_HIP_FOUND 0)
-if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)
-    file(READ ${ROCM_PATH}/include/mivisionx/openvx_backend.h OPENVX_BACKEND_FILE)
-    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
-elseif(EXISTS ${ROCM_PATH}/mivisionx/include/openvx_backend.h)
-    file(READ ${ROCM_PATH}/mivisionx/include/openvx_backend.h OPENVX_BACKEND_FILE)
-    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
-else()
-    message("-- ${Red}WARNING: ${ROCM_PATH}/include/mivisionx/openvx_backend.h file Not Found. please install the latest mivisionx! ${ColourReset}")
-endif()
-
-if (OPENVX_BACKEND_OPENCL_FOUND)
-    find_package(OpenCL REQUIRED)
-    include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
-endif()
-
+include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(${ROCM_PATH}/include/mivisionx)
+include_directories(/opt/rocm/include/mivisionx)
 include_directories(include)
 
-link_directories(${ROCM_PATH}/lib)
+link_directories(/opt/rocm/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
+if(OpenCV_FOUND)
+    if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
+        message("-- OpenCV Found -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Supported")
+    else()
+        message("-- WARNING: OpenCV Found -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+    endif()
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
 list(APPEND SOURCES
         source/detection.cpp
         source/common.cpp
@@ -80,4 +65,8 @@ add_executable(classifier  ${SOURCES})
 target_compile_definitions(classifier PUBLIC ENABLE_OPENCV=1)
 target_link_libraries(classifier openvx vx_nn neuralNetModels ${OpenCV_LIBRARIES}  pthread)
 
-
+if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	target_compile_definitions(classifier PUBLIC USE_OPENCV_4=1)
+else()
+	target_compile_definitions(classifier PUBLIC USE_OPENCV_4=0)
+endif()

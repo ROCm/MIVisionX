@@ -13,8 +13,6 @@
 #include <math.h>
 #include <fstream>
 #include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
 #include <algorithm>
 #define CVUI_IMPLEMENTATION
 #include "cvui.h"

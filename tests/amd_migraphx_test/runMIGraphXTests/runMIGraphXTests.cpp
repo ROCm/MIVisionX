@@ -8,15 +8,13 @@
 
 using namespace std;
 
-#if ENABLE_OPENCV
-#include <opencv2/core.hpp>
+#include <opencv2/opencv.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
-#include "opencv2/opencv.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#define CVUI_IMPLEMENTATION
-
 using namespace cv;
+
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
 #endif
 
 #define ERROR_CHECK_STATUS(status) { \
@@ -57,28 +55,27 @@ void show_usage() {
             "  Mode 1 - Run all ONNX tests\n"
             "  Mode 2 - Run all JSON tests\n"
             "--profiler_level <range:0-N; default:1> [N = batch size][optional]\n"
-            "--mnist          <mnist-model>     [optional]\n"
-            "--resnet50       <resnet50-model>  [optional]\n"
-            "--googlenet      <googlenet-model> [optional]\n" 
-            "--squeezenet     <resnet101-model> [optional]\n"
-            "--alexnet        <resnet152-model> [optional]\n"
-            "--vgg19          <vgg19-model>     [optional]\n"
-            "--densenet       <densenet-model>  [optional]\n"
+            "--mnist          <mnist-model>     \n"
+            "--resnet50       <resnet50-model>  \n"
+            "--googlenet      <googlenet-model> \n" 
+            "--squeezenet     <resnet101-model> \n"
+            "--alexnet        <resnet152-model> \n"
+            "--vgg19          <vgg19-model>     \n"
+            "--densenet       <densenet-model>  \n"
             "\n"
         ); 
 }
 
 int main(int argc, char **argv) {
 
-    // check command-line usage  
-    // TODO: host models or ask user -- change all argv checks accordingly???
-    std::string binaryFilename_squeezenet_str = "/home/svcbuild/onnx_models/squeezenet/model.onnx";
-    std::string binaryFilename_resnet50_str = "/home/svcbuild/onnx_models/resnet50/model.onnx";
-    std::string binaryFilename_vgg19_str = "/home/svcbuild/onnx_models/vgg19/model.onnx";
-    std::string binaryFilename_googlenet_str = "/home/svcbuild/onnx_models/googlenet/model.onnx";
-    std::string binaryFilename_alexnet_str = "/home/svcbuild/onnx_models/bvlc_alexnet/model.onnx";
-    std::string binaryFilename_densenet_str = "/home/svcbuild/onnx_models/densenet121/model.onnx";
-    std::string binaryFilename_mnist_str = "/home/svcbuild/onnx_models/mnist/mnist-8.onnx";
+    // check command-line usage
+    std::string binaryFilename_squeezenet_str;
+    std::string binaryFilename_resnet50_str;
+    std::string binaryFilename_vgg19_str;
+    std::string binaryFilename_googlenet_str;
+    std::string binaryFilename_alexnet_str;
+    std::string binaryFilename_densenet_str;
+    std::string binaryFilename_mnist_str;
     std::string imagenet_inputFile_str;
     std::string mnist_inputFile_str;
 
@@ -92,11 +89,21 @@ int main(int argc, char **argv) {
             exit(-1);
         }
         else if (!strcasecmp(argv[arg], "--imagenet_image")) {
+            if ((arg + 1) == argc) {
+                printf("\n\nERROR: missing image for imagenet model's file location on command-line (see help for details)\n\n\n");
+                show_usage();
+                exit(-1);
+            }
             arg++;
             imagenet_inputFile_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--mnist_image")) {
+            if ((arg + 1) == argc) {
+                printf("\n\nERROR: missing image for mnist model's file location on command-line (see help for details)\n\n\n");
+                show_usage();
+                exit(-1);
+            }
             arg++;
             mnist_inputFile_str = (argv[arg]);
             parameter++;
@@ -112,86 +119,76 @@ int main(int argc, char **argv) {
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--mnist")) {
-            /*if ((arg + 1) == argc) {
+            if ((arg + 1) == argc) {
                 printf("\n\nERROR: missing mnist ONNX .model file location on command-line (see help for details)\n\n\n");
                 show_usage();
                 exit(-1);
-            }*/
+            }
             arg++;
-            binaryFilename_alexnet_str = (argv[arg]);
+            binaryFilename_mnist_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--alexnet")) {
-            /*if ((arg + 1) == argc) {
+            if ((arg + 1) == argc) {
                 printf("\n\nERROR: missing alexnet ONNX .model file location on command-line (see help for details)\n\n\n");
                 show_usage();
                 exit(-1);
-            }*/
+            }
             arg++;
             binaryFilename_alexnet_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--squeezenet")) {
-            /*if ((arg + 1) == argc) {
+            if ((arg + 1) == argc) {
                 printf("\n\nERROR: missing squeezenet ONNX .model file location on command-line (see help for details)\n\n\n");
                 show_usage();
                 exit(-1);
-            }*/
+            }
             arg++;
             binaryFilename_squeezenet_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--resnet50")) {
-            /*if ((arg + 1) == argc) {
+            if ((arg + 1) == argc) {
                 printf("\n\nERROR: missing resnet50 ONNX .model file location on command-line (see help for details)\n\n\n");
                 show_usage();
                 exit(-1);
-            }*/
+            }
             arg++;
             binaryFilename_resnet50_str = (argv[arg]);
             parameter++;
         }
 
         else if (!strcasecmp(argv[arg], "--vgg19")) {
-            /*if ((arg + 1) == argc) {
+            if ((arg + 1) == argc) {
                 printf("\n\nERROR: missing vgg19 ONNX .model file location on command-line (see help for details)\n\n\n");
                 show_usage();
                 exit(-1);
-            }*/
+            }
             arg++;
             binaryFilename_vgg19_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--googlenet")) {
-            /*if ((arg + 1) == argc)
+            if ((arg + 1) == argc)
             {
                 printf("\n\nERROR: missing googlenet ONNX .model file location on command-line (see help for details)\n\n\n");
                 show_usage();
                 exit(-1);
-            }*/
+            }
             arg++;
             binaryFilename_googlenet_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--densenet")) {
-            /*if ((arg + 1) == argc)
+            if ((arg + 1) == argc)
             {
                 printf("\n\nERROR: missing densenet ONNX .model file location on command-line (see help for details)\n\n\n");
                 show_usage();
                 exit(-1);
-            }*/
+            }
             arg++;
             binaryFilename_densenet_str = (argv[arg]);
-            parameter++;
-        }
-        else if (!strcasecmp(argv[arg], "--alexnet")) {
-            /*if ((arg + 1) == argc) {
-                printf("\n\nERROR: missing alexnet ONNX .model file location on command-line (see help for details)\n\n\n");
-                show_usage();
-                exit(-1);
-            }*/
-            arg++;
-            binaryFilename_alexnet_str = (argv[arg]);
             parameter++;
         }
     }
@@ -260,8 +257,10 @@ int main(int argc, char **argv) {
     vx_size input_num_of_dims = 4;
     vx_size input_dims_data_224x224[4] = {1, 3, 224, 224};
     vx_size input_dims_data_28x28[4] = {28, 28, 1, 1}; 
-    vx_size output_num_of_dims = 2;
+    vx_size output_num_of_dims_2 = 2;
+    vx_size output_num_of_dims_4 = 4;
     vx_size output_dims_data_1x1000[2] = {1, 1000};
+    vx_size output_dims_data_1x1000x1x1[4] = {1, 1000, 1, 1};
     vx_size output_dims_data_1x10[2] = {1, 10};
     vx_size stride[4];
     vx_map_id map_id;
@@ -289,36 +288,47 @@ int main(int argc, char **argv) {
     //create data for different sizes
     input_tensor_224x224 = vxCreateTensor(context, input_num_of_dims, input_dims_data_224x224, VX_TYPE_FLOAT32, 0);
     input_tensor_28x28 = vxCreateTensor(context, input_num_of_dims, input_dims_data_28x28, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_resnet50 = vxCreateTensor(context, output_num_of_dims, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_googlenet = vxCreateTensor(context, output_num_of_dims, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_alexnet = vxCreateTensor(context, output_num_of_dims, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_squeezenet = vxCreateTensor(context, output_num_of_dims, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_densenet = vxCreateTensor(context, output_num_of_dims, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_vgg19 = vxCreateTensor(context, output_num_of_dims, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_mnist = vxCreateTensor(context, output_num_of_dims, output_dims_data_1x10, VX_TYPE_FLOAT32, 0);
+    vx_tensor output_tensor_resnet50 = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
+    vx_tensor output_tensor_googlenet = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
+    vx_tensor output_tensor_alexnet = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
+    vx_tensor output_tensor_squeezenet = vxCreateTensor(context, output_num_of_dims_4, output_dims_data_1x1000x1x1, VX_TYPE_FLOAT32, 0);
+    vx_tensor output_tensor_densenet = vxCreateTensor(context, output_num_of_dims_4, output_dims_data_1x1000x1x1, VX_TYPE_FLOAT32, 0);
+    vx_tensor output_tensor_vgg19 = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
+    vx_tensor output_tensor_mnist = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x10, VX_TYPE_FLOAT32, 0);
 
     //read an image and resize to correct dimensions -- opencv imread()
     cv::Mat imagenet_input_image, mnist_input_image, input_image_224x224, input_image_28x28;
-    mnist_input_image = cv::imread(mnist_inputFile_str);
+    mnist_input_image = cv::imread(mnist_inputFile_str, cv::CV_LOAD_IMAGE_COLOR);
     if (mnist_input_image.empty()) //check whether the image is loaded or not
     {
-      cout << "Error : mnist cannot be loaded..!!" << endl;
-      //system("pause"); //wait for a key press
+      cout << "ERROR : mnist image is empty" << endl;
       return -1;
     }
-    imagenet_input_image = cv::imread(imagenet_inputFile_str);
+
+    imagenet_input_image = cv::imread(imagenet_inputFile_str.c_str(), cv::CV_LOAD_IMAGE_COLOR);
     if (imagenet_input_image.empty()) //check whether the image is loaded or not
     {
-      cout << "Error : Imagenet cannot be loaded..!!" << endl;
-      //system("pause"); //wait for a key press
+      cout << "ERROR : imagenet image is empty" << endl;
       return -1;
     }
     
 
     //resizing and preprocessing for mnist
     cv::Mat grayscale_input_image;
-    //cv::resize(mnist_input_image, input_image_28x28, Size(28, 28));
-    cv::cvtColor(mnist_input_image, grayscale_input_image, COLOR_BGR2GRAY);
+    cv::resize(mnist_input_image, input_image_28x28, Size(28, 28));
+    cv::cvtColor(input_image_28x28, grayscale_input_image, COLOR_BGR2GRAY);
+
+    int rows_grayscale = grayscale_input_image.rows; int cols_grayscale = grayscale_input_image.cols; 
+    int total_grayscale = grayscale_input_image.total() * grayscale_input_image.channels();
+    unsigned char *input_image_vector_grayscale = (grayscale_input_image.data);
+
+    float *buf_grayscale = (float *)malloc(total_grayscale*sizeof(float));
+
+    float preproc_mul_grayscale = (1 / 255);
+    
+    for(int i = 0; i < rows_grayscale * cols_grayscale; i++, input_image_vector_grayscale ++) {
+        *buf_grayscale++ = ((float)input_image_vector_grayscale[0] * preproc_mul_grayscale);
+    }
 
     status = vxMapTensorPatch(input_tensor_28x28, input_num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status) {
@@ -326,13 +336,7 @@ int main(int argc, char **argv) {
         return -1;
     }
     
-    for(vx_size y = 0; y < input_dims_data_28x28[1]; y++) {
-        unsigned char * src = input_image_28x28.data + y*input_dims_data_28x28[0]*input_dims_data_28x28[2];
-        float * dst = (float *)ptr + ((y * stride[1]) >> 2);
-        for(vx_size x = 0; x < input_dims_data_28x28[0]; x++, src++) {
-            *dst++ = src[0];
-        }
-    }
+    memcpy(ptr, buf_grayscale, total_grayscale * sizeof(float));
 
     status = vxUnmapTensorPatch(input_tensor_28x28, map_id);
     if(status) {
@@ -400,7 +404,7 @@ int main(int argc, char **argv) {
         return status;
     }
 
-    vx_node node_mnist = amdMIGraphXnode(graph_mnist, binaryFilename_mnist_str.c_str(), input_tensor_224x224, output_tensor_mnist);
+    vx_node node_mnist = amdMIGraphXnode(graph_mnist, binaryFilename_mnist_str.c_str(), input_tensor_28x28, output_tensor_mnist);
     vx_node node_resnet50 = amdMIGraphXnode(graph_resnet50, binaryFilename_resnet50_str.c_str(), input_tensor_224x224, output_tensor_resnet50);
     vx_node node_vgg19 = amdMIGraphXnode(graph_vgg19, binaryFilename_vgg19_str.c_str(), input_tensor_224x224, output_tensor_vgg19);
     vx_node node_googlenet = amdMIGraphXnode(graph_googlenet, binaryFilename_googlenet_str.c_str(), input_tensor_224x224, output_tensor_googlenet);
@@ -432,7 +436,7 @@ int main(int argc, char **argv) {
     ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
 
     //results mnist
-    status = vxMapTensorPatch(output_tensor_mnist, output_num_of_dims, nullptr, nullptr, &map_id, stride,
+    status = vxMapTensorPatch(output_tensor_mnist, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if (status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
@@ -449,7 +453,7 @@ int main(int argc, char **argv) {
     }
 
     //resnet50 results
-    status = vxMapTensorPatch(output_tensor_resnet50, output_num_of_dims, nullptr, nullptr, &map_id, stride,
+    status = vxMapTensorPatch(output_tensor_resnet50, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if (status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
@@ -466,7 +470,7 @@ int main(int argc, char **argv) {
     }
 
     //googlenet results
-    status = vxMapTensorPatch(output_tensor_googlenet, output_num_of_dims, nullptr, nullptr, &map_id, stride,
+    status = vxMapTensorPatch(output_tensor_googlenet, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if (status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
@@ -483,7 +487,7 @@ int main(int argc, char **argv) {
     }
 
     //vgg19 results
-    status = vxMapTensorPatch(output_tensor_vgg19, output_num_of_dims, nullptr, nullptr, &map_id, stride,
+    status = vxMapTensorPatch(output_tensor_vgg19, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if (status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
@@ -500,7 +504,7 @@ int main(int argc, char **argv) {
     }
 
     //alexnet results
-    status = vxMapTensorPatch(output_tensor_alexnet, output_num_of_dims, nullptr, nullptr, &map_id, stride,
+    status = vxMapTensorPatch(output_tensor_alexnet, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if (status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
@@ -517,7 +521,7 @@ int main(int argc, char **argv) {
     }
     
     //squeezenet results
-    status = vxMapTensorPatch(output_tensor_squeezenet, output_num_of_dims, nullptr, nullptr, &map_id, stride,
+    status = vxMapTensorPatch(output_tensor_squeezenet, output_num_of_dims_4, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if (status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
@@ -534,7 +538,7 @@ int main(int argc, char **argv) {
     }
 
     //densenet results
-    status = vxMapTensorPatch(output_tensor_densenet, output_num_of_dims, nullptr, nullptr, &map_id, stride,
+    status = vxMapTensorPatch(output_tensor_densenet, output_num_of_dims_4, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if (status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
@@ -585,7 +589,7 @@ int main(int argc, char **argv) {
     ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_densenet));
     ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_vgg19));
     ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_alexnet));
-    ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_densenet));
+    ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_googlenet));
 
     ERROR_CHECK_STATUS(vxReleaseContext(&context));
     free(buf);

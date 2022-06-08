@@ -44,6 +44,17 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
     }
 }
 
+
+inline int64_t clockCounter()
+{
+    return std::chrono::high_resolution_clock::now().time_since_epoch().count();
+}
+
+inline int64_t clockFrequency()
+{
+    return std::chrono::high_resolution_clock::period::den / std::chrono::high_resolution_clock::period::num;
+}
+
 void show_usage() {
     printf(
             "\n"
@@ -82,6 +93,8 @@ int main(int argc, char **argv) {
     int profiler_mode = 0;
     int profiler_level = 1;
     int parameter = 0;
+    int64_t freq = clockFrequency(), t0, t1;
+    int N = 1000;
 
     for(int arg = 1; arg < argc; arg++) {
         if (!strcasecmp(argv[arg], "--help") || !strcasecmp(argv[arg], "--H") || !strcasecmp(argv[arg], "--h")) {
@@ -434,6 +447,71 @@ int main(int argc, char **argv) {
     ERROR_CHECK_STATUS(vxProcessGraph(graph_alexnet));
     ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
     ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
+
+    float alexnetTime, resnet50Time, vgg19Time, googlenetTime, densenetTime, mnistTime, squeezenetTime;
+
+    //mnist timing for 1000 iterations
+    t0 = clockCounter();
+    for(int i = 0; i < N; i++) {
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_mnist));
+    }
+    t1 = clockCounter();
+    mnistTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+    printf("OK: mnist took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+    
+    //googlenet timing for 1000 iterations
+    t0 = clockCounter();
+    for(int i = 0; i < N; i++) {
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+    }
+    t1 = clockCounter();
+    googlenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+    printf("OK: googlenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+
+    //renet50 timing for 1000 iterations
+    t0 = clockCounter();
+    for(int i = 0; i < N; i++) {
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+    }
+    t1 = clockCounter();
+    resnet50Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+    printf("OK: resnet50 took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+
+    //squeezenet timing for 1000 iterations
+    t0 = clockCounter();
+    for(int i = 0; i < N; i++) {
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+    }
+    t1 = clockCounter();
+    squeezenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+    printf("OK: squeezenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+
+    //vgg19 timing for 1000 iterations
+    t0 = clockCounter();
+    for(int i = 0; i < N; i++) {
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+    }
+    t1 = clockCounter();
+    vgg19Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+    printf("OK: vgg19 took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+
+    //densenet timing for 1000 iterations
+    t0 = clockCounter();
+    for(int i = 0; i < N; i++) {
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+    }
+    t1 = clockCounter();
+    densenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+    printf("OK: densenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+
+    //alexnet timing for 1000 iterations
+    t0 = clockCounter();
+    for(int i = 0; i < N; i++) {
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+    }
+    t1 = clockCounter();
+    alexnetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+    printf("OK: alexnet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
 
     //results mnist
     status = vxMapTensorPatch(output_tensor_mnist, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,

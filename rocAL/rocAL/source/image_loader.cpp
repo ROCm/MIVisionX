@@ -148,9 +148,15 @@ void ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg,
     _loop = reader_cfg.loop();
     _decoder_keep_original = decoder_keep_original;
     _image_loader = std::make_shared<ImageReadAndDecode>();
+    size_t shard_count = reader_cfg.get_shard_count();
+    int device_id = reader_cfg.get_shard_id();
     try
     {
-        _image_loader->create(reader_cfg, decoder_cfg, _batch_size);
+        // set the device_id for decoder same as shard_id for number of shards > 1
+        if (shard_count > 1)
+          _image_loader->create(reader_cfg, decoder_cfg, _batch_size, device_id);
+        else
+          _image_loader->create(reader_cfg, decoder_cfg, _batch_size);
     }
     catch (const std::exception &e)
     {

@@ -30,12 +30,11 @@ THE SOFTWARE.
 #include <iostream>
 #include <thread>
 #include <mutex>
-#include <vector>
 
-#include "rali_api.h"
 
-#include "opencv2/opencv.hpp"
+#include <opencv2/opencv.hpp>
 using namespace cv;
+
 #if USE_OPENCV_4
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
 #define CV_BGR2GRAY COLOR_BGR2GRAY
@@ -45,18 +44,24 @@ using namespace cv;
 #define CV_FILLED FILLED
 #define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
 #define cvDestroyWindow destroyWindow
+#else
+#include <opencv/highgui.h>
 #endif
+
+#include "rali_api.h"
+#define PRINT_NAMES_AND_LABELS    0 // uncomment for printing names and labels
 
 #define DISPLAY
 using namespace std::chrono;
 std::mutex g_mtx;           // mutex for critical section
 
-int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int shard_id, int num_shards, int dec_width, int dec_height, int batch_size, bool shuffle, bool display )
+int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int shard_id, int num_shards, int dec_width, int dec_height, int batch_size, bool shuffle, bool display, int dec_mode )
 {
     std::unique_lock<std::mutex> lck (g_mtx,std::defer_lock);
-    std::cout << ">>> Running on " << (gpu_mode>=0?"GPU":"CPU") << std::endl;
+    std::cout << ">>> Running on " << (gpu_mode>=0?"GPU":"CPU") << "shard_id: " << shard_id << std::endl;
     color_format = RaliImageColor::RALI_COLOR_RGB24;
     int gpu_id = (gpu_mode < 0)? 0: gpu_mode;
+    RaliDecoderType dec_type = (RaliDecoderType) dec_mode;
 
     lck.lock();
     //looks like OpenVX has some issue loading kernels from multiple threads at the same time
@@ -76,7 +81,7 @@ int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int
         input1 = raliJpegFileSourceSingleShard(handle, path, color_format, shard_id, num_shards, false, shuffle, false);
     else
         input1 = raliJpegFileSourceSingleShard(handle, path, color_format, shard_id, num_shards, false,
-                                shuffle, false,  RALI_USE_USER_GIVEN_SIZE_RESTRICTED, dec_width, dec_height);
+                                shuffle, false, RALI_USE_USER_GIVEN_SIZE_RESTRICTED, dec_width, dec_height, dec_type);
 
     if(raliGetStatus(handle) != RALI_OK)
     {
@@ -138,7 +143,8 @@ int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int
     std::vector<int> labels;
     names.resize(batch_size);
     labels.resize(batch_size);
-#if 1
+    int image_name_length[batch_size];
+
     //cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
     int iter_cnt = 0;
     float  pmul = 2.0f/255;
@@ -155,14 +161,17 @@ int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int
             raliCopyToOutputTensor32(handle, out_tensor, RaliTensorLayout::RALI_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += batch_size;
         raliGetImageLabels(handle, labels.data());
+        int img_name_size = raliGetImageNameLen(handle, image_name_length);
+        char img_name[img_name_size];
+        raliGetImageName(handle, img_name);
+#if PRINT_NAMES_AND_LABELS
+        std::cout << "image names for batch: "<< " label "<< img_name << std::endl;
         for(int i = 0; i < batch_size; i++)
         {
-            names[i] = std::move(std::vector<char>(raliGetImageNameLen(handle, 0), '\n'));
-            raliGetImageName(handle, names[i].data(), i);
-            std::string id(names[i].begin(), names[i].end());
-         //   std::cout << "name "<< id << " label "<< labels[i] << " - ";
+            std::cout << "name "<< id << " label "<< labels[i] << " - ";
         }
-       // std::cout << std::endl;
+        std::cout << std::endl;
+#endif        
         iter_cnt ++;
 
         if(!display)
@@ -173,7 +182,7 @@ int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int
         //cv::waitKey(1);
         col_counter = (col_counter+1)%number_of_cols;
     }
-#endif
+
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto dur = duration_cast<microseconds>( t2 - t1 ).count();
     auto rali_timing = raliGetTimingInfo(handle);
@@ -193,7 +202,8 @@ int main(int argc, const char ** argv) {
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT) {
-        printf("Usage: rali_dataloader_mt <image_dataset_folder/video_file> <num_gpus>1(gpu)/cpu=0>  num_shards, decode_width decode_height batch_size shuffle display_on_off \n");
+        printf("Usage: rali_dataloader_mt <image_dataset_folder/video_file> <num_gpus>1(gpu)/cpu=0>  num_shards, \
+                decode_width decode_height batch_size shuffle display_on_off dec_mode<0(tjpeg)/1(opencv)/2(hwdec)>\n");
         return -1;
     }
     int argIdx = 0;
@@ -206,6 +216,7 @@ int main(int argc, const char ** argv) {
     int num_shards = 2;
     bool shuffle = 0;
     int num_gpus = 0;
+    int dec_mode = 0;
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         num_gpus = atoi(argv[++argIdx]);
@@ -228,13 +239,16 @@ int main(int argc, const char ** argv) {
     if (argc >= argIdx + MIN_ARG_COUNT)
         display = atoi(argv[++argIdx]);
 
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        dec_mode = atoi(argv[++argIdx]);
+
     // launch threads process shards
     std::thread loader_threads[num_shards];
     auto gpu_id = num_gpus ? 0 : -1;
     int th_id;
     for (th_id = 0; th_id < num_shards; th_id++) {
         loader_threads[th_id] = std::thread(thread_func, path, gpu_id, RaliImageColor::RALI_COLOR_RGB24, th_id, num_shards, decode_width, decode_height, inputBatchSize,
-                                                shuffle, display);
+                                                shuffle, display, dec_mode);
         if (num_gpus) gpu_id = (gpu_id +1) % num_gpus;
     }
     for (auto& th:loader_threads ) {

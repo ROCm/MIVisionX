@@ -36,9 +36,14 @@ THE SOFTWARE.
 using namespace cv;
 
 #if USE_OPENCV_4
-#define  CV_FONT_HERSHEY_DUPLEX    FONT_HERSHEY_DUPLEX
-#define  CV_WINDOW_AUTOSIZE        WINDOW_AUTOSIZE
-#define  CV_RGB2BGR                cv::COLOR_BGR2RGB
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#define CV_GRAY2RGB COLOR_GRAY2RGB
+#define CV_RGB2BGR COLOR_RGB2BGR
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FILLED FILLED
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
+#define cvDestroyWindow destroyWindow
 #else
 #include <opencv/highgui.h>
 #endif

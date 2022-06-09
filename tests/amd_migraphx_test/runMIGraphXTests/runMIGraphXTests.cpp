@@ -92,6 +92,7 @@ int main(int argc, char **argv) {
     int parameter = 0;
     int64_t freq = clockFrequency(), t0, t1;
     int N = 1000;
+    bool runMnist = false, runResnet50 = false, runVgg19 = false, runGooglenet = false, runDensenet = false, runAlexnet = false, runSqueezenet = false, runAnyImagenet = false;
 
     for(int arg = 1; arg < argc; arg++) {
         if (!strcasecmp(argv[arg], "--help") || !strcasecmp(argv[arg], "--H") || !strcasecmp(argv[arg], "--h")) {
@@ -136,6 +137,7 @@ int main(int argc, char **argv) {
                 show_usage();
                 exit(-1);
             }
+            runMnist = true;
             arg++;
             binaryFilename_mnist_str = (argv[arg]);
             parameter++;
@@ -146,6 +148,8 @@ int main(int argc, char **argv) {
                 show_usage();
                 exit(-1);
             }
+            runAlexnet = true;
+            runAnyImagenet = true;
             arg++;
             binaryFilename_alexnet_str = (argv[arg]);
             parameter++;
@@ -156,6 +160,8 @@ int main(int argc, char **argv) {
                 show_usage();
                 exit(-1);
             }
+            runSqueezenet = true;
+            runAnyImagenet = true;
             arg++;
             binaryFilename_squeezenet_str = (argv[arg]);
             parameter++;
@@ -166,6 +172,8 @@ int main(int argc, char **argv) {
                 show_usage();
                 exit(-1);
             }
+            runResnet50 = true;
+            runAnyImagenet = true;
             arg++;
             binaryFilename_resnet50_str = (argv[arg]);
             parameter++;
@@ -177,28 +185,32 @@ int main(int argc, char **argv) {
                 show_usage();
                 exit(-1);
             }
+            runVgg19 = true;
+            runAnyImagenet = true;
             arg++;
             binaryFilename_vgg19_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--googlenet")) {
-            if ((arg + 1) == argc)
-            {
+            if ((arg + 1) == argc) {
                 printf("\n\nERROR: missing googlenet ONNX .model file location on command-line (see help for details)\n\n\n");
                 show_usage();
                 exit(-1);
             }
+            runGooglenet = true;
+            runAnyImagenet = true;
             arg++;
             binaryFilename_googlenet_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--densenet")) {
-            if ((arg + 1) == argc)
-            {
+            if ((arg + 1) == argc) {
                 printf("\n\nERROR: missing densenet ONNX .model file location on command-line (see help for details)\n\n\n");
                 show_usage();
                 exit(-1);
             }
+            runDensenet = true;
+            runAnyImagenet = true;
             arg++;
             binaryFilename_densenet_str = (argv[arg]);
             parameter++;
@@ -310,366 +322,415 @@ int main(int argc, char **argv) {
 
     //read an image and resize to correct dimensions -- opencv imread()
     cv::Mat imagenet_input_image, mnist_input_image, input_image_224x224, input_image_28x28;
-    mnist_input_image = cv::imread(mnist_inputFile_str, cv::CV_LOAD_IMAGE_COLOR);
-    if (mnist_input_image.empty()) //check whether the image is loaded or not
-    {
-      cout << "ERROR : mnist image is empty" << endl;
-      return -1;
+    if (runMnist) {
+        mnist_input_image = cv::imread(mnist_inputFile_str, cv::CV_LOAD_IMAGE_COLOR);
+        if (mnist_input_image.empty()) { //check whether the image is loaded or not
+            cout << "ERROR : mnist image is empty" << endl;
+            return -1;
+        }
     }
-
-    imagenet_input_image = cv::imread(imagenet_inputFile_str.c_str(), cv::CV_LOAD_IMAGE_COLOR);
-    if (imagenet_input_image.empty()) //check whether the image is loaded or not
-    {
-      cout << "ERROR : imagenet image is empty" << endl;
-      return -1;
+    if(runAnyImagenet) {
+        imagenet_input_image = cv::imread(imagenet_inputFile_str.c_str(), cv::CV_LOAD_IMAGE_COLOR);
+        if (imagenet_input_image.empty()) { //check whether the image is loaded or not
+        cout << "ERROR : imagenet image is empty" << endl;
+        return -1;
+        }
     }
-    
 
     //resizing and preprocessing for mnist
-    cv::Mat grayscale_input_image;
-    cv::resize(mnist_input_image, input_image_28x28, Size(28, 28));
-    cv::cvtColor(input_image_28x28, grayscale_input_image, COLOR_BGR2GRAY);
+    if (runMnist) {
+        cv::Mat grayscale_input_image;
+        cv::resize(mnist_input_image, input_image_28x28, Size(28, 28));
+        cv::cvtColor(input_image_28x28, grayscale_input_image, COLOR_BGR2GRAY);
 
-    int rows_grayscale = grayscale_input_image.rows; int cols_grayscale = grayscale_input_image.cols; 
-    int total_grayscale = grayscale_input_image.total() * grayscale_input_image.channels();
-    unsigned char *input_image_vector_grayscale = (grayscale_input_image.data);
+        int rows_grayscale = grayscale_input_image.rows; int cols_grayscale = grayscale_input_image.cols; 
+        int total_grayscale = grayscale_input_image.total() * grayscale_input_image.channels();
+        unsigned char *input_image_vector_grayscale = (grayscale_input_image.data);
 
-    float *buf_grayscale = (float *)malloc(total_grayscale*sizeof(float));
+        float *buf_grayscale = (float *)malloc(total_grayscale*sizeof(float));
+        float *oneChannel = buf_grayscale;
 
-    float preproc_mul_grayscale = (1 / 255);
-    
-    for(int i = 0; i < rows_grayscale * cols_grayscale; i++, input_image_vector_grayscale ++) {
-        *buf_grayscale++ = ((float)input_image_vector_grayscale[0] * preproc_mul_grayscale);
-    }
+        float preproc_mul_grayscale = 1;
+        
+        for(int i = 0; i < rows_grayscale * cols_grayscale; i++, input_image_vector_grayscale ++) {
+            *oneChannel++ = ((float)input_image_vector_grayscale[0] * preproc_mul_grayscale);
+        }
 
-    status = vxMapTensorPatch(input_tensor_28x28, input_num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    if(status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for mnist" <<  std::endl;
-        return -1;
-    }
-    
-    memcpy(ptr, buf_grayscale, total_grayscale * sizeof(float));
+        status = vxMapTensorPatch(input_tensor_28x28, input_num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+        if(status) {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for mnist" <<  std::endl;
+            return -1;
+        }
+        
+        memcpy(ptr, buf_grayscale, total_grayscale * sizeof(float));
 
-    status = vxUnmapTensorPatch(input_tensor_28x28, map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for mnist" <<  std::endl;
-        return -1;
+        status = vxUnmapTensorPatch(input_tensor_28x28, map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for mnist" <<  std::endl;
+            return -1;
+        }
+
+        free(buf_grayscale);
     }
 
     //resizing -- for imagenet
-    int input_width = imagenet_input_image.size().width;
-    int input_height = imagenet_input_image.size().height;
-    if(input_height > input_width) {
-      int dif = input_height - input_width;
-      int bar = floor(dif / 2);
-      cv::Range rows((bar + (dif % 2)), (input_height - bar));
-      cv::Range cols(0, input_width);
-      cv::Mat square = imagenet_input_image(rows, cols);
-      cv::resize(square, input_image_224x224, cv::Size(224, 224));
-    } else if(input_width > input_height) {
-      int dif = input_width - input_height;
-      int bar = floor(dif / 2);
-      cv::Range rows(0, input_height);
-      cv::Range cols((bar + (dif % 2)), (input_width - bar));
-      cv::Mat square = imagenet_input_image(rows, cols);
-      cv::resize(square, input_image_224x224, cv::Size(224, 224));
-    } else {
-        cv::resize(imagenet_input_image, input_image_224x224, cv::Size(224, 224));
+    if(runAnyImagenet) {
+        int input_width = imagenet_input_image.size().width;
+        int input_height = imagenet_input_image.size().height;
+        if(input_height > input_width) {
+        int dif = input_height - input_width;
+        int bar = floor(dif / 2);
+        cv::Range rows((bar + (dif % 2)), (input_height - bar));
+        cv::Range cols(0, input_width);
+        cv::Mat square = imagenet_input_image(rows, cols);
+        cv::resize(square, input_image_224x224, cv::Size(224, 224));
+        } else if(input_width > input_height) {
+        int dif = input_width - input_height;
+        int bar = floor(dif / 2);
+        cv::Range rows(0, input_height);
+        cv::Range cols((bar + (dif % 2)), (input_width - bar));
+        cv::Mat square = imagenet_input_image(rows, cols);
+        cv::resize(square, input_image_224x224, cv::Size(224, 224));
+        } else {
+            cv::resize(imagenet_input_image, input_image_224x224, cv::Size(224, 224));
+        }
+
+        //preprocess -- imagenet images
+        cv::Mat RGB_input_image;
+        cv::cvtColor(input_image_224x224, RGB_input_image, cv::COLOR_BGR2RGB);
+        
+        int rows = RGB_input_image.rows; int cols = RGB_input_image.cols; 
+        int total = RGB_input_image.total() * RGB_input_image.channels();
+        unsigned char *input_image_vector = (RGB_input_image.data);
+
+        float *buf = (float *)malloc(total*sizeof(float));
+        float *R = buf;
+        float *G = R + rows * cols;
+        float *B = G + rows * cols;
+
+        float mean_vec[3] = {0.485, 0.456, 0.406};
+        float stddev_vec[3] = {0.229, 0.224, 0.225};    
+        float preproc_mul[3] = { 1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])};
+        float preproc_add[3] = {(mean_vec[0] / stddev_vec[0]), (mean_vec[1] / stddev_vec[1]), (mean_vec[2] / stddev_vec[2])};
+        
+        for(int i = 0; i < rows * cols; i++, input_image_vector += 3) {
+            *R++ = ((float)input_image_vector[0] * preproc_mul[0]) - preproc_add[0]; 
+            *G++ = ((float)input_image_vector[1] * preproc_mul[1]) - preproc_add[1]; 
+            *B++ = ((float)input_image_vector[2] * preproc_mul[2]) - preproc_add[2]; 
+        }
+
+        ERROR_CHECK_STATUS(vxMapTensorPatch(input_tensor_224x224, input_num_of_dims, nullptr, nullptr, &map_id, stride,
+            (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+        if (status) {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for imagenet" << std::endl;
+            return status;
+        }
+
+        memcpy(ptr, buf, total * sizeof(float));
+
+        status = vxUnmapTensorPatch(input_tensor_224x224, map_id);
+        if (status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for imagenet" << status << ")" << std::endl;
+            return status;
+        }
+
+        free(buf);
     }
-
-    //preprocess -- imagenet images
-    cv::Mat RGB_input_image;
-    cv::cvtColor(input_image_224x224, RGB_input_image, cv::COLOR_BGR2RGB);
-    
-    int rows = RGB_input_image.rows; int cols = RGB_input_image.cols; 
-    int total = RGB_input_image.total() * RGB_input_image.channels();
-    unsigned char *input_image_vector = (RGB_input_image.data);
-
-    float *buf = (float *)malloc(total*sizeof(float));
-    float *R = buf;
-    float *G = R + rows * cols;
-    float *B = G + rows * cols;
-
-    float mean_vec[3] = {0.485, 0.456, 0.406};
-    float stddev_vec[3] = {0.229, 0.224, 0.225};    
-    float preproc_mul[3] = { 1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])};
-    float preproc_add[3] = {(mean_vec[0] / stddev_vec[0]), (mean_vec[1] / stddev_vec[1]), (mean_vec[2] / stddev_vec[2])};
-    
-    for(int i = 0; i < rows * cols; i++, input_image_vector += 3) {
-        *R++ = ((float)input_image_vector[0] * preproc_mul[0]) - preproc_add[0]; 
-        *G++ = ((float)input_image_vector[1] * preproc_mul[1]) - preproc_add[1]; 
-        *B++ = ((float)input_image_vector[2] * preproc_mul[2]) - preproc_add[2]; 
-    }
-
-    ERROR_CHECK_STATUS(vxMapTensorPatch(input_tensor_224x224, input_num_of_dims, nullptr, nullptr, &map_id, stride,
-        (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
-    if (status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for imagenet" << std::endl;
-        return status;
-    }
-
-    memcpy(ptr, buf, total * sizeof(float));
-
-    status = vxUnmapTensorPatch(input_tensor_224x224, map_id);
-    if (status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for imagenet" << status << ")" << std::endl;
-        return status;
-    }
-
-    vx_node node_mnist = amdMIGraphXnode(graph_mnist, binaryFilename_mnist_str.c_str(), input_tensor_28x28, output_tensor_mnist);
-    vx_node node_resnet50 = amdMIGraphXnode(graph_resnet50, binaryFilename_resnet50_str.c_str(), input_tensor_224x224, output_tensor_resnet50);
-    vx_node node_vgg19 = amdMIGraphXnode(graph_vgg19, binaryFilename_vgg19_str.c_str(), input_tensor_224x224, output_tensor_vgg19);
-    vx_node node_googlenet = amdMIGraphXnode(graph_googlenet, binaryFilename_googlenet_str.c_str(), input_tensor_224x224, output_tensor_googlenet);
-    vx_node node_alexnet = amdMIGraphXnode(graph_alexnet, binaryFilename_alexnet_str.c_str(), input_tensor_224x224, output_tensor_alexnet);
-    vx_node node_squeezenet = amdMIGraphXnode(graph_squeezenet, binaryFilename_squeezenet_str.c_str(), input_tensor_224x224, output_tensor_squeezenet);
-    vx_node node_densenet = amdMIGraphXnode(graph_densenet, binaryFilename_densenet_str.c_str(), input_tensor_224x224, output_tensor_densenet);
-    ERROR_CHECK_OBJECT(node_mnist);
-    ERROR_CHECK_OBJECT(node_resnet50);
-    ERROR_CHECK_OBJECT(node_vgg19);
-    ERROR_CHECK_OBJECT(node_googlenet);
-    ERROR_CHECK_OBJECT(node_alexnet);
-    ERROR_CHECK_OBJECT(node_squeezenet);
-    ERROR_CHECK_OBJECT(node_densenet);
-
-    ERROR_CHECK_STATUS(vxVerifyGraph(graph_mnist));
-    ERROR_CHECK_STATUS(vxVerifyGraph(graph_resnet50));
-    ERROR_CHECK_STATUS(vxVerifyGraph(graph_vgg19));
-    ERROR_CHECK_STATUS(vxVerifyGraph(graph_googlenet));
-    ERROR_CHECK_STATUS(vxVerifyGraph(graph_alexnet));
-    ERROR_CHECK_STATUS(vxVerifyGraph(graph_squeezenet));
-    ERROR_CHECK_STATUS(vxVerifyGraph(graph_densenet));
-
-    ERROR_CHECK_STATUS(vxProcessGraph(graph_mnist));
-    ERROR_CHECK_STATUS(vxProcessGraph(graph_resnet50));
-    ERROR_CHECK_STATUS(vxProcessGraph(graph_vgg19));
-    ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
-    ERROR_CHECK_STATUS(vxProcessGraph(graph_alexnet));
-    ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
-    ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
 
     float alexnetTime, resnet50Time, vgg19Time, googlenetTime, densenetTime, mnistTime, squeezenetTime;
 
-    //mnist timing for 1000 iterations
-    t0 = clockCounter();
-    for(int i = 0; i < N; i++) {
+    if (runMnist) {
+        vx_node node_mnist = amdMIGraphXnode(graph_mnist, binaryFilename_mnist_str.c_str(), input_tensor_28x28, output_tensor_mnist);
+        ERROR_CHECK_OBJECT(node_mnist);
+        ERROR_CHECK_STATUS(vxVerifyGraph(graph_mnist));
         ERROR_CHECK_STATUS(vxProcessGraph(graph_mnist));
-    }
-    t1 = clockCounter();
-    mnistTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-    printf("OK: mnist took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
-    
-    //googlenet timing for 1000 iterations
-    t0 = clockCounter();
-    for(int i = 0; i < N; i++) {
-        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
-    }
-    t1 = clockCounter();
-    googlenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-    printf("OK: googlenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
 
-    //renet50 timing for 1000 iterations
-    t0 = clockCounter();
-    for(int i = 0; i < N; i++) {
+        //mnist timing for 1000 iterations
+        t0 = clockCounter();
+        for (int i = 0; i < N; i++) {
+            ERROR_CHECK_STATUS(vxProcessGraph(graph_mnist));
+        }
+        t1 = clockCounter();
+        mnistTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: mnist took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        
+        //results mnist
+        status = vxMapTensorPatch(output_tensor_mnist, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
+            (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+        if (status) {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
+            return status;
+        }
+
+        int ID_mnist = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_mnist));
+        std::string output_label_mnist = labelText[ID_mnist];
+
+        status = vxUnmapTensorPatch(output_tensor_mnist, map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
+            return status;
+        }
+
+        std::cout << "mnist: output index = " << ID_mnist << std::endl;
+
+        //release resources -- mnist
+        ERROR_CHECK_STATUS(vxReleaseNode(&node_mnist));    
+        ERROR_CHECK_STATUS(vxReleaseGraph(&graph_mnist));
+        ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_mnist));
+        ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor_28x28));
+    }
+
+    if (runResnet50) {
+        vx_node node_resnet50 = amdMIGraphXnode(graph_resnet50, binaryFilename_resnet50_str.c_str(), input_tensor_224x224, output_tensor_resnet50);
+        ERROR_CHECK_OBJECT(node_resnet50);
+        ERROR_CHECK_STATUS(vxVerifyGraph(graph_resnet50));
         ERROR_CHECK_STATUS(vxProcessGraph(graph_resnet50));
-    }
-    t1 = clockCounter();
-    resnet50Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-    printf("OK: resnet50 took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
 
-    //squeezenet timing for 1000 iterations
-    t0 = clockCounter();
-    for(int i = 0; i < N; i++) {
-        ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
-    }
-    t1 = clockCounter();
-    squeezenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-    printf("OK: squeezenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        //renet50 timing for 1000 iterations
+        t0 = clockCounter();
+        for(int i = 0; i < N; i++) {
+            ERROR_CHECK_STATUS(vxProcessGraph(graph_resnet50));
+        }
+        t1 = clockCounter();
+        resnet50Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: resnet50 took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
 
-    //vgg19 timing for 1000 iterations
-    t0 = clockCounter();
-    for(int i = 0; i < N; i++) {
+        //resnet50 results
+        status = vxMapTensorPatch(output_tensor_resnet50, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
+            (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+        if (status) {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
+            return status;
+        }
+
+        int ID_resnet50 = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
+        std::string output_label_resnet50 = labelText[ID_resnet50];
+
+        status = vxUnmapTensorPatch(output_tensor_resnet50, map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
+            return status;
+        }
+
+        std::cout << "resnet50: output index = " << ID_resnet50 << "  && output label = " << output_label_resnet50 << std::endl;
+
+        ERROR_CHECK_STATUS(vxReleaseNode(&node_resnet50));
+        ERROR_CHECK_STATUS(vxReleaseGraph(&graph_resnet50));
+        ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_resnet50));
+    }
+
+    if (runVgg19) {
+        vx_node node_vgg19 = amdMIGraphXnode(graph_vgg19, binaryFilename_vgg19_str.c_str(), input_tensor_224x224, output_tensor_vgg19);
+        ERROR_CHECK_OBJECT(node_vgg19);
+        ERROR_CHECK_STATUS(vxVerifyGraph(graph_vgg19));
         ERROR_CHECK_STATUS(vxProcessGraph(graph_vgg19));
-    }
-    t1 = clockCounter();
-    vgg19Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-    printf("OK: vgg19 took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
 
-    //densenet timing for 1000 iterations
-    t0 = clockCounter();
-    for(int i = 0; i < N; i++) {
-        ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
-    }
-    t1 = clockCounter();
-    densenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-    printf("OK: densenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        //vgg19 timing for 1000 iterations
+        t0 = clockCounter();
+        for(int i = 0; i < N; i++) {
+            ERROR_CHECK_STATUS(vxProcessGraph(graph_vgg19));
+        }
+        t1 = clockCounter();
+        vgg19Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: vgg19 took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
 
-    //alexnet timing for 1000 iterations
-    t0 = clockCounter();
-    for(int i = 0; i < N; i++) {
+        //vgg19 results
+        status = vxMapTensorPatch(output_tensor_vgg19, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
+            (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+        if (status) {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
+            return status;
+        }
+
+        int ID_vgg19 = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
+        std::string output_label_vgg19 = labelText[ID_vgg19];
+
+        status = vxUnmapTensorPatch(output_tensor_vgg19, map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
+            return status;
+        }
+
+        //print results
+        std::cout << "vgg19: output index = " << ID_vgg19 << "  && output label = " << output_label_vgg19 << std::endl;
+
+        //release resources
+        ERROR_CHECK_STATUS(vxReleaseNode(&node_vgg19));
+        ERROR_CHECK_STATUS(vxReleaseGraph(&graph_vgg19));
+        ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_vgg19));
+    }
+
+    if (runGooglenet) {
+        vx_node node_googlenet = amdMIGraphXnode(graph_googlenet, binaryFilename_googlenet_str.c_str(), input_tensor_224x224, output_tensor_googlenet);
+        ERROR_CHECK_OBJECT(node_googlenet);
+        ERROR_CHECK_STATUS(vxVerifyGraph(graph_googlenet));
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+
+        //googlenet timing for 1000 iterations
+        t0 = clockCounter();
+        for(int i = 0; i < N; i++) {
+            ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+        }
+        t1 = clockCounter();
+        googlenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: googlenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+
+        //googlenet results
+        status = vxMapTensorPatch(output_tensor_googlenet, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
+            (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+        if (status) {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
+            return status;
+        }
+
+        int ID_googlenet = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
+        std::string output_label_googlenet = labelText[ID_googlenet];
+
+        status = vxUnmapTensorPatch(output_tensor_googlenet, map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
+            return status;
+        }
+
+        //print results
+        std::cout << "googlenet: output index = " << ID_googlenet << "  && output label = " << output_label_googlenet << std::endl;
+
+        //release resources
+        ERROR_CHECK_STATUS(vxReleaseNode(&node_googlenet));
+        ERROR_CHECK_STATUS(vxReleaseGraph(&graph_googlenet));
+        ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_googlenet));
+    }
+
+    if (runAlexnet) {
+        vx_node node_alexnet = amdMIGraphXnode(graph_alexnet, binaryFilename_alexnet_str.c_str(), input_tensor_224x224, output_tensor_alexnet);
+        ERROR_CHECK_OBJECT(node_alexnet);
+        ERROR_CHECK_STATUS(vxVerifyGraph(graph_alexnet));
         ERROR_CHECK_STATUS(vxProcessGraph(graph_alexnet));
-    }
-    t1 = clockCounter();
-    alexnetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-    printf("OK: alexnet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
 
-    //results mnist
-    status = vxMapTensorPatch(output_tensor_mnist, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
-        (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    if (status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
-        return status;
-    }
+        //alexnet timing for 1000 iterations
+        t0 = clockCounter();
+        for(int i = 0; i < N; i++) {
+            ERROR_CHECK_STATUS(vxProcessGraph(graph_alexnet));
+        }
+        t1 = clockCounter();
+        alexnetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: alexnet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
 
-    int ID_mnist = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_mnist));
-    std::string output_label_mnist = labelText[ID_mnist];
+        //alexnet results
+        status = vxMapTensorPatch(output_tensor_alexnet, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
+            (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+        if (status) {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
+            return status;
+        }
 
-    status = vxUnmapTensorPatch(output_tensor_mnist, map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
-        return status;
-    }
+        int ID_alexnet = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
+        std::string output_label_alexnet = labelText[ID_alexnet];
 
-    //resnet50 results
-    status = vxMapTensorPatch(output_tensor_resnet50, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
-        (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    if (status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
-        return status;
-    }
+        status = vxUnmapTensorPatch(output_tensor_alexnet, map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
+            return status;
+        }
 
-    int ID_resnet50 = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
-    std::string output_label_resnet50 = labelText[ID_resnet50];
+        //print results
+        std::cout << "alexnet: output index = " << ID_alexnet << "  && output label = " << output_label_alexnet << std::endl;
 
-    status = vxUnmapTensorPatch(output_tensor_resnet50, map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
-        return status;
+        //release resources
+        ERROR_CHECK_STATUS(vxReleaseNode(&node_alexnet));
+        ERROR_CHECK_STATUS(vxReleaseGraph(&graph_alexnet));
+        ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_alexnet));
+
     }
 
-    //googlenet results
-    status = vxMapTensorPatch(output_tensor_googlenet, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
-        (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    if (status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
-        return status;
+    if (runSqueezenet) {
+        vx_node node_squeezenet = amdMIGraphXnode(graph_squeezenet, binaryFilename_squeezenet_str.c_str(), input_tensor_224x224, output_tensor_squeezenet);
+        ERROR_CHECK_OBJECT(node_squeezenet);
+        ERROR_CHECK_STATUS(vxVerifyGraph(graph_squeezenet));
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
+
+        //squeezenet timing for 1000 iterations
+        t0 = clockCounter();
+        for(int i = 0; i < N; i++) {
+            ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
+        }
+        t1 = clockCounter();
+        squeezenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: squeezenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+
+        //squeezenet results
+        status = vxMapTensorPatch(output_tensor_squeezenet, output_num_of_dims_4, nullptr, nullptr, &map_id, stride,
+            (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+        if (status) {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
+            return status;
+        }
+
+        int ID_squeezenet = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
+        std::string output_label_squeezenet = labelText[ID_squeezenet];
+
+        status = vxUnmapTensorPatch(output_tensor_squeezenet, map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
+            return status;
+        }
+
+        //print results
+        std::cout << "squeezenet: output index = " << ID_squeezenet << "  && output label = " << output_label_squeezenet << std::endl;
+
+        // release resources   
+        ERROR_CHECK_STATUS(vxReleaseNode(&node_squeezenet));
+        ERROR_CHECK_STATUS(vxReleaseGraph(&graph_squeezenet));
+        ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_squeezenet));
     }
 
-    int ID_googlenet = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
-    std::string output_label_googlenet = labelText[ID_googlenet];
+    if (runDensenet) {
+        vx_node node_densenet = amdMIGraphXnode(graph_densenet, binaryFilename_densenet_str.c_str(), input_tensor_224x224, output_tensor_densenet);
+        ERROR_CHECK_OBJECT(node_densenet);  
+        ERROR_CHECK_STATUS(vxVerifyGraph(graph_densenet));
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
 
-    status = vxUnmapTensorPatch(output_tensor_googlenet, map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
-        return status;
+        //densenet timing for 1000 iterations
+        t0 = clockCounter();
+        for(int i = 0; i < N; i++) {
+            ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
+        }
+        t1 = clockCounter();
+        densenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: densenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+
+        //densenet results
+        status = vxMapTensorPatch(output_tensor_densenet, output_num_of_dims_4, nullptr, nullptr, &map_id, stride,
+            (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+        if (status) {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
+            return status;
+        }
+
+        int ID_densenet = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
+        std::string output_label_densenet = labelText[ID_densenet];
+
+        status = vxUnmapTensorPatch(output_tensor_densenet, map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
+            return status;
+        }
+        
+        //print results
+        std::cout << "densenet: output index = " << ID_densenet << "  && output label = " << output_label_densenet << std::endl;
+
+        //release resources
+        ERROR_CHECK_STATUS(vxReleaseNode(&node_densenet));
+        ERROR_CHECK_STATUS(vxReleaseGraph(&graph_densenet));
+        ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_densenet));
     }
 
-    //vgg19 results
-    status = vxMapTensorPatch(output_tensor_vgg19, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
-        (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    if (status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
-        return status;
+    //release common resources
+    if (runAnyImagenet) {
+        ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor_224x224));
     }
-
-    int ID_vgg19 = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
-    std::string output_label_vgg19 = labelText[ID_vgg19];
-
-    status = vxUnmapTensorPatch(output_tensor_vgg19, map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
-        return status;
-    }
-
-    //alexnet results
-    status = vxMapTensorPatch(output_tensor_alexnet, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
-        (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    if (status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
-        return status;
-    }
-
-    int ID_alexnet = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
-    std::string output_label_alexnet = labelText[ID_alexnet];
-
-    status = vxUnmapTensorPatch(output_tensor_alexnet, map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
-        return status;
-    }
-    
-    //squeezenet results
-    status = vxMapTensorPatch(output_tensor_squeezenet, output_num_of_dims_4, nullptr, nullptr, &map_id, stride,
-        (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    if (status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
-        return status;
-    }
-
-    int ID_squeezenet = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
-    std::string output_label_squeezenet = labelText[ID_squeezenet];
-
-    status = vxUnmapTensorPatch(output_tensor_squeezenet, map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
-        return status;
-    }
-
-    //densenet results
-    status = vxMapTensorPatch(output_tensor_densenet, output_num_of_dims_4, nullptr, nullptr, &map_id, stride,
-        (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    if (status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor" << std::endl;
-        return status;
-    }
-
-    int ID_densenet = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
-    std::string output_label_densenet = labelText[ID_densenet];
-
-    status = vxUnmapTensorPatch(output_tensor_densenet, map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
-        return status;
-    }
- 
-    //print results
-    std::cout << "mnist: output index = " << ID_mnist << std::endl;
-    std::cout << "resnet50: output index = " << ID_resnet50 << "  && output label = " << output_label_resnet50 << std::endl;
-    std::cout << "googlenet: output index = " << ID_googlenet << "  && output label = " << output_label_googlenet << std::endl;
-    std::cout << "squeezenet: output index = " << ID_squeezenet << "  && output label = " << output_label_squeezenet << std::endl;
-    std::cout << "alexnet: output index = " << ID_alexnet << "  && output label = " << output_label_alexnet << std::endl;
-    std::cout << "vgg19: output index = " << ID_vgg19 << "  && output label = " << output_label_vgg19 << std::endl;
-    std::cout << "densenet: output index = " << ID_densenet << "  && output label = " << output_label_densenet << std::endl;
-
-    // release resources
-    ERROR_CHECK_STATUS(vxReleaseNode(&node_mnist));
-    ERROR_CHECK_STATUS(vxReleaseNode(&node_resnet50));
-    ERROR_CHECK_STATUS(vxReleaseNode(&node_squeezenet));
-    ERROR_CHECK_STATUS(vxReleaseNode(&node_densenet));
-    ERROR_CHECK_STATUS(vxReleaseNode(&node_vgg19));
-    ERROR_CHECK_STATUS(vxReleaseNode(&node_alexnet));
-    ERROR_CHECK_STATUS(vxReleaseNode(&node_googlenet));
-
-    ERROR_CHECK_STATUS(vxReleaseGraph(&graph_mnist));
-    ERROR_CHECK_STATUS(vxReleaseGraph(&graph_resnet50));
-    ERROR_CHECK_STATUS(vxReleaseGraph(&graph_squeezenet));
-    ERROR_CHECK_STATUS(vxReleaseGraph(&graph_densenet));
-    ERROR_CHECK_STATUS(vxReleaseGraph(&graph_vgg19));
-    ERROR_CHECK_STATUS(vxReleaseGraph(&graph_alexnet));
-    ERROR_CHECK_STATUS(vxReleaseGraph(&graph_googlenet));
-
-    ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor_224x224));
-    ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor_28x28));
-
-    ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_mnist));
-    ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_resnet50));
-    ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_squeezenet));
-    ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_densenet));
-    ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_vgg19));
-    ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_alexnet));
-    ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_googlenet));
 
     ERROR_CHECK_STATUS(vxReleaseContext(&context));
-    free(buf);
 	
     return 0;
 }

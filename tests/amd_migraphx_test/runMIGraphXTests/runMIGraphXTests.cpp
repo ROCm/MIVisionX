@@ -290,7 +290,6 @@ int main(int argc, char **argv) {
     vx_map_id map_id;
     void *ptr = nullptr;
     auto num_results_imagenet = 1000;
-    auto num_results_mnist = 10;
 
     //imagenet label file
     std::string labelText[1000];
@@ -437,8 +436,6 @@ int main(int argc, char **argv) {
         free(buf);
     }
 
-    float alexnetTime, resnet50Time, vgg19Time, googlenetTime, densenetTime, mnistTime, squeezenetTime;
-
     if (runMnist) {
         vx_node node_mnist = amdMIGraphXnode(graph_mnist, binaryFilename_mnist_str.c_str(), input_tensor_28x28, output_tensor_mnist);
         ERROR_CHECK_OBJECT(node_mnist);
@@ -451,10 +448,11 @@ int main(int argc, char **argv) {
             ERROR_CHECK_STATUS(vxProcessGraph(graph_mnist));
         }
         t1 = clockCounter();
-        mnistTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-        printf("OK: mnist took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        float mnistTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: mnist took %.3f msec (average over %d iterations)\n", mnistTime, N);
         
         //results mnist
+        auto num_results_mnist = 10;
         status = vxMapTensorPatch(output_tensor_mnist, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
             (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
         if (status) {
@@ -492,8 +490,8 @@ int main(int argc, char **argv) {
             ERROR_CHECK_STATUS(vxProcessGraph(graph_resnet50));
         }
         t1 = clockCounter();
-        resnet50Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-        printf("OK: resnet50 took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        float resnet50Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: resnet50 took %.3f msec (average over %d iterations)\n", resnet50Time, N);
 
         //resnet50 results
         status = vxMapTensorPatch(output_tensor_resnet50, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
@@ -531,8 +529,8 @@ int main(int argc, char **argv) {
             ERROR_CHECK_STATUS(vxProcessGraph(graph_vgg19));
         }
         t1 = clockCounter();
-        vgg19Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-        printf("OK: vgg19 took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        float vgg19Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: vgg19 took %.3f msec (average over %d iterations)\n", vgg19Time, N);
 
         //vgg19 results
         status = vxMapTensorPatch(output_tensor_vgg19, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
@@ -572,8 +570,8 @@ int main(int argc, char **argv) {
             ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
         }
         t1 = clockCounter();
-        googlenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-        printf("OK: googlenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        float googlenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: googlenet took %.3f msec (average over %d iterations)\n", googlenetTime, N);
 
         //googlenet results
         status = vxMapTensorPatch(output_tensor_googlenet, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
@@ -613,8 +611,8 @@ int main(int argc, char **argv) {
             ERROR_CHECK_STATUS(vxProcessGraph(graph_alexnet));
         }
         t1 = clockCounter();
-        alexnetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-        printf("OK: alexnet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        float alexnetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: alexnet took %.3f msec (average over %d iterations)\n", alexnetTime, N);
 
         //alexnet results
         status = vxMapTensorPatch(output_tensor_alexnet, output_num_of_dims_2, nullptr, nullptr, &map_id, stride,
@@ -655,8 +653,8 @@ int main(int argc, char **argv) {
             ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
         }
         t1 = clockCounter();
-        squeezenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-        printf("OK: squeezenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        float squeezenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: squeezenet took %.3f msec (average over %d iterations)\n", squeezenetTime, N);
 
         //squeezenet results
         status = vxMapTensorPatch(output_tensor_squeezenet, output_num_of_dims_4, nullptr, nullptr, &map_id, stride,
@@ -696,8 +694,8 @@ int main(int argc, char **argv) {
             ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
         }
         t1 = clockCounter();
-        densenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
-        printf("OK: densenet took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
+        float densenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+        printf("OK: densenet took %.3f msec (average over %d iterations)\n", densenetTime, N);
 
         //densenet results
         status = vxMapTensorPatch(output_tensor_densenet, output_num_of_dims_4, nullptr, nullptr, &map_id, stride,

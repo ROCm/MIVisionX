@@ -216,7 +216,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
     } else
     {
         // run nnir model_compiler
-        // step-1.1: run python caffe_to_nnir <.caffemodel> nnir_output --input-dims <args->getBatchSize(),dimOutput[2], dimOutput[1], dimOutput[0]>
+        // step-1.1: run python3 caffe_to_nnir <.caffemodel> nnir_output --input-dims <args->getBatchSize(),dimOutput[2], dimOutput[1], dimOutput[0]>
         command = "python3 ";
         command += args->getModelCompilerPath() + "/" + "caffe_to_nnir.py weights.caffemodel nnir-output --input-dims";
         command += " " + std::to_string(args->getBatchSize())

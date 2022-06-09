@@ -29,7 +29,7 @@ void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status st
 }
 
 
-InferenceEngine::InferenceEngine(int sock_, Arguments * args_, std::string clientName_, InfComCommand * cmd)
+InferenceEngine::InferenceEngine(int sock_, Arguments * args_, const std::string clientName_, InfComCommand * cmd)
     : sock{ sock_ }, args{ args_ }, clientName{ clientName_ },
       GPUs{ cmd->data[1] },
       dimInput{ cmd->data[2], cmd->data[3], cmd->data[4] },

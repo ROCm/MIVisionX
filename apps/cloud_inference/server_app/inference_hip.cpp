@@ -21,13 +21,13 @@ extern void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
 
 
 #if ENABLE_HIP
-InferenceEngineHip::InferenceEngineHip(int sock_, Arguments * args_, std::string clientName_, InfComCommand * cmd)
+InferenceEngineHip::InferenceEngineHip(int sock_, Arguments * args_, const std::string clientName_, InfComCommand * cmd)
                   :InferenceEngine(sock_, args_, clientName_, cmd),
                   hip_dev_prop{ nullptr }, hip_stream{ nullptr },
                   queueDeviceInputMemIdle{ nullptr }, queueDeviceInputMemBusy{ nullptr },
                   queueDeviceOutputMemIdle{ nullptr }, queueDeviceOutputMemBusy{ nullptr }
 {
-  device_id[MAX_NUM_GPU] = {-1};
+  device_id[MAX_NUM_GPU-1] = {-1};
   if(!args->lockGpuDevices(GPUs, device_id))
     deviceLockSuccess = true;
 }
@@ -861,11 +861,11 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
                     break;
                 }
                 // decode, scale, and format convert into the HIP buffer
-                float *buf;
+                void *buf;
                 if (useFp16)
-                    buf = (float *) ((unsigned short *)mapped_ptr + dimInput[0] * dimInput[1] * dimInput[2] * inputCount);
+                    buf = (unsigned short *)mapped_ptr + dimInput[0] * dimInput[1] * dimInput[2] * inputCount;
                 else
-                    buf = (float *) mapped_ptr + dimInput[0] * dimInput[1] * dimInput[2] * inputCount;
+                    buf = (float *)mapped_ptr + dimInput[0] * dimInput[1] * dimInput[2] * inputCount;
 
                 PROFILER_START(inference_server_app, workDeviceInputCopyJpegDecode);
                 DecodeScaleAndConvertToTensor(dimInput[0], dimInput[1], size, (unsigned char *)byteStream, buf, useFp16);
@@ -1099,7 +1099,7 @@ void InferenceEngineHip::dumpBuffer(hipStream_t stream, void * mem, size_t size,
       fwrite(host_ptr, 1, size, fp);
       fclose(fp);
     }
-    printf("OK: dumped %ld bytes into %s\n", size, fileName.c_str());
+    printf("OK: dumped %lu bytes into %s\n", size, fileName.c_str());
 }
 
 #endif

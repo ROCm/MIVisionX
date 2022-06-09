@@ -187,7 +187,7 @@ private:
 class InferenceEngine {
 public:
     InferenceEngine() {}; // default constructor
-    InferenceEngine(int sock, Arguments * args, std::string clientName, InfComCommand * cmd);
+    InferenceEngine(int sock, Arguments * args, const std::string clientName, InfComCommand * cmd);
     ~InferenceEngine();
     virtual int run();
 
@@ -298,7 +298,7 @@ private:
 class InferenceEngineHip:public InferenceEngine
 {
 public:
-    InferenceEngineHip(int sock_, Arguments * args, std::string clientName, InfComCommand * cmd);
+    InferenceEngineHip(int sock_, Arguments * args, const std::string clientName, InfComCommand * cmd);
     ~InferenceEngineHip();
     int run();
 

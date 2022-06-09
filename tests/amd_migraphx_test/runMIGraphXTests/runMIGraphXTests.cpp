@@ -44,7 +44,6 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
     }
 }
 
-
 inline int64_t clockCounter()
 {
     return std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -471,7 +470,7 @@ int main(int argc, char **argv) {
     //renet50 timing for 1000 iterations
     t0 = clockCounter();
     for(int i = 0; i < N; i++) {
-        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_resnet50));
     }
     t1 = clockCounter();
     resnet50Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
@@ -480,7 +479,7 @@ int main(int argc, char **argv) {
     //squeezenet timing for 1000 iterations
     t0 = clockCounter();
     for(int i = 0; i < N; i++) {
-        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
     }
     t1 = clockCounter();
     squeezenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
@@ -489,7 +488,7 @@ int main(int argc, char **argv) {
     //vgg19 timing for 1000 iterations
     t0 = clockCounter();
     for(int i = 0; i < N; i++) {
-        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_vgg19));
     }
     t1 = clockCounter();
     vgg19Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
@@ -498,7 +497,7 @@ int main(int argc, char **argv) {
     //densenet timing for 1000 iterations
     t0 = clockCounter();
     for(int i = 0; i < N; i++) {
-        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
     }
     t1 = clockCounter();
     densenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
@@ -507,7 +506,7 @@ int main(int argc, char **argv) {
     //alexnet timing for 1000 iterations
     t0 = clockCounter();
     for(int i = 0; i < N; i++) {
-        ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
+        ERROR_CHECK_STATUS(vxProcessGraph(graph_alexnet));
     }
     t1 = clockCounter();
     alexnetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;

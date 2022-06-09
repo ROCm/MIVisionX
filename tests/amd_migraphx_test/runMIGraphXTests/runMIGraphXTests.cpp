@@ -89,8 +89,6 @@ int main(int argc, char **argv) {
     std::string imagenet_inputFile_str;
     std::string mnist_inputFile_str;
 
-    int profiler_mode = 0;
-    int profiler_level = 1;
     int parameter = 0;
     int64_t freq = clockFrequency(), t0, t1;
     int N = 1000;
@@ -121,11 +119,13 @@ int main(int argc, char **argv) {
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--profiler_mode")) {
+            int profiler_mode = 0;
             arg++;
             profiler_mode = std::stoi(argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--profiler_level")){
+            int profiler_level = 1;
             arg++;
             profiler_level = std::stoi(argv[arg]);
             parameter++;

@@ -112,7 +112,6 @@ int main(int argc, const char ** argv)
     std::string feature_map_label = "image/class/label";
 
     rocalCreateTFReader(handle, folderPath1, 1, feature_map_label.c_str(), feature_map_filename.c_str());
-
     input1 = rocalJpegTFRecordSource(handle, folderPath1, ROCAL_COLOR_RGB24, 1, true, feature_map_image.c_str(), feature_map_filename.c_str(), false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height);
 
     if(rocalGetStatus(handle) != ROCAL_OK)
@@ -196,7 +195,6 @@ int main(int argc, const char ** argv)
     cv::Mat mat_input(h, w, cv_color_format);
     int col_counter = 0;
    // cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
-
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
     std::vector<std::vector<char>> names;

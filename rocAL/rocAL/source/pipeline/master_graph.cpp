@@ -118,22 +118,24 @@ MasterGraph::MasterGraph(size_t batch_size, RocalAffinity affinity, int gpu_id, 
         _affinity(affinity),
         _gpu_id(gpu_id),
         _convert_time("Conversion Time", DBG_TIMING),
+        _process_time("Process Time", DBG_TIMING),
+        _bencode_time("BoxEncoder Time", DBG_TIMING),
         _user_batch_size(batch_size),
         _cpu_threads(cpu_threads),
 #if ENABLE_HIP
         _mem_type ((_affinity == RocalAffinity::GPU) ? RocalMemType::HIP : RocalMemType::HOST),
-        _box_encoder_gpu(nullptr),
 #else
         _mem_type ((_affinity == RocalAffinity::GPU) ? RocalMemType::OCL : RocalMemType::HOST),
 #endif
-        _process_time("Process Time", DBG_TIMING),
-        _bencode_time("BoxEncoder Time", DBG_TIMING),
         _first_run(true),
         _processing(false),
         _internal_batch_size(compute_optimum_internal_batch_size(batch_size, affinity)),
         _user_to_internal_batch_ratio (_user_batch_size/_internal_batch_size),
         _prefetch_queue_depth(prefetch_queue_depth),
         _out_data_type(output_tensor_data_type),
+#if ENABLE_HIP
+        _box_encoder_gpu(nullptr),
+#endif
         _rb_block_if_empty_time("Ring Buffer Block IF Empty Time"),
         _rb_block_if_full_time("Ring Buffer Block IF Full Time")
 {

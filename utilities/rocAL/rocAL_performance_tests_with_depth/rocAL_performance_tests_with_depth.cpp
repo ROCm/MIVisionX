@@ -44,7 +44,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
 int main(int argc, const char ** argv)
 {
     // check command-line usage
-    const size_t MIN_ARG_COUNT = 2;
+    const int MIN_ARG_COUNT = 2;
     printf( "Usage: image_augmentation <image-dataset-folder> <width> <height> test_case batch_size graph_depth gpu=1/cpu=0 rgb=1/grayscale =0  \n" );
     if(argc < MIN_ARG_COUNT)
         return -1;
@@ -137,9 +137,6 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
 
 
     int resize_w = width, resize_h = height;
-
-    RocalFlipAxis axis_h = ROCAL_FLIP_HORIZONTAL;
-    RocalFlipAxis axis_v = ROCAL_FLIP_VERTICAL;
 
     switch (test_case) {
         case 0: {
@@ -308,6 +305,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
             break;
         case 16: {
             std::cout << ">>>>>>> Running " << "rocalBlendFixed" << std::endl;
+            image0 = inputImage;
             image0_b = rocalRotateFixed(handle, image0, 30, false);
             for(int j = 0; j < batch_size; j++){
                 image0 = inputImage;
@@ -554,22 +552,19 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
 
 
 
-    printf("Augmented copies count %d\n",  rocalGetAugmentationBranchCount(handle));
+    printf("Augmented copies count %lu\n",  rocalGetAugmentationBranchCount(handle));
 
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
     int h =  rocalGetAugmentationBranchCount(handle) * rocalGetOutputHeight(handle);
     int w = rocalGetOutputWidth(handle);
-    int p = ((color_format == RocalImageColor::ROCAL_COLOR_RGB24) ? 3 : 1);
-    const unsigned number_of_cols = 1;//1920 / w;
     auto cv_color_format = ((color_format == RocalImageColor::ROCAL_COLOR_RGB24) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);
     cv::Mat mat_color;
-    int col_counter = 0;
     cv::namedWindow("output", CV_WINDOW_AUTOSIZE);
     printf("Going to process images\n");
-    printf("Remaining images %d \n", rocalGetRemainingImages(handle));
+    printf("Remaining images %lu \n", rocalGetRemainingImages(handle));
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
     int i = 0;

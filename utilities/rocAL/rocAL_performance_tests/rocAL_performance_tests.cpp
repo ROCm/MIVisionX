@@ -44,7 +44,7 @@ int test(int test_case, const char* path, int rgb, int processing_device, int wi
 int main(int argc, const char ** argv)
 {
     // check command-line usage
-    const size_t MIN_ARG_COUNT = 2;
+    const int MIN_ARG_COUNT = 2;
     printf( "Usage: rocal_performance_tests <image-dataset-folder> <width> <height> <test_case> <batch_size> <gpu=1/cpu=0> <rgb=1/grayscale=0> <shard_count>  <shuffle=1>\n" );
     if(argc < MIN_ARG_COUNT)
         return -1;
@@ -92,7 +92,7 @@ int test(int test_case, const char* path, int rgb, int processing_device, int wi
     int decode_max_height = 0;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (processing_device ? "GPU" : "CPU") << " , "<< (rgb ? " Color ":" Grayscale ")<< std::endl;
-    printf(">>> Batch size = %d -- shard count = %d\n", inputBatchSize, num_threads);
+    printf(">>> Batch size = %d -- shard count = %lu\n", inputBatchSize, num_threads);
 
     RocalImageColor color_format = (rgb != 0) ? RocalImageColor::ROCAL_COLOR_RGB24 : RocalImageColor::ROCAL_COLOR_U8;
 
@@ -138,11 +138,6 @@ int test(int test_case, const char* path, int rgb, int processing_device, int wi
 
 
     int resize_w = width, resize_h = height;
-
-    RocalFlipAxis axis_h = ROCAL_FLIP_HORIZONTAL;
-    RocalFlipAxis axis_v = ROCAL_FLIP_VERTICAL;
-
-    RocalImage image1;
 
     switch (test_case) {
         case 0: {
@@ -308,7 +303,7 @@ int test(int test_case, const char* path, int rgb, int processing_device, int wi
 
 
 
-    printf("Augmented copies count %d\n", rocalGetAugmentationBranchCount(handle));
+    printf("Augmented copies count %lu\n", rocalGetAugmentationBranchCount(handle));
 
 
 

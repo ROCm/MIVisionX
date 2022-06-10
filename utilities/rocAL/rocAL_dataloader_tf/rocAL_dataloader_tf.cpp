@@ -44,12 +44,11 @@ int main(int argc, const char ** argv)
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if(argc < MIN_ARG_COUNT) {
-        printf( "Usage: rocal_dataloader_tf <Folder> <TFrecod_prefix> <processing_device=1/cpu=0>  <decode_width> <decode_height> <batch_size> <gray_scale/rgb/rgbplanar> display_on_off shuffle\n" );
+        printf( "Usage: rocal_dataloader_tf <Folder> <processing_device=1/cpu=0>  <decode_width> <decode_height> <batch_size> <gray_scale/rgb/rgbplanar> display_on_off \n" );
         return -1;
     }
     int argIdx = 0;
     const char * folderPath1 = argv[++argIdx];
-    const char * record_prefix = argv[++argIdx];
     bool display = 0;// Display the images
     //int aug_depth = 1;// how deep is the augmentation tree
     int rgb = 0;// process gray images
@@ -57,7 +56,6 @@ int main(int argc, const char ** argv)
     int decode_height = 28;
     int inputBatchSize = 16;
     bool processing_device = 1;
-    bool shuffle = 0;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
@@ -76,9 +74,6 @@ int main(int argc, const char ** argv)
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         display = atoi(argv[++argIdx]);
-
-    if(argc >= argIdx+MIN_ARG_COUNT)
-        shuffle = atoi(argv[++argIdx]);
 
     std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
     RocalImageColor color_format = RocalImageColor::ROCAL_COLOR_U8;
@@ -117,7 +112,7 @@ int main(int argc, const char ** argv)
     std::string feature_map_label = "image/class/label";
 
     rocalCreateTFReader(handle, folderPath1, 1, feature_map_label.c_str(), feature_map_filename.c_str());
-   
+
     input1 = rocalJpegTFRecordSource(handle, folderPath1, ROCAL_COLOR_RGB24, 1, true, feature_map_image.c_str(), feature_map_filename.c_str(), false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height);
 
     if(rocalGetStatus(handle) != ROCAL_OK)
@@ -164,7 +159,7 @@ int main(int argc, const char ** argv)
     RocalImage image0;
     image0 = input1;
     // just do one augmentation to test
-    // rocalExposure(handle, image0, true);
+    rocalExposure(handle, image0, true);
 #endif
 
     if(rocalGetStatus(handle) != ROCAL_OK)
@@ -201,7 +196,7 @@ int main(int argc, const char ** argv)
     cv::Mat mat_input(h, w, cv_color_format);
     int col_counter = 0;
    // cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
-   
+
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
     std::vector<std::vector<char>> names;

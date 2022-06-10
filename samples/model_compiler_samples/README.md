@@ -1,5 +1,6 @@
 ## MIVisionX Model Compiler Samples
 
+
 <p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/images/modelCompilerWorkflow.png" /></p>
 
 In this sample, we will learn how to run inference efficiently using [OpenVX](https://www.khronos.org/openvx/) and [OpenVX Extensions](https://www.khronos.org/registry/OpenVX/extensions/vx_khr_nn/1.2/html/index.html). The sample will go over each step required to convert a pre-trained neural net model into an OpenVX Graph and run this graph efficiently on any target hardware. In this sample, we will also learn about AMD MIVisionX which delivers open source implementation of OpenVX and OpenVX Extensions along with MIVisionX Neural Net Model Compiler & Optimizer.
@@ -26,25 +27,25 @@ Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/n
 
 ### Prerequisites
 
-* Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
-* [ROCm supported hardware](https://rocm.github.io/ROCmInstall.html#hardware-support) 
+* Ubuntu `18.04`/`20.04` or CentOS `7`/`8`
+* [ROCm supported hardware](https://docs.amd.com/bundle/ROCm-Installation-Guide-v5.1.1/page/Prerequisite_Actions.html) 
 	* AMD Radeon GPU or AMD APU required
-* Latest [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
+* Latest [ROCm](https://docs.amd.com/category/ROCm™%20v5.x)
 * Build & Install [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#linux-1)
 
 #### Docker for Samples
 
-MIVisionX provides developers with [docker images](https://hub.docker.com/u/mivisionx) for [Ubuntu 16.04](https://hub.docker.com/r/mivisionx/ubuntu-16.04), [Ubuntu 18.04](https://hub.docker.com/r/mivisionx/ubuntu-18.04), [CentOS 7.5](https://hub.docker.com/r/mivisionx/centos-7.5), & [CentOS 7.6](https://hub.docker.com/r/mivisionx/centos-7.5). Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
+MIVisionX provides developers with [docker images](https://hub.docker.com/u/mivisionx) for [Ubuntu 18.04](https://hub.docker.com/r/mivisionx/ubuntu-18.04), [Ubuntu 20.04](https://hub.docker.com/r/mivisionx/ubuntu-20.04), [CentOS 7](https://hub.docker.com/r/mivisionx/centos-7), & [CentOS 8](https://hub.docker.com/r/mivisionx/centos-8). Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
 ##### Docker with display option for the samples
 
-* Check [docker prerequisites](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#docker-workflow-sample-on-ubuntu-1604)
+* Check [docker prerequisites](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#docker-workflow-sample-on-ubuntu-1804--2004)
 
 * Start docker with display
 ````
-% sudo docker pull mivisionx/ubuntu-16.04:tutorial
+% sudo docker pull mivisionx/ubuntu-20.04:latest
 % xhost +local:root
-% sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-16.04:tutorial
+% sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-20.04:latest
 ````
 * Test display with MIVisionX sample
 ````
@@ -52,7 +53,6 @@ MIVisionX provides developers with [docker images](https://hub.docker.com/u/mivi
 % export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 % runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
 ````
-
 ## Usage
 
 ### Convert Pre-Trained Models into OpenVX
@@ -99,9 +99,9 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 	````
 
 ### Build - Inference Application
-Classification | Detection | Segmentation
-:-------------------------:|:-------------------------:|:-------------------------:
-<img width="80%" src="images/app-control.png" /> | <img width="45%" src="images/detection_legend.png" /> | <img width="50%" src="images/segmentation_legend.png" />
+|                  Classification                  |                       Detection                       |                       Segmentation                       |
+| :----------------------------------------------: | :---------------------------------------------------: | :------------------------------------------------------: |
+| <img width="80%" src="images/app-control.png" /> | <img width="45%" src="images/detection_legend.png" /> | <img width="50%" src="images/segmentation_legend.png" /> |
 
 Once the OpenVX code is generated(annmodule.cpp & annmodule.h), follow the instructions below to build the project.
 
@@ -121,9 +121,9 @@ Once the OpenVX code is generated(annmodule.cpp & annmodule.h), follow the instr
 
 ### Run
 
-Classification |  Detection 
-:-------------------------:|:-------------------------:
-<img width="75%" src="images/app_display.png" /> | <img width="75%" src="images/detection_display.png" />
+|                  Classification                  |                       Detection                        |
+| :----------------------------------------------: | :----------------------------------------------------: |
+| <img width="75%" src="images/app_display.png" /> | <img width="75%" src="images/detection_display.png" /> |
 
 ```
 ./classifier	--mode				<1/2/3 - 1:classification 2:detection 3:segmentation>	[required]

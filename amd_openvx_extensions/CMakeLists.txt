@@ -176,7 +176,7 @@ endif()
 
 if(OpenCV_FOUND)
     if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
-        message("-- ${White}OpenCV Found -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Supported${ColourReset}")
+        message("-- ${White}OpenCV Found -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X${ColourReset}")
         add_subdirectory(amd_opencv)
         message("-- ${Green}AMD OpenVX OpenCV Extension -- amd_opencv module added${ColourReset}")
     else()

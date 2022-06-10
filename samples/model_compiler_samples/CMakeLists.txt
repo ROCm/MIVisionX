@@ -25,45 +25,46 @@
 ################################################################################
 cmake_minimum_required (VERSION 3.0)
 
-project (classification)
+project(classification)
 
-set (CMAKE_CXX_STANDARD 11)
-
+set(CMAKE_CXX_STANDARD 11)
+set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 find_package(OpenCV REQUIRED)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
-#find the OPENVX backend type
-set(OPENVX_BACKEND_OPENCL_FOUND 0)
-set(OPENVX_BACKEND_HIP_FOUND 0)
-if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)
-    file(READ ${ROCM_PATH}/include/mivisionx/openvx_backend.h OPENVX_BACKEND_FILE)
-    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
-elseif(EXISTS ${ROCM_PATH}/mivisionx/include/openvx_backend.h)
-    file(READ ${ROCM_PATH}/mivisionx/include/openvx_backend.h OPENVX_BACKEND_FILE)
-    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
-else()
-    message("-- ${Red}WARNING: ${ROCM_PATH}/include/mivisionx/openvx_backend.h file Not Found. please install the latest mivisionx! ${ColourReset}")
-endif()
+ #find the OPENVX backend type
+ set(OPENVX_BACKEND_OPENCL_FOUND 0)
+ set(OPENVX_BACKEND_HIP_FOUND 0)
+ if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)
+     file(READ ${ROCM_PATH}/include/mivisionx/openvx_backend.h OPENVX_BACKEND_FILE)
+     string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+     set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+     string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+     set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+ elseif(EXISTS ${ROCM_PATH}/mivisionx/include/openvx_backend.h)
+     file(READ ${ROCM_PATH}/mivisionx/include/openvx_backend.h OPENVX_BACKEND_FILE)
+     string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+     set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+     string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+     set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+ else()
+     message("-- WARNING: ${ROCM_PATH}/include/mivisionx/openvx_backend.h file Not Found. please install the latest mivisionx!")
+ endif()
 
-if (OPENVX_BACKEND_OPENCL_FOUND)
-    find_package(OpenCL REQUIRED)
-    include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
-endif()
+ if (OPENVX_BACKEND_OPENCL_FOUND)
+     find_package(OpenCL REQUIRED)
+     include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
+ endif()
 
-include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${ROCM_PATH}/include/mivisionx)
 include_directories(include)
-
 link_directories(${ROCM_PATH}/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
+include_directories(module_files)
+add_library(neuralNetModels SHARED module_files/annmodule.cpp)
+target_link_libraries(neuralNetModels openvx vx_nn pthread)
+
 list(APPEND SOURCES
         source/detection.cpp
         source/common.cpp
@@ -71,13 +72,20 @@ list(APPEND SOURCES
         source/classifier.cpp
         source/segmentation.cpp
     )
+add_executable(classifier ${SOURCES})
 
-include_directories(module_files)
-add_library(neuralNetModels SHARED module_files/annmodule.cpp)
-target_link_libraries(neuralNetModels openvx vx_nn pthread)
+if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
+    message("-- OpenCV Found -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Supported")
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(classifier ${OpenCV_LIBRARIES})
+    if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	    target_compile_definitions(classifier PUBLIC USE_OPENCV_4=1)
+    else()
+	    target_compile_definitions(classifier PUBLIC USE_OPENCV_4=0)
+    endif()
+else()
+    message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+endif()
 
-add_executable(classifier  ${SOURCES})
-target_compile_definitions(classifier PUBLIC ENABLE_OPENCV=1)
-target_link_libraries(classifier openvx vx_nn neuralNetModels ${OpenCV_LIBRARIES}  pthread)
-
-
+target_link_libraries(classifier openvx vx_nn neuralNetModels pthread)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")

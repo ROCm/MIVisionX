@@ -21,6 +21,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(vx_amd_migraphx)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set(CMAKE_CXX_STANDARD 14)
 
 list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})

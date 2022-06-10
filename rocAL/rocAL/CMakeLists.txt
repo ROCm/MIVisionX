@@ -23,6 +23,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(rali)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
 set(BUILD_RALI true)

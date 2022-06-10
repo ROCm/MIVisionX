@@ -21,6 +21,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(openvx)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set(CMAKE_CXX_STANDARD 14)
 
 include_directories(include ago api)

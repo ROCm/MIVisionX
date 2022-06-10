@@ -21,6 +21,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(rali_pybind)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 

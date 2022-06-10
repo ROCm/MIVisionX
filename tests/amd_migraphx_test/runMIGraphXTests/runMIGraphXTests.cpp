@@ -232,50 +232,6 @@ int main(int argc, char **argv) {
     // load vx_nn kernels
     ERROR_CHECK_STATUS(vxLoadKernels(context, "vx_amd_migraphx"));
 
-    // creation of graphs
-    vx_graph graph_mnist = vxCreateGraph(context);
-    status = vxGetStatus((vx_reference)graph_mnist);
-    if(status) {
-        printf("ERROR: vxCreateGraph(...) for mnist failed (%d)\n", status);
-        return -1;
-    }
-    vx_graph graph_squeezenet = vxCreateGraph(context);
-    status = vxGetStatus((vx_reference)graph_squeezenet);
-    if(status) {
-        printf("ERROR: vxCreateGraph(...) for squeezenet failed (%d)\n", status);
-        return -1;
-    }
-    vx_graph graph_resnet50 = vxCreateGraph(context);
-    status = vxGetStatus((vx_reference)graph_resnet50);
-    if(status) {
-        printf("ERROR: vxCreateGraph(...) for renset50 failed (%d)\n", status);
-        return -1;
-    }
-    vx_graph graph_vgg19 = vxCreateGraph(context);
-    status = vxGetStatus((vx_reference)graph_vgg19);
-    if(status) {
-        printf("ERROR: vxCreateGraph(...) for vgg19 failed (%d)\n", status);
-        return -1;
-    }
-    vx_graph graph_googlenet = vxCreateGraph(context);
-    status = vxGetStatus((vx_reference)graph_googlenet);
-    if(status) {
-        printf("ERROR: vxCreateGraph(...) for googlenet failed (%d)\n", status);
-        return -1;
-    }
-    vx_graph graph_densenet = vxCreateGraph(context);
-    status = vxGetStatus((vx_reference)graph_densenet);
-    if(status) {
-        printf("ERROR: vxCreateGraph(...) for densenet failed (%d)\n", status);
-        return -1;
-    }
-    vx_graph graph_alexnet = vxCreateGraph(context);
-    status = vxGetStatus((vx_reference)graph_alexnet);
-    if(status) {
-        printf("ERROR: vxCreateGraph(...) for alexnet failed (%d)\n", status);
-        return -1;
-    }
-
     // initialize variables
     vx_tensor input_tensor_224x224, input_tensor_28x28;
     vx_size input_num_of_dims = 4;
@@ -308,16 +264,9 @@ int main(int argc, char **argv) {
     }
     out.close();
 
-    //create data for different sizes
+    //create input data for different sizes
     input_tensor_224x224 = vxCreateTensor(context, input_num_of_dims, input_dims_data_224x224, VX_TYPE_FLOAT32, 0);
     input_tensor_28x28 = vxCreateTensor(context, input_num_of_dims, input_dims_data_28x28, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_resnet50 = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_googlenet = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_alexnet = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_squeezenet = vxCreateTensor(context, output_num_of_dims_4, output_dims_data_1x1000x1x1, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_densenet = vxCreateTensor(context, output_num_of_dims_4, output_dims_data_1x1000x1x1, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_vgg19 = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-    vx_tensor output_tensor_mnist = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x10, VX_TYPE_FLOAT32, 0);
 
     //read an image and resize to correct dimensions -- opencv imread()
     cv::Mat imagenet_input_image, mnist_input_image, input_image_224x224, input_image_28x28;
@@ -437,6 +386,16 @@ int main(int argc, char **argv) {
     }
 
     if (runMnist) {
+        //output tensor
+        vx_tensor output_tensor_mnist = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x10, VX_TYPE_FLOAT32, 0);
+
+        //graph creation
+        vx_graph graph_mnist = vxCreateGraph(context);
+        status = vxGetStatus((vx_reference)graph_mnist);
+        if(status) {
+            printf("ERROR: vxCreateGraph(...) for mnist failed (%d)\n", status);
+            return -1;
+        }
         vx_node node_mnist = amdMIGraphXnode(graph_mnist, binaryFilename_mnist_str.c_str(), input_tensor_28x28, output_tensor_mnist);
         ERROR_CHECK_OBJECT(node_mnist);
         ERROR_CHECK_STATUS(vxVerifyGraph(graph_mnist));
@@ -479,6 +438,16 @@ int main(int argc, char **argv) {
     }
 
     if (runResnet50) {
+        //output tensor
+        vx_tensor output_tensor_resnet50 = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
+        
+        //graph creation
+        vx_graph graph_resnet50 = vxCreateGraph(context);
+        status = vxGetStatus((vx_reference)graph_resnet50);
+        if(status) {
+            printf("ERROR: vxCreateGraph(...) for renset50 failed (%d)\n", status);
+            return -1;
+        }
         vx_node node_resnet50 = amdMIGraphXnode(graph_resnet50, binaryFilename_resnet50_str.c_str(), input_tensor_224x224, output_tensor_resnet50);
         ERROR_CHECK_OBJECT(node_resnet50);
         ERROR_CHECK_STATUS(vxVerifyGraph(graph_resnet50));
@@ -518,6 +487,16 @@ int main(int argc, char **argv) {
     }
 
     if (runVgg19) {
+        //output tensor
+        vx_tensor output_tensor_vgg19 = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
+
+        //graph creation
+        vx_graph graph_vgg19 = vxCreateGraph(context);
+        status = vxGetStatus((vx_reference)graph_vgg19);
+        if(status) {
+            printf("ERROR: vxCreateGraph(...) for vgg19 failed (%d)\n", status);
+            return -1;
+        }
         vx_node node_vgg19 = amdMIGraphXnode(graph_vgg19, binaryFilename_vgg19_str.c_str(), input_tensor_224x224, output_tensor_vgg19);
         ERROR_CHECK_OBJECT(node_vgg19);
         ERROR_CHECK_STATUS(vxVerifyGraph(graph_vgg19));
@@ -559,6 +538,16 @@ int main(int argc, char **argv) {
     }
 
     if (runGooglenet) {
+        //output tensor
+        vx_tensor output_tensor_googlenet = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
+
+        //graph creation
+        vx_graph graph_googlenet = vxCreateGraph(context);
+        status = vxGetStatus((vx_reference)graph_googlenet);
+        if(status) {
+            printf("ERROR: vxCreateGraph(...) for googlenet failed (%d)\n", status);
+            return -1;
+        }
         vx_node node_googlenet = amdMIGraphXnode(graph_googlenet, binaryFilename_googlenet_str.c_str(), input_tensor_224x224, output_tensor_googlenet);
         ERROR_CHECK_OBJECT(node_googlenet);
         ERROR_CHECK_STATUS(vxVerifyGraph(graph_googlenet));
@@ -600,6 +589,16 @@ int main(int argc, char **argv) {
     }
 
     if (runAlexnet) {
+        //output tensor
+        vx_tensor output_tensor_alexnet = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
+
+        //graph creation
+        vx_graph graph_alexnet = vxCreateGraph(context);
+        status = vxGetStatus((vx_reference)graph_alexnet);
+        if(status) {
+            printf("ERROR: vxCreateGraph(...) for alexnet failed (%d)\n", status);
+            return -1;
+        }
         vx_node node_alexnet = amdMIGraphXnode(graph_alexnet, binaryFilename_alexnet_str.c_str(), input_tensor_224x224, output_tensor_alexnet);
         ERROR_CHECK_OBJECT(node_alexnet);
         ERROR_CHECK_STATUS(vxVerifyGraph(graph_alexnet));
@@ -642,6 +641,17 @@ int main(int argc, char **argv) {
     }
 
     if (runSqueezenet) {
+        //output tensor
+        vx_tensor output_tensor_squeezenet = vxCreateTensor(context, output_num_of_dims_4, output_dims_data_1x1000x1x1, VX_TYPE_FLOAT32, 0);
+
+        //graph creation
+        vx_graph graph_squeezenet = vxCreateGraph(context);
+        status = vxGetStatus((vx_reference)graph_squeezenet);
+        if(status) {
+            printf("ERROR: vxCreateGraph(...) for squeezenet failed (%d)\n", status);
+            return -1;
+        }
+
         vx_node node_squeezenet = amdMIGraphXnode(graph_squeezenet, binaryFilename_squeezenet_str.c_str(), input_tensor_224x224, output_tensor_squeezenet);
         ERROR_CHECK_OBJECT(node_squeezenet);
         ERROR_CHECK_STATUS(vxVerifyGraph(graph_squeezenet));
@@ -683,6 +693,16 @@ int main(int argc, char **argv) {
     }
 
     if (runDensenet) {
+        //output tensor
+        vx_tensor output_tensor_densenet = vxCreateTensor(context, output_num_of_dims_4, output_dims_data_1x1000x1x1, VX_TYPE_FLOAT32, 0);
+
+        //graph creation
+        vx_graph graph_densenet = vxCreateGraph(context);
+        status = vxGetStatus((vx_reference)graph_densenet);
+        if(status) {
+            printf("ERROR: vxCreateGraph(...) for densenet failed (%d)\n", status);
+            return -1;
+        }
         vx_node node_densenet = amdMIGraphXnode(graph_densenet, binaryFilename_densenet_str.c_str(), input_tensor_224x224, output_tensor_densenet);
         ERROR_CHECK_OBJECT(node_densenet);  
         ERROR_CHECK_STATUS(vxVerifyGraph(graph_densenet));

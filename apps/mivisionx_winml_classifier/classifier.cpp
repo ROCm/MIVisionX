@@ -12,8 +12,11 @@
 #include <io.h>
 #include <math.h>
 #include <fstream>
-#include <opencv2/opencv.hpp>
 #include <algorithm>
+
+#include <opencv2/opencv.hpp>
+using namespace cv;
+
 #define CVUI_IMPLEMENTATION
 #include "cvui.h"
 

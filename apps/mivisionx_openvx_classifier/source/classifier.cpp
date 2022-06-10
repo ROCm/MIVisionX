@@ -38,14 +38,21 @@ THE SOFTWARE.
 #include <unistd.h>
 #include <math.h>
 #include <immintrin.h>
-#include<fstream>
+#include <fstream>
 
-#if ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
+using namespace cv;
+
 #define CVUI_IMPLEMENTATION
 #include "cvui.h"
-using namespace cv;
+
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FONT_HERSHEY_DUPLEX FONT_HERSHEY_DUPLEX
+#define cvWaitKey waitKey
 #endif
+
 
 #define MIVisionX_LEGEND "MIVisionX Image Classification"
 

@@ -23,16 +23,16 @@
 # SOFTWARE.
 #
 ################################################################################
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required(VERSION 3.0)
 
-project (classification)
+project(classification)
 
-set (CMAKE_CXX_STANDARD 11)
-
+set(CMAKE_CXX_STANDARD 14)
+set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm Installation Path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 find_package(OpenCV REQUIRED)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 #find the OPENVX backend type
 set(OPENVX_BACKEND_OPENCL_FOUND 0)
 set(OPENVX_BACKEND_HIP_FOUND 0)
@@ -49,7 +49,7 @@ elseif(EXISTS ${ROCM_PATH}/mivisionx/include/openvx_backend.h)
     string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
     set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
 else()
-    message("-- ${Red}WARNING: ${ROCM_PATH}/include/mivisionx/openvx_backend.h file Not Found. please install the latest mivisionx! ${ColourReset}")
+    message("-- WARNING: ${ROCM_PATH}/include/mivisionx/openvx_backend.h file Not Found. please install the latest mivisionx!")
 endif()
 
 if (OPENVX_BACKEND_OPENCL_FOUND)
@@ -57,19 +57,28 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
     include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 endif()
 
-include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(${ROCM_PATH}/include/mivisionx)
-include_directories(include)
-
-link_directories(${ROCM_PATH}/lib)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
-
 add_library(caffeModels SHARED source/caffeModels.cpp)
 target_link_libraries(caffeModels openvx vx_nn pthread)
 
 add_executable(classifier source/classifier.cpp)
-target_compile_definitions(classifier PUBLIC ENABLE_OPENCV=1)
-target_link_libraries(classifier openvx vx_nn caffeModels ${OpenCV_LIBRARIES}  pthread)
 
+if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
+    message("-- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(classifier ${OpenCV_LIBRARIES})
+    if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	    target_compile_definitions(mvtestdeploy PUBLIC USE_OPENCV_4=1)
+    else()
+	    target_compile_definitions(mvtestdeploy PUBLIC USE_OPENCV_4=0)
+    endif()
+else()
+    message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+endif()
 
+include_directories(${ROCM_PATH}/include/mivisionx)
+include_directories(include)
+link_directories(${ROCM_PATH}/lib)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+
+target_link_libraries(classifier openvx vx_nn caffeModels pthread)

@@ -57,6 +57,10 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
     include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 endif()
 
+include_directories(${ROCM_PATH}/include/mivisionx)
+include_directories(include)
+link_directories(${ROCM_PATH}/lib)
+
 add_library(caffeModels SHARED source/caffeModels.cpp)
 target_link_libraries(caffeModels openvx vx_nn pthread)
 
@@ -67,18 +71,13 @@ if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
     include_directories(${OpenCV_INCLUDE_DIRS})
     target_link_libraries(classifier ${OpenCV_LIBRARIES})
     if(${OpenCV_VERSION_MAJOR} EQUAL 4)
-	    target_compile_definitions(caffeModels PUBLIC USE_OPENCV_4=1)
+	    target_compile_definitions(classifier PUBLIC USE_OPENCV_4=1)
     else()
-	    target_compile_definitions(caffeModels PUBLIC USE_OPENCV_4=0)
+	    target_compile_definitions(classifier PUBLIC USE_OPENCV_4=0)
     endif()
 else()
     message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
 
-include_directories(${ROCM_PATH}/include/mivisionx)
-include_directories(include)
-link_directories(${ROCM_PATH}/lib)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
-
 target_link_libraries(classifier openvx vx_nn caffeModels pthread)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")

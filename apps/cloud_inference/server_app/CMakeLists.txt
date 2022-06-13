@@ -47,7 +47,7 @@ list(APPEND SOURCES
 		configure.cpp
 		compiler.cpp
 		inference.cpp
-    	inference_hip.cpp
+		inference_hip.cpp
 		server.cpp
 		main.cpp
 		profiler.cpp
@@ -107,17 +107,23 @@ else()
 	message( FATAL_ERROR "-- ${Red}FATAL_ERROR: OpenCL/HIP Not Found${ColourReset}")
 endif()
 
-if(OpenCV_FOUND)
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCV=1)
+if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
+	message("-- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
+	if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	    target_compile_definitions(inference_server_app PUBLIC USE_OPENCV_4=1)
+    else()
+	    target_compile_definitions(inference_server_app PUBLIC USE_OPENCV_4=0)
+    endif()
 	include_directories(${OpenCV_INCLUDE_DIRS})
 	target_link_libraries(inference_server_app ${OpenCV_LIBRARIES})
-else(OpenCV_FOUND)
+else()
+	message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCV=0)
-endif(OpenCV_FOUND)
+endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1 -mf16c")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1 -mf16c -fopenmp")
 endif()

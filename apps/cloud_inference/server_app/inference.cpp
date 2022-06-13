@@ -5,7 +5,11 @@
 #include <chrono>
 #include <dlfcn.h>
 #include <opencv2/opencv.hpp>
+#if USE_OPENCV_4
 #include <opencv2/highgui.hpp>
+#else
+#include <highgui.h>
+#endif
 #include <numeric>
 
 #if USE_SSE_OPTIMIZATION

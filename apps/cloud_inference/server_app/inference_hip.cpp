@@ -868,7 +868,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
                     buf = (float *)mapped_ptr + dimInput[0] * dimInput[1] * dimInput[2] * inputCount;
 
                 PROFILER_START(inference_server_app, workDeviceInputCopyJpegDecode);
-                DecodeScaleAndConvertToTensor(dimInput[0], dimInput[1], size, (unsigned char *)byteStream, buf, useFp16);
+                DecodeScaleAndConvertToTensor(dimInput[0], dimInput[1], size, (unsigned char *)byteStream, (float *)buf, useFp16);
                 PROFILER_STOP(inference_server_app, workDeviceInputCopyJpegDecode);
                 // release byteStream
                 delete[] byteStream;

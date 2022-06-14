@@ -32,7 +32,11 @@ int connection(int sock, Arguments * args, std::string clientName)
         status = runCompiler(sock, args, clientName, &cmd);
     }
     else if(mode == INFCOM_MODE_INFERENCE) {
+#if ENABLE_OPENCL      
         InferenceEngine * ie = new InferenceEngine(sock, args, clientName, &cmd);
+#else
+        InferenceEngineHip * ie = new InferenceEngineHip(sock, args, clientName, &cmd);
+#endif        
         if(ie) {
             status = ie->run();
             delete ie;

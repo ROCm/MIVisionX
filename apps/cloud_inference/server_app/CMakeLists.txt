@@ -118,7 +118,6 @@ if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
 	target_link_libraries(inference_server_app ${OpenCV_LIBRARIES})
 else()
 	message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCV=0)
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

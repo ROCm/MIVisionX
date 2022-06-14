@@ -213,10 +213,7 @@ int main(int argc, const char ** argv)
             break;
         }
 
-        if(display)
             rocalCopyToOutput(handle, mat_input.data, h*w*p);
-        else
-            rocalCopyToOutputTensor(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW,RocalTensorOutputType::ROCAL_FP32, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += inputBatchSize;
 #if 0
         rocalGetImageLabels(handle, labels.data());

@@ -30,14 +30,9 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../amd_openvx/cmake)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
-find_package(OpenCL QUIET)
 find_package(OpenCV REQUIRED)
-
-if(NOT OpenCL_FOUND)
-	message(FATAL_ERROR "inference_server_app - Only supported with OpenCL Backend" )
-endif(NOT OpenCL_FOUND)
 
 include_directories(../../../amd_openvx/openvx/include
   					${OpenCL_INCLUDE_DIRS}
@@ -52,6 +47,7 @@ list(APPEND SOURCES
 		configure.cpp
 		compiler.cpp
 		inference.cpp
+		inference_hip.cpp
 		server.cpp
 		main.cpp
 		profiler.cpp
@@ -61,25 +57,72 @@ list(APPEND SOURCES
 
 add_executable(inference_server_app ${SOURCES})
 target_link_libraries(inference_server_app vx_nn openvx pthread dl)
-# install MIVisionX executables -- {ROCM_PATH)/bin
 install(TARGETS inference_server_app DESTINATION bin)
 
-if(OpenCL_FOUND)
-	include_directories(${OpenCL_INCLUDE_DIRS}/CL ${OpenCL_INCLUDE_DIRS}/Headers)
-	target_link_libraries(inference_server_app ${OpenCL_LIBRARIES})
-endif(OpenCL_FOUND)
+if("${BACKEND}" STREQUAL "OPENCL")
+	find_package(OpenCL QUIET)
+	if(OpenCL_FOUND)
+		set(ENABLE_OPENCL 1)
+		set(ENABLE_HIP 0)
+		include_directories(${OpenCL_INCLUDE_DIRS}/CL ${OpenCL_INCLUDE_DIRS}/Headers)
+		target_link_libraries(inference_server_app ${OpenCL_LIBRARIES})
+		message("-- ${Green}Inference Server App -- App built with OpenCL Support${ColourReset}")
+        message("-- ${Blue}Using OpenCL Library -- ${OpenCL_LIBRARIES}${ColourReset}")
+	else()
+		set(ENABLE_OPENCL 0)
+		set(ENABLE_HIP 0)
+		message( FATAL_ERROR "-- ${Red}FATAL ERROR: inference_server_app - OpenCL Not Found${ColourReset}")
+	endif()
+	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
+	target_compile_definitions(inference_server_app PUBLIC ENABLE_HIP=${ENABLE_HIP})
+elseif("${BACKEND}" STREQUAL "HIP")
+	set(OpenCL_FOUND FALSE)
+	# HSA_PATH
+    if(NOT DEFINED ENV{HSA_PATH})
+        SET(HSA_PATH ${ROCM_PATH}/hsa)
+    else()
+        SET(HSA_PATH $ENV{HSA_PATH})
+    endif()
+    find_package(HIP QUIET)
+    if(HIP_FOUND)
+        message(STATUS "Found HIP: " ${HIP_PATH} " version: " ${HIP_VERSION})
+        if(HIP_COMPILER STREQUAL clang)
+			set(ENABLE_OPENCL 0)
+			set(ENABLE_HIP 1)
+		else()
+			message( FATAL_ERROR "-- ${Red}FATAL_ERROR: Unsupported HIP compiler${ColourReset}")
+		endif()
+	else()
+		set(ENABLE_OPENCL 0)
+		set(ENABLE_HIP 0)
+		message( FATAL_ERROR "-- ${Red}FATAL_ERROR: HIP Not Found${ColourReset}")
+	endif()
+	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
+	target_compile_definitions(inference_server_app PUBLIC ENABLE_HIP=${ENABLE_HIP})
+else()
+	set(ENABLE_OPENCL 0)
+	set(ENABLE_HIP 0)
+	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
+	target_compile_definitions(inference_server_app PUBLIC ENABLE_HIP=${ENABLE_HIP})
+	message( FATAL_ERROR "-- ${Red}FATAL_ERROR: OpenCL/HIP Not Found${ColourReset}")
+endif()
 
-if(OpenCV_FOUND)
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCV=1)
+if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
+	message("-- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
+	if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	    target_compile_definitions(inference_server_app PUBLIC USE_OPENCV_4=1)
+    else()
+	    target_compile_definitions(inference_server_app PUBLIC USE_OPENCV_4=0)
+    endif()
 	include_directories(${OpenCV_INCLUDE_DIRS})
 	target_link_libraries(inference_server_app ${OpenCV_LIBRARIES})
-else(OpenCV_FOUND)
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCV=0)
-endif(OpenCV_FOUND)
+else()
+	message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -msse4.1 -mf16c")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1 -mf16c -fopenmp")
 endif()

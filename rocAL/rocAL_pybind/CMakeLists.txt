@@ -21,6 +21,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(rali_pybind)
 
+# Default libdir to "lib", this skips GNUInstallDirs from trying to take a guess if it's unset:
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 #including GNUInstall Dir definitions.
 include( GNUInstallDirs )
 

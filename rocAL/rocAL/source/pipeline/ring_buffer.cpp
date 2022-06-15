@@ -37,6 +37,7 @@ void RingBuffer::block_if_empty()
     std::unique_lock<std::mutex> lock(_lock);
     if(empty())
     { // if the current read buffer is being written wait on it
+        std::cout << "Blocked by slow RPP processing\n";
         if(_dont_block)
             return;
         _wait_for_load.wait(lock);
@@ -49,6 +50,7 @@ void RingBuffer:: block_if_full()
     // Write the whole buffer except for the last spot which is being read by the reader thread
     if(full())
     {
+        std::cout << "Bottlenecked by slow training dataloader\n";
         if(_dont_block)
             return;
         _wait_for_unload.wait(lock);

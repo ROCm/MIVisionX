@@ -112,7 +112,7 @@ int main(int argc, const char ** argv)
     std::string feature_map_label = "image/class/label";
 
     rocalCreateTFReader(handle, folderPath1, 1, feature_map_label.c_str(), feature_map_filename.c_str());
-    input1 = rocalJpegTFRecordSource(handle, folderPath1, ROCAL_COLOR_RGB24, 1, true, feature_map_image.c_str(), feature_map_filename.c_str(), false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height);
+    input1 = rocalJpegTFRecordSource(handle, folderPath1, ROCAL_COLOR_RGB24, 1, false, feature_map_image.c_str(), feature_map_filename.c_str(), false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height);
 
     if(rocalGetStatus(handle) != ROCAL_OK)
     {
@@ -158,7 +158,8 @@ int main(int argc, const char ** argv)
     RocalImage image0;
     image0 = input1;
     // just do one augmentation to test
-    rocalExposure(handle, image0, true);
+    // rocalResize(handle, image0, true);
+    rocalResize(handle, image0, 300, 300, true);
 #endif
 
     if(rocalGetStatus(handle) != ROCAL_OK)
@@ -189,12 +190,10 @@ int main(int argc, const char ** argv)
     const unsigned number_of_cols = 1;    // no augmented case
     printf("Before memalloc\n");
 
-    float out_tensor[(h*w*p)];
     auto cv_color_format = ((p==3) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w*number_of_cols, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);
     int col_counter = 0;
-   // cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
     std::vector<std::vector<char>> names;
@@ -202,8 +201,6 @@ int main(int argc, const char ** argv)
     names.resize(inputBatchSize);
     labels.resize(inputBatchSize);
     int iter_cnt = 0;
-    float  pmul = 1.0f/255;
-    float  padd = 0.0f;
     while (!rocalIsEmpty(handle) && (iter_cnt < 100))
     {
        // if ((iter_cnt %16) == 0)
@@ -262,7 +259,7 @@ int main(int argc, const char ** argv)
             mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
             cv::imshow("output",mat_output);
         }
-        cv::waitKey(1);
+        // cv::waitKey(1);
         col_counter = (col_counter+1)%number_of_cols;
     }
 

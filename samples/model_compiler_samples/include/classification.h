@@ -4,13 +4,6 @@
 #include <stdlib.h>
 #include <string>
 
-#if ENABLE_OPENCV
-#include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-
-#endif
-
 #include "vx_ext_opencv.h"
 
 // Name Output Display Windows

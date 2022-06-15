@@ -96,20 +96,26 @@ list(APPEND SOURCES
 
 add_library(vx_opencv SHARED ${SOURCES})
 
-include_directories(${OpenCV_INCLUDE_DIRS})
-target_link_libraries(vx_opencv ${OpenCV_LIBRARIES} openvx)
+if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
+    message("-- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
+    if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	    target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=1)
+    else()
+	    target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=0)
+    endif()
+else()
+    message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+endif()
+
+target_link_libraries(vx_opencv openvx)
 target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_opencv DESTINATION lib)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_ext_opencv.h DESTINATION include/mivisionx)
-
-if(${OpenCV_VERSION_MAJOR} EQUAL 4)
-	target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=1)
-else()
-	target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=0)
-endif()
 
 if(WIN32)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

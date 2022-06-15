@@ -67,6 +67,18 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 
+#if USE_OPENCV_4
+using namespace cv;
+#define CV_FONT_HERSHEY_PLAIN FONT_HERSHEY_PLAIN
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FONT_HERSHEY_DUPLEX FONT_HERSHEY_DUPLEX
+#define CV_BGR2RGB COLOR_BGR2RGB
+#define CV_DIST_L1 DIST_L1
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#define CV_GRAY2RGB COLOR_GRAY2RGB
+#define CV_FILLED FILLED
+#endif
+
 namespace cvui
 {
 /**

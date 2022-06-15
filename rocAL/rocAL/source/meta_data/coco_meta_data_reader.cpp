@@ -32,6 +32,7 @@ using namespace std;
 void COCOMetaDataReader::init(const MetaDataConfig &cfg)
 {
     _path = cfg.path();
+    _mask = cfg.mask();
     _output = new BoundingBoxBatch();
 }
 
@@ -60,7 +61,23 @@ void COCOMetaDataReader::lookup(const std::vector<std::string> &image_names)
         _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
         _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
         _output->get_img_sizes_batch()[i] = it->second->get_img_size();
+        if (_mask)
+            _output->get_mask_cords_batch()[i] = it->second->get_mask_cords();
     }
+}
+
+void COCOMetaDataReader::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels, ImgSize image_size, MaskCords mask_cords)
+{
+    if (exists(image_name))
+    {
+        auto it = _map_content.find(image_name);
+        it->second->get_bb_cords().push_back(bb_coords[0]);
+        it->second->get_bb_labels().push_back(bb_labels[0]);
+        it->second->get_mask_cords().push_back(mask_cords[0]);
+        return;
+    }
+    pMetaDataBox info = std::make_shared<BoundingBox>(bb_coords, bb_labels, image_size, mask_cords);
+    _map_content.insert(pair<std::string, std::shared_ptr<BoundingBox>>(image_name, info));
 }
 
 void COCOMetaDataReader::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels, ImgSize image_size)
@@ -81,6 +98,7 @@ void COCOMetaDataReader::print_map_contents()
     BoundingBoxCords bb_coords;
     BoundingBoxLabels bb_labels;
     ImgSize img_size;
+    MaskCords mask_cords;
 
     std::cout << "\nBBox Annotations List: \n";
     for (auto &elem : _map_content)
@@ -89,10 +107,25 @@ void COCOMetaDataReader::print_map_contents()
         bb_coords = elem.second->get_bb_cords();
         bb_labels = elem.second->get_bb_labels();
         img_size = elem.second->get_img_size();
+        mask_cords = elem.second->get_mask_cords();
         std::cout << "<wxh, num of bboxes>: " << img_size.w << " X " << img_size.h << " , " << bb_coords.size() << std::endl;
         for (unsigned int i = 0; i < bb_coords.size(); i++)
         {
             std::cout << " l : " << bb_coords[i].l << " t: :" << bb_coords[i].t << " r : " << bb_coords[i].r << " b: :" << bb_coords[i].b << "Label Id : " << bb_labels[i] << std::endl;
+        }
+        if (_mask)
+        {
+            std::cout << "\nNumber of objects : " << mask_cords.size() << std::endl;
+            for (unsigned int i = 0; i < mask_cords.size(); i++)
+            {
+                std::cout << "\nNumber of polygons for object[ << " << i << "]:" << mask_cords[i].size();
+                for (unsigned j = 0; j < mask_cords[i].size(); j++)
+                {
+                    std::cout << "\nPolygon size :" << mask_cords[i][j].size() << "Elements::";
+                    for (unsigned k = 0; k < mask_cords[i][j].size(); k++)
+                        std::cout << "\t " << mask_cords[i][j][k];
+                }
+            }
         }
     }
 }
@@ -125,9 +158,11 @@ void COCOMetaDataReader::read_all(const std::string &path)
     BoundingBoxCords bb_coords;
     BoundingBoxLabels bb_labels;
     ImgSizes img_sizes;
+    MaskCords mask_cords;
 
     BoundingBoxCord box;
     ImgSize img_size;
+    coords mask_cord;
     RAPIDJSON_ASSERT(parser.PeekType() == kObjectType);
     parser.EnterObject();
     while (const char *key = parser.NextObjectKey())
@@ -200,8 +235,9 @@ void COCOMetaDataReader::read_all(const std::string &path)
             parser.EnterArray();
             while (parser.NextArrayValue())
             {
-                int id = 1, label = 0;
+                int id = 1, label = 0, iscrowd = 0;
                 std::array<float, 4> bbox;
+                std::vector<float> mask;
                 if (parser.PeekType() != kObjectType)
                 {
                     continue;
@@ -217,6 +253,10 @@ void COCOMetaDataReader::read_all(const std::string &path)
                     {
                         label = parser.GetInt();
                     }
+                    else if (0 == std::strcmp(internal_key, "iscrowd"))
+                    {
+                        iscrowd = parser.GetInt();
+                    }
                     else if (0 == std::strcmp(internal_key, "bbox"))
                     {
                         RAPIDJSON_ASSERT(parser.PeekType() == kArrayType);
@@ -226,6 +266,33 @@ void COCOMetaDataReader::read_all(const std::string &path)
                         {
                             bbox[i] = parser.GetDouble();
                             ++i;
+                        }
+                    }
+                    else if (_mask && 0 == std::strcmp(internal_key, "segmentation"))
+                    {
+                        if (parser.PeekType() == kObjectType)
+                        {
+                            parser.EnterObject();
+                            const char *key = parser.NextObjectKey();
+                            if (0 == std::strcmp(key, "counts"))
+                            {
+                                parser.SkipArray();
+                            }
+                        }
+                        else
+                        {
+                            RAPIDJSON_ASSERT(parser.PeekType() == kArrayType);
+                            parser.EnterArray();
+                            while (parser.NextArrayValue())
+                            {
+                                parser.EnterArray();
+                                while (parser.NextArrayValue())
+                                {
+                                    mask.push_back(parser.GetDouble());
+                                }
+                                mask_cord.push_back(mask);
+                                mask.clear();
+                            }
                         }
                     }
                     else
@@ -239,16 +306,34 @@ void COCOMetaDataReader::read_all(const std::string &path)
                 std::string file_name = str + ".jpg";
 
                 auto it = _map_img_sizes.find(file_name);
-                ImgSize image_size = it->second; //Normalizing the co-ordinates & convert to "ltrb" format
-                box.l = bbox[0] / image_size.w;
-                box.t = bbox[1] / image_size.h;
-                box.r = (bbox[0] + bbox[2]) / image_size.w;
-                box.b = (bbox[1] + bbox[3]) / image_size.h;
-                bb_coords.push_back(box);
-                bb_labels.push_back(label);
-                add(file_name, bb_coords, bb_labels, image_size);
-                bb_coords.clear();
-                bb_labels.clear();
+                ImgSize image_size = it->second; //Normalizing the co-ordinates & convert to "ltrb" format                                
+                if (_mask && iscrowd == 0)
+                {
+                    box.l = bbox[0] / image_size.w;
+                    box.t = bbox[1] / image_size.h;
+                    box.r = (bbox[0] + bbox[2] - 1) / image_size.w;
+                    box.b = (bbox[1] + bbox[3] - 1) / image_size.h;
+                    bb_coords.push_back(box);
+                    bb_labels.push_back(label);
+                    mask_cords.push_back(mask_cord);
+                    add(file_name, bb_coords, bb_labels, image_size, mask_cords);
+                    mask_cord.clear();
+                    mask_cords.clear();
+                    bb_coords.clear();
+                    bb_labels.clear();
+                }
+                else if (!_mask)
+                {
+                    box.l = bbox[0] / image_size.w;
+                    box.t = bbox[1] / image_size.h;
+                    box.r = (bbox[0] + bbox[2]) / image_size.w;
+                    box.b = (bbox[1] + bbox[3]) / image_size.h;
+                    bb_coords.push_back(box);
+                    bb_labels.push_back(label);
+                    add(file_name, bb_coords, bb_labels, image_size);
+                    bb_coords.clear();
+                    bb_labels.clear();
+                }
                 image_size = {};
             }
         }

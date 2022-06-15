@@ -30,7 +30,7 @@ void ResizeCropMirrorMetaNode::initialize()
     _mirror_val.resize(_batch_size);
 }
 
-void ResizeCropMirrorMetaNode::update_parameters(MetaDataBatch* input_meta_data)
+void ResizeCropMirrorMetaNode::update_parameters(MetaDataBatch* input_meta_data, bool segmentation)
 {
     initialize();
     if(_batch_size != input_meta_data->size())

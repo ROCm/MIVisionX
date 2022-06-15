@@ -33,7 +33,7 @@ class MetaNode
 public:
     MetaNode() {}
     virtual ~MetaNode() {};
-    virtual void update_parameters(MetaDataBatch* input_meta_data) = 0;
+    virtual void update_parameters(MetaDataBatch* input_meta_data, bool segmentation) = 0;
     double BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou) const;
     int _batch_size;
     float _iou_threshold = 0.25;

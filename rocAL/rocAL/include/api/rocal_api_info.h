@@ -35,6 +35,18 @@ extern "C" int ROCAL_API_CALL rocalGetOutputHeight(RocalContext rocal_context);
 
 ///
 /// \param rocal_context
+/// \param buf
+/// \return The width of the ROCAL's output image in pixels
+extern "C" void ROCAL_API_CALL rocalGetOutputResizeWidth(RocalContext rocal_context, unsigned int* buf);
+
+///
+/// \param rocal_context
+/// \param buf
+/// \return The height of the ROCAL's output image in pixels. It includes all images in the batch.
+extern "C" void ROCAL_API_CALL rocalGetOutputResizeHeight(RocalContext rocal_context, unsigned int* buf);
+
+///
+/// \param rocal_context
 /// \return The color format of the ROCAL's output. It's equivalent of what's passed to the loaders as input color format.
 extern "C" int ROCAL_API_CALL rocalGetOutputColorFormat(RocalContext rocal_context);
 

@@ -1,8 +1,11 @@
 cmake_minimum_required (VERSION 3.1)
 project (DGTest)
-set (CMAKE_CXX_STANDARD 14)
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+set (CMAKE_CXX_STANDARD 14)
+
+find_package(OpenCV QUIET)
+
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm Installation Path")
 #find the OPENVX backend type
 set(OPENVX_BACKEND_OPENCL_FOUND 0)
@@ -21,8 +24,6 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
     include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 endif()
 
-find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${ROCM_PATH}/include/mivisionx)
 link_directories(${ROCM_PATH}/lib)
 add_library(annmodule SHARED annmodule.cpp)
@@ -30,4 +31,18 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
 target_link_libraries(annmodule openvx vx_nn pthread)
 set(TARGET_CPP UserInterface.cpp DGtest.cpp)
 add_executable(DGTest main.cpp ${TARGET_CPP})
-target_link_libraries(DGTest openvx vx_nn pthread annmodule ${OpenCV_LIBRARIES})
+
+if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
+    message("-- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(DGTest ${OpenCV_LIBRARIES})
+    if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	    target_compile_definitions(DGTest PUBLIC USE_OPENCV_4=1)
+    else()
+	    target_compile_definitions(DGTest PUBLIC USE_OPENCV_4=0)
+    endif()
+else()
+    message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+endif()
+
+target_link_libraries(DGTest openvx vx_nn pthread annmodule)

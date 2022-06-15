@@ -28,7 +28,6 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(miopen     PATHS ${ROCM_PATH} REQUIRED)
-find_package(Protobuf QUIET)
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(miopengemm PATHS ${ROCM_PATH} REQUIRED)
@@ -50,13 +49,6 @@ elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     endif()
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
 endif()
-
-if(Protobuf_FOUND)
-    add_subdirectory(../../utilities/inference_generator ${CMAKE_CURRENT_BINARY_DIR}/bin)
-    message("-- ${Green}Inference Generator -- utilities/inference_generator module added${ColourReset}")
-else(Protobuf_FOUND)
-    message("-- ${Red}WARNING: Protobuf Not Found -- utilities/inference_generator module excluded${ColourReset}")
-endif(Protobuf_FOUND)
 
 include_directories(../../amd_openvx/openvx/include
                     ${OpenCL_INCLUDE_DIRS}

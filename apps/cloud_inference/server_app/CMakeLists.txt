@@ -21,6 +21,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(inference_server_app)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm Installation Path")
 # need to do this to avoid setting the default path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -62,7 +65,7 @@ list(APPEND SOURCES
 add_executable(inference_server_app ${SOURCES})
 target_link_libraries(inference_server_app vx_nn openvx pthread dl)
 # install MIVisionX executables -- {ROCM_PATH)/bin
-install(TARGETS inference_server_app DESTINATION bin)
+install(TARGETS inference_server_app DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if(OpenCL_FOUND)
 	include_directories(${OpenCL_INCLUDE_DIRS}/CL ${OpenCL_INCLUDE_DIRS}/Headers)

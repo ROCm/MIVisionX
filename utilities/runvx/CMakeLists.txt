@@ -21,6 +21,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(runvx)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set(CMAKE_CXX_STANDARD 14)
 
 find_package(OpenCV QUIET)
@@ -132,6 +135,6 @@ else()
 endif()
 
 # install MIVisionX executables -- {ROCM_PATH}/bin
-install(TARGETS runvx DESTINATION bin)
+install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR})
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../samples/gdf DESTINATION share/mivisionx/samples)
+install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)

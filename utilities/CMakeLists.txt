@@ -21,6 +21,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(utilities)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 #set(ROCM_PATH /opt/rocm CACHE PATH " default ROCm installation path")
 
@@ -63,9 +66,9 @@ if(OpenCL_FOUND AND BUILD_OPENCL)
         add_subdirectory(mv_deploy)
         message("-- ${Green}Utilities -- runvx, runcl, loom_shell, & mv_deploy modules added${ColourReset}")
         # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-        install (FILES ./mv_deploy/mvdeploy_api.h DESTINATION include/mivisionx)
-        install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION libexec/mivisionx/model_compiler/mv_deploy)
-        install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION libexec/mivisionx/model_compiler/mv_deploy)
+        install (FILES ./mv_deploy/mvdeploy_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+	install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
+	install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
     else()
         message("-- ${Green}Utilities -- runcl modules added${ColourReset}")
         message("-- ${Red}WARNING: FFMPEG Not Found -- mv_deploy module excluded${ColourReset}")
@@ -76,9 +79,9 @@ elseif (HIP_FOUND)
         add_subdirectory(mv_deploy)
         message("-- ${Green}Utilities -- runvx and mv_deploy modules added${ColourReset}")
         # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-        install (FILES ./mv_deploy/mvdeploy_api.h DESTINATION include/mivisionx)
-        install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION libexec/mivisionx/model_compiler/mv_deploy)
-        install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION libexec/mivisionx/model_compiler/mv_deploy)
+        install (FILES ./mv_deploy/mvdeploy_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+	install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
+	install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
     else()
         message("-- ${Green}Utilities -- runvx module added with HIP support${ColourReset}")
         message("-- ${Red}WARNING: FFMPEG Not Found -- mv_deploy module excluded${ColourReset}")

@@ -21,6 +21,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(runcl)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL QUIET)
@@ -29,7 +32,7 @@ list(APPEND SOURCES runcl.cpp)
 
 add_executable(runcl ${SOURCES})
 # install MIVisionX executables -- {ROCM_PATH}/bin
-install (TARGETS runcl DESTINATION bin)
+install (TARGETS runcl DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if(OpenCL_FOUND)
 	target_compile_definitions(runcl PUBLIC ENABLE_OPENCL=1)

@@ -21,6 +21,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(loom_shell)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL QUIET)
@@ -33,7 +36,7 @@ list(APPEND SOURCES loom_shell_util.cpp loom_shell.cpp help.cpp)
 
 add_executable(loom_shell ${SOURCES})
 # install MIVisionX executables -- {ROCM_PATH}/bin
-install(TARGETS loom_shell DESTINATION bin)
+install(TARGETS loom_shell DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 target_link_libraries(loom_shell vx_loomsl openvx)
 

@@ -22,6 +22,9 @@ cmake_minimum_required(VERSION 3.0)
 project(MIVisionX)
 set(VERSION "2.2.0")
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -122,7 +125,7 @@ else()
 endif()
 
 # install MIVisionX docs -- {ROCM_PATH}/share/doc/mivisionx/
-install(DIRECTORY docs DESTINATION share/doc/mivisionx)
+install(DIRECTORY docs DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})
@@ -147,7 +150,7 @@ set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vi
 # set license information
 set(CPACK_RPM_PACKAGE_LICENSE    "MIT")
 set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
-install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION share/doc/mivisionx)
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")

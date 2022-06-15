@@ -28,6 +28,9 @@ cmake_minimum_required (VERSION 3.0)
 
 project (rali_unittests)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set (CMAKE_CXX_STANDARD 11)
 set(ROCM_PATH /opt/rocm CACHE PATH " default ROCm installation path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
@@ -44,4 +47,4 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
 target_link_libraries(${PROJECT_NAME} rali ${OpenCV_LIBRARIES})
 
-install (TARGETS ${PROJECT_NAME} DESTINATION bin)
+install (TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})

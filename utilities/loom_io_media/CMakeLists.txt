@@ -21,6 +21,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(vx_loomio_media)
 
+#including GNUInstall Dir definitions.
+include( GNUInstallDirs )
+
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL REQUIRED)
@@ -49,7 +52,7 @@ list(APPEND SOURCES decoder.cpp encoder.cpp vx_loomio_media.cpp)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARIES} ${AVUTIL_LIBRARY} ${AVCODEC_LIBRARY} ${SWSCALE_LIBRARY} ${AVFORMAT_LIBRARY} openvx)
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install (TARGETS ${PROJECT_NAME} DESTINATION lib)
+install (TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

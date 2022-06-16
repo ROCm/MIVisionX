@@ -1078,7 +1078,6 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
         // add the output back to idle queue
         queueDeviceOutputMemIdle[gpu]->enqueue(output);
 
-        free(host_ptr);
         PROFILER_STOP(inference_server_app, workDeviceOutputCopy);
 
         // update counter

@@ -25,7 +25,8 @@
 ################################################################################
 cmake_minimum_required(VERSION 3.0)
 
-project (rocAL_unittests)
+project(rali_video_unittests)
+
 set(CMAKE_CXX_STANDARD 11)
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 
@@ -56,7 +57,7 @@ else()
     message(FATAL_ERROR "OpenCV Not Found -- No Display Support")
 endif()
 
-target_link_libraries(${PROJECT_NAME} rocal)
+target_link_libraries(${PROJECT_NAME} rali)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)

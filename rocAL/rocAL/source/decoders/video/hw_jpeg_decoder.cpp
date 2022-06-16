@@ -38,7 +38,7 @@ struct buffer_data {
 static inline int num_hw_devices() {
 
     int num_hw_devices = 0;
-    FILE *fp = popen("ls -l /dev/dri/by-path", "r");
+    FILE *fp = popen("ls -l /dev/dri", "r");
     if (fp == NULL)
       return num_hw_devices;
 

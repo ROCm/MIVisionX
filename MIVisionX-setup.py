@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.3.1"
+__version__ = "2.3.2"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -46,7 +46,7 @@ parser.add_argument('--protobuf',  	type=str, default='3.12.4',
 parser.add_argument('--rpp',   		type=str, default='0.93',
                     help='RPP Version - optional (default:0.93)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
-                    help='FFMPEG V4.0.4 Installation - optional (default:no) [options:yes/no]')
+                    help='FFMPEG V4.4.2 Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
                     help='MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]')
 parser.add_argument('--rocal',	 	type=str, default='yes',
@@ -181,14 +181,14 @@ if os.path.exists(deps_dir):
         if backend == 'OCL':
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' autoremove miopen-hip migraphx')
+                      linuxSystemInstall_check+' autoremove -y rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y miopen-opencl')
+                      ' '+linuxSystemInstall_check+' install -y --reinstall miopengemm miopen-opencl')
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' autoremove miopen-opencl')
+                      linuxSystemInstall_check+' autoremove -y miopengemm miopen-opencl')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y miopen-hip migraphx')
+                      ' '+linuxSystemInstall_check+' install -y --reinstall rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx')
 
     if (rocalInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
         # ProtoBuf
@@ -206,9 +206,9 @@ if os.path.exists(deps_dir):
 
     if ffmpegInstall == 'yes' and backend != 'CPU':
         # FFMPEG
-        if os.path.exists(deps_dir+'/FFmpeg-n4.0.4'):
+        if os.path.exists(deps_dir+'/FFmpeg-n4.4.2'):
             os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; sudo ' +
+            os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; sudo ' +
                       linuxFlag+' make install -j8)')
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
@@ -234,7 +234,7 @@ else:
         os.system('(cd '+deps_dir+'; unzip v'+ProtoBufVersion+'.zip )')
     if ffmpegInstall == 'yes' and backend != 'CPU':
         os.system(
-            '(cd '+deps_dir+'; wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.0.4.zip && unzip n4.0.4.zip )')
+            '(cd '+deps_dir+'; wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.4.2.zip && unzip n4.4.2.zip )')
 
     # Install
     if (rocalInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
@@ -302,13 +302,13 @@ else:
         if backend == 'OCL':
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' autoremove -y miopen-hip migraphx')
+                      linuxSystemInstall_check+' autoremove -y rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y miopen-opencl')
         else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' autoremove -y miopen-opencl')
+                      linuxSystemInstall_check+' autoremove -y miopengemm miopen-opencl')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y miopen-hip migraphx')
 
@@ -482,11 +482,11 @@ else:
         if "Ubuntu" in platfromInfo or "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
             os.system('sudo -v')
             os.system(
-                '(cd '+deps_dir+'/FFmpeg-n4.0.4; sudo '+linuxFlag+' ldconfig )')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; make -j8 )')
+                '(cd '+deps_dir+'/FFmpeg-n4.4.2; sudo '+linuxFlag+' ldconfig )')
+            os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
+            os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; make -j8 )')
             os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.0.4; sudo ' +
+            os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; sudo ' +
                       linuxFlag+' make install )')
 
     print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")

@@ -78,9 +78,9 @@ InferenceEngineHip::~InferenceEngineHip()
             hipHostFree(image.first);
         }
         while(queueDeviceOutputMemIdle[i] && queueDeviceOutputMemIdle[i]->size() > 0) {
-            void * mem_handle;
-            queueDeviceOutputMemIdle[i]->dequeue(mem_handle);
-            hipFree(mem_handle);
+            std::pair<void *, void*> image;
+            queueDeviceOutputMemIdle[i]->dequeue(image);
+            hipFree(image.first);
         }
         if(queueDeviceTagQ[i]) {
             delete queueDeviceTagQ[i];
@@ -325,27 +325,36 @@ int InferenceEngineHip::run()
 #endif
         queueDeviceInputMemIdle[gpu] = new MessageQueue<std::pair<void *, void *>>();
         queueDeviceInputMemBusy[gpu] = new MessageQueue<std::pair<void *, void *>>();
-        queueDeviceOutputMemIdle[gpu] = new MessageQueue<void *>();
-        queueDeviceOutputMemBusy[gpu] = new MessageQueue<void *>();
+        queueDeviceOutputMemIdle[gpu] = new MessageQueue<std::pair<void *, void *>>();
+        queueDeviceOutputMemBusy[gpu] = new MessageQueue<std::pair<void *, void *>>();
 
         // create HIP buffers for input/output and add them to queueDeviceInputMemIdle/queueDeviceOutputMemIdle
-        void* memInput, *hostmem, *memOutput;
+        void* memInput, *hostmemI, *memOutput, *hostmemO;
         for(int i = 0; i < INFERENCE_PIPE_QUEUE_DEPTH; i++) {
-            memInput = nullptr, hostmem = nullptr, memOutput = nullptr;
-            hipError_t err = hipHostMalloc((void **)&hostmem, inputSizeInBytes, hipHostMallocDefault);
-            if(err != hipSuccess || !hostmem)
+            memInput = nullptr, hostmemI = nullptr, memOutput = nullptr, hostmemO = nullptr;
+            hipError_t err = hipHostMalloc((void **)&hostmemI, inputSizeInBytes, hipHostMallocDefault);
+            if(err != hipSuccess || !hostmemI)
             {
                 fatal("InferenceEngine:hipHostMalloc of size of size %d failed<%d>", inputSizeInBytes, err);
             }
-            if (hipHostGetDevicePointer((void **)&memInput, hostmem, 0)  != hipSuccess)
+            if (hipHostGetDevicePointer((void **)&memInput, hostmemI, 0)  != hipSuccess)
             {
                 fatal("InferenceEngine:hipHostGetDevicePointer of size %d failed \n", inputSizeInBytes);
             }
-            if(hipHostMalloc((void **)&memOutput, outputSizeInBytes) != hipSuccess) {
-                fatal("InferenceEngine: hipMalloc(#%d,%d) [#%d] failed (%d)", gpu, outputSizeInBytes, i, err);
+            err = hipHostMalloc((void **)&hostmemO, outputSizeInBytes, hipHostMallocDefault);
+            if(err != hipSuccess || !hostmemO)
+            {
+                fatal("InferenceEngine:hipHostMalloc of size of size %d failed<%d>", outputSizeInBytes, err);
             }
-            queueDeviceInputMemIdle[gpu]->enqueue(std::make_pair(memInput, hostmem));
-            queueDeviceOutputMemIdle[gpu]->enqueue(memOutput);
+            if (hipHostGetDevicePointer((void **)&memOutput, hostmemO, 0)  != hipSuccess)
+            {
+                fatal("InferenceEngine:hipHostGetDevicePointer of size %d failed \n", outputSizeInBytes);
+            }
+            // if(hipHostMalloc((void **)&memOutput, outputSizeInBytes) != hipSuccess) {
+            //     fatal("InferenceEngine: hipMalloc(#%d,%d) [#%d] failed (%d)", gpu, outputSizeInBytes, i, err);
+            // }
+            queueDeviceInputMemIdle[gpu]->enqueue(std::make_pair(memInput, hostmemI));
+            queueDeviceOutputMemIdle[gpu]->enqueue(std::make_pair(memOutput, hostmemO));
         }
         memInput = nullptr, memOutput = nullptr;
         vx_size idim[4] = { (vx_size)dimInput[0], (vx_size)dimInput[1], (vx_size)dimInput[2], (vx_size)batchSize };
@@ -918,9 +927,9 @@ void InferenceEngineHip::workDeviceProcess(int gpu)
             break;
         }
         // get an empty HIP buffer for output and a busy HIP buffer for input
-        void *output = nullptr;
+        std::pair<void *, void*> output;
         queueDeviceOutputMemIdle[gpu]->dequeue(output);
-        if(output == nullptr) {
+        if(!output.first) {
             fatal("workDeviceProcess: unexpected nullptr in queueDeviceOutputMemIdle[%d]", gpu);
         }
         // process the graph
@@ -929,7 +938,7 @@ void InferenceEngineHip::workDeviceProcess(int gpu)
         if(status != VX_SUCCESS) {
             fatal("workDeviceProcess: vxSwapTensorHandle(input#%d) failed(%d)", gpu, status);
         }
-        status = vxSwapTensorHandle(openvx_output[gpu], output, nullptr);
+        status = vxSwapTensorHandle(openvx_output[gpu], output.first, nullptr);
         if(status != VX_SUCCESS) {
             fatal("workDeviceProcess: vxSwapTensorHandle(output#%d) failed(%d)", gpu, status);
         }
@@ -952,7 +961,7 @@ void InferenceEngineHip::workDeviceProcess(int gpu)
 
     // add the endOfSequenceMarker to next stage
     void * endOfSequenceMarker = nullptr;
-    queueDeviceOutputMemBusy[gpu]->enqueue(endOfSequenceMarker);
+    queueDeviceOutputMemBusy[gpu]->enqueue(std::make_pair(endOfSequenceMarker, endOfSequenceMarker));
 
     args->lock();
     info("workDeviceProcess: GPU#%d terminated for %s [processed %d batches]", gpu, clientName.c_str(), processCounter);
@@ -974,8 +983,9 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
     int totalBatchCounter = 0, totalImageCounter = 0;
     for(bool endOfSequenceReached = false; !endOfSequenceReached; ) {
         // get an output HIP buffer and lock the buffer for reading
-        void * mem = nullptr, * host_ptr = malloc(outputSizeInBytes);
-        queueDeviceOutputMemBusy[gpu]->dequeue(mem);
+        std::pair<void *, void*> output;
+        queueDeviceOutputMemBusy[gpu]->dequeue(output);
+        void * mem = output.first, * host_ptr = output.second;
         if(mem == nullptr || host_ptr == nullptr) {
             break;
         }
@@ -1066,7 +1076,7 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
         }
 
         // add the output back to idle queue
-        queueDeviceOutputMemIdle[gpu]->enqueue(mem);
+        queueDeviceOutputMemIdle[gpu]->enqueue(output);
 
         free(host_ptr);
         PROFILER_STOP(inference_server_app, workDeviceOutputCopy);

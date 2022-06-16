@@ -80,10 +80,12 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     };
     actual_decoded_width = max_decoded_width;
     actual_decoded_height = max_decoded_height;
+
     if(original_image_width > max_decoded_width)
         original_image_width = max_decoded_width;
     if(original_image_height > max_decoded_height)
         original_image_height = max_decoded_height;
+
     // You need get the output of random bbox crop
     // check the vector size for bounding box. If its more than zero go for random bbox crop
     // else go to random crop
@@ -104,7 +106,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         {
             return (h < height && w < width);
         };
-        int num_of_attempts = 5;
+        int num_of_attempts = 10;
         for(int i = 0; i < num_of_attempts; i++)
         {
             double target_area  = crop_mul_param[0] * original_image_width * original_image_height;
@@ -142,6 +144,12 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             y1 =  (original_image_height - crop_height) / 2;
         }
     }
+
+
+    // if(crop_width > max_decoded_width)
+    //     crop_width = max_decoded_width;
+    // if(crop_height > max_decoded_height)
+    //     crop_height = max_decoded_height;
 
    // std::cout<<"Fused Crop Decoder <x,y, w, h>: " << x1 << " " << y1 << " " << crop_width << " " << crop_height << std::endl;
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...

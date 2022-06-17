@@ -74,7 +74,6 @@ if (PYBIND11_TEST)
   add_subdirectory(tests)
 endif()
 
-include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 # extract project version from source

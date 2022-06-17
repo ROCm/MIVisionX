@@ -21,11 +21,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(vx_loomio_media)
 
-# Default libdir to "lib", this skips GNUInstallDirs from trying to take a guess if it's unset:
-set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
-#including GNUInstall Dir definitions.
-include( GNUInstallDirs )
-
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL REQUIRED)

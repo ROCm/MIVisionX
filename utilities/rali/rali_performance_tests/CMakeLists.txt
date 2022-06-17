@@ -30,9 +30,6 @@ project(rali_performance_tests)
 set(CMAKE_CXX_STANDARD 11)
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 
-#including GNUInstall Dir definitions.
-include( GNUInstallDirs )
-
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)

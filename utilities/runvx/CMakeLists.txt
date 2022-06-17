@@ -21,9 +21,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(runvx)
 
-#including GNUInstall Dir definitions.
-include( GNUInstallDirs )
-
 set(CMAKE_CXX_STANDARD 14)
 
 find_package(OpenCV QUIET)

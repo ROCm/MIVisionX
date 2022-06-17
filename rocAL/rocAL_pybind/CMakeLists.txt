@@ -21,11 +21,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(rali_pybind)
 
-# Default libdir to "lib", this skips GNUInstallDirs from trying to take a guess if it's unset:
-set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
-#including GNUInstall Dir definitions.
-include( GNUInstallDirs )
-
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 

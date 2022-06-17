@@ -27,9 +27,6 @@ cmake_minimum_required (VERSION 3.0)
 
 project (rali_dataloader_mt)
 
-#including GNUInstall Dir definitions.
-include( GNUInstallDirs )
-
 set(CMAKE_CXX_STANDARD 11)
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)

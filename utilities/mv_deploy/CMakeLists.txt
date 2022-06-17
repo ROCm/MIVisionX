@@ -24,9 +24,6 @@ cmake_minimum_required(VERSION 3.0)
 project(mv_compile)
 set(CMAKE_CXX_STANDARD 11)
 
-#including GNUInstall Dir definitions.
-include( GNUInstallDirs )
-
 include_directories(${CMAKE_INSTALL_PREFIX}/include
                     ${PROJECT_SOURCE_DIR}
                    )

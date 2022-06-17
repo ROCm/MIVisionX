@@ -21,9 +21,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(inference_generator)
 
-#including GNUInstall Dir definitions.
-include( GNUInstallDirs )
-
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(Protobuf REQUIRED)

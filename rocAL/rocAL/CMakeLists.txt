@@ -23,11 +23,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(rali)
 
-# Default libdir to "lib", this skips GNUInstallDirs from trying to take a guess if it's unset:
-set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
-#including GNUInstall Dir definitions.
-include( GNUInstallDirs )
-
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
 set(BUILD_RALI true)

@@ -29,10 +29,9 @@ THE SOFTWARE.
 #include <string>
 #include <string.h>
 #include <sys/stat.h>
-#include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
-#include "rocal_api.h"
 
+#include "rocal_api.h"
 #include "opencv2/opencv.hpp"
 using namespace cv;
 #if USE_OPENCV_4
@@ -295,7 +294,7 @@ int main(int argc, const char **argv)
                     if (color_format == RocalImageColor::ROCAL_COLOR_RGB24)
                     {
                         cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-                        cv::imwrite(save_image_path, mat_color);
+                        cv::imwrite(save_image_path, mat_output);
 			            video_writer.write(mat_color);
                     }
                     else

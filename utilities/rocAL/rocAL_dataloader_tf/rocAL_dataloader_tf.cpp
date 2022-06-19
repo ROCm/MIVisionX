@@ -102,17 +102,6 @@ int main(int argc, const char ** argv)
     }
 
 
-    /*>>>>>>>>>>>>>>>> Creating Rocal parameters  <<<<<<<<<<<<<<<<*/
-
-    // Creating uniformly distributed random objects to override some of the default augmentation parameters
-    //RocalFloatParam rand_crop_area = rocalCreateFloatUniformRand( 0.3, 0.5 );
-    //RocalIntParam color_temp_adj = rocalCreateIntParameter(0);
-
-    // Creating a custom random object to set a limited number of values to randomize the rotation angle
-    // create Cifar10 meta data reader
-    //rocalCreateTextCifar10LabelReader(handle, folderPath1, "data_batch");
-
-
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
     RocalImage input1;
     //hardcoding the following for mnist tfrecords

@@ -25,6 +25,7 @@
 ################################################################################
 cmake_minimum_required(VERSION 3.0)
 
+project(rocAL_dataloader_tf)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)

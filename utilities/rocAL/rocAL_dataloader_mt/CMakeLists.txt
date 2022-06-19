@@ -38,7 +38,7 @@ find_package(AMDRPP QUIET)
 include_directories (${ROCM_PATH}/include/mivisionx)
 link_directories    (${ROCM_PATH}/lib/)
 
-add_executable(${PROJECT_NAME} ./rocal_dataloader_mt.cpp)
+add_executable(${PROJECT_NAME} ./rocAL_dataloader_mt.cpp)
 if(OpenCV_FOUND)
     if(${OpenCV_VERSION_MAJOR} GREATER_EQUAL 3 )
         message("-- OpenCV Found -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Supported")

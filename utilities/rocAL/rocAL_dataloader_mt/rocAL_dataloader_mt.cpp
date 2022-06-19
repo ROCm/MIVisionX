@@ -83,8 +83,13 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
         input1 = rocalJpegFileSourceSingleShard(handle, path, color_format, shard_id, num_shards, false,
                                 shuffle, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, dec_width, dec_height, dec_type);
 
+    if(rocalGetStatus(handle) != ROCAL_OK)
+    {
+        std::cout << "rocalJpegFileSourceSingleShard<"<<shard_id<<" , "<< num_shards << ">" << " could not initialize : "<<rocalGetErrorMessage(handle) << std::endl;
+        return -1;
     }
     // create meta data reader
+    rocalCreateLabelReader(handle, path);
 
     /*>>>>>>>>>>>>>>>> Creating Rocal parameters  <<<<<<<<<<<<<<<<*/
 
@@ -136,7 +141,6 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
     int counter = 0;
     std::vector<std::vector<char>> names;
     std::vector<int> labels;
-    int ImageNameLen[batch_size];
     names.resize(batch_size);
     labels.resize(batch_size);
     int image_name_length[batch_size];
@@ -154,7 +158,7 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
         if(display)
             rocalCopyToOutput(handle, mat_input.data, h*w*p);
         else
-            rocalCopyToOutputTensor(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW,RocalTensorOutputType::ROCAL_FP32, pmul, pmul, pmul, padd, padd, padd, 0);
+            rocalCopyToOutputTensor32(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += batch_size;
         rocalGetImageLabels(handle, labels.data());
         int img_name_size = rocalGetImageNameLen(handle, image_name_length);
@@ -174,7 +178,7 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
             continue;
         mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
         cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-        cv::imwrite("output.jpg",mat_color);
+        cv::imwrite("output.jpg",mat_output);
         col_counter = (col_counter+1)%number_of_cols;
     }
 
@@ -203,8 +207,12 @@ int main(int argc, const char ** argv) {
     }
     int argIdx = 0;
     const char *path = argv[++argIdx];
+    bool display = 1;// Display the images
+    //int aug_depth = 1;// how deep is the augmentation tree
+    int decode_width = 1024;
     int decode_height = 1024;
     int inputBatchSize = 16;
+    int num_shards = 2;
     bool shuffle = 0;
     int num_gpus = 0;
     int dec_mode = 0;
@@ -238,11 +246,11 @@ int main(int argc, const char ** argv) {
     auto gpu_id = num_gpus ? 0 : -1;
     int th_id;
     for (th_id = 0; th_id < num_shards; th_id++) {
-<<<<<<< HEAD:utilities/rocAL/rocAL_dataloader_mt/rocAL_dataloader_mt.cpp
         loader_threads[th_id] = std::thread(thread_func, path, gpu_id, RocalImageColor::ROCAL_COLOR_RGB24, th_id, num_shards, decode_width, decode_height, inputBatchSize,
-                                                shuffle, display);
-=======
+                                                shuffle, display, dec_mode);
+        if (num_gpus) gpu_id = (gpu_id +1) % num_gpus;
     }
     for (auto& th:loader_threads ) {
+        th.join();
     }
 }

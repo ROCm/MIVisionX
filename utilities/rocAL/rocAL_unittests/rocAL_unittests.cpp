@@ -130,6 +130,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
 #endif
 
     RocalImage input1;
+    RocalMetaData meta_data;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     switch (reader_type)
@@ -162,6 +163,9 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
             std::cout << ">>>>>>> Running COCO READER PARTIAL" << std::endl;
             char const *json_path = "";
             if (strcmp(json_path, "") == 0)
+            {
+                std::cout << "\n json_path has to be set in rocal_unit test manually";
+                exit(0);
             }
             rocalCreateCOCOReader(handle, json_path, true);
 #if defined RANDOMBBOXCROP
@@ -251,6 +255,10 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         }
         break;
     }
+
+    if(meta_data == NULL)
+        return -1;
+
 
     if (rocalGetStatus(handle) != ROCAL_OK)
     {

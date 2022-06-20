@@ -49,6 +49,8 @@ using namespace cv;
 #endif
 
 #include "rali_api.h"
+#include "rali_api_types.h"
+
 #define PRINT_NAMES_AND_LABELS    0 // uncomment for printing names and labels
 
 #define DISPLAY
@@ -147,20 +149,19 @@ int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int
 
     //cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
     int iter_cnt = 0;
-    float  pmul = 2.0f/255;
-    float  padd = -1.0f;
+    //float  pmul = 2.0f/255;
+    //float  padd = -1.0f;
     while (!raliIsEmpty(handle) /*&& (iter_cnt < 100)*/)
     {
       //  std::cout << "processing iter: " << iter_cnt << std::endl;
         if(raliRun(handle) != 0)
             break;
-
-        if(display)
-            raliCopyToOutput(handle, mat_input.data, h*w*p);
+        // copy output to host as image
+        raliCopyToOutput(handle, mat_input.data, h*w*p);
+        if (gpu_mode<0)
+          raliGetImageLabels(handle, labels.data());
         else
-            raliCopyToOutputTensor32(handle, out_tensor, RaliTensorLayout::RALI_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
-        counter += batch_size;
-        raliGetImageLabels(handle, labels.data());
+          raliGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
         int img_name_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_name_size];
         raliGetImageName(handle, img_name);
@@ -241,6 +242,12 @@ int main(int argc, const char ** argv) {
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         dec_mode = atoi(argv[++argIdx]);
+
+    // gpu mode needs either OPENCL or HIP enabled
+#if !(ENABLE_HIP||ENABLE_OPENCL)
+    num_gpus = 0;
+#endif
+    std::cout << "#GPUs     :"<< num_gpus << std::endl;
 
     // launch threads process shards
     std::thread loader_threads[num_shards];

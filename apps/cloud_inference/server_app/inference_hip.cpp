@@ -991,10 +991,6 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
         }
         
         PROFILER_START(inference_server_app, workDeviceOutputCopy);
-        hipError_t err = hipMemcpyDtoH(host_ptr, mem, outputSizeInBytes);
-        if(err) {
-            fatal("workDeviceOutputCopy: hipMemcpyDtoH(#%d) failed (%d)", gpu, err);
-        }
 
         // get next batch of inputs
         int outputCount = 0;

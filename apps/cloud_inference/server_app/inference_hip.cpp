@@ -350,9 +350,6 @@ int InferenceEngineHip::run()
             {
                 fatal("InferenceEngine:hipHostGetDevicePointer of size %d failed \n", outputSizeInBytes);
             }
-            // if(hipHostMalloc((void **)&memOutput, outputSizeInBytes) != hipSuccess) {
-            //     fatal("InferenceEngine: hipMalloc(#%d,%d) [#%d] failed (%d)", gpu, outputSizeInBytes, i, err);
-            // }
             queueDeviceInputMemIdle[gpu]->enqueue(std::make_pair(memInput, hostmemI));
             queueDeviceOutputMemIdle[gpu]->enqueue(std::make_pair(memOutput, hostmemO));
         }

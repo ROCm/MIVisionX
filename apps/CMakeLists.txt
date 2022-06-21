@@ -21,6 +21,8 @@
 cmake_minimum_required (VERSION 3.0)
 project(applications)
 
+include(GNUInstallDirs)
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 if(GPU_SUPPORT)

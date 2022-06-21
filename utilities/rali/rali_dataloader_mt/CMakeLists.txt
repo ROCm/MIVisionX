@@ -29,7 +29,6 @@ project (rali_dataloader_mt)
 
 set(CMAKE_CXX_STANDARD 11)
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
-
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)
@@ -61,7 +60,8 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} rali)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall -pthread")
-install (TARGETS ${PROJECT_NAME} DESTINATION bin)
+
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 
 

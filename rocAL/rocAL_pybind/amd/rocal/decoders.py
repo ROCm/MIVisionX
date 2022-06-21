@@ -75,7 +75,8 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "loop": False,
             "decode_size_policy": types.USER_GIVEN_SIZE,
             "max_width": 2000,
-            "max_height":2000}
+            "max_height":2000,
+            "dec_type":types.DECODER_TJPEG}
         decoded_image = b.ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     return (decoded_image)
@@ -178,7 +179,8 @@ def image_random_crop(*inputs,user_feature_key_map=None ,path = '', file_root= '
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 0,
-            "max_height":0}
+            "max_height":0,
+            "dec_type": types.DECODER_TJPEG}
         image_decoder_output_image = b.ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
 

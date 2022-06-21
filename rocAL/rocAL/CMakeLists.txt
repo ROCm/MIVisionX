@@ -194,7 +194,7 @@ if(${BUILD_RALI})
     add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS} ${CAFFE_PROTO_HEADERS} ${CAFFE_PROTO_SRCS} ${CAFFE2_PROTO_SRCS} ${CAFFE2_PROTO_HEADERS})
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-        include_directories(${HIP_PATH}/include ${HSA_PATH}/include rocAL_hip)
+        include_directories(${ROCM_PATH}/include rocAL_hip)
         target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=1)
     else()

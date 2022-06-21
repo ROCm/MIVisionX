@@ -46,7 +46,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     find_package(migraphx QUIET)
 
     include_directories(../../amd_openvx/openvx/include
-    ${HIP_PATH}/include ${HSA_PATH}/include
+    ${ROCM_PATH}/include
     include)
 
     list(APPEND SOURCES

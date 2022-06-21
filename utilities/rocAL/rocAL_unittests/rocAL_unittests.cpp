@@ -31,18 +31,20 @@ THE SOFTWARE.
 #include<string>
 
 #include "rocal_api.h"
+#include <opencv/highgui.h>
 
 #include "opencv2/opencv.hpp"
 using namespace cv;
-#if USE_OPENCV_4
-#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
-#define CV_BGR2GRAY COLOR_BGR2GRAY
-#define CV_GRAY2RGB COLOR_GRAY2RGB
-#define CV_RGB2BGR COLOR_RGB2BGR
-#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
-#define CV_FILLED FILLED
-#endif
+// #if USE_OPENCV_4
+// #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+// #define CV_BGR2GRAY COLOR_BGR2GRAY
+// #define CV_GRAY2RGB COLOR_GRAY2RGB
+// #define CV_RGB2BGR COLOR_RGB2BGR
+// #define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+// #define CV_FILLED FILLED
+// #endif
 
+#define DISPLAY 0
 //#define RANDOMBBOXCROP
 
 using namespace std::chrono;
@@ -255,10 +257,6 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         }
         break;
     }
-
-    if(meta_data == NULL)
-        return -1;
-
 
     if (rocalGetStatus(handle) != ROCAL_OK)
     {
@@ -677,7 +675,8 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
     cv::Mat mat_input(h, w, cv_color_format);
     cv::Mat mat_color;
     int col_counter = 0;
-    //cv::namedWindow("output", CV_WINDOW_AUTOSIZE);
+    if(DISPLAY)
+        cv::namedWindow("output", CV_WINDOW_AUTOSIZE);
     printf("Going to process images\n");
     printf("Remaining images %lu \n", rocalGetRemainingImages(handle));
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -795,10 +794,16 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         if (color_format == RocalImageColor::ROCAL_COLOR_RGB24)
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imwrite(out_filename, mat_color, compression_params);
+            if(DISPLAY)
+                cv::imshow("output",mat_output);
+            else
+                cv::imwrite(out_filename, mat_output, compression_params);
         }
         else
         {
+            if(DISPLAY)
+            cv::imshow("output",mat_output);
+            else
             cv::imwrite(out_filename, mat_output, compression_params);
         }
         col_counter = (col_counter + 1) % number_of_cols;

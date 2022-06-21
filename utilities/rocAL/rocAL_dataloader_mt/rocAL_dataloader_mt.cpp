@@ -51,7 +51,7 @@ using namespace cv;
 #include "rocal_api.h"
 #define PRINT_NAMES_AND_LABELS    0 // uncomment for printing names and labels
 
-#define DISPLAY
+#define DISPLAY 0
 using namespace std::chrono;
 std::mutex g_mtx;           // mutex for critical section
 
@@ -144,8 +144,8 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
     names.resize(batch_size);
     labels.resize(batch_size);
     int image_name_length[batch_size];
-
-    //cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
+    if(DISPLAY)
+    cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
     int iter_cnt = 0;
     float  pmul = 2.0f/255;
     float  padd = -1.0f;
@@ -178,7 +178,11 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
             continue;
         mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
         cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
+        if(DISPLAY)
+        cv::imshow("output.png",mat_output);
+        else
         cv::imwrite("output.jpg",mat_output);
+
         col_counter = (col_counter+1)%number_of_cols;
     }
 

@@ -44,7 +44,7 @@ using namespace cv;
 #define cvDestroyWindow destroyWindow
 #endif
 
-#define DISPLAY
+#define DISPLAY 0
 using namespace std::chrono;
 
 
@@ -230,7 +230,10 @@ int main(int argc, const char ** argv)
             cv::Mat mat_color;
             mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imshow("output",mat_color);
+            if(DISPLAY)
+            cv::imshow("output",mat_output);
+            else
+            cv::imwrite("output.png",mat_output);
         }
         else if (color_format == RocalImageColor::ROCAL_COLOR_RGB_PLANAR )
         {
@@ -250,14 +253,21 @@ int main(int argc, const char ** argv)
                     }
                 }
             }
+            if(DISPLAY)
             cv::imshow("output",mat_output);
+            else
+            cv::imwrite("output.png",mat_output);
         }
         else
         {
             mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
+            if(DISPLAY)
             cv::imshow("output",mat_output);
+            else
+            cv::imwrite("output.png",mat_output);
         }
-        // cv::waitKey(1);
+        if(DISPLAY)
+        cv::waitKey(1);
         col_counter = (col_counter+1)%number_of_cols;
     }
 

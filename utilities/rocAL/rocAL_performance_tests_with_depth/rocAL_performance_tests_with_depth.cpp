@@ -43,7 +43,7 @@ using namespace cv;
 #define CV_FILLED FILLED
 #endif
 
-#define DISPLAY
+#define DISPLAY 0 
 using namespace std::chrono;
 
 
@@ -569,6 +569,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
     cv::Mat mat_output(h, w, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);
     cv::Mat mat_color;
+    if(DISPLAY)
     cv::namedWindow("output", CV_WINDOW_AUTOSIZE);
     printf("Going to process images\n");
     printf("Remaining images %lu \n", rocalGetRemainingImages(handle));

@@ -44,7 +44,7 @@ using namespace cv;
 #define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
 #define cvDestroyWindow destroyWindow
 #endif
-
+#define DISPLAY 0
 int main(int argc, const char ** argv)
 {
     // check command-line usage
@@ -160,12 +160,14 @@ int main(int argc, const char ** argv)
         std::cout << "Available images = " << rocalGetRemainingImages(handle) << std::endl;
         int porcess_image_count = ((test_case == 0) ? rocalGetRemainingImages(handle) : run_len[test_id]);
         std::cout << ">>>>> Going to process " << porcess_image_count << " images , press a key" << std::endl;
+        if(DISPLAY)
         cv::waitKey(0);
         const unsigned number_of_cols =  porcess_image_count/inputBatchSize;
         cv::Mat mat_output(h, w*number_of_cols, cv_color_format);
         cv::Mat mat_input(h, w, cv_color_format);
         cv::Mat mat_color;
         auto win_name = "output";
+        if(DISPLAY)
         cv::namedWindow( win_name, CV_WINDOW_AUTOSIZE );
 
         int col_counter = 0;
@@ -193,21 +195,30 @@ int main(int argc, const char ** argv)
 
             if (color_format == RocalImageColor::ROCAL_COLOR_RGB24) {
                 cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-                cv::imshow(win_name, mat_color);
-            } else {
+                if(DISPLAY)
                 cv::imshow(win_name, mat_output);
+                else
+                cv::imwrite("output.png",mat_output);
+            } else {
+                if(DISPLAY)
+                cv::imshow(win_name, mat_output);
+                else
+                cv::imwrite("output.png",mat_output);
             }
             // The delay here simulates possible latency between runs due to training
+            if(DISPLAY)
             cv::waitKey(200);
             col_counter = (col_counter + 1) % number_of_cols;
         }
         std::cout << ">>>>> Done test id " << test_id << " processed " << counter << " images ,press a key \n";
+        if(DISPLAY)
         cv::waitKey(0);
         std::cout << "#### Going to reset\n";
         rocalResetLoaders(handle);
         mat_input.release();
         mat_output.release();
         mat_color.release();
+        if(DISPLAY)
         cvDestroyWindow(win_name);
         std::cout << "#### Done reset\n";
     }

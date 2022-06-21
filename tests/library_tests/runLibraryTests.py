@@ -27,7 +27,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Library Tests Report"
 __license__ = "MIT"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -263,7 +263,7 @@ with open(reportFilename, 'w') as f:
         print("SUCCESS: All modules of MIVisionX built")
     f.write("\n")
 
-    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2020 -- runLibraryTests.py V-"+__version__+"**\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2022 -- runLibraryTests.py V-"+__version__+"**\n")
     f.write("\n")
 
 # report file

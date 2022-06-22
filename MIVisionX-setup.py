@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.3.2"
+__version__ = "2.3.3"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -92,14 +92,17 @@ if backend not in ('OCL', 'HIP', 'CPU'):
     exit()
 
 # check ROCm installation
-if os.path.exists(ROCM_PATH):
-    print("ROCm Installation Found -- "+ROCM_PATH+"\n")
+if os.path.exists(ROCM_PATH) and backend != 'CPU':
+    print("\nROCm Installation Found -- "+ROCM_PATH+"\n")
     os.system('echo ROCm Info -- && '+ROCM_PATH+'/bin/rocminfo')
 else:
-    print("WARNING: ROCm Not Found at -- "+ROCM_PATH+"\n")
-    print(
-        "WARNING: Set ROCm Path with --rocm_path option for full installation [Default:/opt/rocm]\n")
-    print("WARNING: Only OpenCV will be installed\n")
+    if backend != 'CPU':
+        print("\nWARNING: ROCm Not Found at -- "+ROCM_PATH+"\n")
+        print(
+            "WARNING: Set ROCm Path with \"--rocm_path\" option for full installation [Default:/opt/rocm]\n")
+        print("WARNING: Only OpenCV will be installed\n")
+    else:
+        print("\nCPU Only Install: OpenCV will be installed\n")
     ffmpegInstall = 'no'
     neuralNetInstall = 'no'
     raliInstall = 'no'

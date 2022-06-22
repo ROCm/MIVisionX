@@ -136,5 +136,9 @@ enum RaliDecoderType
     RALI_DECODER_VIDEO_FFMPEG_HW = 4
 };
 
+// rocal external memcpy flags 
+#define    ROCAL_MEMCPY_TO_HOST      1      // force copy to user provided host memory
+#define    ROCAL_MEMCPY_TO_DEVICE    2      // force copy to user provided device memory (gpu)
+#define    ROCAL_MEMCPY_IS_PINNED    4      // for future use
 
 #endif //MIVISIONX_RALI_API_TYPES_H

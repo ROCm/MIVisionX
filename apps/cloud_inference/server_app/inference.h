@@ -332,8 +332,8 @@ private:
     void dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName);
     MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemIdle[MAX_NUM_GPU];
     MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemBusy[MAX_NUM_GPU];
-    MessageQueue<void *>                 * queueDeviceOutputMemIdle[MAX_NUM_GPU];
-    MessageQueue<void *>                 * queueDeviceOutputMemBusy[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceOutputMemIdle[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceOutputMemBusy[MAX_NUM_GPU];
     // scheduler resources
     int                 device_id[MAX_NUM_GPU];
     hipDeviceProp_t     *hip_dev_prop[MAX_NUM_GPU];

@@ -142,7 +142,7 @@ if(${BUILD_RALI})
         ../python/rali_parameter.py
         ../python/rali_torch.py
         ../python/rali_image_iterator.py
-        DESTINATION libexec/mivisionx/rali/python
+	DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/rali/python
         )
     # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
     install(FILES
@@ -154,7 +154,7 @@ if(${BUILD_RALI})
         include/rali_api_data_transfer.h
         include/rali_api_parameters.h
         include/rali_api_meta_data.h
-        DESTINATION include/mivisionx
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx
         )
     if(FFMPEG_FOUND)
         find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)
@@ -194,7 +194,7 @@ if(${BUILD_RALI})
     add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS} ${CAFFE_PROTO_HEADERS} ${CAFFE_PROTO_SRCS} ${CAFFE2_PROTO_SRCS} ${CAFFE2_PROTO_HEADERS})
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-        include_directories(${HIP_PATH}/include ${HSA_PATH}/include rocAL_hip)
+        include_directories(${ROCM_PATH}/include rocAL_hip)
         target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=1)
     else()
@@ -236,7 +236,7 @@ if(${BUILD_RALI})
         target_link_libraries(${PROJECT_NAME} $<TARGET_OBJECTS:rocAL_hip>)
     endif()
     # install MIVisionX libs -- {ROCM_PATH)/lib
-    install(TARGETS rali DESTINATION lib)
+    install(TARGETS rali DESTINATION ${CMAKE_INSTALL_LIBDIR})
 else()
     message("-- ${Red}WARNING: rocAL module excluded ${ColourReset}")
 endif()

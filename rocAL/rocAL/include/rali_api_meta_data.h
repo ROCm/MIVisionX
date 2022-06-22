@@ -123,7 +123,7 @@ extern "C" unsigned RALI_API_CALL raliGetImageNameLen(RaliContext rali_context, 
 
 /// \param meta_data RaliMetaData object that contains info about the images and labels
 /// \param buf user's buffer that will be filled with labels. Its needs to be at least of size batch_size.
-extern "C" void RALI_API_CALL raliGetImageLabels(RaliContext rali_context, void* buf);
+extern "C" void RALI_API_CALL raliGetImageLabels(RaliContext rali_context, void* buf, unsigned int flags=0);
 
 ///
 /// \param rali_context

@@ -142,26 +142,28 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_OPENCL=1)
     include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
     add_library(vx_rpp SHARED ${SOURCES})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=1 -DRPP_BACKEND_OPENCL=1") # Currently used by rpp. To be removed.
     target_link_libraries(vx_rpp amd_rpp boost_filesystem boost_system ${OpenCL_LIBRARIES})
 elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     message("-- ${Green}amd_rpp -- Building with HIP${ColourReset}")
     set(ENABLE_OPENCL 0)
     set(ENABLE_HIP 1)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_HIP=1 -D__HIP_PLATFORM_AMD__)
-    include_directories(${HIP_PATH}/include  ${HSA_PATH}/include)
+    include_directories(${ROCM_PATH}/include)
     link_directories(${HIP_PATH}/lib)
     add_library(vx_rpp SHARED ${SOURCES})
     set_target_properties(openvx PROPERTIES LINKER_LANGUAGE CXX)
     set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=1 -DRPP_BACKEND_HIP=1") # Currently used by rpp. To be removed.
     target_link_libraries(vx_rpp amd_rpp boost_filesystem boost_system ${HIP_LIBRARY})
 else()
     message("-- ${Red}WARNING: OpenCL/HIP Not Found -- amd_rpp module excluded${ColourReset}")
 endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS vx_rpp DESTINATION lib)
+install(TARGETS vx_rpp DESTINATION ${CMAKE_INSTALL_LIBDIR})
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_ext_rpp.h DESTINATION include/mivisionx)
+install(FILES include/vx_ext_rpp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     target_link_libraries(OpenVX)

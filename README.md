@@ -433,7 +433,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
-* ROCm: rocm-core - `5.1.3.50103-66`
+* ROCm: rocm-core - `5.2.0.50200-52`
 * miopen-hip - `2.16.0.50101-48`
 * miopen-opencl - `2.16.0.50101-48`
 * migraphx - `2.1.0.50101-48`
@@ -442,7 +442,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * RPP - [0.93](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.93)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.3.2`
+* MIVisionX Setup Script - `V2.3.3`
 
 ### Known issues
 

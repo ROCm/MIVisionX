@@ -50,7 +50,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     set(ENABLE_OPENCL 0)
     set(ENABLE_HIP 1)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)
-    include_directories(${HIP_PATH}/include  ${HSA_PATH}/include)
+    include_directories(${ROCM_PATH}/include)
     link_directories(${HIP_PATH}/lib)
     message("-- ${Green}amd_media -- Building with HIP${ColourReset}")
 
@@ -88,9 +88,9 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
 endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_amd_media.h DESTINATION include/mivisionx)
+install(FILES include/vx_amd_media.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

@@ -57,7 +57,7 @@ list(APPEND SOURCES
 
 add_executable(inference_server_app ${SOURCES})
 target_link_libraries(inference_server_app vx_nn openvx pthread dl)
-install(TARGETS inference_server_app DESTINATION bin)
+install(TARGETS inference_server_app DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if("${BACKEND}" STREQUAL "OPENCL")
 	find_package(OpenCL QUIET)

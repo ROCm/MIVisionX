@@ -115,7 +115,6 @@ private:
     std::vector<AVCodecContext *> videoCodecContext;
     std::vector<SwsContext *> conversionContext;
     std::vector<std::deque<AVFrame *>> queueFrames;
-    //std::vector<AVFrame *> swVideoFrame;
     std::vector<int> videoStreamIndex;
     std::vector<std::mutex> mutexCmd, mutexAck, mutexFrame;
     std::vector<std::condition_variable> cvCmd, cvAck, cvFrame;
@@ -128,7 +127,6 @@ private:
     std::vector<int> LoopDec;
 };
 
-static enum AVPixelFormat hwPixelFormat;
 
 static inline bool exists (const char *name) {
     if (FILE *file = fopen(name, "r")) {
@@ -183,8 +181,8 @@ static enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelF
 {
     const enum AVPixelFormat *p;
 
-    for (p = pix_fmts; *p != -1; p++) {
-        if (*p == hwPixelFormat)
+    for (p = pix_fmts; *p != AV_PIX_FMT_NONE; p++) {
+        if (*p == AV_PIX_FMT_VAAPI)
             return *p;
     }
     //vxAddLogEntry((vx_reference)node, VX_ERROR_NOT_SUPPORTED, "ERROR: Failed to create specified HW device.\n");
@@ -335,7 +333,6 @@ CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
 
     // release media resources
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
-        //if (swVideoFrame[mediaIndex]) av_frame_free(&videoFrame[mediaIndex]);
         if (conversionContext[mediaIndex]) av_free(conversionContext[mediaIndex]);
         if (inputMediaFormat[mediaIndex]) av_free(inputMediaFormat[mediaIndex]);
         if (videoCodecContext[mediaIndex]->hw_device_ctx) av_buffer_unref(&videoCodecContext[mediaIndex]->hw_device_ctx);
@@ -496,20 +493,6 @@ vx_status CLoomIoMediaDecoder::Initialize()
             }
         } else
         {
-            // for hardware accelerated decoding, find config
-            for (int i = 0; ; i++) {
-                const AVCodecHWConfig *config = avcodec_get_hw_config(decoder, i);
-                if (!config) {
-                    vx_status status = VX_FAILURE;
-                    vxAddLogEntry((vx_reference)node, status, "ERROR: decoder %s doesn't support device_type %s\n", decoder->name, av_hwdevice_get_type_name(hw_type) );
-                    return status;
-                }
-                if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
-                    config->device_type == hw_type) {
-                    hwPixelFormat = config->pix_fmt;
-                    break;
-                }
-            }
             if (!(codecContext = avcodec_alloc_context3(decoder))){
                 vxAddLogEntry((vx_reference)node, VX_ERROR_NO_MEMORY, "ERROR: can't alloc codec context\n");
                 return VX_ERROR_NO_MEMORY;
@@ -538,16 +521,6 @@ vx_status CLoomIoMediaDecoder::Initialize()
             printf("OK created sws context src: <%d %d %d> dst: <%d %d %d>\n", codecContext->width, codecContext->height, decoderFormat, width, decoderImageHeight, outputFormat);
         }
         conversionContext[mediaIndex] = swsContext;
-#if 0
-        AVFrame * frame = NULL, *sw_frame = NULL;
-        if (!(frame = av_frame_alloc()) || !(sw_frame = av_frame_alloc())) {
-            err = AVERROR(ENOMEM);
-            vxAddLogEntry((vx_reference)node, VX_ERROR_NO_MEMORY, "ERROR: Can not alloc frame(%d)", err);
-            return VX_ERROR_NO_MEMORY;
-        }
-        videoFrame[mediaIndex] = frame;
-        swVideoFrame[mediaIndex] = sw_frame;
-#endif
         // debug log
         vxAddLogEntry((vx_reference)node, VX_SUCCESS, "INFO: reading %dx%d into slice#%d from %s", width, decoderImageHeight, mediaIndex, mediaFileName);
     }

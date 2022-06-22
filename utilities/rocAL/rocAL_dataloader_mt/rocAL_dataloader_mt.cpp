@@ -49,8 +49,10 @@ using namespace cv;
 #endif
 
 #include "rocal_api.h"
-#define PRINT_NAMES_AND_LABELS    0 // uncomment for printing names and labels
+#include "rocal_api_types.h"
 
+#define PRINT_NAMES_AND_LABELS 0 // uncomment for printing names and labels
+// #define ROCAL_MEMCPY_TO_HOST 0 //For HOST 0 / GPU 1
 #define DISPLAY 0
 using namespace std::chrono;
 std::mutex g_mtx;           // mutex for critical section
@@ -147,20 +149,18 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
     if(DISPLAY)
     cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
     int iter_cnt = 0;
-    float  pmul = 2.0f/255;
-    float  padd = -1.0f;
+
     while (!rocalIsEmpty(handle) /*&& (iter_cnt < 100)*/)
     {
       //  std::cout << "processing iter: " << iter_cnt << std::endl;
         if(rocalRun(handle) != 0)
             break;
-
-        if(display)
-            rocalCopyToOutput(handle, mat_input.data, h*w*p);
+        // copy output to host as image
+        rocalCopyToOutput(handle, mat_input.data, h*w*p);
+        if (gpu_mode<0)
+          rocalGetImageLabels(handle, labels.data());
         else
-            rocalCopyToOutputTensor32(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
-        counter += batch_size;
-        rocalGetImageLabels(handle, labels.data());
+          rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
         int img_name_size = rocalGetImageNameLen(handle, image_name_length);
         char img_name[img_name_size];
         rocalGetImageName(handle, img_name);
@@ -244,6 +244,12 @@ int main(int argc, const char ** argv) {
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         dec_mode = atoi(argv[++argIdx]);
+
+    // gpu mode needs either OPENCL or HIP enabled
+#if !(ENABLE_HIP||ENABLE_OPENCL)
+    num_gpus = 0;
+#endif
+    std::cout << "#GPUs     :"<< num_gpus << std::endl;
 
     // launch threads process shards
     std::thread loader_threads[num_shards];

@@ -93,16 +93,16 @@ if backend not in ('OCL', 'HIP', 'CPU'):
 
 # check ROCm installation
 if os.path.exists(ROCM_PATH) and backend != 'CPU':
-    print("ROCm Installation Found -- "+ROCM_PATH+"\n")
+    print("\nROCm Installation Found -- "+ROCM_PATH+"\n")
     os.system('echo ROCm Info -- && '+ROCM_PATH+'/bin/rocminfo')
 else:
     if backend != 'CPU':
-        print("WARNING: ROCm Not Found at -- "+ROCM_PATH+"\n")
+        print("\nWARNING: ROCm Not Found at -- "+ROCM_PATH+"\n")
         print(
             "WARNING: Set ROCm Path with \"--rocm_path\" option for full installation [Default:/opt/rocm]\n")
         print("WARNING: Only OpenCV will be installed\n")
     else:
-        print("CPU Only Install: OpenCV will be installed\n")
+        print("\nCPU Only Install: OpenCV will be installed\n")
     ffmpegInstall = 'no'
     neuralNetInstall = 'no'
     raliInstall = 'no'

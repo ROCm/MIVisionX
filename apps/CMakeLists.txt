@@ -30,7 +30,7 @@ if(EXISTS ${ROCM_PATH}/{CMAKE_INSTALL_LIBDIR}/libopenvx.so)
     add_subdirectory(bubble_pop)
     add_subdirectory(optical_flow)
 else()
-    message(FATAL_ERROR "MIVisionX Not Installed")
+    message(FATAL_ERROR "MIVisionX Not Installed - ${ROCM_PATH}/{CMAKE_INSTALL_LIBDIR}/libopenvx.so missing")
 endif()
 
 if(EXISTS ${ROCM_PATH}/{CMAKE_INSTALL_LIBDIR}/libvx_nn.so)

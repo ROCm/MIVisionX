@@ -59,13 +59,14 @@ else()
 	message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
 endif()
 
+add_executable(${PROJECT_NAME} source/optical_flow.cpp)
+
 if(${OpenCV_VERSION_MAJOR} EQUAL 4)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
 else()
 	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
 endif()
 
-add_executable(${PROJECT_NAME} source/optical_flow.cpp)
 target_link_libraries(${PROJECT_NAME} ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES})
 
 

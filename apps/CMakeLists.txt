@@ -41,4 +41,4 @@ endif()
 
 if(EXISTS ${ROCM_PATH}/{CMAKE_INSTALL_LIBDIR}/librali.so)
     add_subdirectory(image_augmentation)
-endif
+endif()

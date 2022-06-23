@@ -29,6 +29,9 @@ project(vx_pop)
 set(CMAKE_CXX_STANDARD 11)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+#Added Default libdir
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
+include(GNUInstallDirs)
 
 find_package(OpenCV REQUIRED)
 
@@ -38,7 +41,7 @@ if(DEFINED OPENVX_INCLUDES)
     message(STATUS "OPENVX_INCLUDES: \t${OPENVX_INCLUDES}")
     include_directories(${OPENVX_INCLUDES})
 else()
-    include_directories (${ROCM_PATH}/include/mivisionx)
+    include_directories (${ROCM_PATH}/{CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
 endif()
 
 set(SHARED_LIB_TYPE so)
@@ -49,7 +52,7 @@ endif()
 if(DEFINED OPENVX_LIBRARIES)
     message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
 else()
-    set(OPENVX_LIBRARIES ${ROCM_PATH}/lib/libopenvx.${SHARED_LIB_TYPE})
+    set(OPENVX_LIBRARIES ${ROCM_PATH}/{CMAKE_INSTALL_LIBDIR}/libopenvx.${SHARED_LIB_TYPE})
 	message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
 endif()
 
@@ -85,3 +88,5 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections")
 endif()
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

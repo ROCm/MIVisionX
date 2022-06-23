@@ -37,7 +37,7 @@ if(EXISTS ${ROCM_PATH}/{CMAKE_INSTALL_LIBDIR}/libvx_nn.so)
     add_subdirectory(cloud_inference/server_app)
     add_subdirectory(dg_test)
     add_subdirectory(mivisionx_openvx_classifier)
-endif
+endif()
 
 if(EXISTS ${ROCM_PATH}/{CMAKE_INSTALL_LIBDIR}/librali.so)
     add_subdirectory(image_augmentation)

@@ -37,7 +37,8 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_CXX_STANDARD 14)
 
 find_package(OpenCV REQUIRED)
-find_package(miopen     PATHS ${ROCM_PATH} QUIET)
+find_package(miopen PATHS ${ROCM_PATH} REQUIRED)
+
 if(miopen_FOUND)
     #find the MIOPEN backend type
     set(MIOPEN_BACKEND_OPENCL_FOUND 0)
@@ -52,8 +53,6 @@ if(miopen_FOUND)
     else()
         message(FATAL_ERROR "${ROCM_PATH}/miopen/include/miopen/config.h file Not Found. please run the MIVisionX setup script to install the MIOpen package")
     endif()
-else()
-	message(FATAL_ERROR "MIOpen Not Found. Install MIVisionX & its dependencies for Neural Net Support")
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)

@@ -6,7 +6,12 @@ set (CMAKE_CXX_STANDARD 14)
 find_package(OpenCV QUIET)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm Installation Path")
+#Added Default libdir
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
+include(GNUInstallDirs)
+
 #find the OPENVX backend type
 set(OPENVX_BACKEND_OPENCL_FOUND 0)
 set(OPENVX_BACKEND_HIP_FOUND 0)

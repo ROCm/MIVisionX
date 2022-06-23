@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 cmake_minimum_required (VERSION 3.0)
-project(applications)
+project(mivisionx_applications)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm Installation Path")
 #Added Default libdir
@@ -27,6 +27,7 @@ set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
 
 if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}/libopenvx.so)
+    message("-- MIVisionX Applications -- OpenVX Found, adding CV Apps")
     add_subdirectory(bubble_pop)
     add_subdirectory(optical_flow)
 else()
@@ -34,11 +35,17 @@ else()
 endif()
 
 if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}/libvx_nn.so)
+    message("-- MIVisionX Applications -- OpenVX NN Extension Found, adding ML Apps")
     add_subdirectory(cloud_inference/server_app)
     add_subdirectory(dg_test)
     add_subdirectory(mivisionx_openvx_classifier)
+else()
+    message("-- MIVisionX Applications -- OpenVX NN Extension Not Found at ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}")
 endif()
 
 if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}/librali.so)
+    message("-- MIVisionX Applications -- rocAL Found, adding Image Augmentation Apps")
     add_subdirectory(image_augmentation)
+else()
+    message("-- MIVisionX Applications -- rocAL Not Found at ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}")
 endif()

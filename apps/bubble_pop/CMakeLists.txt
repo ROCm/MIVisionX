@@ -38,11 +38,12 @@ find_package(OpenCV REQUIRED)
 include_directories(include)
 
 if(DEFINED OPENVX_INCLUDES)
-    message(STATUS "OPENVX_INCLUDES: \t${OPENVX_INCLUDES}")
-    include_directories(${OPENVX_INCLUDES})
+    message(STATUS "BUBBLE POP - OPENVX_INCLUDES: \t${OPENVX_INCLUDES}")
 else()
-    include_directories (${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+	set(OPENVX_INCLUDES ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+	message(STATUS "BUBBLE POP - OPENVX_INCLUDES: \t<empty> \tDefault:${OPENVX_INCLUDES}")
 endif()
+include_directories(${OPENVX_INCLUDES})
 
 set(SHARED_LIB_TYPE so)
 if(APPLE)
@@ -50,10 +51,10 @@ if(APPLE)
 endif()
 
 if(DEFINED OPENVX_LIBRARIES)
-    message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
+    message(STATUS "BUBBLE POP - OPENVX_LIBRARIES: \t${OPENVX_LIBRARIES}")
 else()
     set(OPENVX_LIBRARIES ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}/libopenvx.${SHARED_LIB_TYPE})
-	message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
+	message(STATUS "BUBBLE POP - OPENVX_LIBRARIES: \t<empty> \tDefault:${OPENVX_LIBRARIES}")
 endif()
 
 list    (APPEND SOURCES

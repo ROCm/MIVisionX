@@ -35,7 +35,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
-include_directories ( ${OpenCV_INCLUDE_DIRS} ${ROCM_PATH}/include/mivisionx)
+include_directories ( ${OpenCV_INCLUDE_DIRS} ${ROCM_PATH}/libexec/mivisionx/rali/python/)
 link_directories    (${ROCM_PATH}/lib/)
 
 add_executable(${PROJECT_NAME} ./rocAL_performance_tests_with_depth.cpp)

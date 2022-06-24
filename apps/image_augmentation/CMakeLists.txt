@@ -41,7 +41,7 @@ find_package(AMDRPP QUIET)
 #    find_package(HIP QUIET REQUIRED)
 #endif()
 
-include_directories(${ROCM_PATH}/include/mivisionx)
+include_directories(${ROCM_PATH}/libexec/mivisionx/rali/python/)
 
 link_directories(${ROCM_PATH}/lib/)
 

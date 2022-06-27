@@ -24,29 +24,37 @@
 #
 ################################################################################
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required(VERSION 3.0)
 
-project (image_augmentation)
+project(image_augmentation)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
+
+# ROCm Path
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
+# avoid setting the default installation path to /usr/local
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Add Default libdir
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
+include(GNUInstallDirs)
+
+# Find Modules
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
-#if("${BACKEND}" STREQUAL "HIP")
-#    set(HIP_PATH "${ROCM_PATH}/hip" CACHE PATH "Path to which HIP has been installed")
-#    list(APPEND CMAKE_MODULE_PATH ${HIP_PATH}/cmake)
-#    find_package(HIP QUIET REQUIRED)
-#endif()    
+# Application Includes & Libraries
+include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})
 
-include_directories(${ROCM_PATH}/include/mivisionx)
+add_executable(${PROJECT_NAME} image_augmentation.cpp)
 
-link_directories(${ROCM_PATH}/lib/)
-
-add_executable(${PROJECT_NAME} ./image_augmentation.cpp)
-
+# OpenCV 3/4 Support
 if(OpenCV_FOUND)
     if(${OpenCV_VERSION_MAJOR} GREATER_EQUAL 3 )
         message("-- OpenCV Found -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Supported")
@@ -67,7 +75,9 @@ else()
     target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
 endif()
 
+# Link Libraries & Set CXX Flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
 target_link_libraries(${PROJECT_NAME} rali)
 
-install (TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+# Install Application in ROCm Bin Directory
+install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

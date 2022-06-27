@@ -42,25 +42,27 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenCV REQUIRED)
 
 # Choose Backend
-set(MIOPEN_BACKEND_OPENCL_FOUND 0)
-set(MIOPEN_BACKEND_HIP_FOUND 0)
-if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/miopen/config.h)
-    file(READ ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/miopen/config.h MIOPEN_CONFIG_FILE)
-    string(REGEX MATCH "MIOPEN_BACKEND_OPENCL ([0-9]*)" _ ${MIOPEN_CONFIG_FILE})
-    set(MIOPEN_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-    string(REGEX MATCH "MIOPEN_BACKEND_HIP ([0-9]*)" _ ${MIOPEN_CONFIG_FILE})
-    set(MIOPEN_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+set(MIVISIONX_BACKEND_OPENCL_FOUND 0)
+set(MIVISIONX_BACKEND_HIP_FOUND 0)
+if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h)
+    file(READ ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h MIVISIONX_CONFIG_FILE)
+    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${MIVISIONX_CONFIG_FILE})
+    set(MIVISIONX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${MIVISIONX_CONFIG_FILE})
+    set(MIVISIONX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
 else()
-    message(FATAL_ERROR "${PROJECT_NAME} -- ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/miopen/config.h File Not Found. please run the MIVisionX setup script to install the MIOpen package")
+    message(FATAL_ERROR "${PROJECT_NAME} -- ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h File Not Found. Install MIVisionX")
 endif()
 
 # Application Includes & Libraries
 include_directories(${PROJECT_SOURCE_DIR}/include ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
 link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})
 
+# Application Source Files
 file(GLOB My_Source_Files ${PROJECT_SOURCE_DIR}/source/*.cpp)
 add_executable(${PROJECT_NAME} ${My_Source_Files})
 
+# Link Libraries & Set CXX Flags
 target_link_libraries(${PROJECT_NAME} vx_nn openvx pthread dl)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
 
@@ -68,7 +70,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
 set(ENABLE_OPENCL 0)
 set(ENABLE_HIP 0)
 
-if(MIOPEN_BACKEND_OPENCL_FOUND)
+if(MIVISIONX_BACKEND_OPENCL_FOUND)
 	find_package(OpenCL QUIET)
 	if(OpenCL_FOUND)
 		set(ENABLE_OPENCL 1)
@@ -79,7 +81,7 @@ if(MIOPEN_BACKEND_OPENCL_FOUND)
 	else()
 		message( FATAL_ERROR "${PROJECT_NAME} -- OpenCL Not Found")
 	endif()
-elseif(MIOPEN_BACKEND_HIP_FOUND)
+elseif(MIVISIONX_BACKEND_HIP_FOUND)
 	if(NOT DEFINED HIP_PATH)
 		if(NOT DEFINED ENV{HIP_PATH})
 			set(HIP_PATH ${ROCM_PATH}/hip CACHE PATH "Path to which HIP has been installed")
@@ -111,9 +113,11 @@ else()
 	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCL/HIP Not Found")
 endif()
 
+# Set Backend
 target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=${ENABLE_HIP})
 
+# OpenCV 3/4 Support
 if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
 	message("-- ${PROJECT_NAME} -- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
 	if(${OpenCV_VERSION_MAJOR} EQUAL 4)
@@ -127,4 +131,5 @@ else()
 	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
 
+# Install Application in ROCm Bin Directory
 install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

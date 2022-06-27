@@ -50,7 +50,7 @@ add_library(annmodule SHARED source/annmodule.cpp)
 target_link_libraries(annmodule openvx vx_nn pthread)
 
 set(TARGET_CPP source/UserInterface.cpp source/DGtest.cpp)
-add_executable(${PROJECT_NAME} main.cpp ${TARGET_CPP})
+add_executable(${PROJECT_NAME} source/main.cpp ${TARGET_CPP})
 target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread annmodule)
 
 # OpenCV 3/4 Support

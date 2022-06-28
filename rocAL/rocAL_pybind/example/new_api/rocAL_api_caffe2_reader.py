@@ -1,5 +1,5 @@
 import sys
-from amd.rocal.plugin.pytorch import RALIClassificationIterator
+from amd.rocal.plugin.pytorch import ROCALClassificationIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
 import amd.rocal.fn as fn
@@ -27,9 +27,9 @@ def main():
     args = parse_args()
     # Args
     image_path = args.image_dataset_path
-    _rali_cpu = False if args.rocal_gpu else True
+    _rocal_cpu = False if args.rocal_gpu else True
     batch_size = args.batch_size
-    _rali_bbox = False if args.classification else True
+    _rocal_bbox = False if args.classification else True
     num_threads = args.num_threads
     local_rank =  args.local_rank
     random_seed = args.seed
@@ -48,25 +48,25 @@ def main():
     except OSError as error:
         print(error)
     pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=local_rank,
-                    seed=random_seed, rali_cpu=_rali_cpu)
+                    seed=random_seed, rocal_cpu=_rocal_cpu)
     with pipe:
-        if _rali_bbox:
+        if _rocal_bbox:
             jpegs, labels, bboxes = fn.readers.caffe2(
-                path=image_path, bbox=_rali_bbox, random_shuffle=True)
+                path=image_path, bbox=_rocal_bbox, random_shuffle=True)
         else:
             jpegs, labels = fn.readers.caffe2(
-                path=image_path, bbox=_rali_bbox, random_shuffle=True)
+                path=image_path, bbox=_rocal_bbox, random_shuffle=True)
         images = fn.decoders.image(jpegs, output_type=types.RGB, path=image_path, random_shuffle=True)
         images = fn.resize(images, resize_x=224, resize_y=224)
         pipe.set_outputs(images)
     pipe.build()
-    data_loader = RALIClassificationIterator(pipe , display=display, device=device)
+    data_loader = ROCALClassificationIterator(pipe , display=display, device=device)
 
     # Training loop
     cnt = 0
     for epoch in range(1):  # loop over the dataset multiple times
         print("epoch:: ", epoch)
-        if not _rali_bbox:
+        if not _rocal_bbox:
             for i, (image_batch, labels) in enumerate(data_loader, 0):  # Classification
                 if args.print_tensor:
                     sys.stdout.write("\r Mini-batch " + str(i))

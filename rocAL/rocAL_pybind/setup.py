@@ -54,15 +54,15 @@ class CMakeBuild(build_ext):
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
         subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
-setup(name='amd-rali',
-      description='AMD RALI',
-      url='https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/rali',
+setup(name='amd-rocal',
+      description='AMD ROCAL',
+      url='https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/rocal',
       version='1.1.0',
       author='AMD',
       license='Apache License 2.0',
       packages=find_packages(),
       include_package_data=True,
-      ext_modules=[CMakeExtension('rali_pybind')],
+      ext_modules=[CMakeExtension('rocal_pybind')],
       cmdclass=dict(build_ext=CMakeBuild),
       zip_safe=False,
      )

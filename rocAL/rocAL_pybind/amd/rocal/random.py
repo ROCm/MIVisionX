@@ -1,4 +1,4 @@
-import rali_pybind as b
+import rocal_pybind as b
 
 
 def coin_flip(*inputs,probability=0.5, device=None):

@@ -1,4 +1,4 @@
-import rali_pybind as b
+import rocal_pybind as b
 import amd.rocal.types as types
 import numpy as np
 import torch
@@ -7,7 +7,7 @@ import ctypes
 
 class Pipeline(object):
 
-    """Pipeline class internally calls RaliCreate which returns context which will have all
+    """Pipeline class internally calls RocalCreate which returns context which will have all
     the info set by the user.
 
     Parameters
@@ -35,7 +35,7 @@ class Pipeline(object):
         overlapping CPU and GPU computation, typically resulting
         in faster execution speed, but larger memory consumption.
     `prefetch_queue_depth` : int or {"cpu_size": int, "gpu_size": int}, optional, default = 2
-        Depth of the executor pipeline. Deeper pipeline makes RALI
+        Depth of the executor pipeline. Deeper pipeline makes ROCAL
         more resistant to uneven execution time of each batch, but it
         also consumes more memory for internal buffers.
         Specifying a dict:
@@ -54,7 +54,7 @@ class Pipeline(object):
         In order to synchronize with the pipeline one needs to call
         :meth:`nvidia.dali.pipeline.Pipeline.outputs` method.
     `bytes_per_sample` : int, optional, default = 0
-        A hint for RALI for how much memory to use for its tensors.
+        A hint for ROCAL for how much memory to use for its tensors.
     `set_affinity` : bool, optional, default = False
         Whether to set CPU core affinity to the one closest to the
         GPU being used.
@@ -64,11 +64,11 @@ class Pipeline(object):
         This parameter is currently unused (and behavior of
         unrestricted number of streams is assumed).
     `default_cuda_stream_priority` : int, optional, default = 0
-        CUDA stream priority used by RALI. See `cudaStreamCreateWithPriority` in CUDA documentation
+        CUDA stream priority used by ROCAL. See `cudaStreamCreateWithPriority` in CUDA documentation
     """
     '''.
     Args: batch_size
-          rali_cpu
+          rocal_cpu
           gpu_id (default 0)
           cpu_threads (default 1)
     This returns a context'''
@@ -78,14 +78,14 @@ class Pipeline(object):
     def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=-1,
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
-                 rali_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
-        if(rali_cpu):
+                 rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
+        if(rocal_cpu):
             # print("comes to cpu")
-            self._handle = b.raliCreate(
+            self._handle = b.rocalCreate(
                 batch_size, types.CPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         else:
             print("comes to gpu")
-            self._handle = b.raliCreate(
+            self._handle = b.rocalCreate(
                 batch_size, types.GPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         if(b.getStatus(self._handle) == types.OK):
             print("Pipeline has been created succesfully")
@@ -104,7 +104,7 @@ class Pipeline(object):
         self._prefetch_queue_depth = prefetch_queue_depth
         self._exec_async = exec_async
         self._bytes_per_sample = bytes_per_sample
-        self._rali_cpu = rali_cpu
+        self._rocal_cpu = rocal_cpu
         self._max_streams = max_streams
         self._default_cuda_stream_priority = default_cuda_stream_priority
         self._tensor_layout = tensor_layout
@@ -127,26 +127,26 @@ class Pipeline(object):
         self._define_graph_set = False
 
     def build(self):
-        """Build the pipeline using raliVerify call
+        """Build the pipeline using rocalVerify call
         """
-        status = b.raliVerify(self._handle)
+        status = b.rocalVerify(self._handle)
         if(status != types.OK):
             print("Verify graph failed")
             exit(0)
         return self
 
     def run(self):
-        """ Run the pipeline using raliRun call
+        """ Run the pipeline using rocalRun call
         """
-        status = b.raliRun(self._handle)
+        status = b.rocalRun(self._handle)
         if(status != types.OK):
-            print("Rali Run failed")
+            print("Rocal Run failed")
         return status
 
     def define_graph(self):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
-        It returns a list of outputs created by calling RALI Operators."""
+        It returns a list of outputs created by calling ROCAL Operators."""
         print("definegraph is deprecated")
         raise NotImplementedError
 
@@ -155,36 +155,36 @@ class Pipeline(object):
 
     def copyImage(self, array):
         out = np.frombuffer(array, dtype=array.dtype)
-        b.raliCopyToOutput(
+        b.rocalCopyToOutput(
             self._handle, np.ascontiguousarray(out, dtype=array.dtype))
 
     def copyToTensor(self, array,  multiplier, offset, reverse_channels, tensor_format, tensor_dtype):
 
-        b.raliCopyToOutputTensor(self._handle, ctypes.c_void_p(array.data_ptr()), tensor_format, tensor_dtype,
+        b.rocalCopyToOutputTensor(self._handle, ctypes.c_void_p(array.data_ptr()), tensor_format, tensor_dtype,
                                     multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
         if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+            b.rocalCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
         elif tensor_dtype == types.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+            b.rocalCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
         if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+            b.rocalCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
         elif tensor_dtype == types.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+            b.rocalCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def encode(self, bboxes_in, labels_in):
         bboxes_tensor = torch.tensor(bboxes_in).float()
         labels_tensor=  torch.tensor(labels_in).long()
-        return self._encode_tensor.prev.rali_c_func_call(self._handle, bboxes_tensor , labels_tensor )
+        return self._encode_tensor.prev.rocal_c_func_call(self._handle, bboxes_tensor , labels_tensor )
 
     def GetOneHotEncodedLabels(self, array, device):
         if device=="cpu":
@@ -256,10 +256,10 @@ class Pipeline(object):
         b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
-        b.raliCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)
+        b.rocalCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)
 
     def getEncodedBoxesAndLables(self, batch_size, num_anchors):
-        return b.raliGetEncodedBoxesAndLables(self._handle, batch_size, num_anchors)
+        return b.rocalGetEncodedBoxesAndLables(self._handle, batch_size, num_anchors)
 
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
@@ -289,8 +289,8 @@ class Pipeline(object):
     def getRemainingImages(self):
         return b.getRemainingImages(self._handle)
 
-    def raliResetLoaders(self):
-        return b.raliResetLoaders(self._handle)
+    def rocalResetLoaders(self):
+        return b.rocalResetLoaders(self._handle)
 
     def isEmpty(self):
         return b.isEmpty(self._handle)

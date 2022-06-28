@@ -1,4 +1,4 @@
-from amd.rocal.plugin.tf import RALIIterator
+from amd.rocal.plugin.tf import ROCALIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
 import os
@@ -18,7 +18,7 @@ def main():
     args = parse_args()
     # Args
     imagePath = args.image_dataset_path
-    raliCPU = False if args.rocal_gpu else True
+    rocalCPU = False if args.rocal_gpu else True
     batch_size = args.batch_size
     oneHotLabel = 1
     num_threads = args.num_threads
@@ -36,7 +36,7 @@ def main():
     except OSError as error:
         print(error)
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rali_cpu=raliCPU)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rocal_cpu=rocalCPU)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
@@ -56,7 +56,7 @@ def main():
     # Build the pipeline
     pipe.build()
     # Dataloader
-    imageIterator = RALIIterator(pipe)
+    imageIterator = ROCALIterator(pipe)
     cnt = 0
     # Enumerate over the Dataloader
     for i, (images_array, labels_array) in enumerate(imageIterator, 0):

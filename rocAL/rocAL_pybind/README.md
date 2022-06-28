@@ -3,13 +3,13 @@
 rocAL Python Binding allows you to call functions and pass data from Python to rocAL C/C++ libraries,
 letting you take advantage of the rocAL functionality in both languages.
 
-rali_pybind.so is a wrapper library that bridge python and C/C++, so that a rocAL functionality
+rocal_pybind.so is a wrapper library that bridge python and C/C++, so that a rocAL functionality
 written primarily in C/C++ language can be used effectively in Python.
 
 ## Prerequisites
 * [rocAL C/C++ Library](../rocAL#prerequisites)
 * CMake Version 3.10 or higher
-* Python 3.6 or higher
+* Python 3.6
 * PIP3 - `sudo apt install python3-pip`
 
 ## Install

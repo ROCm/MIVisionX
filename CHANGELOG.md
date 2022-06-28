@@ -88,7 +88,7 @@
 
 ### Known issues
 
-* `CMakeList.txt Warnings` - With ROCm CMake Version MIVisionX will have cmake warnings 
+* `CMakeList.txt Warnings` - With ROCm CMake Version MIVisionX will have cmake warnings
 
 ## MIVisionX 2.0.1
 
@@ -151,7 +151,7 @@
 
 ### Changed
 
-- Docker Build Files 
+- Docker Build Files
 
 ### Fixed
 

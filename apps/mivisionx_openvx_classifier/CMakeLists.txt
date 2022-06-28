@@ -24,60 +24,50 @@
 #
 ################################################################################
 cmake_minimum_required(VERSION 3.0)
+project(classifier)
 
-project(classification)
+# ROCm Path
+set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+# avoid setting the default installation path to /usr/local
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-set(CMAKE_CXX_STANDARD 14)
-set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm Installation Path")
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+# Add Default libdir
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
+include(GNUInstallDirs)
 
+# OpenCV -- Display Component
 find_package(OpenCV REQUIRED)
 
-#find the OPENVX backend type
-set(OPENVX_BACKEND_OPENCL_FOUND 0)
-set(OPENVX_BACKEND_HIP_FOUND 0)
-if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)
-    file(READ ${ROCM_PATH}/include/mivisionx/openvx_backend.h OPENVX_BACKEND_FILE)
-    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
-elseif(EXISTS ${ROCM_PATH}/mivisionx/include/openvx_backend.h)
-    file(READ ${ROCM_PATH}/mivisionx/include/openvx_backend.h OPENVX_BACKEND_FILE)
-    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
-else()
-    message("-- WARNING: ${ROCM_PATH}/include/mivisionx/openvx_backend.h file Not Found. please install the latest mivisionx!")
-endif()
+# Application Includes & Libraries
+include_directories(${PROJECT_SOURCE_DIR}/include ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})
 
-if (OPENVX_BACKEND_OPENCL_FOUND)
-    find_package(OpenCL REQUIRED)
-    include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
-endif()
-
-include_directories(${ROCM_PATH}/include/mivisionx)
-include_directories(include)
-link_directories(${ROCM_PATH}/lib)
-
+# Application Source Files
 add_library(caffeModels SHARED source/caffeModels.cpp)
 target_link_libraries(caffeModels openvx vx_nn pthread)
 
-add_executable(classifier source/classifier.cpp)
+add_executable(${PROJECT_NAME} source/classifier.cpp)
 
+# Link Libraries & Set CXX Flags
+target_link_libraries(${PROJECT_NAME} openvx vx_nn caffeModels pthread)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
+
+# OpenCV 3/4 Support
 if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
-    message("-- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
-    include_directories(${OpenCV_INCLUDE_DIRS})
-    target_link_libraries(classifier ${OpenCV_LIBRARIES})
-    if(${OpenCV_VERSION_MAJOR} EQUAL 4)
-	    target_compile_definitions(classifier PUBLIC USE_OPENCV_4=1)
+	message("-- ${PROJECT_NAME} -- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
+	if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
     else()
-	    target_compile_definitions(classifier PUBLIC USE_OPENCV_4=0)
+	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
     endif()
+	include_directories(${OpenCV_INCLUDE_DIRS})
+	target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES})
 else()
-    message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
 
-target_link_libraries(classifier openvx vx_nn caffeModels pthread)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+# Install Application in ROCm Bin Directory
+install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

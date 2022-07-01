@@ -31,16 +31,19 @@ project(opticalFlow)
 set(CMAKE_CXX_STANDARD 11)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
+#Added Default libdir
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
+include(GNUInstallDirs)
 
 find_package(OpenCV REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 if(DEFINED OPENVX_INCLUDES)
-    message(STATUS "OPENVX_INCLUDES: \t${OPENVX_INCLUDES}")
+    message(STATUS "Optical Flow - OPENVX_INCLUDES: \t${OPENVX_INCLUDES}")
 else()
-    set(OPENVX_INCLUDES ${ROCM_PATH}/include/mivisionx)
-    message(STATUS "OPENVX_INCLUDES: \t<empty> \t Default:${OPENVX_INCLUDES}")
+    set(OPENVX_INCLUDES ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+    message(STATUS "Optical Flow - OPENVX_INCLUDES: \t<empty> \tDefault:${OPENVX_INCLUDES}")
 endif()
 include_directories(${OPENVX_INCLUDES})
 
@@ -50,12 +53,21 @@ if(APPLE)
 endif()
 
 if(DEFINED OPENVX_LIBRARIES)
-    message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
+    message(STATUS "Optical Flow - OPENVX_LIBRARIES: \t${OPENVX_LIBRARIES}")
 else()
-    set(OPENVX_LIBRARIES ${ROCM_PATH}/lib/libopenvx.${SHARED_LIB_TYPE})
-	message(STATUS "OPENVX_LIBRARIES: ${OPENVX_LIBRARIES}")
+    set(OPENVX_LIBRARIES ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}/libopenvx.${SHARED_LIB_TYPE})
+	message(STATUS "Optical Flow - OPENVX_LIBRARIES:  \t<empty> \tDefault:${OPENVX_LIBRARIES}")
 endif()
 
 add_executable(${PROJECT_NAME} source/optical_flow.cpp)
+
+if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
+else()
+	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
+endif()
+
 target_link_libraries(${PROJECT_NAME} ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES})
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

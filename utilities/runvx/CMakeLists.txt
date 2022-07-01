@@ -78,7 +78,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
             set(ENABLE_HIP 1)
             set_target_properties(runvx PROPERTIES LINKER_LANGUAGE CXX)
             set_target_properties(runvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
-            include_directories(${ROCM_PATH}/include ${HIP_PATH}/include ${HSA_PATH}/include)
+            include_directories(${ROCM_PATH}/include)
             link_directories(${HIP_PATH}/lib)
             target_link_libraries(runvx ${HIP_PATH}/lib/libamdhip64.so)
             message("-- ${Green}runvx built with HIP Support${ColourReset}")
@@ -132,6 +132,6 @@ else()
 endif()
 
 # install MIVisionX executables -- {ROCM_PATH}/bin
-install(TARGETS runvx DESTINATION bin)
+install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR})
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../samples/gdf DESTINATION share/mivisionx/samples)
+install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)

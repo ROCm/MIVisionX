@@ -46,6 +46,10 @@
 #define BOUNDING_BOX_NUMBER_OF_CLASSES      20
 
 
+const float BB_biases[10]             = {1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52};     // bounding box biases
+
+
+
 extern "C" {
     typedef VX_API_ENTRY vx_graph VX_API_CALL type_annCreateGraph(
             vx_context context,
@@ -182,9 +186,10 @@ private:
 
 class InferenceEngine {
 public:
-    InferenceEngine(int sock, Arguments * args, std::string clientName, InfComCommand * cmd);
+    InferenceEngine() {}; // default constructor
+    InferenceEngine(int sock, Arguments * args, const std::string clientName, InfComCommand * cmd);
     ~InferenceEngine();
-    int run();
+    virtual int run();
 
 protected:
     // scheduler thread workers
@@ -194,16 +199,12 @@ protected:
     // libre scheduler needs:
     //   masterInputQ thread
     //   device threads for input copy, processing, and output copy
-    void workMasterInputQ();
-    void workDeviceInputCopy(int gpu);
-    void workDeviceProcess(int gpu);
-    void workDeviceOutputCopy(int gpu);
+    virtual void workMasterInputQ();
+    virtual void workDeviceInputCopy(int gpu);
+    virtual void workDeviceProcess(int gpu);
+    virtual void workDeviceOutputCopy(int gpu);
 #endif
 
-private:
-    void dumpBuffer(cl_command_queue cmdq, cl_mem mem, std::string fileName);
-
-private:
     // configuration
     int sock;
     Arguments * args;
@@ -224,7 +225,6 @@ private:
     void * moduleHandle;
     type_annCreateGraph * annCreateGraph;
     type_annAddToGraph  * annAddtoGraph;
-    cl_device_id device_id[MAX_NUM_GPU];
     int batchSize;
     int inputSizeInBytes;
     int outputSizeInBytes;
@@ -267,6 +267,22 @@ private:
     MessageQueue<int>                    * queueDeviceTagQ[MAX_NUM_GPU];
     MessageQueue<std::tuple<char *,int>> * queueDeviceImageQ[MAX_NUM_GPU];
 #endif
+    vx_context openvx_context[MAX_NUM_GPU];
+    vx_graph openvx_graph[MAX_NUM_GPU];
+    vx_tensor openvx_input[MAX_NUM_GPU];
+    vx_tensor openvx_output[MAX_NUM_GPU];
+#endif
+// sort indexes based on comparing values in v
+  template <typename T>
+  void sort_indexes(const std::vector<T> &v, std::vector<size_t> &idx) {
+    sort(idx.begin(), idx.end(),
+        [&v](size_t i1, size_t i2) {return v[i1] > v[i2];});
+  }
+
+private:
+#if ENABLE_OPENCL
+    void dumpBuffer(cl_command_queue cmdq, cl_mem mem, std::string fileName);
+    cl_device_id device_id[MAX_NUM_GPU];
     MessageQueue<cl_mem>                 * queueDeviceInputMemIdle[MAX_NUM_GPU];
     MessageQueue<cl_mem>                 * queueDeviceInputMemBusy[MAX_NUM_GPU];
     MessageQueue<cl_mem>                 * queueDeviceOutputMemIdle[MAX_NUM_GPU];
@@ -274,11 +290,55 @@ private:
     // scheduler resources
     cl_context opencl_context[MAX_NUM_GPU];
     cl_command_queue opencl_cmdq[MAX_NUM_GPU];
+#endif    
+
+};
+
+#if ENABLE_HIP
+class InferenceEngineHip:public InferenceEngine
+{
+public:
+    InferenceEngineHip(int sock_, Arguments * args, const std::string clientName, InfComCommand * cmd);
+    ~InferenceEngineHip();
+    int run();
+
+protected:
+
+#if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER && !DONOT_RUN_INFERENCE
+    // OpenVX resources
+    vx_context openvx_context;
+    vx_tensor openvx_input;
+    vx_tensor openvx_output;
+    vx_graph openvx_graph;
+
+#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
+    virtual void workMasterInputQ();
+    virtual void workDeviceInputCopy(int gpu);
+    virtual void workDeviceProcess(int gpu);
+    virtual void workDeviceOutputCopy(int gpu);
+#endif
+
+    MessageQueue<std::tuple<int,char *,int>> inputQ;
+    // scheduler device queues
+    MessageQueue<int>                    * queueDeviceTagQ[MAX_NUM_GPU];
+    MessageQueue<std::tuple<char *,int>> * queueDeviceImageQ[MAX_NUM_GPU];
+
     vx_context openvx_context[MAX_NUM_GPU];
     vx_graph openvx_graph[MAX_NUM_GPU];
     vx_tensor openvx_input[MAX_NUM_GPU];
     vx_tensor openvx_output[MAX_NUM_GPU];
-#endif
-};
 
+private:
+    void dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName);
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemIdle[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemBusy[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceOutputMemIdle[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceOutputMemBusy[MAX_NUM_GPU];
+    // scheduler resources
+    int                 device_id[MAX_NUM_GPU];
+    hipDeviceProp_t     *hip_dev_prop[MAX_NUM_GPU];
+    hipStream_t         hip_stream[MAX_NUM_GPU];
+
+};
+#endif
 #endif

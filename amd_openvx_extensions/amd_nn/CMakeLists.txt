@@ -25,7 +25,6 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(miopen     PATHS ${ROCM_PATH} REQUIRED)
-find_package(Protobuf QUIET)
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(miopengemm PATHS ${ROCM_PATH} REQUIRED)
@@ -47,13 +46,6 @@ elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     endif()
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
 endif()
-
-if(Protobuf_FOUND)
-    add_subdirectory(../../utilities/inference_generator ${CMAKE_CURRENT_BINARY_DIR}/bin)
-    message("-- ${Green}Inference Generator -- utilities/inference_generator module added${ColourReset}")
-else(Protobuf_FOUND)
-    message("-- ${Red}WARNING: Protobuf Not Found -- utilities/inference_generator module excluded${ColourReset}")
-endif(Protobuf_FOUND)
 
 include_directories(../../amd_openvx/openvx/include
                     ${OpenCL_INCLUDE_DIRS}
@@ -120,7 +112,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     set(ENABLE_OPENCL 0)
     set(ENABLE_HIP 1)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)
-    include_directories(${HIP_PATH}/include  ${HSA_PATH}/include)
+    include_directories(${ROCM_PATH}/include)
     link_directories(${HIP_PATH}/lib)
     add_subdirectory(nn_hip)
     add_library(vx_nn SHARED ${SOURCES} $<TARGET_OBJECTS:nn_hip>)
@@ -132,19 +124,19 @@ else()
 endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS vx_nn DESTINATION lib)
+install(TARGETS vx_nn DESTINATION ${CMAKE_INSTALL_LIBDIR})
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_amd_nn.h DESTINATION include/mivisionx)
+install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
 # install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
-install(DIRECTORY ../../model_compiler DESTINATION libexec/mivisionx)
-install(DIRECTORY ../../toolkit DESTINATION libexec/mivisionx)
+install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
+install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../apps/cloud_inference DESTINATION share/mivisionx/apps)
-install(DIRECTORY ../../apps/dg_test DESTINATION share/mivisionx/apps)
-install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION share/mivisionx/apps)
-install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION share/mivisionx/apps)
-install(DIRECTORY ../../samples/inference/mv_objdetect DESTINATION share/mivisionx/samples)
-install(DIRECTORY ../../samples/model_compiler_samples DESTINATION share/mivisionx/samples)
+install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+install(DIRECTORY ../../samples/inference/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")

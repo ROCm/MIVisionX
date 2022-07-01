@@ -7,7 +7,6 @@
 #include <string>
 #include <stdio.h>
 
-
 struct DetectedObject
 {
     int left, top, right, bottom;

@@ -148,6 +148,8 @@ To provide a basic set of vision processing functions. This set of functions is 
   * [OpenVX](openvx/README.md): AMD OpenVX library
 
 **NOTE:** The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. Look into amd_openvx_extensions for additional OpenVX modules and utilities.
+
+### AMD OpenVX - Extensions
   * **vx_loomsl**: Radeon LOOM stitching library for live 360-degree video applications
   * **vx_nn**: OpenVX neural network module that was built on top of [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen)
   * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels

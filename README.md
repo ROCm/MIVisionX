@@ -314,6 +314,8 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   ```
   **Note:** More samples are available [here](samples#samples)
 
+  **Note:** For `macOS` use `export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/rocm/lib`
+
 ### Windows
 
 * MIVisionX.sln builds the libraries & executables in the folder `MIVisionX/x64`
@@ -411,10 +413,9 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 
 ## Technical Support
 
-Please email `mivisionx.support@amd.com` for questions, issues, and feedback on MIVisionX.
+Please email `mivisionx.support@amd.com` for questions, and feedback on MIVisionX.
 
-Please submit your questions, feature requests, and bug reports on the
-[GitHub issues](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/issues) page.
+Please submit your feature requests, and bug reports on the [GitHub issues](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/issues) page.
 
 ## Release Notes
 
@@ -446,7 +447,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Known issues
 
-* Package install requires **OpenCV** `V-3+` to execute `AMD OpenCV extensions`
+* Package install requires **OpenCV** `V-4.5.X` to execute `AMD OpenCV extensions`
 
 ## MIVisionX Dependency Map
 

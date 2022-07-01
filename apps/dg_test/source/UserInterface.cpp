@@ -6,6 +6,16 @@
 using namespace cv;
 using namespace std;
 
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
+#define cvDestroyWindow 
+#define CV_EVENT_LBUTTONDOWN EVENT_LBUTTONDOWN
+#define CV_EVENT_LBUTTONUP EVENT_LBUTTONUP
+#define CV_EVENT_MOUSEMOVE EVENT_MOUSEMOVE
+#define CV_AA 16
+#endif
+
 UserInterface::UserInterface(const char* weights) {
     // constructs a DGtest detector 
     mDetector = make_unique<DGtest>(weights);

@@ -29,11 +29,20 @@ THE SOFTWARE.
 #include <string>
 #include <string.h>
 #include <sys/stat.h>
-#include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
-#include "rocal_api.h"
 
+#include "rocal_api.h"
+#include "opencv2/opencv.hpp"
 using namespace cv;
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#define CV_GRAY2RGB COLOR_GRAY2RGB
+#define CV_RGB2BGR COLOR_RGB2BGR
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FILLED FILLED
+#endif
+
 using namespace std::chrono;
 
 bool IsPathExist(const char *s)
@@ -285,7 +294,7 @@ int main(int argc, const char **argv)
                     if (color_format == RocalImageColor::ROCAL_COLOR_RGB24)
                     {
                         cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-                        cv::imwrite(save_image_path, mat_color);
+                        cv::imwrite(save_image_path, mat_output);
 			            video_writer.write(mat_color);
                     }
                     else

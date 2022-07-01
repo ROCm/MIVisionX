@@ -20,11 +20,14 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
-set(VERSION "2.2.0")
+set(VERSION "2.3.0")
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
+include(GNUInstallDirs)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 
 find_program(MAKE_NSIS_EXE makensis)
 find_program(RPMBUILD_EXE rpmbuild)
@@ -33,16 +36,24 @@ find_program(DPKG_EXE dpkg)
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 # avoid setting the default installation path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default installation path" FORCE)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-option(ENHANCED_MESSAGE "MIVisionX Enhanced Message Option" ON)
+# MIVisionX Default Options
+option(ENHANCED_MESSAGE "MIVisionX Enhanced Message Option"        ON)
+option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
+option(ROCAL            "Build MIVisionX with ROCAL Support"       ON)
+option(LOOM             "Build MIVisionX with LOOM Support"        ON)
+option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
+option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
+
 if(WIN32)
-  set(BACKEND "OPENCL")
+  set(BACKEND "OpenCL")
   set(ENHANCED_MESSAGE OFF)
   message("-- Windows Detected -- Backend Set to OpenCL")
 endif()
+set(DEFAULT_BUILD_TYPE "Release")
 
 if(ENHANCED_MESSAGE)
   string(ASCII 27 Esc)
@@ -58,6 +69,13 @@ if(ENHANCED_MESSAGE)
 endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
+
+if(APPLE)
+  set(CMAKE_MACOSX_RPATH 1)
+  set(GPU_SUPPORT OFF)
+  set(BACKEND "CPU")
+  message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
+endif()
 
 if(NOT DEFINED BACKEND)
   set(BACKEND "HIP")   # set default backend to HIP
@@ -77,52 +95,38 @@ else()
 endif()
 message("-- ${BoldBlue}MIVisionX Backend set to -- ${BACKEND}${ColourReset}")
 
+# MIVisionX Build Type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE STRING "MIVisionX Default Build Type" FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+endif()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  message("-- ${BoldBlue}MIVisionX Build Type -- Debug${ColourReset}")
-  if(NOT WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3")
-  endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 else()
-  message("-- ${BoldBlue}MIVisionX Build Type -- Release${ColourReset}")
-  if(NOT WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-    if(NOT APPLE AND (NOT "${BACKEND}" STREQUAL "HIP"))
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
-    endif()
-  endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 endif()
-
-option(NEURAL_NET  "Build MIVisionX with Neural Net Support"  ON)
-option(ROCAL       "Build MIVisionX with ROCAL Support"       ON)
-option(LOOM        "Build MIVisionX with LOOM Support"        ON)
-option(GPU_SUPPORT "Build MIVisionX with GPU Support"         ON)
-option(MIGRAPHX    "Build MIVisionX with MIGraphX Support"    ON)
-
-if(APPLE)
-  set(CMAKE_MACOSX_RPATH 1)
-  set(GPU_SUPPORT OFF)
-  message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
-endif()
+message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}")
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
-message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D ROCAL=OFF [Turn OFF ROCAL Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D BACKEND=OPENCL [select OPENCL for GPU backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
-message("-- ${Cyan}     -D MIGRAPHX=OFF [Turn OFF MIGraphX Module (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D NEURAL_NET=${NEURAL_NET} [Turn ON/OFF Neural Net Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D ROCAL=${ROCAL} [Turn ON/OFF ROCAL Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
 add_subdirectory(utilities)
+
 if(ROCAL)
   add_subdirectory(rocAL)
 else()
   message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
 endif()
 
-# install MIVisionX docs -- {ROCM_PATH}/share/doc/mivisionx/
-install(DIRECTORY docs DESTINATION share/doc/mivisionx)
+# install MIVisionX docs -- {ROCM_PATH}/${CMAKE_INSTALL_DATADIR}/doc/mivisionx/
+install(DIRECTORY docs DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})
@@ -147,7 +151,7 @@ set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vi
 # set license information
 set(CPACK_RPM_PACKAGE_LICENSE    "MIT")
 set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
-install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION share/doc/mivisionx)
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")

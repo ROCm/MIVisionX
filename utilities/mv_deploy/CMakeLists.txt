@@ -30,7 +30,7 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include
 
 add_executable(mv_compile mv_compile.cpp)
 # install MIVisionX executables -- {ROCM_PATH}/bin
-install (TARGETS mv_compile DESTINATION bin)
+install (TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -msse4.1 -mf16c")
 target_link_libraries(mv_compile ${CMAKE_DL_LIBS})

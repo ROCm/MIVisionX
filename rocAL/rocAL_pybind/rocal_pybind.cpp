@@ -324,6 +324,13 @@ namespace rocal{
             .value("HARDWARE_DECODE",ROCAL_HW_DECODE)
             .value("SOFTWARE_DECODE",ROCAL_SW_DECODE)
             .export_values();
+        py::enum_<RocalDecoderType>(types_m,"RocalDecoderType", "Rocal Decoder Type")
+            .value("DECODER_TJPEG",ROCAL_DECODER_TJPEG)
+            .value("DECODER_OPENCV",ROCAL_DECODER_OPENCV)
+            .value("DECODER_HW_JEPG",ROCAL_DECODER_HW_JEPG)
+            .value("DECODER_VIDEO_FFMPEG_SW",ROCAL_DECODER_VIDEO_FFMPEG_SW)
+            .value("DECODER_VIDEO_FFMPEG_HW",ROCAL_DECODER_VIDEO_FFMPEG_HW)
+            .export_values();
         // rocal_api_info.h
         m.def("getOutputWidth",&rocalGetOutputWidth);
         m.def("getOutputHeight",&rocalGetOutputHeight);
@@ -425,31 +432,9 @@ namespace rocal{
             py::arg("y_drift_factor") = NULL
             );
         m.def("ImageDecoder",&rocalJpegFileSource,"Reads file from the source given and decodes it according to the policy",
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("source_path"),
-            py::arg("color_format"),
-            py::arg("num_threads"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0,
-            py::arg("dec_type") = 0);
+            py::return_value_policy::reference);
         m.def("ImageDecoderShard",&rocalJpegFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("source_path"),
-            py::arg("color_format"),
-            py::arg("shard_id"),
-            py::arg("shard_count"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0);
+            py::return_value_policy::reference);
         m.def("COCO_ImageDecoder",&rocalJpegCOCOFileSource,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),

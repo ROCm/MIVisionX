@@ -31,23 +31,39 @@ THE SOFTWARE.
 #include <thread>
 #include <mutex>
 
+
 #include <opencv2/opencv.hpp>
-#include <opencv/highgui.h>
-
-#include "rocal_api.h"
-
 using namespace cv;
 
-#define DISPLAY
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#define CV_GRAY2RGB COLOR_GRAY2RGB
+#define CV_RGB2BGR COLOR_RGB2BGR
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FILLED FILLED
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
+#define cvDestroyWindow destroyWindow
+#else
+#include <opencv/highgui.h>
+#endif
+
+#include "rocal_api.h"
+#include "rocal_api_types.h"
+
+#define PRINT_NAMES_AND_LABELS 0 // uncomment for printing names and labels
+// #define ROCAL_MEMCPY_TO_HOST 0 //For HOST 0 / GPU 1
+#define DISPLAY 0
 using namespace std::chrono;
 std::mutex g_mtx;           // mutex for critical section
 
-int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, int shard_id, int num_shards, int dec_width, int dec_height, int batch_size, bool shuffle, bool display )
+int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, int shard_id, int num_shards, int dec_width, int dec_height, int batch_size, bool shuffle, bool display, int dec_mode )
 {
     std::unique_lock<std::mutex> lck (g_mtx,std::defer_lock);
-    std::cout << ">>> Running on " << (gpu_mode>=0?"GPU":"CPU") << std::endl;
+    std::cout << ">>> Running on " << (gpu_mode>=0?"GPU":"CPU") << "shard_id: " << shard_id << std::endl;
     color_format = RocalImageColor::ROCAL_COLOR_RGB24;
     int gpu_id = (gpu_mode < 0)? 0: gpu_mode;
+    RocalDecoderType dec_type = (RocalDecoderType) dec_mode;
 
     lck.lock();
     //looks like OpenVX has some issue loading kernels from multiple threads at the same time
@@ -67,7 +83,7 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
         input1 = rocalJpegFileSourceSingleShard(handle, path, color_format, shard_id, num_shards, false, shuffle, false);
     else
         input1 = rocalJpegFileSourceSingleShard(handle, path, color_format, shard_id, num_shards, false,
-                                shuffle, false,  ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, dec_width, dec_height);
+                                shuffle, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, dec_width, dec_height, dec_type);
 
     if(rocalGetStatus(handle) != ROCAL_OK)
     {
@@ -127,44 +143,49 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
     int counter = 0;
     std::vector<std::vector<char>> names;
     std::vector<int> labels;
-    int ImageNameLen[batch_size];
     names.resize(batch_size);
     labels.resize(batch_size);
-#if 1
-    //cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
+    int image_name_length[batch_size];
+    if(DISPLAY)
+    cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
     int iter_cnt = 0;
-    float  pmul = 2.0f/255;
-    float  padd = -1.0f;
+
     while (!rocalIsEmpty(handle) /*&& (iter_cnt < 100)*/)
     {
       //  std::cout << "processing iter: " << iter_cnt << std::endl;
         if(rocalRun(handle) != 0)
             break;
-
-        if(display)
-            rocalCopyToOutput(handle, mat_input.data, h*w*p);
+        // copy output to host as image
+        rocalCopyToOutput(handle, mat_input.data, h*w*p);
+        if (gpu_mode<0)
+          rocalGetImageLabels(handle, labels.data());
         else
-            rocalCopyToOutputTensor(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW,RocalTensorOutputType::ROCAL_FP32, pmul, pmul, pmul, padd, padd, padd, 0);
-        counter += batch_size;
-        rocalGetImageLabels(handle, labels.data());
+          rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
+        int img_name_size = rocalGetImageNameLen(handle, image_name_length);
+        char img_name[img_name_size];
+        rocalGetImageName(handle, img_name);
+#if PRINT_NAMES_AND_LABELS
+        std::cout << "image names for batch: "<< " label "<< img_name << std::endl;
         for(int i = 0; i < batch_size; i++)
         {
-            names[i] = std::move(std::vector<char>(rocalGetImageNameLen(handle, ImageNameLen), '\n'));
-            rocalGetImageName(handle, names[i].data());
-            std::string id(names[i].begin(), names[i].end());
-         //   std::cout << "name "<< id << " label "<< labels[i] << " - ";
+            std::cout << "name "<< id << " label "<< labels[i] << " - ";
         }
-       // std::cout << std::endl;
+        std::cout << std::endl;
+#endif
         iter_cnt ++;
 
         if(!display)
             continue;
         mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
         cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-        cv::imwrite("output.jpg",mat_color);
+        if(DISPLAY)
+        cv::imshow("output.png",mat_output);
+        else
+        cv::imwrite("output.jpg",mat_output);
+
         col_counter = (col_counter+1)%number_of_cols;
     }
-#endif
+
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto dur = duration_cast<microseconds>( t2 - t1 ).count();
     auto rocal_timing = rocalGetTimingInfo(handle);
@@ -184,12 +205,13 @@ int main(int argc, const char ** argv) {
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT) {
-        printf("Usage: rocal_dataloader_mt <image_dataset_folder/video_file> <num_gpus>1(gpu)/cpu=0>  num_shards, decode_width decode_height batch_size shuffle display_on_off \n");
+        printf("Usage: rocal_dataloader_mt <image_dataset_folder/video_file> <num_gpus>1(gpu)/cpu=0>  num_shards, \
+                decode_width decode_height batch_size shuffle display_on_off dec_mode<0(tjpeg)/1(opencv)/2(hwdec)>\n");
         return -1;
     }
     int argIdx = 0;
     const char *path = argv[++argIdx];
-    bool display = 0;// Display the images
+    bool display = 1;// Display the images
     //int aug_depth = 1;// how deep is the augmentation tree
     int decode_width = 1024;
     int decode_height = 1024;
@@ -197,6 +219,7 @@ int main(int argc, const char ** argv) {
     int num_shards = 2;
     bool shuffle = 0;
     int num_gpus = 0;
+    int dec_mode = 0;
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         num_gpus = atoi(argv[++argIdx]);
@@ -219,13 +242,22 @@ int main(int argc, const char ** argv) {
     if (argc >= argIdx + MIN_ARG_COUNT)
         display = atoi(argv[++argIdx]);
 
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        dec_mode = atoi(argv[++argIdx]);
+
+    // gpu mode needs either OPENCL or HIP enabled
+#if !(ENABLE_HIP||ENABLE_OPENCL)
+    num_gpus = 0;
+#endif
+    std::cout << "#GPUs     :"<< num_gpus << std::endl;
+
     // launch threads process shards
     std::thread loader_threads[num_shards];
     auto gpu_id = num_gpus ? 0 : -1;
     int th_id;
     for (th_id = 0; th_id < num_shards; th_id++) {
         loader_threads[th_id] = std::thread(thread_func, path, gpu_id, RocalImageColor::ROCAL_COLOR_RGB24, th_id, num_shards, decode_width, decode_height, inputBatchSize,
-                                                shuffle, display);
+                                                shuffle, display, dec_mode);
         if (num_gpus) gpu_id = (gpu_id +1) % num_gpus;
     }
     for (auto& th:loader_threads ) {

@@ -5,7 +5,11 @@
 #include <chrono>
 #include <dlfcn.h>
 #include <opencv2/opencv.hpp>
+#if USE_OPENCV_4
+#include <opencv2/highgui.hpp>
+#else
 #include <highgui.h>
+#endif
 #include <numeric>
 
 #if USE_SSE_OPTIMIZATION
@@ -17,7 +21,7 @@
 #endif
 #endif
 
-static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
+void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
 {
     size_t len = strlen(string);
     if (len > 0) {
@@ -28,16 +32,8 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
     }
 }
 
-const float BB_biases[10]             = {1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52};     // bounding box biases
 
-// sort indexes based on comparing values in v
-template <typename T>
-void sort_indexes(const std::vector<T> &v, std::vector<size_t> &idx) {
-  sort(idx.begin(), idx.end(),
-       [&v](size_t i1, size_t i2) {return v[i1] > v[i2];});
-}
-
-InferenceEngine::InferenceEngine(int sock_, Arguments * args_, std::string clientName_, InfComCommand * cmd)
+InferenceEngine::InferenceEngine(int sock_, Arguments * args_, const std::string clientName_, InfComCommand * cmd)
     : sock{ sock_ }, args{ args_ }, clientName{ clientName_ },
       GPUs{ cmd->data[1] },
       dimInput{ cmd->data[2], cmd->data[3], cmd->data[4] },
@@ -45,17 +41,19 @@ InferenceEngine::InferenceEngine(int sock_, Arguments * args_, std::string clien
       receiveFileNames { (bool)cmd->data[8] }, topK { cmd->data[9] }, detectBoundingBoxes { cmd->data[10] },
       reverseInputChannelOrder{ 0 }, preprocessMpy{ 1, 1, 1 }, preprocessAdd{ 0, 0, 0 },
       moduleHandle{ nullptr }, annCreateGraph{ nullptr }, annAddtoGraph { nullptr},
-      device_id{ nullptr }, deviceLockSuccess{ false }, useShadowFilenames{ false }
+      deviceLockSuccess{ false }, useShadowFilenames{ false }
 #if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER && !DONOT_RUN_INFERENCE
     , openvx_context{ nullptr }, openvx_graph{ nullptr }, openvx_input{ nullptr }, openvx_output{ nullptr }
 #elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
     , threadMasterInputQ{ nullptr },
-      opencl_context{ nullptr }, opencl_cmdq{ nullptr },
+#if ENABLE_OPENCL
+      device_id{ nullptr }, opencl_context{ nullptr }, opencl_cmdq{ nullptr },
+      queueDeviceInputMemIdle{ nullptr }, queueDeviceInputMemBusy{ nullptr },
+      queueDeviceOutputMemIdle{ nullptr }, queueDeviceOutputMemBusy{ nullptr },
+#endif      
       openvx_context{ nullptr }, openvx_graph{ nullptr }, openvx_input{ nullptr }, openvx_output{ nullptr },
       threadDeviceInputCopy{ nullptr }, threadDeviceProcess{ nullptr }, threadDeviceOutputCopy{ nullptr },
       queueDeviceTagQ{ nullptr }, queueDeviceImageQ{ nullptr },
-      queueDeviceInputMemIdle{ nullptr }, queueDeviceInputMemBusy{ nullptr },
-      queueDeviceOutputMemIdle{ nullptr }, queueDeviceOutputMemBusy{ nullptr },
       region { nullptr }, useFp16 { 0 }
 #if  USE_ADVANCED_MESSAGE_Q
     , inputQ(MAX_INPUT_QUEUE_DEPTH)
@@ -88,8 +86,10 @@ InferenceEngine::InferenceEngine(int sock_, Arguments * args_, std::string clien
     if (detectBoundingBoxes)
         region = new CYoloRegion();
     // lock devices
+#if ENABLE_OPENCL
     if(!args->lockGpuDevices(GPUs, device_id))
         deviceLockSuccess = true;
+#endif
     if (!args->getlocalShadowRootDir().empty()){
         useShadowFilenames = true;
         std::cout << "INFO::inferenceserver is running with LocalShadowFolder and infcom command receiving only filenames" << std::endl;
@@ -100,6 +100,7 @@ InferenceEngine::InferenceEngine(int sock_, Arguments * args_, std::string clien
 
 InferenceEngine::~InferenceEngine()
 {
+#if ENABLE_OPENCL  
 #if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER && !DONOT_RUN_INFERENCE
     if(openvx_graph) {
         vxReleaseGraph(&openvx_graph);
@@ -195,12 +196,13 @@ InferenceEngine::~InferenceEngine()
     }
     if (region) delete region;
     PROFILER_SHUTDOWN();
+#endif    
 }
 
 vx_status InferenceEngine::DecodeScaleAndConvertToTensor(vx_size width, vx_size height, int size, unsigned char *inp, float *buf, int use_fp16)
 {
     int length = width*height;
-    cv::Mat matOrig = cv::imdecode(cv::Mat(1, size, CV_8UC1, inp), CV_LOAD_IMAGE_COLOR);
+    cv::Mat matOrig = cv::imdecode(cv::Mat(1, size, CV_8UC1, inp), cv::IMREAD_COLOR);
 
 #if USE_SSE_OPTIMIZATION
     unsigned char *data_resize = nullptr;
@@ -557,6 +559,7 @@ void InferenceEngine::DecodeScaleAndConvertToTensorBatch(std::vector<std::tuple<
 
 int InferenceEngine::run()
 {
+#if ENABLE_OPENCL  
     //////
     /// make device lock is successful
     ///
@@ -1133,7 +1136,7 @@ int InferenceEngine::run()
     };
     ERRCHK(sendCommand(sock, reply, clientName));
     ERRCHK(recvCommand(sock, reply, clientName, INFCOM_CMD_DONE));
-
+#endif
     return 0;
 }
 
@@ -1194,6 +1197,7 @@ void InferenceEngine::workMasterInputQ()
 
 void InferenceEngine::workDeviceInputCopy(int gpu)
 {
+#if ENABLE_OPENCL  
     args->lock();
     info("workDeviceInputCopy: GPU#%d started for %s", gpu, clientName.c_str());
     args->unlock();
@@ -1330,10 +1334,12 @@ void InferenceEngine::workDeviceInputCopy(int gpu)
     args->lock();
     info("workDeviceInputCopy: GPU#%d terminated for %s [processed %d batches, %d images]", gpu, clientName.c_str(), totalBatchCounter, totalImageCounter);
     args->unlock();
+#endif    
 }
 
 void InferenceEngine::workDeviceProcess(int gpu)
 {
+#if ENABLE_OPENCL  
     args->lock();
     info("workDeviceProcess: GPU#%d started for %s", gpu, clientName.c_str());
     args->unlock();
@@ -1388,10 +1394,12 @@ void InferenceEngine::workDeviceProcess(int gpu)
     args->lock();
     info("workDeviceProcess: GPU#%d terminated for %s [processed %d batches]", gpu, clientName.c_str(), processCounter);
     args->unlock();
+#endif    
 }
 
 void InferenceEngine::workDeviceOutputCopy(int gpu)
 {
+#if ENABLE_OPENCL  
     args->lock();
     info("workDeviceOutputCopy: GPU#%d started for %s", gpu, clientName.c_str());
     args->unlock();
@@ -1532,9 +1540,11 @@ void InferenceEngine::workDeviceOutputCopy(int gpu)
     args->lock();
     info("workDeviceOutputCopy: GPU#%d terminated for %s [processed %d batches, %d images]", gpu, clientName.c_str(), totalBatchCounter, totalImageCounter);
     args->unlock();
+#endif    
 }
 #endif
 
+#if ENABLE_OPENCL
 void InferenceEngine::dumpBuffer(cl_command_queue cmdq, cl_mem mem, std::string fileName)
 {
     cl_int err;
@@ -1555,3 +1565,4 @@ void InferenceEngine::dumpBuffer(cl_command_queue cmdq, cl_mem mem, std::string 
     if(err) return;
     printf("OK: dumped %ld bytes into %s\n", size, fileName.c_str());
 }
+#endif    

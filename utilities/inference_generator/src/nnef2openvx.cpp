@@ -1484,8 +1484,6 @@ protected:
              << "" << std::endl
              << "#if ENABLE_OPENCV" << std::endl
              << "#include <opencv2/opencv.hpp>" << std::endl
-             << "#include <opencv/cv.h>" << std::endl
-             << "#include <opencv/highgui.h>" << std::endl
              << "using namespace cv; " << std::endl
              << "#endif" << std::endl
              << "" << std::endl

@@ -38,17 +38,22 @@ void ResizeMirrorNormalizeNode::create_node()
 
     _dest_width_val.resize(_batch_size);
     _dest_height_val.resize(_batch_size);
-    _mean_vx.resize(_batch_size);
-    _std_dev_vx.resize(_batch_size);
+    _mean_vx.resize(_batch_size*3);
+    _std_dev_vx.resize(_batch_size*3);
     for (uint i=0; i < _batch_size; i++ ) {
-         _mean_vx[i] = _mean;
-         _std_dev_vx[i] = _std_dev;
+        _mean_vx[3*i] = _mean[0];
+        _mean_vx[3*i+1] = _mean[1];
+        _mean_vx[3*i+2] = _mean[2];
+
+        _std_dev_vx[3*i] = _std_dev[0];
+        _std_dev_vx[3*i+1] = _std_dev[1];
+        _std_dev_vx[3*i+2] = _std_dev[2];
     }
-    _mean_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_FLOAT32, _batch_size);
-    _std_dev_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_FLOAT32, _batch_size);
+    _mean_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_FLOAT32, _batch_size*3);
+    _std_dev_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_FLOAT32, _batch_size*3);
     vx_status mean_status = VX_SUCCESS;
-    mean_status |= vxAddArrayItems(_mean_array,_batch_size, _mean_vx.data(), sizeof(vx_float32));
-    mean_status |= vxAddArrayItems(_std_dev_array,_batch_size, _std_dev_vx.data(), sizeof(vx_float32));
+    mean_status |= vxAddArrayItems(_mean_array,_batch_size*3, _mean_vx.data(), sizeof(vx_float32));
+    mean_status |= vxAddArrayItems(_std_dev_array,_batch_size*3, _std_dev_vx.data(), sizeof(vx_float32));
     _mirror.create_array(_graph ,VX_TYPE_UINT32, _batch_size);
     if(mean_status != 0)
         THROW(" vxAddArrayItems failed in the resize mirror normalize node (vxExtrppNode_ResizeMirrorNormalizeCropbatchPD    )  node: "+ TOSTR(mean_status) + "  "+ TOSTR(mean_status))
@@ -126,7 +131,7 @@ void ResizeMirrorNormalizeNode::update_node()
     _mirror.update_array();
 }
 
-void ResizeMirrorNormalizeNode::init(float mean, float std_dev, IntParam *mirror)
+void ResizeMirrorNormalizeNode::init(std::vector<float>& mean, std::vector<float>& std_dev, IntParam *mirror)
 {
     _mean   = mean;
     _std_dev = std_dev;

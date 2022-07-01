@@ -30,7 +30,7 @@ class ResizeMirrorNormalizeNode : public Node
 public:
     ResizeMirrorNormalizeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     ResizeMirrorNormalizeNode() = delete;
-    void init(float mean, float std_dev, IntParam *mirror);
+    void init(std::vector<float>& mean,  std::vector<float>& std_dev, IntParam *mirror);
     vx_array get_dst_width() { return _dst_roi_width; }
     vx_array get_dst_height() { return _dst_roi_height;}
     vx_array get_src_width() { return _src_roi_width; }
@@ -44,8 +44,8 @@ private:
     std::vector<uint> _dest_width_val, _dest_height_val;
     std::vector<vx_float32> _mean_vx, _std_dev_vx;
     vx_array _mean_array, _std_dev_array;
-    float _mean; 
-    float _std_dev; 
+    std::vector<float> _mean;
+    std::vector<float> _std_dev; 
     ParameterVX<int> _mirror;
     constexpr static int   MIRROR_RANGE [2] =  {0, 1};
 };

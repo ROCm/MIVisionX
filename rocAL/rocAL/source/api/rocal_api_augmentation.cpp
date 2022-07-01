@@ -561,13 +561,13 @@ rocalResizeMirrorNormalize(
     auto input = static_cast<Image*>(p_input);
     auto mirror = static_cast<IntParam *>(p_mirror);
     float mean_actual = 0, std_actual = 0; // Mean of vectors
-    for(unsigned i = 0; i < mean.size(); i++)
-    {
-        mean_actual += mean[i];
-        std_actual  += std_dev[i];
-    }
-    mean_actual /= mean.size();
-    std_actual /= std_dev.size();
+    // for(unsigned i = 0; i < mean.size(); i++)
+    // {
+    //     mean_actual += mean[i];
+    //     std_actual  += std_dev[i];
+    // }
+    // mean_actual /= mean.size();
+    // std_actual /= std_dev.size();
 
    try
     {
@@ -583,7 +583,8 @@ rocalResizeMirrorNormalize(
         //rmn_node->init(mean_actual, std_actual, mirror);
         // RPP doesn't support returning float buffers so passing 0 and 1 as mean and std and doing normalization in rocAL
         // TODO: To be removed with rocAL Tensor support
-        rmn_node->init(0, 1, mirror);
+        // rmn_node->init(0, 1, mirror);
+        rmn_node->init(mean,std_dev,mirror);
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<ResizeMirrorNormalizeMetaNode,ResizeMirrorNormalizeNode>(rmn_node);
     }

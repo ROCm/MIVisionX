@@ -29,11 +29,13 @@ THE SOFTWARE.
 #include <string>
 #include <string.h>
 #include <sys/stat.h>
-#include <opencv/highgui.h>
+#include <vector>
 
 #include "rocal_api.h"
+
 #include "opencv2/opencv.hpp"
 using namespace cv;
+
 #if USE_OPENCV_4
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
 #define CV_BGR2GRAY COLOR_BGR2GRAY
@@ -41,6 +43,7 @@ using namespace cv;
 #define CV_RGB2BGR COLOR_RGB2BGR
 #define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
 #define CV_FILLED FILLED
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE 
 #endif
 
 using namespace std::chrono;

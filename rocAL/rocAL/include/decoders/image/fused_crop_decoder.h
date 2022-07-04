@@ -23,6 +23,42 @@ THE SOFTWARE.
 #pragma once
 #include "decoder.h"
 #include <turbojpeg.h>
+#include <random>
+// todo:: move this to common header
+template<typename T = std::mt19937, std::size_t state_size = T::state_size>
+class SeededRNG {
+  /*
+  * @param batch_size How many RNGs to store
+  * @param state_size How many seed are used to initialize one RNG. Used to lower probablity of
+  * collisions between seeds used to initialize RNGs in different operators.
+  */
+public:
+  SeededRNG (int batch_size = 256) {
+      std::random_device source;
+      _batch_size = batch_size;
+      std::size_t _random_data_size = state_size * batch_size ;
+      std::vector<std::random_device::result_type> random_data(_random_data_size);
+      std::generate(random_data.begin(), random_data.end(), std::ref(source));
+      _rngs.reserve(batch_size);
+      for (int i=0; i < (int)(_batch_size*state_size); i += state_size) {
+        std::seed_seq seeds(std::begin(random_data) + i, std::begin(random_data)+ i +state_size);
+        _rngs.emplace_back(T(seeds));
+      }
+  }
+
+  /**
+   * Returns engine corresponding to given sample ID
+   */
+   T &operator[](int sample) noexcept {
+    return _rngs[sample % _batch_size];
+  }
+
+private:
+    std::vector<T> _rngs;
+    int _batch_size;
+};
+
+
 class FusedCropTJDecoder : public Decoder {
 public:
     //! Default constructor
@@ -31,14 +67,14 @@ public:
     /*!
      \param input_buffer  User provided buffer containig the encoded image
      \param input_size Size of the compressed data provided in the input_buffer
-     \param width pointer to the user's buffer to write the width of the compressed image to 
-     \param height pointer to the user's buffer to write the height of the compressed image to 
-     \param color_comps pointer to the user's buffer to write the number of color components of the compressed image to 
+     \param width pointer to the user's buffer to write the width of the compressed image to
+     \param height pointer to the user's buffer to write the height of the compressed image to
+     \param color_comps pointer to the user's buffer to write the number of color components of the compressed image to
     */
     Status decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) override;
-    
+
     //! Decodes the actual image data
-    /*! 
+    /*!
       \param input_buffer  User provided buffer containig the encoded image
       \param output_buffer User provided buffer used to write the decoded image into
       \param input_size Size of the compressed data provided in the input_buffer
@@ -83,4 +119,6 @@ private:
     };
     bool _is_partial_decoder = true;
     std::vector <float> _bbox_coord;
+    SeededRNG<std::mt19937, 4> _rngs;     // setting the state_size to 4 for 4 random parameters.
+
 };

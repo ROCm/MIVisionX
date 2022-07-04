@@ -80,7 +80,7 @@ class Pipeline(object):
                  exec_async=True, bytes_per_sample=0,
                  rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
         if(rocal_cpu):
-            # print("comes to cpu")
+            print("comes to cpu")
             self._handle = b.rocalCreate(
                 batch_size, types.CPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         else:
@@ -149,6 +149,7 @@ class Pipeline(object):
         It returns a list of outputs created by calling ROCAL Operators."""
         print("definegraph is deprecated")
         raise NotImplementedError
+
 
     def get_handle(self):
         return self._handle

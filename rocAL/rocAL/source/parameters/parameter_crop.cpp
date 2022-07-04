@@ -44,7 +44,7 @@ void CropParam::set_y_drift_factor(Parameter<float>* y_drift)
 }
 
 void CropParam::get_crop_dimensions(std::vector<uint32_t> &crop_w_dim, std::vector<uint32_t> &crop_h_dim)
-{   
+{
     crop_h_dim = croph_arr_val;
     crop_w_dim = cropw_arr_val;
 }
@@ -83,10 +83,15 @@ void CropParam::update_crop_array()
 {
     vx_status status = VX_SUCCESS;
     status = vxCopyArrayRange((vx_array)x1_arr, 0, batch_size, sizeof(vx_uint32), x1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    // std::cerr<<"\n x1::"<<x1_arr_val[0];
+    // std::cerr<<"\n y1::"<<y1_arr_val[0];
+
     if(status != VX_SUCCESS)
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
     status = vxCopyArrayRange((vx_array)y1_arr, 0, batch_size, sizeof(vx_uint32), y1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
+    // std::cerr<<"\n y1::"<<y1_arr_val[0];
+
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
     status = vxCopyArrayRange((vx_array)cropw_arr, 0, batch_size, sizeof(vx_uint32), cropw_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)

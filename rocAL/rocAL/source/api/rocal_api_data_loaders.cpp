@@ -39,6 +39,7 @@ THE SOFTWARE.
 #include "node_fused_jpeg_crop.h"
 #include "node_fused_jpeg_crop_single_shard.h"
 #include "node_resize.h"
+#include "node_resize_single_param.h"
 #include "meta_node_resize.h"
 
 namespace filesys = boost::filesystem;
@@ -129,6 +130,7 @@ rocalJpegFileSourceSingleShard(
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
+
         DecoderType decType = DecoderType::TURBO_JPEG; // default
         if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
         if (dec_type == ROCAL_DECODER_HW_JEPG) decType = DecoderType::HW_JPEG_DEC;

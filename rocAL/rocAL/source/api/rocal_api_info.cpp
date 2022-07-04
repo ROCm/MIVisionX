@@ -25,50 +25,49 @@ THE SOFTWARE.
 #include "rocal_api.h"
 size_t ROCAL_API_CALL rocalGetImageWidth(RocalImage p_image)
 {
-    auto image = static_cast<Image *>(p_image);
+    auto image = static_cast<Image*>(p_image);
     return image->info().width();
 }
 size_t ROCAL_API_CALL rocalGetImageHeight(RocalImage p_image)
 {
-    auto image = static_cast<Image *>(p_image);
+    auto image = static_cast<Image*>(p_image);
     return image->info().height_batch();
 }
 
 size_t ROCAL_API_CALL rocalGetImagePlanes(RocalImage p_image)
 {
-    auto image = static_cast<Image *>(p_image);
+    auto image = static_cast<Image*>(p_image);
     return image->info().color_plane_count();
 }
 
 int ROCAL_API_CALL rocalGetOutputWidth(RocalContext p_context)
 {
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
     return context->master_graph->output_width();
 }
 
 int ROCAL_API_CALL rocalGetOutputHeight(RocalContext p_context)
 {
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
     return context->master_graph->output_height();
 }
 
 int ROCAL_API_CALL rocalGetOutputColorFormat(RocalContext p_context)
 {
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
     auto translate_color_format = [](RocalColorFormat color_format)
     {
-        switch (color_format)
-        {
-        case RocalColorFormat::RGB24:
-            return 0;
-        case RocalColorFormat::BGR24:
-            return 1;
-        case RocalColorFormat::U8:
-            return 2;
-        case RocalColorFormat::RGB_PLANAR:
-            return 3;
-        default:
-            THROW("Unsupported Image type" + TOSTR(color_format))
+        switch(color_format){
+            case RocalColorFormat::RGB24:
+                return 0;
+            case RocalColorFormat::BGR24:
+                return 1;
+            case RocalColorFormat::U8:
+                return 2;
+            case RocalColorFormat::RGB_PLANAR:
+                return 3;
+            default:
+                THROW("Unsupported Image type" + TOSTR(color_format))
         }
     };
 
@@ -76,20 +75,20 @@ int ROCAL_API_CALL rocalGetOutputColorFormat(RocalContext p_context)
 }
 size_t ROCAL_API_CALL rocalGetAugmentationBranchCount(RocalContext p_context)
 {
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
     return context->master_graph->augmentation_branch_count();
 }
 
-size_t ROCAL_API_CALL
+size_t  ROCAL_API_CALL
 rocalGetRemainingImages(RocalContext p_context)
 {
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
     size_t count = 0;
     try
     {
         count = context->master_graph->remaining_count();
     }
-    catch (const std::exception &e)
+    catch(const std::exception& e)
     {
         context->capture_error(e.what());
         ERR(e.what());
@@ -99,29 +98,28 @@ rocalGetRemainingImages(RocalContext p_context)
 
 RocalStatus ROCAL_API_CALL rocalGetStatus(RocalContext p_context)
 {
-    if (!p_context)
+    if(!p_context)
         return ROCAL_CONTEXT_INVALID;
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
 
-    if (context->no_error())
+    if(context->no_error())
         return ROCAL_OK;
 
     return ROCAL_RUNTIME_ERROR;
 }
 
-const char *ROCAL_API_CALL rocalGetErrorMessage(RocalContext p_context)
+const char* ROCAL_API_CALL rocalGetErrorMessage(RocalContext p_context)
 {
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
     return context->error_msg();
 }
 TimingInfo
-    ROCAL_API_CALL
-    rocalGetTimingInfo(RocalContext p_context)
+ROCAL_API_CALL rocalGetTimingInfo(RocalContext p_context)
 {
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
     auto info = context->timing();
-    // INFO("shuffle time "+ TOSTR(info.shuffle_time)); to display time taken for shuffling dataset
-    // INFO("bbencode time "+ TOSTR(info.bb_process_time)); //to display time taken for bbox encoder
+    //INFO("shuffle time "+ TOSTR(info.shuffle_time)); to display time taken for shuffling dataset
+    //INFO("bbencode time "+ TOSTR(info.bb_process_time)); //to display time taken for bbox encoder
     if (context->master_graph->is_video_loader())
         return {info.video_read_time, info.video_decode_time, info.video_process_time, info.copy_to_output};
     else
@@ -129,61 +127,55 @@ TimingInfo
 }
 
 RocalMetaData
-    ROCAL_API_CALL
-    rocalCreateCaffe2LMDBLabelReader(RocalContext p_context, const char *source_path, bool is_output)
-{
+ROCAL_API_CALL rocalCreateCaffe2LMDBLabelReader(RocalContext p_context, const char* source_path, bool is_output){
 
     if (!p_context)
         THROW("Invalid rocal context passed to rocalCreateCaffe2LMDBLabelReader")
 
-    auto context = static_cast<Context *>(p_context);
-    return context->master_graph->create_caffe2_lmdb_record_meta_data_reader(source_path, MetaDataReaderType::CAFFE2_META_DATA_READER, MetaDataType::Label);
+    auto context = static_cast<Context*>(p_context);
+    return context->master_graph->create_caffe2_lmdb_record_meta_data_reader(source_path , MetaDataReaderType::CAFFE2_META_DATA_READER , MetaDataType::Label);
 }
 
 RocalMetaData
-    ROCAL_API_CALL
-    rocalCreateCaffe2LMDBReaderDetection(RocalContext p_context, const char *source_path, bool is_output)
-{
+ROCAL_API_CALL rocalCreateCaffe2LMDBReaderDetection(RocalContext p_context, const char* source_path, bool is_output){
     if (!p_context)
         THROW("Invalid rocal context passed to rocalCreateCaffe2LMDBReaderDetection")
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
 
-    return context->master_graph->create_caffe2_lmdb_record_meta_data_reader(source_path, MetaDataReaderType::CAFFE2_DETECTION_META_DATA_READER, MetaDataType::BoundingBox);
+    return context->master_graph->create_caffe2_lmdb_record_meta_data_reader(source_path , MetaDataReaderType::CAFFE2_DETECTION_META_DATA_READER,  MetaDataType::BoundingBox);
+
 }
 
 RocalMetaData
-    ROCAL_API_CALL
-    rocalCreateCaffeLMDBLabelReader(RocalContext p_context, const char *source_path)
-{
+ROCAL_API_CALL rocalCreateCaffeLMDBLabelReader(RocalContext p_context, const char* source_path){
 
     if (!p_context)
         THROW("Invalid rocal context passed to rocalCreateCaffeLMDBLabelReader")
-    auto context = static_cast<Context *>(p_context);
-    return context->master_graph->create_caffe_lmdb_record_meta_data_reader(source_path, MetaDataReaderType::CAFFE_META_DATA_READER, MetaDataType::Label);
+    auto context = static_cast<Context*>(p_context);
+    return context->master_graph->create_caffe_lmdb_record_meta_data_reader(source_path , MetaDataReaderType::CAFFE_META_DATA_READER , MetaDataType::Label);
 }
 
 RocalMetaData
-    ROCAL_API_CALL
-    rocalCreateCaffeLMDBReaderDetection(RocalContext p_context, const char *source_path)
-{
+ROCAL_API_CALL rocalCreateCaffeLMDBReaderDetection(RocalContext p_context, const char* source_path){
     if (!p_context)
         THROW("Invalid rocal context passed to rocalCreateCaffeLMDBReaderDetection")
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
 
-    return context->master_graph->create_caffe_lmdb_record_meta_data_reader(source_path, MetaDataReaderType::CAFFE_DETECTION_META_DATA_READER, MetaDataType::BoundingBox);
+    return context->master_graph->create_caffe_lmdb_record_meta_data_reader(source_path, MetaDataReaderType::CAFFE_DETECTION_META_DATA_READER,  MetaDataType::BoundingBox);
+
 }
 
 size_t ROCAL_API_CALL rocalIsEmpty(RocalContext p_context)
 {
     if (!p_context)
         THROW("Invalid rocal context passed to rocalIsEmpty")
-    auto context = static_cast<Context *>(p_context);
+    auto context = static_cast<Context*>(p_context);
     size_t ret = 0;
     try
     {
         ret = context->master_graph->empty();
     }
-    catch (const std::exception &e)
+    catch(const std::exception& e)
     {
         context->capture_error(e.what());
         ERR(e.what());

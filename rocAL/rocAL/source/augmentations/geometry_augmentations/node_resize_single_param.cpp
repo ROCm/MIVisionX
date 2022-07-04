@@ -22,19 +22,22 @@ THE SOFTWARE.
 
 #include <vx_ext_rpp.h>
 #include <graph.h>
-#include "node_resize.h"
+#include "node_resize_single_param.h"
 #include "exception.h"
 
 
-ResizeNode::ResizeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
+ResizeSingleParamNode::ResizeSingleParamNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs)
 {
 }
 
-void ResizeNode::create_node()
+void ResizeSingleParamNode::create_node()
 {
     if(_node)
         return;
+
+    _dest_width_val.resize(_batch_size);
+    _dest_height_val.resize(_batch_size);
 
     std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
     std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());
@@ -57,7 +60,43 @@ void ResizeNode::create_node()
 
 }
 
-void ResizeNode::update_node()
+
+
+void ResizeSingleParamNode::update_node()
 {
 
+std::vector<uint32_t> src_roi_width, src_roi_height;
+src_roi_width = _inputs[0]->info().get_roi_width_vec();
+src_roi_height = _inputs[0]->info().get_roi_height_vec();
+
+for(uint i = 0; i < _batch_size; i++)
+    {
+
+        uint w = src_roi_width[i];
+        uint h = src_roi_height[i];
+
+        uint old_short, old_long, new_short, new_long, new_w, new_h;
+
+        old_short = (w <= h) ? w : h;
+        old_long = (w <= h) ? h : w;
+        new_short = _size;
+        new_long = int(_size * old_long / old_short);
+
+        new_w = (w <= h) ?  new_short : new_long;
+        new_h = (w <= h) ?  new_long : new_short;
+
+    _dest_height_val[i] = new_h;
+    _dest_width_val[i] = new_w;
+    }
+    vxCopyArrayRange((vx_array)_dst_roi_width, 0, _batch_size, sizeof(uint), _dest_width_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    vxCopyArrayRange((vx_array)_dst_roi_height, 0, _batch_size, sizeof(uint), _dest_height_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+
+
+    _outputs[0]->update_image_roi(_dest_width_val, _dest_height_val);
+
+}
+
+void ResizeSingleParamNode::init(int size)
+{
+    _size   = size;
 }

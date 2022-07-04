@@ -86,11 +86,7 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
                                 shuffle, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, dec_width, dec_height, dec_type);
 
     if(rocalGetStatus(handle) != ROCAL_OK)
-    {
         std::cout << "rocalJpegFileSourceSingleShard<"<<shard_id<<" , "<< num_shards << ">" << " could not initialize : "<<rocalGetErrorMessage(handle) << std::endl;
-        return -1;
-    }
-    // create meta data reader
     rocalCreateLabelReader(handle, path);
 
     /*>>>>>>>>>>>>>>>> Creating Rocal parameters  <<<<<<<<<<<<<<<<*/
@@ -149,7 +145,6 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
     if(DISPLAY)
     cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
     int iter_cnt = 0;
-
     while (!rocalIsEmpty(handle) /*&& (iter_cnt < 100)*/)
     {
       //  std::cout << "processing iter: " << iter_cnt << std::endl;

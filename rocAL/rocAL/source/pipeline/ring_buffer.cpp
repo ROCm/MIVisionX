@@ -93,7 +93,7 @@ std::pair<void*, void*> RingBuffer::get_box_encode_write_buffers()
     block_if_full();
     if((_mem_type == RocalMemType::OCL) || (_mem_type == RocalMemType::HIP))
         return std::make_pair(_dev_bbox_buffer[_write_ptr], _dev_labels_buffer[_write_ptr]);
-    return std::make_pair(nullptr, nullptr); 
+    return std::make_pair(nullptr, nullptr);
 }
 void RingBuffer::unblock_reader()
 {

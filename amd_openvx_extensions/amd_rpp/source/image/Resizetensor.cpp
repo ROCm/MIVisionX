@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-struct ResizebatchPDLocalData
+struct ResizetensorLocalData
 {
     RPPCommonHandle handle;
     rppHandle_t rppHandle;
@@ -38,34 +38,37 @@ struct ResizebatchPDLocalData
     Rpp32u *srcBatch_height;
     Rpp32u *dstBatch_width;
     Rpp32u *dstBatch_height;
+    RpptDescPtr srcDescPtr, dstDescPtr;
+    RpptROIPtr roiTensorPtrSrc;
+    RpptRoiType roiType;
+    RpptImagePatchPtr dstImgSize;
+    RpptDesc srcDesc, dstDesc;
 #if ENABLE_OPENCL
     cl_mem cl_pSrc;
     cl_mem cl_pDst;
 #elif ENABLE_HIP
     void *hip_pSrc;
     void *hip_pDst;
+    RpptImagePatch *d_dstImgSize;
+    RpptROI *d_roiTensorPtrSrc;
 #endif
 };
 
-static vx_status VX_CALLBACK refreshResizebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, ResizebatchPDLocalData *data)
+static vx_status VX_CALLBACK refreshResizetensor(vx_node node, const vx_reference *parameters, vx_uint32 num, ResizetensorLocalData *data)
 {
     vx_status status = VX_SUCCESS;
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
-    data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_HEIGHT, &data->maxDstDimensions.height, sizeof(data->maxDstDimensions.height)));
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_WIDTH, &data->maxDstDimensions.width, sizeof(data->maxDstDimensions.width)));
-    data->maxDstDimensions.height = data->maxDstDimensions.height / data->nbatchSize;
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u), data->srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u), data->srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->nbatchSize, sizeof(Rpp32u), data->dstBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->nbatchSize, sizeof(Rpp32u), data->dstBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     for (int i = 0; i < data->nbatchSize; i++)
     {
-        data->srcDimensions[i].width = data->srcBatch_width[i];
-        data->srcDimensions[i].height = data->srcBatch_height[i];
-        data->dstDimensions[i].width = data->dstBatch_width[i];
-        data->dstDimensions[i].height = data->dstBatch_height[i];
+        data->srcDimensions[i].width = data->roiTensorPtrSrc[i].xywhROI.roiWidth = data->srcBatch_width[i];
+        data->srcDimensions[i].height = data->roiTensorPtrSrc[i].xywhROI.roiHeight = data->srcBatch_height[i];
+        data->dstDimensions[i].width = data->dstImgSize[i].width = data->dstBatch_width[i];
+        data->dstDimensions[i].height = data->dstImgSize[i].height = data->dstBatch_height[i];
+        data->roiTensorPtrSrc[i].xywhROI.xy.x = 0;
+        data->roiTensorPtrSrc[i].xywhROI.xy.y = 0;
     }
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
@@ -75,6 +78,8 @@ static vx_status VX_CALLBACK refreshResizebatchPD(vx_node node, const vx_referen
 #elif ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
+        hipMemcpy(data->d_dstImgSize, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice);
+        hipMemcpy(data->d_roiTensorPtrSrc, data->roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI), hipMemcpyHostToDevice);
 #endif
     }
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
@@ -85,7 +90,7 @@ static vx_status VX_CALLBACK refreshResizebatchPD(vx_node node, const vx_referen
     return status;
 }
 
-static vx_status VX_CALLBACK validateResizebatchPD(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
+static vx_status VX_CALLBACK validateResizetensor(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
@@ -104,7 +109,7 @@ static vx_status VX_CALLBACK validateResizebatchPD(vx_node node, const vx_refere
     STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     if (df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB)
     {
-        return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: ResizebatchPD: image: #0 format=%4.4s (must be RGB2 or U008)\n", (char *)&df_image);
+        return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: Resizetensor: image: #0 format=%4.4s (must be RGB2 or U008)\n", (char *)&df_image);
     }
 
     // Check for output parameters
@@ -126,11 +131,11 @@ static vx_status VX_CALLBACK validateResizebatchPD(vx_node node, const vx_refere
     return status;
 }
 
-static vx_status VX_CALLBACK processResizebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
+static vx_status VX_CALLBACK processResizetensor(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
-    ResizebatchPDLocalData *data = NULL;
+    ResizetensorLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     vx_df_image df_image = VX_DF_IMAGE_VIRT;
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
@@ -138,7 +143,7 @@ static vx_status VX_CALLBACK processResizebatchPD(vx_node node, const vx_referen
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
 #if ENABLE_OPENCL
-        refreshResizebatchPD(node, parameters, num, data);
+        refreshResizetensor(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
             rpp_status = rppi_resize_u8_pln1_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->dstDimensions, data->maxDstDimensions, output_format_toggle, data->nbatchSize, data->rppHandle);
@@ -149,37 +154,23 @@ static vx_status VX_CALLBACK processResizebatchPD(vx_node node, const vx_referen
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
-        refreshResizebatchPD(node, parameters, num, data);
-        if (df_image == VX_DF_IMAGE_U8)
-        {
-            rpp_status = rppi_resize_u8_pln1_batchPD_gpu((void *)data->hip_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->dstDimensions, data->maxDstDimensions, output_format_toggle, data->nbatchSize, data->rppHandle);
-        }
-        else if (df_image == VX_DF_IMAGE_RGB)
-        {
-            rpp_status = rppi_resize_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->dstDimensions, data->maxDstDimensions, output_format_toggle, data->nbatchSize, data->rppHandle);
-        }
+        refreshResizetensor(node, parameters, num, data);
+        rpp_status = rppt_resize_gpu(data->hip_pSrc, data->srcDescPtr, data->hip_pDst, data->dstDescPtr, data->d_dstImgSize, RpptInterpolationType::TRIANGULAR, data->d_roiTensorPtrSrc, data->roiType, data->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
     {
-        refreshResizebatchPD(node, parameters, num, data);
-        if (df_image == VX_DF_IMAGE_U8)
-        {
-            rpp_status = rppi_resize_u8_pln1_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->dstDimensions, data->maxDstDimensions, output_format_toggle, data->nbatchSize, data->rppHandle);
-        }
-        else if (df_image == VX_DF_IMAGE_RGB)
-        {
-            rpp_status = rppi_resize_u8_pkd3_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->dstDimensions, data->maxDstDimensions, output_format_toggle, data->nbatchSize, data->rppHandle);
-        }
+        refreshResizetensor(node, parameters, num, data);
+        rpp_status = rppt_resize_host(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->dstImgSize, RpptInterpolationType::TRIANGULAR, data->roiTensorPtrSrc, data->roiType, data->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
 }
 
-static vx_status VX_CALLBACK initializeResizebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
+static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    ResizebatchPDLocalData *data = new ResizebatchPDLocalData;
+    ResizetensorLocalData *data = new ResizetensorLocalData;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
@@ -188,13 +179,92 @@ static vx_status VX_CALLBACK initializeResizebatchPD(vx_node node, const vx_refe
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &data->nbatchSize));
+    // data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
     data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
     data->dstDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
     data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     data->dstBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     data->dstBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-    refreshResizebatchPD(node, parameters, num, data);
+    data->dstImgSize = (RpptImagePatch *)malloc(sizeof(RpptImagePatch) * data->nbatchSize);
+
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
+    data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_HEIGHT, &data->maxDstDimensions.height, sizeof(data->maxDstDimensions.height)));
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_WIDTH, &data->maxDstDimensions.width, sizeof(data->maxDstDimensions.width)));
+    data->maxDstDimensions.height = data->maxDstDimensions.height / data->nbatchSize;
+
+    // Check if it is a RGB or single channel U8 input
+    vx_df_image df_image = VX_DF_IMAGE_VIRT;
+    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
+    uint ip_channel = (df_image == VX_DF_IMAGE_RGB) ? 3 : 1;
+
+    // Initializing tensor config parameters.
+    data->srcDescPtr = &data->srcDesc;
+    data->dstDescPtr = &data->dstDesc;
+
+    data->srcDescPtr->dataType = RpptDataType::U8;
+    data->dstDescPtr->dataType = RpptDataType::U8;
+
+    // Set numDims, offset, n/c/h/w values for src/dst
+    data->srcDescPtr->numDims = 4;
+    data->dstDescPtr->numDims = 4;
+
+    data->srcDescPtr->offsetInBytes = 0;
+    data->dstDescPtr->offsetInBytes = 0;
+
+    data->srcDescPtr->n = data->nbatchSize;
+    data->srcDescPtr->h = data->maxSrcDimensions.height;
+    data->srcDescPtr->w = data->maxSrcDimensions.width;
+    data->srcDescPtr->c = ip_channel;
+
+    data->dstDescPtr->n = data->nbatchSize;
+    data->dstDescPtr->h = data->maxDstDimensions.height;
+    data->dstDescPtr->w = data->maxDstDimensions.width;
+    data->dstDescPtr->c = ip_channel;
+    // Set layout and n/c/h/w strides for src/dst
+    if(df_image == VX_DF_IMAGE_U8) // For PLN1 images
+    {
+        data->srcDescPtr->layout = RpptLayout::NCHW;
+        data->dstDescPtr->layout = RpptLayout::NCHW;
+
+        data->srcDescPtr->strides.nStride = ip_channel * data->srcDescPtr->w * data->srcDescPtr->h;
+        data->srcDescPtr->strides.cStride = data->srcDescPtr->w * data->srcDescPtr->h;
+        data->srcDescPtr->strides.hStride = data->srcDescPtr->w;
+        data->srcDescPtr->strides.wStride = 1;
+
+        data->dstDescPtr->strides.nStride = ip_channel * data->dstDescPtr->w * data->dstDescPtr->h;
+        data->dstDescPtr->strides.cStride = data->dstDescPtr->w * data->dstDescPtr->h;
+        data->dstDescPtr->strides.hStride = data->dstDescPtr->w;
+        data->dstDescPtr->strides.wStride = 1;
+    }
+    else // For RGB (NHWC/NCHW) images
+    {
+        data->srcDescPtr->layout = RpptLayout::NHWC;
+        data->dstDescPtr->layout = RpptLayout::NHWC;
+
+        data->srcDescPtr->strides.nStride = ip_channel * data->srcDescPtr->w * data->srcDescPtr->h;
+        data->srcDescPtr->strides.hStride = ip_channel * data->srcDescPtr->w;
+        data->srcDescPtr->strides.wStride = ip_channel;
+        data->srcDescPtr->strides.cStride = 1;
+
+        data->dstDescPtr->strides.nStride = ip_channel * data->dstDescPtr->w * data->dstDescPtr->h;
+        data->dstDescPtr->strides.hStride = ip_channel * data->dstDescPtr->w;
+        data->dstDescPtr->strides.wStride = ip_channel;
+        data->dstDescPtr->strides.cStride = 1;
+    }
+
+    // Initialize ROI tensors for src/dst
+    data->roiTensorPtrSrc  = (RpptROI *) calloc(data->nbatchSize, sizeof(RpptROI));
+
+    // Set ROI tensors types for src/dst
+    data->roiType = RpptRoiType::XYWH;
+#if ENABLE_HIP
+    hipMalloc(&data->d_dstImgSize, data->nbatchSize * sizeof(RpptImagePatch));
+    hipMalloc(&data->d_roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI));
+#endif
+    refreshResizetensor(node, parameters, num, data);
 #if ENABLE_OPENCL
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.cmdq, data->nbatchSize);
@@ -209,10 +279,14 @@ static vx_status VX_CALLBACK initializeResizebatchPD(vx_node node, const vx_refe
     return VX_SUCCESS;
 }
 
-static vx_status VX_CALLBACK uninitializeResizebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
+static vx_status VX_CALLBACK uninitializeResizetensor(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    ResizebatchPDLocalData *data;
+    ResizetensorLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+#if ENABLE_HIP
+    hipFree(data->d_dstImgSize);
+    hipFree(data->d_roiTensorPtrSrc);
+#endif
 #if ENABLE_OPENCL || ENABLE_HIP
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppDestroyGPU(data->rppHandle);
@@ -225,6 +299,8 @@ static vx_status VX_CALLBACK uninitializeResizebatchPD(vx_node node, const vx_re
     free(data->srcBatch_height);
     free(data->dstBatch_width);
     free(data->dstBatch_height);
+    free(data->roiTensorPtrSrc);
+    free(data->dstImgSize);
     delete (data);
     return VX_SUCCESS;
 }
@@ -252,17 +328,17 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
-vx_status ResizebatchPD_Register(vx_context context)
+vx_status Resizetensor_Register(vx_context context)
 {
     vx_status status = VX_SUCCESS;
     // Add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.ResizebatchPD",
-                                       VX_KERNEL_RPP_RESIZEBATCHPD,
-                                       processResizebatchPD,
+    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Resizetensor",
+                                       VX_KERNEL_RPP_RESIZETENSOR,
+                                       processResizetensor,
                                        8,
-                                       validateResizebatchPD,
-                                       initializeResizebatchPD,
-                                       uninitializeResizebatchPD);
+                                       validateResizetensor,
+                                       initializeResizetensor,
+                                       uninitializeResizetensor);
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));

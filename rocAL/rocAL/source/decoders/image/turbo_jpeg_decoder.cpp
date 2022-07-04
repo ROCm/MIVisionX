@@ -29,7 +29,7 @@ TJDecoder::TJDecoder(){
 
 #if 0
     int num_avail_scalings = 0;
-    auto scaling_factors = tjGetScalingFactors	(&num_avail_scalings);	
+    auto scaling_factors = tjGetScalingFactors	(&num_avail_scalings);
     for(int i = 0; i < num_avail_scalings; i++) {
         if(scaling_factors[i].num < scaling_factors[i].denom) {
 
@@ -40,14 +40,14 @@ TJDecoder::TJDecoder(){
 };
 
 
-Decoder::Status TJDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) 
+Decoder::Status TJDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps)
 {
     //TODO : Use the most recent TurboJpeg API tjDecompressHeader3 which returns the color components
     if(tjDecompressHeader2(m_jpegDecompressor,
-                            input_buffer, 
-                            input_size, 
-                            width, 
-                            height, 
+                            input_buffer,
+                            input_size,
+                            width,
+                            height,
                             color_comps) != 0)
     {
         // ignore "Could not determine Subsampling type error"
@@ -131,9 +131,9 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
             actual_decoded_width = scaledw;
             actual_decoded_height = scaledh;
             //std::cout << "actual_decoded_width: " << actual_decoded_width << " actual_decoded_height: " << actual_decoded_height  << std::endl;
-        } 
+        }
         //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
-        else { 
+        else {
             if (tjDecompress2(m_jpegDecompressor,
                             input_buffer,
                             input_size,
@@ -212,7 +212,7 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
             }
             actual_decoded_width = scaledw;
             actual_decoded_height = scaledh;
-            //std::cout << "actual_decoded_width: " << actual_decoded_width << " actual_decoded_height: " << actual_decoded_height  << std::endl;
+            // std::cout << "actual_decoded_width: " << actual_decoded_width << " actual_decoded_height: " << actual_decoded_height  << std::endl;
         }
         else {
             //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...

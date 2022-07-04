@@ -42,6 +42,7 @@ THE SOFTWARE.
 #include "node_fisheye.h"
 #include "node_blend.h"
 #include "node_resize.h"
+#include "node_resize_single_param.h"
 #include "node_rotate.h"
 #include "node_color_twist.h"
 #include "node_hue.h"
@@ -532,6 +533,49 @@ rocalResize(
         std::shared_ptr<ResizeNode> resize_node =  context->master_graph->add_node<ResizeNode>({input}, {output});
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<ResizeMetaNode,ResizeNode>(resize_node);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+
+RocalImage  ROCAL_API_CALL
+rocalResizeSingleParam(
+        RocalContext p_context,
+        RocalImage p_input,
+        unsigned size,
+        bool is_output)
+{
+    Image* output = nullptr;
+    if ((p_context == nullptr) || (p_input == nullptr)) {
+        ERR("Invalid ROCAL context or invalid input image")
+        return output;
+    }
+
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        // For the resize node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+        if (size == 0) size = input->info().width();
+        if (size == 0) size = input->info().height_single();
+
+        output_info.width(size*10);
+        output_info.height(size*10);
+        output = context->master_graph->create_image(output_info, is_output);
+
+        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
+        output->reset_image_roi();
+
+        std::shared_ptr<ResizeSingleParamNode> resize_node =  context->master_graph->add_node<ResizeSingleParamNode>({input}, {output});
+        resize_node->init(size);
+        // if (context->master_graph->meta_data_graph())
+        //     context->master_graph->meta_add_node<ResizeMetaNode,ResizeSingleParamNode>(resize_node);
     }
     catch(const std::exception& e)
     {
@@ -1765,6 +1809,10 @@ rocalCropCenterFixed(
         output->reset_image_roi();
         std::shared_ptr<CropNode> crop_node =  context->master_graph->add_node<CropNode>({input}, {output});
         crop_node->init(crop_height, crop_width);
+        float crop_pos_x, crop_pos_y;
+        crop_pos_x = 10;
+        crop_pos_y = 10;
+        // crop_node->init(crop_height, crop_width, crop_pos_x, crop_pos_y);
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<CropMetaNode,CropNode>(crop_node);
     }

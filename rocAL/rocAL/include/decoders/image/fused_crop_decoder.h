@@ -33,7 +33,7 @@ class SeededRNG {
   * collisions between seeds used to initialize RNGs in different operators.
   */
 public:
-  SeededRNG (int batch_size = 128) {
+  SeededRNG (int batch_size = 256) {
       std::random_device source;
       _batch_size = batch_size;
       std::size_t _random_data_size = state_size * batch_size ;

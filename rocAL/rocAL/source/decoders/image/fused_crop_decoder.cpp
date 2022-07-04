@@ -24,8 +24,11 @@ THE SOFTWARE.
 #include <commons.h>
 #include <string.h>
 #include "fused_crop_decoder.h"
+#include <random>
 
-FusedCropTJDecoder::FusedCropTJDecoder(){
+FusedCropTJDecoder::FusedCropTJDecoder():
+    _rngs(256)
+{
     m_jpegDecompressor = tjInitDecompress();
 
 #if 0
@@ -111,6 +114,9 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         {
             std::uniform_real_distribution<float> float_dis(0.08, 1.0);
             std::uniform_real_distribution<float> log_ratio_dist(-0.2877,  0.2877);
+            std::uniform_real_distribution<float> crop_mul_param_0(0.0, 1.0);
+            std::uniform_real_distribution<float> crop_mul_param_1(0.0, 1.0);
+
 
 
             float scale_dist = float_dis(_rngs[i]); // change i to sample_idx here later
@@ -120,8 +126,8 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             crop_height = static_cast<size_t>(std::sqrt(target_area * (1 / aspect_ratio)));
             if(is_valid_crop(crop_height, crop_width, original_image_height, original_image_width))
             {
-                x1 = static_cast<size_t>(crop_mul_param[2] * (original_image_width  - crop_width));
-                y1 = static_cast<size_t>(crop_mul_param[3] * (original_image_height - crop_height));
+                x1 = static_cast<size_t>(crop_mul_param_0(_rngs[i]) * (original_image_width  - crop_width));
+                y1 = static_cast<size_t>(crop_mul_param_1(_rngs[i])* (original_image_height - crop_height));
                 break ;
             }
         }

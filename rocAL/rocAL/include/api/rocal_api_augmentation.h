@@ -60,7 +60,6 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalResizeSingleParam(RocalContext conte
                                                 unsigned size,
                                                 bool is_output );
 
-
 /// Accepts U8 and RGB24 input.
 /// \param context
 /// \param input

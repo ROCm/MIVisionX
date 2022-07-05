@@ -41,7 +41,7 @@ extern "C" int ROCAL_API_CALL rocalGetOutputColorFormat(RocalContext rocal_conte
 ///
 /// \param rocal_context
 /// \return The number of images yet to be processed
-extern "C"  size_t  ROCAL_API_CALL rocalGetRemainingImages(RocalContext rocal_context);
+extern "C"  size_t ROCAL_API_CALL rocalGetRemainingImages(RocalContext rocal_context);
 
 /// Returned value valid only after rocalVerify is called
 /// \param image

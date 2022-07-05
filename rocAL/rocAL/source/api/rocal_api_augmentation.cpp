@@ -452,7 +452,6 @@ rocalCropResize(
     return output;
 }
 
-
 RocalImage  ROCAL_API_CALL
 rocalCropResizeFixed(
         RocalContext p_context,
@@ -1809,10 +1808,7 @@ rocalCropCenterFixed(
         output->reset_image_roi();
         std::shared_ptr<CropNode> crop_node =  context->master_graph->add_node<CropNode>({input}, {output});
         crop_node->init(crop_height, crop_width);
-        float crop_pos_x, crop_pos_y;
-        crop_pos_x = 10;
-        crop_pos_y = 10;
-        // crop_node->init(crop_height, crop_width, crop_pos_x, crop_pos_y);
+
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<CropMetaNode,CropNode>(crop_node);
     }

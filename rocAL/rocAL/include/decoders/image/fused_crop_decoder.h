@@ -58,7 +58,6 @@ private:
     int _batch_size;
 };
 
-
 class FusedCropTJDecoder : public Decoder {
 public:
     //! Default constructor
@@ -87,7 +86,7 @@ public:
                            size_t max_decoded_width, size_t max_decoded_height,
                            size_t original_image_width, size_t original_image_height,
                            size_t &actual_decoded_width, size_t &actual_decoded_height,
-                           Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size=false) override;
+                           Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size=false, uint sample_idx = 0) override;
 
 
     ~FusedCropTJDecoder() override;
@@ -120,5 +119,4 @@ private:
     bool _is_partial_decoder = true;
     std::vector <float> _bbox_coord;
     SeededRNG<std::mt19937, 4> _rngs;     // setting the state_size to 4 for 4 random parameters.
-
 };

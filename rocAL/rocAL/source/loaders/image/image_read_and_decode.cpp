@@ -236,7 +236,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                                     max_decoded_width, max_decoded_height,
                                     original_width, original_height,
                                     scaledw, scaledh,
-                                    decoder_color_format, _decoder_config, keep_original) != Decoder::Status::OK) {
+                                    decoder_color_format, _decoder_config, keep_original, i) != Decoder::Status::OK) {
             }
             _actual_decoded_width[i] = scaledw;
             _actual_decoded_height[i] = scaledh;
@@ -252,11 +252,6 @@ ImageReadAndDecode::load(unsigned char* buff,
                 std::cerr<<"\n Decoded width is greater than the max_decoded_width "<<roi_width[i]<<" max:: "<<max_decoded_width;
             if(roi_height[i] > max_decoded_height)
                 std::cerr<<"\n Decoded height is greater than the max_decoded_height "<<roi_height[i]<<" max:: "<<max_decoded_height;
-            // std::cerr<<"***************************************";
-            // std::cerr<<"roi_width :: "<<roi_width[i]<<std::endl;
-            // std::cerr<<"roi_height :: "<<roi_height[i]<<std::endl;
-            // std::cerr<<"actual_width :: "<<actual_width[i]<<std::endl;
-            // std::cerr<<"actual_height :: "<<actual_height[i]<<std::endl;
         }
     }
     _bbox_coords.clear();

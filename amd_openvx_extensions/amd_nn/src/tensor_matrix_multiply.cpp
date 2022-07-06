@@ -24,7 +24,7 @@ THE SOFTWARE.
 #if ENABLE_OPENCL
 #include <miopengemm/gemm.hpp>
 #elif ENABLE_HIP
-#include <rocblas.h>
+#include <rocblas/rocblas.h>
 #endif
 #include <algorithm>
 

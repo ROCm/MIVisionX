@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <half.hpp>
+#include <half/half.hpp>
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 #include "hip/hip_fp16.h"

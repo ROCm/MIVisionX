@@ -79,7 +79,7 @@ int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
     if (err != hipSuccess) {
         agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipGetDeviceProperties(%d) => %d (failed)\n", deviceID, err);
     }
-    agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device#%d %s (%s) (with %d CUs) on PCI bus %02x:%02x.%x\n",
+    agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device - %d: %s [%s] with %d CUs on PCI bus %02x:%02x.%x\n",
                    deviceID, context->hip_dev_prop.name, context->hip_dev_prop.gcnArchName, context->hip_dev_prop.multiProcessorCount,
                    context->hip_dev_prop.pciBusID, context->hip_dev_prop.pciDomainID, context->hip_dev_prop.pciDeviceID);
 

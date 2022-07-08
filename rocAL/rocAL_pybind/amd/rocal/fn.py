@@ -6,7 +6,7 @@ from amd.rocal import noise
 from amd.rocal import reductions
 
 import amd.rocal.types as types
-import rali_pybind as b
+import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
 
 def blend(*inputs,ratio=None):
@@ -536,13 +536,13 @@ def color_temp(*inputs, adjustment_value=50, device=None, preserve = False):
 def nop(*inputs, device=None, preserve = False):
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False }
-    nop_output = b.raliNop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
+    nop_output = b.rocalNop(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (nop_output)
 
 def copy(*inputs, device=None):
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0],"is_output": False }
-    copied_image = b.raliCopy(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
+    copied_image = b.rocalCopy(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (copied_image)
 
 def snp_noise(*inputs, snpNoise=None, device=None, preserve = False):

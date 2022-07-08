@@ -8,13 +8,13 @@ import amd.rocal.types as types
 import numpy as np
 from parse_config import parse_args
 
-class RALIVideoIterator(object):
+class ROCALVideoIterator(object):
     """
-    RALIVideoIterator for pyTorch.
+    ROCALVideoIterator for pyTorch.
 
     Parameters
     ----------
-    pipelines : list of amd.rali.pipeline.Pipeline
+    pipelines : list of amd.rocal.pipeline.Pipeline
                 List of pipelines to use
     size : int
            Epoch size.
@@ -66,7 +66,7 @@ class RALIVideoIterator(object):
         return img
 
     def reset(self):
-        self.loader.raliResetLoaders()
+        self.loader.rocalResetLoaders()
 
     def __iter__(self):
         return self
@@ -88,14 +88,14 @@ def main():
     #Args
     args = parse_args()
     video_path = args.video_path
-    _rali_cpu = False if args.rocal_gpu else True
+    _rocal_cpu = False if args.rocal_gpu else True
     batch_size = args.batch_size
     user_sequence_length = args.sequence_length
     display = args.display
     num_threads = args.num_threads
     random_seed = args.seed
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=random_seed, rali_cpu=_rali_cpu)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=random_seed, rocal_cpu=_rocal_cpu)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         images = fn.readers.video(device="gpu", file_root=video_path, sequence_length=user_sequence_length,
@@ -114,7 +114,7 @@ def main():
     # Build the pipeline
     pipe.build()
     # Dataloader
-    data_loader = RALIVideoIterator(
+    data_loader = ROCALVideoIterator(
         pipe, multiplier=pipe._multiplier, offset=pipe._offset,display=display,sequence_length=user_sequence_length)
     import timeit
     start = timeit.default_timer()

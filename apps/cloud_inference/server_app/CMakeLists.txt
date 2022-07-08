@@ -21,108 +21,115 @@
 cmake_minimum_required(VERSION 3.0)
 project(inference_server_app)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm Installation Path")
-# need to do this to avoid setting the default path to /usr/local
+set(CMAKE_CXX_STANDARD 14)
+
+# ROCm Path
+set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+# avoid setting the default installation path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default installation path" FORCE)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../amd_openvx/cmake)
+# Add Default libdir
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
+include(GNUInstallDirs)
 
-set(CMAKE_CXX_STANDARD 14)
+# Find Modules
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+# OpenCV -- Display Component
 find_package(OpenCV REQUIRED)
 
-include_directories(../../../amd_openvx/openvx/include
-  					${OpenCL_INCLUDE_DIRS}
-					../../../amd_openvx_extensions/amd_nn
-				   )
-link_directories(${ROCM_PATH}/lib)
+# Choose Backend
+set(MIVISIONX_BACKEND_OPENCL_FOUND 0)
+set(MIVISIONX_BACKEND_HIP_FOUND 0)
+if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h)
+    file(READ ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h MIVISIONX_CONFIG_FILE)
+    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${MIVISIONX_CONFIG_FILE})
+    set(MIVISIONX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${MIVISIONX_CONFIG_FILE})
+    set(MIVISIONX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+else()
+    message(FATAL_ERROR "${PROJECT_NAME} -- ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h File Not Found. Install MIVisionX")
+endif()
 
-list(APPEND SOURCES
-		common.cpp
-		arguments.cpp
-		netutil.cpp
-		configure.cpp
-		compiler.cpp
-		inference.cpp
-		inference_hip.cpp
-		server.cpp
-		main.cpp
-		profiler.cpp
-		region.cpp
-		shadow.cpp
-	)
+# Application Includes & Libraries
+include_directories(${PROJECT_SOURCE_DIR}/include ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})
 
-add_executable(inference_server_app ${SOURCES})
-target_link_libraries(inference_server_app vx_nn openvx pthread dl)
-install(TARGETS inference_server_app DESTINATION bin)
+# Application Source Files
+file(GLOB My_Source_Files ${PROJECT_SOURCE_DIR}/source/*.cpp)
+add_executable(${PROJECT_NAME} ${My_Source_Files})
 
-if("${BACKEND}" STREQUAL "OPENCL")
+# Link Libraries & Set CXX Flags
+target_link_libraries(${PROJECT_NAME} vx_nn openvx pthread dl)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
+
+# Link OpenCL/HIP
+set(ENABLE_OPENCL 0)
+set(ENABLE_HIP 0)
+
+if(MIVISIONX_BACKEND_OPENCL_FOUND)
 	find_package(OpenCL QUIET)
 	if(OpenCL_FOUND)
 		set(ENABLE_OPENCL 1)
-		set(ENABLE_HIP 0)
 		include_directories(${OpenCL_INCLUDE_DIRS}/CL ${OpenCL_INCLUDE_DIRS}/Headers)
-		target_link_libraries(inference_server_app ${OpenCL_LIBRARIES})
-		message("-- ${Green}Inference Server App -- App built with OpenCL Support${ColourReset}")
-        message("-- ${Blue}Using OpenCL Library -- ${OpenCL_LIBRARIES}${ColourReset}")
+		target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARIES})
+		message("-- ${PROJECT_NAME} -- App built with OpenCL Support")
+		message("-- ${PROJECT_NAME} -- Using OpenCL Library -- ${OpenCL_LIBRARIES}")
 	else()
-		set(ENABLE_OPENCL 0)
-		set(ENABLE_HIP 0)
-		message( FATAL_ERROR "-- ${Red}FATAL ERROR: inference_server_app - OpenCL Not Found${ColourReset}")
+		message( FATAL_ERROR "${PROJECT_NAME} -- OpenCL Not Found")
 	endif()
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_HIP=${ENABLE_HIP})
-elseif("${BACKEND}" STREQUAL "HIP")
-	set(OpenCL_FOUND FALSE)
-	# HSA_PATH
-    if(NOT DEFINED ENV{HSA_PATH})
-        SET(HSA_PATH ${ROCM_PATH}/hsa)
-    else()
-        SET(HSA_PATH $ENV{HSA_PATH})
-    endif()
-    find_package(HIP QUIET)
-    if(HIP_FOUND)
-        message(STATUS "Found HIP: " ${HIP_PATH} " version: " ${HIP_VERSION})
-        if(HIP_COMPILER STREQUAL clang)
-			set(ENABLE_OPENCL 0)
-			set(ENABLE_HIP 1)
+elseif(MIVISIONX_BACKEND_HIP_FOUND)
+	if(NOT DEFINED HIP_PATH)
+		if(NOT DEFINED ENV{HIP_PATH})
+			set(HIP_PATH ${ROCM_PATH}/hip CACHE PATH "Path to which HIP has been installed")
 		else()
-			message( FATAL_ERROR "-- ${Red}FATAL_ERROR: Unsupported HIP compiler${ColourReset}")
+			set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
+		endif()
+	endif()
+	list(APPEND CMAKE_MODULE_PATH ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/hip ${HIP_PATH}/cmake)
+	find_package(HIP QUIET)
+	if(HIP_FOUND)
+		message(STATUS "${PROJECT_NAME} -- Found HIP: " ${HIP_PATH} "\tversion: " ${HIP_VERSION})
+		if(HIP_COMPILER STREQUAL clang)
+			set(ENABLE_HIP 1)
+			set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+			set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+			set(COMPILER_FOR_HIP ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR}/hipcc)
+			set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})
+			include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR})
+			link_directories(${HIP_PATH}/${CMAKE_INSTALL_LIBDIR})
+			target_link_libraries(${PROJECT_NAME} ${HIP_PATH}/${CMAKE_INSTALL_LIBDIR}/libamdhip64.so)
+			message("-- ${PROJECT_NAME} -- Built with HIP Support")
+		else()
+			message(FATAL_ERROR "${PROJECT_NAME} -- Unsupported HIP compiler")
 		endif()
 	else()
-		set(ENABLE_OPENCL 0)
-		set(ENABLE_HIP 0)
-		message( FATAL_ERROR "-- ${Red}FATAL_ERROR: HIP Not Found${ColourReset}")
+		message(FATAL_ERROR "${PROJECT_NAME} -- HIP Not Found")
 	endif()
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_HIP=${ENABLE_HIP})
 else()
-	set(ENABLE_OPENCL 0)
-	set(ENABLE_HIP 0)
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
-	target_compile_definitions(inference_server_app PUBLIC ENABLE_HIP=${ENABLE_HIP})
-	message( FATAL_ERROR "-- ${Red}FATAL_ERROR: OpenCL/HIP Not Found${ColourReset}")
+	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCL/HIP Not Found")
 endif()
 
+# Set Backend
+target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
+target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=${ENABLE_HIP})
+
+# OpenCV 3/4 Support
 if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
-	message("-- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
+	message("-- ${PROJECT_NAME} -- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
 	if(${OpenCV_VERSION_MAJOR} EQUAL 4)
-	    target_compile_definitions(inference_server_app PUBLIC USE_OPENCV_4=1)
+	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
     else()
-	    target_compile_definitions(inference_server_app PUBLIC USE_OPENCV_4=0)
+	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
     endif()
 	include_directories(${OpenCV_INCLUDE_DIRS})
-	target_link_libraries(inference_server_app ${OpenCV_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES})
 else()
-	message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.1 -mf16c -fopenmp")
-endif()
+# Install Application in ROCm Bin Directory
+install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

@@ -1,4 +1,4 @@
-from amd.rocal.plugin.tf import RALIIterator
+from amd.rocal.plugin.tf import ROCALIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
 import tensorflow as tf
@@ -48,7 +48,7 @@ def main():
     # Args
     imagePath = args.image_dataset_path
     numClasses = 91
-    raliCPU = False if args.rocal_gpu else True
+    rocalCPU = False if args.rocal_gpu else True
     batch_size = args.batch_size
     num_threads = args.num_threads
     TFRecordReaderType = 1
@@ -71,7 +71,7 @@ def main():
         print(error)
 
 
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rali_cpu=raliCPU)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rocal_cpu=rocalCPU)
     with pipe:
         inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
             features={
@@ -94,12 +94,12 @@ def main():
         resized = fn.resize(decoded_images, resize_x=300, resize_y=300)
         pipe.set_outputs(resized)
     pipe.build()
-    imageIterator = RALIIterator(pipe)
+    imageIterator = ROCALIterator(pipe)
 
     cnt = 0
     for i, (images_array, bboxes_array, labels_array, num_bboxes_array) in enumerate(imageIterator, 0):
         images_array = np.transpose(images_array, [0, 2, 3, 1])
-        print("RALI augmentation pipeline - Processing batch %d....." % i)
+        print("ROCAL augmentation pipeline - Processing batch %d....." % i)
 
         for element in list(range(batch_size)):
             cnt = cnt + 1

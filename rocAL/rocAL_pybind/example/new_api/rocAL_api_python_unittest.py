@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from amd.rocal.plugin.pytorch import RALIClassificationIterator
+from amd.rocal.plugin.pytorch import ROCALClassificationIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
@@ -30,8 +30,8 @@ def main():
     data_path = args.image_dataset_path
     augmentation_name = args.augmentation_name
     print("\n AUGMENTATION NAME: ", augmentation_name)
-    rali_cpu = False if args.rocal_gpu else True
-    device = "cpu" if rali_cpu else "cuda"
+    rocal_cpu = False if args.rocal_gpu else True
+    device = "cpu" if rocal_cpu else "cuda"
     batch_size = args.batch_size
     num_threads = args.num_threads
     random_seed = args.seed
@@ -46,16 +46,16 @@ def main():
     except OSError as error:
         print(error)
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rali_cpu=rali_cpu, tensor_layout=types.NHWC if args.NHWC else types.NCHW , tensor_dtype=types.FLOAT16 if args.fp16 else types.FLOAT)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu, tensor_layout=types.NHWC if args.NHWC else types.NCHW , tensor_dtype=types.FLOAT16 if args.fp16 else types.FLOAT)
     # Set Params
     output_set = 0
-    rali_device = 'cpu' if rali_cpu else 'gpu'
-    decoder_device = 'cpu' if rali_cpu else 'gpu'
+    rocal_device = 'cpu' if rocal_cpu else 'gpu'
+    decoder_device = 'cpu' if rocal_cpu else 'gpu'
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         jpegs, _ = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
         images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
-        images = fn.resize(images, device=rali_device, resize_x=300, resize_y=300)
+        images = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
 
 
         if augmentation_name == "resize":
@@ -74,7 +74,7 @@ def main():
             output = fn.blur(images)
         elif augmentation_name == "one_hot":
             _ = fn.one_hot(num_classes=2)
-            output = fn.resize(images, device=rali_device, resize_x=300, resize_y=300)
+            output = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
         elif augmentation_name == "hue_rotate_blend":
             images_hue = fn.hue(images)
             images_rotate = fn.rotate(images)
@@ -144,7 +144,7 @@ def main():
     # build the pipeline
     pipe.build()
     # Dataloader
-    data_loader = RALIClassificationIterator(pipe,device=device)
+    data_loader = ROCALClassificationIterator(pipe,device=device)
     cnt = 0
 
     import timeit

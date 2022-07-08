@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.3.2"
+__version__ = "2.3.3"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -65,7 +65,7 @@ ProtoBufVersion = args.protobuf
 rppVersion = args.rpp
 ffmpegInstall = args.ffmpeg
 neuralNetInstall = args.neural_net
-raliInstall = args.rocal
+rocalInstall = args.rocal
 reinstall = args.reinstall
 backend = args.backend
 ROCM_PATH = args.rocm_path
@@ -78,7 +78,7 @@ if neuralNetInstall not in ('no', 'yes'):
     print(
         "ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
     exit()
-if raliInstall not in ('no', 'yes'):
+if rocalInstall not in ('no', 'yes'):
     print(
         "ERROR: Neural Net Install Option Not Supported - [Supported Options: no or yes]")
     exit()
@@ -92,17 +92,20 @@ if backend not in ('OCL', 'HIP', 'CPU'):
     exit()
 
 # check ROCm installation
-if os.path.exists(ROCM_PATH):
-    print("ROCm Installation Found -- "+ROCM_PATH+"\n")
+if os.path.exists(ROCM_PATH) and backend != 'CPU':
+    print("\nROCm Installation Found -- "+ROCM_PATH+"\n")
     os.system('echo ROCm Info -- && '+ROCM_PATH+'/bin/rocminfo')
 else:
-    print("WARNING: ROCm Not Found at -- "+ROCM_PATH+"\n")
-    print(
-        "WARNING: Set ROCm Path with --rocm_path option for full installation [Default:/opt/rocm]\n")
-    print("WARNING: Only OpenCV will be installed\n")
+    if backend != 'CPU':
+        print("\nWARNING: ROCm Not Found at -- "+ROCM_PATH+"\n")
+        print(
+            "WARNING: Set ROCm Path with \"--rocm_path\" option for full installation [Default:/opt/rocm]\n")
+        print("WARNING: Only OpenCV will be installed\n")
+    else:
+        print("\nCPU Only Install: OpenCV will be installed\n")
     ffmpegInstall = 'no'
     neuralNetInstall = 'no'
-    raliInstall = 'no'
+    rocalInstall = 'no'
 
 # get platfrom info
 platfromInfo = platform.platform()
@@ -190,14 +193,14 @@ if os.path.exists(deps_dir):
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y --reinstall rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx')
 
-    if (raliInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
+    if (rocalInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
         # ProtoBuf
         if os.path.exists(deps_dir+'/protobuf-'+ProtoBufVersion):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                       '; sudo '+linuxFlag+' make install -j8)')
 
-    if raliInstall == 'yes' and backend != 'CPU':
+    if rocalInstall == 'yes' and backend != 'CPU':
         # RPP
         if os.path.exists(deps_dir+'/rpp/build-'+backend):
             os.system('sudo -v')
@@ -228,7 +231,7 @@ else:
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
     os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
-    if (raliInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
+    if (rocalInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
         os.system(
             '(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v'+ProtoBufVersion+'.zip )')
         os.system('(cd '+deps_dir+'; unzip v'+ProtoBufVersion+'.zip )')
@@ -237,7 +240,7 @@ else:
             '(cd '+deps_dir+'; wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.4.2.zip && unzip n4.4.2.zip )')
 
     # Install
-    if (raliInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
+    if (rocalInstall == 'yes' or neuralNetInstall == 'yes') and backend != 'CPU':
         # package dependencies
         os.system('sudo -v')
         if "centos" in platfromInfo or "redhat" in platfromInfo:
@@ -364,7 +367,7 @@ else:
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
 
-    if raliInstall == 'yes' and backend != 'CPU':
+    if rocalInstall == 'yes' and backend != 'CPU':
         # Install RPP
         if "Ubuntu" in platfromInfo:
             # Install Packages for rocAL

@@ -117,7 +117,7 @@ if [[ rocAL_api_python_unittest -eq 1 ]]; then
     # By default : cpu backend, NCHW format , fp32
     # Please pass image_folder augmentation_nanme in addition to other common args
     # Refer rocAL_api_python_unitest.py for all augmentation names
-    python$ver rocAL_api_python_unittest.py \
+    python"$ver" rocAL_api_python_unittest.py \
         --image-dataset-path $data_dir \
         --augmentation-name snow \
         --batch-size $batch_size \
@@ -147,7 +147,7 @@ if [[ rocAL_api_coco_pipeline -eq 1 ]]; then
     # By default : cpu backend, NCHW format , fp32
     # Please pass annotation path in addition to other common args
     # Annotation must be a json file
-    python$ver rocAL_api_coco_pipeline.py \
+    python"$ver" rocAL_api_coco_pipeline.py \
         --image-dataset-path $data_dir \
         --json-path $json_path \
         --batch-size $batch_size \
@@ -174,7 +174,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
     # By default : cpu backend, NCHW format , fp32
     # use --classification for Classification / --no-classification for Detection
 
-    python$ver rocAL_api_caffe_reader.py \
+    python"$ver" rocAL_api_caffe_reader.py \
         --image-dataset-path $data_dir \
         --classification \
         --batch-size $batch_size \
@@ -202,7 +202,7 @@ if [[ rocAL_api_caffe_reader -eq 1 ]]; then
     # By default : cpu backend, NCHW format , fp32
     # use --classification for Classification / --no-classification for Detection
 
-    python$ver rocAL_api_caffe_reader.py \
+    python"$ver" rocAL_api_caffe_reader.py \
         --image-dataset-path $data_dir \
         --no-classification \
         --batch-size $batch_size \
@@ -230,7 +230,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
     # By default : cpu backend, NCHW format , fp32
     # use --classification for Classification / --no-classification for Detection
 
-    python$ver rocAL_api_caffe2_reader.py \
+    python"$ver" rocAL_api_caffe2_reader.py \
         --image-dataset-path $data_dir \
         --classification \
         --batch-size $batch_size \
@@ -257,7 +257,7 @@ if [[ rocAL_api_caffe2_reader -eq 1 ]]; then
     # By default : cpu backend, NCHW format , fp32
     # use --classification for Classification / --no-classification for Detection
 
-    python$ver rocAL_api_caffe2_reader.py \
+    python"$ver" rocAL_api_caffe2_reader.py \
         --image-dataset-path $data_dir \
         --no-classification \
         --batch-size $batch_size \
@@ -283,7 +283,7 @@ if [[ rocAL_api_tf_classification_reader -eq 1 ]]; then
     # By default : cpu backend, NCHW format , fp32
     # use --classification for Classification / --no-classification for Detection
 
-    python$ver rocAL_api_tf_classification_reader.py \
+    python"$ver" rocAL_api_tf_classification_reader.py \
         --image-dataset-path $data_dir \
         --classification \
         --batch-size $batch_size \
@@ -309,7 +309,7 @@ if [[ rocAL_api_tf_detection_pipeline -eq 1 ]]; then
     # By default : cpu backend, NCHW format , fp32
     # use --classification for Classification / --no-classification for Detection
 
-    python$ver rocAL_api_tf_detection_pipeline.py \
+    python"$ver" rocAL_api_tf_detection_pipeline.py \
         --image-dataset-path $data_dir \
         --no-classification \
         --batch-size 100 \
@@ -334,7 +334,7 @@ if [[ rocAL_api_video_pipeline -eq 1 ]]; then
     # rocAL_api_video_pipeline.py
     # By default : cpu backend, NCHW format , fp32
 
-    python$ver rocAL_api_video_pipeline.py \
+    python"$ver" rocAL_api_video_pipeline.py \
         --video-path $data_dir \
         --$backend_arg \
         --batch-size 10 \

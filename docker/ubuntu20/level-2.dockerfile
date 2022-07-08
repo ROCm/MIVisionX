@@ -7,11 +7,11 @@ RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo &&  \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration &&  \
         wget https://repo.radeon.com/amdgpu-install/22.20/ubuntu/focal/amdgpu-install_22.20.50200-1_all.deb && \
         sudo apt-get install -y ./amdgpu-install_22.20.50200-1_all.deb && \
         sudo apt-get update -y && \
-        sudo amdgpu-install -y --usecase=rocm
+        sudo amdgpu-install -y --usecase=graphics,rocm
 
 WORKDIR /workspace
 

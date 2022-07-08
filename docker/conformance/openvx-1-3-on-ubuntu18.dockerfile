@@ -11,7 +11,8 @@ RUN apt-get -y install libnuma-dev wget sudo &&  \
         wget https://repo.radeon.com/amdgpu-install/21.50/ubuntu/bionic/amdgpu-install_21.50.50000-1_all.deb && \
         sudo apt-get -y install ./amdgpu-install_21.50.50000-1_all.deb && \
         sudo apt-get update -y && \
-        sudo amdgpu-install -y --usecase=rocm
+        sudo apt-get install keyboard-configuration && \
+        sudo amdgpu-install -y --usecase=graphics,rocm
 
 WORKDIR /workspace
 

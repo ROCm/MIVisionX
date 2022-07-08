@@ -8,8 +8,8 @@ RUN apt-get update -y
 RUN apt-get -y install gcc g++ cmake git
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
 RUN apt-get -y install initramfs-tools libnuma-dev wget sudo &&  \
-        wget https://repo.radeon.com/amdgpu-install/22.10.3/ubuntu/bionic/amdgpu-install_22.10.3.50103-1_all.deb && \
-        sudo apt-get -y install ./amdgpu-install_22.10.3.50103-1_all.deb && \
+        wget https://repo.radeon.com/amdgpu-install/22.20/ubuntu/bionic/amdgpu-install_22.20.50200-1_all.deb && \
+        sudo apt-get -y install ./amdgpu-install_22.20.50200-1_all.deb && \
         sudo apt-get update -y && \
         sudo amdgpu-install -y --usecase=rocm
 

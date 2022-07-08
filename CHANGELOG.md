@@ -46,7 +46,6 @@
 
 * OpenCV 4.X support for some apps missing
 
-
 ## MIVisionX 2.2.0
 
 ### Added

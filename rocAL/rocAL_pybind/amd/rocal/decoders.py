@@ -5,6 +5,7 @@ from amd.rocal.pipeline import Pipeline
 def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotations_file= '', shard_id = 0, num_shards = 1, random_shuffle = False, affine=True, bytes_per_sample_hint=0, cache_batch_copy= True, cache_debug = False, cache_size = 0, cache_threshold = 0,
                  cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold= 1000000, output_type = types.RGB,
                  preserve=False, seed=-1, split_stages=False, use_chunk_allocator= False, use_fast_idct = False, device = None):
+    b.setSeed(seed)
     reader = Pipeline._current_pipeline._reader
     if( reader == 'COCOReader'):
         kwargs_pybind = {
@@ -86,6 +87,7 @@ def image_raw(*inputs, user_feature_key_map = None, path='', file_root ='', anno
                  cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold= 1000000, output_type = types.RGB,
                  preserve=False, seed=-1, split_stages=False, use_chunk_allocator= False, use_fast_idct = False, device = None):
     reader = Pipeline._current_pipeline._reader
+    b.setSeed(seed)
 
     if (reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection"):
         kwargs_pybind = {
@@ -207,7 +209,7 @@ def image_slice(*inputs,file_root='',path='',annotations_file='',shard_id = 0, n
 
 
     reader = Pipeline._current_pipeline._reader
-
+    b.setSeed(seed)
     #Reader -> Randon BBox Crop -> ImageDecoderSlice
     if( reader == 'COCOReader'):
 

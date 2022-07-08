@@ -55,7 +55,11 @@ int main(int argc, const char ** argv)
     if(argc < MIN_ARG_COUNT) {
         printf( "Usage: rocal_dataloader_tf <Folder> <processing_device=1/cpu=0>  <decode_width> <decode_height> <batch_size> <gray_scale/rgb/rgbplanar> display_on_off \n" );
         return -1;
+    }
     int argIdx = 0;
+    const char * folderPath1 = argv[++argIdx];
+    bool display = 0;// Display the images
+    //int aug_depth = 1;// how deep is the augmentation tree
     int rgb = 0;// process gray images
     int decode_width = 28;          // mnist data_set
     int decode_height = 28;

@@ -198,6 +198,6 @@ vx_status Resizetensor_Register(vx_context);
 #define VX_KERNEL_RPP_CROPPD_NAME   							"org.rpp.CropPD"
 #define VX_KERNEL_RPP_RESIZECROPMIRRORPD_NAME      				"org.rpp.ResizeCropMirrorPD"
 #define VX_KERNEL_RPP_SEQUENCEREARRANGE_NAME                    "org.rpp.SequenceRearrange"
- #define VX_KERNEL_RPP_RESIZETENSOR_NAME      					"org.rpp.Resizetensor"
+#define VX_KERNEL_RPP_RESIZETENSOR_NAME      					"org.rpp.Resizetensor"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

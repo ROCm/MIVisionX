@@ -186,6 +186,10 @@ int main(int argc, const char ** argv)
             {
                 names[i] = std::move(std::vector<char>(rocalGetImageNameLen(handle, ImageNameLen), '\n'));
                 rocalGetImageName(handle, names[i].data());
+                std::string id(names[i].begin(), names[i].end());
+                std::cout << "name "<< id << " label "<< labels[i] << " - ";
+            }
+            std::cout << std::endl;
 
             mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));
 

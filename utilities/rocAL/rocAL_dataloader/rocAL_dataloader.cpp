@@ -165,7 +165,7 @@ int main(int argc, const char ** argv)
      RocalImage image0;
      image0 = input1;
     // just do one augmentation to test
-    // image1 = rocalRain(handle, image0, true);
+    rocalRain(handle, image0, true);
 #endif
 
     if(rocalGetStatus(handle) != ROCAL_OK)

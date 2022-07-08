@@ -134,12 +134,12 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             if(in_ratio < ASPECT_RATIO_RANGE[0])
             {
                 crop_width =  original_image_width;
-                crop_height = std::round(crop_width / ASPECT_RATIO_RANGE[0]);
+                crop_height = static_cast<size_t>(std::round(crop_width / ASPECT_RATIO_RANGE[0]));
             }
             else if(in_ratio > ASPECT_RATIO_RANGE[1])
             {
                 crop_height = original_image_height;
-                crop_width  = std::round(crop_height * ASPECT_RATIO_RANGE[1]);
+                crop_width  = static_cast<size_t>(std::round(crop_height * ASPECT_RATIO_RANGE[1]));
             }
             else // Whole Image
             {

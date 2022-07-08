@@ -573,8 +573,6 @@ rocalResizeSingleParam(
 
         std::shared_ptr<ResizeSingleParamNode> resize_node =  context->master_graph->add_node<ResizeSingleParamNode>({input}, {output});
         resize_node->init(size);
-        // if (context->master_graph->meta_data_graph())
-        //     context->master_graph->meta_add_node<ResizeMetaNode,ResizeSingleParamNode>(resize_node);
     }
     catch(const std::exception& e)
     {
@@ -1808,7 +1806,6 @@ rocalCropCenterFixed(
         output->reset_image_roi();
         std::shared_ptr<CropNode> crop_node =  context->master_graph->add_node<CropNode>({input}, {output});
         crop_node->init(crop_height, crop_width);
-
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<CropMetaNode,CropNode>(crop_node);
     }

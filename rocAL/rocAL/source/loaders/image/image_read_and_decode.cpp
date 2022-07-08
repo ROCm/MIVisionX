@@ -136,8 +136,6 @@ ImageReadAndDecode::load(unsigned char* buff,
                          RocalColorFormat output_color_format,
                          bool decoder_keep_original )
 {
-    // std::cerr<<"Image Read & Decode : Max decoded width :"<< max_decoded_width<<std::endl;
-    // std::cerr<<"Image Read & Decode : Max decoded height:"<< max_decoded_height<<std::endl;
 
     if(max_decoded_width == 0 || max_decoded_height == 0 )
         THROW("Zero image dimension is not valid")
@@ -213,7 +211,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         for (size_t i = 0; i < _batch_size; i++)
             _decompressed_buff_ptrs[i] = buff + image_size * i;
 
-#pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
+#pragma omp parallel for num_threads(8)  // default(none) TBD: option disabled in Ubuntu 20.04
         for (size_t i = 0; i < _batch_size; i++)
         {
             // initialize the actual decoded height and width with the maximum
@@ -240,7 +238,6 @@ ImageReadAndDecode::load(unsigned char* buff,
             }
             _actual_decoded_width[i] = scaledw;
             _actual_decoded_height[i] = scaledh;
-
         }
         for (size_t i = 0; i < _batch_size; i++) {
             names[i] = _image_names[i];

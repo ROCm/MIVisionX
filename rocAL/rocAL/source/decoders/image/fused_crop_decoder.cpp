@@ -83,7 +83,6 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     };
     actual_decoded_width = max_decoded_width;
     actual_decoded_height = max_decoded_height;
-
     // You need get the output of random bbox crop
     // check the vector size for bounding box. If its more than zero go for random bbox crop
     // else go to random crop
@@ -111,10 +110,9 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         {
             std::uniform_real_distribution<float> area_dis(AREA_RANGE[0], AREA_RANGE[1]);
             std::uniform_real_distribution<float> log_ratio_dist(std::log(ASPECT_RATIO_RANGE[0]), std::log(ASPECT_RATIO_RANGE[1]));
-
             float scale = area_dis(_rngs[sample_idx]);
             double target_area  = scale * original_image_width * original_image_height;
-            double aspect_ratio = std::exp(log_ratio_dist(_rngs[sample_idx])); //change i to sample_idx here later
+            double aspect_ratio = std::exp(log_ratio_dist(_rngs[sample_idx]));
             crop_width  = static_cast<size_t>(std::round(std::sqrt(target_area * aspect_ratio)));
             crop_height = static_cast<size_t>(std::round(std::sqrt(target_area * (1 / aspect_ratio))));
             if(is_valid_crop(crop_height, crop_width, original_image_height, original_image_width))
@@ -148,13 +146,10 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             y1 =  (original_image_height - crop_height) / 2;
         }
     }
-
-
     if(crop_width > max_decoded_width)
         crop_width = max_decoded_width;
     if(crop_height > max_decoded_height)
         crop_height = max_decoded_height;
-
    // std::cout<<"Fused Crop Decoder <x,y, w, h>: " << x1 << " " << y1 << " " << crop_width << " " << crop_height << std::endl;
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
     if( tjDecompress2_partial(m_jpegDecompressor,
@@ -176,16 +171,13 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     if (x1 != x1_diff) {
         // std::cout << "x_off changed by tjpeg decoder " << x1 << " " << x1_diff << std::endl;
         unsigned char *src_ptr_temp, *dst_ptr_temp;
-        unsigned int elements_in_row = max_decoded_width * planes;
         unsigned int elements_in_crop_row = crop_width * planes;
-        //unsigned int remainingElements =  elements_in_row - elements_in_crop_row;
         unsigned int xoffs = (x1-x1_diff) * planes;   // in case x1 gets adjusted by tjpeg decoder
         src_ptr_temp = output_buffer;
         dst_ptr_temp = output_buffer;
         for (unsigned int i = 0; i < crop_height; i++)
         {
             memcpy(dst_ptr_temp, src_ptr_temp + xoffs, elements_in_crop_row * sizeof(unsigned char));
-            //memset(dst_ptr_temp + elements_in_crop_row, 0, remainingElements * sizeof(unsigned char));
             src_ptr_temp +=  xoffs + elements_in_crop_row;
             dst_ptr_temp +=  xoffs + elements_in_crop_row;
         }

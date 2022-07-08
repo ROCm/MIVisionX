@@ -107,10 +107,6 @@ rocAL_api_python_unittest=1
 
     # Mention dataset_path
     data_dir=$ROCAL_DATA_PATH/images_jpg/labels_folder/
-    # data_dir=/media/imageNetCompleteDataset/train
-    # data_dir=/media/imageNetCompleteDataset/train/n01440764/
-
-
 
     # rocAL_api_python_unittest.py
     # By default : cpu backend, NCHW format , fp32

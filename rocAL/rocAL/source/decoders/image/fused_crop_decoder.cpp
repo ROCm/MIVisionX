@@ -101,11 +101,9 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     {
         constexpr static float ASPECT_RATIO_RANGE[2] = {0.75, 1.33};
         constexpr static float AREA_RANGE[2] = {0.08, 1};
-        int64_t seed = time(0);
-
         auto is_valid_crop = [](uint h, uint w, uint height, uint width)
         {
-            return (h < height && w < width);
+            return (h <= height && w <= width);
         };
         int num_of_attempts = 10;
         int num_attemts_left = num_of_attempts;

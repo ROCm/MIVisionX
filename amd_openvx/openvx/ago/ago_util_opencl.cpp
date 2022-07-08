@@ -257,7 +257,7 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
     }
     context->isAmdMediaOpsSupported = strstr(extensions, "cl_amd_media_ops") ? true : false;
 #if defined(CL_VERSION_2_0)
-    agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device - %d: %s [%s] [CL_DEVICE_SVM_CAPABILITIES "VX_FMT_SIZE" %d]\n", device_id, deviceName, deviceVersion, context->opencl_svmcaps, context->opencl_config_flags);
+    agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device - %d: %s [%s] [CL_DEVICE_SVM_CAPABILITIES " VX_FMT_SIZE " %d]\n", device_id, deviceName, deviceVersion, context->opencl_svmcaps, context->opencl_config_flags);
 #else
     agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device - %d: %s [%s] [%d]\n", device_id, deviceName, deviceVersion, context->opencl_config_flags);
 #endif

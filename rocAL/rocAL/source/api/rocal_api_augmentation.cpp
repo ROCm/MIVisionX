@@ -1812,7 +1812,6 @@ rocalCropCenterFixed(
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<CropMetaNode,CropNode>(crop_node);
     }
-
     catch(const std::exception& e)
     {
         context->capture_error(e.what());

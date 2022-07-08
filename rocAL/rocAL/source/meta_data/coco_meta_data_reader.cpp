@@ -201,7 +201,7 @@ void COCOMetaDataReader::read_all(const std::string &path)
             while (parser.NextArrayValue())
             {
                 int id = 1, label = 0;
-                std::array<float, 4> bbox;
+                std::array<float, 4> bbox = {};
                 if (parser.PeekType() != kObjectType)
                 {
                     continue;

@@ -129,6 +129,10 @@ int main(int argc, char **argv) {
             int profiler_level = 1;
             arg++;
             profiler_level = std::stoi(argv[arg]);
+            if(1 < profiler_level <= 10) {
+                printf("\n\nERROR: profiler level has to be between 1-10)\n\n\n");
+                exit(-1);
+            }
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--mnist")) {
@@ -235,12 +239,12 @@ int main(int argc, char **argv) {
     // initialize variables
     vx_tensor input_tensor_224x224, input_tensor_28x28;
     vx_size input_num_of_dims = 4;
-    vx_size input_dims_data_224x224[4] = {1, 3, 224, 224};
+    vx_size input_dims_data_224x224[4] = {128, 3, 224, 224};
     vx_size input_dims_data_28x28[4] = {28, 28, 1, 1}; 
     vx_size output_num_of_dims_2 = 2;
     vx_size output_num_of_dims_4 = 4;
-    vx_size output_dims_data_1x1000[2] = {1, 1000};
-    vx_size output_dims_data_1x1000x1x1[4] = {1, 1000, 1, 1};
+    vx_size output_dims_data_1x1000[2] = {128, 1000};
+    vx_size output_dims_data_1x1000x1x1[4] = {128, 1000, 1, 1};
     vx_size output_dims_data_1x10[2] = {1, 10};
     vx_size stride[4];
     vx_map_id map_id;

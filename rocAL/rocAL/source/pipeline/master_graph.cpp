@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <VX/vx_types.h>
 #include <cstring>
 #include <sched.h>
-#include <half.hpp>
+#include <half/half.hpp>
 #include "master_graph.h"
 #include "parameter_factory.h"
 #include "ocl_setup.h"

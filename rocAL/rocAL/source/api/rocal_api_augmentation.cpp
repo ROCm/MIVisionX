@@ -42,7 +42,7 @@ THE SOFTWARE.
 #include "node_fisheye.h"
 #include "node_blend.h"
 #include "node_resize.h"
-#include "node_resize_single_param.h"
+#include "node_resize_shorter.h"
 #include "node_rotate.h"
 #include "node_color_twist.h"
 #include "node_hue.h"
@@ -543,7 +543,7 @@ rocalResize(
 
 
 RocalImage  ROCAL_API_CALL
-rocalResizeSingleParam(
+rocalResizeShorter(
         RocalContext p_context,
         RocalImage p_input,
         unsigned size,
@@ -571,7 +571,7 @@ rocalResizeSingleParam(
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
         output->reset_image_roi();
 
-        std::shared_ptr<ResizeSingleParamNode> resize_node =  context->master_graph->add_node<ResizeSingleParamNode>({input}, {output});
+        std::shared_ptr<ResizeShorterNode> resize_node =  context->master_graph->add_node<ResizeShorterNode>({input}, {output});
         resize_node->init(size);
     }
     catch(const std::exception& e)

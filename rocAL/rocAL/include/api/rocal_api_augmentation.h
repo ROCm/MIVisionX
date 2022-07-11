@@ -56,7 +56,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalResize(RocalContext context, RocalIm
 /// \param size
 /// \param is_output
 /// \return
-extern "C"  RocalImage  ROCAL_API_CALL rocalResizeSingleParam(RocalContext context, RocalImage input,
+extern "C"  RocalImage  ROCAL_API_CALL rocalResizeShorter(RocalContext context, RocalImage input,
                                                 unsigned size,
                                                 bool is_output );
 

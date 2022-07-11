@@ -23,11 +23,11 @@ THE SOFTWARE.
 #pragma once
 #include "node.h"
 
-class ResizeSingleParamNode : public Node
+class ResizeShorterNode : public Node
 {
 public:
-    ResizeSingleParamNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
-    ResizeSingleParamNode() = delete;
+    ResizeShorterNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
+    ResizeShorterNode() = delete;
     void init(int size);
     unsigned int get_dst_width() { return _outputs[0]->info().width(); }
     unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }

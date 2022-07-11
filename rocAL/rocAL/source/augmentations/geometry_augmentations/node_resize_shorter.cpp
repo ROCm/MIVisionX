@@ -22,16 +22,16 @@ THE SOFTWARE.
 
 #include <vx_ext_rpp.h>
 #include <graph.h>
-#include "node_resize_single_param.h"
+#include "node_resize_shorter.h"
 #include "exception.h"
 
 
-ResizeSingleParamNode::ResizeSingleParamNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
+ResizeShorterNode::ResizeShorterNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs)
 {
 }
 
-void ResizeSingleParamNode::create_node()
+void ResizeShorterNode::create_node()
 {
     if(_node)
         return;
@@ -50,19 +50,17 @@ void ResizeSingleParamNode::create_node()
     width_status = vxAddArrayItems(_dst_roi_width, _batch_size, dst_roi_width.data(), sizeof(vx_uint32));
     height_status = vxAddArrayItems(_dst_roi_height, _batch_size, dst_roi_height.data(), sizeof(vx_uint32));
      if(width_status != 0 || height_status != 0)
-        THROW(" vxAddArrayItems failed in the resize (vxExtrppNode_Resizetensor) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
+        THROW(" vxAddArrayItems failed in the resize (vxExtrppNode_ResizebatchPD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
 
-   _node = vxExtrppNode_Resizetensor(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height, _batch_size);
+   _node = vxExtrppNode_ResizebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height, _batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the resize (vxExtrppNode_Resizetensor) node failed: "+ TOSTR(status))
+        THROW("Adding the resize (vxExtrppNode_ResizebatchPD) node failed: "+ TOSTR(status))
 
 }
 
-
-
-void ResizeSingleParamNode::update_node()
+void ResizeShorterNode::update_node()
 {
 
 std::vector<uint32_t> src_roi_width, src_roi_height;
@@ -96,7 +94,7 @@ for(uint i = 0; i < _batch_size; i++)
 
 }
 
-void ResizeSingleParamNode::init(int size)
+void ResizeShorterNode::init(int size)
 {
     _size   = size;
 }

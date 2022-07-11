@@ -108,6 +108,7 @@ rocAL_api_python_unittest=1
     # Mention dataset_path
     data_dir=$ROCAL_DATA_PATH/images_jpg/labels_folder/
 
+
     # rocAL_api_python_unittest.py
     # By default : cpu backend, NCHW format , fp32
     # Please pass image_folder augmentation_name in addition to other common args

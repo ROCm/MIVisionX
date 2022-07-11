@@ -25,7 +25,6 @@ def draw_patches(img, idx, device):
 
 
 def main():
-    print("*****************************")
     args = parse_args()
     # Args
     data_path = args.image_dataset_path
@@ -60,7 +59,7 @@ def main():
 
 
         if augmentation_name == "resize":
-            images = fn.resize_single_param(images, resize_size=256)
+            images = fn.resize_shorterimages, resize_size=256)
             images = fn.centre_crop(images,crop=(224, 224))
             output = fn.crop_mirror_normalize(images, device="cpu",
                                               output_dtype=types.FLOAT16 if args.fp16 else types.FLOAT,

@@ -83,12 +83,10 @@ void CropParam::update_crop_array()
 {
     vx_status status = VX_SUCCESS;
     status = vxCopyArrayRange((vx_array)x1_arr, 0, batch_size, sizeof(vx_uint32), x1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-
     if(status != VX_SUCCESS)
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
     status = vxCopyArrayRange((vx_array)y1_arr, 0, batch_size, sizeof(vx_uint32), y1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
     status = vxCopyArrayRange((vx_array)cropw_arr, 0, batch_size, sizeof(vx_uint32), cropw_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)

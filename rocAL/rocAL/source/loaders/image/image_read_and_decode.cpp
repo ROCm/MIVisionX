@@ -183,6 +183,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     }
     else {
         while ((file_counter != _batch_size) && _reader->count_items() > 0) {
+
             size_t fsize = _reader->open();
             if (fsize == 0) {
                 WRN("Opened file " + _reader->id() + " of size 0");
@@ -211,7 +212,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         for (size_t i = 0; i < _batch_size; i++)
             _decompressed_buff_ptrs[i] = buff + image_size * i;
 
-#pragma omp parallel for num_threads(8)  // default(none) TBD: option disabled in Ubuntu 20.04
+#pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
         for (size_t i = 0; i < _batch_size; i++)
         {
             // initialize the actual decoded height and width with the maximum

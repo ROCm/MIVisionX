@@ -380,14 +380,14 @@ openvxNodes = [
     # ',U008 "matrix:FLOAT32,3,3:INIT,{2;0.1;0;2;1.9;0;-1200;-360;1}" !BILINEAR image:' + str(width) + ',' + str(height) + ',U008'),
     #('WarpPerspective_U8_U8_Bilinear_Constant',   'org.khronos.openvx.warp_perspective image:' + str(width) + ',' + str(height) + \
     # ',U008 "matrix:FLOAT32,3,3:INIT,{2;0.1;0;2;1.9;0;-1200;-360;1}" !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
-    ('Remap_S16_nearest',                         'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + \
-     ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Remap_S16_nearest_constant',                'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + \
-     ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
-    ('Remap_S16_bilinear',                        'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + \
-     ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008'),
-    ('Remap_S16_bilinear_constant',               'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + \
-     ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
+    #('Remap_S16_nearest',                         'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + \
+    # ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008'),
+    #('Remap_S16_nearest_constant',                'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + \
+    # ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !NEAREST_NEIGHBOR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
+    #('Remap_S16_bilinear',                        'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + \
+    # ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008'),
+    #('Remap_S16_bilinear_constant',               'org.khronos.openvx.remap image:' + str(width) + ',' + str(height) + \
+    # ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
     # vision kernels
     ('FastCorners_XY_U8_NoSupression',            'org.khronos.openvx.fast_corners uniform-image:' + str(width) + ',' + str(height) + \
      ',U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),

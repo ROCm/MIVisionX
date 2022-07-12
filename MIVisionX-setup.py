@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.3.3"
+__version__ = "2.3.4"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -280,7 +280,7 @@ else:
         os.system('(cd '+deps_dir+'; unzip half-1.12.0.zip -d half-files )')
         os.system('sudo -v')
         os.system(
-            '(cd '+deps_dir+'; sudo cp half-files/include/half.hpp /usr/local/include/ )')
+            '(cd '+deps_dir+'; sudo mkdir -p /usr/local/include/half; sudo cp half-files/include/half.hpp /usr/local/include/half )')
         # Install ProtoBuf
         os.system('(cd '+deps_dir+'/protobuf-' +
                   ProtoBufVersion+'; ./autogen.sh )')

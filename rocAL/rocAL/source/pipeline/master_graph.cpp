@@ -1405,7 +1405,6 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
             break;
         }
     INFO("User batch size "+ TOSTR(user_batch_size)+" Internal batch size set to "+ TOSTR(ret))
-    std::cerr<<"IBS********************************* :: "<<ret;
     return ret;
 }
 

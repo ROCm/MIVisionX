@@ -59,7 +59,7 @@ def main():
 
 
         if augmentation_name == "resize":
-            images = fn.resize_shorterimages, resize_size=256)
+            images = fn.resize_shorter(images, resize_size=256)
             images = fn.centre_crop(images,crop=(224, 224))
             output = fn.crop_mirror_normalize(images, device="cpu",
                                               output_dtype=types.FLOAT16 if args.fp16 else types.FLOAT,

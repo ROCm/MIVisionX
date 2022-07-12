@@ -102,7 +102,7 @@ opencv_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_opencv.so')
 nn_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_nn.so')
 # level 5 - libraries
 rpp_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_rpp.so')
-rali_lib = shell('ldd '+MIVisionXAbsPath+'/lib/librali.so')
+rocal_lib = shell('ldd '+MIVisionXAbsPath+'/lib/librocal.so')
 
 # Executables
 runvx_exe = shell('ldd '+MIVisionXAbsPath+'/bin/runvx')
@@ -203,12 +203,12 @@ with open(reportFilename, 'w') as f:
         f.write("\n")
         # rocAL Libraries
         f.write("* rocAL Library\n")
-        if not rali_lib:
+        if not rocal_lib:
             f.write("WARNING: rocAL Library Not Built\n")
             print("WARNING: rocAL Library Not Built\n")
             warning = 1
         else:
-            write_formatted(rali_lib, f)
+            write_formatted(rocal_lib, f)
         f.write("\n")
 
     f.write("\nExecutables Report\n")

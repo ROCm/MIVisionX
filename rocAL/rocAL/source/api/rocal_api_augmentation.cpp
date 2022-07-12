@@ -541,7 +541,6 @@ rocalResize(
     return output;
 }
 
-
 RocalImage  ROCAL_API_CALL
 rocalResizeShorter(
         RocalContext p_context,
@@ -561,11 +560,12 @@ rocalResizeShorter(
     {
         // For the resize node, user can create an image with a different width and height
         ImageInfo output_info = input->info();
-        if (size == 0) size = input->info().width();
-        if (size == 0) size = input->info().height_single();
+        if (size == 0)
+            THROW("Size passed must be greater than 0")
 
-        output_info.width(size*10);
-        output_info.height(size*10);
+        unsigned int buffer_size = size * 10;
+        output_info.width(buffer_size);
+        output_info.height(buffer_size);
         output = context->master_graph->create_image(output_info, is_output);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size

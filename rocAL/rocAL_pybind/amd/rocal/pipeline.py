@@ -148,7 +148,6 @@ class Pipeline(object):
         print("definegraph is deprecated")
         raise NotImplementedError
 
-
     def get_handle(self):
         return self._handle
 
@@ -265,7 +264,6 @@ class Pipeline(object):
 
     def GetImageLabels(self, array):
         return b.getImageLabels(self._handle, array)
-
 
     def GetBoundingBox(self,array):
         return array

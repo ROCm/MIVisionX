@@ -33,7 +33,7 @@ FusedCropTJDecoder::FusedCropTJDecoder():
 
 #if 0
     int num_avail_scalings = 0;
-    auto scaling_factors = tjGetScalingFactors	(&num_avail_scalings);
+    auto scaling_factors = tjGetScalingFactors (&num_avail_scalings);
     for(int i = 0; i < num_avail_scalings; i++) {
         if(scaling_factors[i].num < scaling_factors[i].denom) {
 
@@ -105,8 +105,8 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             return (h <= height && w <= width);
         };
         int num_of_attempts = 10;
-        int num_attemts_left = num_of_attempts;
-        for(; num_attemts_left > 0; num_attemts_left--)
+        int num_attempts_left = num_of_attempts;
+        for(; num_attempts_left > 0; num_attempts_left--)
         {
             std::uniform_real_distribution<float> area_dis(AREA_RANGE[0], AREA_RANGE[1]);
             std::uniform_real_distribution<float> log_ratio_dist(std::log(ASPECT_RATIO_RANGE[0]), std::log(ASPECT_RATIO_RANGE[1]));
@@ -123,7 +123,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             }
         }
         // Fallback on Central Crop
-        if( !is_valid_crop(crop_height, crop_width, original_image_height, original_image_width))
+        if(!is_valid_crop(crop_height, crop_width, original_image_height, original_image_width))
         {
             float in_ratio;
             in_ratio = static_cast<float>(original_image_width) / original_image_height;
@@ -160,7 +160,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                       max_decoded_height,
                       tjpf,
                       TJFLAG_FASTDCT, &x1_diff, &crop_width_diff,
-		                  x1, y1, crop_width, crop_height) != 0)
+                          x1, y1, crop_width, crop_height) != 0)
 
     {
         WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))

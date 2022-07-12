@@ -59,6 +59,8 @@ def main():
 
 
         if augmentation_name == "resize":
+            output = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
+        if augmentation_name == "resize_shorter":
             images = fn.resize_shorter(images, resize_size=256)
             images = fn.centre_crop(images,crop=(224, 224))
             output = fn.crop_mirror_normalize(images, device="cpu",

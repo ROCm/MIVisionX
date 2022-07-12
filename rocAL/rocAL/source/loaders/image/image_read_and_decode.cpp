@@ -136,7 +136,6 @@ ImageReadAndDecode::load(unsigned char* buff,
                          RocalColorFormat output_color_format,
                          bool decoder_keep_original )
 {
-
     if(max_decoded_width == 0 || max_decoded_height == 0 )
         THROW("Zero image dimension is not valid")
     if(!buff)

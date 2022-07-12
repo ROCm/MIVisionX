@@ -86,7 +86,6 @@ void CropNode::init(unsigned int crop_h, unsigned int crop_w)
     _crop_param->set_center();
 }
 
-
 void CropNode::init(FloatParam *crop_h_factor, FloatParam  *crop_w_factor, FloatParam *x_drift, FloatParam *y_drift)
 {
     _crop_param->set_x_drift_factor(core(x_drift));

@@ -49,8 +49,8 @@ struct ResizetensorLocalData
 #elif ENABLE_HIP
     void *hip_pSrc;
     void *hip_pDst;
-    RpptImagePatch *d_dstImgSize;
-    RpptROI *d_roiTensorPtrSrc;
+    RpptImagePatch *hip_dstImgSize;
+    RpptROI *hip_roiTensorPtrSrc;
 #endif
 };
 
@@ -78,8 +78,8 @@ static vx_status VX_CALLBACK refreshResizetensor(vx_node node, const vx_referenc
 #elif ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
-        hipMemcpy(data->d_dstImgSize, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice);
-        hipMemcpy(data->d_roiTensorPtrSrc, data->roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI), hipMemcpyHostToDevice);
+        hipMemcpy(data->hip_dstImgSize, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice);
+        hipMemcpy(data->hip_roiTensorPtrSrc, data->roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI), hipMemcpyHostToDevice);
 #endif
     }
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
@@ -155,8 +155,8 @@ static vx_status VX_CALLBACK processResizetensor(vx_node node, const vx_referenc
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
         refreshResizetensor(node, parameters, num, data);
-        rpp_status = rppt_resize_gpu(data->hip_pSrc, data->srcDescPtr, data->hip_pDst, data->dstDescPtr, data->d_dstImgSize, RpptInterpolationType::TRIANGULAR, data->d_roiTensorPtrSrc, data->roiType, data->rppHandle);
-        return_status =RPP_SUCCESS;
+        rpp_status = rppt_resize_gpu(data->hip_pSrc, data->srcDescPtr, data->hip_pDst, data->dstDescPtr, data->hip_dstImgSize, RpptInterpolationType::TRIANGULAR, data->hip_roiTensorPtrSrc, data->roiType, data->rppHandle);
+        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
@@ -179,7 +179,6 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &data->nbatchSize));
-    // data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
     data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
     data->dstDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
     data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
@@ -210,15 +209,12 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     // Set numDims, offset, n/c/h/w values for src/dst
     data->srcDescPtr->numDims = 4;
     data->dstDescPtr->numDims = 4;
-
     data->srcDescPtr->offsetInBytes = 0;
     data->dstDescPtr->offsetInBytes = 0;
-
     data->srcDescPtr->n = data->nbatchSize;
     data->srcDescPtr->h = data->maxSrcDimensions.height;
     data->srcDescPtr->w = data->maxSrcDimensions.width;
     data->srcDescPtr->c = ip_channel;
-
     data->dstDescPtr->n = data->nbatchSize;
     data->dstDescPtr->h = data->maxDstDimensions.height;
     data->dstDescPtr->w = data->maxDstDimensions.width;
@@ -228,12 +224,10 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     {
         data->srcDescPtr->layout = RpptLayout::NCHW;
         data->dstDescPtr->layout = RpptLayout::NCHW;
-
         data->srcDescPtr->strides.nStride = ip_channel * data->srcDescPtr->w * data->srcDescPtr->h;
         data->srcDescPtr->strides.cStride = data->srcDescPtr->w * data->srcDescPtr->h;
         data->srcDescPtr->strides.hStride = data->srcDescPtr->w;
         data->srcDescPtr->strides.wStride = 1;
-
         data->dstDescPtr->strides.nStride = ip_channel * data->dstDescPtr->w * data->dstDescPtr->h;
         data->dstDescPtr->strides.cStride = data->dstDescPtr->w * data->dstDescPtr->h;
         data->dstDescPtr->strides.hStride = data->dstDescPtr->w;
@@ -243,12 +237,10 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     {
         data->srcDescPtr->layout = RpptLayout::NHWC;
         data->dstDescPtr->layout = RpptLayout::NHWC;
-
         data->srcDescPtr->strides.nStride = ip_channel * data->srcDescPtr->w * data->srcDescPtr->h;
         data->srcDescPtr->strides.hStride = ip_channel * data->srcDescPtr->w;
         data->srcDescPtr->strides.wStride = ip_channel;
         data->srcDescPtr->strides.cStride = 1;
-
         data->dstDescPtr->strides.nStride = ip_channel * data->dstDescPtr->w * data->dstDescPtr->h;
         data->dstDescPtr->strides.hStride = ip_channel * data->dstDescPtr->w;
         data->dstDescPtr->strides.wStride = ip_channel;
@@ -261,8 +253,8 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     // Set ROI tensors types for src/dst
     data->roiType = RpptRoiType::XYWH;
 #if ENABLE_HIP
-    hipMalloc(&data->d_dstImgSize, data->nbatchSize * sizeof(RpptImagePatch));
-    hipMalloc(&data->d_roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI));
+    hipMalloc(&data->hip_dstImgSize, data->nbatchSize * sizeof(RpptImagePatch));
+    hipMalloc(&data->hip_roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI));
 #endif
     refreshResizetensor(node, parameters, num, data);
 #if ENABLE_OPENCL
@@ -284,8 +276,8 @@ static vx_status VX_CALLBACK uninitializeResizetensor(vx_node node, const vx_ref
     ResizetensorLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_HIP
-    hipFree(data->d_dstImgSize);
-    hipFree(data->d_roiTensorPtrSrc);
+    hipFree(data->hip_dstImgSize);
+    hipFree(data->hip_roiTensorPtrSrc);
 #endif
 #if ENABLE_OPENCL || ENABLE_HIP
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)

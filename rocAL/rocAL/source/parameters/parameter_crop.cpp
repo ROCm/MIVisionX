@@ -44,7 +44,7 @@ void CropParam::set_y_drift_factor(Parameter<float>* y_drift)
 }
 
 void CropParam::get_crop_dimensions(std::vector<uint32_t> &crop_w_dim, std::vector<uint32_t> &crop_h_dim)
-{
+{   
     crop_h_dim = croph_arr_val;
     crop_w_dim = cropw_arr_val;
 }

@@ -36,13 +36,13 @@ THE SOFTWARE.
 #define SCALE_CONSTANT_HALF_BODY 1.5
 typedef struct BoundingBoxCord_
 {
-  float l; float t; float r; float b;
+  long double l; long double t; long double r; long double b;
   BoundingBoxCord_() {}
-  BoundingBoxCord_(float l_, float t_, float r_, float b_): l(l_), t(t_), r(r_), b(b_) {}   // constructor
+  BoundingBoxCord_(long double l_, long double t_, long double r_, long double b_): l(l_), t(t_), r(r_), b(b_) {}   // constructor
   BoundingBoxCord_(const BoundingBoxCord_& cord) : l(cord.l), t(cord.t), r(cord.r), b(cord.b) {}  //copy constructor
 } BoundingBoxCord;
 
-typedef  struct { float xc; float yc; float w; float h; } BoundingBoxCord_xcycwh;
+typedef  struct { long double xc; long double yc; long double w; long double h; } BoundingBoxCord_xcycwh;
 typedef  std::vector<BoundingBoxCord> BoundingBoxCords;
 typedef  std::vector<BoundingBoxCord_xcycwh> BoundingBoxCords_xcycwh;
 typedef  std::vector<int> BoundingBoxLabels;

@@ -144,7 +144,7 @@ if(${BUILD_ROCAL})
         include/api/rocal_api_parameters.h
         include/api/rocal_api_meta_data.h
         # DESTINATION include/mivisionx
-        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/rocAL
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocAL
         )
     if(FFMPEG_FOUND)
         find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)

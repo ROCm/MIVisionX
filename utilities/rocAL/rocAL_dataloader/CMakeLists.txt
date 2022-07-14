@@ -35,8 +35,10 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
-include_directories(${ROCM_PATH}/libexec/mivisionx/rocAL/)
-link_directories(${ROCM_PATH}/lib/)
+include(GNUInstallDirs)
+include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocAL)
+link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})link_directories(${ROCM_PATH}/lib/)
+
 file(GLOB My_Source_Files ./*.cpp)
 add_executable(${PROJECT_NAME} ${My_Source_Files})
 

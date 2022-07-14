@@ -27,7 +27,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
 # install MIVisionX neural net dependency - Level 4
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget miopen-opencl && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
-        unzip half-1.12.0.zip -d half-files && sudo cp half-files/include/half.hpp /usr/local/include/ && cd
+        unzip half-1.12.0.zip -d half-files && sudo mkdir -p /usr/local/include/half && sudo cp half-files/include/half.hpp /usr/local/include/half && cd
 
 WORKDIR /workspace
 

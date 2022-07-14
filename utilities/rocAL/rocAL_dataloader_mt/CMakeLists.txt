@@ -83,7 +83,7 @@ endif()
 
 include(GNUInstallDirs)
 include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocAL)
-link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})link_directories    (${ROCM_PATH}/lib/)
+link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})
 
 add_executable(${PROJECT_NAME} ./rocAL_dataloader_mt.cpp)
 if(OpenCV_FOUND)

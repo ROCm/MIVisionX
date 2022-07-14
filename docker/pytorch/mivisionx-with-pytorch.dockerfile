@@ -30,12 +30,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install miopen-hip migraphx && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && sudo mkdir -p /usr/local/include/half && sudo cp half-files/include/half.hpp /usr/local/include/half && cd
 # install MIVisionX rocAL dependency - Level 5
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev python-dev python3-dev libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm libjsoncpp-dev clang && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev python3-dev libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm libjsoncpp-dev clang && \
         git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd ../../ && \
         wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 && tar xjvf boost_1_72_0.tar.bz2 && \
-        cd boost_1_72_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
+        export CPLUS_INCLUDE_PATH=/usr/include/python3.6 && cd boost_1_72_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
         ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11" && \
         sudo ./b2 install threading=multi link=shared --with-system --with-filesystem && \
         ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \

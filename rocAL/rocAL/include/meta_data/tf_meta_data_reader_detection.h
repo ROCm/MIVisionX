@@ -47,7 +47,7 @@ public :
     ~TFMetaDataReaderDetection() override { delete _output; }
 private:
     void read_files(const std::string& _path);
-    bool exists(const std::string &image_name);
+    bool exists(const std::string &image_name) override;
     // void add(std::string image_name, int label);
     //bbox add
     void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);

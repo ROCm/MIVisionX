@@ -60,7 +60,7 @@ public:
     ~SequenceFileSourceReader() override;
 
     int close() override;
-    unsigned long long get_shuffle_time() {return _shuffle_time.get_timing();};
+    unsigned long long get_shuffle_time() override {return _shuffle_time.get_timing();};
 
     SequenceFileSourceReader();
 

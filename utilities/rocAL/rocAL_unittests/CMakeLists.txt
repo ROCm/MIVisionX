@@ -35,7 +35,7 @@ find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
 include(GNUInstallDirs)
-include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocAL)
+include_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/rocAL)
 link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})
 file(GLOB My_Source_Files ./*.cpp)
 add_executable(${PROJECT_NAME} ${My_Source_Files})

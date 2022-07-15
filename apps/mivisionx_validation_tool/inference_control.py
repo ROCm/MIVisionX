@@ -190,7 +190,7 @@ class InferenceControl(QtWidgets.QMainWindow):
         model_name = (str)(self.name_lineEdit.text())
         model_location = (str)(self.file_lineEdit.text())
         batch_size = (str)(self.batch_comboBox.currentText())
-        rali_mode = self.mode_comboBox.currentIndex() + 1 
+        rocal_mode = self.mode_comboBox.currentIndex() + 1 
         input_dims = (str)('%s' % (self.idims_lineEdit.text()))
         output_dims = (str)('%s' % (self.odims_lineEdit.text()))
         label = (str)(self.label_lineEdit.text())
@@ -219,7 +219,7 @@ class InferenceControl(QtWidgets.QMainWindow):
         self.close()
 
         viewer = InferenceViewer(model_name, model_format, image_dir, model_location, label, hierarchy, image_val, input_dims, output_dims, batch_size, output_dir, 
-                                    add, multiply, verbose, fp16, replace, loop, rali_mode, gui, container_logo, fps_file, cpu_name, gpu_name, self)
+                                    add, multiply, verbose, fp16, replace, loop, rocal_mode, gui, container_logo, fps_file, cpu_name, gpu_name, self)
         if gui == 'yes':
             #viewer.show()
             viewer.showMaximized()

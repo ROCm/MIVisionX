@@ -31,22 +31,22 @@ THE SOFTWARE.
 #include<string>
 
 #include "rocal_api.h"
+#include <opencv/highgui.h>
 
 #include "opencv2/opencv.hpp"
 using namespace cv;
-
-#if USE_OPENCV_4
-#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
-#define CV_BGR2GRAY COLOR_BGR2GRAY
-#define CV_GRAY2RGB COLOR_GRAY2RGB
-#define CV_RGB2BGR COLOR_RGB2BGR
-#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
-#define CV_FILLED FILLED
-#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE 
-#endif
+// #if USE_OPENCV_4
+// #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+// #define CV_BGR2GRAY COLOR_BGR2GRAY
+// #define CV_GRAY2RGB COLOR_GRAY2RGB
+// #define CV_RGB2BGR COLOR_RGB2BGR
+// #define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+// #define CV_FILLED FILLED
+// #endif
 
 #define DISPLAY 0
 //#define RANDOMBBOXCROP
+
 
 using namespace std::chrono;
 
@@ -695,7 +695,10 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         {
             case 1: //classification pipeline
             {
-                rocalGetImageLabels(handle, label_id);
+                if (gpu == 1)
+                    rocalGetImageLabels(handle, label_id, ROCAL_MEMCPY_TO_HOST);
+                else
+                    rocalGetImageLabels(handle, label_id);
                 int img_size = rocalGetImageNameLen(handle, image_name_length);
                 char img_name[img_size];
                 numOfClasses = num_of_classes;

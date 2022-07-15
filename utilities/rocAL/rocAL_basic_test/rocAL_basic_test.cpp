@@ -181,13 +181,16 @@ int main(int argc, const char ** argv)
             rocalCopyToOutput(handle, mat_input.data, h * w * p);
 
             counter += inputBatchSize;
-            rocalGetImageLabels(handle, labels.data());
+            if (processing_device == 1)
+                rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
+            else
+                rocalGetImageLabels(handle, labels.data());
             for(int i = 0; i < inputBatchSize; i++)
             {
                 names[i] = std::move(std::vector<char>(rocalGetImageNameLen(handle, ImageNameLen), '\n'));
                 rocalGetImageName(handle, names[i].data());
                 std::string id(names[i].begin(), names[i].end());
-                std::cout << "name "<< id << " label "<< labels[i] << " - ";
+                std::cout << "name " << id << " label " << labels[i] << std::endl;
             }
             std::cout << std::endl;
 

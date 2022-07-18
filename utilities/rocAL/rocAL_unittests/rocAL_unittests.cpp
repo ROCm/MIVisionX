@@ -48,7 +48,6 @@ using namespace cv;
 #define DISPLAY 0
 //#define RANDOMBBOXCROP
 
-
 using namespace std::chrono;
 
 int test(int test_case, int reader_type, int pipeline_type, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes, int display_all);

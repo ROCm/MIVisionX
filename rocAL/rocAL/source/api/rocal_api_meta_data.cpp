@@ -346,7 +346,7 @@ ROCAL_API_CALL rocalGetOneHotImageLabels(RocalContext p_context, void* buf, int 
 
 
 void
-ROCAL_API_CALL rocalGetBoundingBoxCords(RocalContext p_context, long double* buf)
+ROCAL_API_CALL rocalGetBoundingBoxCords(RocalContext p_context, double* buf)
 {
     if (!p_context)
         THROW("Invalid rocal context passed to rocalGetBoundingBoxCords")
@@ -493,7 +493,7 @@ void ROCAL_API_CALL rocalBoxEncoder(RocalContext p_context, std::vector<float>& 
 }
 
 void
-ROCAL_API_CALL rocalCopyEncodedBoxesAndLables(RocalContext p_context, long double* boxes_buf, int* labels_buf)
+ROCAL_API_CALL rocalCopyEncodedBoxesAndLables(RocalContext p_context, double* boxes_buf, int* labels_buf)
 {
     if (!p_context)
         THROW("Invalid rocal context passed to rocalCopyEncodedBoxesAndLables")
@@ -520,7 +520,7 @@ ROCAL_API_CALL rocalCopyEncodedBoxesAndLables(RocalContext p_context, long doubl
     {
         unsigned bb_count = meta_data.second->get_bb_labels_batch()[i].size();
         int *temp_labels_buf = labels_buf + bb_offset[i];
-        long double *temp_bbox_buf = boxes_buf + (bb_offset[i] * 4);
+        double *temp_bbox_buf = boxes_buf + (bb_offset[i] * 4);
         memcpy(temp_labels_buf, meta_data.second->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         memcpy(temp_bbox_buf, meta_data.second->get_bb_cords_batch()[i].data(), sizeof(BoundingBoxCord) * bb_count);
     }

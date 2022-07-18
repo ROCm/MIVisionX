@@ -161,10 +161,10 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_encoded_bbox_label(RocalContext context, py::array_t<long double>bboxes_array, py::array_t<int>labels_array)
+    py::object wrapper_encoded_bbox_label(RocalContext context, py::array_t<double>bboxes_array, py::array_t<int>labels_array)
     {
         auto bboxes_buf = bboxes_array.request();
-        long double* bboxes_ptr = (long double*) bboxes_buf.ptr;
+        double* bboxes_ptr = (double*) bboxes_buf.ptr;
         auto labels_buf = labels_array.request();
         int* labels_ptr = (int*) labels_buf.ptr;
         // call pure C++ function
@@ -194,10 +194,10 @@ namespace rocal{
     }
 
 
-    py::object wrapper_BB_cord_copy(RocalContext context, py::array_t<long double> array)
+    py::object wrapper_BB_cord_copy(RocalContext context, py::array_t<double> array)
     {
         auto buf = array.request();
-        long double* ptr = (long double*) buf.ptr;
+        double* ptr = (double*) buf.ptr;
         // call pure C++ function
         rocalGetBoundingBoxCords(context,ptr);
         return py::cast<py::none>(Py_None);

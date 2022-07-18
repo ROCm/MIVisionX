@@ -372,7 +372,7 @@ class ROCALCOCOIterator(object):
         self.loader.GetBBLabels(self.labels)
         # print(self.labels)
 # 1D bboxes array in a batch
-        self.bboxes = np.zeros((self.count_batch*4), dtype="float128")
+        self.bboxes = np.zeros((self.count_batch*4), dtype="float64")
         self.loader.GetBBCords(self.bboxes)
         # print("BBoxes (rocAL): ",self.bboxes)
 #Image sizes of a batch

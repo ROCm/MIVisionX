@@ -31,10 +31,10 @@ THE SOFTWARE.
 #include<string>
 
 #include "rocal_api.h"
-#include <opencv/highgui.h>
 
 #include "opencv2/opencv.hpp"
 using namespace cv;
+
 #if USE_OPENCV_4
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
 #define CV_BGR2GRAY COLOR_BGR2GRAY

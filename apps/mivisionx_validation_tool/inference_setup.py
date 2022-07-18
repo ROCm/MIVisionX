@@ -6,9 +6,9 @@ import numpy as np
 import cv2
 from numpy.ctypeslib import ndpointer
 from PyQt5 import QtCore
-from rali_setup import *
+from rocal_setup import *
 import amd.rocal.types as types
-from amd.rocal.plugin.pytorch import RALI_iterator
+from amd.rocal.plugin.pytorch import ROCAL_iterator
 from amd.rocal.pipeline import Pipeline
 
 # AMD Neural Net python wrapper
@@ -80,7 +80,7 @@ class annieObjectWrapper():
 
 class modelInference(QtCore.QObject):
     def __init__(self, modelName, modelFormat, imageDir, modelLocation, label, hierarchy, imageVal, modelInputDims, modelOutputDims, 
-                modelBatchSize, outputDir, inputAdd, inputMultiply, verbose, fp16, replaceModel, loop, rali_mode, origQueue, augQueue, gui, totalImages, fps_file, parent=None):
+                modelBatchSize, outputDir, inputAdd, inputMultiply, verbose, fp16, replaceModel, loop, rocal_mode, origQueue, augQueue, gui, totalImages, fps_file, parent=None):
 
         super(modelInference, self).__init__(parent)
         self.modelCompilerPath = '/opt/rocm/libexec/mivisionx/model_compiler/python'
@@ -114,8 +114,8 @@ class modelInference(QtCore.QObject):
         self.loop = False
         self.classifier = None
         self.labelNames = []
-        self.raliEngine = None
-        self.rali_mode = rali_mode
+        self.rocalEngine = None
+        self.rocal_mode = rocal_mode
         self.origQueue = origQueue
         self.augQueue = augQueue
         self.imgCount = 0
@@ -215,7 +215,7 @@ class modelInference(QtCore.QObject):
         self.msFrame = 0.0
         self.totalFPS = 0.0
         # get correct list for augmentations
-        self.raliList = []
+        self.rocalList = []
         self.setupInference()
 
     def setupInference(self):
@@ -295,15 +295,15 @@ class modelInference(QtCore.QObject):
         sys.stdout = self.orig_stdout
 
         # Setup rocAL Data Loader. 
-        rali_batch_size = 1
+        rocal_batch_size = 1
         device_id = 0
-        self.pipe = Pipeline(batch_size=rali_batch_size, num_threads=1, device_id=0, seed=12 + device_id, rali_cpu=True, tensor_layout = types.NCHW, tensor_dtype=self.tensor_dtype)
-        self.raliEngine = InferencePipe(self.pipe, imageValidation, self.modelBatchSizeInt, self.rali_mode, self.c_i, 
-                                    self.h_i, self.w_i, rali_batch_size, self.tensor_dtype, self.Mx, self.Ax, 
+        self.pipe = Pipeline(batch_size=rocal_batch_size, num_threads=1, device_id=0, seed=12 + device_id, rocal_cpu=True, tensor_layout = types.NCHW, tensor_dtype=self.tensor_dtype)
+        self.rocalEngine = InferencePipe(self.pipe, imageValidation, self.modelBatchSizeInt, self.rocal_mode, self.c_i, 
+                                    self.h_i, self.w_i, rocal_batch_size, self.tensor_dtype, self.Mx, self.Ax, 
                                     tensor_layout = types.NCHW, num_threads=1, device_id=0, 
-                                    data_dir=self.inputImageDir, crop=224, rali_cpu=True)
-        self.imageIterator = RALI_iterator(self.pipe)
-        self.raliList = self.raliEngine.get_rali_list(self.rali_mode, self.modelBatchSizeInt)
+                                    data_dir=self.inputImageDir, crop=224, rocal_cpu=True)
+        self.imageIterator = ROCAL_iterator(self.pipe)
+        self.rocalList = self.rocalEngine.get_rocal_list(self.rocal_mode, self.modelBatchSizeInt)
         for i in range(self.modelBatchSizeInt):
             self.augStats.append([0,0,0])
         self.setupDone = True
@@ -325,7 +325,7 @@ class modelInference(QtCore.QObject):
         return topIndex, topProb
 
     def setIntensity(self, intensity):
-        self.raliEngine.updateAugmentationParameter(intensity)
+        self.rocalEngine.updateAugmentationParameter(intensity)
     
     def pauseInference(self):
         self.pauseState = not self.pauseState
@@ -338,15 +338,15 @@ class modelInference(QtCore.QObject):
             while not self.pauseState:
                 msFrame = 0.0
                 start = time.time()
-                image_RGB_it, image_tensor = self.raliEngine.get_next_augmentation(self.imageIterator)
+                image_RGB_it, image_tensor = self.rocalEngine.get_next_augmentation(self.imageIterator)
                 image_RGB = image_RGB_it[0]
                 image_batch = cv2.cvtColor(image_RGB, cv2.COLOR_RGB2BGR)
                 original_image = image_batch[0:self.h_i, 0:self.w_i]
                 cloned_image = np.copy(image_batch)
                 frame = image_tensor
                 #get image file name and ground truth
-                imageFileName = self.raliEngine.get_input_name()
-                groundTruthIndex = self.raliEngine.get_ground_truth()
+                imageFileName = self.rocalEngine.get_input_name()
+                groundTruthIndex = self.rocalEngine.get_ground_truth()
                 groundTruthIndex = int(groundTruthIndex)
                 groundTruthLabel = self.labelNames[groundTruthIndex]
                 groundTruthLabel = groundTruthLabel.split(" ", 1)[1]
@@ -355,7 +355,7 @@ class modelInference(QtCore.QObject):
                 end = time.time()
                 msFrame += (end-start)*1000
                 if (self.verbosePrint):
-                    print ('%30s' % 'Get next image from RALI took', str((end - start)*1000), 'ms')
+                    print ('%30s' % 'Get next image from rocal took', str((end - start)*1000), 'ms')
     
                 if self.gui:
                     text_width, text_height = cv2.getTextSize(groundTruthLabel, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)[0]
@@ -391,7 +391,7 @@ class modelInference(QtCore.QObject):
                         print ('%30s' % 'Processing top 5 results took ', str((end - start)*1000), 'ms' )
 
                     if self.gui:
-                        augmentationText = self.raliList[i].split('+')
+                        augmentationText = self.rocalList[i].split('+')
                         textCount = len(augmentationText)
                         for cnt in range(0,textCount):
                             currentText = augmentationText[cnt]
@@ -443,7 +443,7 @@ class modelInference(QtCore.QObject):
         return self.augStats[augmentation]
 
     def getAugName(self, index):
-        return self.raliList[index]
+        return self.rocalList[index]
 
     def processOutput(self, groundTruthIndex, topIndex, topProb, i, imageFileName):
         sys.stdout = open(self.finalImageResultsFile,'a')

@@ -42,7 +42,7 @@ using namespace cv;
 #define CV_RGB2BGR COLOR_RGB2BGR
 #define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
 #define CV_FILLED FILLED
-#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE 
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
 #endif
 
 #define DISPLAY 0
@@ -695,7 +695,10 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         {
             case 1: //classification pipeline
             {
-                rocalGetImageLabels(handle, label_id);
+                if (gpu == 1)
+                    rocalGetImageLabels(handle, label_id, ROCAL_MEMCPY_TO_HOST);
+                else
+                    rocalGetImageLabels(handle, label_id);
                 int img_size = rocalGetImageNameLen(handle, image_name_length);
                 char img_name[img_size];
                 numOfClasses = num_of_classes;

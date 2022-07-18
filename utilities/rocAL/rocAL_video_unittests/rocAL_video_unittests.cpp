@@ -43,7 +43,7 @@ using namespace cv;
 #define CV_RGB2BGR COLOR_RGB2BGR
 #define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
 #define CV_FILLED FILLED
-#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE 
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
 #endif
 
 using namespace std::chrono;
@@ -313,7 +313,10 @@ int main(int argc, const char **argv)
         {
             int label_id[input_batch_size];
             int image_name_length[input_batch_size];
-            rocalGetImageLabels(handle, label_id);
+            if (processing_device == 1)
+                rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
+            else
+                rocalGetImageLabels(handle, labels.data());
             int img_size = rocalGetImageNameLen(handle, image_name_length);
             char img_name[img_size];
             rocalGetImageName(handle, img_name);

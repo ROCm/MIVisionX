@@ -27,7 +27,7 @@ cmake_minimum_required (VERSION 3.0)
 
 project(classification)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 

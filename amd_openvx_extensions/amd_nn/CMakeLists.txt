@@ -22,7 +22,7 @@ cmake_minimum_required(VERSION 3.0)
 project(amd_nn)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 find_package(miopen     PATHS ${ROCM_PATH} REQUIRED)
 

@@ -1739,7 +1739,7 @@ protected:
         }
         ovxC << "cmake_minimum_required (VERSION 2.8)" << std::endl
              << "project (annmodule)" << std::endl
-             << "set (CMAKE_CXX_STANDARD 11) " << std::endl
+             << "set (CMAKE_CXX_STANDARD 14) " << std::endl
              << "list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)" << std::endl
              << "find_package(OpenCL REQUIRED)" << std::endl
              << "find_package(OpenCV QUIET)" << std::endl
@@ -1748,7 +1748,7 @@ protected:
              << "link_directories    (/opt/rocm/lib)" << std::endl
              << "list(APPEND SOURCES annmodule.cpp)" << std::endl
              << "add_library(${PROJECT_NAME} SHARED ${SOURCES})" << std::endl
-             << "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11\")" << std::endl
+             << "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14\")" << std::endl
              << "target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread)" << std::endl
              << "add_executable(anntest anntest.cpp)" << std::endl
              << "if (OpenCV_FOUND)" << std::endl

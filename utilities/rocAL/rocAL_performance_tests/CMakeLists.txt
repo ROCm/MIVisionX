@@ -26,7 +26,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project (rocAL_performance_tests)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)

@@ -26,7 +26,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(vx_pop)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 #Added Default libdir

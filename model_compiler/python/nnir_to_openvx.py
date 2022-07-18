@@ -112,7 +112,7 @@ cmake_minimum_required (VERSION 3.0)
 
 project (annmodule)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
 

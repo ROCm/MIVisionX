@@ -3,7 +3,7 @@ import amd.rocal.types as types
 import numpy as np
 
 #batch size = 64
-raliList_mode1_64 = ['original', 'warpAffine', 'contrast', 'rain', 
+rocalList_mode1_64 = ['original', 'warpAffine', 'contrast', 'rain', 
             'brightness', 'colorTemp', 'exposure', 'vignette', 
             'blur', 'snow', 'pixelate', 'SnPNoise', 
             'gamma', 'rotate', 'flip', 'blend',
@@ -19,7 +19,7 @@ raliList_mode1_64 = ['original', 'warpAffine', 'contrast', 'rain',
             'rotate150+brightness', 'rotate150+colorTemp', 'rotate150+exposure', 'rotate150+vignette', 
             'rotate150+blur', 'rotate150+snow', 'rotate150+pixelate', 'rotate150+SnPNoise', 
             'rotate150+gamma', 'rotate150+rotate', 'rotate150+flip', 'rotate150+blend']
-raliList_mode2_64 = ['original', 'warpAffine', 'contrast', 'rain', 
+rocalList_mode2_64 = ['original', 'warpAffine', 'contrast', 'rain', 
             'brightness', 'colorTemp', 'exposure', 'vignette', 
             'blur', 'snow', 'pixelate', 'SnPNoise', 
             'gamma', 'rotate', 'flip', 'blend',
@@ -35,7 +35,7 @@ raliList_mode2_64 = ['original', 'warpAffine', 'contrast', 'rain',
             'lensCorrection+brightness', 'lensCorrection+colorTemp', 'exposure', 'lensCorrection+vignette', 
             'lensCorrection+blur', 'lensCorrection+snow', 'lensCorrection+pixelate', 'lensCorrection+SnPNoise', 
             'lensCorrection+gamma', 'lensCorrection+rotate', 'lensCorrection+flip', 'lensCorrection+blend',]
-raliList_mode3_64 = ['original', 'warpAffine', 'contrast', 'rain', 
+rocalList_mode3_64 = ['original', 'warpAffine', 'contrast', 'rain', 
             'brightness', 'colorTemp', 'exposure', 'vignette', 
             'blur', 'snow', 'pixelate', 'SnPNoise', 
             'gamma', 'rotate', 'flip', 'blend',
@@ -51,7 +51,7 @@ raliList_mode3_64 = ['original', 'warpAffine', 'contrast', 'rain',
             'warpAffine+brightness', 'warpAffine+colorTemp', 'warpAffine+exposure', 'warpAffine+vignette', 
             'warpAffine+blur', 'warpAffine+snow', 'pixelate', 'warpAffine+SnPNoise', 
             'warpAffine+gamma', 'warpAffine+rotate', 'warpAffine+flip', 'warpAffine+blend']
-raliList_mode4_64 = ['original', 'original', 'original', 'original',
+rocalList_mode4_64 = ['original', 'original', 'original', 'original',
                     'original', 'original', 'original', 'original',
                     'original', 'original', 'original', 'original',
                     'original', 'original', 'original', 'original',
@@ -67,7 +67,7 @@ raliList_mode4_64 = ['original', 'original', 'original', 'original',
                     'original', 'original', 'original', 'original',
                     'original', 'original', 'original', 'original',
                     'original', 'original', 'original', 'original']
-raliList_mode5_64 = ['original', 'nop', 'nop', 'nop',
+rocalList_mode5_64 = ['original', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop',
@@ -84,32 +84,32 @@ raliList_mode5_64 = ['original', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop']
 #batch size = 16
-raliList_mode1_16 = ['original', 'warpAffine', 'contrast', 'rain', 
+rocalList_mode1_16 = ['original', 'warpAffine', 'contrast', 'rain', 
             'brightness', 'colorTemp', 'exposure', 'vignette', 
             'blur', 'snow', 'pixelate', 'SnPNoise', 
             'gamma', 'rotate', 'flip', 'blend']
-raliList_mode2_16 = ['original', 'warpAffine', 'contrast', 'contrast+rain', 
+rocalList_mode2_16 = ['original', 'warpAffine', 'contrast', 'contrast+rain', 
             'brightness', 'brightness+colorTemp', 'exposure', 'exposure+vignette', 
             'blur', 'blur+snow', 'pixelate', 'pixelate+SnPNoise', 
             'gamma', 'rotate', 'rotate+flip', 'blend']
-raliList_mode3_16 = ['original', 'warpAffine', 'contrast', 'warpAffine+rain', 
+rocalList_mode3_16 = ['original', 'warpAffine', 'contrast', 'warpAffine+rain', 
             'brightness', 'colorTemp', 'exposure', 'vignette', 
             'blur', 'vignette+snow', 'pixelate', 'gamma',
             'SnPNoise+gamma', 'rotate', 'flip+pixelate', 'blend']
-raliList_mode4_16 = ['original', 'original', 'original', 'original',
+rocalList_mode4_16 = ['original', 'original', 'original', 'original',
                     'original', 'original', 'original', 'original',
                     'original', 'original', 'original', 'original',
                     'original', 'original', 'original', 'original']
-raliList_mode5_16 = ['original', 'nop', 'nop', 'nop',
+rocalList_mode5_16 = ['original', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop',
                     'nop', 'nop', 'nop', 'nop']
 
-# Class to initialize Rali and call the augmentations 
+# Class to initialize rocal and call the augmentations 
 class InferencePipe():
-    def __init__(self, pipe, image_validation, model_batch_size, raliMode, c_img, h_img, w_img, rali_batch_size, tensor_dtype, multiplier, offset, tensor_layout, num_threads, device_id, data_dir, crop, rali_cpu = True):
-        rali_device = 'cpu' if rali_cpu else 'gpu'
-        decoder_device = 'cpu' if rali_cpu else 'mixed'
+    def __init__(self, pipe, image_validation, model_batch_size, rocalMode, c_img, h_img, w_img, rocal_batch_size, tensor_dtype, multiplier, offset, tensor_layout, num_threads, device_id, data_dir, crop, rocal_cpu = True):
+        rocal_device = 'cpu' if rocal_cpu else 'gpu'
+        decoder_device = 'cpu' if rocal_cpu else 'mixed'
         device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
         host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
         
@@ -119,19 +119,19 @@ class InferencePipe():
         self.pipe.set_seed(0)
         self.aug_strength = 0
         self.model_batch_size = model_batch_size
-        self.raliMode =  raliMode
+        self.rocalMode =  rocalMode
         self.data_dir = data_dir
         self.c_img = c_img
         self.h_img = h_img
         self.w_img = w_img
-        self.rali_batch_size = rali_batch_size
+        self.rocal_batch_size = rocal_batch_size
         self.tensor_dtype = tensor_dtype
         self.multiplier = multiplier
         self.offset = offset
         self.tensor_layout = tensor_layout
         self.reverse_channels = False
         #for tensor output
-        self.bs = self.rali_batch_size
+        self.bs = self.rocal_batch_size
         if self.tensor_dtype == types.FLOAT:
             self.out_tensor = np.zeros(( self.bs*self.model_batch_size, self.c_img, int(self.h_img/self.bs), self.w_img,), dtype = "float32")
         elif self.tensor_dtype == types.FLOAT16:
@@ -186,19 +186,19 @@ class InferencePipe():
         #param for blend
         self.blend_param = self.pipe.create_float_param(0.5)
 
-        #rali list of augmentation
-        self.rali_list = None
+        #rocal list of augmentation
+        self.rocal_list = None
 
-        #read file and decode images - common for all rali modes
+        #read file and decode images - common for all rocal modes
         with self.pipe:
             self.jpegs, self.labels = fn.readers.file(file_root=self.data_dir)
             self.decoded_images = fn.decoders.image(self.jpegs, device=decoder_device, output_type=types.RGB,
                                                 device_memory_padding=device_memory_padding,
                                                 host_memory_padding=host_memory_padding,
                                                 file_root=self.data_dir, shard_id=self.shard_id, num_shards=self.num_shards, random_shuffle=self.random_shuffle)
-            self.input = fn.resize(self.decoded_images, device=rali_device, resize_x=crop, resize_y=crop)
+            self.input = fn.resize(self.decoded_images, device=rocal_device, resize_x=crop, resize_y=crop)
             if model_batch_size == 16:
-                if raliMode == 1:
+                if rocalMode == 1:
                     self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
                     self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
                     self.rain_img = fn.rain(self.input, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
@@ -219,7 +219,7 @@ class InferencePipe():
                     self.pipe.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                                     self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
                                     self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img, self.blend_img)
-                elif raliMode == 2:
+                elif rocalMode == 2:
                     self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
                     self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
                     self.rain_img = fn.rain(self.contrast_img, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
@@ -240,7 +240,7 @@ class InferencePipe():
                     self.pipe.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                                     self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
                                     self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img, self.blend_img)
-                elif raliMode == 3:
+                elif rocalMode == 3:
                     self.warped = fn.warp_affine(self.input, matrix=self.affine_matrix_param)
                     self.contrast_img = fn.contrast(self.input, min_contrast=self.min_param, max_contrast=self.max_param)
                     self.rain_img = fn.rain(self.warped, rain=self.rain_param, rain_width = self.rain_width_param, rain_height = self.rain_height_param, rain_transparency =self.rain_transparency_param)
@@ -261,7 +261,7 @@ class InferencePipe():
                     self.pipe.set_outputs(self.input, self.warped, self.contrast_img, self.rain_img, self.bright_img,
                                     self.temp_img, self.exposed_img, self.vignette_img, self.blur_img, self.snow_img,
                                     self.pixelate_img, self.snp_img, self.gamma_img, self.rotate_img, self.flip_img, self.blend_img)
-                elif raliMode == 4:
+                elif rocalMode == 4:
                     for i in range(15):
                         self.copy_img = fn.copy(self.input)
                     # set outputs for this mode
@@ -269,7 +269,7 @@ class InferencePipe():
                                     self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
                                     self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
                                     self.copy_img)
-                elif raliMode == 5:
+                elif rocalMode == 5:
                     for i in range(15):
                         self.nop_img = fn.nop(self.input, True)
                     # set outputs for this mode
@@ -278,7 +278,7 @@ class InferencePipe():
                                     self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
                                     self.nop_img)
             elif model_batch_size == 64:
-                if raliMode == 1:
+                if rocalMode == 1:
                     self.rot150_img = fn.rotate(self.input, angle=self.degree_param_150)
                     self.flip_img = fn.flip(self.input, flip=self.flip_param)
                     self.rot45_img = fn.rotate(self.input, angle=self.degree_param_45)
@@ -288,7 +288,7 @@ class InferencePipe():
                     self.setof16_mode1(self.flip_img)
                     self.setof16_mode1(self.rot150_img)
                     
-                elif raliMode == 2:
+                elif rocalMode == 2:
                     #self.warpAffine2_img = self.warpAffine(self.input, False, [[1.5,0],[0,1],[None,None]])
                     self.warpAffine1_img = fn.warp_affine(self.input, matrix=self.affine_matrix_1_param) #squeeze
                     self.fishEye_img = fn.fish_eye(self.input)
@@ -299,7 +299,7 @@ class InferencePipe():
                     self.setof16_mode1(self.fishEye_img)
                     self.setof16_mode1(self.lensCorrection_img)
 
-                elif raliMode == 3:
+                elif rocalMode == 3:
                     self.colorTemp1_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param_10)
                     self.colorTemp2_img = fn.color_temp(self.input, adjustment_value=self.adjustment_param_20)
                     self.warpAffine2_img = fn.warp_affine(self.input, matrix=self.affine_matrix_2_param) #stretch
@@ -308,7 +308,7 @@ class InferencePipe():
                     self.setof16_mode1(self.colorTemp1_img)
                     self.setof16_mode1(self.colorTemp2_img)
                     self.setof16_mode1(self.warpAffine2_img)
-                elif raliMode == 4:
+                elif rocalMode == 4:
                     for i in range(63):
                         self.copy_img = fn.copy(self.input)
                     # set outputs for this mode
@@ -325,7 +325,7 @@ class InferencePipe():
                                     self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img,
                                     self.copy_img, self.copy_img, self.copy_img, self.copy_img, self.copy_img, 
                                     self.copy_img)
-                elif raliMode == 5:	
+                elif rocalMode == 5:	
                     for i in range(63):
                         self.nop_img = fn.nop(self.input, True)
                     # set outputs for this mode
@@ -342,7 +342,7 @@ class InferencePipe():
                                     self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
                                     self.nop_img, self.nop_img, self.nop_img, self.nop_img, self.nop_img,
                                     self.nop_img)
-        #rali iterator
+        #rocal iterator
         self.pipe.build()
         self.tensor_format =tensor_layout
         self.multiplier = multiplier
@@ -360,7 +360,7 @@ class InferencePipe():
         self.out_tensor = np.zeros(( self.b*self.n, self.p, int(self.h/self.b), self.w,), dtype = "float32")
 
     def get_input_name(self):
-        self.img_names_length = np.empty(self.rali_batch_size, dtype="int32")
+        self.img_names_length = np.empty(self.rocal_batch_size, dtype="int32")
         self.img_names_size = self.pipe.GetImageNameLen(self.img_names_length)
         # Images names of a batch
         self.Img_name = self.pipe.GetImageName(self.img_names_size)
@@ -432,7 +432,7 @@ class InferencePipe():
         self.pipe.update_float_param(curr_degree+degree, self.degree_param)
 
     def start_iterator(self):
-        self.raliResetLoaders()
+        self.rocalResetLoaders()
         
     def get_next_augmentation(self, imageIterator):
         if self.pipe.isEmpty() == 1:
@@ -447,28 +447,28 @@ class InferencePipe():
 
         return self.out_image, self.out_tensor
 
-    def get_rali_list(self, raliMode, model_batch_size):
+    def get_rocal_list(self, rocalMode, model_batch_size):
         if model_batch_size == 16:
-            if raliMode == 1:
-                self.rali_list = raliList_mode1_16
-            elif raliMode == 2:
-                self.rali_list = raliList_mode2_16
-            elif raliMode == 3:
-                self.rali_list = raliList_mode3_16
-            elif raliMode == 4:
-                self.rali_list = raliList_mode4_16
-            elif raliMode == 5:
-                self.rali_list = raliList_mode5_16
+            if rocalMode == 1:
+                self.rocal_list = rocalList_mode1_16
+            elif rocalMode == 2:
+                self.rocal_list = rocalList_mode2_16
+            elif rocalMode == 3:
+                self.rocal_list = rocalList_mode3_16
+            elif rocalMode == 4:
+                self.rocal_list = rocalList_mode4_16
+            elif rocalMode == 5:
+                self.rocal_list = rocalList_mode5_16
         elif model_batch_size == 64:
-            if raliMode == 1:
-                self.rali_list = raliList_mode1_64
-            elif raliMode == 2:
-                self.rali_list = raliList_mode2_64
-            elif raliMode == 3:
-                self.rali_list = raliList_mode3_64
-            elif raliMode == 4:
-                self.rali_list = raliList_mode4_64
-            elif raliMode == 5:
-                self.rali_list = raliList_mode5_64
+            if rocalMode == 1:
+                self.rocal_list = rocalList_mode1_64
+            elif rocalMode == 2:
+                self.rocal_list = rocalList_mode2_64
+            elif rocalMode == 3:
+                self.rocal_list = rocalList_mode3_64
+            elif rocalMode == 4:
+                self.rocal_list = rocalList_mode4_64
+            elif rocalMode == 5:
+                self.rocal_list = rocalList_mode5_64
                 
-        return self.rali_list
+        return self.rocal_list

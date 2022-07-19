@@ -26,7 +26,7 @@ if __name__ == '__main__':
         parser.add_argument('--model_name',			type=str, required=True,	help='model name                             [required]')
         parser.add_argument('--model',				type=str, required=True,	help='pre_trained model file/folder          [required]')
         parser.add_argument('--model_batch_size',	type=str, required=True,	help='n - batch size			             [required]')
-        parser.add_argument('--rali_mode',			type=str, required=True,	help='rali mode (1/2/3)			             [required]')
+        parser.add_argument('--rocal_mode',			type=str, required=True,	help='rocal mode (1/2/3)			             [required]')
         parser.add_argument('--model_input_dims',	type=str, required=True,	help='c,h,w - channel,height,width           [required]')
         parser.add_argument('--model_output_dims',	type=str, required=True,	help='c,h,w - channel,height,width           [required]')
         parser.add_argument('--label',				type=str, required=True,	help='labels text file                       [required]')
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         modelName = args.model_name
         modelLocation = args.model
         modelBatchSize = args.model_batch_size
-        raliMode = (int)(args.rali_mode)
+        rocalMode = (int)(args.rocal_mode)
         modelInputDims = args.model_input_dims
         modelOutputDims = args.model_output_dims
         label = args.label
@@ -72,6 +72,6 @@ if __name__ == '__main__':
         container_logo = 0
 
         viewer = InferenceViewer(modelName, modelFormat, imageDir, modelLocation, label, hierarchy, imageVal, modelInputDims, modelOutputDims, 
-                                    modelBatchSize, outputDir, inputAdd, inputMultiply, verbose, fp16, replaceModel, loop, raliMode, gui, container_logo, fps_file, cpu_name,
+                                    modelBatchSize, outputDir, inputAdd, inputMultiply, verbose, fp16, replaceModel, loop, rocalMode, gui, container_logo, fps_file, cpu_name,
                                     gpu_name, parent=None)
     app.exec_()

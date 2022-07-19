@@ -73,7 +73,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
 
     find_package(HIP QUIET)
     if(HIP_FOUND)
-        message(STATUS "Found HIP: " ${HIP_PATH} " version: " ${HIP_VERSION})
+        message(STATUS "Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION})
         if(HIP_COMPILER STREQUAL clang)
             set(ENABLE_HIP 1)
             set_target_properties(runvx PROPERTIES LINKER_LANGUAGE CXX)

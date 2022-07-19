@@ -73,7 +73,7 @@ else()
 endif()
 
 # Link Libraries & Set CXX Flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mf16c -Wall ")
 target_link_libraries(${PROJECT_NAME} rocal ${OpenCV_LIBRARIES} )
 
 # Install Application in ROCm Bin Directory

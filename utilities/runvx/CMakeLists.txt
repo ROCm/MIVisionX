@@ -118,7 +118,6 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
     target_link_libraries(runvx pthread)
     find_path(SSL_INCLUDE
               NAMES openssl/hmac.h openssl/md5.h
@@ -129,6 +128,7 @@ else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
         target_link_libraries(runvx crypto)
     endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
 endif()
 
 # install MIVisionX executables -- {ROCM_PATH}/bin

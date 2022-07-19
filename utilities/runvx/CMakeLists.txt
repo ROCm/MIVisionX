@@ -135,3 +135,5 @@ endif()
 install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR})
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
 install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+
+message("-- ${White}runVX - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

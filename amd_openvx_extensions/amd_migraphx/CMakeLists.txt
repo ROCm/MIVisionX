@@ -76,3 +76,5 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
     endif()
 endif()
+
+message("-- ${White}vx_migraphx - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

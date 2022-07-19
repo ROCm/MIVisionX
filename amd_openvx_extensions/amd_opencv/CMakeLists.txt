@@ -124,3 +124,5 @@ else()
 	target_link_libraries(vx_opencv openvx)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections")
 endif()
+
+message("-- ${White}vx_opencv - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

@@ -164,4 +164,4 @@ else()
     target_link_libraries(openvx dl m)
 endif()
 
-message("-- ${White}OpenVX - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}OpenVX -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

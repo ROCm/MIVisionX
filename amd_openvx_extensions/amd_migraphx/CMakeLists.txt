@@ -77,4 +77,4 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     endif()
 endif()
 
-message("-- ${White}vx_migraphx - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}vx_migraphx -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

@@ -228,7 +228,7 @@ if(${BUILD_ROCAL})
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -msse4.2 -mavx2 -Wall -fPIC -pg -pthread -Wno-deprecated-declarations -std=gnu++14")
-    message("-- ${White}rocAL - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+    message("-- ${White}rocAL -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 
     if(NOT FFMPEG_FOUND)
         message("-- ${Yellow}NOTE: rocAL library is going to be built without video decode functionality ${ColourReset}")

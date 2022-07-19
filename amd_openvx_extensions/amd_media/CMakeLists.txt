@@ -99,4 +99,4 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations -msse4.2 -std=gnu++14")
 endif()
 
-message("-- ${White}amd_media - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}amd_media -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

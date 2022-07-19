@@ -145,4 +145,4 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
 endif()
 
-message("-- ${White}vx_nn - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}amd_nn -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

@@ -768,7 +768,7 @@ else:
         f.write("\n")
 
         f.write(
-            "\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2021 -- runVisionTests.py V-"+__version__+"**\n")
+            "\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2022 -- runVisionTests.py V-"+__version__+"**\n")
         f.write("\n")
 
         # report file

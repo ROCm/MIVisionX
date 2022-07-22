@@ -73,7 +73,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
 
     find_package(HIP QUIET)
     if(HIP_FOUND)
-        message(STATUS "Found HIP: " ${HIP_PATH} " version: " ${HIP_VERSION})
+        message(STATUS "Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION})
         if(HIP_COMPILER STREQUAL clang)
             set(ENABLE_HIP 1)
             set_target_properties(runvx PROPERTIES LINKER_LANGUAGE CXX)
@@ -118,7 +118,6 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
     target_link_libraries(runvx pthread)
     find_path(SSL_INCLUDE
               NAMES openssl/hmac.h openssl/md5.h
@@ -129,9 +128,12 @@ else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
         target_link_libraries(runvx crypto)
     endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
 endif()
 
 # install MIVisionX executables -- {ROCM_PATH}/bin
 install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR})
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
 install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+
+message("-- ${White}runVX -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

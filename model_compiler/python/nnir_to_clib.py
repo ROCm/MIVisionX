@@ -1543,7 +1543,7 @@ using namespace cv;
 #if USE_OPENCV_4
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
 #endif
-#include <half.hpp>
+#include <half/half.hpp>
 #include <immintrin.h>
 using half_float::half;
 

@@ -2325,7 +2325,7 @@ void generateCode(
     //
     ofsCodeM << "cmake_minimum_required (VERSION 2.8)" << std::endl;
     ofsCodeM << "project (annmodule)" << std::endl;
-    ofsCodeM << "set (CMAKE_CXX_STANDARD 11)" << std::endl;
+    ofsCodeM << "set (CMAKE_CXX_STANDARD 14)" << std::endl;
     ofsCodeM << "list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)" << std::endl;
     ofsCodeM << "find_package(OpenCL     REQUIRED)" << std::endl;
     ofsCodeM << "include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )" << std::endl;
@@ -2333,7 +2333,7 @@ void generateCode(
     ofsCodeM << "link_directories    (/opt/rocm/lib)" << std::endl;
     ofsCodeM << "list(APPEND SOURCES annmodule.cpp)" << std::endl;
     ofsCodeM << "add_library(${PROJECT_NAME} SHARED ${SOURCES})" << std::endl;
-    ofsCodeM << "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11\")" << std::endl;
+    ofsCodeM << "set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14\")" << std::endl;
     ofsCodeM << "target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread)" << std::endl;
     ofsCodeM << "add_executable(anntest anntest.cpp)" << std::endl;
     ofsCodeM << "target_link_libraries(anntest openvx vx_nn pthread ${PROJECT_NAME})" << std::endl;

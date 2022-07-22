@@ -21,16 +21,18 @@
 cmake_minimum_required(VERSION 3.5)
 project(rocAL_hip CXX)
 
-set(rocAL_HIP_SOURCES
+list(APPEND rocAL_HIP_SOURCES
     rocal_hip_kernels.cpp
     box_encoder_hip.cpp
-    )
+)
 
 set_source_files_properties(${rocAL_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
+
 set(HIP_CXX_FLAGS -std=gnu++14)
 set(COMPILER_FOR_HIP ${ROCM_PATH}/bin/hipcc)
 set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")
-add_library(${PROJECT_NAME} OBJECT ${rocAL_HIP_SOURCES})
-set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
+
+add_library(rocAL_hip OBJECT ${rocAL_HIP_SOURCES})
+set_target_properties(rocAL_hip PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_compile_definitions(rocAL_hip PRIVATE __HIP_PLATFORM_AMD__)

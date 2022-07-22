@@ -48,7 +48,7 @@ if(GPU_SUPPORT)
 
     find_package(HIP QUIET)
     if(HIP_FOUND)
-        message(STATUS "Found HIP: " ${HIP_PATH} " version: " ${HIP_VERSION})
+        message(STATUS "Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION})
     else()
         message("-- ${Yellow}rocAL pybind requires HIP, Not Found${ColourReset}")
     endif()

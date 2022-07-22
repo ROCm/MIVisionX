@@ -117,7 +117,7 @@ def generateCMakeFiles(graph,outputFolder):
 cmake_minimum_required (VERSION 3.0)
 project (mvdeploy)
 
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
@@ -263,7 +263,7 @@ def generateCMakeExtras(graph,outputFolder):
 """
 cmake_minimum_required (VERSION 3.0)
 project (mv_extras)
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 14)
 list(APPEND CMAKE_MODULE_PATH ../cmake)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
@@ -1543,7 +1543,7 @@ using namespace cv;
 #if USE_OPENCV_4
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
 #endif
-#include <half.hpp>
+#include <half/half.hpp>
 #include <immintrin.h>
 using half_float::half;
 

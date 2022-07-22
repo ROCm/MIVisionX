@@ -22,7 +22,7 @@ cmake_minimum_required(VERSION 3.0)
 project(amd_nn)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 find_package(miopen     PATHS ${ROCM_PATH} REQUIRED)
 
@@ -144,3 +144,5 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
 endif()
+
+message("-- ${White}amd_nn -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

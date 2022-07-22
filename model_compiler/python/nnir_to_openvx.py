@@ -112,7 +112,7 @@ cmake_minimum_required (VERSION 3.0)
 
 project (annmodule)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
 
@@ -1238,7 +1238,7 @@ def generatePythonH(graph, fileName, virtual_tensor_flag):
 #include <VX/vx.h>
 #include <map>
 #include <string>
-#include <half.hpp>
+#include <half/half.hpp>
 using half_float::half;
 
 ////
@@ -1980,7 +1980,7 @@ def generateTestCPP(graph,argmaxOutput,fileName,virtual_tensor_flag):
 #include <chrono>
 #include <unistd.h>
 #include <math.h>
-#include <half.hpp>
+#include <half/half.hpp>
 #include <immintrin.h>
 #include <map>
 using half_float::half;

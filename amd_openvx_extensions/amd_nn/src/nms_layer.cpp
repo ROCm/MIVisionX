@@ -435,9 +435,9 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
         return -1;
     }
 
-    delete iou_thresh;
-    delete score_thresh;
-    delete max_output_boxes_per_class;
+    delete [] iou_thresh;
+    delete [] score_thresh;
+    delete [] max_output_boxes_per_class;
 
     return VX_SUCCESS;
 

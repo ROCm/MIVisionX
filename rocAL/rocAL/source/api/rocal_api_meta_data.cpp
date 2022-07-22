@@ -383,9 +383,9 @@ ROCAL_API_CALL rocalGetMaskCount(RocalContext p_context, int* buf)
         THROW("No mask has been loaded for this output image")
     for(unsigned i = 0; i < meta_data_batch_size; i++)
     {
-        unsigned object_count = meta_data.second->get_mask_cords_batch()[i].size();
+        unsigned object_count = meta_data.second->get_bb_labels_batch()[i].size();
         for(unsigned int j = 0; j < object_count; j++) {
-            unsigned polygon_count = meta_data.second->get_mask_cords_batch()[i][j].size();
+            unsigned polygon_count = meta_data.second->get_mask_polygons_count_batch()[i][j];
             buf[count++] = polygon_count;
             size += polygon_count;
         }
@@ -409,16 +409,19 @@ ROCAL_API_CALL rocalGetMaskCoordinates(RocalContext p_context, int *bufcount, fl
     auto ptr = buf;
     for(unsigned image_idx = 0; image_idx < meta_data_batch_size; image_idx++)
     {
-        unsigned object_count = meta_data.second->get_mask_cords_batch()[image_idx].size();
+        int poly_size = 0;
+        unsigned object_count = meta_data.second->get_bb_labels_batch()[image_idx].size();
         for(unsigned int i = 0; i < object_count; i++)
         {
-            unsigned polygon_count = meta_data.second->get_mask_cords_batch()[image_idx][i].size();
+            auto mask_data_ptr = meta_data.second->get_mask_cords_batch()[image_idx].data(); 
+            unsigned polygon_count = meta_data.second->get_mask_polygons_count_batch()[image_idx][i];
             for(unsigned int j = 0; j < polygon_count; j++)
             {
-                unsigned polygon_size = meta_data.second->get_mask_cords_batch()[image_idx][i][j].size();
+                unsigned polygon_size = meta_data.second->get_mask_vertices_count_batch()[image_idx][i][j];
                 bufcount[size++] = polygon_size;
-                memcpy(ptr, meta_data.second->get_mask_cords_batch()[image_idx][i][j].data(), sizeof(float) * meta_data.second->get_mask_cords_batch()[image_idx][i][j].size());
+                memcpy(ptr, mask_data_ptr + poly_size, sizeof(float) * polygon_size);
                 ptr += polygon_size;
+                poly_size += polygon_size;
             }
         }
     }

@@ -43,47 +43,29 @@ void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_
         float _dst_to_src_height_ratio = roi_height[i] / float(original_height[i]);
         unsigned bb_count = input_meta_data->get_bb_labels_batch()[i].size();
         float mask_data[MAX_BUFFER];
-        int poly_count[bb_count];
-        std::vector<int> poly_size;
-        MaskCords mask_coords;
-        coords mask_cord;
-        std::vector<float> mask;
-        int idx = 0, index = 1;
+        int poly_size = 0;
         if (segmentation)
         {
             auto ptr = mask_data;
+            auto mask_data_ptr = input_meta_data->get_mask_cords_batch()[i].data();
             for (unsigned int object_index = 0; object_index < bb_count; object_index++)
             {
-                unsigned polygon_count = input_meta_data->get_mask_cords_batch()[i][object_index].size();
-                poly_count[object_index] = polygon_count;
+                unsigned polygon_count = input_meta_data->get_mask_polygons_count_batch()[i][object_index];
                 for (unsigned int polygon_index = 0; polygon_index < polygon_count; polygon_index++)
                 {
-                    unsigned polygon_size = input_meta_data->get_mask_cords_batch()[i][object_index][polygon_index].size();
-                    poly_size.push_back(polygon_size);
-                    memcpy(ptr, input_meta_data->get_mask_cords_batch()[i][object_index][polygon_index].data(), sizeof(float) * input_meta_data->get_mask_cords_batch()[i][object_index][polygon_index].size());
+                    unsigned polygon_size = input_meta_data->get_mask_vertices_count_batch()[i][object_index][polygon_index];
+                    memcpy(ptr, mask_data_ptr + poly_size, sizeof(float) * polygon_size);
                     ptr += polygon_size;
+                    poly_size += polygon_size;
                 }
             }
-            for (unsigned int loop_index_1 = 0, k = 0; loop_index_1 < poly_size.size(); loop_index_1++)
+            // TODO: Check if there's any shorter way to multiply odd and even indices with ratios besides copying to float buffer and doing scaling
+            for (int idx = 0; idx < poly_size; idx += 2)
             {
-                for (int loop_idx_2 = 0; loop_idx_2 < poly_size[loop_index_1]; loop_idx_2 += 2, idx += 2)
-                {
-                    mask.push_back(mask_data[idx] * _dst_to_src_width_ratio);
-                    mask.push_back(mask_data[idx + 1] * _dst_to_src_height_ratio);
-                }
-                mask_cord.push_back(mask);
-                mask.clear();
-                if (poly_count[k] == index++)
-                {
-                    mask_coords.push_back(mask_cord);
-                    mask_cord.clear();
-                    k++;
-                    index = 1;
-                }
+                mask_data[idx] = mask_data[idx] * _dst_to_src_width_ratio;
+                mask_data[idx + 1] = mask_data[idx + 1] * _dst_to_src_height_ratio;
             }
-            input_meta_data->get_mask_cords_batch()[i] = mask_coords;
-            mask_coords.clear();
-            poly_size.clear();
+            memcpy(mask_data_ptr, mask_data, sizeof(float) * poly_size);
         }
     }
 }

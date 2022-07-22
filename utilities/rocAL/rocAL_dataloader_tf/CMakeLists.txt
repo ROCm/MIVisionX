@@ -33,7 +33,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
-include_directories(${ROCM_PATH}/libexec/mivisionx/rali/python/)
+include_directories(${ROCM_PATH}/include/mivisionx/rocal)
 link_directories(${ROCM_PATH}/lib/)
 file(GLOB My_Source_Files ./*.cpp)
 add_executable(${PROJECT_NAME} ${My_Source_Files})

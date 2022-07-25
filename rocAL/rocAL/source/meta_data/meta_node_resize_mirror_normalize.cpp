@@ -21,7 +21,6 @@ THE SOFTWARE.
 */
 
 #include "meta_node_resize_mirror_normalize.h"
-#define MAX_BUFFER 10000
 
 void ResizeMirrorNormalizeMetaNode::initialize()
 {
@@ -63,38 +62,24 @@ void ResizeMirrorNormalizeMetaNode::update_parameters(MetaDataBatch *input_meta_
         memcpy((void *)coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
-        float mask_data[MAX_BUFFER];
-        int poly_size = 0;
         if (segmentation)
         {
-            auto ptr = mask_data;
+            // auto ptr = mask_data;
             auto mask_data_ptr = input_meta_data->get_mask_cords_batch()[i].data();
-            for (unsigned int object_index = 0; object_index < bb_count; object_index++)
-            {
-                unsigned polygon_count = input_meta_data->get_mask_polygons_count_batch()[i][object_index];
-                for (unsigned int polygon_index = 0; polygon_index < polygon_count; polygon_index++)
-                {
-                    unsigned polygon_size = input_meta_data->get_mask_vertices_count_batch()[i][object_index][polygon_index];
-                    memcpy(ptr, mask_data_ptr + poly_size, sizeof(float) * polygon_size);
-                    ptr += polygon_size;
-                    poly_size += polygon_size;
-                }
-            }
-            // TODO: Check if there's any shorter way to multiply odd and even indices with ratios besides copying to float buffer and doing scaling
-            for (int idx = 0; idx < poly_size; idx += 2)
+            int mask_size = input_meta_data->get_mask_cords_batch()[i].size();
+            for (int idx = 0; idx < mask_size; idx += 2)
             {
                 if(_mirror_val[i] == 1)
                 {
-                    mask_data[idx] = _dst_width_val[i] - (mask_data[idx] * _dst_to_src_width_ratio) - 1;
-                    mask_data[idx + 1] = mask_data[idx + 1] * _dst_to_src_height_ratio;
+                    mask_data_ptr[idx] = _dst_width_val[i] - (mask_data_ptr[idx] * _dst_to_src_width_ratio) - 1;
+                    mask_data_ptr[idx + 1] = mask_data_ptr[idx + 1] * _dst_to_src_height_ratio;
                 }
                 else
                 {
-                    mask_data[idx] = mask_data[idx] * _dst_to_src_width_ratio;
-                    mask_data[idx + 1] = mask_data[idx + 1] * _dst_to_src_height_ratio;
+                    mask_data_ptr[idx] = mask_data_ptr[idx] * _dst_to_src_width_ratio;
+                    mask_data_ptr[idx + 1] = mask_data_ptr[idx + 1] * _dst_to_src_height_ratio;
                 }
             }
-            memcpy(mask_data_ptr, mask_data, sizeof(float) * poly_size);
         }
 
         for (uint j = 0; j < bb_count; j++)

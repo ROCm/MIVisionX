@@ -98,19 +98,19 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     }
     else
     {
-        constexpr static float ASPECT_RATIO_RANGE[2] = {0.75, 1.33};
-        constexpr static float AREA_RANGE[2] = {0.08, 1};
+        constexpr static double ASPECT_RATIO_RANGE[2] = {3.0/4.0, 4.0/3.0};
+        constexpr static double AREA_RANGE[2] = {0.08, 1.0};
         auto is_valid_crop = [](uint h, uint w, uint height, uint width)
         {
-            return (h <= height && w <= width);
+            return (0 < h && h <= height && 0 < w && w <= width);
         };
         int num_of_attempts = 10;
         int num_attempts_left = num_of_attempts;
         for(; num_attempts_left > 0; num_attempts_left--)
         {
-            std::uniform_real_distribution<float> area_dis(AREA_RANGE[0], AREA_RANGE[1]);
-            std::uniform_real_distribution<float> log_ratio_dist(std::log(ASPECT_RATIO_RANGE[0]), std::log(ASPECT_RATIO_RANGE[1]));
-            float scale = area_dis(_rngs[sample_idx]);
+            std::uniform_real_distribution<double> area_dis(AREA_RANGE[0], AREA_RANGE[1]);
+            std::uniform_real_distribution<double> log_ratio_dist(std::log(ASPECT_RATIO_RANGE[0]), std::log(ASPECT_RATIO_RANGE[1]));
+            double scale = area_dis(_rngs[sample_idx]);
             double target_area  = scale * original_image_width * original_image_height;
             double aspect_ratio = std::exp(log_ratio_dist(_rngs[sample_idx]));
             crop_width  = static_cast<size_t>(std::round(std::sqrt(target_area * aspect_ratio)));
@@ -125,8 +125,8 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         // Fallback on Central Crop
         if(!is_valid_crop(crop_height, crop_width, original_image_height, original_image_width))
         {
-            float in_ratio;
-            in_ratio = static_cast<float>(original_image_width) / original_image_height;
+            double in_ratio;
+            in_ratio = static_cast<double>(original_image_width) / original_image_height;
             if(in_ratio < ASPECT_RATIO_RANGE[0])
             {
                 crop_width =  original_image_width;

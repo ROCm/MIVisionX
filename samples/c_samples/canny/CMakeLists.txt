@@ -26,7 +26,7 @@
 
 cmake_minimum_required (VERSION 3.0)
 project (cannyDetect)
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 14)
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenCL REQUIRED)

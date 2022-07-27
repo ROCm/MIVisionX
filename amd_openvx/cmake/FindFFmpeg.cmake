@@ -175,7 +175,7 @@ else()
 
   if(FFMPEG_FOUND)
     if(NOT FFMPEG_FIND_QUIETLY)
-      message("-- ${White}Using FFMPEG -- Libraries:${FFMPEG_LIBRARIES} Includes:${FFMPEG_INCLUDE_DIR}${ColourReset}")
+      message("-- ${White}Using FFMPEG -- \n\tLibraries:${FFMPEG_LIBRARIES} \n\tIncludes:${FFMPEG_INCLUDE_DIR}${ColourReset}")
     endif()
   else()
     if(FFMPEG_FIND_REQUIRED)

@@ -133,19 +133,6 @@ if(${BUILD_ROCAL})
     # rocAL uses C++ 17 features
     set(CMAKE_CXX_STANDARD 17)
     message("-- ${Green}ROCm Augmentation Library -- rocAL module added${ColourReset}")
-    # install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
-    install(FILES
-        include/api/rocal_api.h
-        include/api/rocal_api_info.h
-        include/api/rocal_api_augmentation.h
-        include/api/rocal_api_data_loaders.h
-        include/api/rocal_api_types.h
-        include/api/rocal_api_data_transfer.h
-        include/api/rocal_api_parameters.h
-        include/api/rocal_api_meta_data.h
-        # DESTINATION include/mivisionx
-        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/rocAL
-        )
     if(FFMPEG_FOUND)
         find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)
         find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
@@ -185,24 +172,27 @@ if(${BUILD_ROCAL})
                 ./include/pipeline/
                 include
                 )
+
+    if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
+        link_directories(${HIP_PATH}/lib)
+        include_directories(${ROCM_PATH}/include rocAL_hip)
+        add_subdirectory(rocAL_hip)
+    endif()
+
     protobuf_generate_cpp(TF_PROTO_SRCS TF_PROTO_HEADERS proto/example.proto proto/feature.proto)
     protobuf_generate_cpp(CAFFE2_PROTO_SRCS CAFFE2_PROTO_HEADERS proto/caffe2_protos.proto)
     protobuf_generate_cpp(CAFFE_PROTO_SRCS CAFFE_PROTO_HEADERS proto/caffe_protos.proto)
     link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR} ${PROTOBUF_LIBRARY_DIRS} /usr/local/lib/)
 
-    if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-        add_subdirectory(rocAL_hip)
-        link_directories(${HIP_PATH}/lib)
-        message("-- ${White}rocAL library is going to be built with HIP support ${ColourReset}")
-    endif()
-
     file(GLOB_RECURSE SOURCES "./source/*.cpp")
     add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS} ${CAFFE_PROTO_HEADERS} ${CAFFE_PROTO_SRCS} ${CAFFE2_PROTO_SRCS} ${CAFFE2_PROTO_HEADERS})
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-        include_directories(${ROCM_PATH}/include rocAL_hip)
+        add_dependencies(${PROJECT_NAME} rocAL_hip)
+        target_link_libraries(${PROJECT_NAME} $<TARGET_OBJECTS:rocAL_hip>)
         target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=1)
+        message("-- ${White}rocAL library is going to be built with HIP support ${ColourReset}")
     else()
         include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=0)
@@ -227,8 +217,8 @@ if(${BUILD_ROCAL})
     else()
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall  -fPIC -pg -pthread -std=gnu++14 -Wno-deprecated-declarations")
-    message("-- ${White}rocAL - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -msse4.2 -mavx2 -Wall -fPIC -pg -pthread -Wno-deprecated-declarations -std=gnu++17")
+    message("-- ${White}rocAL -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 
     if(NOT FFMPEG_FOUND)
         message("-- ${Yellow}NOTE: rocAL library is going to be built without video decode functionality ${ColourReset}")
@@ -238,11 +228,21 @@ if(${BUILD_ROCAL})
         target_compile_definitions(${PROJECT_NAME} PUBLIC -DROCAL_VIDEO)
         target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} ${FFMPEG_LIBRARIES} lmdb turbojpeg openvx vx_rpp)
     endif()
-    if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-        target_link_libraries(${PROJECT_NAME} $<TARGET_OBJECTS:rocAL_hip>)
-    endif()
+
     # install MIVisionX libs -- {ROCM_PATH)/lib
     install(TARGETS rocal DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+    install(FILES
+        include/api/rocal_api.h
+        include/api/rocal_api_info.h
+        include/api/rocal_api_augmentation.h
+        include/api/rocal_api_data_loaders.h
+        include/api/rocal_api_types.h
+        include/api/rocal_api_data_transfer.h
+        include/api/rocal_api_parameters.h
+        include/api/rocal_api_meta_data.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal
+    )
 else()
     message("-- ${Red}WARNING: rocAL module excluded ${ColourReset}")
 endif()

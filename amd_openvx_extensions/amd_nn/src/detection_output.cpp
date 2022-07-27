@@ -743,9 +743,9 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
         std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
         return -1;
     }
-    delete locData;
-    delete confData;
-    delete priorData;
+    delete [] locData;
+    delete [] confData;
+    delete [] priorData;
   
     /*DUMP LAYER BUFFER*/
     #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS

@@ -27,7 +27,7 @@ cmake_minimum_required (VERSION 3.0)
 
 project (rocAL_dataloader_mt)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
@@ -60,7 +60,7 @@ elseif ("${BACKEND}" STREQUAL "HIP")
 
     find_package(HIP QUIET)
     if(HIP_FOUND)
-        message(STATUS "Found HIP: " ${HIP_PATH} " version: " ${HIP_VERSION})
+        message(STATUS "Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION})
         if(HIP_COMPILER STREQUAL clang)
             set(ENABLE_HIP 1)
             set(ENABLE_OPENCL 0)
@@ -81,7 +81,7 @@ else()
 endif()
 
 
-include_directories (${ROCM_PATH}/libexec/mivisionx/rocAL/)
+include_directories (${ROCM_PATH}/include/mivisionx/rocal)
 link_directories    (${ROCM_PATH}/lib/)
 
 add_executable(${PROJECT_NAME} ./rocAL_dataloader_mt.cpp)

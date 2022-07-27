@@ -1027,7 +1027,7 @@ color: rgb(0, 0, 0);</string>
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="rali_checkBox">
+           <widget class="QCheckBox" name="rocal_checkBox">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -1035,7 +1035,7 @@ color: rgb(0, 0, 0);</string>
              </sizepolicy>
             </property>
             <property name="text">
-             <string>RALI</string>
+             <string>rocal</string>
             </property>
            </widget>
           </item>

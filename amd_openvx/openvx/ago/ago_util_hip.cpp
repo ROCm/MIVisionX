@@ -390,7 +390,7 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
     else if (data->ref.type == VX_TYPE_THRESHOLD) {
         // nothing to do.. the node will
     }
-    else if ((data->ref.type == VX_TYPE_SCALAR)) {
+    else if (data->ref.type == VX_TYPE_SCALAR) {
         // nothing to do.. the node will
     }
     else if (data->ref.type == VX_TYPE_MATRIX) {

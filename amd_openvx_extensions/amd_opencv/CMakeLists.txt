@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(amd_opencv)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 find_package(OpenCV QUIET)
 
@@ -122,5 +122,7 @@ if(WIN32)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
 	target_link_libraries(vx_opencv openvx)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
 endif()
+
+message("-- ${White}vx_opencv -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

@@ -222,7 +222,10 @@ int main(int argc, const char ** argv)
         else
             rocalCopyToOutputTensor32(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += inputBatchSize;
-        rocalGetImageLabels(handle, labels.data());
+        if (processing_device == 1)
+            rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
+        else
+            rocalGetImageLabels(handle, labels.data());
         unsigned imagename_size = rocalGetImageNameLen(handle,ImageNameLen);
         char imageNames[imagename_size];
         rocalGetImageName(handle,imageNames);

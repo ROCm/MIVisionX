@@ -23,7 +23,7 @@ project(vx_amd_migraphx)
 
 set(CMAKE_CXX_STANDARD 14)
 
-list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
+list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     if(NOT DEFINED ENV{HSA_PATH})
@@ -33,7 +33,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     endif()
     if(NOT DEFINED HIP_PATH)
         if(NOT DEFINED ENV{HIP_PATH})
-            set(HIP_PATH ${ROCM_PATH}/hip)
+            set(HIP_PATH ${ROCM_PATH})
         else()
             set(HIP_PATH $ENV{HIP_PATH})
         endif()

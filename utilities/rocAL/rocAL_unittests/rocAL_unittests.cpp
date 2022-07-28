@@ -133,7 +133,6 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
 #endif
 
     RocalImage input1;
-    RocalMetaData meta_data;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     switch (reader_type)

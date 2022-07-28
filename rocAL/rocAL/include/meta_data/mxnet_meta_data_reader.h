@@ -49,7 +49,7 @@ public :
     ~MXNetMetaDataReader() override { delete _output; }
 private:
     void read_images();
-    bool exists(const std::string &image_name);
+    bool exists(const std::string &image_name) override;
     void add(std::string image_name, int label);
     uint32_t DecodeFlag(uint32_t rec) {return (rec >> 29U) & 7U; };
     uint32_t DecodeLength(uint32_t rec) {return rec & ((1U << 29U) - 1U); };

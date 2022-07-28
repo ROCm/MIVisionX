@@ -17060,7 +17060,7 @@ int agoKernel_HarrisScore_HVC_HG3_5x5(AgoNode * node, AgoKernelCommand cmd)
             vx_float32 normFactor = 255.0f * (1 << (gradient_size - 1)) * N;
             normFactor = 1 / (normFactor * normFactor * normFactor * normFactor);
             if (HipExec_HarrisScore_HVC_HG3_5x5(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_float32 *)(oImg->hip_memory + oImg->gpu_buffer_offset), oImg->u.img.stride_in_bytes,
-                (vx_float32 *)(iImg->hip_memory + iImg->gpu_buffer_offset), iImg->u.img.stride_in_bytes, sensitivity, strength_threshold, border, normFactor)) {
+                (vx_float32 *)(iImg->hip_memory + iImg->gpu_buffer_offset), iImg->u.img.stride_in_bytes, iImg->size, sensitivity, strength_threshold, border, normFactor)) {
                 status = VX_FAILURE;
             }
         }

@@ -7,10 +7,10 @@ if [ -n "$CONDA_DEFAULT_ENV" ]  || [ -n "$VIRTUAL_ENV" ] || [[ "$DEFAULT_PYTHON"
     PYTHON_LIB_PATH=${DEFAULT_PYTHON/bin/lib}
     EGG_FILE_PATH_ROCAL="/site-packages/amd_rocal-1.1.0-py$PYTHON_VERSION-linux-x86_64.egg"
     ROCAL_PYTHON_LIB_PATH=$PYTHON_LIB_PATH$EGG_FILE_PATH_ROCAL
-    EGG_FILE_PATH_RALI="/site-packages/amd_rali-1.1.0-py$PYTHON_VERSION-linux-x86_64.egg" ## To be removed later
-    RALI_PYTHON_LIB_PATH=$PYTHON_LIB_PATH$EGG_FILE_PATH_RALI ## To be removed later
+    OLD_EGG_FILE_PATH="/site-packages/amd_rali-1.1.0-py$PYTHON_VERSION-linux-x86_64.egg" ## To be removed later
+    OLD_PYTHON_LIB_PATH=$PYTHON_LIB_PATH$OLD_EGG_FILE_PATH ## To be removed later
     sudo rm -r "$ROCAL_PYTHON_LIB_PATH"
-    sudo rm -r "$RALI_PYTHON_LIB_PATH" ##To be removed later
+    sudo rm -r "$OLD_PYTHON_LIB_PATH" ##To be removed later
 else
   sudo rm -r "/usr/local/lib/python$PYTHON_VERSION/dist-packages/amd_rocal-1.1.0-py$PYTHON_VERSION-linux-x86_64.egg"
   sudo rm -r "/usr/local/lib/python$PYTHON_VERSION/dist-packages/amd_rali-1.1.0-py$PYTHON_VERSION-linux-x86_64.egg" ##To be removed later

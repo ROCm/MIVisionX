@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,7 +103,7 @@ void HWJpegDecoder::initialize(int dev_id){
 };
 
 
-Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) 
+Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps)
 {
     struct buffer_data bd = { 0 };
     int ret = 0;
@@ -120,7 +120,7 @@ Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t i
     if (!(_fmt_ctx = avformat_alloc_context())) {
         return Status::NO_MEMORY;
     }
-    
+
     uint8_t *avio_ctx_buffer = new uint8_t[AVIO_CONTEXT_BUF_SIZE];
     if (!avio_ctx_buffer) {
         return Status::NO_MEMORY;
@@ -130,7 +130,7 @@ Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t i
     if (!_io_ctx) {
         return Status::NO_MEMORY;
     }
-    
+
     _fmt_ctx->pb = _io_ctx;
     _fmt_ctx->flags |= AVFMT_FLAG_CUSTOM_IO;
     //ret = avformat_open_input(&_fmt_ctx, NULL, NULL, NULL);
@@ -147,7 +147,7 @@ Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t i
     ret = av_find_best_stream(_fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &_decoder, 0);
     if (ret < 0)
     {
-        ERR("HardwareJpegDecoder::Initialize Could not find %s stream in input file " + 
+        ERR("HardwareJpegDecoder::Initialize Could not find %s stream in input file " +
             STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)));
         return Status::HEADER_DECODE_FAILED;
     }
@@ -167,7 +167,7 @@ Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t i
         ERR("HardwareJpegDecoder::Initialize Could not find video stream in the input, aborting");
         return Status::HEADER_DECODE_FAILED;
     }
-    // Copy codec parameters from input stream to output codec context 
+    // Copy codec parameters from input stream to output codec context
     if ((ret = avcodec_parameters_to_context(_video_dec_ctx, _video_stream->codecpar)) < 0)
     {
         ERR("HardwareJpegDecoder::Initialize Failed to copy " +
@@ -194,7 +194,7 @@ Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t i
     }
     _dec_pix_fmt = AV_PIX_FMT_NV12; // nv12 for vaapi
 
-    // Init the decoders 
+    // Init the decoders
     if ((ret = avcodec_open2(_video_dec_ctx, _decoder, NULL)) < 0)
     {
         ERR("HardwareJpegDecoder::Initialize Failed to open " + STR(av_get_media_type_string(AVMEDIA_TYPE_VIDEO)) + " codec");
@@ -231,7 +231,7 @@ Decoder::Status HWJpegDecoder::decode(unsigned char *input_buffer, size_t input_
             out_pix_fmt = AV_PIX_FMT_BGR24;
         break;
     };
-    // Initialize the SwsContext 
+    // Initialize the SwsContext
     SwsContext *swsctx = nullptr;
     if ((max_decoded_width != _codec_width) || (max_decoded_height != _codec_height) || (out_pix_fmt != _dec_pix_fmt))
     {

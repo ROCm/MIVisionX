@@ -57,11 +57,11 @@ Follow the build instructions in [rocAL](../README.md)
 * define_graph functionality has been implemented to add nodes to build a pipeline graph.
 
 ### amd.rocal.types
-rali.types are enums exported from C++ API to python. Some examples include CPU, GPU, FLOAT, FLOAT16, RGB, GRAY, etc..
+rocal.types are enums exported from C++ API to python. Some examples include CPU, GPU, FLOAT, FLOAT16, RGB, GRAY, etc..
 
 ### amd.rocal.plugin.pytorch
-*  Contains RaliGenericIterator for Pytorch.
-*  RaliClassificationIterator class implements iterator for image classification and return images with corresponding labels.
+*  Contains RocalGenericIterator for Pytorch.
+*  RocalClassificationIterator class implements iterator for image classification and return images with corresponding labels.
 *  From the above classes, any hybrid iterator pipeline can be created by adding augmentations.
 *  see example [PyTorch Simple Example](./examples). Requires PyTorch.
 
@@ -80,9 +80,9 @@ sudo docker pull rocm/pytorch:rocm3.3_ubuntu16.04_py3.6_pytorch
 * Step 3: Install RPP on the docker
 * Step 4: Install MIVisionX on the docker
 * Step 5: Install rocAL python_pybind plugin
-* Step 6: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
+* Step 6: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rocal branch
 ```
-git clone -b mlperf-rali https://github.com/rrawther/MLPerf-mGPU
+git clone -b mlperf-rocal https://github.com/rrawther/MLPerf-mGPU
 ```
 * Step 7: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
 * Step 8: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
@@ -90,12 +90,12 @@ git clone -b mlperf-rali https://github.com/rrawther/MLPerf-mGPU
 sh ./SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 ```
 
-### Steps to run MLPerf training on rali_pytorch docker
+### Steps to run MLPerf training on rocal_pytorch docker
 * Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into the train and Val folders
-* Step 2: Pull and run  [MIVisionX rali_pytorch docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#docker). The docker already installed with pre-built packages for rocAL
-* Step 3: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
+* Step 2: Pull and run  [MIVisionX rocal_pytorch docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#docker). The docker already installed with pre-built packages for rocAL
+* Step 3: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rocal branch
 ```
-git clone -b mlperf-rali https://github.com/rrawther/MLPerf-mGPU
+git clone -b mlperf-rocal https://github.com/rrawther/MLPerf-mGPU
 ```
 * Step 4: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
 * Step 5: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh

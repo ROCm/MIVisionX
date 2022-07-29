@@ -25,9 +25,6 @@
 ################################################################################
 
 import sys
-##############
-import numpy as np
-import cv2
 from amd.rocal.plugin.pytorch import ROCALClassificationIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
@@ -164,25 +161,25 @@ def main():
     dataset_train = image_path + '/train'
     num_classes = len(next(os.walk(image_path))[1])
     print("num_classes:: ",num_classes)
-        
-    train_loader = train_loader_obj.get_pytorch_train_loader()
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.0005, momentum=0.9)
-    net = ToyNet(num_classes)
     
+    net = ToyNet(num_classes)
+
     #train loader
     train_loader_obj = trainLoader(dataset_train, batch_size=bs, num_thread=nt, crop=crop_size, rocal_cpu=rocal_cpu)
-    train_loader = train_loader_obj.get_pytorch_train_loader()
+    train_loader, train_loader_len = train_loader_obj.get_pytorch_train_loader()
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(net.parameters(), lr=0.0005, momentum=0.9)
 
     # Training loop
     for epoch in range(10):  # loop over the dataset multiple times
-        print("epoch:: ",epoch)
+        print("\n epoch:: ",epoch)
         running_loss = 0.0
 
-        for i, (inputs , labels) in enumerate(train_loader, 0):
+        for i, (inputs,labels) in enumerate(train_loader, 0):
 
             sys.stdout.write("\r Mini-batch " + str(i))
-            # print("Images",image_batch)
+            # print("Images",inputs)
             # print("Labels",labels)
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
@@ -200,6 +197,7 @@ def main():
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / print_interval))
                 running_loss = 0.0
+        train_loader.reset()
 
     print('Finished Training')
 

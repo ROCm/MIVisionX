@@ -23,7 +23,7 @@ THE SOFTWARE.
 #pragma once
 
 #include "decoder.h"
-#ifdef RALI_VIDEO
+#ifdef ROCAL_VIDEO
 extern "C"
 {
 #include <libavcodec/avcodec.h>

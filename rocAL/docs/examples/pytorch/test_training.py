@@ -36,7 +36,9 @@ import torch.optim as optim
 import torch
 
 def trainPipeline(data_path, batch_size, num_classes, one_hot, local_rank, world_size, num_thread, crop, rocal_cpu, fp16):
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_thread, device_id=local_rank, seed=local_rank+10, rocal_cpu=rocal_cpu, tensor_dtype = types.FLOAT16 if fp16 else types.FLOAT, tensor_layout=types.NCHW, prefetch_queue_depth = 7)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_thread, device_id=local_rank, seed=local_rank+10, 
+                rocal_cpu=rocal_cpu, tensor_dtype = types.FLOAT16 if fp16 else types.FLOAT, tensor_layout=types.NCHW, 
+                prefetch_queue_depth = 7)
     with pipe:
         jpegs, labels = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
         rocal_device = 'cpu' if rocal_cpu else 'gpu'
@@ -75,7 +77,8 @@ class trainLoader():
 
     def get_pytorch_train_loader(self):
         print("in get_pytorch_train_loader function")   
-        pipe_train = trainPipeline(self.data_path, self.batch_size, self.num_classes, self.one_hot, self.local_rank, self.world_size, self.num_thread, self.crop, self.rocal_cpu, self.fp16)
+        pipe_train = trainPipeline(self.data_path, self.batch_size, self.num_classes, self.one_hot, self.local_rank, 
+                                    self.world_size, self.num_thread, self.crop, self.rocal_cpu, self.fp16)
         pipe_train.build()
         train_loader = ROCALClassificationIterator(pipe_train, device="cpu" if self.rocal_cpu else "cuda", device_id = self.local_rank)
         if self.rocal_cpu:
@@ -154,7 +157,6 @@ def main():
         rocal_cpu = False
     bs = int(sys.argv[3])
     nt = 1
-    di = 0
     crop_size = 224
     device="cpu" if rocal_cpu else "cuda"
     image_path = sys.argv[1]
@@ -200,6 +202,7 @@ def main():
         train_loader.reset()
 
     print('Finished Training')
+
 
 if __name__ == '__main__':
     main()

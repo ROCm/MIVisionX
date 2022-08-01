@@ -96,5 +96,3 @@ sudo docker run -it -v <Path-To-Data-HostSystem>:/data -v /<Path-to-GitRepo>:/do
   * Optional: Map localhost directory on the docker image
     * option to map the localhost directory with imagenet dataset folder to be accessed on the docker image.
     * usage: -v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH}
-
-

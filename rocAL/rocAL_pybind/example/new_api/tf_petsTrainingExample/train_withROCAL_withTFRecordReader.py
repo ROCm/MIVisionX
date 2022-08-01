@@ -1,8 +1,9 @@
-from amd.rocal.plugin.tf import RALIIterator
+import os
+from amd.rocal.plugin.tf import ROCALIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
-import os
+
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
@@ -103,7 +104,7 @@ def main():
 	}
 
 
-	trainPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rali_cpu=RUN_ON_HOST)
+	trainPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rocal_cpu=RUN_ON_HOST)
 	with trainPipe:
 		inputs = fn.readers.tfrecord(path=TRAIN_RECORDS_DIR, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
 		features={
@@ -120,7 +121,7 @@ def main():
 		trainPipe.set_outputs(cmn_images)
 	trainPipe.build()
 
-	valPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rali_cpu=RUN_ON_HOST)
+	valPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rocal_cpu=RUN_ON_HOST)
 	with valPipe:
 		inputs = fn.readers.tfrecord(path=VAL_RECORDS_DIR, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
 		features={
@@ -137,8 +138,8 @@ def main():
 		valPipe.set_outputs(cmn_images)
 	valPipe.build()
 
-	trainIterator = RALIIterator(trainPipe)
-	valIterator = RALIIterator(valPipe)
+	trainIterator = ROCALIterator(trainPipe)
+	valIterator = ROCALIterator(valPipe)
 
 
 	i = 0

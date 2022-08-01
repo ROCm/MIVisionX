@@ -182,6 +182,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     }
     else {
         while ((file_counter != _batch_size) && _reader->count_items() > 0) {
+
             size_t fsize = _reader->open();
             if (fsize == 0) {
                 WRN("Opened file " + _reader->id() + " of size 0");
@@ -233,7 +234,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                                     max_decoded_width, max_decoded_height,
                                     original_width, original_height,
                                     scaledw, scaledh,
-                                    decoder_color_format, _decoder_config, keep_original) != Decoder::Status::OK) {
+                                    decoder_color_format, _decoder_config, keep_original, i) != Decoder::Status::OK) {
             }
             _actual_decoded_width[i] = scaledw;
             _actual_decoded_height[i] = scaledh;

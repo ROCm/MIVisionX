@@ -59,7 +59,17 @@ def main():
 
 
         if augmentation_name == "resize":
-            output = fn.resize(images, resize_x=300, resize_y=300)
+            output = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
+        if augmentation_name == "resize_shorter":
+            images = fn.resize_shorter(images, resize_size=256)
+            images = fn.centre_crop(images,crop=(224, 224))
+            output = fn.crop_mirror_normalize(images, device="cpu",
+                                              output_dtype=types.FLOAT16 if args.fp16 else types.FLOAT,
+                                              output_layout=types.NHWC if args.NHWC else types.NCHW,
+                                              crop=(224, 224),
+                                              image_type=types.RGB,
+                                              mean=[0, 0, 0],
+                                              std=[1, 1, 1])
         elif augmentation_name == "rotate":
             output = fn.rotate(images)
         elif augmentation_name == "brightness":

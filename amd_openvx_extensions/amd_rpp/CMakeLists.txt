@@ -111,6 +111,7 @@ list(APPEND SOURCES
         source/RandomShadowbatchPD.cpp
         source/Remap.cpp
         source/ResizebatchPD.cpp
+        source/Resizetensor.cpp
         source/ResizeCropbatchPD.cpp
         source/ResizeCropMirrorPD.cpp
         source/RotatebatchPD.cpp

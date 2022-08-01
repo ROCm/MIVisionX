@@ -20,35 +20,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#pragma once
+#include "node.h"
 
-#include <decoder.h>
-#include <turbo_jpeg_decoder.h>
-#include <fused_crop_decoder.h>
-#include <open_cv_decoder.h>
-#include <hw_jpeg_decoder.h>
-#include "decoder_factory.h"
-#include "commons.h"
+class ResizeShorterNode : public Node
+{
+public:
+    ResizeShorterNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
+    ResizeShorterNode() = delete;
+    void init(int size);
+    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
+    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
+    vx_array get_src_width() { return _src_roi_width; }
+    vx_array get_src_height() { return _src_roi_height; }
+protected:
+    void create_node() override;
+    void update_node() override;
+private:
+    vx_array _dst_roi_width, _dst_roi_height;
+    std::vector<uint> _dest_width_val, _dest_height_val;
+    int _size;
+};
 
-std::shared_ptr<Decoder> create_decoder(DecoderConfig config) {
-    switch(config.type())
-    {
-        case DecoderType::TURBO_JPEG:
-            return std::make_shared<TJDecoder>();
-            break;
-        case DecoderType::FUSED_TURBO_JPEG:
-            return std::make_shared<FusedCropTJDecoder>();
-            break;
-#if ENABLE_OPENCV
-        case DecoderType::OPENCV_DEC:
-            return std::make_shared<CVDecoder>();
-            break;
-#endif
-#if ROCAL_VIDEO
-        case DecoderType::HW_JPEG_DEC:
-            return std::make_shared<HWJpegDecoder>();
-            break;
-#endif
-        default:
-            THROW("Unsupported decoder type "+ TOSTR(config.type()));
-    }
-}

@@ -56,10 +56,21 @@ void RocalCropParam::fill_crop_dims()
         if(!(_random))
         {
             // Evaluating user given crop
-            (crop_w > in_width[img_idx]) ? (cropw_arr_val[img_idx] = in_width[img_idx]) : (cropw_arr_val[img_idx] = crop_w);
-            (crop_h > in_height[img_idx]) ? (croph_arr_val[img_idx] = in_height[img_idx]) : (croph_arr_val[img_idx] = crop_h);
-            (x1 >= in_width[img_idx]) ? (x1_arr_val[img_idx] = 0) : (x1_arr_val[img_idx] = x1);
-            (y1 >= in_height[img_idx]) ? (y1_arr_val[img_idx] = 0) : (y1_arr_val[img_idx] = y1);
+            cropw_arr_val[img_idx] = (crop_w > in_width[img_idx]) ? in_width[img_idx] : crop_w;
+            croph_arr_val[img_idx] = (crop_h > in_height[img_idx]) ? in_height[img_idx] : crop_h;
+            if(_is_center_crop)
+            {
+                float x_drift, y_drift;
+                x_drift = x_drift_factor->get();
+                y_drift = y_drift_factor->get();
+                x1_arr_val[img_idx] = static_cast<size_t>(x_drift * (in_width[img_idx]  - cropw_arr_val[img_idx]));
+                y1_arr_val[img_idx] = static_cast<size_t>(y_drift * (in_height[img_idx] - croph_arr_val[img_idx]));
+            }
+            else
+            {
+                x1_arr_val[img_idx] = (x1 >= in_width[img_idx]) ? 0 : x1;
+                y1_arr_val[img_idx] = (y1 >= in_height[img_idx]) ? 0 : y1;
+            }
         }
         else
         {

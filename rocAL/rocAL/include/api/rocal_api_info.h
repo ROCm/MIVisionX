@@ -41,7 +41,7 @@ extern "C" int ROCAL_API_CALL rocalGetOutputColorFormat(RocalContext rocal_conte
 ///
 /// \param rocal_context
 /// \return The number of images yet to be processed
-extern "C"  size_t ROCAL_API_CALL rocalGetRemainingImages(RocalContext rocal_context);
+extern "C"  size_t  ROCAL_API_CALL rocalGetRemainingImages(RocalContext rocal_context);
 
 /// Returned value valid only after rocalVerify is called
 /// \param image
@@ -53,6 +53,7 @@ extern "C" size_t ROCAL_API_CALL rocalGetImageWidth(RocalImage image);
 /// \return Height of the pipeline output image, includes all images in the batch
 extern "C" size_t ROCAL_API_CALL rocalGetImageHeight(RocalImage image);
 
+
 /// Returned value valid only after rocalVerify is called
 /// \param image
 /// \return Color format of the pipeline output image,
@@ -62,6 +63,7 @@ extern "C" size_t ROCAL_API_CALL rocalGetImagePlanes(RocalImage image);
 /// \param rocal_context
 /// \return 1 if all images have been processed, otherwise 0
 extern "C" size_t ROCAL_API_CALL rocalIsEmpty(RocalContext rocal_context);
+
 
 ///
 /// \param rocal_context

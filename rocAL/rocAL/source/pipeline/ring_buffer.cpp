@@ -93,7 +93,7 @@ std::pair<void*, void*> RingBuffer::get_box_encode_write_buffers()
     block_if_full();
     if((_mem_type == RocalMemType::OCL) || (_mem_type == RocalMemType::HIP))
         return std::make_pair(_dev_bbox_buffer[_write_ptr], _dev_labels_buffer[_write_ptr]);
-    return std::make_pair(nullptr, nullptr);
+    return std::make_pair(nullptr, nullptr); 
 }
 void RingBuffer::unblock_reader()
 {
@@ -394,3 +394,4 @@ MetaDataNamePair& RingBuffer::get_meta_data()
         THROW("ring buffer internals error, image and metadata sizes not the same "+TOSTR(_level) + " != "+TOSTR(_meta_ring_buffer.size()))
     return  _meta_ring_buffer.front();
 }
+

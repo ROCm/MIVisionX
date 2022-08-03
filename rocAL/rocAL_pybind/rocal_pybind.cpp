@@ -605,12 +605,6 @@ namespace rocal{
             py::arg("dest_width"),
             py::arg("dest_height"),
             py::arg("is_output"));
-        m.def("ResizeShorter",&rocalResizeShorter,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input"),
-            py::arg("size"),
-            py::arg("is_output"));
         m.def("CropResize",&rocalCropResize,
             py::return_value_policy::reference,
             py::arg("context"),

@@ -440,10 +440,10 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * migraphx - `2.1.0.50101-48`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
-* RPP - [0.95](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.95)
+* RPP - [0.96](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.96)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.3.5`
+* MIVisionX Setup Script - `V2.4.0`
 
 ### Known issues
 

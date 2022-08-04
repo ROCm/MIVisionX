@@ -86,14 +86,14 @@ if(GPU_SUPPORT)
         #find the RPP backend type
         set(RPP_BACKEND_OPENCL_FOUND 0)
         set(RPP_BACKEND_HIP_FOUND 0)
-        if(EXISTS ${ROCM_PATH}/rpp/include/rpp_backend.h)
-            file(READ ${ROCM_PATH}/rpp/include/rpp_backend.h RPP_BACKEND_FILE)
+        if(EXISTS ${ROCM_PATH}/include/rpp/rpp_backend.h)
+            file(READ ${ROCM_PATH}/include/rpp/rpp_backend.h RPP_BACKEND_FILE)
             string(REGEX MATCH "RPP_BACKEND_OPENCL ([0-9]*)" _ ${RPP_BACKEND_FILE})
             set(RPP_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
             string(REGEX MATCH "RPP_BACKEND_HIP ([0-9]*)" _ ${RPP_BACKEND_FILE})
             set(RPP_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
         else()
-            message("-- ${Red}WARNING: ${ROCM_PATH}/rpp/include/rpp_backend.h file Not Found. please run the setup script to install latest RPP package ${ColourReset}")
+            message("-- ${Red}WARNING: ${ROCM_PATH}/include/rpp/rpp_backend.h file Not Found. please run the setup script to install latest RPP package ${ColourReset}")
         endif()
 
         if ("${BACKEND}" STREQUAL "OPENCL" AND OpenCL_FOUND)
@@ -140,8 +140,6 @@ if(${BUILD_ROCAL})
         find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
     endif()
     include_directories(
-                ${OpenCL_INCLUDE_DIRS}
-                ${OpenCL_INCLUDE_DIRS}/Headers
                 ${AVUTIL_INCLUDE_DIR}
                 ${AVCODEC_INCLUDE_DIR}
                 ${SWSCALE_INCLUDE_DIR}
@@ -217,7 +215,10 @@ if(${BUILD_ROCAL})
     else()
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -msse4.2 -mavx2 -Wall -fPIC -pg -pthread -Wno-deprecated-declarations -std=gnu++17")
+    # -Wall -- Enable most warning messages; -fPIC -- Generate position-independent code if possible.
+    # -mavx2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and AVX2 built-in functions and code generation.
+    # -std=gnu++17 -- Conform to the ISO 2017 C++ standard with GNU extensions.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -pthread -Wall -fPIC -mavx2 -std=gnu++17")
     message("-- ${White}rocAL -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 
     if(NOT FFMPEG_FOUND)

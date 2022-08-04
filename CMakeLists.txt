@@ -20,7 +20,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
-set(VERSION "2.3.0")
+set(VERSION "2.4.0")
 
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
@@ -88,8 +88,8 @@ else()
     set(BACKEND "CPU")
     set(GPU_SUPPORT OFF)
   else()
-    message("-- ${Red}Warning: MIVisionX backend option unknown -- ${BACKEND}${ColourReset}")
-    message("-- ${Red}Warning: MIVisionX default backend will enforced${ColourReset}")
+    message("-- ${Red}Warning: MIVisionX backend option: ${BACKEND} -- unknown${ColourReset}")
+    message("-- ${Red}Warning: MIVisionX default backend will be enforced${ColourReset}")
     set(BACKEND "HIP")
   endif()
 endif()
@@ -101,9 +101,11 @@ if(NOT CMAKE_BUILD_TYPE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+  # -O0  -- Don't Optimize output file; -g -- generate debugging information; -Og -- Optimize for debugging experience rather than speed or size.
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Og")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
+  # -O3 -- Optimize output file; -DNDEBUG -- turn off asserts.
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 endif()
 message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}")
 

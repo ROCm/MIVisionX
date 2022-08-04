@@ -51,7 +51,7 @@ Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/n
 
 ``` 
 	export PATH=$PATH:/opt/rocm/bin
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 ```
 
 **NOTE:**
@@ -89,7 +89,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 
 ``` 
 export PATH=$PATH:/opt/rocm/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
 ```
 
@@ -200,7 +200,7 @@ usage: python mivisionx_validation_tool.py
     ``` 
 	cd ~/sample-1/MIVisionX-validation-tool/
 	export PATH=$PATH:/opt/rocm/bin
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 	python mivisionx_validation_tool.py -h
     ```
 
@@ -245,7 +245,7 @@ usage: python mivisionx_validation_tool.py
     ``` 
 	cd ~/sample-2/MIVisionX-validation-tool/
 	export PATH=$PATH:/opt/rocm/bin
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 	python mivisionx_validation_tool.py -h
     ```
 
@@ -291,7 +291,7 @@ usage: python mivisionx_validation_tool.py
     ``` 
 	cd ~/sample-3/MIVisionX-validation-tool/
 	export PATH=$PATH:/opt/rocm/bin
-	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 	python mivisionx_validation_tool.py -h
     ```
 

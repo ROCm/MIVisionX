@@ -534,16 +534,16 @@ if [ "$BACKEND_TYPE" = "HOST" ]; then
         cd build_host
         cmake ..
         sudo make -j20 install
-        export LD_LIBRARY_PATH="/opt/rocm/lib:/opt/rocm/rpp/lib"
+        export LD_LIBRARY_PATH="/opt/rocm/lib"
         cd ../tests/openvx_node_tests
     elif [ "$OVERRIDE" = "1" ]; then
         cd ../../build_host
         sudo make -j20 install
-        export LD_LIBRARY_PATH="/opt/rocm/lib:/opt/rocm/rpp/lib"
+        export LD_LIBRARY_PATH="/opt/rocm/lib"
         cd ../tests/openvx_node_tests
     else
         RUNVX_PATH="$PRIMARY_RUNVX_PATH/"
-        export LD_LIBRARY_PATH="$PRIMARY_RUNVX_PATH/../lib:/opt/rocm/rpp/lib"
+        export LD_LIBRARY_PATH="$PRIMARY_RUNVX_PATH/../lib"
     fi
     echo "$LD_LIBRARY_PATH"
 
@@ -587,16 +587,16 @@ if [ "$BACKEND_TYPE" = "OCL" ] || [ "$BACKEND_TYPE" = "OCLvsHIP" ]; then
         cd build_ocl
         cmake ..
         sudo make -j20 install
-        export LD_LIBRARY_PATH="/opt/rocm/lib:/opt/rocm/rpp/lib"
+        export LD_LIBRARY_PATH="/opt/rocm/lib"
         cd ../tests/openvx_node_tests
     elif [ "$OVERRIDE" = "1" ]; then
         cd ../../build_ocl
         sudo make -j20 install
-        export LD_LIBRARY_PATH="/opt/rocm/lib:/opt/rocm/rpp/lib"
+        export LD_LIBRARY_PATH="/opt/rocm/lib"
         cd ../tests/openvx_node_tests
     else
         RUNVX_PATH="$PRIMARY_RUNVX_PATH/"
-        export LD_LIBRARY_PATH="$PRIMARY_RUNVX_PATH/../lib:/opt/rocm/rpp/lib"
+        export LD_LIBRARY_PATH="$PRIMARY_RUNVX_PATH/../lib"
     fi
     echo "$LD_LIBRARY_PATH"
 
@@ -640,20 +640,20 @@ if [ "$BACKEND_TYPE" = "HIP" ] || [ "$BACKEND_TYPE" = "OCLvsHIP" ]; then
         cd build_hip
         cmake -DBACKEND=HIP ..
         sudo make -j20 install
-        export LD_LIBRARY_PATH="/opt/rocm/lib:/opt/rocm/rpp/lib"
+        export LD_LIBRARY_PATH="/opt/rocm/lib"
         cd ../tests/openvx_node_tests
     elif [ "$OVERRIDE" = "1" ]; then
         cd ../../build_hip
         sudo make -j20 install
-        export LD_LIBRARY_PATH="/opt/rocm/lib:/opt/rocm/rpp/lib"
+        export LD_LIBRARY_PATH="/opt/rocm/lib"
         cd ../tests/openvx_node_tests
     else
         if [ "$BACKEND_TYPE" = "HIP" ]; then
             RUNVX_PATH="$PRIMARY_RUNVX_PATH/"
-            export LD_LIBRARY_PATH="$PRIMARY_RUNVX_PATH/../lib:/opt/rocm/rpp/lib"
+            export LD_LIBRARY_PATH="$PRIMARY_RUNVX_PATH/../lib"
         else
             RUNVX_PATH="$SECONDARY_RUNVX_PATH/"
-            export LD_LIBRARY_PATH="$SECONDARY_RUNVX_PATH/../lib:/opt/rocm/rpp/lib"
+            export LD_LIBRARY_PATH="$SECONDARY_RUNVX_PATH/../lib"
         fi
     fi
     echo "$LD_LIBRARY_PATH"

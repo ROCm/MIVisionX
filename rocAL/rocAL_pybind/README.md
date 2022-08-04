@@ -37,7 +37,6 @@ pip3 install numpy opencv-python torch
 * Export `RPP` & `rocAL` library into PATH
 ```
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib/
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/rpp/lib/
 ```
 #### Run Test Script
 

@@ -303,7 +303,7 @@ class ROCALCOCOIterator(object):
            Epoch size.
     """
 
-    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=None, offset=None, tensor_dtype=types.FLOAT, device="cpu"):
+    def __init__(self, pipelines, tensor_layout=types.NCHW, reverse_channels=False, multiplier=None, offset=None, tensor_dtype=types.FLOAT16, device="cpu"):
 
         assert pipelines is not None, "Number of provided pipelines has to be at least 1"
 
@@ -506,7 +506,7 @@ def main():
                                             mean= [102.9801, 115.9465, 122.7717],
                                             std = [1. , 1., 1.])
         pipe.set_outputs(rmn_images)
-    
+
     pipe.build()
     if(_rali_cpu):
         data_loader = ROCALCOCOIterator(

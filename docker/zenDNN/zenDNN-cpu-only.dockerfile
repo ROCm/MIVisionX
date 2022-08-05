@@ -26,8 +26,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget unzip python3-dev dmi
 ENV ZENDNN_AOCC_COMP_PATH=/opt/mivisionx-deps/aocc-compiler-3.2.0
 ENV ZENDNN_BLIS_PATH=/opt/mivisionx-deps/aocl-linux-aocc-3.0-6/amd-blis
 ENV ZENDNN_LIBM_PATH=/usr/lib/x86_64-linux-gnu
-ENV OMP_NUM_THREADS=$(grep -c ^processor /proc/cpuinfo)
-ENV GOMP_CPU_AFFINITY="0-$(grep ^cpu\\scores /proc/cpuinfo | uniq |  awk '{print $4}')"
 
 # Install Zen DNN required Packages
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y numactl libnuma-dev hwloc
@@ -36,6 +34,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install hwloc-nox ccache libopenbl
 # Working Directory
 ENV MIVISIONX_WORKING_ROOT=/workspace
 WORKDIR $MIVISIONX_WORKING_ROOT
+
+# set OMP variables
+RUN export OMP_NUM_THREADS=$(grep -c ^processor /proc/cpuinfo)
+RUN export GOMP_CPU_AFFINITY="0-$(grep ^cpu\\scores /proc/cpuinfo | uniq |  awk '{print $4}')"
 
 # install Zen DNN
 RUN DEBIAN_FRONTEND=noninteractive git clone https://github.com/amd/ZenDNN.git && cd ZenDNN && make clean && \

@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <cstring>
 #include <sched.h>
 #include <half.hpp>
+#include <omp.h>
 #include "master_graph.h"
 #include "parameter_factory.h"
 #include "ocl_setup.h"
@@ -703,6 +704,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
         for( auto&& out_image: output_buffers)
         {
             unsigned int single_image_size = w * c * h;
+            omp_set_dynamic(0);
             #pragma omp parallel for num_threads(_user_batch_size)
             for(unsigned int batchCount = 0; batchCount < n; batchCount ++)
             {

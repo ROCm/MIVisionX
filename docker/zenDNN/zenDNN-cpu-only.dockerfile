@@ -47,4 +47,4 @@ RUN DEBIAN_FRONTEND=noninteractive git clone https://github.com/amd/ZenDNN.git &
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
     cmake ../MIVisionX && make -j8 && make install
 
-RUN source ~/.profile
+ENTRYPOINT source ~/.profile

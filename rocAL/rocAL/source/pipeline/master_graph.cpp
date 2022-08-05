@@ -916,6 +916,7 @@ void MasterGraph::output_routine()
 #endif
     }
     try {
+        _process_time.start();
         while (_processing)
         {
             const size_t each_cycle_size = output_byte_size()/batch_ratio;
@@ -938,7 +939,6 @@ void MasterGraph::output_routine()
             auto write_buffers = _ring_buffer.get_write_buffers();
             _rb_block_if_full_time.end();
 
-            _process_time.start();
             // When executing on CPU the internal batch count can be smaller than the user batch count
             // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
             // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size

@@ -70,8 +70,8 @@ ENV MIVISIONX_WORKING_ROOT=/workspace
 WORKDIR $MIVISIONX_WORKING_ROOT
 
 # set OMP variables
-RUN export OMP_NUM_THREADS=$(grep -c ^processor /proc/cpuinfo)
-RUN export GOMP_CPU_AFFINITY="0-$(grep ^cpu\\scores /proc/cpuinfo | uniq |  awk '{print $4}')"
+RUN echo "export OMP_NUM_THREADS=$(grep -c ^processor /proc/cpuinfo)" >> ~/.profile
+RUN echo "export GOMP_CPU_AFFINITY=\"0-$(grep ^cpu\\scores /proc/cpuinfo | uniq |  awk '{print $4}')\"" >> ~/.profile
 
 # install Zen DNN
 RUN DEBIAN_FRONTEND=noninteractive git clone https://github.com/amd/ZenDNN.git && cd ZenDNN && make clean && \
@@ -80,3 +80,5 @@ RUN DEBIAN_FRONTEND=noninteractive git clone https://github.com/amd/ZenDNN.git &
 # Clone MIVisionX 
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
         #mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install
+
+ENTRYPOINT source ~/.profile && /bin/bash

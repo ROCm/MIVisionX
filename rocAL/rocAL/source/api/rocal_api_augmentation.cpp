@@ -561,11 +561,11 @@ rocalResizeMirrorNormalize(
     auto input = static_cast<Image*>(p_input);
     auto mirror = static_cast<IntParam *>(p_mirror);
     float mean_actual = 0, std_actual = 0; // Mean of vectors
-    // for(unsigned i = 0; i < mean.size(); i++)
-    // {
-    //     mean_actual += mean[i];
-    //     std_actual  += std_dev[i];
-    // }
+    for(unsigned i = 0; i < mean.size(); i++)
+    {
+        mean[i] = 0;
+        std_dev[i] = 1;
+    }
     // mean_actual /= mean.size();
     // std_actual /= std_dev.size();
 

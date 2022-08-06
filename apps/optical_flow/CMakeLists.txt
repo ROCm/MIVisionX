@@ -28,7 +28,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(opticalFlow)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 #Added Default libdir

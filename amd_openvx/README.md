@@ -144,10 +144,11 @@ To provide a basic set of vision processing functions. This set of functions is 
 * Includes a “graph optimizer” that looks at the entire processing pipeline and removes/replaces/merges functions to improve performance and minimize bandwidth at runtime 
 * Scripting support with [RunVX](../utilities/runvx/README.md) allows for rapid prototyping, without re-compiling at production performance levels
 
-**NOTE:** The amd_openvx project consists of the following components:
-  * [OpenVX](openvx/README.md): AMD OpenVX library
+**NOTE:** The amd_openvx project consists of the following components: [AMD OpenVX Library](openvx/README.md)
 
 **NOTE:** The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. Look into amd_openvx_extensions for additional OpenVX modules and utilities.
+
+### AMD OpenVX - Extensions
   * **vx_loomsl**: Radeon LOOM stitching library for live 360-degree video applications
   * **vx_nn**: OpenVX neural network module that was built on top of [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen)
   * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels

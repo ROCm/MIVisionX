@@ -29,11 +29,13 @@ THE SOFTWARE.
 #include <string>
 #include <string.h>
 #include <sys/stat.h>
-#include <opencv/highgui.h>
+#include <vector>
 
 #include "rocal_api.h"
+
 #include "opencv2/opencv.hpp"
 using namespace cv;
+
 #if USE_OPENCV_4
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
 #define CV_BGR2GRAY COLOR_BGR2GRAY
@@ -41,6 +43,7 @@ using namespace cv;
 #define CV_RGB2BGR COLOR_RGB2BGR
 #define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
 #define CV_FILLED FILLED
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
 #endif
 
 using namespace std::chrono;
@@ -310,7 +313,10 @@ int main(int argc, const char **argv)
         {
             int label_id[input_batch_size];
             int image_name_length[input_batch_size];
-            rocalGetImageLabels(handle, label_id);
+            if (processing_device == 1)
+                rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
+            else
+                rocalGetImageLabels(handle, labels.data());
             int img_size = rocalGetImageNameLen(handle, image_name_length);
             char img_name[img_size];
             rocalGetImageName(handle, img_name);

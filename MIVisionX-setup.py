@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.3.3"
+__version__ = "2.3.6"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -43,8 +43,8 @@ parser.add_argument('--opencv',    	type=str, default='4.5.5',
                     help='OpenCV Version - optional (default:4.5.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.4',
                     help='ProtoBuf Version - optional (default:3.12.4)')
-parser.add_argument('--rpp',   		type=str, default='0.93',
-                    help='RPP Version - optional (default:0.93)')
+parser.add_argument('--rpp',   		type=str, default='0.96',
+                    help='RPP Version - optional (default:0.96)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG V4.4.2 Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
@@ -280,7 +280,7 @@ else:
         os.system('(cd '+deps_dir+'; unzip half-1.12.0.zip -d half-files )')
         os.system('sudo -v')
         os.system(
-            '(cd '+deps_dir+'; sudo cp half-files/include/half.hpp /usr/local/include/ )')
+            '(cd '+deps_dir+'; sudo mkdir -p /usr/local/include/half; sudo cp half-files/include/half.hpp /usr/local/include/half )')
         # Install ProtoBuf
         os.system('(cd '+deps_dir+'/protobuf-' +
                   ProtoBufVersion+'; ./autogen.sh )')
@@ -390,8 +390,6 @@ else:
             # RPP
             # Remove Previous Install - RPP
             os.system('sudo -v')
-            if os.path.exists(ROCM_PATH+'/rpp'):
-                os.system('sudo rm -rf '+ROCM_PATH+'/rpp')
             os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
                       linuxCMake+' -DBACKEND='+backend+' ../; make -j4; sudo make install)')
 

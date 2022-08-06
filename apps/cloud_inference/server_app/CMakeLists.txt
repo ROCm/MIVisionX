@@ -64,6 +64,7 @@ add_executable(${PROJECT_NAME} ${My_Source_Files})
 
 # Link Libraries & Set CXX Flags
 target_link_libraries(${PROJECT_NAME} vx_nn openvx pthread dl)
+# -mf16c -- Support F16C built-in functions and code generation.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
 
 # Link OpenCL/HIP
@@ -84,7 +85,7 @@ if(MIVISIONX_BACKEND_OPENCL_FOUND)
 elseif(MIVISIONX_BACKEND_HIP_FOUND)
 	if(NOT DEFINED HIP_PATH)
 		if(NOT DEFINED ENV{HIP_PATH})
-			set(HIP_PATH ${ROCM_PATH}/hip CACHE PATH "Path to which HIP has been installed")
+			set(HIP_PATH ${ROCM_PATH} CACHE PATH "Path to which HIP has been installed")
 		else()
 			set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
 		endif()
@@ -92,7 +93,7 @@ elseif(MIVISIONX_BACKEND_HIP_FOUND)
 	list(APPEND CMAKE_MODULE_PATH ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/hip ${HIP_PATH}/cmake)
 	find_package(HIP QUIET)
 	if(HIP_FOUND)
-		message(STATUS "${PROJECT_NAME} -- Found HIP: " ${HIP_PATH} "\tversion: " ${HIP_VERSION})
+		message(STATUS "${PROJECT_NAME} -- Using HIP - Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION})
 		if(HIP_COMPILER STREQUAL clang)
 			set(ENABLE_HIP 1)
 			set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)

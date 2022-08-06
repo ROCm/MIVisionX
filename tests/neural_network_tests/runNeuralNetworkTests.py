@@ -252,11 +252,11 @@ if not os.path.exists(modelCompilerDeps):
         os.system(
             'sudo '+linuxSystemInstall+' ' +
             linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
-    os.system('pip3 install future pytz numpy')
+    os.system('sudo pip3 install future pytz numpy')
     # Install CAFFE Deps
-    os.system('pip3 install google protobuf==3.12.4')
+    os.system('sudo pip3 install google protobuf==3.12.4')
     # Install ONNX Deps
-    os.system('pip3 install onnx')
+    os.system('sudo pip3 install onnx')
     # Install NNEF Deps
     os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
     os.system(

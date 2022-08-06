@@ -886,7 +886,7 @@ int HipExec_HarrisScore_HVC_HG3_3x3(
 int HipExec_HarrisScore_HVC_HG3_5x5(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_float32 *pHipDstVc, vx_uint32 dstVcStrideInBytes,
-        vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes,
+        vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes, vx_int32 srcImageBufferSize, 
         vx_float32 sensitivity, vx_float32 strength_threshold,
         vx_int32 border, vx_float32 normFactor);
 int HipExec_HarrisScore_HVC_HG3_7x7(

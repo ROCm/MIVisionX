@@ -43,7 +43,7 @@ public :
     ~LabelReaderFolders() override { delete _output; }
 private:
     void read_files(const std::string& _path);
-    bool exists(const std::string &image_name);
+    bool exists(const std::string &image_name) override;
     void add(std::string image_name, int label);
     std::map<std::string, std::shared_ptr<MetaData>> _map_content;
     std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;

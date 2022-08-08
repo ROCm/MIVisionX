@@ -47,7 +47,7 @@ public :
     ~Caffe2MetaDataReaderDetection() override { delete _output; }
 private:
     void read_files(const std::string& _path);
-    bool exists(const std::string &image_name);
+    bool exists(const std::string &image_name) override;
     void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);
     bool _last_rec;
     void read_lmdb_record(std::string file_name, uint file_size);

@@ -47,7 +47,7 @@ public:
 private:
     void read_files(const std::string &_path);
     void read_text_file(const std::string &_path);
-    bool exists(const std::string &frame_name);
+    bool exists(const std::string &frame_name) override;
     void add(std::string frame_name, int label, unsigned int video_frame_count = 0, unsigned int start_frame = 0);
     std::map<std::string, std::shared_ptr<MetaData>> _map_content;
     std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;

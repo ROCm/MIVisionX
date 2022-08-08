@@ -7,11 +7,11 @@ RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
 RUN apt-get -y install gcc g++ cmake git
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
-RUN apt-get -y install initramfs-tools libnuma-dev wget sudo &&  \
-        wget https://repo.radeon.com/amdgpu-install/22.10.3/ubuntu/bionic/amdgpu-install_22.10.3.50103-1_all.deb && \
-        sudo apt-get -y install ./amdgpu-install_22.10.3.50103-1_all.deb && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration &&  \
+        wget https://repo.radeon.com/amdgpu-install/22.20/ubuntu/bionic/amdgpu-install_22.20.50200-1_all.deb && \
+        sudo apt-get -y install ./amdgpu-install_22.20.50200-1_all.deb && \
         sudo apt-get update -y && \
-        sudo amdgpu-install -y --usecase=rocm
+        sudo amdgpu-install -y --usecase=graphics,rocm
 # install OpenCV & FFMPEG - Level 3
 RUN apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \
         libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip && \
@@ -27,7 +27,7 @@ RUN apt-get -y install autoconf automake build-essential cmake git-core libass-d
 # install MIVisionX neural net dependency - Level 4
 RUN apt-get -y install wget miopen-opencl && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
-        unzip half-1.12.0.zip -d half-files && sudo cp half-files/include/half.hpp /usr/local/include/ && cd
+        unzip half-1.12.0.zip -d half-files && sudo mkdir -p /usr/local/include/half && sudo cp half-files/include/half.hpp /usr/local/include/half && cd
 # install MIVisionX rocAL dependency - Level 5
 RUN apt-get -y install wget autoconf automake libbz2-dev libssl-dev python-dev python3-dev libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm libjsoncpp-dev clang && \
         git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \
@@ -39,7 +39,7 @@ RUN apt-get -y install wget autoconf automake libbz2-dev libssl-dev python-dev p
         sudo ./b2 install threading=multi link=shared --with-system --with-filesystem && \
         ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
         sudo ./b2 install threading=multi link=static --with-system --with-filesystem && cd ../ && \
-        git clone -b 0.93  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
+        git clone -b 0.96  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=OCL ../ && make -j4 && sudo make install && cd ../../ && \
         git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd

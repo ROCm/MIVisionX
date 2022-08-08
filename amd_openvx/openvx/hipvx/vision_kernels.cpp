@@ -5548,7 +5548,7 @@ int HipExec_HarrisScore_HVC_HG3_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_u
 __global__ void __attribute__((visibility("default")))
 Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
     uchar *pDstVc, uint dstVcStrideInBytes,
-    uchar *pSrcGxy, uint srcGxyStrideInBytes,
+    uchar *pSrcGxy, uint srcGxyStrideInBytes, int srcImageBufferSize,
     float sensitivity, float strength_threshold,
     int border, float normFactor,
     uint dstWidthComp1, uint dstWidthComp2) {
@@ -5584,7 +5584,7 @@ Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
             goffset = (gy - ly + id - 2) * gstride + ((gx - lx) << 4) + 248;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
         }
         __syncthreads();
@@ -5674,7 +5674,7 @@ Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
             goffset = (gy - ly + id - 2) * gstride + ((gx - lx) << 4) + 248;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
         }
         __syncthreads();
@@ -5763,7 +5763,7 @@ Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
             goffset = (gy - ly + id - 2) * gstride + ((gx - lx) << 4) + 248;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
         }
         __syncthreads();
@@ -5862,7 +5862,7 @@ Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
 }
 
 int HipExec_HarrisScore_HVC_HG3_5x5(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_float32 *pHipDstVc, vx_uint32 dstVcStrideInBytes, vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes,
+    vx_float32 *pHipDstVc, vx_uint32 dstVcStrideInBytes, vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes, vx_int32 srcImageBufferSize,
     vx_float32 sensitivity, vx_float32 strength_threshold, vx_int32 border, vx_float32 normFactor) {
     int localThreads_x = 16;
     int localThreads_y = 16;
@@ -5874,7 +5874,7 @@ int HipExec_HarrisScore_HVC_HG3_5x5(hipStream_t stream, vx_uint32 dstWidth, vx_u
 
     hipLaunchKernelGGL(Hip_HarrisScore_HVC_HG3_5x5, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstVc, dstVcStrideInBytes,
-                        (uchar *)pHipSrcGxy, srcGxyStrideInBytes, sensitivity, strength_threshold, border, normFactor,
+                        (uchar *)pHipSrcGxy, srcGxyStrideInBytes, srcImageBufferSize, sensitivity, strength_threshold, border, normFactor,
                         dstWidthComp1, dstWidthComp2);
 
     return VX_SUCCESS;

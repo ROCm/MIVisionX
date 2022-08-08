@@ -26,7 +26,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(vx_pop)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 #Added Default libdir
@@ -87,7 +87,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
 endif()
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

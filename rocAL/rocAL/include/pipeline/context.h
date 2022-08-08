@@ -34,7 +34,7 @@ struct Context
     _user_batch_size(batch_size)
     {
         LOG("Processing on " + STR(((affinity == RocalAffinity::CPU)?" CPU": " GPU")))
-        master_graph = std::make_shared<MasterGraph>(batch_size, affinity, gpu_id, cpu_thread_count, prefetch_queue_depth, output_tensor_type);
+        master_graph = std::make_shared<MasterGraph>(batch_size, affinity, gpu_id, prefetch_queue_depth, output_tensor_type);
         _internal_batch_size = master_graph->internal_batch_size();
     }
     ~Context()

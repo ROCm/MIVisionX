@@ -46,7 +46,7 @@ private:
     std::string _path;
     int meta_data_reader_type;
     void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels, ImgSize image_size);
-    bool exists(const std::string &image_name);
+    bool exists(const std::string &image_name) override;
     std::map<std::string, std::shared_ptr<MetaData>> _map_content;
     std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::map<std::string, ImgSize> _map_img_sizes;

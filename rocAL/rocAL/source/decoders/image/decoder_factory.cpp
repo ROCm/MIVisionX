@@ -43,7 +43,7 @@ std::shared_ptr<Decoder> create_decoder(DecoderConfig config) {
             return std::make_shared<CVDecoder>();
             break;
 #endif
-#if RALI_VIDEO
+#if ROCAL_VIDEO
         case DecoderType::HW_JPEG_DEC:
             return std::make_shared<HWJpegDecoder>();
             break;

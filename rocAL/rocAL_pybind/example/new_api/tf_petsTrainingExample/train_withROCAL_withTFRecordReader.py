@@ -4,8 +4,8 @@ from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
 
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
+import tensorflow as tf
+tf.compat.v1.disable_v2_behavior()
 
 import numpy as np
 import tensorflow_hub as hub
@@ -46,7 +46,7 @@ def download_images():
 
 def create_model(features):
 	global NUM_CLASSES
-	layer = tf.layers.dense(inputs=features, units=NUM_CLASSES, activation=None)
+	layer = tf.compat.v1.layers.dense(inputs=features, units=NUM_CLASSES, activation=None)
 	return layer
 
 def get_label_one_hot(label_ndArray):
@@ -81,19 +81,19 @@ def main():
 	with train_graph.as_default():
 		image_module = hub.Module('https://tfhub.dev/google/imagenet/mobilenet_v2_035_128/feature_vector/2')
 		image_size = hub.get_expected_image_size(image_module)
-		decoded_images = tf.placeholder(tf.float32, shape = [None, None, None, None])
+		decoded_images = tf.compat.v1.placeholder(tf.float32, shape = [None, None, None, None])
 		features = image_module(decoded_images)
 		logits = create_model(features)
-		labels = tf.placeholder(tf.float32, [None, NUM_CLASSES])
-		cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=labels)
-		cross_entropy_mean = tf.reduce_mean(cross_entropy)
-		optimizer = tf.train.GradientDescentOptimizer(learning_rate=LEARNING_RATE)
+		labels = tf.compat.v1.placeholder(tf.float32, [None, NUM_CLASSES])
+		cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels)
+		cross_entropy_mean = tf.reduce_mean(input_tensor=cross_entropy)
+		optimizer = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=LEARNING_RATE)
 		train_op = optimizer.minimize(loss=cross_entropy_mean)
 		probabilities = tf.nn.softmax(logits)
-		prediction = tf.argmax(probabilities, 1)
-		correct_label = tf.argmax(labels, 1)
-		correct_prediction = tf.equal(prediction, tf.argmax(labels, 1))
-		accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+		prediction = tf.argmax(input=probabilities, axis=1)
+		correct_label = tf.argmax(input=labels, axis=1)
+		correct_prediction = tf.equal(prediction, tf.argmax(input=labels, axis=1))
+		accuracy = tf.reduce_mean(input_tensor=tf.cast(correct_prediction, tf.float32))
 
 	crop_size = tuple(image_size)
 	TFRecordReaderType = 0
@@ -143,8 +143,8 @@ def main():
 
 
 	i = 0
-	with tf.Session(graph = train_graph) as sess:
-		sess.run(tf.global_variables_initializer())
+	with tf.compat.v1.Session(graph = train_graph) as sess:
+		sess.run(tf.compat.v1.global_variables_initializer())
 		while i < NUM_TRAIN_STEPS:
 
 			for t, (train_image_ndArray, train_label_ndArray) in enumerate(trainIterator, 0):

@@ -704,7 +704,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
         {
             unsigned int single_image_size = w * c * h;
             omp_set_dynamic(0);
-            #pragma omp parallel for num_threads(_user_batch_size)
+            #pragma omp parallel for num_threads(64)
             for(unsigned int batchCount = 0; batchCount < n; batchCount ++)
             {
                 size_t dest_buf_offset = dest_buf_offset_start + single_image_size*batchCount;

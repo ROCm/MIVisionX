@@ -212,7 +212,7 @@ ImageReadAndDecode::load(unsigned char* buff,
             _decompressed_buff_ptrs[i] = buff + image_size * i;
 
         omp_set_dynamic(0);
-#pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
+#pragma omp parallel for num_threads(64)  // default(none) TBD: option disabled in Ubuntu 20.04
         for (size_t i = 0; i < _batch_size; i++)
         {
             // initialize the actual decoded height and width with the maximum

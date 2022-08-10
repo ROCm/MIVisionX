@@ -14,7 +14,7 @@ tar xzvf images.tar.gz
 tar xzvf annotations.tar.gz
 mkdir tfr
 git clone https://github.com/LakshmiKumar23/rocALmodels.git
-python3.9 ROCALmodels/models/research/object_detection/dataset_tools/create_pet_tf_record.py --data_dir=./ --output_dir=tfr/ --label_map_path=ROCALmodels/models/research/object_detection/data/pet_label_map.pbtxt
+python3.9 rocALmodels/models/research/object_detection/dataset_tools/create_pet_tf_record.py --data_dir=./ --output_dir=tfr/ --label_map_path=rocALmodels/models/research/object_detection/data/pet_label_map.pbtxt
 cd tfr
 mkdir train
 mv pet_faces_train.record-0000* train

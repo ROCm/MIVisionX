@@ -297,20 +297,28 @@ inference_control::inference_control(int operationMode_, QWidget *parent)
     comboTopKResult->setEnabled(false);
     controlLayout->addWidget(comboTopKResult, row, 1, 1, 1);
     connect(checkTopKResult, SIGNAL(clicked(bool)), this, SLOT(topKResultsEnable(bool)));
+    buttonInference = new QPushButton("Run");
+    controlLayout->addWidget(buttonInference, row, 1 + editSpan, 1, 1);
+    connect(buttonInference, SIGNAL(released()), this, SLOT(runInference()));
     row++;
     QLabel * labelGPUs = new QLabel("GPUs:");
     editGPUs = new QLineEdit("1");
     labelMaxGPUs = new QLabel("");
-    buttonInference = new QPushButton("Run");
     editGPUs->setValidator(new QIntValidator(1,maxGPUs));
     editGPUs->setEnabled(false);
     labelGPUs->setStyleSheet("font-weight: bold; font-style: italic; font-size: 15pt;");
     labelGPUs->setAlignment(Qt::AlignLeft);
+    QLabel * labelDecodeMode = new QLabel("Decode Mode:");
+    labelDecodeMode->setStyleSheet("font-weight: bold; font-style: italic; font-size: 15pt;");
+    comboDecodeMode = new QComboBox();
+    comboDecodeMode->addItems({ "OpenCV", "rocAL" });
     controlLayout->addWidget(labelGPUs, row, 0, 1, 1);
     controlLayout->addWidget(editGPUs, row, 1, 1, 1);
     controlLayout->addWidget(labelMaxGPUs, row, 2, 1, 1);
     controlLayout->addWidget(buttonInference, row, 1 + editSpan, 1, 1);
     connect(buttonInference, SIGNAL(released()), this, SLOT(runInference()));
+    controlLayout->addWidget(labelDecodeMode, row, 3, 1, 1);
+    controlLayout->addWidget(comboDecodeMode, row, 4, 1, 1);
     row++;
     QLabel * labelImageLabelsFile = new QLabel("Labels:");
     editImageLabelsFile = new QLineEdit("");
@@ -1043,6 +1051,7 @@ void inference_control::runInference()
     if(enableTopK)
         topKValue = ( comboTopKResult->currentIndex() + 1 );
 
+    decodeMode = comboDecodeMode->currentIndex();
     inference_panel *display_panel = new inference_panel;
     display_panel->setWindowIcon(QIcon(":/images/vega_icon_150.png"));
     //display_panel->show();
@@ -1050,7 +1059,7 @@ void inference_control::runInference()
     inference_viewer * viewer = new inference_viewer(
                 editServerHost->text(), editServerPort->text().toInt(), modelName,
                 dataLabels, dataHierarchy, editImageListFile->text(), editImageFolder->text(),
-                dimInput, editGPUs->text().toInt(), dimOutput, maxDataSize, repeat_images, sendScaledImages, sendFileName, topKValue);
+                dimInput, editGPUs->text().toInt(), dimOutput, maxDataSize, repeat_images, sendScaledImages, sendFileName, topKValue, decodeMode);
     viewer->setWindowIcon(QIcon(":/images/vega_icon_150.png"));
     viewer->show();
     close();

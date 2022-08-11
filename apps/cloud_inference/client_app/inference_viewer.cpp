@@ -77,7 +77,7 @@ inference_state::inference_state()
 inference_viewer::inference_viewer(QString serverHost, int serverPort, QString modelName,
         QVector<QString> * dataLabels, QVector<QString> * dataHierarchy, QString dataFilename, QString dataFolder,
         int dimInput[3], int GPUs, int dimOutput[3], int maxImageDataSize,
-        bool repeat_images, bool sendScaledImages, int sendFileName_, int topKValue,
+        bool repeat_images, bool sendScaledImages, int sendFileName_, int topKValue, int decodeMode,
         QWidget *parent) :
     QWidget(parent),
     ui(new Ui::inference_viewer),
@@ -102,6 +102,7 @@ inference_viewer::inference_viewer(QString serverHost, int serverPort, QString m
     state->sendScaledImages = sendScaledImages;
     state->sendFileName = sendFileName_;
     state->topKValue = topKValue;
+    state->decodeMode = decodeMode;
     progress.completed = false;
     progress.errorCode = 0;
     progress.repeat_images = repeat_images;
@@ -153,7 +154,7 @@ void inference_viewer::startReceiver()
     state->receiver_worker = new inference_receiver(
                 state->serverHost, state->serverPort, state->modelName,
                 state->GPUs, state->inputDim, state->outputDim, INFCOM_RUNTIME_OPTIONS,
-                &state->imageBuffer, &progress, state->sendFileName, state->topKValue, &state->shadowFileBuffer);
+                &state->imageBuffer, &progress, state->sendFileName, state->topKValue, &state->shadowFileBuffer, state->decodeMode);
     state->receiver_worker->moveToThread(state->receiver_thread);
     connect(state->receiver_worker, SIGNAL (error(QString)), this, SLOT (errorString(QString)));
     connect(state->receiver_thread, SIGNAL (started()), state->receiver_worker, SLOT (run()));

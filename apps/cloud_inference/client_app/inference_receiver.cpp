@@ -15,7 +15,7 @@ inference_receiver::inference_receiver(
         int GPUs_, int * inputDim_, int * outputDim_, const char * runtimeOptions_,
         QVector<QByteArray> * imageBuffer_,
         runtime_receiver_status * progress_, int sendFileName_, int topKValue_,
-        QVector<QString> * shadowFileBuffer_,
+        QVector<QString> * shadowFileBuffer_, int decodeMode_,
         QObject *parent) : QObject(parent)
 {
     perfRate = 0;
@@ -35,6 +35,7 @@ inference_receiver::inference_receiver(
     progress = progress_;
     sendFileName = sendFileName_;
     topKValue = topKValue_;
+    decodeMode = decodeMode_;
     shadowFileBuffer = shadowFileBuffer_;
 }
 
@@ -101,7 +102,7 @@ void inference_receiver::run()
                 InfComCommand reply = {
                     INFCOM_MAGIC, INFCOM_CMD_SEND_MODE,
                     { INFCOM_MODE_INFERENCE, GPUs,
-                      inputDim[0], inputDim[1], inputDim[2], outputDim[0], outputDim[1], outputDim[2], sendFileName, topKValue },
+                      inputDim[0], inputDim[1], inputDim[2], outputDim[0], outputDim[1], outputDim[2], sendFileName, topKValue, 0, decodeMode },
                     { 0 }
                 };
                 QString text = modelName;

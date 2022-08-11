@@ -216,6 +216,7 @@ protected:
     bool useShadowFilenames;
     bool receiveFileNames;
     int topK;
+    int decodeMode;
     int reverseInputChannelOrder;
     float preprocessMpy[3];
     float preprocessAdd[3];
@@ -339,6 +340,19 @@ private:
     hipDeviceProp_t     *hip_dev_prop[MAX_NUM_GPU];
     hipStream_t         hip_stream[MAX_NUM_GPU];
 
+};
+
+class InferenceEngineRocalHip:public InferenceEngineHip
+{
+public:
+    InferenceEngineRocalHip();
+    ~InferenceEngineRocalHip();
+    int run();
+
+protected:
+
+    virtual void workMasterInputQ();
+    virtual void workDeviceInputCopy(int gpu);
 };
 #endif
 #endif

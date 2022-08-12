@@ -48,7 +48,7 @@ if(GPU_SUPPORT)
         list(APPEND CMAKE_MODULE_PATH ${ROCM_PATH}/lib/cmake/hip ${HIP_PATH}/cmake)
         # HSA_PATH
         IF(NOT DEFINED ENV{HSA_PATH})
-            SET(HSA_PATH ${ROCM_PATH}/hsa)
+            SET(HSA_PATH ${ROCM_PATH})
         ELSE()
             SET(HSA_PATH $ENV{HSA_PATH})
         ENDIF()

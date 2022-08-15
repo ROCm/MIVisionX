@@ -39,6 +39,9 @@ WORKDIR $MIVISIONX_WORKING_ROOT
 RUN echo "export OMP_NUM_THREADS=$(grep -c ^processor /proc/cpuinfo)" >> ~/.profile
 RUN echo "export GOMP_CPU_AFFINITY=\"0-$(grep ^cpu\\scores /proc/cpuinfo | uniq |  awk '{print $4}')\"" >> ~/.profile
 
+# set environment variable
+ENV ZENDNN_GIT_ROOT=/workspace/ZenDNN
+
 # install Zen DNN
 RUN DEBIAN_FRONTEND=noninteractive git clone https://github.com/amd/ZenDNN.git && cd ZenDNN && make clean && \
 	source scripts/zendnn_aocc_build.sh

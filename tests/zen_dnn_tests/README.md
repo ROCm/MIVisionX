@@ -17,7 +17,7 @@ This C++ API example demonstrates how to build an AlexNet neural network topolog
 ```
 mkdir build-alexnet && cd build-alexnet
 cmake ../alexnet && make
-ZENDNN_VERBOSE=1 ./zendnn_alexnet_f32_test cpu
+ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 ./zendnn_alexnet_f32_test cpu
 ```
 
 ## Convolution Layer Test
@@ -39,7 +39,7 @@ ZENDNN_VERBOSE=1 ./zendnn_alexnet_f32_test cpu
 ```
 mkdir build-conv && cd build-conv
 cmake ../conv && make
-ZENDNN_VERBOSE=1 ./zendnn_conv_test cpu
+ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 ./zendnn_conv_test cpu
 ```
 
-**NOTE:** use `export ZENDNN_VERBOSE=1` for developer information
+**NOTE:** use `export ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1` for developer information

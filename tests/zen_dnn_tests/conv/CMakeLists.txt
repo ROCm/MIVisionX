@@ -59,6 +59,8 @@ endif()
 # set global compiler flags for the project
 # -O3 -- Optimize output file
 # -fPIC -- Generate position-independent code if possible.
+# -march -- Generate code for given CPU. [znver2 -- Zen Version 2]
+# -Wreturn-type -- Warn whenever a function's return type defaults to "int" (C), or about inconsistent return types (C++).
 # -std=gnu++14 -- Conform to the ISO 2014 C++ standard with GNU extensions.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLIBM_ENABLE=1 -DBIAS_ENABLED=1 -DZENDNN_ENABLE=1 -DZENDNN_X64=1")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC -march=znver2 -Wreturn-type -std=gnu++14")

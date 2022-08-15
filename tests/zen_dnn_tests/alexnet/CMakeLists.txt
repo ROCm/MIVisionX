@@ -29,7 +29,7 @@ set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 14)
 
-project(zendnn_conv_test)
+project(zendnn_alexnet_f32_test)
 
 # OpenMP
 find_package(OpenMP REQUIRED)

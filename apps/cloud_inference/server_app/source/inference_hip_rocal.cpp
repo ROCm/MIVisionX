@@ -21,18 +21,18 @@ extern void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
 
 
 #if ENABLE_HIP
-InferenceEngineHip::InferenceEngineHip(int sock_, Arguments * args_, const std::string clientName_, InfComCommand * cmd)
-                  :InferenceEngine(sock_, args_, clientName_, cmd),
+InferenceEngineRocalHip::InferenceEngineRocalHip(int sock_, Arguments * args_, const std::string clientName_, InfComCommand * cmd)
+                  :InferenceEngineHip(sock_, args_, clientName_, cmd),
                   hip_dev_prop{ nullptr }, hip_stream{ nullptr },
                   queueDeviceInputMemIdle{ nullptr }, queueDeviceInputMemBusy{ nullptr },
                   queueDeviceOutputMemIdle{ nullptr }, queueDeviceOutputMemBusy{ nullptr }
 {
-  device_id[MAX_NUM_GPU-1] = {-1};
-  if(!args->lockGpuDevices(GPUs, device_id))
+    device_id[MAX_NUM_GPU-1] = {-1};
+    if(!args->lockGpuDevices(GPUs, device_id))
     deviceLockSuccess = true;
 }
 
-InferenceEngineHip::~InferenceEngineHip()
+InferenceEngineRocalHip::~InferenceEngineRocalHip()
 {
 #if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER && !DONOT_RUN_INFERENCE
     if(openvx_graph) {
@@ -130,9 +130,9 @@ InferenceEngineHip::~InferenceEngineHip()
     PROFILER_SHUTDOWN();
 }
 
-int InferenceEngineHip::run()
+int InferenceEngineRocalHip::run()
 {
-    printf("opencv run\n");
+    printf("rocal run\n");
     //////
     /// make device lock is successful
     ///
@@ -315,6 +315,31 @@ int InferenceEngineHip::run()
         }else
             fatal("ERROR: HIP Device(%d) out of range %d", gpu);
 
+        // create rocAL Handle 
+        rocalHandle[gpu] = rocalCreate(batchSize, RocalProcessMode::ROCAL_PROCESS_CPU, 0, 1);
+        if((status = rocalGetStatus(rocalHandle[gpu])) != ROCAL_OK)
+            fatal("InferenceEngine: rocalCreate(#%d) failed (%d)", gpu, status);
+
+        //todo : folder path from user
+        const char * folderPathTmp = "/home/hansel/MIVisionX/MIVisionX/data/images/AMD-tinyDataSet";
+        RocalImage input = rocalJpegFileSource(rocalHandle[gpu], folderPathTmp, RocalImageColor::ROCAL_COLOR_RGB24, 1, false, false);
+        rocalCreateLabelReader(rocalHandle[gpu], folderPathTmp);
+
+        RocalImage image1 = rocalResize(rocalHandle[gpu], input, 224, 224, true); //todo : resize w/h
+
+        if(rocalGetStatus(rocalHandle[gpu]) != ROCAL_OK)
+        {
+            std::cout << "JPEG source could not initialize : "<<rocalGetErrorMessage(rocalHandle[gpu]) << std::endl;
+            return -1;
+        }
+
+        // Calling the API to verify and build the augmentation graph
+        if(rocalVerify(rocalHandle[gpu]) != ROCAL_OK)
+        {
+            std::cout << "Could not verify the rocAL graph" << std::endl;
+            return -1;
+        }
+
         // create scheduler device queues
 #if  USE_ADVANCED_MESSAGE_Q
         queueDeviceTagQ[gpu] = new MessageQueueAdvanced<int>(MAX_DEVICE_QUEUE_DEPTH);
@@ -413,11 +438,11 @@ int InferenceEngineHip::run()
 #if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER
     // nothing to do
 #elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
-    threadMasterInputQ = new std::thread(&InferenceEngineHip::workMasterInputQ, this);
+    threadMasterInputQ = new std::thread(&InferenceEngineRocalHip::workMasterInputQ, this);
     for(int gpu = 0; gpu < GPUs; gpu++) {
-        threadDeviceInputCopy[gpu] = new std::thread(&InferenceEngineHip::workDeviceInputCopy, this, gpu);
-        threadDeviceProcess[gpu] = new std::thread(&InferenceEngineHip::workDeviceProcess, this, gpu);
-        threadDeviceOutputCopy[gpu] = new std::thread(&InferenceEngineHip::workDeviceOutputCopy, this, gpu);
+        threadDeviceInputCopy[gpu] = new std::thread(&InferenceEngineRocalHip::workDeviceInputCopy, this, gpu);
+        threadDeviceProcess[gpu] = new std::thread(&InferenceEngineRocalHip::workDeviceProcess, this, gpu);
+        threadDeviceOutputCopy[gpu] = new std::thread(&InferenceEngineRocalHip::workDeviceOutputCopy, this, gpu);
     }
 #endif
 
@@ -723,7 +748,7 @@ int InferenceEngineHip::run()
 }
 
 #if INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
-void InferenceEngineHip::workMasterInputQ()
+void InferenceEngineRocalHip::workMasterInputQ()
 {
     args->lock();
     info("workMasterInputQ: started for %s", clientName.c_str());
@@ -777,7 +802,7 @@ void InferenceEngineHip::workMasterInputQ()
     args->unlock();
 }
 
-void InferenceEngineHip::workDeviceInputCopy(int gpu)
+void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
 {
     args->lock();
     info("workDeviceInputCopy: GPU#%d started for %s", gpu, clientName.c_str());
@@ -910,7 +935,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
     args->unlock();
 }
 
-void InferenceEngineHip::workDeviceProcess(int gpu)
+void InferenceEngineRocalHip::workDeviceProcess(int gpu)
 {
     args->lock();
     info("workDeviceProcess: GPU#%d started for %s", gpu, clientName.c_str());
@@ -966,7 +991,7 @@ void InferenceEngineHip::workDeviceProcess(int gpu)
     args->unlock();
 }
 
-void InferenceEngineHip::workDeviceOutputCopy(int gpu)
+void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu)
 {
     args->lock();
     info("workDeviceOutputCopy: GPU#%d started for %s", gpu, clientName.c_str());
@@ -1092,7 +1117,7 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
 }
 #endif
 
-void InferenceEngineHip::dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName)
+void InferenceEngineRocalHip::dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName)
 {
     void *host_ptr = nullptr;
     hipError_t err = hipMemcpyDtoH(mem, host_ptr, size);

@@ -14,6 +14,9 @@
 #include <condition_variable>
 #include <VX/vx.h>
 #include <vx_ext_amd.h>
+#include <rocal_api.h>
+#include <rocal_api_data_loaders.h>
+#include <rocal_api_meta_data.h>
 
 // inference scheduler modes
 //   NO_INFERENCE_SCHEDULER    - no scheduler (i.e., network connection with respond back immediately)
@@ -328,6 +331,7 @@ protected:
     vx_graph openvx_graph[MAX_NUM_GPU];
     vx_tensor openvx_input[MAX_NUM_GPU];
     vx_tensor openvx_output[MAX_NUM_GPU];
+    RocalContext rocalHandle[MAX_NUM_GPU];
 
 private:
     void dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName);
@@ -345,14 +349,47 @@ private:
 class InferenceEngineRocalHip:public InferenceEngineHip
 {
 public:
-    InferenceEngineRocalHip();
+    InferenceEngineRocalHip(int sock_, Arguments * args, const std::string clientName, InfComCommand * cmd);
     ~InferenceEngineRocalHip();
     int run();
 
 protected:
 
+#if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER && !DONOT_RUN_INFERENCE
+    // OpenVX resources
+    vx_context openvx_context;
+    vx_tensor openvx_input;
+    vx_tensor openvx_output;
+    vx_graph openvx_graph;
+
+#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
     virtual void workMasterInputQ();
     virtual void workDeviceInputCopy(int gpu);
+    virtual void workDeviceProcess(int gpu);
+    virtual void workDeviceOutputCopy(int gpu);
+#endif
+
+    MessageQueue<std::tuple<int,char *,int>> inputQ;
+    // scheduler device queues
+    MessageQueue<int>                    * queueDeviceTagQ[MAX_NUM_GPU];
+    MessageQueue<std::tuple<char *,int>> * queueDeviceImageQ[MAX_NUM_GPU];
+
+    vx_context openvx_context[MAX_NUM_GPU];
+    vx_graph openvx_graph[MAX_NUM_GPU];
+    vx_tensor openvx_input[MAX_NUM_GPU];
+    vx_tensor openvx_output[MAX_NUM_GPU];
+    RocalContext rocalHandle[MAX_NUM_GPU];
+
+private:
+    void dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName);
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemIdle[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemBusy[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceOutputMemIdle[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceOutputMemBusy[MAX_NUM_GPU];
+    // scheduler resources
+    int                 device_id[MAX_NUM_GPU];
+    hipDeviceProp_t     *hip_dev_prop[MAX_NUM_GPU];
+    hipStream_t         hip_stream[MAX_NUM_GPU];
 };
 #endif
 #endif

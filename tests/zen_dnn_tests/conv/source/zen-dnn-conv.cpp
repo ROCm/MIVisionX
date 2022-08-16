@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
     //initialize the engine
     if (argc <= 1) {
         zendnnInfo(ZENDNN_TESTLOG, "The command to run this test");
-        zendnnInfo(ZENDNN_TESTLOG, "ZENDNN_VERBOSE=1 zendnn_conv_test cpu");
+        zendnnInfo(ZENDNN_TESTLOG, "ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 zendnn_conv_test cpu");
 
         return -1;
     }

@@ -27,6 +27,8 @@ THE SOFTWARE.
 class customCopy: public custom_base
 {
 public:
+    customCopy() {};
+    ~customCopy() {};
     /*!
      \param input_handle  => memory handle of input tensor
      \param inputdesc => Input tensor desc
@@ -35,7 +37,7 @@ public:
      \param backend  => backend for the impl
      \param stream  => Output command queue
     */
-    customStatus_t Setup(void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc, customBackend backend, customStream stream);
+    customStatus_t Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream, int num_cpu_threads=0);
     /*!
      \param input_handle  => memory handle of input tensor
      \param inputdesc => Input tensor desc
@@ -44,10 +46,11 @@ public:
     customStatus_t Execute(void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc);
      
     //* Shutdown and release resources */
-    void Shutdown();
+    customStatus_t Shutdown();
 // workspace data    
 private:
     customTensorDesc _input_desc, _output_desc;
     customBackend _backend;
     customStream  _stream;
+    int _cpu_num_threads;
 };

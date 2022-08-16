@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #ifndef _CUSTOM_API_H_
 #define _CUSTOM_API_H_
+#include <hip/hip_runtime.h>
 
 #ifdef __cplusplus
 extern  "C" {
@@ -46,7 +47,7 @@ typedef enum
 
 enum CustomFunctionType
 {
-    customCopy,
+    Copy,
 };
 
 enum customBackend
@@ -65,7 +66,7 @@ typedef enum
 
 }customDataType;
 
-typedef struct hipStream_t customStream;
+typedef void* customStream;
 typedef void * customHandle;
 
 typedef struct customTensorDesc_t
@@ -75,10 +76,26 @@ typedef struct customTensorDesc_t
     unsigned         strides[4];
 }customTensorDesc;
 
+#if 0
+struct customContext
+{
+    explicit customContext(CustomFunctionType function): _custom_fn_type(function)
+    {
+        customimpl = CustomImpl(function);
+    };
+    ~customContext() {};
+    std::shared_ptr<custom_base> customimpl;
+    CustomFunctionType custom_function_type() { return _custom_fn_type; }
+
+private:
+    CustomFunctionType _custom_fn_type;
+};
+#endif
+
 customHandle CreateCustom(CustomFunctionType function);
-customStatus_t CustomSetup(void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc, customBackend backend, customStream stream);
-customStatus_t CustomExecute(void *input_handle, void *output_handle);
-void CustomShutdown();
+customStatus_t CustomSetup(customHandle input_handle, customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream, int num_cpu_threads=0);
+customStatus_t CustomExecute(customHandle custom_handle, void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc);
+customStatus_t CustomShutdown(customHandle custom_handle);
 
 
 #ifdef __cplusplus

@@ -24,7 +24,10 @@ THE SOFTWARE.
 #define _VX_KERNELS_CUSTOM_H_
 
 #include <VX/vx.h>
+#include <VX/vx_compatibility.h>
 #include <vx_ext_amd.h>
+#include <iostream>
+#include "vx_amd_custom.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -32,22 +35,39 @@ extern "C"
 #endif
 
 #define VX_LIBRARY_CUSTOM   6
-enum CustomFunctionType
-{
-    customcopy,
-};
+
+#define ERROR_CHECK_STATUS(call){vx_status status = call; if(status!= VX_SUCCESS) return status;}
+#ifndef ERROR_CHECK_CUSTOM_STATUS
+#define ERROR_CHECK_CUSTOM_STATUS(call) if(call) { \
+    std::cerr << "ERROR: fatal error occured at " __FILE__ << "#" << __LINE__ << std::endl; \
+    exit(1); \
+    }
+#endif
+#define ERROR_CHECK_OBJECT(obj)  { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS){ vxAddLogEntry((vx_reference)(obj), status, "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; }}
+//! \brief The macro for error message and return error code
+#define ERRMSG(status, format, ...) printf("ERROR: " format, __VA_ARGS__), status
+
+//////////////////////////////////////////////////////////////////////
+// SHARED_PUBLIC - shared sybols for export
+// STITCH_API_ENTRY - export API symbols
+#if _WIN32
+#define SHARED_PUBLIC __declspec(dllexport)
+#else
+#define SHARED_PUBLIC __attribute__ ((visibility ("default")))
+#endif
+
 
 enum vx_kernel_ext_amd_custom_e
 {
-    VX_KERNEL_CUSTOM_EXAMPLE_COPY = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_CUSTOM) + 0x0,
-    // define your custom kernel enum below
+    VX_KERNEL_CUSTOM_LAYER = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_CUSTOM) + 0x0,
 };
 
 //! \brief The kernel registration functions.
 vx_status publishCustomLayer(vx_context context);
 vx_node createCustomNode(vx_graph graph, const char * kernelName, vx_reference params[], vx_uint32 num);
 
-#ifdef __cplusplus
-extern "C"
+#ifdef  __cplusplus
 }
+#endif
+
 #endif

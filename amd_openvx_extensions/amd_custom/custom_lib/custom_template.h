@@ -24,7 +24,10 @@ THE SOFTWARE.
 
 class custom_base
 {
+protected:  
+    custom_base() {};
 public:
+    virtual ~custom_base() {};
     /*!
      \param inputdesc => Input tensor desc
      \param outputdesc => output tensor desc
@@ -32,7 +35,7 @@ public:
      \param stream  => Output command queue
 
     */
-    virtual customStatus_t Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc,  customBackend backend, customStream stream) = 0;
+    virtual customStatus_t Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc,  customBackend backend, customStream stream, int num_cpu_threads) = 0;
     /*!
      \param input_handle  => memory handle of input tensor
      \param inputdesc => Input tensor desc
@@ -42,8 +45,6 @@ public:
     virtual customStatus_t Execute(void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc) = 0;
      
     //* Shutdown and release resources */
-    virtual void Shutdown() = 0;
+    virtual customStatus_t Shutdown() = 0;
 
 };
-
-std::shared_ptr<custom_base> create_custom(CustomFunctionType function);

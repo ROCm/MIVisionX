@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "custom_kernels.h"
+#include "kernels_custom.h"
 
 ////////////////////////////////////////////////////////////////////////////
 //! \brief The module entry point for publishing kernel.
@@ -49,7 +49,7 @@ vx_node createCustomNode(vx_graph graph, const char *kernelName, vx_reference pa
                 if (params[p]) {
                     status = vxSetParameterByIndex(node, p, params[p]);
                     if (status != VX_SUCCESS) {
-                        vxAddLogEntry((vx_reference)graph, status, "MIGraphXNode: vxSetParameterByIndex(%s, %d, 0x%p) => %d\n", kernelName, p, params[p], status);
+                        vxAddLogEntry((vx_reference)graph, status, "CustomLayer: vxSetParameterByIndex(%s, %d, 0x%p) => %d\n", kernelName, p, params[p], status);
                         vxReleaseNode(&node);
                         node = 0;
                         break;

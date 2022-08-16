@@ -23,14 +23,33 @@ project(custom_lib)
 
 set(CMAKE_CXX_STANDARD 14)
 
-#following is needed for HIP support
-list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
+# ROCm Path
+set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+# avoid setting the default installation path to /usr/local
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Add Default libdir
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
+include(GNUInstallDirs)
+
+# Find Modules
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
+    if(NOT DEFINED ENV{HIP_PATH})
+      set(HIP_PATH ${ROCM_PATH} CACHE PATH "Path to which HIP has been installed")
+    else()
+      set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
+    endif()
+    list(APPEND CMAKE_MODULE_PATH ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/hip ${HIP_PATH}/cmake)
     find_package(HIP QUIET)
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
     include_directories(${ROCM_PATH}/include)
-    list(APPEND SOURCES
+    set(CUSTOM_LIB_SOURCES
             custom_api.cpp
             custom_copy_impl.cpp
         )
@@ -40,10 +59,25 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         set(ENABLE_HIP 1)
         add_definitions(-DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)
         link_directories(${HIP_PATH}/lib)
-        add_library(${PROJECT_NAME} SHARED ${SOURCES})
-        target_link_libraries(${PROJECT_NAME} hip::device)
+        add_library(${PROJECT_NAME} OBJECT ${CUSTOM_LIB_SOURCES})
+        target_link_libraries(${PROJECT_NAME} ${HIP_PATH}/lib/libamdhip64.so)
+        #target_link_libraries(${PROJECT_NAME} hip::device)
     else()
         message("-- ${Red}WARNING: HIP Not Found -- ${PROJECT_NAME} not built{ColourReset}")
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp-std=c++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -fPIC -std=gnu++14")
+else()
+    message("-- ${Green}${PROJECT_NAME} -- Building for CPU backend${ColourReset}")
+    set(ENABLE_HIP 0)
+    add_library(${PROJECT_NAME} OBJECT ${CUSTOM_LIB_SOURCES})
 endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
+endif()
+
+
+message("-- ${White}custom_lib -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

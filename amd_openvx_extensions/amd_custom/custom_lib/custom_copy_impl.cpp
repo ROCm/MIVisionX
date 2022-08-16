@@ -19,16 +19,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "custom_copy_impl.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "custom_copy_impl.h"
+#if ENABLE_HIP
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
+#endif
 
-
-customStatus_t customCopy::Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream):
-            _input_desc(inputdesc), _output_desc(outputdesc), _backend(backend), _stream(stream)
+customStatus_t customCopy::Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream, int num_cpu_threads)
 {
+    _input_desc = inputdesc, _output_desc = outputdesc;
+    _backend = backend, _stream = stream, _cpu_num_threads = num_cpu_threads;
+
     if ((_input_desc.data_type != _output_desc.data_type) || (_input_desc.dims[0] != _output_desc.dims[0]) || 
         (_input_desc.dims[1] != _output_desc.dims[1]) || (_input_desc.dims[2] != _output_desc.dims[2]) || (_input_desc.dims[3] != _output_desc.dims[3]))
         return  customStatus_t::customStatusInvalidValue;
@@ -39,27 +42,32 @@ customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputde
 {
     unsigned size = outputdesc.dims[0] * outputdesc.dims[1] * outputdesc.dims[3];
     unsigned batch_size = outputdesc.dims[3];
-
+#if  !ENABLE_HIP
     if (_backend == CPU)
     {
-    #pragma omp parallel for num_threads(batch_size)
-        unsigned char *src, *dst;
+        int omp_threads =  (_cpu_num_threads < batch_size)?  _cpu_num_threads: batch_size;
+    #pragma omp parallel for num_threads(omp_threads)
         for (size_t i = 0; i < batch_size; i++) {
+            unsigned char *src, *dst;
             src = (unsigned char *)input_handle + size*i;
             dst = (unsigned char *)output_handle + size*i;
             memcpy(dst, src, size);
         }
-    }else{
+    }else
+#else
+    {
         for (size_t i = 0; i < batch_size; i++) {
+            unsigned char *src, *dst;
             src = (unsigned char *)input_handle + size*i;
             dst = (unsigned char *)output_handle + size*i;
             hipMemcpy(dst, src, size, hipMemcpyDeviceToDevice);
         }      
     }
+#endif
     return customStatusSuccess;
 }
 
-customStatus_t customCopy::Shutdown(void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc, customBackend backend, customStream stream)
+customStatus_t customCopy::Shutdown()
 {
     // nothing to do since we don't have any local resources to release.
     return customStatusSuccess;

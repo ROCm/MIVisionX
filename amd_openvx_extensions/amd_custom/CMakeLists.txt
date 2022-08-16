@@ -43,24 +43,25 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
 
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
 
-    include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include)
+    include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include ./custom_lib)
 
     list(APPEND SOURCES
             source/custom_kernels.cpp
             source/custom_layer.cpp
         )
 
-    if (HIP_FOUND AND migraphx_FOUND)
+    if (HIP_FOUND)
         message("-- ${Green}${PROJECT_NAME} -- Building with HIP backend${ColourReset}")
         set(ENABLE_HIP 1)
         add_definitions(-DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)
         link_directories(${HIP_PATH}/lib)
-        add_library(${PROJECT_NAME} SHARED ${SOURCES})
-        target_link_libraries(${PROJECT_NAME} openvx migraphx::c ${HIP_PATH}/lib/libamdhip64.so)
+        add_subdirectory(custom_lib)
+        add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
+        target_link_libraries(${PROJECT_NAME} openvx ${HIP_PATH}/lib/libamdhip64.so)
         # install MIVisionX libs -- {ROCM_PATH}/lib
         install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
         # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-	    install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+	      install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
     else()
         message("-- ${Red}WARNING: HIP Not Found -- ${PROJECT_NAME} module excluded${ColourReset}")
     endif()
@@ -71,4 +72,15 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
     endif()
+else()
+  set(ENABLE_HIP 0)
+  add_definitions(-DENABLE_HIP=${ENABLE_HIP})
+  message("-- ${Red}WARNING: GPU Support Turned OFF -- ${PROJECT_NAME} built for CPU only${ColourReset}")
+  add_subdirectory(custom_lib)
+  add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
+  target_link_libraries(${PROJECT_NAME} openvx ${HIP_PATH}/lib/libamdhip64.so)
+  # install MIVisionX libs -- {ROCM_PATH}/lib
+  install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  # install include files -- {ROCM_PATH}/include/mivisionx/
+  install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
 endif()

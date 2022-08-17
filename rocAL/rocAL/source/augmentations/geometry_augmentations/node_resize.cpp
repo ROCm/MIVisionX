@@ -29,12 +29,15 @@ THE SOFTWARE.
 ResizeNode::ResizeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs)
 {
+    _crop_param = std::make_shared<RocalCropParam>(_batch_size);
 }
 
 void ResizeNode::create_node()
 {
     if(_node)
         return;
+    
+    _crop_param->create_array(_graph);
 
     std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
     std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());

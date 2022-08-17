@@ -176,9 +176,9 @@ int main(int argc, char **argv) {
         for(size_t n = 0; n < input_dims[0]; n++) {
             for(size_t c = 0; c < input_dims[1]; c++) {
                 for(size_t y = 0; y < input_dims[2]; y++) {
-                    float * buf = (float *)ptr + (n * input_dims[2] * input_dims[1] * input_dims[0] + c * input_dims[1] * input_dims[0] + y * input_dims[0]);
-                    vx_size n = fread(buf, sizeof(float), input_dims[3], fp);
-                    if(n != input_dims[3]) {
+                    float * buf = (float *)ptr + (n * input_dims[3] * input_dims[2] * input_dims[1] + c * input_dims[3] * input_dims[2] + y * input_dims[3]);
+                    vx_size w = fread(buf, sizeof(float), input_dims[3], fp);
+                    if(w != input_dims[3]) {
                         std::cerr << "ERROR: expected char[" << count*sizeof(float) << "], but got less in " << inputFileName << std::endl;
                         return -1;
                     }

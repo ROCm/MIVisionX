@@ -60,7 +60,7 @@ void read_input_digit(std::vector<int> n, std::vector<float>& input_digit) {
 int main(int argc, char **argv) {
     
     if(argc < 4) {
-        std::cout << "Usage: \n ./migraphx_node_test <path-to-resnet50 ONNX model> --batch-size n" << std::endl;
+        std::cout << "Usage: \n ./migraphx_node_test <path-to-mnist ONNX model> --batch-size n" << std::endl;
         return -1;
     }
     

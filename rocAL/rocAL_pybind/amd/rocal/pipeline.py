@@ -259,7 +259,7 @@ class Pipeline(object):
         return b.getImgSizes(self._handle, array)
 
     def GetImageLabels(self, array):
-        return b.getImageLabels(self._handle, array)
+        return b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
 
 
     def GetBoundingBox(self,array):

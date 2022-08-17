@@ -16,7 +16,7 @@ import tensorflow_hub as hub
 
 ############################### CHANGE THESE GLOBAL VARIABLES APPROPRIATELY ###############################
 
-RECORDS_DIR = 'tfr/'
+RECORDS_DIR = 'tf_pets_records/'
 NUM_CLASSES = 37
 LEARNING_RATE = 0.005
 NUM_TRAIN_STEPS = 2775
@@ -41,8 +41,8 @@ def download_images():
 	global TRAIN_RECORDS_DIR
 	global VAL_RECORDS_DIR
 	os.system("./download_and_preprocess_dataset.sh")
-	TRAIN_RECORDS_DIR = "./tfr/train/"
-	VAL_RECORDS_DIR = "./tfr/val/"
+	TRAIN_RECORDS_DIR = "./tf_pets_records/train/"
+	VAL_RECORDS_DIR = "./tf_pets_records/val/"
 
 def create_model(features):
 	global NUM_CLASSES

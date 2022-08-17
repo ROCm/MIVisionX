@@ -132,6 +132,8 @@ CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg
     _loop = reader_cfg.loop();
     _image_size = _output_mem_size/batch_size;
     _output_names.resize(batch_size);
+    _reader_config = reader_cfg;
+    _decoder_config = decoder_cfg;
     try
     {
         _reader = create_reader(reader_cfg);

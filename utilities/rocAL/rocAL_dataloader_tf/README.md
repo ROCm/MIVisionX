@@ -13,7 +13,6 @@ This application demonstrates a basic usage of rocAL's C API to load TfRecords f
 ### build
   ````
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/rpp/lib
   mkdir build
   cd build
   cmake ../

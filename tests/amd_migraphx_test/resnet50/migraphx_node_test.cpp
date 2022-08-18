@@ -4,6 +4,9 @@
 #include <fstream>
 #include <algorithm>
 #include <dirent.h>
+#include <chrono>
+#include <sstream>
+#include <sys/stat.h>
 #define MAX_STRING_LENGTH 100
 
 using namespace std;
@@ -76,6 +79,16 @@ int main(int argc, char **argv) {
     float stddev_vec[3] = {0.229, 0.224, 0.225};
     std::vector<float> mulVec = {1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])}, 
                         addVec = {(mean_vec[0] / stddev_vec[0]), (mean_vec[1] / stddev_vec[1]), (mean_vec[2] / stddev_vec[2])};
+
+    //create a reults folder
+    std::ofstream outputFile;
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream datetime;
+    datetime << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d-%X");
+    std::string date = "../results-" + datetime.str();
+    if (mkdir(date.c_str(), 0777) == -1)
+        cerr << "Error, cannot create results folder:  " << strerror(errno) << endl;
 
     //imagenet label file
     std::string labelText[1000];
@@ -212,15 +225,19 @@ int main(int argc, char **argv) {
         return status;
     }
 
+    //copy results into file
+    outputFile.open(date + "/resnet50-output-results.csv");
+    outputFile << "image,classification,probability,label\n";
+    
     //find the argmax
     float *output_buf = (float*)ptr;
     auto num_results = 1000;
     for(int i = 0; i < batch_size; i++, output_buf += num_results) {
         int final_argmax_result = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results));
         std::string output_label = labelText[final_argmax_result];
-        std::cout << "image[" << i << "]: output index = " << final_argmax_result << ", output label = " << output_label << std::endl;
+        outputFile << i+1 << "," << final_argmax_result << "," << output_buf[final_argmax_result] << "," << output_label.c_str() << "\n";
     }
-
+    outputFile.close();
     status = vxUnmapTensorPatch(output_tensor, map_id);
     if(status) {
         std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;

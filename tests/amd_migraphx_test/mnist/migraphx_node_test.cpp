@@ -2,7 +2,11 @@
 #include <cstring>
 #include <random>
 #include <fstream>
+#include <iomanip>
 #include <algorithm>
+#include <chrono>
+#include <sstream>
+#include <sys/stat.h>
 #define MAX_STRING_LENGTH 100
 
 using namespace std;
@@ -85,6 +89,16 @@ int main(int argc, char **argv) {
     void *ptr = nullptr;
     vx_status status = 0;
 
+    //create a reults folder
+    std::ofstream outputFile;
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream datetime;
+    datetime << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d-%X");
+    std::string date = "../results-" + datetime.str();
+    if (mkdir(date.c_str(), 0777) == -1)
+        cerr << "Error, cannot create results folder:  " << strerror(errno) << endl;
+
     input_tensor = vxCreateTensor(context, input_num_of_dims, input_dims, VX_TYPE_FLOAT32, 0);
     output_tensor = vxCreateTensor(context, output_num_of_dims, output_dims, VX_TYPE_FLOAT32, 0);
 
@@ -128,18 +142,17 @@ int main(int argc, char **argv) {
         return status;
     }
 
+    //copy results into file
+    outputFile.open(date + "/mnist-output-results.csv");
+    outputFile << "iteration,Randomly chosen digit,Result from inference,result\n";
+
     float *output_buf = (float*)ptr;
     auto num_results = 10;
     for(int i = 0; i < batch_size; i++, output_buf+= num_results) {
         float* max = std::max_element(output_buf, output_buf + num_results);
         int answer = max - output_buf;
 
-        std::cout << std::endl
-            << "Randomly chosen digit: " << rand_digit[i] << std::endl
-            << "Result from inference: " << answer << std::endl
-            << std::endl
-            << (answer == rand_digit[i] ? "CORRECT" : "INCORRECT") << std::endl
-            << std::endl;
+        outputFile << i+1 << "," << rand_digit[i] << "," << answer << "," << (answer == rand_digit[i] ? "Correct":"Incorrect") << "\n";
     }
 
     status = vxUnmapTensorPatch(output_tensor, map_id);

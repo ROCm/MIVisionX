@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <string>
 #include <cmath>
+#include <chrono>
+#include <sstream>
+#include <sys/stat.h>
 #define MAX_STRING_LENGTH 100
 
 using namespace std;
@@ -236,6 +239,16 @@ int main(int argc, char **argv) {
     vx_map_id map_id;
     void *ptr = nullptr;
     auto num_results_imagenet = 1000;
+    
+    //create a reults folder
+    std::ofstream outputFile;
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream datetime;
+    datetime << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X");
+    std::string date = "../results-" + datetime.str();
+    if (mkdir(date.c_str(), 0777) == -1)
+        cerr << "Error, cannot create results folder:  " << strerror(errno) << endl;
 
     float mean_vec[3] = {0.485, 0.456, 0.406};
     float stddev_vec[3] = {0.229, 0.224, 0.225};
@@ -246,17 +259,17 @@ int main(int argc, char **argv) {
     std::string imagenetLabelFileName = ("../labels.txt");
 
     std::string line;
-    std::ifstream out(imagenetLabelFileName);
-    if(!out) {
-      std::cout << "label file failed to open" << std::endl;
+    std::ifstream labelFile(imagenetLabelFileName);
+    if(!labelFile) {
+      std::cout << "failed to open label file" << std::endl;
       return -1; 
     }
     int lineNum = 0;
-    while(getline(out, line)) {
+    while(getline(labelFile, line)) {
         labelText[lineNum] = line;
         lineNum++;
     }
-    out.close();
+    labelFile.close();
 
     for(int lev = 0; lev < profiler_level; lev++) {
         vx_size batch_size = std::pow(2, lev);
@@ -342,11 +355,19 @@ int main(int argc, char **argv) {
                     return status;
                 }
 
+                if (lev == profiler_level - 1) {
+                    outputFile.open("../results/resnet50-output-results.csv");
+                    outputFile << "image,classification,probability,label\n";
+                }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_resnet50 = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
                     std::string output_label_resnet50 = labelText[ID_resnet50];
+                    if (lev == profiler_level - 1) {
+                        outputFile << i+1 << "," << ID_resnet50 << "," << output_buf[ID_resnet50] << "," << output_label_resnet50.c_str() << "\n";
+                    }
                 }
+                outputFile.close();
                 status = vxUnmapTensorPatch(output_tensor_resnet50, map_id);
                 if(status) {
                     std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
@@ -391,9 +412,19 @@ int main(int argc, char **argv) {
                     return status;
                 }
 
-                int ID_vgg19 = std::distance((float*)ptr, std::max_element((float*)ptr, (float*)ptr + num_results_imagenet));
-                std::string output_label_vgg19 = labelText[ID_vgg19];
-
+                if (lev == profiler_level - 1) {
+                    outputFile.open("../results/vgg19-output-results.csv");
+                    outputFile << "image,classification,probability,label\n";
+                }
+                float *output_buf = (float*)ptr;
+                for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
+                    int ID_vgg19 = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
+                    std::string output_label_vgg19 = labelText[ID_vgg19];
+                    if (lev == profiler_level - 1) {
+                        outputFile << i+1 << "," << ID_vgg19 << "," << output_buf[ID_vgg19] << "," << output_label_vgg19 << "\n";
+                    }
+                }
+                outputFile.close();
                 status = vxUnmapTensorPatch(output_tensor_vgg19, map_id);
                 if(status) {
                     std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
@@ -439,12 +470,19 @@ int main(int argc, char **argv) {
                     return status;
                 }
 
+                if (lev == profiler_level - 1) {
+                    outputFile.open("../results/googlenet-output-results.csv");
+                    outputFile << "image,classification,probability,label\n";
+                }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_googlenet = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
-                    std::string output_label_resnet50 = labelText[ID_googlenet];
+                    std::string output_label_googlenet = labelText[ID_googlenet];
+                    if (lev == profiler_level - 1) {
+                        outputFile << i+1 << "," << ID_googlenet << "," << output_buf[ID_googlenet] << "," << output_label_googlenet << "\n";
+                    }
                 }
-
+                outputFile.close();
                 status = vxUnmapTensorPatch(output_tensor_googlenet, map_id);
                 if(status) {
                     std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
@@ -490,12 +528,19 @@ int main(int argc, char **argv) {
                     return status;
                 }
 
+                if (lev == profiler_level - 1) {
+                    outputFile.open("../results/alexnet-output-results.csv");
+                    outputFile << "image,classification,probability,label\n";
+                }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_alexnet = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
-                    std::string output_label_resnet50 = labelText[ID_alexnet];
+                    std::string output_label_alexnet = labelText[ID_alexnet];
+                    if (lev == profiler_level - 1) {
+                        outputFile << i+1 << "," << ID_alexnet << "," << output_buf[ID_alexnet] << "," << output_label_alexnet << "\n";
+                    }
                 }
-
+                outputFile.close();
                 status = vxUnmapTensorPatch(output_tensor_alexnet, map_id);
                 if(status) {
                     std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
@@ -543,12 +588,19 @@ int main(int argc, char **argv) {
                     return status;
                 }
 
+                if (lev == profiler_level - 1) {
+                    outputFile.open("../results/squeezenet-output-results.csv");
+                    outputFile << "image,classification,probability,label\n";
+                }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_squeezenet = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
-                    std::string output_label_resnet50 = labelText[ID_squeezenet];
+                    std::string output_label_squeezenet = labelText[ID_squeezenet];
+                    if (lev == profiler_level - 1) {
+                        outputFile << i+1 << "," << ID_squeezenet << "," << output_buf[ID_squeezenet] << "," << output_label_squeezenet << "\n";
+                    }
                 }
-
+                outputFile.close();
                 status = vxUnmapTensorPatch(output_tensor_squeezenet, map_id);
                 if(status) {
                     std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
@@ -594,12 +646,19 @@ int main(int argc, char **argv) {
                     return status;
                 }
 
+                if (lev == profiler_level - 1) {
+                    outputFile.open("../results/densenet-output-results.csv");
+                    outputFile << "image,classification,probability,label\n";
+                }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_densenet = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
-                    std::string output_label_resnet50 = labelText[ID_densenet];
+                    std::string output_label_densenet = labelText[ID_densenet];
+                    if (lev == profiler_level - 1) {
+                        outputFile << i+1 << "," << ID_densenet << "," << output_buf[ID_densenet] << "," << output_label_densenet << "\n";
+                    }
                 }
-
+                outputFile.close();
                 status = vxUnmapTensorPatch(output_tensor_densenet, map_id);
                 if(status) {
                     std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;

@@ -10,7 +10,8 @@
   7. vgg19
 * Test one or more of the models by specifying the paths to the models which need testing.
 * Tests batch sizes from 1-N (N specified by user)
-* Currently only mode 1 -- runs ONNX modelss
+* Currently only mode 1 -- runs ONNX models
+* Currently only Batch size = 1 works (TO test bigger batch sizes, build and install [this branch](https://github.com/ROCmSoftwarePlatform/AMDMIGraphX/tree/dyn_reshape_parsing))
 * Usage:
 ```
 Usage: ./runMIGraphXTests

@@ -245,7 +245,7 @@ int main(int argc, char **argv) {
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
     std::stringstream datetime;
-    datetime << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X");
+    datetime << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d-%X");
     std::string date = "../results-" + datetime.str();
     if (mkdir(date.c_str(), 0777) == -1)
         cerr << "Error, cannot create results folder:  " << strerror(errno) << endl;
@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
                 }
 
                 if (lev == profiler_level - 1) {
-                    outputFile.open("../results/resnet50-output-results.csv");
+                    outputFile.open(date + "/resnet50-output-results.csv");
                     outputFile << "image,classification,probability,label\n";
                 }
                 float *output_buf = (float*)ptr;
@@ -413,7 +413,7 @@ int main(int argc, char **argv) {
                 }
 
                 if (lev == profiler_level - 1) {
-                    outputFile.open("../results/vgg19-output-results.csv");
+                    outputFile.open(date + "/vgg19-output-results.csv");
                     outputFile << "image,classification,probability,label\n";
                 }
                 float *output_buf = (float*)ptr;
@@ -471,7 +471,7 @@ int main(int argc, char **argv) {
                 }
 
                 if (lev == profiler_level - 1) {
-                    outputFile.open("../results/googlenet-output-results.csv");
+                    outputFile.open(date + "/googlenet-output-results.csv");
                     outputFile << "image,classification,probability,label\n";
                 }
                 float *output_buf = (float*)ptr;
@@ -529,7 +529,7 @@ int main(int argc, char **argv) {
                 }
 
                 if (lev == profiler_level - 1) {
-                    outputFile.open("../results/alexnet-output-results.csv");
+                    outputFile.open(date + "/alexnet-output-results.csv");
                     outputFile << "image,classification,probability,label\n";
                 }
                 float *output_buf = (float*)ptr;
@@ -589,7 +589,7 @@ int main(int argc, char **argv) {
                 }
 
                 if (lev == profiler_level - 1) {
-                    outputFile.open("../results/squeezenet-output-results.csv");
+                    outputFile.open(date + "/squeezenet-output-results.csv");
                     outputFile << "image,classification,probability,label\n";
                 }
                 float *output_buf = (float*)ptr;
@@ -647,7 +647,7 @@ int main(int argc, char **argv) {
                 }
 
                 if (lev == profiler_level - 1) {
-                    outputFile.open("../results/densenet-output-results.csv");
+                    outputFile.open(date + "/densenet-output-results.csv");
                     outputFile << "image,classification,probability,label\n";
                 }
                 float *output_buf = (float*)ptr;

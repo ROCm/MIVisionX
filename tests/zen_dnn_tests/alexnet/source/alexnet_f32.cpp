@@ -794,7 +794,7 @@ void simple_net(engine::kind engine_kind, int times = 100) {
 }
 
 int main(int argc, char **argv) {
-    zendnnInfo(ZENDNN_TESTLOG, "zendnn_alexnet_f32_test API test starts");
+    zendnnInfo(ZENDNN_TESTLOG, "zendnn_alexnet_f32 test starts");
     try {
         auto begin = chrono::duration_cast<chrono::milliseconds>(
                          chrono::steady_clock::now().time_since_epoch())
@@ -810,6 +810,6 @@ int main(int argc, char **argv) {
         std::cerr << "status: " << e.status << std::endl;
         std::cerr << "message: " << e.message << std::endl;
     }
-    zendnnInfo(ZENDNN_TESTLOG, "zendnn_alexnet_f32_test API test ends\n");
+    zendnnInfo(ZENDNN_TESTLOG, "zendnn_alexnet_f32 test ends\n");
     return 0;
 }

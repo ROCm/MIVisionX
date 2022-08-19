@@ -189,13 +189,13 @@ void conv_relu_naive(memory user_src, memory user_wei, memory user_dst, memory u
 
 
 int main(int argc, char **argv) {
-    zendnnInfo(ZENDNN_TESTLOG, "zendnn_conv_test starts");
+    zendnnInfo(ZENDNN_TESTLOG, "zendnn_conv starts");
     ofstream file;
 
     //initialize the engine
     if (argc <= 1) {
         zendnnInfo(ZENDNN_TESTLOG, "The command to run this test");
-        zendnnInfo(ZENDNN_TESTLOG, "ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 zendnn_conv_test cpu");
+        zendnnInfo(ZENDNN_TESTLOG, "ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 zendnn_conv cpu");
 
         return -1;
     }
@@ -346,6 +346,6 @@ int main(int argc, char **argv) {
                  "sha1 /sha1sum value of ZenDNN output and Ref output do not matches");
 #endif //ZENDNN_CMP_OUTPUT compare SHA1 value
 
-    zendnnInfo(ZENDNN_TESTLOG, "zendnn_conv_test ends");
+    zendnnInfo(ZENDNN_TESTLOG, "zendnn_conv ends");
     return 0;
 }

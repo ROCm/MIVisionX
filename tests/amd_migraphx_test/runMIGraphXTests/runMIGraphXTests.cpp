@@ -334,7 +334,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_resnet50));
                 }
                 t1 = clockCounter();
-                float resnet50Time = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
+                float resnet50Time = (float)(t1 - 10) * 1000.0f / (float)freq / (float)N;
                 printf("OK: resnet50 took %.3f msec (average over %d iterations)\n", resnet50Time, N);
 
                 //resnet50 results
@@ -391,7 +391,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_vgg19));
                 }
                 t1 = clockCounter();
-                float vgg19Time = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
+                float vgg19Time = (float)(t1 - 10) * 1000.0f / (float)freq / (float)N;
                 printf("OK: vgg19 took %.3f msec (average over %d iterations)\n", vgg19Time, N);
 
                 //vgg19 results
@@ -449,7 +449,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
                 }
                 t1 = clockCounter();
-                float googlenetTime = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
+                float googlenetTime = (float)(t1 - 10) * 1000.0f / (float)freq / (float)N;
                 printf("OK: googlenet took %.3f msec (average over %d iterations)\n", googlenetTime, N);
 
                 //googlenet results
@@ -507,7 +507,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_alexnet));
                 }
                 t1 = clockCounter();
-                float alexnetTime = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
+                float alexnetTime = (float)(t1 - 10) * 1000.0f / (float)freq / (float)N;
                 printf("OK: alexnet took %.3f msec (average over %d iterations)\n", alexnetTime, N);
 
                 //alexnet results
@@ -567,7 +567,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
                 }
                 t1 = clockCounter();
-                float squeezenetTime = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
+                float squeezenetTime = (float)(t1 - 10) * 1000.0f / (float)freq / (float)N;
                 printf("OK: squeezenet took %.3f msec (average over %d iterations)\n", squeezenetTime, N);
 
                 //squeezenet results
@@ -625,7 +625,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
                 }
                 t1 = clockCounter();
-                float densenetTime = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
+                float densenetTime = (float)(t1 - 10) * 1000.0f / (float)freq / (float)N;
                 printf("OK: densenet took %.3f msec (average over %d iterations)\n", densenetTime, N);
 
                 //densenet results

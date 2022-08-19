@@ -26,6 +26,21 @@ THE SOFTWARE.
 
 #include <VX/vx.h>
 
+/*! \brief The type enumeration lists all NN extension types.
+ * \ingroup group_cnn
+ */
+enum vx_amd_custom_type_e {
+	VX_TYPE_CUSTOM_PARAMS     = VX_TYPE_USER_STRUCT_START + 0x001,/*!< \brief A <tt>\ref vx_nn_convolution_params_t</tt>. */
+};
+
+/*! \brief Input parameters for a convolution operation.
+ * \ingroup group_cnn
+ */
+typedef struct _vx_amd_custom_params_t
+{
+	  vx_enum function_name;         /*!< \brief A <tt> VX_TYPE_ENUM</tt> of the <tt> function name for custom layer</tt> enumeration. */
+} vx_amd_custom_params_t;
+
 
 /*! \brief [Graph] Creates a Custom Layer Node.
  * \param [in] graph The handle to the graph.

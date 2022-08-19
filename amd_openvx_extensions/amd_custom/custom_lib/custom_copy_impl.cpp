@@ -40,10 +40,9 @@ customStatus_t customCopy::Setup(customTensorDesc &inputdesc, customTensorDesc &
 
 customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc)
 {
-    unsigned size = outputdesc.dims[0] * outputdesc.dims[1] * outputdesc.dims[3];
+    unsigned size = outputdesc.dims[0] * outputdesc.dims[1] * outputdesc.dims[3] * sizeof(_output_desc.data_type);
     unsigned batch_size = outputdesc.dims[3];
-#if  !ENABLE_HIP
-    if (_backend == CPU)
+    if (_backend == customBackend::CPU)
     {
         int omp_threads =  (_cpu_num_threads < batch_size)?  _cpu_num_threads: batch_size;
     #pragma omp parallel for num_threads(omp_threads)
@@ -54,16 +53,16 @@ customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputde
             memcpy(dst, src, size);
         }
     }else
-#else
     {
+#if ENABLE_HIP
         for (size_t i = 0; i < batch_size; i++) {
             unsigned char *src, *dst;
             src = (unsigned char *)input_handle + size*i;
             dst = (unsigned char *)output_handle + size*i;
             hipMemcpy(dst, src, size, hipMemcpyDeviceToDevice);
-        }      
-    }
+        }
 #endif
+    }
     return customStatusSuccess;
 }
 

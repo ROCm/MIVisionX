@@ -148,11 +148,10 @@ int main(int argc, char **argv) {
 
     float *output_buf = (float*)ptr;
     auto num_results = 10;
-    for(int i = 0; i < batch_size; i++, output_buf+= num_results) {
+    for(int i = 0; i < batch_size; i++, output_buf += num_results) {
         float* max = std::max_element(output_buf, output_buf + num_results);
         int answer = max - output_buf;
-
-        outputFile << i+1 << "," << rand_digit[i] << "," << answer << "," << (answer == rand_digit[i] ? "Correct":"Incorrect") << "\n";
+        outputFile << i + 1 << "," << rand_digit[i] << "," << answer << "," << (answer == rand_digit[i] ? "Correct":"Incorrect") << "\n";
     }
 
     status = vxUnmapTensorPatch(output_tensor, map_id);

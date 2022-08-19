@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
 
     //copy results into file
     outputFile.open(date + "/mnist-output-results.csv");
-    outputFile << "iteration,Randomly chosen digit,Result from inference,result\n";
+    outputFile << "iteration, Randomly chosen digit, Result from inference, result\n";
 
     float *output_buf = (float*)ptr;
     auto num_results = 10;

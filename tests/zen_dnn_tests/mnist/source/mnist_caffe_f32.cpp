@@ -60,6 +60,7 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
     const memory::dim batch = 1;
 
     // Start: MNIST Layer 1 - conv1
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 1 - conv1 Setup");
     // Start: CONV1 - set dimensions
     memory::dims conv1_src_tensor_dims = {batch, 1, 28, 28}; // {nchw}
     memory::dims conv1_weights_tensor_dims = {20, 1, 5, 5}; // {oihw}
@@ -146,9 +147,11 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
         {ZENDNN_ARG_BIAS, conv1_user_bias_memory},
         {ZENDNN_ARG_DST, conv1_dst_memory}});
     // End: Create a convolution primitive and add it to the net
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 1 - conv1 Setup Complete");
     // End: MNIST Layer 1 - conv1
 
     // Start: MNIST Layer 2 - pool1
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 2 - pool1 Setup");
     // Start: pool1 - set dimensions
     memory::dims pool1_dst_tensor_dims = {batch, 20, 12, 12};
     memory::dims pool1_kernel = {2, 2};
@@ -179,9 +182,11 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
     net_args.push_back({{ZENDNN_ARG_SRC, conv1_dst_memory},
         {ZENDNN_ARG_DST, pool1_dst_memory}});
     // End: Create a pooling primitive and add it to the net
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 2 - pool1 Setup Complete");
     // End: MNIST Layer 2 - pool1
 
     // Start: MNIST Layer 3 - conv2
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 3 - conv2 Setup");
     // Start: CONV2 - set dimensions
     memory::dims conv2_weights_tensor_dims = {50, 20, 5, 5};
     memory::dims conv2_bias_tensor_dims = {50};
@@ -236,9 +241,11 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
         {ZENDNN_ARG_BIAS, conv2_user_bias_memory},
         {ZENDNN_ARG_DST, conv2_dst_memory}});
     // End: Create a convolution primitive and add it to the net
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 3 - conv2 Setup Complete");
     // End: MNIST Layer 3 - conv2
 
     // Start: MNIST Layer 4 - pool2
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 4 - pool2 Setup");
     // Start: pool2 - set dimensions
     memory::dims pool2_dst_tensor_dims = {batch, 50, 4, 4};
     memory::dims pool2_kernel = {2, 2};
@@ -269,9 +276,11 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
     net_args.push_back({{ZENDNN_ARG_SRC, conv2_dst_memory},
         {ZENDNN_ARG_DST, pool2_dst_memory}});
     // End: Create a pooling primitive and add it to the net
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 4 - pool2 Setup Complete");
     // End: MNIST Layer 4 - pool2
 
     // Start: MNIST Layer 5 - ip1
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 5 - ip1 Setup");
     // Start: fc1 inner product 1 - set dimensions
     memory::dims fc1_weights_tensor_dims = {500, 50, 4, 4};
     memory::dims fc1_bias_tensor_dims = {500};
@@ -322,9 +331,11 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
         {ZENDNN_ARG_BIAS, fc1_user_bias_memory},
         {ZENDNN_ARG_DST, fc1_dst_memory}});
     // End: Create a IP primitive and add it to the net
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 5 - ip1 Setup Complete");
     // End: MNIST Layer 5 - ip1
 
     // Start: MNIST Layer 6 - relu1
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 6 - relu1 Setup");
     const float alpha = 0.0f;
     const float beta = 0.0f;
 
@@ -344,9 +355,11 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
     net_args.push_back({{ZENDNN_ARG_SRC, fc1_dst_memory},
         {ZENDNN_ARG_DST, fc1_dst_memory}});
     // End: Create a relu1 primitive and add it to the net
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 6 - relu1 Setup Complete");
     // End: MNIST Layer 6 - relu1
 
     // Start: MNIST Layer 7 - ip2
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 7 - ip2 Setup");
     // Start: fc2 inner product 2 - set dimensions
     memory::dims fc2_weights_tensor_dims = {10, 500, 1, 1};
     memory::dims fc2_bias_tensor_dims = {10};
@@ -397,9 +410,11 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
         {ZENDNN_ARG_BIAS, fc2_user_bias_memory},
         {ZENDNN_ARG_DST, fc2_dst_memory}});
     // End: Create a IP primitive and add it to the net
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 7 - ip2 Setup Complete");
     // End: MNIST Layer 7 - ip2
 
     // Start: MNIST Layer 8 - softMax
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 8 - softmax Setup incomplete");
     // End: MNIST Layer 8 - softMax
 
 

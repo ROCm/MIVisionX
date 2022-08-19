@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <dirent.h>
 #include <chrono>
+#include <iomanip>
 #include <sstream>
 #include <sys/stat.h>
 #define MAX_STRING_LENGTH 100
@@ -109,7 +110,7 @@ int main(int argc, char **argv) {
 
     input_tensor = vxCreateTensor(context, input_num_of_dims, input_dims, VX_TYPE_FLOAT32, 0);
     output_tensor = vxCreateTensor(context, output_num_of_dims, output_dims, VX_TYPE_FLOAT32, 0);
-    int count = input_dims[0]*input_dims[1]*input_dims[2]*input_dims[3];
+    int count = input_dims[0] * input_dims[1] * input_dims[2] * input_dims[3];
     
     ERROR_CHECK_STATUS(vxMapTensorPatch(input_tensor, input_num_of_dims, nullptr, nullptr, &map_id, stride,
     (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
@@ -129,10 +130,12 @@ int main(int argc, char **argv) {
         while((pDirent = readdir(pDir)) && bs < batch_size) {
             std::string imageFileName;
             bool inference = false;
-            if ((std::string(pDirent->d_name)).size() > 2)
+            if ((std::string(pDirent->d_name)).size() > 2) {
                 inference = true;
-            else
+            }
+            else {
                 continue;
+            }
             imageFileName = inputFileName + std::string(pDirent->d_name);
             cv::Mat input_image, input_image_224x224;
 
@@ -147,14 +150,16 @@ int main(int argc, char **argv) {
             cv::Range cols(0, input_width);
             cv::Mat square = input_image(rows, cols);
             cv::resize(square, input_image_224x224, cv::Size(224, 224));
-            } else if(input_width > input_height) {
+            } 
+            else if(input_width > input_height) {
             int dif = input_width - input_height;
             int bar = floor(dif / 2);
             cv::Range rows(0, input_height);
             cv::Range cols((bar + (dif % 2)), (input_width - bar));
             cv::Mat square = input_image(rows, cols);
             cv::resize(square, input_image_224x224, cv::Size(224, 224));
-            } else {
+            } 
+            else {
                 cv::resize(input_image, input_image_224x224, cv::Size(224, 224));
             }
 
@@ -174,8 +179,9 @@ int main(int argc, char **argv) {
                 *B++ = ((float)input_image_vector[2] * mulVec[2]) - addVec[2]; 
             }
 
-            if(inference) 
-                bs++;            
+            if(inference) { 
+                bs++;
+            }      
         }
         closedir(pDir);
     }
@@ -227,7 +233,7 @@ int main(int argc, char **argv) {
 
     //copy results into file
     outputFile.open(date + "/resnet50-output-results.csv");
-    outputFile << "image,classification,probability,label\n";
+    outputFile << "image, classification, probability, label\n";
     
     //find the argmax
     float *output_buf = (float*)ptr;
@@ -235,7 +241,7 @@ int main(int argc, char **argv) {
     for(int i = 0; i < batch_size; i++, output_buf += num_results) {
         int final_argmax_result = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results));
         std::string output_label = labelText[final_argmax_result];
-        outputFile << i+1 << "," << final_argmax_result << "," << output_buf[final_argmax_result] << "," << output_label.c_str() << "\n";
+        outputFile << i + 1 << "," << final_argmax_result << "," << output_buf[final_argmax_result] << "," << output_label.c_str() << "\n";
     }
     outputFile.close();
     status = vxUnmapTensorPatch(output_tensor, map_id);

@@ -61,7 +61,7 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
         param_name =  std::string(input);
 
         std::vector<std::size_t> input_dims_vector;
-        input_dims_vector.assign(input_dims, input_dims+in_num_dims);
+        input_dims_vector.assign(input_dims, input_dims + in_num_dims);
         onnx_opts.set_input_parameter_shape(param_name, input_dims_vector);
         onnx_opts.set_default_dim_value((unsigned int)input_dims[0]);  //set batch size
         

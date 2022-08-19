@@ -6,20 +6,12 @@
 #include <string>
 #include <cmath>
 #include <chrono>
+#include <iomanip>
 #include <sstream>
 #include <sys/stat.h>
 #define MAX_STRING_LENGTH 100
 
 using namespace std;
-
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
-using namespace cv;
-
-#if USE_OPENCV_4
-#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
-#endif
 
 #define ERROR_CHECK_STATUS(status) { \
     vx_status status_ = (status); \
@@ -229,18 +221,16 @@ int main(int argc, char **argv) {
     ERROR_CHECK_STATUS(vxLoadKernels(context, "vx_amd_migraphx"));
 
     // initialize variables
-    vx_tensor input_tensor_224x224, input_tensor_28x28;
+    vx_tensor input_tensor_224x224;
     vx_size input_num_of_dims = 4;
-    vx_size input_dims_data_28x28[4] = {28, 28, 1, 1}; 
     vx_size output_num_of_dims_2 = 2;
     vx_size output_num_of_dims_4 = 4;
-    vx_size output_dims_data_1x10[2] = {1, 10};
     vx_size stride[4];
     vx_map_id map_id;
     void *ptr = nullptr;
     auto num_results_imagenet = 1000;
     
-    //create a reults folder
+    //create a results folder
     std::ofstream outputFile;
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
@@ -277,7 +267,7 @@ int main(int argc, char **argv) {
         vx_size input_dims_data_224x224[4] = {batch_size, 3, 224,224};
         vx_size output_dims_data_1x1000[2] = {batch_size, 1000};
         vx_size output_dims_data_1x1000x1x1[4] = {batch_size, 1000, 1, 1};
-        int count = input_dims_data_224x224[0]*input_dims_data_224x224[1]*input_dims_data_224x224[2]*input_dims_data_224x224[3];
+        int count = input_dims_data_224x224[0] * input_dims_data_224x224[1] * input_dims_data_224x224[2] * input_dims_data_224x224[3];
 
         //create input data
         input_tensor_224x224 = vxCreateTensor(context, input_num_of_dims, input_dims_data_224x224, VX_TYPE_FLOAT32, 0);
@@ -344,7 +334,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_resnet50));
                 }
                 t1 = clockCounter();
-                float resnet50Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+                float resnet50Time = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
                 printf("OK: resnet50 took %.3f msec (average over %d iterations)\n", resnet50Time, N);
 
                 //resnet50 results
@@ -357,14 +347,14 @@ int main(int argc, char **argv) {
 
                 if (lev == profiler_level - 1) {
                     outputFile.open(date + "/resnet50-output-results.csv");
-                    outputFile << "image,classification,probability,label\n";
+                    outputFile << "image, classification, probability, label\n";
                 }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_resnet50 = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
                     std::string output_label_resnet50 = labelText[ID_resnet50];
                     if (lev == profiler_level - 1) {
-                        outputFile << i+1 << "," << ID_resnet50 << "," << output_buf[ID_resnet50] << "," << output_label_resnet50.c_str() << "\n";
+                        outputFile << i + 1 << "," << ID_resnet50 << "," << output_buf[ID_resnet50] << "," << output_label_resnet50.c_str() << "\n";
                     }
                 }
                 outputFile.close();
@@ -401,7 +391,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_vgg19));
                 }
                 t1 = clockCounter();
-                float vgg19Time = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+                float vgg19Time = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
                 printf("OK: vgg19 took %.3f msec (average over %d iterations)\n", vgg19Time, N);
 
                 //vgg19 results
@@ -414,14 +404,14 @@ int main(int argc, char **argv) {
 
                 if (lev == profiler_level - 1) {
                     outputFile.open(date + "/vgg19-output-results.csv");
-                    outputFile << "image,classification,probability,label\n";
+                    outputFile << "image, classification, probability, label\n";
                 }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_vgg19 = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
                     std::string output_label_vgg19 = labelText[ID_vgg19];
                     if (lev == profiler_level - 1) {
-                        outputFile << i+1 << "," << ID_vgg19 << "," << output_buf[ID_vgg19] << "," << output_label_vgg19 << "\n";
+                        outputFile << i + 1 << "," << ID_vgg19 << "," << output_buf[ID_vgg19] << "," << output_label_vgg19 << "\n";
                     }
                 }
                 outputFile.close();
@@ -459,7 +449,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_googlenet));
                 }
                 t1 = clockCounter();
-                float googlenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+                float googlenetTime = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
                 printf("OK: googlenet took %.3f msec (average over %d iterations)\n", googlenetTime, N);
 
                 //googlenet results
@@ -472,14 +462,14 @@ int main(int argc, char **argv) {
 
                 if (lev == profiler_level - 1) {
                     outputFile.open(date + "/googlenet-output-results.csv");
-                    outputFile << "image,classification,probability,label\n";
+                    outputFile << "image, classification, probability, label\n";
                 }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_googlenet = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
                     std::string output_label_googlenet = labelText[ID_googlenet];
                     if (lev == profiler_level - 1) {
-                        outputFile << i+1 << "," << ID_googlenet << "," << output_buf[ID_googlenet] << "," << output_label_googlenet << "\n";
+                        outputFile << i + 1 << "," << ID_googlenet << "," << output_buf[ID_googlenet] << "," << output_label_googlenet << "\n";
                     }
                 }
                 outputFile.close();
@@ -517,7 +507,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_alexnet));
                 }
                 t1 = clockCounter();
-                float alexnetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+                float alexnetTime = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
                 printf("OK: alexnet took %.3f msec (average over %d iterations)\n", alexnetTime, N);
 
                 //alexnet results
@@ -530,14 +520,14 @@ int main(int argc, char **argv) {
 
                 if (lev == profiler_level - 1) {
                     outputFile.open(date + "/alexnet-output-results.csv");
-                    outputFile << "image,classification,probability,label\n";
+                    outputFile << "image, classification, probability, label\n";
                 }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_alexnet = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
                     std::string output_label_alexnet = labelText[ID_alexnet];
                     if (lev == profiler_level - 1) {
-                        outputFile << i+1 << "," << ID_alexnet << "," << output_buf[ID_alexnet] << "," << output_label_alexnet << "\n";
+                        outputFile << i + 1 << "," << ID_alexnet << "," << output_buf[ID_alexnet] << "," << output_label_alexnet << "\n";
                     }
                 }
                 outputFile.close();
@@ -577,7 +567,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
                 }
                 t1 = clockCounter();
-                float squeezenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+                float squeezenetTime = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
                 printf("OK: squeezenet took %.3f msec (average over %d iterations)\n", squeezenetTime, N);
 
                 //squeezenet results
@@ -590,14 +580,14 @@ int main(int argc, char **argv) {
 
                 if (lev == profiler_level - 1) {
                     outputFile.open(date + "/squeezenet-output-results.csv");
-                    outputFile << "image,classification,probability,label\n";
+                    outputFile << "image, classification, probability, label\n";
                 }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_squeezenet = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
                     std::string output_label_squeezenet = labelText[ID_squeezenet];
                     if (lev == profiler_level - 1) {
-                        outputFile << i+1 << "," << ID_squeezenet << "," << output_buf[ID_squeezenet] << "," << output_label_squeezenet << "\n";
+                        outputFile << i + 1 << "," << ID_squeezenet << "," << output_buf[ID_squeezenet] << "," << output_label_squeezenet << "\n";
                     }
                 }
                 outputFile.close();
@@ -635,7 +625,7 @@ int main(int argc, char **argv) {
                     ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
                 }
                 t1 = clockCounter();
-                float densenetTime = (float)(t1-t0)*1000.0f/(float)freq/(float)N;
+                float densenetTime = (float)(t1-t0) * 1000.0f / (float)freq / (float)N;
                 printf("OK: densenet took %.3f msec (average over %d iterations)\n", densenetTime, N);
 
                 //densenet results
@@ -648,14 +638,14 @@ int main(int argc, char **argv) {
 
                 if (lev == profiler_level - 1) {
                     outputFile.open(date + "/densenet-output-results.csv");
-                    outputFile << "image,classification,probability,label\n";
+                    outputFile << "image, classification, probability, label\n";
                 }
                 float *output_buf = (float*)ptr;
                 for(int i = 0; i < batch_size; i++, output_buf += num_results_imagenet) {
                     int ID_densenet = std::distance(output_buf, std::max_element(output_buf, output_buf + num_results_imagenet));
                     std::string output_label_densenet = labelText[ID_densenet];
                     if (lev == profiler_level - 1) {
-                        outputFile << i+1 << "," << ID_densenet << "," << output_buf[ID_densenet] << "," << output_label_densenet << "\n";
+                        outputFile << i + 1 << "," << ID_densenet << "," << output_buf[ID_densenet] << "," << output_label_densenet << "\n";
                     }
                 }
                 outputFile.close();

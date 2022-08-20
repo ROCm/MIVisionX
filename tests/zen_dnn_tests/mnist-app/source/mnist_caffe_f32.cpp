@@ -60,7 +60,7 @@ static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE 
     fread(h, 1, sizeof(h), fp);
     if (h[0] != 0xf00dd1e1 || (size_t)h[1] != (tensorSize * itemsize))
     {
-        printf("ERROR: invalid data (magic,size)=(0x%x,%d) in %s at byte position %d -- expected size is %ld\n", h[0], h[1], binaryFilename, ftell(fp) - sizeof(h), tensorSize * itemsize);
+        printf("ERROR: invalid data (magic,size)=(0x%x,%d) in %s at byte position %lu -- expected size is %ld\n", h[0], h[1], binaryFilename, ftell(fp) - sizeof(h), tensorSize * itemsize);
         return -1;
     }
 
@@ -527,6 +527,8 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, int 
     read_from_zendnn_memory(user_dst.data(), fc2_dst_memory);
 
     s.wait();
+
+    return 0;
 }
 
 int main(int argc, const char **argv)
@@ -546,7 +548,7 @@ int main(int argc, const char **argv)
         return -1;
     }
 
-    engine::kind engine_kind = parse_engine_kind(argc, argv)
+    engine::kind engine_kind = parse_engine_kind(argc, argv);
     const char *weights = argv[2];
     int NumExecution = 1000;
 

@@ -122,15 +122,18 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     std::vector<float> user_src(batch * 1 * 28 * 28);
     std::vector<float> user_dst(batch * 10);
     // End: allocate input & output data
-
-    // Start: Input Image Load for Inference
-    Mat input = imread(imageFilename);
+    cv::Mat input = imread(imageFilename);
     if (input.empty())
     {
         printf("Image not found\n");
         return 0;
     }
-    Mat img = input.clone();
+    else
+    {
+        printf("Image found -- %s\n", imageFilename);
+    }
+
+    cv::Mat img = input.clone();
 
     // convert to grayscale image
     cvtColor(img, img, CV_BGR2GRAY);
@@ -145,7 +148,8 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     copyMakeBorder(img, img, 2, 2, 2, 2, BORDER_CONSTANT, Scalar(0, 0, 0));
 
     float *ptr = user_src.data();
-    for (unsigned int y = 0; y < (1 * 1 * 28 * 28); y++)
+    int imageElements = (1 * 1 * 28 * 28);
+    for (int y = 0; y < imageElements; y++)
     {
         unsigned char *src = img.data + y;
         float *dst = ptr + y;
@@ -580,11 +584,11 @@ int main(int argc, const char **argv)
     zendnnInfo(ZENDNN_TESTLOG, "zendnn_mnist_app test starts");
 
     // check command-line usage
-    if (argc != 2)
+    if (argc != 3)
     {
         printf(
             "\n"
-            "Usage: ./zendnn_mnist_app [weights.bin] [imageName]\n"
+            "Usage: ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 ./zendnn_mnist_app [weights.bin] [imageName]\n"
             "\n"
             "   <weights.bin>: name of the weights file to be used for the inference\n."
             "   <imageName>: name of the image file to be used for the inference\n."

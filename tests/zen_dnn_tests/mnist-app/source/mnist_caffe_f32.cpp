@@ -124,7 +124,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     // End: allocate input & output data
 
     // Start: Input Image Load for Inference
-    Mat input = imread(argv[2]);
+    Mat input = imread(imageFilename);
     if (input.empty())
     {
         printf("Image not found\n");
@@ -145,14 +145,11 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     copyMakeBorder(img, img, 2, 2, 2, 2, BORDER_CONSTANT, Scalar(0, 0, 0));
 
     void *ptr = user_src.data();
-    for (vx_size y = 0; y < 28]; y++)
+    for (unsigned int y = 0; y < (1 * 1 * 28 * 28); y++)
     {
-        unsigned char *src = img.data + y * 28;
-        float *dst = ptr + ((y * stride[1]) >> 2);
-        for (vx_size x = 0; x < 28; x++, src++)
-        {
-            *dst++ = src[0];
-        }
+        unsigned char *src = img.data + y;
+        float *dst = ptr + y;
+        *dst = src[0];
     }
     // End: Input Image
 

@@ -12,7 +12,7 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN apt-get update -y
 
 # install mivisionx base dependencies - CPU Only
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git sudo
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git sudo wget
 
 # install OpenCV for test app
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \

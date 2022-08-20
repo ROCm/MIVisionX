@@ -32,9 +32,16 @@ THE SOFTWARE.
 #include "test_utils.hpp"
 #include "zendnn_logging.hpp"
 
+#include <opencv2/opencv.hpp>
+
 using namespace zendnn;
 
+using namespace cv;
 using namespace std;
+
+#if USE_OPENCV_4
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#endif
 
 memory::dim product(const memory::dims &dims)
 {
@@ -75,7 +82,7 @@ static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE 
     return 0;
 }
 
-int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, int times)
+int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, const char *imageFilename, int times)
 {
 
     using tag = memory::format_tag;
@@ -115,6 +122,39 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, int 
     std::vector<float> user_src(batch * 1 * 28 * 28);
     std::vector<float> user_dst(batch * 10);
     // End: allocate input & output data
+
+    // Start: Input Image Load for Inference
+    Mat input = imread(argv[2]);
+    if (input.empty())
+    {
+        printf("Image not found\n");
+        return 0;
+    }
+    Mat img = input.clone();
+
+    // convert to grayscale image
+    cvtColor(img, img, CV_BGR2GRAY);
+
+    // resize to 24 x 24
+    resize(img, img, Size(24, 24));
+
+    // dilate image
+    dilate(img, img, Mat::ones(2, 2, CV_8U));
+
+    // add border to the image so that the digit will go center and become 28 x 28 image
+    copyMakeBorder(img, img, 2, 2, 2, 2, BORDER_CONSTANT, Scalar(0, 0, 0));
+
+    void *ptr = user_src.data();
+    for (vx_size y = 0; y < 28]; y++)
+    {
+        unsigned char *src = img.data + y * 28;
+        float *dst = ptr + ((y * stride[1]) >> 2);
+        for (vx_size x = 0; x < 28; x++, src++)
+        {
+            *dst++ = src[0];
+        }
+    }
+    // End: Input Image
 
     // Start: MNIST Layer 1 - conv1
     zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 1 - conv1 Setup");
@@ -497,7 +537,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, int 
     net_args.push_back({{ZENDNN_ARG_SRC, fc2_dst_memory},
                         {ZENDNN_ARG_DST, fc2_dst_memory}});
     // End: Create a softmax primitive and add it to the net
-    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 4 - pool2 Setup Complete");
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 8 - softmax Setup Complete");
     // End: MNIST Layer 8 - softMax
 
     {
@@ -520,11 +560,18 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, int 
         {
             net.at(i).execute(s, net_args.at(i));
         }
+        // Start: Read output from engine
+        read_from_zendnn_memory(user_dst.data(), fc2_dst_memory);
     }
     // End: Execute primitives
 
     // Start: Read output from engine
-    read_from_zendnn_memory(user_dst.data(), fc2_dst_memory);
+    // read_from_zendnn_memory(user_dst.data(), fc2_dst_memory);
+    printf("MNIST Probability Result\n");
+    for (int j = 0; j < 10; ++j)
+    {
+        printf("%d -- %f", j, user_dst[j]);
+    }
 
     s.wait();
 
@@ -540,16 +587,18 @@ int main(int argc, const char **argv)
     {
         printf(
             "\n"
-            "Usage: ./zendnn_mnist_app [weights.bin]\n"
+            "Usage: ./zendnn_mnist_app [weights.bin] [imageName]\n"
             "\n"
             "   <weights.bin>: name of the weights file to be used for the inference\n."
+            "   <imageName>: name of the image file to be used for the inference\n."
             "\n");
         return -1;
     }
 
     engine::kind engine_kind = zendnn::engine::kind::cpu;
     const char *weights = argv[1];
-    int NumExecution = 1000;
+    const char *imageFileName = argv[2];
+    int NumExecution = 10;
 
     try
     {
@@ -557,7 +606,7 @@ int main(int argc, const char **argv)
                          chrono::steady_clock::now().time_since_epoch())
                          .count();
 
-        int app_status = mnist_caffe_setup(engine_kind, weights, NumExecution);
+        int app_status = mnist_caffe_setup(engine_kind, weights, imageFileName, NumExecution);
 
         auto end = chrono::duration_cast<chrono::milliseconds>(
                        chrono::steady_clock::now().time_since_epoch())

@@ -536,19 +536,18 @@ int main(int argc, const char **argv)
     zendnnInfo(ZENDNN_TESTLOG, "zendnn_mnist_app test starts");
 
     // check command-line usage
-    if (argc != 3)
+    if (argc != 2)
     {
         printf(
             "\n"
-            "Usage: ./zendnn_mnist_app [zendnn::engine::kind(CPU/GPU)] [weights.bin]\n"
+            "Usage: ./zendnn_mnist_app [weights.bin]\n"
             "\n"
-            "   <CPU/GPU>: name of the zendnn::engine::kind to be used for the inference\n."
             "   <weights.bin>: name of the weights file to be used for the inference\n."
             "\n");
         return -1;
     }
 
-    engine::kind engine_kind = parse_engine_kind(argc, argv);
+    engine::kind engine_kind = zendnn::engine::kind::cpu;
     const char *weights = argv[2];
     int NumExecution = 1000;
 

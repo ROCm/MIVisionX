@@ -65,22 +65,6 @@ if(NOT DEFINED ZENDNN_GIT_ROOT)
     endif()
 endif()
 
-# OpenCV -- Display Component
-find_package(OpenCV REQUIRED)
-# OpenCV 3/4 Support
-if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
-	message("-- ${PROJECT_NAME} -- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
-	if(${OpenCV_VERSION_MAJOR} EQUAL 4)
-	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
-    else()
-	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
-    endif()
-	include_directories(${OpenCV_INCLUDE_DIRS})
-    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${OpenCV_LIBRARIES})
-else()
-	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
-endif()
-
 # set global compiler flags for the project
 # -O3 -- Optimize output file
 # -fPIC -- Generate position-independent code if possible.
@@ -107,6 +91,22 @@ link_directories(/usr/lib/x86_64-linux-gnu/lib)
 
 file(GLOB My_Source_Files ./source/*.cpp)
 add_executable(${PROJECT_NAME} ${My_Source_Files})
+
+# OpenCV -- Display Component
+find_package(OpenCV REQUIRED)
+# OpenCV 3/4 Support
+if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
+	message("-- ${PROJECT_NAME} -- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
+	if(${OpenCV_VERSION_MAJOR} EQUAL 4)
+	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
+    else()
+	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
+    endif()
+	include_directories(${OpenCV_INCLUDE_DIRS})
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${OpenCV_LIBRARIES})
+else()
+	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
+endif()
 
 set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} amdZenDNN blis-mt alm)
 target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})

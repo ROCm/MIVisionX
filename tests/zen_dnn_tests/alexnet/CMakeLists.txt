@@ -25,8 +25,16 @@
 ################################################################################
 cmake_minimum_required(VERSION 3.5)
 # Set Default Compiler & Standard
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_CXX_COMPILER clang++)
+# aocc-linux-compiler -- ENV:ZENDNN_AOCC_COMP_PATH
+if(NOT DEFINED ZENDNN_AOCC_COMP_PATH)
+    if(NOT DEFINED ENV{ZENDNN_AOCC_COMP_PATH})
+        message(FATAL_ERROR "ZENDNN_AOCC_COMP_PATH NOT FOUND -- aocc-compiler-X.X.XX install path must be set to ZENDNN_AOCC_COMP_PATH${ColourReset}")
+    else()
+        set(ZENDNN_AOCC_COMP_PATH $ENV{ZENDNN_AOCC_COMP_PATH} CACHE PATH "Path to which ZENDNN_AOCC_COMP_PATH has been installed")
+    endif()
+endif()
+set(CMAKE_C_COMPILER ${ZENDNN_AOCC_COMP_PATH}/bin/clang)
+set(CMAKE_CXX_COMPILER ${ZENDNN_AOCC_COMP_PATH}/bin/clang++)
 set(CMAKE_CXX_STANDARD 14)
 
 project(zendnn_alexnet_f32)

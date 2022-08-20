@@ -44,7 +44,6 @@ cmake ../mnist && make
 ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 ./zendnn_mnist_f32 cpu
 ```
 
-
 ## AlexNet F32 Sample
 This C++ API example demonstrates how to build an AlexNet neural network topology for forward-pass inference.
 

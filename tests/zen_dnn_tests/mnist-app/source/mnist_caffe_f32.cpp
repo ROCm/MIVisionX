@@ -60,7 +60,7 @@ static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE 
     fread(h, 1, sizeof(h), fp);
     if (h[0] != 0xf00dd1e1 || (size_t)h[1] != (tensorSize * itemsize))
     {
-        printf("ERROR: invalid data (magic,size)=(0x%%x,%%d) in %%s at byte position %%d -- expected size is %%ld\n", h[0], h[1], binaryFilename, ftell(fp) - sizeof(h), tensorSize * itemsize);
+        printf("ERROR: invalid data (magic,size)=(0x%x,%d) in %s at byte position %d -- expected size is %ld\n", h[0], h[1], binaryFilename, ftell(fp) - sizeof(h), tensorSize * itemsize);
         return -1;
     }
 
@@ -68,7 +68,7 @@ static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE 
     size_t n = fread(ptr, itemsize, tensorSize, fp);
     if (n != tensorSize)
     {
-        printf("ERROR: expected char[%%ld], but got char[%%ld] in %%s\n", tensorSize * itemsize, n * itemsize, binaryFilename);
+        printf("ERROR: expected char[%ld], but got char[%ld] in %s\n", tensorSize * itemsize, n * itemsize, binaryFilename);
         return -1;
     }
 
@@ -545,6 +545,8 @@ int main(int argc, const char **argv)
             "\n");
         return -1;
     }
+
+    engine::kind engine_kind = parse_engine_kind(argc, argv)
     const char *weights = argv[2];
     int NumExecution = 1000;
 
@@ -553,11 +555,13 @@ int main(int argc, const char **argv)
         auto begin = chrono::duration_cast<chrono::milliseconds>(
                          chrono::steady_clock::now().time_since_epoch())
                          .count();
-        int app_status = mnist_caffe_setup(parse_engine_kind(argc, argv), weights, NumExecution);
+
+        int app_status = mnist_caffe_setup(engine_kind, weights, NumExecution);
+
         auto end = chrono::duration_cast<chrono::milliseconds>(
                        chrono::steady_clock::now().time_since_epoch())
                        .count();
-        zendnnInfo(ZENDNN_TESTLOG, "Use time ", (end - begin) / (times + 0.0));
+        zendnnInfo(ZENDNN_TESTLOG, "Use time ", (end - begin) / (NumExecution + 0.0));
     }
 
     catch (error &e)

@@ -52,20 +52,20 @@ memory::dim product(const memory::dims &dims)
         }                                                                                      \
     }
 
-static int initializeTensor(std::vector<float> *tensor, size tensorSize, FILE *fp, const char *binaryFilename)
+static int initializeTensor(&std::vector<float>* tensor, size_t tensorSize, FILE *fp, const char *binaryFilename)
 {
-    size itemsize = sizeof(float);
+    size_t itemsize = sizeof(float);
     unsigned int h[2] = {0};
 
     fread(h, 1, sizeof(h), fp);
-    if (h[0] != 0xf00dd1e1 || (vx_size)h[1] != (tensorSize * itemsize))
+    if (h[0] != 0xf00dd1e1 || (size_t)h[1] != (tensorSize * itemsize))
     {
         printf("ERROR: invalid data (magic,size)=(0x%%x,%%d) in %%s at byte position %%d -- expected size is %%ld\n", h[0], h[1], binaryFilename, ftell(fp) - sizeof(h), tensorSize * itemsize);
         return -1;
     }
 
-    void *ptr = tensor.data();
-    vx_size n = fread(ptr, itemsize, tensorSize, fp);
+    void *ptr = tensor->data();
+    size_t n = fread(ptr, itemsize, tensorSize, fp);
     if (n != tensorSize)
     {
         printf("ERROR: expected char[%%ld], but got char[%%ld] in %%s\n", tensorSize * itemsize, n * itemsize, binaryFilename);
@@ -129,9 +129,9 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, int 
 
     // Start: Allocate buffers for input, output data, weights, and bias
     std::vector<float> conv1_weights(product(conv1_weights_tensor_dims));
-    ERROR_CHECK_STATUS(initializeTensor(conv1_weights, product(conv1_weights_tensor_dims), fp__variables, binaryFilename));
+    ERROR_CHECK_STATUS(initializeTensor(&conv1_weights, product(conv1_weights_tensor_dims), fp__variables, binaryFilename));
     std::vector<float> conv1_bias(product(conv1_bias_tensor_dims));
-    ERROR_CHECK_STATUS(initializeTensor(conv1_bias, product(conv1_bias_tensor_dims), fp__variables, binaryFilename));
+    ERROR_CHECK_STATUS(initializeTensor(&conv1_bias, product(conv1_bias_tensor_dims), fp__variables, binaryFilename));
     // End: Allocate buffers for input, output data, weights, and bias
 
     // Start: Create memory that describes data layout in the buffers
@@ -256,9 +256,9 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, int 
 
     // Start: weights, and bias
     std::vector<float> conv2_weights(product(conv2_weights_tensor_dims));
-    ERROR_CHECK_STATUS(initializeTensor(conv2_weights, product(conv2_weights_tensor_dims), fp__variables, binaryFilename));
+    ERROR_CHECK_STATUS(initializeTensor(&conv2_weights, product(conv2_weights_tensor_dims), fp__variables, binaryFilename));
     std::vector<float> conv2_bias(product(conv2_bias_tensor_dims));
-    ERROR_CHECK_STATUS(initializeTensor(conv2_bias, product(conv2_bias_tensor_dims), fp__variables, binaryFilename));
+    ERROR_CHECK_STATUS(initializeTensor(&conv2_bias, product(conv2_bias_tensor_dims), fp__variables, binaryFilename));
     // End: weights, and bias
 
     // Start: Create memory that describes data layout in the buffers
@@ -351,9 +351,9 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, int 
 
     // Start: weights, and bias
     std::vector<float> fc1_weights(product(fc1_weights_tensor_dims));
-    ERROR_CHECK_STATUS(initializeTensor(fc1_weights, product(fc1_weights_tensor_dims), fp__variables, binaryFilename));
+    ERROR_CHECK_STATUS(initializeTensor(&fc1_weights, product(fc1_weights_tensor_dims), fp__variables, binaryFilename));
     std::vector<float> fc1_bias(product(fc1_bias_tensor_dims));
-    ERROR_CHECK_STATUS(initializeTensor(fc1_bias, product(fc1_bias_tensor_dims), fp__variables, binaryFilename));
+    ERROR_CHECK_STATUS(initializeTensor(&fc1_bias, product(fc1_bias_tensor_dims), fp__variables, binaryFilename));
     // End: weights, and bias
 
     // Start: Create memory that describes data layout in the buffers
@@ -433,9 +433,9 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, int 
 
     // Start: weights, and bias
     std::vector<float> fc2_weights(product(fc2_weights_tensor_dims));
-    ERROR_CHECK_STATUS(initializeTensor(fc2_weights, product(fc2_weights_tensor_dims), fp__variables, binaryFilename));
+    ERROR_CHECK_STATUS(initializeTensor(&fc2_weights, product(fc2_weights_tensor_dims), fp__variables, binaryFilename));
     std::vector<float> fc2_bias(product(fc2_bias_tensor_dims));
-    ERROR_CHECK_STATUS(initializeTensor(fc2_bias, product(fc2_bias_tensor_dims), fp__variables, binaryFilename));
+    ERROR_CHECK_STATUS(initializeTensor(&fc2_bias, product(fc2_bias_tensor_dims), fp__variables, binaryFilename));
     // End: weights, and bias
 
     // Start: Create memory that describes data layout in the buffers

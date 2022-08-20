@@ -548,7 +548,7 @@ int main(int argc, const char **argv)
     }
 
     engine::kind engine_kind = zendnn::engine::kind::cpu;
-    const char *weights = argv[2];
+    const char *weights = argv[1];
     int NumExecution = 1000;
 
     try

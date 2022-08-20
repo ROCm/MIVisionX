@@ -611,7 +611,7 @@ int main(int argc, const char **argv)
         zendnnInfo(ZENDNN_TESTLOG, "Use time ", (end - begin) / (NumExecution + 0.0));
     }
 
-    catch (error &e)
+    catch (zendnn::error &e)
     {
         std::cerr << "status: " << e.status << std::endl;
         std::cerr << "message: " << e.message << std::endl;

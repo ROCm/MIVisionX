@@ -144,7 +144,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     // add border to the image so that the digit will go center and become 28 x 28 image
     copyMakeBorder(img, img, 2, 2, 2, 2, BORDER_CONSTANT, Scalar(0, 0, 0));
 
-    void *ptr = user_src.data();
+    float *ptr = user_src.data();
     for (unsigned int y = 0; y < (1 * 1 * 28 * 28); y++)
     {
         unsigned char *src = img.data + y;

@@ -52,7 +52,7 @@ memory::dim product(const memory::dims &dims)
         }                                                                                      \
     }
 
-static int initializeTensor(&std::vector<float>* tensor, size_t tensorSize, FILE *fp, const char *binaryFilename)
+static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE *fp, const char *binaryFilename)
 {
     size_t itemsize = sizeof(float);
     unsigned int h[2] = {0};

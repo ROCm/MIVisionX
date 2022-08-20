@@ -284,7 +284,7 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
     // Start: fc1 inner product 1 - set dimensions
     memory::dims fc1_weights_tensor_dims = {500, 50, 4, 4};
     memory::dims fc1_bias_tensor_dims = {500};
-    memory::dims fc1_dst_tensor_dims = {batch, 500, 1, 1};
+    memory::dims fc1_dst_tensor_dims = {batch, 500};
     // End: fc1 inner product 1 - set dimensions
 
     // Start: weights, and bias
@@ -306,7 +306,7 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
     // End: Create ip1 memory descriptors with layout tag::any
 
     // Start: Create inner product primitive descriptor
-    auto fc1_desc = inner_product_forward::desc(prop_kind::forward_inference,
+    auto fc1_desc = inner_product_forward::desc(prop_kind::forward_inference, 
                     pool2_dst_memory.get_desc(), fc1_weights_md, fc1_bias_md, fc1_dst_md);
     auto fc1_prim_desc = inner_product_forward::primitive_desc(fc1_desc, eng);
     // End: Create inner product primitive descriptor
@@ -361,9 +361,9 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
     // Start: MNIST Layer 7 - ip2
     zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 7 - ip2 Setup");
     // Start: fc2 inner product 2 - set dimensions
-    memory::dims fc2_weights_tensor_dims = {10, 500, 1, 1};
+    memory::dims fc2_weights_tensor_dims = {10, 500};
     memory::dims fc2_bias_tensor_dims = {10};
-    memory::dims fc2_dst_tensor_dims = {batch, 10, 1, 1};
+    memory::dims fc2_dst_tensor_dims = {batch, 10};
     // End: fc2 inner product 2 - set dimensions
 
     // Start: weights, and bias
@@ -372,7 +372,7 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
     // End: weights, and bias
 
     // Start: Create memory that describes data layout in the buffers
-    auto fc2_user_weights_memory = memory({{fc2_weights_tensor_dims}, dt::f32, tag::oihw}, eng);
+    auto fc2_user_weights_memory = memory({{fc2_weights_tensor_dims}, dt::f32, tag::nc}, eng);
     write_to_zendnn_memory(fc2_weights.data(), fc2_user_weights_memory);
     auto fc2_user_bias_memory = memory({{fc2_bias_tensor_dims}, dt::f32, tag::x}, eng);
     write_to_zendnn_memory(fc2_bias.data(), fc2_user_bias_memory);

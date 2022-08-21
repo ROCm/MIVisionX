@@ -590,15 +590,15 @@ int main(int argc, const char **argv)
             "\n"
             "Usage: ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 ./zendnn_mnist_app [weights.bin] [imageName]\n"
             "\n"
-            "   <weights.bin>: name of the weights file to be used for the inference\n."
-            "   <imageName>: name of the image file to be used for the inference\n."
+            "   <weights.bin>: weights file to be used for the inference\n."
+            "   <imageName>: image file to be used for the inference\n."
             "\n");
         return -1;
     }
 
     engine::kind engine_kind = zendnn::engine::kind::cpu;
     const char *weights = argv[1];
-    const char *imageFileName = argv[2];
+    const char *image = argv[2];
     int NumExecution = 10;
 
     try
@@ -607,7 +607,7 @@ int main(int argc, const char **argv)
                          chrono::steady_clock::now().time_since_epoch())
                          .count();
 
-        int app_status = mnist_caffe_setup(engine_kind, weights, imageFileName, NumExecution);
+        int app_status = mnist_caffe_setup(engine_kind, weights, image, NumExecution);
 
         auto end = chrono::duration_cast<chrono::milliseconds>(
                        chrono::steady_clock::now().time_since_epoch())

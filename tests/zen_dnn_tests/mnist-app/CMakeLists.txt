@@ -92,6 +92,8 @@ link_directories(/usr/lib/x86_64-linux-gnu/lib)
 file(GLOB My_Source_Files ./source/*.cpp)
 add_executable(${PROJECT_NAME} ${My_Source_Files})
 
+set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} amdZenDNN blis-mt alm)
+
 # OpenCV -- Display Component
 find_package(OpenCV REQUIRED)
 # OpenCV 3/4 Support
@@ -108,7 +110,6 @@ else()
 	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
 
-set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} amdZenDNN blis-mt alm)
 target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
 
 # Bring in weights & images to build folder

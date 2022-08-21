@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include <opencv2/opencv.hpp>
 
 using namespace zendnn;
-using namespace cv;
 using namespace std;
 
 #if USE_OPENCV_4
@@ -123,7 +122,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     // End: allocate input & output data
 
     // Start: Load Input Image
-    cv::Mat input = imread(imageFilename);
+    cv::Mat input = cv::imread(imageFilename);
     if (input.empty())
     {
         printf("Image not found\n");
@@ -137,16 +136,16 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     cv::Mat img = input.clone();
 
     // convert to grayscale image
-    cvtColor(img, img, CV_BGR2GRAY);
+    cv::cvtColor(img, img, cv::CV_BGR2GRAY);
 
     // resize to 24 x 24
-    resize(img, img, Size(24, 24));
+    cv::resize(img, img, Size(24, 24));
 
     // dilate image
-    dilate(img, img, Mat::ones(2, 2, CV_8U));
+    cv::dilate(img, img, Mat::ones(2, 2, CV_8U));
 
     // add border to the image so that the digit will go center and become 28 x 28 image
-    copyMakeBorder(img, img, 2, 2, 2, 2, BORDER_CONSTANT, Scalar(0, 0, 0));
+    cv::copyMakeBorder(img, img, 2, 2, 2, 2, BORDER_CONSTANT, Scalar(0, 0, 0));
 
     float *ptr = user_src.data();
     int imageElements = (batch * 1 * 28 * 28);
@@ -568,7 +567,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     // End: Execute primitives
 
     // Start: Print Output Probabilty
-    printf("MNIST Probability Result for - %s\n",imageFilename);
+    printf("MNIST Probability Result for - %s\n", imageFilename);
     for (int j = 0; j < 10; ++j)
     {
         printf("%d -- %.2f", j, user_dst[j]);
@@ -590,8 +589,8 @@ int main(int argc, const char **argv)
             "\n"
             "Usage: ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 ./zendnn_mnist_app [weights.bin] [imageName]\n"
             "\n"
-            "   <weights.bin>: weights file to be used for the inference\n."
-            "   <imageName>: image file to be used for the inference\n."
+            "   <weights.bin>: weights file to be used for the inference\n"
+            "   <imageName>: image file to be used for the inference\n"
             "\n");
         return -1;
     }
@@ -615,7 +614,7 @@ int main(int argc, const char **argv)
         zendnnInfo(ZENDNN_TESTLOG, "Use time ", (end - begin) / (NumExecution + 0.0));
     }
 
-    catch (zendnn::error &e)
+    catch (error &e)
     {
         std::cerr << "status: " << e.status << std::endl;
         std::cerr << "message: " << e.message << std::endl;

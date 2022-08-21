@@ -139,13 +139,13 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     cv::cvtColor(img, img, cv::CV_BGR2GRAY);
 
     // resize to 24 x 24
-    cv::resize(img, img, Size(24, 24));
+    cv::resize(img, img, cv::Size(24, 24));
 
     // dilate image
-    cv::dilate(img, img, Mat::ones(2, 2, CV_8U));
+    cv::dilate(img, img, cv::Mat::ones(2, 2, cv::CV_8U));
 
     // add border to the image so that the digit will go center and become 28 x 28 image
-    cv::copyMakeBorder(img, img, 2, 2, 2, 2, BORDER_CONSTANT, Scalar(0, 0, 0));
+    cv::copyMakeBorder(img, img, 2, 2, 2, 2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 
     float *ptr = user_src.data();
     int imageElements = (batch * 1 * 28 * 28);

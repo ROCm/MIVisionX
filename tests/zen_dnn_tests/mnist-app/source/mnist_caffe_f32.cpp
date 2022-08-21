@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include <opencv2/opencv.hpp>
 
 using namespace zendnn;
-
 using namespace cv;
 using namespace std;
 
@@ -122,6 +121,8 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     std::vector<float> user_src(batch * 1 * 28 * 28);
     std::vector<float> user_dst(batch * 10);
     // End: allocate input & output data
+
+    // Start: Load Input Image
     cv::Mat input = imread(imageFilename);
     if (input.empty())
     {
@@ -148,14 +149,14 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     copyMakeBorder(img, img, 2, 2, 2, 2, BORDER_CONSTANT, Scalar(0, 0, 0));
 
     float *ptr = user_src.data();
-    int imageElements = (1 * 1 * 28 * 28);
+    int imageElements = (batch * 1 * 28 * 28);
     for (int y = 0; y < imageElements; y++)
     {
         unsigned char *src = img.data + y;
         float *dst = ptr + y;
         *dst = src[0];
     }
-    // End: Input Image
+    // End: Load Input Image
 
     // Start: MNIST Layer 1 - conv1
     zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 1 - conv1 Setup");
@@ -538,7 +539,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     net_args.push_back({{ZENDNN_ARG_SRC, fc2_dst_memory},
                         {ZENDNN_ARG_DST, fc2_dst_memory}});
     // End: Create a softmax primitive and add it to the net
-    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 8 - softmax Setup Complete");
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 4 - pool2 Setup Complete");
     // End: MNIST Layer 8 - softMax
 
     {
@@ -566,12 +567,11 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     }
     // End: Execute primitives
 
-    // Start: Read output from engine
-    // read_from_zendnn_memory(user_dst.data(), fc2_dst_memory);
-    printf("MNIST Probability Result\n");
+    // Start: Print Output Probabilty
+    printf("MNIST Probability Result for - %s\n",imageFilename);
     for (int j = 0; j < 10; ++j)
     {
-        printf("%d -- %f", j, user_dst[j]);
+        printf("%d -- %.2f", j, user_dst[j]);
     }
 
     s.wait();

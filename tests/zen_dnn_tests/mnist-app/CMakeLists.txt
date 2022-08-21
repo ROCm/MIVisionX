@@ -112,9 +112,9 @@ set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} amdZenDNN blis-mt alm)
 target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
 
 # Bring in weights & images to build folder
-FILE(GLOB IMAGE_LIST ./data/images/*.png)
-file(COPY ./data/weights.bin DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data/)
-file(COPY ${IMAGE_LIST} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/images/)
+#FILE(GLOB IMAGE_LIST ./data/images/*.png)
+#file(COPY ./data/weights.bin DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data/)
+#file(COPY ${IMAGE_LIST} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/images/)
 
 message("-- ${PROJECT_NAME} -- Using Compiler - Path:" ${CMAKE_CXX_COMPILER} "\tVersion:" ${CMAKE_CXX_COMPILER_VERSION} "\tCompiler:" ${CMAKE_CXX_COMPILER_ID}${ColourReset})
 message("-- ${PROJECT_NAME} -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

@@ -414,7 +414,22 @@ void mnist_caffe(engine::kind engine_kind, int times = 1000) {
     // End: MNIST Layer 7 - ip2
 
     // Start: MNIST Layer 8 - softMax
-    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 8 - softmax Setup incomplete");
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 8 - softmax Setup");
+
+    // Softmax axis.
+    const int sm_axis = 1;
+
+    // Start: Create softmax primitive
+    auto softmax_desc = softmax_forward::desc(prop_kind::forward_inference, fc2_dst_memory.get_desc(), sm_axis);
+    auto softmax_pd = softmax_forward::primitive_desc(softmax_desc, eng);
+    // End: Create softmax primitive
+
+    // Start: Create a softmax primitive and add it to the net
+    net.push_back(softmax_forward(softmax_pd));
+    net_args.push_back({{ZENDNN_ARG_SRC, fc2_dst_memory},
+                        {ZENDNN_ARG_DST, fc2_dst_memory}});
+    // End: Create a softmax primitive and add it to the net
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 8 - softmax Setup Complete");
     // End: MNIST Layer 8 - softMax
 
 

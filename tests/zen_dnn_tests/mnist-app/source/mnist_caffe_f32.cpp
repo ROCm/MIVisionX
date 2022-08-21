@@ -142,7 +142,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     cv::resize(img, img, cv::Size(24, 24));
 
     // dilate image
-    cv::dilate(img, img, cv::Mat::ones(2, 2, cv::CV_8U));
+    cv::dilate(img, img, cv::Mat::ones(2, 2, CV_8U));
 
     // add border to the image so that the digit will go center and become 28 x 28 image
     cv::copyMakeBorder(img, img, 2, 2, 2, 2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
@@ -561,8 +561,13 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
         {
             net.at(i).execute(s, net_args.at(i));
         }
+
+        // Wait for the computation to finalize.
+        s.wait();
+
         // Start: Read output from engine
         read_from_zendnn_memory(user_dst.data(), fc2_dst_memory);
+        // End: Read output from engine
     }
     // End: Execute primitives
 
@@ -570,10 +575,9 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     printf("MNIST Probability Result for - %s\n", imageFilename);
     for (int j = 0; j < 10; ++j)
     {
-        printf("%d -- %.2f", j, user_dst[j]);
+        printf("Class:%d -- %.3f\n", j, user_dst[j]);
     }
-
-    s.wait();
+    // End: Print Output Probabilty
 
     return 0;
 }

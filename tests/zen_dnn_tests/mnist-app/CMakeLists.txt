@@ -113,9 +113,9 @@ endif()
 target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
 
 # Bring in weights & images to build folder
-#FILE(GLOB IMAGE_LIST ./data/images/*.png)
-#file(COPY ./data/weights.bin DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data/)
-#file(COPY ${IMAGE_LIST} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/images/)
+FILE(GLOB IMAGE_LIST ${CMAKE_CURRENT_SOURCE_DIR}/data/images/*.png)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/weights.bin DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
+file(COPY ${IMAGE_LIST} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/images/)
 
 message("-- ${PROJECT_NAME} -- Using Compiler - Path:" ${CMAKE_CXX_COMPILER} "\tVersion:" ${CMAKE_CXX_COMPILER_VERSION} "\tCompiler:" ${CMAKE_CXX_COMPILER_ID}${ColourReset})
 message("-- ${PROJECT_NAME} -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

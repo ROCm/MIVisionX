@@ -28,6 +28,8 @@ THE SOFTWARE.
 #include <numeric>
 #include <vector>
 #include <unordered_map>
+#include <iostream>
+#include <fstream>
 
 #include "test_utils.hpp"
 #include "zendnn_logging.hpp"
@@ -121,39 +123,59 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     std::vector<float> user_dst(batch * 10);
     // End: allocate input & output data
 
-    // Start: Load Input Image
-    cv::Mat input = cv::imread(imageFilename);
-    if (input.empty())
+    /*
+        // Start: Load Input Image - OpenCV for Images
+        cv::Mat input = cv::imread(imageFilename);
+        if (input.empty())
+        {
+            printf("Image not found\n");
+            return 0;
+        }
+        else
+        {
+            printf("Image found -- %s\n", imageFilename);
+        }
+
+        cv::Mat img = input.clone();
+
+        // convert to grayscale image
+        cv::cvtColor(img, img, cv::CV_BGR2GRAY);
+
+        // resize to 24 x 24
+        cv::resize(img, img, cv::Size(24, 24));
+
+        // dilate image
+        cv::dilate(img, img, cv::Mat::ones(2, 2, CV_8U));
+
+        // add border to the image so that the digit will go center and become 28 x 28 image
+        cv::copyMakeBorder(img, img, 2, 2, 2, 2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
+
+        float *ptr = user_src.data();
+        int imageElements = (batch * 1 * 28 * 28);
+        for (int y = 0; y < imageElements; y++)
+        {
+            unsigned char *src = img.data + y;
+            float *dst = ptr + y;
+            *dst = src[0];
+        }
+        // End: Load Input Image
+    */
+
+    // Start: Load Input Image - Binary Files
+    std::ifstream input_binary_image(imageFilename, std::ios::binary);
+
+    input_binary_image.seekg(0, infile.end);
+    int elementCount = (input_binary_image.tellg() / sizeof(float)); // total number of elements
+    input_binary_image.seekg(0, input_binary_image.beg);
+
+    if (elementCount == (batch * 1 * 28 * 28))
     {
-        printf("Image not found\n");
-        return 0;
+        input_binary_image.read(reinterpret_cast<char *>(user_src.data()), user_src.size() * sizeof(float));
     }
     else
     {
-        printf("Image found -- %s\n", imageFilename);
-    }
-
-    cv::Mat img = input.clone();
-
-    // convert to grayscale image
-    cv::cvtColor(img, img, cv::CV_BGR2GRAY);
-
-    // resize to 24 x 24
-    cv::resize(img, img, cv::Size(24, 24));
-
-    // dilate image
-    cv::dilate(img, img, cv::Mat::ones(2, 2, CV_8U));
-
-    // add border to the image so that the digit will go center and become 28 x 28 image
-    cv::copyMakeBorder(img, img, 2, 2, 2, 2, cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
-
-    float *ptr = user_src.data();
-    int imageElements = (batch * 1 * 28 * 28);
-    for (int y = 0; y < imageElements; y++)
-    {
-        unsigned char *src = img.data + y;
-        float *dst = ptr + y;
-        *dst = src[0];
+        printf("ERROR: invalid Binary Image File -- %s: Total Pixels:%d Received: %d\n", imageFilename, (batch * 1 * 28 * 28), elementCount);
+        return -1;
     }
     // End: Load Input Image
 

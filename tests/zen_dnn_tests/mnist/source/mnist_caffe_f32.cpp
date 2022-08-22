@@ -41,7 +41,7 @@ memory::dim product(const memory::dims &dims) {
                            std::multiplies<memory::dim>());
 }
 
-void mnist_caffe(engine::kind engine_kind, int times = 1000) {
+void mnist_caffe(engine::kind engine_kind, int times) {
 
     using tag = memory::format_tag;
     using dt = memory::data_type;
@@ -452,7 +452,7 @@ int main(int argc, char **argv) {
         auto begin = chrono::duration_cast<chrono::milliseconds>(
                          chrono::steady_clock::now().time_since_epoch())
                      .count();
-        int times = 1000;
+        int times = 10;
         mnist_caffe(parse_engine_kind(argc, argv), times);
         auto end = chrono::duration_cast<chrono::milliseconds>(
                        chrono::steady_clock::now().time_since_epoch())

@@ -105,7 +105,7 @@ if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
 	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
     endif()
 	include_directories(${OpenCV_INCLUDE_DIRS})
-    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${OpenCV_LIBRARIES})
+    #set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${OpenCV_LIBRARIES}) # TBD -- Investigate SegFault
 else()
 	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
@@ -114,8 +114,10 @@ target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
 
 # Bring in weights & images to build folder
 FILE(GLOB IMAGE_LIST ${CMAKE_CURRENT_SOURCE_DIR}/data/images/*.png)
+FILE(GLOB IMAGE_BIN_LIST ${CMAKE_CURRENT_SOURCE_DIR}/data/images/*.bin)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/weights.bin DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data/)
 file(COPY ${IMAGE_LIST} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/images/)
+file(COPY ${IMAGE_BIN_LIST} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/images/)
 
 message("-- ${PROJECT_NAME} -- Using Compiler - Path:" ${CMAKE_CXX_COMPILER} "\tVersion:" ${CMAKE_CXX_COMPILER_VERSION} "\tCompiler:" ${CMAKE_CXX_COMPILER_ID}${ColourReset})
 message("-- ${PROJECT_NAME} -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

@@ -44,6 +44,18 @@ cmake ../mnist && make
 ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 ./zendnn_mnist_f32 cpu
 ```
 
+## MNIST F32 Inference Application
+This C++ API example demonstrates how to build the MNIST neural network topology for forward-pass inference and test with images.
+
+**NOTE:** The example implements the MNIST layers as numbered primitives (for example, conv1, pool1, conv2).
+
+### Build & Run
+```
+mkdir build-mnist && cd build-mnist
+cmake ../mnist_app && make
+ZENDNN_LOG_OPTS=ALL:5 ZENDNN_VERBOSE=1 ./zendnn_mnist_app data/weights.bin images/input_data_3.bin 
+```
+
 ## AlexNet F32 Sample
 This C++ API example demonstrates how to build an AlexNet neural network topology for forward-pass inference.
 

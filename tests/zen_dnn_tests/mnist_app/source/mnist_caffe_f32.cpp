@@ -67,7 +67,7 @@ static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE 
     fread(h, 1, sizeof(h), fp);
     if (h[0] != 0xf00dd1e1 || (size_t)h[1] != (tensorSize * itemsize))
     {
-        printf("ERROR: invalid data (magic,size)=(0x%x,%d) in %s at byte position %lu -- expected size is %ld\n", h[0], h[1], binaryFilename, ftell(fp) - sizeof(h), tensorSize * itemsize);
+        printf("ERROR: invalid data (magic,size)=(0x%x,%x) in %s at byte position %lu -- expected size is %ld\n", h[0], h[1], binaryFilename, ftell(fp) - sizeof(h), tensorSize * itemsize);
         return -1;
     }
 
@@ -75,7 +75,7 @@ static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE 
     size_t n = fread(ptr, itemsize, tensorSize, fp);
     if (n != tensorSize)
     {
-        printf("ERROR: expected char[%ld], but got char[%ld] in %s\n", tensorSize * itemsize, n * itemsize, binaryFilename);
+        printf("ERROR: expected char[%zu], but got char[%zu] in %s\n", tensorSize * itemsize, n * itemsize, binaryFilename);
         return -1;
     }
 
@@ -100,6 +100,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
         fread(&magic, 1, sizeof(magic), fp__variables);
         if (magic != 0xf00dd1e0)
         {
+            fclose(fp__variables);
             printf("ERROR: invalid file magic in %s\n", binaryFilename);
             return -1;
         }
@@ -566,12 +567,12 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     {
         unsigned int magic = 0;
         fread(&magic, 1, sizeof(magic), fp__variables);
+        fclose(fp__variables);
         if (magic != 0xf00dd1e2)
         {
             printf("ERROR: invalid eoff magic in %s\n", binaryFilename);
             return -1;
         }
-        fclose(fp__variables);
     }
 
     // Start: Execute primitives

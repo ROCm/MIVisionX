@@ -33,7 +33,7 @@ custom_base * CreateCustomClass(CustomFunctionType function) {
         case Copy:
             return new customCopy();
             break;
-        // todo:: add new custom function types here with corresponding implemetation files   
+        // todo:: add new custom function types here with corresponding implemetation files
         default:
             throw std::runtime_error ("Custom function type is unsupported");
             return nullptr;

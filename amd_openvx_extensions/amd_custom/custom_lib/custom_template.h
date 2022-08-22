@@ -46,5 +46,4 @@ public:
      
     //* Shutdown and release resources */
     virtual customStatus_t Shutdown() = 0;
-
 };

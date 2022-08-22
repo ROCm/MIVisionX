@@ -576,29 +576,43 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
 
     // Start: Execute primitives
     // For this example, the net is executed multiple times and each execution is timed individually.
+    float AverageTime = 0;
     for (int j = 0; j < times; ++j)
     {
+        auto start_exec_time = std::chrono::high_resolution_clock::now();
         assert(net.size() == net_args.size() && "something is missing");
         for (size_t i = 0; i < net.size(); ++i)
         {
             net.at(i).execute(s, net_args.at(i));
         }
-
         // Wait for the computation to finalize.
         s.wait();
+        auto end_exec_time = std::chrono::high_resolution_clock::now();
+        auto exec_duration = end_exec_time - start_exec_time;
+        auto exec_in_millis = std::chrono::duration_cast<std::chrono::milliseconds>(exec_duration);
+        printf("Execution:%d -- \t%.8f ms\n", j, (float)exec_in_millis.count());
 
         // Start: Read output from engine
+        auto start_mem_time = std::chrono::high_resolution_clock::now();
         read_from_zendnn_memory(user_dst.data(), fc2_dst_memory);
+        auto end_mem_time = std::chrono::high_resolution_clock::now();
+        auto exec_mem_duration = end_mem_time - start_mem_time;
+        auto mem_in_millis = std::chrono::duration_cast<std::chrono::milliseconds>(exec_mem_duration);
+        //printf("Mem Transfer:%d -- \t%.8f ms\n", j, (float)mem_in_millis.count());
         // End: Read output from engine
+
+        AverageTime += (float)exec_in_millis.count() + (float)mem_in_millis.count();
     }
     // End: Execute primitives
+    printf("\nAvg Inference Time -- \t%.8f ms\n",(float)(AverageTime/times));
 
     // Start: Print Output Probabilty
-    printf("MNIST Probability Result for - %s\n", imageFilename);
+    printf("\nMNIST Probability Result for - %s\n", imageFilename);
     for (int j = 0; j < 10; ++j)
     {
         printf("Class:%d -- %.3f\n", j, user_dst[j]);
     }
+    printf("\n");
     // End: Print Output Probabilty
 
     return 0;

@@ -164,7 +164,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     // Start: Load Input Image - Binary Files
     std::ifstream input_binary_image(imageFilename, std::ios::binary);
 
-    input_binary_image.seekg(0, infile.end);
+    input_binary_image.seekg(0, input_binary_image.end);
     int elementCount = (input_binary_image.tellg() / sizeof(float)); // total number of elements
     input_binary_image.seekg(0, input_binary_image.beg);
 
@@ -174,7 +174,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     }
     else
     {
-        printf("ERROR: invalid Binary Image File -- %s: Total Pixels:%d Received: %d\n", imageFilename, (batch * 1 * 28 * 28), elementCount);
+        printf("ERROR: invalid Binary Image File -- %s: Total Pixels:%d Received: %d\n", imageFilename, (28 * 28), elementCount);
         return -1;
     }
     // End: Load Input Image

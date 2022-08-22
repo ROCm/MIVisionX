@@ -560,7 +560,7 @@ int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, cons
     net_args.push_back({{ZENDNN_ARG_SRC, fc2_dst_memory},
                         {ZENDNN_ARG_DST, fc2_dst_memory}});
     // End: Create a softmax primitive and add it to the net
-    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 4 - pool2 Setup Complete");
+    zendnnInfo(ZENDNN_TESTLOG, "MNIST Layer 8 - softmax Setup Complete");
     // End: MNIST Layer 8 - softMax
 
     {

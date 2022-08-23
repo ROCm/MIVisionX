@@ -797,8 +797,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
                     {
                         half *output_tensor_16 = static_cast<half *>(out_ptr);
                         auto channel_size = w * h;
-                        if(c != 3)
-                        {
+                        if(c != 3) {
                             for(unsigned i = 0; i < channel_size; i++)
                                 output_tensor_16[dest_buf_offset + i] = offset[0] + multiplier[0] * (half)in_buffer[c * i];
                         }
@@ -841,12 +840,9 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
                                 fB = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_R));
                                 fG = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_G));
                                 fR = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_B));
-                                fB = _mm256_mul_ps(fB, pmul0);
-                                fG = _mm256_mul_ps(fG, pmul1);
-                                fR = _mm256_mul_ps(fR, pmul2);
-                                fB = _mm256_add_ps(fB, padd0);
-                                fG = _mm256_add_ps(fG, padd1);
-                                fR = _mm256_add_ps(fR, padd2);
+                                fB = _mm256_fmadd_ps(fB, pmul0, padd0);
+                                fG = _mm256_fmadd_ps(fG, pmul1, padd1);
+                                fR = _mm256_fmadd_ps(fR, pmul2, padd2);
                                 _mm256_storeu_ps(tempB, fB);
                                 _mm256_storeu_ps(tempG, fG);
                                 _mm256_storeu_ps(tempR, fR);
@@ -968,7 +964,6 @@ void MasterGraph::output_routine()
 #endif
     }
     try {
-        _process_time.start();
         while (_processing)
         {
             const size_t each_cycle_size = output_byte_size()/batch_ratio;

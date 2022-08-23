@@ -51,7 +51,7 @@ if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     list(APPEND CMAKE_MODULE_PATH ${ROCM_PATH}/lib/cmake/hip ${HIP_PATH}/cmake)
     # HSA_PATH
     IF(NOT DEFINED ENV{HSA_PATH})
-        SET(HSA_PATH ${ROCM_PATH}/hsa)
+        SET(HSA_PATH ${ROCM_PATH})
     ELSE()
         SET(HSA_PATH $ENV{HSA_PATH})
     ENDIF()
@@ -219,7 +219,7 @@ if(${BUILD_ROCAL})
     # -mavx2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and AVX2 built-in functions and code generation.
     # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute.
     # -std=gnu++17 -- Conform to the ISO 2017 C++ standard with GNU extensions.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -pthread -Wall -fPIC -mavx2 -Wno-deprecated-declarations -std=gnu++17")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -pthread -Wall -fPIC -mavx2 -mfma -Wno-deprecated-declarations -std=gnu++17")
     message("-- ${White}rocAL -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 
     if(NOT FFMPEG_FOUND)

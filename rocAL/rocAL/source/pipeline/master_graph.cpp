@@ -815,81 +815,85 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
     #endif
                         }
                     }
-                    else if(output_data_type == RocalTensorDataType::FP16) {
+                    else if(output_data_type == RocalTensorDataType::FP16) 
+                    {
                         half *output_tensor_16 = static_cast<half *>(out_ptr);
                         auto channel_size = w * h;
+                        if(c != 3) {
+                            for(unsigned i = 0; i < channel_size; i++)
+                                output_tensor_16[dest_buf_offset + i] = offset[0] + multiplier[0] * (half)in_buffer[c * i];
+                        }
+                        else {
     #if (ENABLE_SIMD && __AVX2__)
-                        half *B_buf = output_tensor_16 + dest_buf_offset;
-                        half *G_buf = B_buf + channel_size;
-                        half *R_buf = G_buf + channel_size;
+                            half *B_buf_16 = output_tensor_16 + dest_buf_offset;
+                            half *G_buf_16 = B_buf_16 + channel_size;
+                            half *R_buf_16 = G_buf_16 + channel_size;
 
-                        __m256i mask_B, mask_G, mask_R;
-                        if (reverse_channels) {
-                            mask_B = _mm256_setr_epi32(0x80808000, 0x80808003, 0x80808006, 0x80808009, 0x80808000,
-                                                        0x80808003, 0x80808006, 0x80808009);
-                            mask_G = _mm256_setr_epi32(0x80808001, 0x80808004, 0x80808007, 0x8080800A, 0x80808001,
-                                                        0x80808004, 0x80808007, 0x8080800A);
-                            mask_R = _mm256_setr_epi32(0x80808002, 0x80808005, 0x80808008, 0x8080800B, 0x80808002,
-                                                        0x80808005, 0x80808008, 0x8080800B);
-                        } else {
-                            mask_R = _mm256_setr_epi32(0x80808000, 0x80808003, 0x80808006, 0x80808009, 0x80808000,
-                                                        0x80808003, 0x80808006, 0x80808009);
-                            mask_G = _mm256_setr_epi32(0x80808001, 0x80808004, 0x80808007, 0x8080800A, 0x80808001,
-                                                        0x80808004, 0x80808007, 0x8080800A);
-                            mask_B = _mm256_setr_epi32(0x80808002, 0x80808005, 0x80808008, 0x8080800B, 0x80808002,
-                                                        0x80808005, 0x80808008, 0x8080800B);
-                        }
-                        __m256 pmul0 = _mm256_set1_ps(multiplier0);
-                        __m256 pmul1 = _mm256_set1_ps(multiplier1);
-                        __m256 pmul2 = _mm256_set1_ps(multiplier2);
-                        __m256 padd0 = _mm256_set1_ps(offset0);
-                        __m256 padd1 = _mm256_set1_ps(offset1);
-                        __m256 padd2 = _mm256_set1_ps(offset2);
-                        unsigned int alignedLength = (channel_size & ~7);    // multiple of 8
-                        unsigned int i = 0;
-
-                        __m256 fR, fG, fB;
-                        float dstPtrTempR_ps[8], dstPtrTempG_ps[8], dstPtrTempB_ps[8];
-                        for (; i < alignedLength; i += 8) {
-                            __m256i pix0 = _mm256_loadu_si256((const __m256i *) in_buffer);
-                            pix0 = _mm256_permutevar8x32_epi32(pix0, _mm256_setr_epi32(0, 1, 2, 3, 3, 4, 5, 6));
-                            fB = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_R));
-                            fG = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_G));
-                            fR = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_B));
-                            fB = _mm256_mul_ps(fB, pmul0);
-                            fG = _mm256_mul_ps(fG, pmul1);
-                            fR = _mm256_mul_ps(fR, pmul2);
-                            fB = _mm256_add_ps(fB, padd0);
-                            fG = _mm256_add_ps(fG, padd1);
-                            fR = _mm256_add_ps(fR, padd2);
-                            _mm256_storeu_ps(dstPtrTempR_ps, fB);
-                            _mm256_storeu_ps(dstPtrTempG_ps, fG);
-                            _mm256_storeu_ps(dstPtrTempB_ps, fR);
-                            for(int cnt = 0; cnt < 8; cnt++)
-                            {
-                                B_buf[cnt] = (half) dstPtrTempR_ps[cnt];
-                                G_buf[cnt] = (half) dstPtrTempG_ps[cnt];
-                                R_buf[cnt] = (half) dstPtrTempB_ps[cnt];
+                            __m256i mask_B, mask_G, mask_R;
+                            if (reverse_channels) {
+                                mask_B = _mm256_setr_epi32(0x80808000, 0x80808003, 0x80808006, 0x80808009, 0x80808000,
+                                                            0x80808003, 0x80808006, 0x80808009);
+                                mask_G = _mm256_setr_epi32(0x80808001, 0x80808004, 0x80808007, 0x8080800A, 0x80808001,
+                                                            0x80808004, 0x80808007, 0x8080800A);
+                                mask_R = _mm256_setr_epi32(0x80808002, 0x80808005, 0x80808008, 0x8080800B, 0x80808002,
+                                                            0x80808005, 0x80808008, 0x8080800B);
+                            } else {
+                                mask_R = _mm256_setr_epi32(0x80808000, 0x80808003, 0x80808006, 0x80808009, 0x80808000,
+                                                            0x80808003, 0x80808006, 0x80808009);
+                                mask_G = _mm256_setr_epi32(0x80808001, 0x80808004, 0x80808007, 0x8080800A, 0x80808001,
+                                                            0x80808004, 0x80808007, 0x8080800A);
+                                mask_B = _mm256_setr_epi32(0x80808002, 0x80808005, 0x80808008, 0x8080800B, 0x80808002,
+                                                            0x80808005, 0x80808008, 0x8080800B);
                             }
-                            B_buf += 8;
-                            G_buf += 8;
-                            R_buf += 8;
-                            in_buffer += 24;
-                        }
-                        for (; i < channel_size; i++, in_buffer += 3) {
-                            *B_buf++ = (half) (in_buffer[0] * multiplier0) + offset0;
-                            *G_buf++ = (half) (in_buffer[1] * multiplier1) + offset1;
-                            *R_buf++ = (half) (in_buffer[2] * multiplier2) + offset1;
-                        }
+                            __m256 pmul0 = _mm256_set1_ps(multiplier0);
+                            __m256 pmul1 = _mm256_set1_ps(multiplier1);
+                            __m256 pmul2 = _mm256_set1_ps(multiplier2);
+                            __m256 padd0 = _mm256_set1_ps(offset0);
+                            __m256 padd1 = _mm256_set1_ps(offset1);
+                            __m256 padd2 = _mm256_set1_ps(offset2);
+                            unsigned int alignedLength = (channel_size & ~7);    // multiple of 8
+                            unsigned int i = 0;
+
+                            __m256 fR, fG, fB;
+                            float tempR[8], tempG[8], tempB[8];
+                            for (; i < alignedLength; i += 8) {
+                                __m256i pix0 = _mm256_loadu_si256((const __m256i *) in_buffer);
+                                pix0 = _mm256_permutevar8x32_epi32(pix0, _mm256_setr_epi32(0, 1, 2, 3, 3, 4, 5, 6));
+                                fB = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_R));
+                                fG = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_G));
+                                fR = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_B));
+                                fB = _mm256_fmadd_ps(fB, pmul0, padd0);
+                                fG = _mm256_fmadd_ps(fG, pmul1, padd1);
+                                fR = _mm256_fmadd_ps(fR, pmul2, padd2);
+                                _mm256_storeu_ps(tempB, fB);
+                                _mm256_storeu_ps(tempG, fG);
+                                _mm256_storeu_ps(tempR, fR);
+                                for(int cnt = 0; cnt < 8; cnt++)
+                                {
+                                    B_buf_16[cnt] = (half) tempB[cnt];
+                                    G_buf_16[cnt] = (half) tempG[cnt];
+                                    R_buf_16[cnt] = (half) tempR[cnt];
+                                }
+                                B_buf_16 += 8;
+                                G_buf_16 += 8;
+                                R_buf_16 += 8;
+                                in_buffer += 24;
+                            }
+                            for (; i < channel_size; i++, in_buffer += 3) {
+                                *B_buf_16++ = (half) (in_buffer[0] * multiplier0) + offset0;
+                                *G_buf_16++ = (half) (in_buffer[1] * multiplier1) + offset1;
+                                *R_buf_16++ = (half) (in_buffer[2] * multiplier2) + offset2;
+                            }
     #else
-                        for (unsigned channel_idx = 0; channel_idx < c; channel_idx++) {
-                            for (unsigned i = 0; i < channel_size; i++)
-                                output_tensor_16[dest_buf_offset + channel_idx * channel_size + i] =
-                                        offset[channel_idx] + multiplier[channel_idx] *
-                                                              (reverse_channels ? (half) (in_buffer[(c*i+c-channel_idx-1)])
-                                                                                : (half) (in_buffer[(c * i + channel_idx)]));
-                        }
+                            for (unsigned channel_idx = 0; channel_idx < c; channel_idx++) {
+                                for (unsigned i = 0; i < channel_size; i++)
+                                    output_tensor_16[dest_buf_offset + channel_idx * channel_size + i] =
+                                            offset[channel_idx] + multiplier[channel_idx] *
+                                                                  (reverse_channels ? (half) (in_buffer[(c * i + c - channel_idx - 1)])
+                                                                                    : (half) (in_buffer[(c * i + channel_idx)]));
+                            }
     #endif
+                        }
                     }
                 }  // NCHW or NHWC
             } // for loop batch

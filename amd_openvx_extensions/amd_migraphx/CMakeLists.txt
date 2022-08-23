@@ -27,7 +27,7 @@ list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     if(NOT DEFINED ENV{HSA_PATH})
-        set(HSA_PATH ${ROCM_PATH}/hsa)
+        set(HSA_PATH ${ROCM_PATH})
     else()
         set(HSA_PATH $ENV{HSA_PATH})
     endif()

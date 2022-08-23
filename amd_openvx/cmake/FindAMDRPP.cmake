@@ -27,7 +27,7 @@ find_path(AMDRPP_INCLUDE_DIRS
     NAMES rpp.h
     PATHS
     /usr/include
-    ${ROCM_PATH}/rpp/include
+    ${ROCM_PATH}/include/rpp
 )
 mark_as_advanced( AMDRPP_INCLUDE_DIRS )
 
@@ -35,7 +35,7 @@ find_library( AMDRPP_LIBRARIES
     NAMES amd_rpp
     PATHS
     /usr/lib
-    ${ROCM_PATH}/rpp/lib
+    ${ROCM_PATH}/lib
 )
 mark_as_advanced( AMDRPP_LIBRARIES_DIR )
 
@@ -43,7 +43,7 @@ find_path(AMDRPP_LIBRARIES_DIR
     NAMES libamd_rpp.so
     PATHS
     /usr/lib
-    ${ROCM_PATH}/rpp/lib
+    ${ROCM_PATH}/lib
 )
     
 include( FindPackageHandleStandardArgs )

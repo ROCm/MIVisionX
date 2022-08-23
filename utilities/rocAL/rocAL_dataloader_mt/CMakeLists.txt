@@ -51,7 +51,7 @@ if("${BACKEND}" STREQUAL "OPENCL")
 elseif ("${BACKEND}" STREQUAL "HIP")
     # HSA_PATH
     if(NOT DEFINED ENV{HSA_PATH})
-        SET(HSA_PATH ${ROCM_PATH}/hsa)
+        SET(HSA_PATH ${ROCM_PATH})
     else()
         SET(HSA_PATH $ENV{HSA_PATH})
     endif()

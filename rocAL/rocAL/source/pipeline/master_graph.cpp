@@ -867,7 +867,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
                                 for (unsigned i = 0; i < channel_size; i++)
                                     output_tensor_16[dest_buf_offset + channel_idx * channel_size + i] =
                                             offset[channel_idx] + multiplier[channel_idx] *
-                                                                (reverse_channels ? (half) (in_buffer[(c * i + c - channel_idx - 1)])
+                                                                  (reverse_channels ? (half) (in_buffer[(c * i + c - channel_idx - 1)])
                                                                                     : (half) (in_buffer[(c * i + channel_idx)]));
                             }
     #endif

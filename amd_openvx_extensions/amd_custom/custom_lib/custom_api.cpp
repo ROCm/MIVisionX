@@ -41,7 +41,7 @@ custom_base * CreateCustomClass(CustomFunctionType function) {
 }
 
 
-customHandle CreateCustom(CustomFunctionType function) {
+customHandle CustomCreate(CustomFunctionType function) {
     customHandle handle = (customHandle)CreateCustomClass(function);
     return handle;
 }

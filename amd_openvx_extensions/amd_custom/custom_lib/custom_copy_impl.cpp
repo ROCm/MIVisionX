@@ -30,7 +30,15 @@ THE SOFTWARE.
 customStatus_t customCopy::Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream, int num_cpu_threads)
 {
     _input_desc = inputdesc, _output_desc = outputdesc;
-    _backend = backend, _stream = stream, _cpu_num_threads = num_cpu_threads;
+    _backend = backend, _stream = stream;
+    unsigned sys_cpu_thread_count;
+    // find the number of cpu threads available in the system
+    if (num_cpu_threads == 0) {
+        sys_cpu_thread_count = std::thread::hardware_concurrency();
+        if (sys_cpu_thread_count < 2) sys_cpu_thread_count = 2;
+       _cpu_num_threads = sys_cpu_thread_count>>1; // don't count hyperthreads
+    } else
+        _cpu_num_threads = num_cpu_threads;
 
     if ((_input_desc.data_type != _output_desc.data_type) || (_input_desc.dims[0] != _output_desc.dims[0]) || 
         (_input_desc.dims[1] != _output_desc.dims[1]) || (_input_desc.dims[2] != _output_desc.dims[2]) || (_input_desc.dims[3] != _output_desc.dims[3]))
@@ -45,7 +53,7 @@ customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputde
     if (_backend == customBackend::CPU)
     {
         int omp_threads =  (_cpu_num_threads < batch_size)?  _cpu_num_threads: batch_size;
-    #pragma omp parallel for num_threads(omp_threads)
+        #pragma omp parallel for num_threads(omp_threads)
         for (size_t i = 0; i < batch_size; i++) {
             unsigned char *src, *dst;
             src = (unsigned char *)input_handle + size*i;

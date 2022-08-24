@@ -13,9 +13,9 @@ It is built with MIVisionX package.
 
 * AMD OpenVX library
 * ROCM installed system with AMD GPU
-    - [ROCm](https://rocmdocs.amd.com/en/latest/)
+* [ROCm](https://rocmdocs.amd.com/en/latest/)
     
-### Example 1: using custom extension with example "Copy" function and CPU backend
+### Example 1: Using custom extension with example "Copy" function and CPU backend
 
 To show the usage of custom extension, an example function to "Copy" is implemented in custom_lib module.
 The follwing is the gdf to test it using runvx utility
@@ -36,9 +36,10 @@ node com.amd.custom_extension.custom_layer input_1 function backend NULL output
 write output out_tensor_1.bin
 
 ```
-After running the gdf using the runvx utility, you can see the out_tensor_1.bin will have the same data as input tensor
+* To run the gdf using runvx use the command "runvx example.gdf"
+* After running the gdf using the runvx utility, you can see the out_tensor_1.bin will have the same data as input tensor
 
-### Example 2: using custom extension with example "Copy" function and GPU backend
+### Example 2: Using custom extension with example "Copy" function and GPU backend
 
 To show the usage of custom extension an example function to "Copy" is implemented in custom_lib module.
 The follwing is the gdf to test it using runvx utility
@@ -60,4 +61,5 @@ node com.amd.custom_extension.custom_layer input_1 function backend NULL output
 write output out_tensor_1.bin
 
 ```
-After running the gdf using the runvx utility, you can see the out_tensor_1.bin will have the same data as input tensor
+* To run the gdf using runvx use the command "runvx -affinity:GPU example.gdf"
+* After running the gdf using the runvx utility, you can see the out_tensor_1.bin will have the same data as input tensor

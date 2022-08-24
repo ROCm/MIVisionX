@@ -96,16 +96,15 @@ static vx_status VX_CALLBACK processCustomLayer(vx_node node, const vx_reference
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &data->output_mem, sizeof(data->output_mem)));
     } else{
         ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[0], 4, NULL, NULL, &map_id, istride, (void **)&data->input_mem, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[4], 4, NULL, NULL, &map_id_1, ostride, (void **)&data->output_mem, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST));
+        ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[4], 4, NULL, NULL, &map_id_1, ostride, (void **)&data->output_mem, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
-
     //custom node execute call.
     ERROR_CHECK_CUSTOM_STATUS(CustomExecute(data->custom_handle, data->input_mem, data->input_desc, data->output_mem, data->output_desc));
-
     if (data->backend != customBackend::GPU) { 
         ERROR_CHECK_STATUS(vxUnmapTensorPatch((vx_tensor)parameters[0], map_id));
         ERROR_CHECK_STATUS(vxUnmapTensorPatch((vx_tensor)parameters[4], map_id_1));
     }
+
     return VX_SUCCESS;
 }
 
@@ -133,6 +132,7 @@ static vx_status VX_CALLBACK initializeCustomLayer(vx_node node, const vx_refere
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &in_data_type, sizeof(in_data_type)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DATA_TYPE, &out_data_type, sizeof(out_data_type)));
     data->backend = customBackend::CPU;   //default based on compiler flag
+
     if (parameters[2])
       ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &data->backend, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #if ENABLE_HIP
@@ -140,6 +140,17 @@ static vx_status VX_CALLBACK initializeCustomLayer(vx_node node, const vx_refere
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_GPU, input_strides, sizeof(input_strides)));
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_STRIDE_GPU, output_strides, sizeof(output_strides)));
         ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->hipstream, sizeof(data->hipstream)));
+    }
+    else {
+        data->backend = customBackend::CPU;   //default for CPU
+        input_strides[0] = sizeof(in_data_type);
+        input_strides[1] = input_strides[0]* input_dims[0];
+        input_strides[2] = input_strides[1]* input_dims[1];
+        input_strides[3] = input_strides[2]* input_dims[2];
+        output_strides[0] = sizeof(out_data_type);
+        output_strides[1] = output_strides[0]* output_dims[0];
+        output_strides[2] = output_strides[1]* output_dims[1];
+        output_strides[3] = output_strides[2]* output_dims[2];
     }
 #else
     data->backend = customBackend::CPU;   //default for CPU
@@ -158,7 +169,7 @@ static vx_status VX_CALLBACK initializeCustomLayer(vx_node node, const vx_refere
       ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &data->backend, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     // Create custom lib and run setup
-    data->custom_handle = CreateCustom((CustomFunctionType)customFuntion);
+    data->custom_handle = CustomCreate((CustomFunctionType)customFuntion);
     ERROR_CHECK_CUSTOM_STATUS(CustomSetup(data->custom_handle, data->input_desc, data->output_desc, 
                               (customBackend)data->backend, (customStream)data->hipstream));
 
@@ -171,14 +182,10 @@ static vx_status VX_CALLBACK uninitializeCustomLayer(vx_node node, const vx_refe
     CustomLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     ERROR_CHECK_CUSTOM_STATUS(CustomShutdown(data->custom_handle));
+    if (data->pCustomParameterArray)
+        delete data->pCustomParameterArray;
+    delete data;
 
-    //todo:: release local data
-    if (data) {
-        //ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
-        if (data->pCustomParameterArray)
-            delete data->pCustomParameterArray;
-        delete data;
-    }
     return VX_SUCCESS;
 }
 
@@ -189,8 +196,14 @@ vx_status publishCustomLayer(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
 
     // enable GPU buffer access since the kernel_f callback uses GPU buffers instead of host accessible buffers
+    AgoTargetAffinityInfo affinity;
+    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
+#if ENABLE_OPENCL || ENABLE_HIP
+    // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
-    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
+    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+        ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
+#endif
 
     // set kernel parameters
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
@@ -212,8 +225,6 @@ VX_API_ENTRY vx_node VX_API_CALL vxCustomLayer(vx_graph graph, vx_tensor inputs,
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
       // todo register custom enum for using here and support in runvx
-//        vx_scalar s_function = vxCreateScalarWithSize(context, VX_TYPE_ENUM, &function, sizeof(function));
-//        vx_scalar s_backend = vxCreateScalarWithSize(context, VX_TYPE_ENUM, &custom_backend, sizeof(custom_backend));
         vx_scalar s_function = vxCreateScalarWithSize(context, VX_TYPE_UINT32, &function, sizeof(function));
         vx_scalar s_backend = vxCreateScalarWithSize(context, VX_TYPE_UINT32, &custom_backend, sizeof(custom_backend));
         if (vxGetStatus((vx_reference)s_function) == VX_SUCCESS && vxGetStatus((vx_reference)s_backend) == VX_SUCCESS)

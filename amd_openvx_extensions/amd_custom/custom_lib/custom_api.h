@@ -92,7 +92,7 @@ private:
 };
 #endif
 
-customHandle CreateCustom(CustomFunctionType function);
+customHandle CustomCreate(CustomFunctionType function);
 customStatus_t CustomSetup(customHandle input_handle, customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream, int num_cpu_threads=0);
 customStatus_t CustomExecute(customHandle custom_handle, void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc);
 customStatus_t CustomShutdown(customHandle custom_handle);

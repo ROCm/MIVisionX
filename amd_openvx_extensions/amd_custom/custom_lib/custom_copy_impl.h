@@ -37,7 +37,7 @@ public:
      \param backend  => backend for the impl
      \param stream  => Output command queue
     */
-    customStatus_t Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream, int num_cpu_threads=0);
+    customStatus_t Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream, int num_cpu_threads=1);
     /*!
      \param input_handle  => memory handle of input tensor
      \param inputdesc => Input tensor desc

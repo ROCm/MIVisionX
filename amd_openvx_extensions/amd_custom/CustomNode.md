@@ -1,6 +1,6 @@
 # How to create a new Custom function using vx_amd_custom extension
 
-## When to use Custom OpenVX Node?
+## When to use Custom OpenVX Node
 
 The idea of custom Node is to allow the following
 * To allow the user to plug-in an a kernel which is not yet supported
@@ -139,9 +139,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxCustomLayer(vx_graph graph, vx_tensor inputs,
 * Implement the three functions of the class in a seperate .cpp file following [custom_copy_impl.cpp](./custom_lib/custom_copy_impl.cpp)
 * Invoke the new class by adding it in the CreateCustomClass() [custom_api.cpp](./custom_lib/custom_api.cpp)
 * Modify CMakeLists.txt to include the implementation file in [CUSTOM_LIB_SOURCES](./custom_lib/CMakeLists.txt)
-* Rebuild MIVisionX with the new custom operator. Voila: The new custom function is ready to work from vx_amd_custom extension
+* Rebuild MIVisionX with the new custom operator. Voila! The new custom function is ready to work from vx_amd_custom extension
 
 ### Test the new custom operator using runvx utility
 * Sample gdf for runvx using the "Copy" operator can be found under [Readme](./README.md)
 * Modify the gdf approproately to test the new custom functionality
-

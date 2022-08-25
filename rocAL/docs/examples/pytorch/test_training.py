@@ -91,7 +91,8 @@ class PrefetchedWrapper_rocal(object):
 
         stream = torch.cuda.Stream()
         first = True
-
+        input = None
+        target = None
         for next_input, next_target in loader:
             with torch.cuda.stream(stream):
                 if rocal_cpu:
@@ -165,6 +166,7 @@ def main():
     print("num_classes:: ",num_classes)
     
     net = ToyNet(num_classes)
+    net.to(device)
 
     #train loader
     train_loader_obj = trainLoader(dataset_train, batch_size=bs, num_thread=nt, crop=crop_size, rocal_cpu=rocal_cpu)

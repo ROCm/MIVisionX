@@ -112,7 +112,7 @@ static vx_status VX_CALLBACK initializeCustomLayer(vx_node node, const vx_refere
     //custom Function Type
     vx_int32 customFuntion;
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[1], &customFuntion, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    if (parameters[3]){
+    if (parameters[3]) {
       // Get Custom parameters array
       size_t arr_size;
       ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[3], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));

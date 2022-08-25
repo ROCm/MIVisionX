@@ -39,7 +39,7 @@ THE SOFTWARE.
 
 #define VX_LIBRARY_CUSTOM   6
 
-#define ERROR_CHECK_STATUS(call){vx_status status = call; if(status!= VX_SUCCESS) return status;}
+#define ERROR_CHECK_STATUS(call) {vx_status status = call; if(status != VX_SUCCESS) return status;}
 #ifndef ERROR_CHECK_CUSTOM_STATUS
 #define ERROR_CHECK_CUSTOM_STATUS(call) if(call) { \
     std::cerr << "ERROR: fatal error occured at " __FILE__ << "#" << __LINE__ << std::endl; \
@@ -59,7 +59,7 @@ enum vx_kernel_ext_amd_custom_e
 
 //! \brief The kernel registration functions.
 vx_status publishCustomLayer(vx_context context);
-vx_node createCustomNode(vx_graph graph, const char * kernelName, vx_reference params[], vx_uint32 num);
+vx_node createCustomNode(vx_graph graph, const char *kernelName, vx_reference params[], vx_uint32 num);
 
 
 #endif

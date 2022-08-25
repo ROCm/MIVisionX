@@ -35,8 +35,7 @@ struct CustomLayerLocalData {
     customBackend backend;
 };
 
-inline void Set4dTensorDesc(customTensorDesc &desc, int data_type, vx_size (&dims)[4],  vx_size (&strides)[4])
-{
+inline void Set4dTensorDesc(customTensorDesc &desc, int data_type, vx_size (&dims)[4],  vx_size (&strides)[4]) {
     desc.data_type = (customDataType)data_type;
     desc.dims[0] = (unsigned int)dims[0], desc.dims[1] = (unsigned int)dims[1];
     desc.dims[2] = (unsigned int)dims[2], desc.dims[3] = (unsigned int)dims[3];
@@ -44,8 +43,7 @@ inline void Set4dTensorDesc(customTensorDesc &desc, int data_type, vx_size (&dim
     desc.strides[2] = (unsigned int)strides[2], desc.strides[3] = (unsigned int)strides[3];
 }
 
-static vx_status VX_CALLBACK validateCustomLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
-{
+static vx_status VX_CALLBACK validateCustomLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     // check scalar type
     vx_enum type, in_type, out_type;
     ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[1], VX_SCALAR_TYPE, &type, sizeof(type)));
@@ -84,8 +82,7 @@ static vx_status VX_CALLBACK validateCustomLayer(vx_node node, const vx_referenc
     return VX_SUCCESS;
 }
 
-static vx_status VX_CALLBACK processCustomLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
-{
+static vx_status VX_CALLBACK processCustomLayer(vx_node node, const vx_reference * parameters, vx_uint32 num) {
     CustomLayerLocalData * data= NULL;
     vx_map_id map_id, map_id_1;
     vx_size istride[4], ostride[4];
@@ -108,8 +105,7 @@ static vx_status VX_CALLBACK processCustomLayer(vx_node node, const vx_reference
     return VX_SUCCESS;
 }
 
-static vx_status VX_CALLBACK initializeCustomLayer(vx_node node, const vx_reference *parameters, vx_uint32 num)
-{
+static vx_status VX_CALLBACK initializeCustomLayer(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     CustomLayerLocalData * data = new CustomLayerLocalData;
     memset(data, 0, sizeof(*data));
 
@@ -144,24 +140,24 @@ static vx_status VX_CALLBACK initializeCustomLayer(vx_node node, const vx_refere
     else {
         data->backend = customBackend::CPU;   //default for CPU
         input_strides[0] = sizeof(in_data_type);
-        input_strides[1] = input_strides[0]* input_dims[0];
-        input_strides[2] = input_strides[1]* input_dims[1];
-        input_strides[3] = input_strides[2]* input_dims[2];
+        input_strides[1] = input_strides[0] * input_dims[0];
+        input_strides[2] = input_strides[1] * input_dims[1];
+        input_strides[3] = input_strides[2] * input_dims[2];
         output_strides[0] = sizeof(out_data_type);
-        output_strides[1] = output_strides[0]* output_dims[0];
-        output_strides[2] = output_strides[1]* output_dims[1];
-        output_strides[3] = output_strides[2]* output_dims[2];
+        output_strides[1] = output_strides[0] * output_dims[0];
+        output_strides[2] = output_strides[1] * output_dims[1];
+        output_strides[3] = output_strides[2] * output_dims[2];
     }
 #else
     data->backend = customBackend::CPU;   //default for CPU
     input_strides[0] = sizeof(in_data_type);
-    input_strides[1] = input_strides[0]* input_dims[0];
-    input_strides[2] = input_strides[1]* input_dims[1];
-    input_strides[3] = input_strides[2]* input_dims[2];
+    input_strides[1] = input_strides[0] * input_dims[0];
+    input_strides[2] = input_strides[1] * input_dims[1];
+    input_strides[3] = input_strides[2] * input_dims[2];
     output_strides[0] = sizeof(out_data_type);
-    output_strides[1] = output_strides[0]* output_dims[0];
-    output_strides[2] = output_strides[1]* output_dims[1];
-    output_strides[3] = output_strides[2]* output_dims[2];
+    output_strides[1] = output_strides[0] * output_dims[0];
+    output_strides[2] = output_strides[1] * output_dims[1];
+    output_strides[3] = output_strides[2] * output_dims[2];
 #endif
     Set4dTensorDesc(data->input_desc, in_data_type, input_dims,  input_strides);
     Set4dTensorDesc(data->output_desc, out_data_type, output_dims,  output_strides);
@@ -177,20 +173,20 @@ static vx_status VX_CALLBACK initializeCustomLayer(vx_node node, const vx_refere
     return VX_SUCCESS;
 }
 
-static vx_status VX_CALLBACK uninitializeCustomLayer(vx_node node, const vx_reference *parameters, vx_uint32 num)
-{
+static vx_status VX_CALLBACK uninitializeCustomLayer(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     CustomLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    ERROR_CHECK_CUSTOM_STATUS(CustomShutdown(data->custom_handle));
-    if (data->pCustomParameterArray)
-        delete data->pCustomParameterArray;
-    delete data;
+    if (data) {
+      ERROR_CHECK_CUSTOM_STATUS(CustomShutdown(data->custom_handle));
+      if (data->pCustomParameterArray)
+          delete data->pCustomParameterArray;
+      delete data;
+    }
 
     return VX_SUCCESS;
 }
 
-vx_status publishCustomLayer(vx_context context)
-{
+vx_status publishCustomLayer(vx_context context) {
     // add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "com.amd.custom_extension.custom_layer", VX_KERNEL_CUSTOM_LAYER, processCustomLayer, 5, validateCustomLayer, initializeCustomLayer, uninitializeCustomLayer);
     ERROR_CHECK_OBJECT(kernel);
@@ -198,7 +194,7 @@ vx_status publishCustomLayer(vx_context context)
     // enable GPU buffer access since the kernel_f callback uses GPU buffers instead of host accessible buffers
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
-#if ENABLE_OPENCL || ENABLE_HIP
+#if ENABLE_HIP
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
     if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
@@ -219,8 +215,7 @@ vx_status publishCustomLayer(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxCustomLayer(vx_graph graph, vx_tensor inputs, vx_uint32 function, vx_uint32 custom_backend, vx_array custom_parameters, vx_tensor outputs)
-{
+VX_API_ENTRY vx_node VX_API_CALL vxCustomLayer(vx_graph graph, vx_tensor inputs, vx_uint32 function, vx_uint32 custom_backend, vx_array custom_parameters, vx_tensor outputs) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {

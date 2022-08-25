@@ -22,8 +22,7 @@ THE SOFTWARE.
 #pragma once
 #include <iostream>
 
-class custom_base
-{
+class custom_base {
 protected:  
     custom_base() {};
 public:

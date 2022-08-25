@@ -31,9 +31,9 @@ customStatus_t customCopy::Setup(customTensorDesc &inputdesc, customTensorDesc &
 {
     _input_desc = inputdesc, _output_desc = outputdesc;
     _backend = backend, _stream = stream;
-    unsigned sys_cpu_thread_count;
     // find the number of cpu threads available in the system
     if (num_cpu_threads == 0) {
+        unsigned sys_cpu_thread_count;
         sys_cpu_thread_count = std::thread::hardware_concurrency();
         if (sys_cpu_thread_count < 2) sys_cpu_thread_count = 2;
        _cpu_num_threads = sys_cpu_thread_count>>1; // don't count hyperthreads

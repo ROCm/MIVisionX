@@ -33,5 +33,5 @@ mkdir build
 cd build
 cmake ../
 make -j
-./runMIGraphXTests --imagenet_image <path to image from imagenet dataset> --mnist_image <path to image from mnist dataset> --mnist <path to mnist model> --googlenet <path to googlenet model> --alexnet <path to alexnet model> --squeezenet <path to squeezenet model> --resnet50 <path to resnet50 model> --vgg19 <path to vgg19 model> --densenet <path to densenet model> --profiler_level 1
+./runMIGraphXTests --tensor <path to Mike tensor folder> --googlenet <path to googlenet model> --alexnet <path to alexnet model> --squeezenet <path to squeezenet model> --resnet50 <path to resnet50 model> --vgg19 <path to vgg19 model> --densenet <path to densenet model> --profiler_level 1
 ```

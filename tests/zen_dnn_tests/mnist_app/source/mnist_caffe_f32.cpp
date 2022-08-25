@@ -49,6 +49,7 @@ memory::dim product(const memory::dims &dims)
                            std::multiplies<memory::dim>());
 }
 
+// Check function status
 #define ERROR_CHECK_STATUS(call)                                                               \
     {                                                                                          \
         int status = (call);                                                                   \
@@ -59,6 +60,7 @@ memory::dim product(const memory::dims &dims)
         }                                                                                      \
     }
 
+// Intialize weights & bias tensors
 static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE *fp, const char *binaryFilename)
 {
     size_t itemsize = sizeof(float);
@@ -82,6 +84,7 @@ static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE 
     return 0;
 }
 
+// MNIST Caffe Model Zen DNN Implementation
 int mnist_caffe_setup(engine::kind engine_kind, const char *binaryFilename, const char *imageFilename, int times)
 {
 

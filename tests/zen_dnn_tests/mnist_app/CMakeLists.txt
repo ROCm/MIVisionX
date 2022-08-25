@@ -81,8 +81,8 @@ include_directories(${ZENDNN_GIT_ROOT}/inc ${ZENDNN_GIT_ROOT}/src ${ZENDNN_GIT_R
 include_directories(${ZENDNN_BLIS_PATH}/include)
 # GNU Includes
 include_directories(/usr/lib/x86_64-linux-gnu/include)
-# Local
-include_directories(include)
+# test utilities
+include_directories(${ZENDNN_GIT_ROOT}/tests/api_tests)
 
 # Link Library Directories
 link_directories(${ZENDNN_GIT_ROOT}/_out/lib)

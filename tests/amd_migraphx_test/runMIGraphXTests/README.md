@@ -1,13 +1,12 @@
 * This script is used for testing multiple onnx models using ```amdMIGraphXnode``` node extension for inference.
 * The script takes one image for some of the models which use an imagenet dataset and one image for the mnist model.
 * Models tested in this script (needed as input). All models can be found [here](https://github.com/onnx/models). 
-  1. mnist
-  2. resnet50
-  3. googlenet
-  4. alexnet
-  5. densenet
-  6. squeezenet
-  7. vgg19
+  1. resnet50
+  2. googlenet
+  3. alexnet
+  4. densenet
+  5. squeezenet
+  6. vgg19
 * Test one or more of the models by specifying the paths to the models which need testing.
 * Tests batch sizes from 1-N (N specified by user)
 * Currently only mode 1 -- runs ONNX models
@@ -21,7 +20,6 @@ Usage: ./runMIGraphXTests
               Mode 1 - Run all ONNX tests\n"
               Mode 2 - Run all JSON tests\n"
             --profiler_level <range:0-N; default:1> [N = batch size][optional]
-            --mnist          <mnist-model>   
             --resnet50       <resnet50-model>
             --googlenet      <googlenet-model>
             --squeezenet     <resnet101-model>

@@ -24,8 +24,7 @@ THE SOFTWARE.
 #include "custom_api.h"
 #include "custom_template.h"
 
-class customCopy: public custom_base
-{
+class customCopy: public custom_base {
 public:
     customCopy() {};
     ~customCopy() {};

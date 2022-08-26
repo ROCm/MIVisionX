@@ -27,8 +27,7 @@ THE SOFTWARE.
 #include "hip/hip_runtime.h"
 #endif
 
-customStatus_t customCopy::Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream, int num_cpu_threads)
-{
+customStatus_t customCopy::Setup(customTensorDesc &inputdesc, customTensorDesc &outputdesc, customBackend backend, customStream stream, int num_cpu_threads) {
     _input_desc = inputdesc, _output_desc = outputdesc;
     _backend = backend, _stream = stream;
     // find the number of cpu threads available in the system
@@ -46,12 +45,10 @@ customStatus_t customCopy::Setup(customTensorDesc &inputdesc, customTensorDesc &
     return customStatusSuccess;
 }
 
-customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc)
-{
+customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputdesc, void *output_handle, customTensorDesc &outputdesc) {
     unsigned size = outputdesc.dims[0] * outputdesc.dims[1] * outputdesc.dims[3] * sizeof(_output_desc.data_type);
     unsigned batch_size = outputdesc.dims[3];
-    if (_backend == customBackend::CPU)
-    {
+    if (_backend == customBackend::CPU) {
         int omp_threads =  (_cpu_num_threads < batch_size)?  _cpu_num_threads: batch_size;
         #pragma omp parallel for num_threads(omp_threads)
         for (size_t i = 0; i < batch_size; i++) {
@@ -60,8 +57,7 @@ customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputde
             dst = (unsigned char *)output_handle + size*i;
             memcpy(dst, src, size);
         }
-    }else
-    {
+    } else {
 #if ENABLE_HIP
         for (size_t i = 0; i < batch_size; i++) {
             unsigned char *src, *dst;

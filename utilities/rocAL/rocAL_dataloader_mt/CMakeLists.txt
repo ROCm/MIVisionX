@@ -51,7 +51,7 @@ if("${BACKEND}" STREQUAL "OPENCL")
 elseif ("${BACKEND}" STREQUAL "HIP")
     # HSA_PATH
     if(NOT DEFINED ENV{HSA_PATH})
-        SET(HSA_PATH ${ROCM_PATH}/hsa)
+        SET(HSA_PATH ${ROCM_PATH})
     else()
         SET(HSA_PATH $ENV{HSA_PATH})
     endif()
@@ -109,3 +109,26 @@ target_link_libraries(${PROJECT_NAME} rocal)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall -pthread")
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

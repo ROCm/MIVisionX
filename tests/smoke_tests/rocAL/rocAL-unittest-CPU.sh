@@ -1,5 +1,5 @@
 #!/bin/bash
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 rm -rf rocAL-CPU-RESULTS
 mkdir rocAL-CPU-RESULTS
 

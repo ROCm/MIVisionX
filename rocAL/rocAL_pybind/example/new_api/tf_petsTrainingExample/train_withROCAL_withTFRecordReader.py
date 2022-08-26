@@ -1,10 +1,11 @@
-from amd.rocal.plugin.tf import RALIIterator
+import os
+from amd.rocal.plugin.tf import ROCALIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
-import os
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
+
+import tensorflow as tf
+tf.compat.v1.disable_v2_behavior()
 
 import numpy as np
 import tensorflow_hub as hub
@@ -15,7 +16,7 @@ import tensorflow_hub as hub
 
 ############################### CHANGE THESE GLOBAL VARIABLES APPROPRIATELY ###############################
 
-RECORDS_DIR = 'tfr/'
+RECORDS_DIR = 'tf_pets_records/'
 NUM_CLASSES = 37
 LEARNING_RATE = 0.005
 NUM_TRAIN_STEPS = 2775
@@ -40,12 +41,12 @@ def download_images():
 	global TRAIN_RECORDS_DIR
 	global VAL_RECORDS_DIR
 	os.system("./download_and_preprocess_dataset.sh")
-	TRAIN_RECORDS_DIR = "./tfr/train/"
-	VAL_RECORDS_DIR = "./tfr/val/"
+	TRAIN_RECORDS_DIR = "./tf_pets_records/train/"
+	VAL_RECORDS_DIR = "./tf_pets_records/val/"
 
 def create_model(features):
 	global NUM_CLASSES
-	layer = tf.layers.dense(inputs=features, units=NUM_CLASSES, activation=None)
+	layer = tf.compat.v1.layers.dense(inputs=features, units=NUM_CLASSES, activation=None)
 	return layer
 
 def get_label_one_hot(label_ndArray):
@@ -80,19 +81,19 @@ def main():
 	with train_graph.as_default():
 		image_module = hub.Module('https://tfhub.dev/google/imagenet/mobilenet_v2_035_128/feature_vector/2')
 		image_size = hub.get_expected_image_size(image_module)
-		decoded_images = tf.placeholder(tf.float32, shape = [None, None, None, None])
+		decoded_images = tf.compat.v1.placeholder(tf.float32, shape = [None, None, None, None])
 		features = image_module(decoded_images)
 		logits = create_model(features)
-		labels = tf.placeholder(tf.float32, [None, NUM_CLASSES])
-		cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=labels)
-		cross_entropy_mean = tf.reduce_mean(cross_entropy)
-		optimizer = tf.train.GradientDescentOptimizer(learning_rate=LEARNING_RATE)
+		labels = tf.compat.v1.placeholder(tf.float32, [None, NUM_CLASSES])
+		cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels)
+		cross_entropy_mean = tf.reduce_mean(input_tensor=cross_entropy)
+		optimizer = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=LEARNING_RATE)
 		train_op = optimizer.minimize(loss=cross_entropy_mean)
 		probabilities = tf.nn.softmax(logits)
-		prediction = tf.argmax(probabilities, 1)
-		correct_label = tf.argmax(labels, 1)
-		correct_prediction = tf.equal(prediction, tf.argmax(labels, 1))
-		accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+		prediction = tf.argmax(input=probabilities, axis=1)
+		correct_label = tf.argmax(input=labels, axis=1)
+		correct_prediction = tf.equal(prediction, tf.argmax(input=labels, axis=1))
+		accuracy = tf.reduce_mean(input_tensor=tf.cast(correct_prediction, tf.float32))
 
 	crop_size = tuple(image_size)
 	TFRecordReaderType = 0
@@ -103,7 +104,7 @@ def main():
 	}
 
 
-	trainPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rali_cpu=RUN_ON_HOST)
+	trainPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rocal_cpu=RUN_ON_HOST)
 	with trainPipe:
 		inputs = fn.readers.tfrecord(path=TRAIN_RECORDS_DIR, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
 		features={
@@ -120,7 +121,7 @@ def main():
 		trainPipe.set_outputs(cmn_images)
 	trainPipe.build()
 
-	valPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rali_cpu=RUN_ON_HOST)
+	valPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rocal_cpu=RUN_ON_HOST)
 	with valPipe:
 		inputs = fn.readers.tfrecord(path=VAL_RECORDS_DIR, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
 		features={
@@ -137,13 +138,13 @@ def main():
 		valPipe.set_outputs(cmn_images)
 	valPipe.build()
 
-	trainIterator = RALIIterator(trainPipe)
-	valIterator = RALIIterator(valPipe)
+	trainIterator = ROCALIterator(trainPipe)
+	valIterator = ROCALIterator(valPipe)
 
 
 	i = 0
-	with tf.Session(graph = train_graph) as sess:
-		sess.run(tf.global_variables_initializer())
+	with tf.compat.v1.Session(graph = train_graph) as sess:
+		sess.run(tf.compat.v1.global_variables_initializer())
 		while i < NUM_TRAIN_STEPS:
 
 			for t, (train_image_ndArray, train_label_ndArray) in enumerate(trainIterator, 0):

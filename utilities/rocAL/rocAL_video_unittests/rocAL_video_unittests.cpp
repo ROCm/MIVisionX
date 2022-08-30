@@ -240,7 +240,7 @@ int main(int argc, const char **argv)
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
     if(save_frames)
-        mkdir("output_images", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); // Create directory in which images will be stored
+        mkdir("output_frames", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); // Create directory in which images will be stored
     int h = rocalGetAugmentationBranchCount(handle) * rocalGetOutputHeight(handle);
     int w = rocalGetOutputWidth(handle);
     int p = ((color_format == RocalImageColor::ROCAL_COLOR_RGB24) ? 3 : 1);
@@ -267,7 +267,7 @@ int main(int argc, const char **argv)
         counter += input_batch_size;
         if (save_frames)
         {
-            std::string batch_path = "output_images/" + std::to_string(count);
+            std::string batch_path = "output_frames/" + std::to_string(count);
             int status = mkdir(batch_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             if (status) continue;
             for(unsigned b = 0; b < input_batch_size; b++) // Iterates over each sequence in the batch
@@ -314,9 +314,9 @@ int main(int argc, const char **argv)
             int label_id[input_batch_size];
             int image_name_length[input_batch_size];
             if (processing_device == 1)
-                rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
+                rocalGetImageLabels(handle, label_id, ROCAL_MEMCPY_TO_HOST);
             else
-                rocalGetImageLabels(handle, labels.data());
+                rocalGetImageLabels(handle, label_id);
             int img_size = rocalGetImageNameLen(handle, image_name_length);
             char img_name[img_size];
             rocalGetImageName(handle, img_name);

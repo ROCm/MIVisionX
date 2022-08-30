@@ -162,7 +162,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     if (x1 != x1_diff) {
         unsigned char *src_ptr_temp, *dst_ptr_temp;
         unsigned int elements_in_crop_row = crop_width * planes;
-        unsigned int xoffs = (x1-x1_diff) * planes;   // in case x1 gets adjusted by tjpeg decoder
+        unsigned int xoffs = (x1 - x1_diff) * planes;   // in case x1 gets adjusted by tjpeg decoder
         src_ptr_temp = output_buffer;
         dst_ptr_temp = output_buffer;
         for (unsigned int i = 0; i < crop_height; i++)

@@ -138,6 +138,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             y1 =  (original_image_height - crop_height) / 2;
         }
     }
+    // Handles the case where generated crop width / crop height can be greater than the max decoded width & max decoded height set by the user.
     if(crop_width > max_decoded_width)
         crop_width = max_decoded_width;
     if(crop_height > max_decoded_height)

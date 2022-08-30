@@ -30,6 +30,13 @@ THE SOFTWARE.
 #include <string>
 #endif
 
+#ifndef EXPERIMENTAL_PLATFORM_SUPPORTS_16_FLOAT
+#include <half/half.hpp>
+using half_float::half;
+
+typedef half   vx_float16;
+#endif
+
 /*! \brief AMD target affinity enumerations for AgoTargetAffinityInfo.device_type
 */
 #define AGO_TARGET_AFFINITY_CPU       0x0010 // CPU

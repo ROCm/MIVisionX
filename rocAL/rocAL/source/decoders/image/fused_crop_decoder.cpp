@@ -144,15 +144,15 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         crop_height = max_decoded_height;
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
     if(tjDecompress2_partial(m_jpegDecompressor,
-                      input_buffer,
-                      input_size,
-                      output_buffer,
-                      max_decoded_width,
-                      max_decoded_width * planes,
-                      max_decoded_height,
-                      tjpf,
-                      TJFLAG_FASTDCT, &x1_diff, &crop_width_diff,
-		                  x1, y1, crop_width, crop_height) != 0)
+                      	     input_buffer,
+                             input_size,
+                             output_buffer,
+                             max_decoded_width,
+                             max_decoded_width * planes,
+                             max_decoded_height,
+                             tjpf,
+                             TJFLAG_FASTDCT, &x1_diff, &crop_width_diff,
+		             x1, y1, crop_width, crop_height) != 0)
 
     {
         WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))

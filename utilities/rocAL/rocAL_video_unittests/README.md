@@ -6,7 +6,7 @@ This application can be used to verify the video functionality of the API offere
 ### Pre-requisites
 * Ubuntu Linux, [version `16.04` or later](https://www.microsoft.com/software-download/windows10)
 * rocAL library (Part of the MIVisionX toolkit)
-* [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* [OpenCV 4.5.5+](https://github.com/opencv/opencv/releases/tag/4.5.5)
 * [FFmpeg 4.4.2](https://git.ffmpeg.org/gitweb/ffmpeg.git/blob/refs/heads/release/4.4:/RELEASE_NOTES)
 * Radeon Performance Primitives (RPP)
 
@@ -17,7 +17,7 @@ The other arguments can be modified in the test script.
   ````
 ./testScript.sh <input> <test_case>
   ````
-
+The outputs will be dumped inside the build/output_frames folder
 ## Test Cases
 The following test cases are supported in this unittest:
 1. Video Reader

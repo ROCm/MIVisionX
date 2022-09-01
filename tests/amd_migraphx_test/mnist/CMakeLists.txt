@@ -39,4 +39,3 @@ if(migraphx_FOUND)
 else()
     message("-- ERROR!: MIGraphX not Found, please install MIGrpahX!-- ${PROJECT_NAME} excluded${ColourReset}")
 endif()
-

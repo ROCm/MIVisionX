@@ -2,7 +2,11 @@
 #include <cstring>
 #include <random>
 #include <fstream>
+#include <iomanip>
 #include <algorithm>
+#include <chrono>
+#include <sstream>
+#include <sys/stat.h>
 #define MAX_STRING_LENGTH 100
 
 using namespace std;
@@ -34,7 +38,7 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
     }
 }
 
-void read_input_digit(const int n, std::vector<float>& input_digit) {
+void read_input_digit(std::vector<int> n, std::vector<float>& input_digit) {
     std::ifstream file("../digits.txt");
     const int Digits = 10;
     const int Height = 28;
@@ -46,9 +50,11 @@ void read_input_digit(const int n, std::vector<float>& input_digit) {
         for(int i = 0; i < Height * Width; ++i) {
             unsigned char temp = 0;
             file.read((char*)&temp, sizeof(temp));
-            if(d == n) {
-                float data = temp / 255.0;
-                input_digit.push_back(data);
+            for(int j = 0; j < n.size(); j++) {
+                if(d == n[j]) {
+                    float data = temp / 255.0;
+                    input_digit.push_back(data);
+                }
             }
         }
     }
@@ -57,12 +63,13 @@ void read_input_digit(const int n, std::vector<float>& input_digit) {
 
 int main(int argc, char **argv) {
     
-    if(argc < 2) {
-        std::cout << "Usage: \n ./migraphx_node_test <path-to-resnet50 ONNX model>" << std::endl;
+    if(argc < 4) {
+        std::cout << "Usage: \n ./migraphx_node_test <path-to-mnist ONNX model> --batch-size n" << std::endl;
         return -1;
     }
     
     std::string modelFileName = argv[1];
+    vx_size batch_size = stoul(argv[3]);
 
     vx_context context = vxCreateContext();
     ERROR_CHECK_OBJECT(context);
@@ -74,13 +81,23 @@ int main(int argc, char **argv) {
     // initialize variables
     vx_tensor input_tensor, output_tensor;
     vx_size input_num_of_dims = 4;
-    vx_size input_dims[4] = {1, 1, 28, 28}; //input dimensions for the mnist model
+    vx_size input_dims[4] = {batch_size, 1, 28, 28}; //input dimensions for the mnist model
     vx_size output_num_of_dims = 2;
-    vx_size output_dims[2] = {1, 10};  //output dimensions for the mnist model
+    vx_size output_dims[2] = {batch_size, 10};  //output dimensions for the mnist model
     vx_size stride[4];
     vx_map_id map_id;
     void *ptr = nullptr;
     vx_status status = 0;
+
+    //create a reults folder
+    std::ofstream outputFile;
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream datetime;
+    datetime << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d-%X");
+    std::string date = "../results-" + datetime.str();
+    if (mkdir(date.c_str(), 0777) == -1)
+        cerr << "Error, cannot create results folder:  " << strerror(errno) << endl;
 
     input_tensor = vxCreateTensor(context, input_num_of_dims, input_dims, VX_TYPE_FLOAT32, 0);
     output_tensor = vxCreateTensor(context, output_num_of_dims, output_dims, VX_TYPE_FLOAT32, 0);
@@ -88,9 +105,12 @@ int main(int argc, char **argv) {
     std::vector<float> input_digit;
     std::random_device rd;
     std::uniform_int_distribution<int> dist(0, 9);
-    const int rand_digit = dist(rd);
+    std::vector<int> rand_digit(batch_size);
+    for (int i = 0; i < batch_size; i++) {
+        rand_digit[i] = dist(rd);
+    } 
     read_input_digit(rand_digit, input_digit);
-
+    
     ERROR_CHECK_STATUS(vxMapTensorPatch(input_tensor, input_num_of_dims, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
     if (status) {
@@ -122,16 +142,17 @@ int main(int argc, char **argv) {
         return status;
     }
 
-    auto num_results = 10;
-    float* max = std::max_element((float*)ptr, (float*)ptr + num_results);
-    int answer = max - (float*)ptr;
+    //copy results into file
+    outputFile.open(date + "/mnist-output-results.csv");
+    outputFile << "iteration, Randomly chosen digit, Result from inference, result\n";
 
-    std::cout << std::endl
-              << "Randomly chosen digit: " << rand_digit << std::endl
-              << "Result from inference: " << answer << std::endl
-              << std::endl
-              << (answer == rand_digit ? "CORRECT" : "INCORRECT") << std::endl
-              << std::endl;
+    float *output_buf = (float*)ptr;
+    auto num_results = 10;
+    for(int i = 0; i < batch_size; i++, output_buf += num_results) {
+        float* max = std::max_element(output_buf, output_buf + num_results);
+        int answer = max - output_buf;
+        outputFile << i + 1 << "," << rand_digit[i] << "," << answer << "," << (answer == rand_digit[i] ? "Correct":"Incorrect") << "\n";
+    }
 
     status = vxUnmapTensorPatch(output_tensor, map_id);
     if(status) {
@@ -148,4 +169,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-

@@ -104,7 +104,7 @@ def main():
 	}
 
 
-	trainPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rocal_cpu=RUN_ON_HOST)
+	trainPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rocal_cpu=RUN_ON_HOST,tensor_layout = types.NHWC)
 	with trainPipe:
 		inputs = fn.readers.tfrecord(path=TRAIN_RECORDS_DIR, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
 		features={
@@ -117,11 +117,11 @@ def main():
 		images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=TRAIN_RECORDS_DIR)
 		resized = fn.resize(images, resize_x=crop_size[0], resize_y=crop_size[1])
 		flip_coin = fn.random.coin_flip(probability=0.5)
-		cmn_images = fn.crop_mirror_normalize(resized, crop=(crop_size[1], crop_size[0]), mean=[0,0,0], std=[255,255,255], mirror=flip_coin, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False)
+		cmn_images = fn.crop_mirror_normalize(resized, crop=(crop_size[1], crop_size[0]), mean=[0,0,0], std=[255,255,255], mirror=0, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False)
 		trainPipe.set_outputs(cmn_images)
 	trainPipe.build()
 
-	valPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rocal_cpu=RUN_ON_HOST)
+	valPipe = Pipeline(batch_size=TRAIN_BATCH_SIZE, num_threads=1, rocal_cpu=RUN_ON_HOST,tensor_layout = types.NHWC)
 	with valPipe:
 		inputs = fn.readers.tfrecord(path=VAL_RECORDS_DIR, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
 		features={
@@ -134,7 +134,7 @@ def main():
 		images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=VAL_RECORDS_DIR)
 		resized = fn.resize(images, resize_x=crop_size[0], resize_y=crop_size[1])
 		flip_coin = fn.random.coin_flip(probability=0.5)
-		cmn_images = fn.crop_mirror_normalize(resized, crop=(crop_size[1], crop_size[0]), mean=[0,0,0], std=[255,255,255], mirror=flip_coin, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False)
+		cmn_images = fn.crop_mirror_normalize(resized, crop=(crop_size[1], crop_size[0]), mean=[0,0,0], std=[255,255,255], mirror=0, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False)
 		valPipe.set_outputs(cmn_images)
 	valPipe.build()
 
@@ -148,7 +148,9 @@ def main():
 		while i < NUM_TRAIN_STEPS:
 
 			for t, (train_image_ndArray, train_label_ndArray) in enumerate(trainIterator, 0):
-				train_image_ndArray_transposed = np.transpose(train_image_ndArray, [0, 2, 3, 1])
+				print("trainIteratorshape  :", train_image_ndArray.shape)
+				# train_image_ndArray_transposed = np.transpose(train_image_ndArray, [0, 2, 3, 1])
+				train_image_ndArray_transposed = train_image_ndArray
 				train_label_one_hot_list = get_label_one_hot(train_label_ndArray)
 				train_loss, _, train_accuracy = sess.run(
 					[cross_entropy_mean, train_op, accuracy],
@@ -160,7 +162,8 @@ def main():
 					mean_loss = 0
 					print("\n\n-------------------------------------------------------------------------------- BEGIN VALIDATION --------------------------------------------------------------------------------")
 					for j, (val_image_ndArray, val_label_ndArray) in enumerate(valIterator, 0):
-						val_image_ndArray_transposed = np.transpose(val_image_ndArray, [0, 2, 3, 1])
+						# val_image_ndArray_transposed = np.transpose(val_image_ndArray, [0, 2, 3, 1])
+						val_image_ndArray_transposed= val_image_ndArray
 						val_label_one_hot_list = get_label_one_hot(val_label_ndArray)
 						val_loss, val_accuracy, val_prediction, val_target, correct_predicate = sess.run(
 							[cross_entropy_mean, accuracy, prediction, correct_label, correct_prediction],

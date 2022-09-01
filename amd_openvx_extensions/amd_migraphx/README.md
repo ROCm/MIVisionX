@@ -1,17 +1,17 @@
 # OpenVX MIGraphX Extension Library
 
-`vx_amd_migraphx` is an OpenVX AMD extension module which has one node (`com.amd.amd_migraphx_node`). This node enables importing the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> library into an OpenVX grph for inference.
+`vx_amd_migraphx` is an OpenVX AMD extension module which has one node (`com.amd.amd_migraphx_node`). This node enables importing the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> library into an OpenVX graph for inference.
 
 ## Build Instructions
 
 ### Pre-requisites
 
 * AMD OpenVX library
-*<a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> MIGraphx </a>
+* <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD MIGraphX </a>
 
 This module is built by default when building the MIVisionX.
 
-### Example 1: mnist
+### Example 1: vision inference example with the MNIST
 
 Following is an example gdf to perform inference using the `vx_amd_migraphx` extension. The model used is a CNN pre-trained on the MNIST dataset.
 

@@ -45,7 +45,7 @@ class CropParam
 // V Y directoin
 public:
     CropParam() = delete;
-    CropParam(unsigned int batch_size): batch_size(batch_size), _random(false)
+    CropParam(unsigned int batch_size): batch_size(batch_size), _random(false), _is_center_crop(false)
     {
         x_drift_factor     = default_x_drift_factor();
         y_drift_factor     = default_y_drift_factor();

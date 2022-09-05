@@ -112,8 +112,8 @@ void RocalCropParam::fill_crop_dims()
         x2_arr_val[img_idx] = x1_arr_val[img_idx] + cropw_arr_val[img_idx];
         y2_arr_val[img_idx] = y1_arr_val[img_idx] + croph_arr_val[img_idx];
         // Evaluating the crop
-        (x2_arr_val[img_idx] > in_width[img_idx]) ? x2_arr_val[img_idx] = in_width[img_idx] : x2_arr_val[img_idx] = x2_arr_val[img_idx];
-        (y2_arr_val[img_idx] > in_height[img_idx]) ? y2_arr_val[img_idx] = in_height[img_idx] : y2_arr_val[img_idx] = y2_arr_val[img_idx];
+        x2_arr_val[img_idx] = (x2_arr_val[img_idx] > in_width[img_idx]) ? in_width[img_idx] : x2_arr_val[img_idx];
+        y2_arr_val[img_idx] = (y2_arr_val[img_idx] > in_height[img_idx]) ? in_height[img_idx] : y2_arr_val[img_idx];
     }
 }
 

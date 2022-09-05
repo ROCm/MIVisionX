@@ -58,10 +58,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalResize(RocalContext context, RocalIm
                                                 std::vector<unsigned> max_size = {},
                                                 unsigned resize_shorter = 0,
                                                 unsigned resize_longer = 0,
-                                                RocalResizeInterpolationType interpolation_type = ROCAL_LINEAR_INTERPOLATION,
-                                                float crop_x = 0, float crop_y = 0,
-                                                float crop_width = 0, float crop_height = 0,
-                                                bool is_normalized_roi = false);
+                                                RocalResizeInterpolationType interpolation_type = ROCAL_LINEAR_INTERPOLATION);
 
 /// Accepts U8 and RGB24 input.
 /// \param context

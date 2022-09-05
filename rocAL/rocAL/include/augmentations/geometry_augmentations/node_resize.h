@@ -35,8 +35,7 @@ public:
     vx_array get_src_width() { return _src_roi_width; }
     vx_array get_src_height() { return _src_roi_height; }
     void init(unsigned dest_width, unsigned dest_height, RocalResizeScalingMode scaling_mode,
-              std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type,
-              float crop_x, float crop_y, float crop_width, float crop_height, bool is_normalized_roi);
+              std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type);
     void adjust_out_roi_size();
 protected:
     void create_node() override;
@@ -44,8 +43,6 @@ protected:
 private:
     vx_array  _dst_roi_width , _dst_roi_height;
     unsigned _dest_width, _dest_height;
-    bool _is_normalized_roi;
-    bool _has_roi = false;
     unsigned _dim = 2; // Denotes 2D images
     int _interpolation_type;
     RocalResizeScalingMode _scaling_mode;

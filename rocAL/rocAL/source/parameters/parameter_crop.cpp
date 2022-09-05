@@ -49,12 +49,6 @@ void CropParam::get_crop_dimensions(std::vector<uint32_t> &crop_w_dim, std::vect
     crop_w_dim = cropw_arr_val;
 }
 
-void CropParam::get_crop_dimensions(std::vector<float> &crop_w_dim, std::vector<float> &crop_h_dim)
-{
-    crop_h_dim = croph_float_arr_val;
-    crop_w_dim = cropw_float_arr_val;
-}
-
 void CropParam::array_init()
 {
     x1_arr_val.resize(batch_size);
@@ -65,8 +59,6 @@ void CropParam::array_init()
     y2_arr_val.resize(batch_size);
     in_width.resize(batch_size);
     in_height.resize(batch_size);
-    cropw_float_arr_val.resize(batch_size);
-    croph_float_arr_val.resize(batch_size);
 }
 
 void CropParam::create_array(std::shared_ptr<Graph> graph)

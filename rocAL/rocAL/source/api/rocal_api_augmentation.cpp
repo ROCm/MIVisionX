@@ -71,8 +71,7 @@ THE SOFTWARE.
 void
 get_max_resize_width_and_height(ReaderConfig reader_cfg, DecoderConfig decoder_cfg,
                                 std::vector<unsigned> &dst_size, RocalResizeScalingMode mode,
-                                std::vector<unsigned> &out_size, std::vector<unsigned> &max_size,
-                                std::vector<float> &crop_size, bool is_normalized_roi, int dim = 2)
+                                std::vector<unsigned> &out_size, std::vector<unsigned> &max_size, int dim = 2)
 {
     ImageSourceEvaluator source_evaluator;
     source_evaluator.set_size_evaluation_policy(MaxSizeEvaluationPolicy::MAXIMUM_FOUND_SIZE);
@@ -85,18 +84,6 @@ get_max_resize_width_and_height(ReaderConfig reader_cfg, DecoderConfig decoder_c
     if (max_width == 0 || max_height  == 0)
         THROW("Cannot find size of the images or images cannot be accessed")
     LOG("Maximum input image dimension [ "+ TOSTR(max_width) + " x " + TOSTR(max_height)+" ] for images in "+source_path)
-
-    // Calculate the max_width, max_height, max_aspect_ratio, min_aspect_ratio if crop is passed
-    if(crop_size.size() > 0)
-    {
-        float scale = crop_size[0] / crop_size[1];
-        max_width = static_cast<unsigned>(is_normalized_roi ? std::ceil(crop_size[0] * max_width) : crop_size[0]);
-        max_height = static_cast<unsigned>(is_normalized_roi ? std::ceil(crop_size[1] * max_height) : crop_size[1]);
-        max_aspect_ratio = is_normalized_roi ? max_aspect_ratio * scale : scale;
-        min_aspect_ratio = is_normalized_roi ? min_aspect_ratio * scale : scale;
-        if(max_aspect_ratio < min_aspect_ratio)
-            std::swap(max_aspect_ratio, min_aspect_ratio);
-    }
 
     // Calculate the maximum resized width and height to be set to output image info
     for (int i = 0; i < dim; i++)
@@ -566,10 +553,7 @@ rocalResize(
         std::vector<unsigned> max_size,
         unsigned resize_shorter,
         unsigned resize_longer,
-        RocalResizeInterpolationType interpolation_type,
-        float crop_x, float crop_y,
-        float crop_width, float crop_height,
-        bool is_normalized_roi
+        RocalResizeInterpolationType interpolation_type
 )
 {
     Image* output = nullptr;
@@ -588,8 +572,6 @@ rocalResize(
             THROW("Only one method of specifying size can be used \ndest_width and/or dest_height\nresize_shorter\nresize_longer")
         if(resize_longer != 0 && resize_shorter != 0)
             THROW("'resize_longer' and 'resize_shorter' cannot be passed together. They are mutually exclusive.")
-        if((crop_width != 0 && crop_height == 0) || (crop_width == 0 && crop_height != 0))
-            THROW("'crop_width' and 'crop_height' must be specified together.")
 
         ImageInfo output_info = input->info();
         unsigned dst_width, dst_height;
@@ -641,14 +623,10 @@ rocalResize(
         {
             auto reader_config = context->master_graph->get_reader_config();
             auto decoder_config = context->master_graph->get_decoder_config();
-            std::vector<float> crop_size;
             std::vector<unsigned> dst_size = {dst_width, dst_height};
-            // Check if ROI is passed
-            if(crop_width > 0 && crop_height > 0)
-                crop_size = {crop_width, crop_height};
 
             // compute the output info width and height wrt the scaling modes and roi passed
-            get_max_resize_width_and_height(reader_config, decoder_config, dst_size, resize_scaling_mode, output_info_size, maximum_size, crop_size, is_normalized_roi);
+            get_max_resize_width_and_height(reader_config, decoder_config, dst_size, resize_scaling_mode, output_info_size, maximum_size);
         }
 
         // set the width and height in the output info
@@ -661,8 +639,7 @@ rocalResize(
         output->reset_image_roi();
 
         std::shared_ptr<ResizeNode> resize_node =  context->master_graph->add_node<ResizeNode>({input}, {output});
-        resize_node->init(dst_width, dst_height, resize_scaling_mode, maximum_size, interpolation_type,
-                          crop_x, crop_y, crop_width, crop_height, is_normalized_roi);
+        resize_node->init(dst_width, dst_height, resize_scaling_mode, maximum_size, interpolation_type);
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<ResizeMetaNode,ResizeNode>(resize_node);
     }

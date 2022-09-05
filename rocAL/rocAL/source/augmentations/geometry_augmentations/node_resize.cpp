@@ -63,24 +63,12 @@ void ResizeNode::update_node()
     _crop_param->set_image_dimensions(_inputs[0]->info().get_roi_width_vec(), _inputs[0]->info().get_roi_height_vec());
     _crop_param->update_array();
 
-    std::vector<float> crop_fh_dims, crop_fw_dims;
     std::vector<uint32_t> crop_h_dims, crop_w_dims;
-    if(_is_normalized_roi)
-        _crop_param->get_crop_dimensions(crop_fw_dims, crop_fh_dims);
-    else
-        _crop_param->get_crop_dimensions(crop_w_dims, crop_h_dims);
+    _crop_param->get_crop_dimensions(crop_w_dims, crop_h_dims);
     for (unsigned i = 0; i < _batch_size; i++)
     {
-        if(_is_normalized_roi)
-        {
-            _src_roi_size[0] = crop_fw_dims[i];
-            _src_roi_size[1] = crop_fh_dims[i];
-        }
-        else
-        {
-            _src_roi_size[0] = crop_w_dims[i];
-            _src_roi_size[1] = crop_h_dims[i];
-        }
+        _src_roi_size[0] = crop_w_dims[i];
+        _src_roi_size[1] = crop_h_dims[i];
         _dst_roi_size[0] = _dest_width;
         _dst_roi_size[1] = _dest_height;
         adjust_out_roi_size();
@@ -98,8 +86,7 @@ void ResizeNode::update_node()
 }
 
 void ResizeNode::init(unsigned dest_width, unsigned dest_height, RocalResizeScalingMode scaling_mode,
-                      std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type,
-                      float crop_x, float crop_y, float crop_width, float crop_height, bool is_normalized_roi)
+                      std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type)
 {
     _scaling_mode = scaling_mode;
     _dest_width = dest_width;
@@ -108,22 +95,6 @@ void ResizeNode::init(unsigned dest_width, unsigned dest_height, RocalResizeScal
     _src_roi_size.resize(2);
     _dst_roi_size.resize(2);
     _max_roi_size = max_size;
-    _is_normalized_roi = is_normalized_roi;
-    if(!_is_normalized_roi)
-    {
-        _crop_param->crop_w = crop_width;
-        _crop_param->crop_h = crop_height;
-        _crop_param->x1     = crop_x;
-        _crop_param->y1     = crop_y;
-    }
-    else
-    {
-        _crop_param->set_normalized_roi();
-        _crop_param->crop_w_factor = crop_width;
-        _crop_param->crop_h_factor = crop_height;
-        _crop_param->x1_factor     = crop_x;
-        _crop_param->y1_factor     = crop_y;
-    }
 }
 
 void ResizeNode::adjust_out_roi_size()

@@ -141,4 +141,22 @@ enum RocalDecoderType
 #define    ROCAL_MEMCPY_TO_DEVICE    2      // force copy to user provided device memory (gpu)
 #define    ROCAL_MEMCPY_IS_PINNED    4      // for future use
 
+enum RocalResizeScalingMode
+{
+    ROCAL_SCALING_MODE_DEFAULT = 0,
+    ROCAL_SCALING_MODE_STRETCH = 1,
+    ROCAL_SCALING_MODE_NOT_SMALLER = 2,
+    ROCAL_SCALING_MODE_NOT_LARGER = 3
+};
+
+enum RocalResizeInterpolationType
+{
+    ROCAL_NEAREST_NEIGHBOR_INTERPOLATION = 0,
+    ROCAL_LINEAR_INTERPOLATION = 1,
+    ROCAL_CUBIC_INTERPOLATION = 2,
+    ROCAL_LANCZOS_INTERPOLATION = 3,
+    ROCAL_GAUSSIAN_INTERPOLATION = 4,
+    ROCAL_TRIANGULAR_INTERPOLATION = 5
+};
+
 #endif //MIVISIONX_ROCAL_API_TYPES_H

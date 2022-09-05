@@ -22,6 +22,8 @@ THE SOFTWARE.
 
 #pragma once
 #include "node.h"
+#include "rocal_api_types.h"
+#include "parameter_rocal_crop.h"
 
 class ResizeNode : public Node
 {
@@ -32,9 +34,22 @@ public:
     unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
     vx_array get_src_width() { return _src_roi_width; }
     vx_array get_src_height() { return _src_roi_height; }
+    void init(unsigned dest_width, unsigned dest_height, RocalResizeScalingMode scaling_mode,
+              std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type,
+              float crop_x, float crop_y, float crop_width, float crop_height, bool is_normalized_roi);
+    void adjust_out_roi_size();
 protected:
     void create_node() override;
     void update_node() override;
 private:
-    vx_array  _dst_roi_width , _dst_roi_height ;
+    vx_array  _dst_roi_width , _dst_roi_height;
+    unsigned _dest_width, _dest_height;
+    bool _is_normalized_roi;
+    bool _has_roi = false;
+    unsigned _dim = 2; // Denotes 2D images
+    int _interpolation_type;
+    RocalResizeScalingMode _scaling_mode;
+    std::vector<float> _src_roi_size;
+    std::vector<uint32_t> _dst_roi_size, _max_roi_size, _dst_roi_width_vec, _dst_roi_height_vec;
+    std::shared_ptr<RocalCropParam> _crop_param;
 };

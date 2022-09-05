@@ -56,10 +56,41 @@ void RocalCropParam::fill_crop_dims()
         if(!(_random))
         {
             // Evaluating user given crop
-            (crop_w > in_width[img_idx]) ? (cropw_arr_val[img_idx] = in_width[img_idx]) : (cropw_arr_val[img_idx] = crop_w);
-            (crop_h > in_height[img_idx]) ? (croph_arr_val[img_idx] = in_height[img_idx]) : (croph_arr_val[img_idx] = crop_h);
-            (x1 >= in_width[img_idx]) ? (x1_arr_val[img_idx] = 0) : (x1_arr_val[img_idx] = x1);
-            (y1 >= in_height[img_idx]) ? (y1_arr_val[img_idx] = 0) : (y1_arr_val[img_idx] = y1);
+            // (crop_w > in_width[img_idx]) ? (cropw_arr_val[img_idx] = in_width[img_idx]) : (cropw_arr_val[img_idx] = crop_w);
+            // (crop_h > in_height[img_idx]) ? (croph_arr_val[img_idx] = in_height[img_idx]) : (croph_arr_val[img_idx] = crop_h);
+            if(_is_center_crop)
+            {
+                float x_drift, y_drift;
+                x_drift = x_drift_factor->get();
+                y_drift = y_drift_factor->get();
+                cropw_arr_val[img_idx] = (crop_w > in_width[img_idx]) ? in_width[img_idx] : crop_w;
+                croph_arr_val[img_idx] = (crop_h > in_height[img_idx]) ? in_height[img_idx] : crop_h;
+                x1_arr_val[img_idx] = static_cast<size_t>(x_drift * (in_width[img_idx]  - cropw_arr_val[img_idx]));
+                y1_arr_val[img_idx] = static_cast<size_t>(y_drift * (in_height[img_idx] - croph_arr_val[img_idx]));
+            }
+            // else
+            // {
+            //     (x1 >= in_width[img_idx]) ? (x1_arr_val[img_idx] = 0) : (x1_arr_val[img_idx] = x1);
+            //     (y1 >= in_height[img_idx]) ? (y1_arr_val[img_idx] = 0) : (y1_arr_val[img_idx] = y1);
+            // }
+
+            // Evaluating user given crop
+            else if(!_normalized_roi)
+            {
+                cropw_arr_val[img_idx] = (crop_w <= in_width[img_idx] && crop_w > 0) ? crop_w : in_width[img_idx];
+                croph_arr_val[img_idx] = (crop_h <= in_height[img_idx] && crop_h > 0) ? crop_h : in_height[img_idx];
+                x1_arr_val[img_idx] = (x1 < in_width[img_idx] && x1 > 0) ? x1 : 0;
+                y1_arr_val[img_idx] = (y1 < in_height[img_idx] && y1 > 0) ? y1 : 0;
+            }
+            else
+            {
+                cropw_float_arr_val[img_idx] = (crop_w_factor > 0) ? crop_w_factor * in_width[img_idx] :  in_width[img_idx];
+                croph_float_arr_val[img_idx] = (crop_h_factor > 0) ? crop_h_factor * in_height[img_idx] : in_height[img_idx];
+                x1_arr_val[img_idx] = (x1_factor > 0) ? std::round(x1_factor * in_width[img_idx]) : 0;
+                y1_arr_val[img_idx] = (y1_factor > 0) ? std::round(y1_factor * in_height[img_idx]) : 0;
+                cropw_arr_val[img_idx] = std::round(cropw_float_arr_val[img_idx]);
+                croph_arr_val[img_idx] = std::round(croph_float_arr_val[img_idx]);
+            }
         }
         else
         {

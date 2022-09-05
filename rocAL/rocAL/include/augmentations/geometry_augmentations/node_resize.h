@@ -43,7 +43,6 @@ protected:
 private:
     vx_array  _dst_roi_width , _dst_roi_height;
     unsigned _dest_width, _dest_height;
-    unsigned _dim = 2; // Denotes 2D images
     int _interpolation_type;
     RocalResizeScalingMode _scaling_mode;
     std::vector<float> _src_roi_size;

@@ -93,4 +93,3 @@ private:
     ReaderConfig _reader_config = ReaderConfig(StorageType::FILE_SYSTEM, "", "");
     DecoderConfig _decoder_config;
 };
-

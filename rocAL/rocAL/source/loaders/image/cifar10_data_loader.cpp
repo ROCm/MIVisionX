@@ -314,3 +314,12 @@ crop_image_info CIFAR10DataLoader::get_crop_image_info()
 {
     return _circ_buff.get_cropped_image_info();
 }
+
+ReaderConfig CIFAR10DataLoader::get_reader_config()
+{
+    return _reader_config;
+}
+DecoderConfig CIFAR10DataLoader::get_decoder_config()
+{
+    return _decoder_config;
+}

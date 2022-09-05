@@ -113,6 +113,8 @@ public:
 #if ENABLE_OPENCL
     cl_command_queue get_ocl_cmd_q() { return _device.resources().cmd_queue; }
 #endif
+    ReaderConfig get_reader_config() { return _loader_module->get_reader_config(); }
+    DecoderConfig get_decoder_config() { return _loader_module->get_decoder_config(); }
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();

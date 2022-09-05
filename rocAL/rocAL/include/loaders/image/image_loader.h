@@ -56,6 +56,8 @@ public:
     crop_image_info get_crop_image_info() override;
     void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
     void shut_down() override;
+    ReaderConfig get_reader_config() override;
+    DecoderConfig get_decoder_config() override;
 private:
     bool is_out_of_data();
     void de_init();
@@ -88,5 +90,7 @@ private:
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
     bool _decoder_keep_original = false;
     int _device_id;
+    ReaderConfig _reader_config = ReaderConfig(StorageType::FILE_SYSTEM, "", "");
+    DecoderConfig _decoder_config;
 };
 

@@ -49,6 +49,8 @@ public:
     Timing timing() override;
     void set_prefetch_queue_depth(size_t prefetch_queue_depth) override;
     void shut_down() override;
+    ReaderConfig get_reader_config() override;
+    DecoderConfig get_decoder_config() override;
 private:
     void increment_loader_idx();
 #if ENABLE_HIP
@@ -65,4 +67,6 @@ private:
 
     Image *_output_image;
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
+    ReaderConfig _reader_config = ReaderConfig(StorageType::FILE_SYSTEM, "", "");
+    DecoderConfig _decoder_config;
 };

@@ -348,3 +348,12 @@ crop_image_info ImageLoader::get_crop_image_info()
 {
     return _output_cropped_img_info;
 }
+
+ReaderConfig ImageLoader::get_reader_config()
+{
+    return _reader_config;
+}
+DecoderConfig ImageLoader::get_decoder_config()
+{
+    return _decoder_config;
+}

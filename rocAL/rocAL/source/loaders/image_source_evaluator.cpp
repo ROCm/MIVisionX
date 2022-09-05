@@ -39,6 +39,16 @@ size_t ImageSourceEvaluator::max_height()
     return _height_max.get_max();
 }  
 
+float ImageSourceEvaluator::max_aspect_ratio()
+{
+    return _max_aspect_ratio;
+}
+
+float ImageSourceEvaluator::min_aspect_ratio()
+{
+    return _min_aspect_ratio;
+}
+
 ImageSourceEvaluatorStatus 
 ImageSourceEvaluator::create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg)
 {
@@ -80,6 +90,9 @@ ImageSourceEvaluator::find_max_dimension()
 
         _width_max.process_sample(width);
         _height_max.process_sample(height);
+        float aspect_ratio = width / (float)height;
+        _max_aspect_ratio = std::max(aspect_ratio, _max_aspect_ratio);
+        _min_aspect_ratio = std::min(aspect_ratio, _min_aspect_ratio);
 
     }
     // return the reader read pointer to the begining of the resource

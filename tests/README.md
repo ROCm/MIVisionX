@@ -25,3 +25,7 @@ Quick MIVisionX [test suite](smoke_tests)
 ## Vision Tests
 
 OpenVX [vision function tests](vision_tests) for verification and performance
+
+## Zen DNN Unit Tests
+
+[Zen DNN tests](zen_dnn_tests) for unit test, verification and performance

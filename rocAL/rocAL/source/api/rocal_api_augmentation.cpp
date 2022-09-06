@@ -88,11 +88,8 @@ get_max_resize_width_and_height(ReaderConfig reader_cfg, DecoderConfig decoder_c
     // Calculate the maximum resized width and height to be set to output image info
     for (int i = 0; i < dim; i++)
     {
-        if (max_size.size() > 0)
-        {
-            if (max_size[i] > 0)
-                out_size[i] = max_size[i];
-        }
+        if (max_size.size())
+            out_size[i] = std::max(out_size[i], max_size[i]);
         else
         {
             if ((dst_size[i] > 0 && mode != RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER) ||

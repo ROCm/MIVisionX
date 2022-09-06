@@ -143,10 +143,10 @@ enum RocalDecoderType
 
 enum RocalResizeScalingMode
 {
-    ROCAL_SCALING_MODE_DEFAULT = 0,
-    ROCAL_SCALING_MODE_STRETCH = 1,
-    ROCAL_SCALING_MODE_NOT_SMALLER = 2,
-    ROCAL_SCALING_MODE_NOT_LARGER = 3
+    ROCAL_SCALING_MODE_DEFAULT = 0,     // scales wrt specified size, if only width/height is provided the other dimension is scaled according to aspect ratio
+    ROCAL_SCALING_MODE_STRETCH = 1,     // scales wrt specified size, if only width/height is provided the other dimension is not scaled
+    ROCAL_SCALING_MODE_NOT_SMALLER = 2, // scales wrt to aspect ratio, so that width/height is not lesser tha the specified dimension 
+    ROCAL_SCALING_MODE_NOT_LARGER = 3   // scales wrt to aspect ratio, so that width/height does not exceed specified dimension 
 };
 
 enum RocalResizeInterpolationType

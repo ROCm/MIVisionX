@@ -81,9 +81,9 @@ get_max_resize_width_and_height(ReaderConfig reader_cfg, DecoderConfig decoder_c
     auto min_aspect_ratio = source_evaluator.min_aspect_ratio();
     auto max_width = source_evaluator.max_width();
     auto max_height = source_evaluator.max_height();
-    if (max_width == 0 || max_height  == 0)
+    if (max_width == 0 || max_height == 0)
         THROW("Cannot find size of the images or images cannot be accessed")
-    LOG("Maximum input image dimension [ "+ TOSTR(max_width) + " x " + TOSTR(max_height)+" ] for images in "+source_path)
+    LOG("Maximum input image dimension [ " + TOSTR(max_width) + " x " + TOSTR(max_height) +" ] for images in " + source_path)
 
     // Calculate the maximum resized width and height to be set to output image info
     for (int i = 0; i < dim; i++)
@@ -596,7 +596,7 @@ rocalResize(
         }
 
         std::vector<unsigned> maximum_size;
-        if (max_size.size() > 0)
+        if (max_size.size())
         {
             if(max_size.size() == 1)
                 maximum_size = {max_size[0], max_size[0]};
@@ -608,8 +608,7 @@ rocalResize(
 
         // Determine the max width and height to be set to the output info
         std::vector<unsigned> output_info_size(2, 0);
-        if((dest_width != 0 && dest_height != 0) &&
-                (resize_scaling_mode == ROCAL_SCALING_MODE_DEFAULT || resize_scaling_mode == ROCAL_SCALING_MODE_STRETCH))
+        if((dest_width != 0 && dest_height != 0) && (resize_scaling_mode == ROCAL_SCALING_MODE_DEFAULT || resize_scaling_mode == ROCAL_SCALING_MODE_STRETCH))
         {
             // If both dst width and height is passed by the user, the resized images cannot exceed the given size,
             output_info_size = {dest_width, dest_height};

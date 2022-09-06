@@ -198,5 +198,5 @@ ReaderConfig ImageLoaderSharded::get_reader_config()
 }
 DecoderConfig ImageLoaderSharded::get_decoder_config()
 {
-    return _loaders[_loader_idx]->get_decoder_config();;
+    return _loaders[_loader_idx]->get_decoder_config();
 }

@@ -71,7 +71,7 @@ private:
     std::shared_ptr<MetaDataReader> _meta_data_reader;
     std::vector<unsigned char> _header_buff;
     static const size_t COMPRESSED_SIZE = 1024 * 1024; // 1 MB
-    float _max_aspect_ratio = -1;
-    float _min_aspect_ratio = 1000;
+    float _max_aspect_ratio = std::numeric_limits<float>::lowest();
+    float _min_aspect_ratio = std::numeric_limits<float>::max();
 };
 

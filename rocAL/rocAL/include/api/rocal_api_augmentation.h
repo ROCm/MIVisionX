@@ -52,13 +52,13 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalSequenceRearrange(RocalContext conte
 /// \param interpolation_type The type of interpolation to be used for resize.
 /// \return
 extern "C"  RocalImage  ROCAL_API_CALL rocalResize(RocalContext context, RocalImage input,
-                                                unsigned dest_width, unsigned dest_height,
-                                                bool is_output,
-                                                RocalResizeScalingMode scaling_mode = ROCAL_SCALING_MODE_STRETCH,
-                                                std::vector<unsigned> max_size = {},
-                                                unsigned resize_shorter = 0,
-                                                unsigned resize_longer = 0,
-                                                RocalResizeInterpolationType interpolation_type = ROCAL_LINEAR_INTERPOLATION);
+                                                   unsigned dest_width, unsigned dest_height,
+                                                   bool is_output,
+                                                   RocalResizeScalingMode scaling_mode = ROCAL_SCALING_MODE_STRETCH,
+                                                   std::vector<unsigned> max_size = {},
+                                                   unsigned resize_shorter = 0,
+                                                   unsigned resize_longer = 0,
+                                                   RocalResizeInterpolationType interpolation_type = ROCAL_LINEAR_INTERPOLATION);
 
 /// Accepts U8 and RGB24 input.
 /// \param context

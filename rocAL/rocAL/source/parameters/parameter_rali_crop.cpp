@@ -58,19 +58,8 @@ void RocalCropParam::fill_crop_dims()
             // Evaluating user given crop
             cropw_arr_val[img_idx] = (crop_w <= in_width[img_idx] && crop_w > 0) ? crop_w : in_width[img_idx];
             croph_arr_val[img_idx] = (crop_h <= in_height[img_idx] && crop_h > 0) ? crop_h : in_height[img_idx];
-            if(_is_center_crop)
-            {
-                float x_drift, y_drift;
-                x_drift = x_drift_factor->get();
-                y_drift = y_drift_factor->get();
-                x1_arr_val[img_idx] = static_cast<size_t>(x_drift * (in_width[img_idx]  - cropw_arr_val[img_idx]));
-                y1_arr_val[img_idx] = static_cast<size_t>(y_drift * (in_height[img_idx] - croph_arr_val[img_idx]));
-            }
-            else
-            {
-                x1_arr_val[img_idx] = (x1 < in_width[img_idx] && x1 > 0) ? x1 : 0;
-                y1_arr_val[img_idx] = (y1 < in_height[img_idx] && y1 > 0) ? y1 : 0;
-            }
+            x1_arr_val[img_idx] = (x1 < in_width[img_idx] && x1 > 0) ? x1 : 0;
+            y1_arr_val[img_idx] = (y1 < in_height[img_idx] && y1 > 0) ? y1 : 0;
         }
         else
         {

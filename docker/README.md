@@ -3,7 +3,7 @@
 ## Build - dockerfiles
 
 ```
-sudo docker build -f {DOCKER_FILE_NAME}.dockerfile -t {DOCKER_IMAGE_NAME} .
+sudo docker build --build-arg {ARG_NAME}={ARG_VALUE} -f {DOCKER_FILE_NAME}.dockerfile -t {DOCKER_IMAGE_NAME} .
 ```
 
 ## Run - docker

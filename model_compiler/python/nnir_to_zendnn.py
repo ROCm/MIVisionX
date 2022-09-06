@@ -648,8 +648,8 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
 """
     // Start: Model Layer %d - relu
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - relu Setup");
-    const float alpha = %f;
-    const float beta = 0.0f;
+    const float %s_alpha = %f;
+    const float %s_beta = 0.0f;
 
     // Start: Create relu primitive descriptor
     // For better performance, keep the input data format for ReLU
@@ -658,7 +658,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     // for convolution. Also note that ReLU can be done in-place
     auto %s_desc = eltwise_forward::desc(prop_kind::forward_inference,
                                             algorithm::eltwise_relu, %s_dst_memory.get_desc(),
-                                            alpha, beta);
+                                            %s_alpha, %s_beta);
     auto %s_prim_desc = eltwise_forward::primitive_desc(%s_desc, eng);
     // End: Create relu primitive descriptor
 
@@ -673,9 +673,49 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     // End: Create a relu primitive and add it to the net
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - relu Setup Complete");
     // End: Model Layer %d - relu
-"""%(layerNumber, layerNumber, alpha, node.outputs[0], node.inputs[0], node.outputs[0], 
+"""%(layerNumber, layerNumber, node.outputs[0], alpha, node.outputs[0], node.outputs[0], 
+    node.inputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
+    node.outputs[0], node.outputs[0], node.outputs[0], node.inputs[0], node.inputs[0], 
+    layerNumber, layerNumber))
+                layerNumber += 1
+            elif node.type == 'lrn':
+                size = node.attr.get('size')
+                alpha = node.attr.get('alpha')
+                beta = node.attr.get('beta')
+                bias = node.attr.get('bias')
+                f.write( \
+"""
+    // Start: Model Layer %d - LRN
+    zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - LRN Setup");
+    const float %s_alpha = %f;
+    const float %s_beta = %f;
+    const float %s_bias = %f;
+    const unsigned long %s_size = %lu;
+
+    // Start: Create LRN primitive descriptor
+    auto %s_desc = lrn_forward::desc(prop_kind::forward_inference,
+                                    algorithm::lrn_across_channels, 
+                                    %s_dst_memory.get_desc(), %s_size, %s_alpha, %s_beta, %s_bias);
+
+    auto %s_prim_desc = lrn_forward::primitive_desc(%s_desc, eng);
+    // End: Create LRN primitive descriptor
+
+    // Start: LRN - dst memory
+    auto %s_dst_memory = memory(%s_prim_desc.dst_desc(), eng);
+    // End: LRN - dst memory
+
+    // Start: Create a LRN primitive and add it to the net
+    net.push_back(lrn_forward(%s_prim_desc));
+    net_args.push_back({{ZENDNN_ARG_SRC, %s_dst_memory},
+                        {ZENDNN_ARG_DST, %s_dst_memory}});
+    // End: Create a LRN primitive and add it to the net
+    zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - LRN Setup Complete");
+    // End: Model Layer %d - LRN
+"""%(layerNumber, layerNumber, node.outputs[0], alpha, node.outputs[0], beta, node.outputs[0], 
+    bias, node.outputs[0], size, node.outputs[0] , node.inputs[0], 
+    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
     node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.inputs[0], 
-    node.inputs[0], layerNumber, layerNumber))
+    node.outputs[0], layerNumber, layerNumber))
                 layerNumber += 1
             elif node.type == 'softmax':
                 axis = node.attr.get('axis');

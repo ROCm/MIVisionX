@@ -47,5 +47,4 @@ private:
     RocalResizeScalingMode _scaling_mode;
     std::vector<float> _src_roi_size;
     std::vector<uint32_t> _dst_roi_size, _max_roi_size, _dst_roi_width_vec, _dst_roi_height_vec;
-    std::shared_ptr<RocalCropParam> _crop_param;
 };

@@ -29,7 +29,6 @@ THE SOFTWARE.
 ResizeNode::ResizeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs)
 {
-    _crop_param = std::make_shared<RocalCropParam>(_batch_size);
 }
 
 void ResizeNode::create_node()
@@ -37,8 +36,6 @@ void ResizeNode::create_node()
     if(_node)
         return;
     
-    _crop_param->create_array(_graph);
-
     std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
     std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());
 
@@ -61,15 +58,14 @@ void ResizeNode::create_node()
 
 void ResizeNode::update_node()
 {
-    _crop_param->set_image_dimensions(_inputs[0]->info().get_roi_width_vec(), _inputs[0]->info().get_roi_height_vec());
-    _crop_param->update_array();
 
-    std::vector<uint32_t> crop_h_dims, crop_w_dims;
-    _crop_param->get_crop_dimensions(crop_w_dims, crop_h_dims);
+    std::vector<uint32_t> src_h_dims, src_w_dims;
+    src_w_dims = _inputs[0]->info().get_roi_width_vec();
+    src_h_dims = _inputs[0]->info().get_roi_height_vec();
     for (unsigned i = 0; i < _batch_size; i++)
     {
-        _src_roi_size[0] = crop_w_dims[i];
-        _src_roi_size[1] = crop_h_dims[i];
+        _src_roi_size[0] = src_w_dims[i];
+        _src_roi_size[1] = src_h_dims[i];
         _dst_roi_size[0] = _dest_width;
         _dst_roi_size[1] = _dest_height;
         adjust_out_roi_size();
@@ -170,8 +166,9 @@ void ResizeNode::adjust_out_roi_size()
                 double s = scale[i];
                 if (first ||
                     (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER && s > final_scale) ||
-                    (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER && s < final_scale))
-                    final_scale = s;
+                    (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER && s < final_scale)) {
+                        final_scale = s;
+                    }
                 first = false;
             }
         }
@@ -190,9 +187,7 @@ void ResizeNode::adjust_out_roi_size()
         for (unsigned i = 0; i < dim; i++)
         {
             if(!has_size[i] || (scale[i] != final_scale))
-            {
                 _dst_roi_size[i] = std::round(_src_roi_size[i] * final_scale);
-            }
         }
     }
 }

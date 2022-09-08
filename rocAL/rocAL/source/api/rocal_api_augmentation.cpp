@@ -69,37 +69,32 @@ THE SOFTWARE.
 #include "image_source_evaluator.h"
 
 void
-get_max_resize_width_and_height(ReaderConfig reader_cfg, DecoderConfig decoder_cfg,
-                                std::vector<unsigned> &dst_size, RocalResizeScalingMode mode,
-                                std::vector<unsigned> &out_size, int dim = 2)
+get_max_resize_width_and_height(std::vector<unsigned> &src_size, std::vector<unsigned> &dst_size, RocalResizeScalingMode mode,
+                                std::vector<unsigned> &out_size)
 {
-    ImageSourceEvaluator source_evaluator;
-    source_evaluator.set_size_evaluation_policy(MaxSizeEvaluationPolicy::MAXIMUM_FOUND_SIZE);
-    if(source_evaluator.create(reader_cfg, decoder_cfg) != ImageSourceEvaluatorStatus::OK)
-        THROW("Initializing file source input evaluator failed ")
-    auto max_aspect_ratio = source_evaluator.max_aspect_ratio();
-    auto min_aspect_ratio = source_evaluator.min_aspect_ratio();
-    auto max_width = source_evaluator.max_width();
-    auto max_height = source_evaluator.max_height();
-    if (max_width == 0 || max_height == 0)
-        THROW("Cannot find size of the images or images cannot be accessed")
-    LOG("Maximum input image dimension [ " + TOSTR(max_width) + " x " + TOSTR(max_height) +" ] for images in " + source_path)
+    float max_aspect_ratio = 2.0f;
 
-    // Calculate the maximum resized width and height to be set to output image info
-    for (int i = 0; i < dim; i++)
+    switch (mode)
     {
-        if ((dst_size[i] > 0 && mode != RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER) ||
-            (dst_size[i] > 0 && mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER && dst_size[(i + 1) % 2] == 0))
-            out_size[i] = dst_size[i];
-        else if (mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH)
-            out_size[i] = (i == 0) ? max_width : max_height;
-        else
-        {
-            out_size[i] = (i == 0) ? std::round(max_aspect_ratio * dst_size[1]) : std::round((1 / min_aspect_ratio) * dst_size[0]);
-            if (mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER && (out_size[i] < dst_size[i]))
-                out_size[i] = dst_size[i];
-        }
+    case ROCAL_SCALING_MODE_STRETCH:
+    {
+        out_size[0] = dst_size[0] ? dst_size[0] : src_size[0];   // For width dimension
+        out_size[1] = dst_size[1] ? dst_size[1] : src_size[1];   // For height dimension
     }
+    break;
+    case ROCAL_SCALING_MODE_NOT_SMALLER:
+    {
+        out_size[0] = (dst_size[0] > src_size[0] ? dst_size[0] : src_size[0]) * max_aspect_ratio;   // For width dimension
+        out_size[1] = (dst_size[1] > src_size[1] ? dst_size[1] : src_size[1]) * max_aspect_ratio;   // For height dimension
+    }
+    break;
+    default:
+    {
+        out_size[0] = dst_size[0] ? dst_size[0] : src_size[0] * max_aspect_ratio;   // For width dimension
+        out_size[1] = dst_size[1] ? dst_size[1] : src_size[1] * max_aspect_ratio;   // For height dimension
+    }
+    }
+
 };
 
 RocalImage  ROCAL_API_CALL
@@ -612,12 +607,11 @@ rocalResize(
         }
         else
         {
-            auto reader_config = context->master_graph->get_reader_config();
-            auto decoder_config = context->master_graph->get_decoder_config();
+            std::vector<unsigned> src_size = {input->info().width(), input->info().height_single()};
             std::vector<unsigned> dst_size = {dst_width, dst_height};
 
             // compute the output info width and height wrt the scaling modes and roi passed
-            get_max_resize_width_and_height(reader_config, decoder_config, dst_size, resize_scaling_mode, output_info_size);
+            get_max_resize_width_and_height(src_size, dst_size, resize_scaling_mode, output_info_size);
         }
 
         // set the width and height in the output info

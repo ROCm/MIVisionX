@@ -3,7 +3,6 @@
 ### Building the required TF Rocm docker
 Use the instructions in the [docker section](../../../../../docker) to build the required [Tensorflow docker](../../../../../docker/tensorflow)
 
-
 ### Running the training
 
 * For first run, to setup dataset, edit "train_withROCAL_withTFRecordReader.py" and set "DATASET_DOWNLOAD_AND_PREPROCESS = True"

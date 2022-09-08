@@ -18,9 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import os, sys, struct, subprocess
+import os, sys, struct
 import datetime, pytz
-import numpy as np
 from nnir import *
 
 def generateLicenseForScript(f):

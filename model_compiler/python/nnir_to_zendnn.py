@@ -207,6 +207,7 @@ def generateDeployCPP(graph,fileName):
 #include <unordered_map>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 #include "test_utils.hpp"
 #include "zendnn_logging.hpp"
@@ -286,24 +287,21 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
         }
     }
 
-    // Start: Initialize engine and stream
+    // Initialize engine and stream
     engine eng(engine_kind, 0);
     stream s(eng);
-    // End: Initialize engine and stream
 
-    // Start: Create network
+    // Create network
     std::vector<primitive> net;
     std::vector<std::unordered_map<int, memory>> net_args;
-    // End: Create network
-
 """)
         for tensor in graph.inputs:
             f.write( \
 """
-    // Start: allocate input data %s
+    // Allocate input data %s
     std::vector<float> user_src(%s);
     memory::dims %s_src_tensor_dims = {%s};
-    // End: allocate input data
+
     //Create memory that describes data layout
     auto user_src_memory = memory({{%s_src_tensor_dims}, dt::f32, tag::nchw}, eng);
     write_to_zendnn_memory(user_src.data(), user_src_memory);
@@ -312,15 +310,14 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
         for tensor in graph.outputs:
             f.write( \
 """
-    // Start: allocate output data %s
+    // Allocate output data %s
     std::vector<float> user_dst(%s);
     memory::dims %s_dims = {%s};
-    // End: allocate output data
 """% (tensor.name, ' * '.join([str(v) for v in tensor.shape]), tensor.name, ', '.join([str(v) for v in tensor.shape])))
         for tensor in graph.inputs:
             f.write( \
 """
-    // Start: Load Input Image - Binary Files
+    // Load Input Image - Binary Files
     std::ifstream input_binary_image(imageFilename, std::ios::binary);
 
     input_binary_image.seekg(0, input_binary_image.end);
@@ -336,7 +333,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
         printf("ERROR: invalid Binary Image File -- %%s: Total Pixels:%s Received: %%d\\n", imageFilename, elementCount);
         return -1;
     }
-    // End: Load Input Image
+
     // Allocate initializers
 """% (' * '.join([str(v) for v in tensor.shape]), ' * '.join([str(v) for v in tensor.shape])))
         for tensor in graph.initializers:
@@ -346,8 +343,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
                     del tensor.shape[-1]
                 i += 1
             f.write( \
-"""
-    memory::dims %s_dims = {%s};
+"""    memory::dims %s_dims = {%s};
 """%(tensor.name, ', '.join([str(v) for v in tensor.shape])))
         f.write( 
 """
@@ -360,77 +356,85 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
                     del tensor.shape[-1]
                 j += 1
             f.write( \
-"""
-    memory::dims %s_dims = {%s};
+"""    memory::dims %s_dims = {%s};
 """%(tensor.name, ', '.join([str(v) for v in tensor.shape])))
         layerNumber = 1
         for node in graph.nodes:
             if node.type == 'conv':
+                # TODO: add support for group convolution
                 pads = node.attr.get('pads')
                 strides = node.attr.get('strides')
                 f.write( \
 """
     // Start: Model Layer %d - conv
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - conv Setup");
-    // Start: conv set dimensions
+    // Conv set dimensions
     memory::dims %s_padding = {%s};
     memory::dims %s_strides = {%s};
-    // Start: Allocate buffers for weights and bias
+    // Allocate buffers for weights and bias
     std::vector<float> %s(product(%s_dims));
     ERROR_CHECK_STATUS(initializeTensor(&%s, product(%s_dims), fp__variables, binaryFilename));
-    std::vector<float> %s(product(%s_dims));
-    ERROR_CHECK_STATUS(initializeTensor(&%s, product(%s_dims), fp__variables, binaryFilename));
-    // End: Allocate buffers for weights and bias
-    // Start: Create memory that describes data layout in the buffers
-    auto %s_user_weights_memory = memory({{%s_dims}, dt::f32, tag::oihw}, eng);
-    write_to_zendnn_memory(%s.data(), %s_user_weights_memory);
-    auto %s_user_bias_memory = memory({{%s_dims[1]}, dt::f32, tag::x}, eng);
-    write_to_zendnn_memory(%s.data(), %s_user_bias_memory);
-    // End: Create memory that describes data layout in the buffers
-
-    // Start: Create convolution memory descriptors with layout tag::any
-    // The `any` format enables the convolution primitive to choose the data format
-    // that will result in best performance based on its input parameters (convolution
-    // kernel sizes, strides, padding, and so on). If the resulting format is different
-    // from `nchw`, the user data must be transformed to the format required for
-    // the convolution
 """%(layerNumber, layerNumber, node.outputs[0], ', '.join([str(v) for v in pads]), 
     node.outputs[0], ', '.join([str(v) for v in strides]), node.inputs[1], node.inputs[1], 
-    node.inputs[1], node.inputs[1], node.inputs[2], node.inputs[2], node.inputs[2], 
-    node.inputs[2], node.outputs[0], node.inputs[1], node.inputs[1], node.outputs[0],
-    node.outputs[0], node.inputs[2], node.inputs[2], node.outputs[0]))
+    node.inputs[1], node.inputs[1]))
+                if len(node.inputs) == 3:
+                    f.write( \
+"""
+    std::vector<float> %s(product(%s_dims));
+    ERROR_CHECK_STATUS(initializeTensor(&%s, product(%s_dims), fp__variables, binaryFilename));
+"""%(node.inputs[2], node.inputs[2], node.inputs[2], node.inputs[2]))
+                f.write( \
+"""
+    // Create memory that describes data layout in the buffers
+    auto %s_user_weights_memory = memory({{%s_dims}, dt::f32, tag::oihw}, eng);
+    write_to_zendnn_memory(%s.data(), %s_user_weights_memory);
+"""%(node.outputs[0], node.inputs[1], node.inputs[1], node.outputs[0]))
+                if len(node.inputs) == 3:
+                    f.write( \
+"""
+    auto %s_user_bias_memory = memory({{%s_dims[1]}, dt::f32, tag::x}, eng);
+    write_to_zendnn_memory(%s.data(), %s_user_bias_memory);
+
+    // Create convolution memory descriptors with layout tag::any
+"""%(node.outputs[0], node.inputs[2], node.inputs[2], node.outputs[0]))
                 if layerNumber == 1:
                     f.write( \
 """
     auto %s_src_md = memory::desc({%s_src_tensor_dims}, dt::f32, tag::any);
 """%(node.outputs[0], node.inputs[0]))
-                f.write( \
+                if len(node.inputs) == 3:
+                    f.write( \
 """
     auto %s_bias_md = memory::desc({%s_dims[1]}, dt::f32, tag::any);
+"""%(node.outputs[0], node.inputs[2]))
+                f.write( \
+"""
     auto %s_weights_md = memory::desc({%s_dims}, dt::f32, tag::any);
     auto %s_dst_md = memory::desc({%s_dims}, dt::f32, tag::any);
-    // End: Create convolution memory descriptors with layout tag::any
 
-    // Start: Create convolution descriptor
-    // by specifying: propagation kind, convolution algorithm , shapes of input,
-    // weights, bias, output, convolution strides, padding, and kind of padding.
-    // Propagation kind is set to prop_kind::forward_inference to optimize for
-    // inference execution and omit computations that are necessary only for
-    // backward propagation.
-"""%(node.outputs[0], node.inputs[2], node.outputs[0], node.inputs[1], 
-    node.outputs[0], node.outputs[0]))
+    // Create convolution descriptor
+"""%(node.outputs[0], node.inputs[1], node.outputs[0], node.outputs[0]))
                 if layerNumber == 1:
-                    f.write( \
+                    if len(node.inputs) == 3:
+                        f.write( \
 """
     auto %s_desc = convolution_forward::desc(prop_kind::forward_inference,
                                             algorithm::convolution_gemm, %s_src_md, %s_weights_md,
                                             %s_bias_md, %s_dst_md, %s_strides, %s_padding,
                                             %s_padding);
-    // End: Create convolution descriptor
 """%(node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
     node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0]))
+                    else:
+                        f.write( \
+"""
+    auto %s_desc = convolution_forward::desc(prop_kind::forward_inference,
+                                            algorithm::convolution_gemm, %s_src_md, %s_weights_md,
+                                            %s_dst_md, %s_strides, %s_padding, %s_padding);
+"""%(node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
+    node.outputs[0], node.outputs[0], node.outputs[0]))
                 else:
-                    f.write( \
+                    if len(node.inputs) == 3:
+                        f.write( \
 """
     auto %s_desc = convolution_forward::desc(prop_kind::forward_inference,
                                             algorithm::convolution_gemm, %s_dst_memory.get_desc(), %s_weights_md,
@@ -439,20 +443,24 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     // End: Create convolution descriptor
 """%(node.outputs[0], node.inputs[0], node.outputs[0], node.outputs[0],
     node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0]))
+                    else:
+                        f.write( \
+"""
+    auto %s_desc = convolution_forward::desc(prop_kind::forward_inference,
+                                            algorithm::convolution_gemm, %s_dst_memory.get_desc(), %s_weights_md,
+                                            %s_dst_md, %s_strides, %s_padding, %s_padding);
+    // End: Create convolution descriptor
+"""%(node.outputs[0], node.inputs[0], node.outputs[0], node.outputs[0],
+    node.outputs[0], node.outputs[0], node.outputs[0]))
                 f.write( \
 """
-    // Start: Create a convolution primitive descriptor
-    // Once created, this descriptor has specific formats instead of the `any`
-    // format specified in the convolution descriptor.
+    // Create a convolution primitive descriptor
     auto %s_prim_desc = convolution_forward::primitive_desc(%s_desc, eng);
-    // End: Create a convolution primitive descriptor
 """%(node.outputs[0], node.outputs[0]))
                 if layerNumber == 1:
                     f.write( \
 """
-    // Start: Check data and weights formats - Reorder
-    // Data formats required by convolution is different from the user format.
-    // In case it is different change the layout using reorder primitive.
+    // Check data and weights formats - Reorder
     auto %s_src_memory = user_src_memory;
     if (%s_prim_desc.src_desc() != user_src_memory.get_desc())
     {
@@ -469,7 +477,6 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
         reorder(%s_user_weights_memory, %s_weights_memory)
             .execute(s, %s_user_weights_memory, %s_weights_memory);
     }
-    // End: Check data and weights formats - Reorder
 """%(node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
     node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
     node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
@@ -477,7 +484,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
                 else:
                     f.write( \
 """
-    // Start: Check weights formats - Reorder
+    // Check weights formats - Reorder
     auto %s_weights_memory = %s_user_weights_memory;
     if (%s_prim_desc.weights_desc() != %s_user_weights_memory.get_desc())
     {
@@ -485,39 +492,55 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
         reorder(%s_user_weights_memory, %s_weights_memory)
             .execute(s, %s_user_weights_memory, %s_weights_memory);
     }
-    // End: Check weights formats - Reorder
 """%(node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
     node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0]))
                 f.write( \
 """
-    // Start: Create a memory primitive for output
+    // Create a memory primitive for output
     auto %s_dst_memory = memory(%s_prim_desc.dst_desc(), eng);
-    // End: Create a memory primitive for output
 """%(node.outputs[0], node.outputs[0]))
                 if layerNumber == 1:
-                    f.write( \
+                    if len(node.inputs) == 3:
+                        f.write( \
 """
-    // Start: Create a convolution primitive and add it to the net
+    // Create a convolution primitive and add it to the net
     net.push_back(convolution_forward(%s_prim_desc));
     net_args.push_back({{ZENDNN_ARG_SRC, %s_src_memory},
                         {ZENDNN_ARG_WEIGHTS, %s_weights_memory},
                         {ZENDNN_ARG_BIAS, %s_user_bias_memory},
                         {ZENDNN_ARG_DST, %s_dst_memory}});
-    // End: Create a convolution primitive and add it to the net
 """%(node.outputs[0], node.outputs[0], node.outputs[0],
     node.outputs[0], node.outputs[0]))
-                else:
-                    f.write( \
+                    else:
+                        f.write( \
 """
-    // Start: Create a convolution primitive and add it to the net
+    // Create a convolution primitive and add it to the net
+    net.push_back(convolution_forward(%s_prim_desc));
+    net_args.push_back({{ZENDNN_ARG_SRC, %s_src_memory},
+                        {ZENDNN_ARG_WEIGHTS, %s_weights_memory},
+                        {ZENDNN_ARG_DST, %s_dst_memory}});
+"""%(node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0]))
+                else:
+                    if len(node.inputs) == 3:
+                        f.write( \
+"""
+    // Create a convolution primitive and add it to the net
     net.push_back(convolution_forward(%s_prim_desc));
     net_args.push_back({{ZENDNN_ARG_SRC, %s_dst_memory},
                         {ZENDNN_ARG_WEIGHTS, %s_weights_memory},
                         {ZENDNN_ARG_BIAS, %s_user_bias_memory},
                         {ZENDNN_ARG_DST, %s_dst_memory}});
-    // End: Create a convolution primitive and add it to the net
 """%(node.outputs[0], node.inputs[0], node.outputs[0],
-    node.outputs[0], node.outputs[0],))
+    node.outputs[0], node.outputs[0]))
+                    else:
+                        f.write( \
+"""
+    // Create a convolution primitive and add it to the net
+    net.push_back(convolution_forward(%s_prim_desc));
+    net_args.push_back({{ZENDNN_ARG_SRC, %s_dst_memory},
+                        {ZENDNN_ARG_WEIGHTS, %s_weights_memory},
+                        {ZENDNN_ARG_DST, %s_dst_memory}});
+"""%(node.outputs[0], node.inputs[0], node.outputs[0], node.outputs[0]))
                 f.write( \
 """
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - conv Setup Complete");
@@ -532,35 +555,27 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
 """
     // Start: Model Layer %d - pool
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - pool Setup");
-    // Start: pool set dimensions
+    // Pool set dimensions
     memory::dims %s_padding = {%s};
     memory::dims %s_strides = {%s};
     memory::dims %s_kernel = {%s};
-    // End: pool - set dimensions
 
-    // Start: pool - set dst memory desc
+    // Pool - set dst memory desc
     auto %s_dst_md = memory::desc({%s_dims}, dt::f32, tag::any);
-    // End: pool - set dst memory desc
 
-    // Start: Create pooling primitive
-    // For training execution, pooling requires a private workspace memory
-    // to perform the backward pass. However, pooling should not use 'workspace'
-    // for inference, because this is detrimental to performance.
+    // Create pooling primitive
     auto %s_desc = pooling_forward::desc(prop_kind::forward_inference,
                                             algorithm::pooling_max, %s_dst_memory.get_desc(), %s_dst_md,
                                             %s_strides, %s_kernel, %s_padding, %s_padding);
     auto %s_pd = pooling_forward::primitive_desc(%s_desc, eng);
-    // End: Create pooling primitive
 
-    // Start: pool - dst memory
+    // Pool - dst memory
     auto %s_dst_memory = memory(%s_pd.dst_desc(), eng);
-    // End: pool - dst memory
 
-    // Start: Create a pooling primitive and add it to the net
+    // Create a pooling primitive and add it to the net
     net.push_back(pooling_forward(%s_pd));
     net_args.push_back({{ZENDNN_ARG_SRC, %s_dst_memory},
                         {ZENDNN_ARG_DST, %s_dst_memory}});
-    // End: Create a pooling primitive and add it to the net
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - pool Setup Complete");
     // End: Model Layer %d - pool
 
@@ -568,7 +583,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     ', '.join([str(v) for v in strides]), node.outputs[0], ', '.join([str(v) for v in kernel]), node.outputs[0], 
     node.outputs[0], node.outputs[0], node.inputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
     node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
-    node.outputs[0], node.outputs[0], node.outputs[0], layerNumber, layerNumber))
+    node.outputs[0], node.inputs[0], node.outputs[0], layerNumber, layerNumber))
                 layerNumber += 1
             elif node.type == 'gemm':
                 weights_shape = graph.tensor_dict[node.inputs[1]].shape
@@ -577,32 +592,28 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     // Start: Model Layer %d - inner product
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - inner product Setup");
 
-    // Start: weights, and bias
+    // Weights and bias
     std::vector<float> %s_weights(product(%s_dims));
     ERROR_CHECK_STATUS(initializeTensor(&%s_weights, product(%s_dims), fp__variables, binaryFilename));
     std::vector<float> %s_bias(product(%s_dims));
     ERROR_CHECK_STATUS(initializeTensor(&%s_bias, product(%s_dims), fp__variables, binaryFilename));
-    // End: weights, and bias
 
-    // Start: Create memory that describes data layout in the buffers
+    // Create memory that describes data layout in the buffers
     auto %s_user_weights_memory = memory({{%s_dims}, dt::f32, tag::%s}, eng);
     write_to_zendnn_memory(%s_weights.data(), %s_user_weights_memory);
     auto %s_user_bias_memory = memory({{%s_dims[1]}, dt::f32, tag::x}, eng);
     write_to_zendnn_memory(%s_bias.data(), %s_user_bias_memory);
-    // End: Create memory that describes data layout in the buffers
 
-    // Start: Create ip1 memory descriptors with layout tag::any
+    // Create ip memory descriptors with layout tag::any
     auto %s_weights_md = memory::desc({%s_dims}, dt::f32, tag::any);
     auto %s_bias_md = memory::desc({%s_dims[1]}, dt::f32, tag::any);
     auto %s_dst_md = memory::desc({%s_dims}, dt::f32, tag::any);
-    // End: Create ip1 memory descriptors with layout tag::any
 
-    // Start: Create inner product primitive descriptor
+    // Create inner product primitive descriptor
     auto %s_desc = inner_product_forward::desc(prop_kind::forward_inference,
                                                 %s_dst_memory.get_desc(), %s_weights_md, %s_bias_md, 
                                                 %s_dst_md);
     auto %s_prim_desc = inner_product_forward::primitive_desc(%s_desc, eng);
-    // End: Create inner product primitive descriptor
 """%(layerNumber, layerNumber, node.inputs[1], node.inputs[1], node.inputs[1], 
     node.inputs[1], node.inputs[2], node.inputs[2], node.inputs[2], node.inputs[2], 
     node.inputs[1], node.inputs[1], 'oihw' if len(weights_shape) == 4 else 'nc', 
@@ -613,7 +624,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     node.outputs[0]))
                 f.write( \
 """
-    // Start: Check weights formats - Reorder
+    // Check weights formats - Reorder
     auto %s_weights_memory = %s_user_weights_memory;
     if (%s_prim_desc.weights_desc() != %s_user_weights_memory.get_desc())
     {
@@ -621,19 +632,16 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
         reorder(%s_user_weights_memory, %s_weights_memory)
             .execute(s, %s_user_weights_memory, %s_weights_memory);
     }
-    // End: Check weights formats - Reorder
 
-    // Start: IP - dst memory
+    // IP - dst memory
     auto %s_dst_memory = memory(%s_prim_desc.dst_desc(), eng);
-    // End: IP - dst memory
 
-    // Start: Create a IP primitive and add it to the net
+    // Create a IP primitive and add it to the net
     net.push_back(inner_product_forward(%s_prim_desc));
     net_args.push_back({{ZENDNN_ARG_SRC, %s_dst_memory},
                         {ZENDNN_ARG_WEIGHTS, %s_weights_memory},
                         {ZENDNN_ARG_BIAS, %s_user_bias_memory},
                         {ZENDNN_ARG_DST, %s_dst_memory}});
-    // End: Create a IP primitive and add it to the net
 
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - inner product Setup Complete");
     // End: Model Layer %d - inner product
@@ -651,32 +659,27 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     const float %s_alpha = %f;
     const float %s_beta = 0.0f;
 
-    // Start: Create relu primitive descriptor
-    // For better performance, keep the input data format for ReLU
-    // (as well as for other operation primitives until another
-    // convolution or inner product is encountered) the same as the one chosen
-    // for convolution. Also note that ReLU can be done in-place
+    auto %s_dst_md = memory::desc({%s_dims}, dt::f32, tag::any);
+
+    // Create relu primitive descriptor
     auto %s_desc = eltwise_forward::desc(prop_kind::forward_inference,
                                             algorithm::eltwise_relu, %s_dst_memory.get_desc(),
                                             %s_alpha, %s_beta);
     auto %s_prim_desc = eltwise_forward::primitive_desc(%s_desc, eng);
-    // End: Create relu primitive descriptor
 
-    // Start: relu - dst memory
+    // Relu - dst memory
     auto %s_dst_memory = memory(%s_prim_desc.dst_desc(), eng);
-    // End: IP1 - dst memory
 
-    // Start: Create a relu primitive and add it to the net
+    // Create a relu primitive and add it to the net
     net.push_back(eltwise_forward(%s_prim_desc));
     net_args.push_back({{ZENDNN_ARG_SRC, %s_dst_memory},
                         {ZENDNN_ARG_DST, %s_dst_memory}});
-    // End: Create a relu primitive and add it to the net
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - relu Setup Complete");
     // End: Model Layer %d - relu
 """%(layerNumber, layerNumber, node.outputs[0], alpha, node.outputs[0], node.outputs[0], 
-    node.inputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
-    node.outputs[0], node.outputs[0], node.outputs[0], node.inputs[0], node.inputs[0], 
-    layerNumber, layerNumber))
+    node.outputs[0],node.outputs[0], node.inputs[0], node.outputs[0], node.outputs[0], 
+    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
+    node.inputs[0], node.outputs[0], layerNumber, layerNumber))
                 layerNumber += 1
             elif node.type == 'lrn':
                 size = node.attr.get('size')
@@ -692,55 +695,180 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     const float %s_bias = %f;
     const unsigned long %s_size = %lu;
 
-    // Start: Create LRN primitive descriptor
+    // Create LRN primitive descriptor
     auto %s_desc = lrn_forward::desc(prop_kind::forward_inference,
-                                    algorithm::lrn_across_channels, 
+                                    algorithm::%s, 
                                     %s_dst_memory.get_desc(), %s_size, %s_alpha, %s_beta, %s_bias);
 
     auto %s_prim_desc = lrn_forward::primitive_desc(%s_desc, eng);
-    // End: Create LRN primitive descriptor
 
-    // Start: LRN - dst memory
+    // LRN - dst memory
     auto %s_dst_memory = memory(%s_prim_desc.dst_desc(), eng);
-    // End: LRN - dst memory
 
-    // Start: Create a LRN primitive and add it to the net
+    // Create a LRN primitive and add it to the net
     net.push_back(lrn_forward(%s_prim_desc));
     net_args.push_back({{ZENDNN_ARG_SRC, %s_dst_memory},
                         {ZENDNN_ARG_DST, %s_dst_memory}});
-    // End: Create a LRN primitive and add it to the net
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - LRN Setup Complete");
     // End: Model Layer %d - LRN
 """%(layerNumber, layerNumber, node.outputs[0], alpha, node.outputs[0], beta, node.outputs[0], 
-    bias, node.outputs[0], size, node.outputs[0] , node.inputs[0], 
-    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
-    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.inputs[0], 
-    node.outputs[0], layerNumber, layerNumber))
+    bias, node.outputs[0], size, node.outputs[0] , 
+    "lrn_across_channels" if node.attr.get('mode') == 0 else "lrn_within_channel",
+    node.inputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
+    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0],
+    node.inputs[0], node.outputs[0], layerNumber, layerNumber))
+                layerNumber += 1
+            elif node.type == 'batch_norm':
+                epsilon = node.attr.get('epsilon')
+                f.write( \
+"""
+    // Start: Model Layer %d - Batch Normalization
+    zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - Batch Normalization Setup");
+    const float %s_epsilon = %ef;
+
+    // Allocate buffers for mean, variance, scale and bias
+    std::vector<float> %s(product(%s_dims));
+    ERROR_CHECK_STATUS(initializeTensor(&%s, product(%s_dims), fp__variables, binaryFilename));
+    std::vector<float> %s(product(%s_dims));
+    ERROR_CHECK_STATUS(initializeTensor(&%s, product(%s_dims), fp__variables, binaryFilename));
+    std::vector<float> %s(product(%s_dims));
+    ERROR_CHECK_STATUS(initializeTensor(&%s, product(%s_dims), fp__variables, binaryFilename));
+    std::vector<float> %s(product(%s_dims));
+    ERROR_CHECK_STATUS(initializeTensor(&%s, product(%s_dims), fp__variables, binaryFilename));
+
+    // Allocate memory for scaleshift tensor
+    memory::dims %s_scale_shift_dims = {2, %s};    
+    std::vector<float> %s_scale_shift_data(product(%s_scale_shift_dims));
+
+    auto %s_mid = %s_scale_shift_data.begin() + %s_scale_shift_dims[1];
+    
+    copy(%s.begin(), %s.end(), %s_scale_shift_data.begin());
+    copy(%s.begin(), %s.end(), %s_mid);
+
+    // Create memory that describes data layout in the buffers
+    auto %s_user_mean_memory = memory({{%s_dims}, dt::f32, tag::nc}, eng);
+    write_to_zendnn_memory(%s.data(), %s_user_mean_memory);
+    auto %s_user_variance_memory = memory({{%s_dims}, dt::f32, tag::nc}, eng);
+    write_to_zendnn_memory(%s.data(), %s_user_variance_memory);
+    auto %s_user_scale_memory = memory({{%s_dims}, dt::f32, tag::nc}, eng);
+    write_to_zendnn_memory(%s.data(), %s_user_scale_memory);
+    auto %s_user_bias_memory = memory({{%s_dims}, dt::f32, tag::nc}, eng);
+    write_to_zendnn_memory(%s.data(), %s_user_bias_memory);
+    auto %s_scale_shift_memory = memory({{%s_scale_shift_dims}, dt::f32, tag::nc}, eng);
+    write_to_zendnn_memory(%s_scale_shift_data.data(), %s_scale_shift_memory);
+
+    // Create memory descriptors and memory objects. 
+    auto %s_dst_md = memory::desc({%s_dims}, dt::f32, tag::any);
+
+    auto %s_desc = batch_normalization_forward::desc(
+            prop_kind::forward_inference, %s_dst_memory.get_desc(), %s_epsilon,
+            normalization_flags::use_scale_shift);
+
+    // Create primitive descriptor.
+    auto %s_prim_desc = batch_normalization_forward::primitive_desc(%s_desc, eng);
+
+    // Create a memory primitive for output
+    auto %s_dst_memory = memory(%s_prim_desc.dst_desc(), eng);
+
+    // Create a batch normalization primitive and add it to the net
+    net.push_back(batch_normalization_forward(%s_prim_desc));
+    net_args.push_back({{ZENDNN_ARG_SRC, %s_dst_memory},
+                        {ZENDNN_ARG_MEAN, %s_user_mean_memory},
+                        {ZENDNN_ARG_VARIANCE, %s_user_variance_memory},
+                        {ZENDNN_ARG_SCALE_SHIFT, %s_scale_shift_memory},
+                        {ZENDNN_ARG_DST, %s_dst_memory}});
+
+    zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - Batch Normalization Setup Complete");
+    // End: Model Layer %d - Batch Normalization
+"""%(layerNumber, layerNumber, node.outputs[0], epsilon, 
+    node.inputs[1], node.inputs[1], node.inputs[1], node.inputs[1],
+    node.inputs[2], node.inputs[2], node.inputs[2], node.inputs[2],
+    node.inputs[3], node.inputs[3], node.inputs[3], node.inputs[3],
+    node.inputs[4], node.inputs[4], node.inputs[4], node.inputs[4],
+    node.outputs[0], str(graph.tensor_dict[node.inputs[0]].shape[1]), 
+    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
+    node.outputs[0], node.inputs[1], node.inputs[1], node.outputs[0], 
+    node.inputs[2], node.inputs[2], node.outputs[0], node.inputs[3], 
+    node.inputs[3], node.inputs[3], node.inputs[3], node.inputs[4], 
+    node.inputs[4], node.inputs[4], node.inputs[4], node.inputs[1], 
+    node.inputs[1], node.inputs[1], node.inputs[1], node.inputs[2], 
+    node.inputs[2], node.inputs[2], node.inputs[2], node.outputs[0], 
+    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
+    node.outputs[0], node.outputs[0], node.inputs[0], node.outputs[0], 
+    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
+    node.outputs[0], node.inputs[0], node.inputs[3],node.inputs[4], 
+    node.outputs[0], node.outputs[0], layerNumber, layerNumber))
+                layerNumber += 1
+            elif node.type == 'sum' or node.type == 'add':
+                num_src = len(node.inputs)
+                f.write( \
+"""
+    // Start: Model Layer %d - Sum
+    zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - Sum Setup");
+
+    // Sum number of inputs.
+    const int %s_num_src = %d;
+
+    // Scaling factors.
+    std::vector<float> %s_scales(%s_num_src);
+    std::generate(%s_scales.begin(), %s_scales.end(), [](int n = 0) { return sin(float(n)); });
+
+    // Create an array of memory descriptors and memory objects for src tensors.
+    std::vector<memory::desc> %s_src_md;
+    std::vector<memory> %s_src_mem;
+
+"""%(layerNumber, layerNumber, node.outputs[0], num_src, node.outputs[0], 
+    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0]))
+                for i in range(num_src):
+                    f.write( \
+"""    
+    %s_src_md.push_back(%s_dst_md);
+    %s_src_mem.push_back(%s_dst_memory);
+
+"""%(node.outputs[0], node.inputs[i], node.outputs[0], node.inputs[i]))
+                f.write( \
+"""
+    // Create primitive descriptor.
+    auto %s_pd = sum::primitive_desc(%s_scales, %s_src_md, eng);
+
+    // Create memory object for dst.
+    auto %s_dst_memory = memory(%s_pd.dst_desc(), eng);
+
+    // Adding sum primitive to net 
+    net.push_back(sum(%s_pd));
+    net_args.push_back({{ZENDNN_ARG_DST, %s_dst_memory}});
+"""%(node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
+    node.outputs[0], node.outputs[0], node.outputs[0]))
+                for i in range(num_src):
+                    f.write( \
+"""
+    net_args.push_back({{ZENDNN_ARG_MULTIPLE_SRC + %d, %s_src_mem[%d]}});
+
+    zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - Sum Setup Complete");
+    // End: Model Layer %d - Sum
+"""%(i, node.outputs[0], i, layerNumber, layerNumber))
                 layerNumber += 1
             elif node.type == 'softmax':
                 axis = node.attr.get('axis');
                 f.write( \
 """
-     // Start: Model Layer %d - softMax
+    // Start: Model Layer %d - softMax
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - softmax Setup");
 
     // Softmax axis.
     const int sm_axis = %d;
 
-    // Start: Create softmax primitive
+    // Create softmax primitive
     auto %s_desc = softmax_forward::desc(prop_kind::forward_inference, %s_dst_memory.get_desc(), sm_axis);
     auto %s_pd = softmax_forward::primitive_desc(%s_desc, eng);
-    // End: Create softmax primitive
 
-    // Start: softmax - dst memory
+    // softmax - dst memory
     auto %s_dst_memory = memory(%s_pd.dst_desc(), eng);
-    // End: softmax - dst memory
 
-    // Start: Create a softmax primitive and add it to the net
+    // Create a softmax primitive and add it to the net
     net.push_back(softmax_forward(%s_pd));
     net_args.push_back({{ZENDNN_ARG_SRC, %s_dst_memory},
                         {ZENDNN_ARG_DST, %s_dst_memory}});
-    // End: Create a softmax primitive and add it to the net
     zendnnInfo(ZENDNN_TESTLOG, "Model Layer %d - softmax Setup Complete");
     // End: Model Layer %d- softMax
 """%(layerNumber, layerNumber, axis, node.outputs[0], node.inputs[0], node.outputs[0], 
@@ -759,7 +887,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
         }
     }
 
-    // Start: Execute primitives
+    // Execute primitives
     // For this example, the net is executed multiple times and each execution is timed individually.
     float AverageTime = 0;
     for (int j = 0; j < times; ++j)
@@ -777,7 +905,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
         auto exec_in_millis = std::chrono::duration_cast<std::chrono::milliseconds>(exec_duration);
         printf("Execution:%d -- \t%.8f ms\\n", j, (float)exec_in_millis.count());
 
-        // Start: Read output from engine
+        // Read output from engine
         auto start_mem_time = std::chrono::high_resolution_clock::now();
 """)
         for tensor in graph.outputs:
@@ -791,11 +919,9 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
         auto exec_mem_duration = end_mem_time - start_mem_time;
         auto mem_in_millis = std::chrono::duration_cast<std::chrono::milliseconds>(exec_mem_duration);
         //printf("Mem Transfer:%d -- \t%.8f ms\\n", j, (float)mem_in_millis.count());
-        // End: Read output from engine
 
         AverageTime += (float)exec_in_millis.count() + (float)mem_in_millis.count();
     }
-    // End: Execute primitives
     printf("\\nAvg Inference Time -- \t%.8f ms\\n",(float)(AverageTime/times));
         return 0;
 }

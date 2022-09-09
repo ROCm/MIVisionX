@@ -1,4 +1,6 @@
-FROM rocm/pytorch:latest
+
+ARG PYTORCH_VERSION=latest
+FROM rocm/pytorch:${PYTORCH_VERSION}
 
 ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT

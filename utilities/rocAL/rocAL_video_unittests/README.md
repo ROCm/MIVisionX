@@ -35,10 +35,10 @@ The sample video files are available in the following path : [video and sequence
 
 INPUT_PATH : Input passed by the user. It can be a video file path, folder path containing videos or a text file.
 
-NOTE:
+  NOTE:
 
-* Inputs for cases 1 and 2 - Video file / folder containing videos
-* Input for case 3 - Folder containing sequence of images [sample folder](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data/tree/main/rocal_data/video_and_sequence_samples/sequence)
+  * Inputs for cases 1 and 2 - Video file / folder containing videos
+  * Input for case 3 - Folder containing sequence of images [sample folder](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data/tree/main/rocal_data/video_and_sequence_samples/sequence)
 
 READER_CASE : Value passed can be 1/2/3 depending upon the selected reader (default value : 1).
 

@@ -71,3 +71,46 @@ ENABLE_FRAME_NUMBER : If set to true, prints the starting frame number of the se
 ENABLE_TIMESTAMPS : If set to true, prints the timestamp of each frame in the sequences.
 
 ENABLE_SEQUENCE_REARRANGE : If set to true, the frames in each sequence will be rearranged in the order specified by the user. The new order passed for sequence rearrange can be modified here. The order should contain values in the range of [0, sequence_length)
+
+
+## Test case examples
+
+**Example 1: Video Reader**
+
+> ./testScript.sh <[path/to/test_frame_num.mp4](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data/blob/main/rocal_data/video_and_sequence_samples/test_frame/test_frame_num.mp4)> 1
+
+Arguments modified in testScript.sh
+
+- BATCH_SIZE=1
+- SEQUENCE_LENGTH= 3
+- STEP=3
+- STRIDE=5
+
+![video_reader.png](./samples/video_reader.png)
+
+To test with VideoReaderResize pass reader_case as 2:
+> ./testScript.sh <path_to_video_file/folder> 2
+
+Also RESIZE_WIDTH and RESIZE_HEIGHT can be changed in testScript.sh
+
+**Example 2: Sequence Reader**
+
+> ./testScript.sh <path/to/sequence_folder> 3 
+
+![sequence_reader.png](./samples/sequence_reader.png)
+
+NOTE :
+
+The input to the sequence reader should be a directory of images.
+
+The output of Sequence Reader may be different from the Video Reader because the names of the images from the input directory are sorted in lexicographic order and then split into sequences.
+
+**Example 3: Sequence Rearrange**
+
+> ./testScript.sh <path/to/test_frame_num.mp4> 1
+
+ENABLE_SEQUENCE_REARRANGE = 1
+
+![sequence_rearrange.png](./samples/sequence_rearrange.png)
+
+New Sequence order : [2 1 1 0] (Order can be changed directly in rocal_video_unittests.cpp file. The values specified in the order can only be in the range [0,sequence_length))

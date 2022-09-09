@@ -20,16 +20,21 @@ The following test cases are supported in this unittest:
 ### Running the application
 Executing the below command will build and run the application for the specified test case.
 
-  ````
+````
 ./testScript.sh <path_to_video/path_to_directory/path_to_text_file> <test-case>
-  ````
+````
 
 The arguments passed to the Video Pipeline can be modified in the bash script testScript.sh.
 
 The outputs will be dumped inside the build/output_frames folder.
 
-The sample video files are available in the following path : [video and sequence samples](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data/tree/main/rocal_data/video_and_sequence_samples).
+The sample video files and folder are available in the In the following path : [video and sequence samples](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data/tree/main/rocal_data/video_and_sequence_samples).
 
+The data samples are present in the MIVisionX-data repository.
+
+```
+git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data.git
+```
 
 ### Arguments used in test script
 
@@ -72,14 +77,14 @@ ENABLE_TIMESTAMPS : If set to true, prints the timestamp of each frame in the se
 
 ENABLE_SEQUENCE_REARRANGE : If set to true, the frames in each sequence will be rearranged in the order specified by the user. The new order passed for sequence rearrange can be modified here. The order should contain values in the range of [0, sequence_length)
 
-
 ## Test case examples
+</br>
 
 **Example 1: Video Reader**
 
 > ./testScript.sh <[path/to/test_frame_num.mp4](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data/blob/main/rocal_data/video_and_sequence_samples/test_frame/test_frame_num.mp4)> 1
 
-Arguments modified in testScript.sh
+Arguments to be modified in testScript.sh to get the following output:
 
 - BATCH_SIZE=2
 - SEQUENCE_LENGTH= 3
@@ -93,9 +98,11 @@ To test with VideoReaderResize pass reader_case as 2:
 
 Also RESIZE_WIDTH and RESIZE_HEIGHT can be changed in testScript.sh
 
+</br>
+
 **Example 2: Sequence Reader**
 
-> ./testScript.sh <path/to/sequence_folder> 3 
+> ./testScript.sh <[path/to/sequence_folder](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data/tree/main/rocal_data/video_and_sequence_samples/sequence)> 3 
 
 ![sequence_reader.png](./samples/sequence_reader.png)
 
@@ -105,12 +112,20 @@ The input to the sequence reader should be a directory of images.
 
 The output of Sequence Reader may be different from the Video Reader because the names of the images from the input directory are sorted in lexicographic order and then split into sequences.
 
+</br>
+
 **Example 3: Sequence Rearrange**
 
 > ./testScript.sh <path/to/test_frame_num.mp4> 1
+
+Arguments to be modified in testScript.sh to enable sequence rearrange:
 
 ENABLE_SEQUENCE_REARRANGE = 1
 
 ![sequence_rearrange.png](./samples/sequence_rearrange.png)
 
 New Sequence order : [2 1 1 0] (Order can be changed directly in rocal_video_unittests.cpp file. The values specified in the order can only be in the range [0,sequence_length))
+
+NOTE:
+
+The outputs frames will be dumped inside the build/output_frames folder. The above images are for illustration purpose.

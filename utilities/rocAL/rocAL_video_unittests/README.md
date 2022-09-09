@@ -10,7 +10,6 @@ This application can be used to verify the functionality of the video API offere
 * [FFmpeg n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Radeon Performance Primitives (RPP)
 
-
 ### Running the application
 Executing the below command will build and run the application for the specified test case.
 
@@ -126,7 +125,7 @@ ENABLE_SEQUENCE_REARRANGE=1
 
 ![sequence_rearrange.png](./samples/sequence_rearrange.png)
 
-New Sequence order : [2 1 1 0] (Order can be changed directly in [rocAL_video_unittests.cpp](./rocAL_video_unittests/rocAL_video_unittests.cpp) file. The values specified in the order can only be in the range [0,sequence_length))
+New Sequence order : [2 1 1 0]. The order can be changed directly in rocAL_video_unittests.cpp file. The values specified in the order can only be in the range [0,sequence_length)
 
 **NOTE**:
 

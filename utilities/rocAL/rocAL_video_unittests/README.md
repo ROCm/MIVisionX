@@ -10,12 +10,6 @@ This application can be used to verify the functionality of the video API offere
 * [FFmpeg n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Radeon Performance Primitives (RPP)
 
-### Test Cases
-
-The following test cases are supported in this unittest:
-1. Video Reader - Reads the video file/folder and returns a sequence of frames.
-2. Video Reader Resize (reader followed by resize augmentation)  - Reads the video file/folder and returns a sequence of re-sized frames.
-3. Sequence Reader - Reads the folder of images and returns a sequence of images.
 
 ### Running the application
 Executing the below command will build and run the application for the specified test case.
@@ -24,17 +18,26 @@ Executing the below command will build and run the application for the specified
 ./testScript.sh <path_to_video/path_to_directory/path_to_text_file> <test-case>
 ````
 
-The arguments passed to the Video Pipeline can be modified in the bash script testScript.sh.
+The arguments passed to the Video Pipeline can be modified in the bash script [testScript.sh](./testScript.sh).
 
 The outputs will be dumped inside the build/output_frames folder.
 
 The sample video files and folder are available in the In the following path : [video and sequence samples](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data/tree/main/rocal_data/video_and_sequence_samples).
 
-The data samples are present in the MIVisionX-data repository.
+The data samples can be downloaded from the MIVisionX-data repository.
 
 ```
 git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data.git
 ```
+
+## Description
+
+### Test Cases
+
+The following test cases are supported in this unittest:
+1. Video Reader - Reads the video file/folder and returns a sequence of frames.
+2. Video Reader Resize (reader followed by resize augmentation)  - Reads the video file/folder and returns a sequence of re-sized frames.
+3. Sequence Reader - Reads the folder of images and returns a sequence of images.
 
 ### Arguments used in test script
 
@@ -75,10 +78,10 @@ ENABLE_FRAME_NUMBER : If set to true, prints the starting frame number of the se
 
 ENABLE_TIMESTAMPS : If set to true, prints the timestamp of each frame in the sequences.
 
-ENABLE_SEQUENCE_REARRANGE : If set to true, the frames in each sequence will be rearranged in the order specified by the user. The new order passed for sequence rearrange can be modified here. The order should contain values in the range of [0, sequence_length)
+ENABLE_SEQUENCE_REARRANGE : If set to true, the frames in each sequence will be rearranged in the order specified by the user. The order should contain values in the range of [0, sequence_length)
 
 ## Test case examples
-</br>
+<br>
 
 **Example 1: Video Reader**
 
@@ -98,7 +101,7 @@ To test with VideoReaderResize pass reader_case as 2:
 
 Also RESIZE_WIDTH and RESIZE_HEIGHT can be changed in testScript.sh
 
-</br>
+<br>
 
 **Example 2: Sequence Reader**
 
@@ -112,7 +115,7 @@ The input to the sequence reader should be a directory of images.
 
 The output of Sequence Reader may be different from the Video Reader because the names of the images from the input directory are sorted in lexicographic order and then split into sequences.
 
-</br>
+<br>
 
 **Example 3: Sequence Rearrange**
 
@@ -120,12 +123,12 @@ The output of Sequence Reader may be different from the Video Reader because the
 
 Arguments to be modified in testScript.sh to enable sequence rearrange:
 
-ENABLE_SEQUENCE_REARRANGE = 1
+ENABLE_SEQUENCE_REARRANGE=1
 
 ![sequence_rearrange.png](./samples/sequence_rearrange.png)
 
-New Sequence order : [2 1 1 0] (Order can be changed directly in rocal_video_unittests.cpp file. The values specified in the order can only be in the range [0,sequence_length))
+New Sequence order : [2 1 1 0] (Order can be changed directly in [rocAL_video_unittests.cpp](./rocAL_video_unittests/rocAL_video_unittests.cpp) file. The values specified in the order can only be in the range [0,sequence_length))
 
-NOTE:
+**NOTE**:
 
-The outputs frames will be dumped inside the build/output_frames folder. The above images are for illustration purpose.
+The outputs frames will be dumped inside the build/output_frames folder. The above images are for illustration purpose only.

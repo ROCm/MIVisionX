@@ -81,7 +81,6 @@ ENABLE_TIMESTAMPS : If set to true, prints the timestamp of each frame in the se
 ENABLE_SEQUENCE_REARRANGE : If set to true, the frames in each sequence will be rearranged in the order specified by the user. The order should contain values in the range of [0, sequence_length)
 
 ## Test case examples
-<br>
 
 **Example 1: Video Reader**
 

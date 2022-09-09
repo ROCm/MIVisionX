@@ -1,11 +1,5 @@
 #!/bin/bash
 
-sudo rm -rvf build*
-mkdir build
-cd build || exit
-cmake ..
-make
-
 ################ AVAILABLE READERS ######################
 ##   DEFAULT        : VideoReader                      ##
 ##   READER_CASE 2  : VideoReaderResize                ##
@@ -20,11 +14,26 @@ if [ -z "$INPUT_PATH" ]
     exit
 fi
 
+# Handles relative input path
+if [ ! -d "$INPUT_PATH" & [[ "$INPUT_PATH" != /* ]]
+then
+  CWD=$(pwd)
+  INPUT_PATH="$CWD/$INPUT_PATH"
+fi
+
 if [ -z "$READER_CASE" ]
   then
     READER_CASE=1
 fi
 
+# Building video unit test
+sudo rm -rvf build*
+mkdir build
+cd build || exit
+cmake ..
+make
+
+# Arguments used in video unit test
 SAVE_FRAMES=1   # (save_frames:on/off)
 RGB=1           # (rgb:1/gray:0)
 DEVICE=0        # (cpu:0/gpu:1)
@@ -44,7 +53,6 @@ ENABLE_FRAME_NUMBER=0        # outputs the starting frame numbers of the sequenc
 ENABLE_TIMESTAMPS=0          # outputs timestamps of the frames in the batch
 ENABLE_SEQUENCE_REARRANGE=0  # rearranges the frames in the sequence NOTE: The order needs to be set in the rocAL_video_unittests.cpp
 
-echo "$INPUT_PATH"
 echo ./rocAL_video_unittests "$INPUT_PATH" $READER_CASE $DEVICE $HARDWARE_DECODE_MODE $BATCH_SIZE $SEQUENCE_LENGTH $STEP $STRIDE \
 $RGB $SAVE_FRAMES $SHUFFLE $RESIZE_WIDTH $RESIZE_HEIGHT $FILELIST_FRAMENUM \
 $ENABLE_METADATA $ENABLE_FRAME_NUMBER $ENABLE_TIMESTAMPS $ENABLE_SEQUENCE_REARRANGE

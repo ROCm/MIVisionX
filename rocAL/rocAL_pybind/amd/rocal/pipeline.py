@@ -1,7 +1,6 @@
 import rocal_pybind as b
 import amd.rocal.types as types
 import numpy as np
-import torch
 import ctypes
 
 
@@ -181,11 +180,6 @@ class Pipeline(object):
             b.rocalCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
-    def encode(self, bboxes_in, labels_in):
-        bboxes_tensor = torch.tensor(bboxes_in).float()
-        labels_tensor=  torch.tensor(labels_in).long()
-        return self._encode_tensor.prev.rocal_c_func_call(self._handle, bboxes_tensor , labels_tensor )
-
     def GetOneHotEncodedLabels(self, array, device):
         if device=="cpu":
             return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
@@ -271,7 +265,7 @@ class Pipeline(object):
         return b.getImgSizes(self._handle, array)
 
     def GetImageLabels(self, array):
-        return b.getImageLabels(self._handle, array)
+        return b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
 
 
     def GetBoundingBox(self,array):

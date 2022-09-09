@@ -833,7 +833,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
                             unsigned int i = 0;
 
                             __m256 fR, fG, fB;
-                            float tempR[8], tempG[8], tempB[8];
+                            __m128i tempR, tempG, tempB;
                             for (; i < alignedLength; i += 8) {
                                 __m256i pix0 = _mm256_loadu_si256((const __m256i *) in_buffer);
                                 pix0 = _mm256_permutevar8x32_epi32(pix0, _mm256_setr_epi32(0, 1, 2, 3, 3, 4, 5, 6));
@@ -843,15 +843,12 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
                                 fB = _mm256_fmadd_ps(fB, pmul0, padd0);
                                 fG = _mm256_fmadd_ps(fG, pmul1, padd1);
                                 fR = _mm256_fmadd_ps(fR, pmul2, padd2);
-                                _mm256_storeu_ps(tempB, fB);
-                                _mm256_storeu_ps(tempG, fG);
-                                _mm256_storeu_ps(tempR, fR);
-                                for(int cnt = 0; cnt < 8; cnt++)
-                                {
-                                    B_buf_16[cnt] = (half) tempB[cnt];
-                                    G_buf_16[cnt] = (half) tempG[cnt];
-                                    R_buf_16[cnt] = (half) tempR[cnt];
-                                }
+                                tempB = _mm256_cvtps_ph(fB, _MM_FROUND_NO_EXC);
+                                tempG = _mm256_cvtps_ph(fG, _MM_FROUND_NO_EXC);
+                                tempR = _mm256_cvtps_ph(fR, _MM_FROUND_NO_EXC);
+                                _mm_storeu_si128((__m128i *)B_buf_16, tempB);
+                                _mm_storeu_si128((__m128i *)G_buf_16, tempG);
+                                _mm_storeu_si128((__m128i *)R_buf_16, tempR);
                                 B_buf_16 += 8;
                                 G_buf_16 += 8;
                                 R_buf_16 += 8;

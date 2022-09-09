@@ -69,9 +69,9 @@ The following is a list of OpenCV functions that have been included in the vx_op
 ### Pre-requisites
 
 * AMD OpenVX library
-* CMake 3.0 or later
-* OpenCV [3.4](https://github.com/opencv/opencv/releases/tag/3.4.0) `with`/`without` **contrib**
-    - OpenCV_DIR environment variable should point to OpenCV/build folder
+* CMake `3.0` or later
+* OpenCV `3`/`4` `with`/`without` **contrib**
+    - **Note** For pre-built library: OpenCV_DIR environment variable should point to OpenCV/build folder
 
 ### Build using `Visual Studio 2019` on 64-bit Windows `10` / `11`
 

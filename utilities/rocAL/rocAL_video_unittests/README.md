@@ -81,7 +81,7 @@ ENABLE_SEQUENCE_REARRANGE : If set to true, the frames in each sequence will be 
 
 Arguments modified in testScript.sh
 
-- BATCH_SIZE=1
+- BATCH_SIZE=2
 - SEQUENCE_LENGTH= 3
 - STEP=3
 - STRIDE=5

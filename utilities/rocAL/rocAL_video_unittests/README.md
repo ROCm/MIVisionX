@@ -125,7 +125,7 @@ ENABLE_SEQUENCE_REARRANGE=1
 
 ![sequence_rearrange.png](./samples/sequence_rearrange.png)
 
-New Sequence order : [2 1 1 0]. The order can be changed directly in rocAL_video_unittests.cpp file. The values specified in the order can only be in the range [0,sequence_length)
+New Sequence order : (2, 1, 1, 0), The order can be changed directly in rocAL_video_unittests.cpp file. The values specified in the order can only be in the range [0,sequence_length)
 
 **NOTE**:
 

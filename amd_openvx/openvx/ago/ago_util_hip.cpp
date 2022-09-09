@@ -79,8 +79,19 @@ int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
     if (err != hipSuccess) {
         agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipGetDeviceProperties(%d) => %d (failed)\n", deviceID, err);
     }
+
+    bool wgpMode = false;
+    if (context->hip_dev_prop.major >= 10) {
+        wgpMode = true;
+        char temp[2] = {};
+        if (agoGetEnvironmentVariable("GPU_ENABLE_WGP_MODE", temp, sizeof(temp))) {
+            wgpMode = (temp[0] == '0') ? false : true;
+        }
+    }
+    int totalCUs = wgpMode ? context->hip_dev_prop.multiProcessorCount * 2 : context->hip_dev_prop.multiProcessorCount;
+
     agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device - %d: %s [%s] with %d CUs on PCI bus %02x:%02x.%x\n",
-                   deviceID, context->hip_dev_prop.name, context->hip_dev_prop.gcnArchName, context->hip_dev_prop.multiProcessorCount,
+                   deviceID, context->hip_dev_prop.name, context->hip_dev_prop.gcnArchName, totalCUs,
                    context->hip_dev_prop.pciBusID, context->hip_dev_prop.pciDomainID, context->hip_dev_prop.pciDeviceID);
 
     return 0;

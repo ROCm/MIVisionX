@@ -457,7 +457,7 @@ rocalJpegCaffe2LMDBRecordSource(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
 
         if(internal_shard_count < 1 )
@@ -533,7 +533,7 @@ rocalJpegCaffe2LMDBRecordSourceSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
@@ -610,7 +610,7 @@ rocalJpegCaffeLMDBRecordSource(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
 
         if(internal_shard_count < 1 )
@@ -687,7 +687,7 @@ rocalJpegCaffeLMDBRecordSourceSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
@@ -774,7 +774,7 @@ rocalJpegCaffeLMDBRecordSourcePartialSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         // bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
@@ -861,7 +861,7 @@ rocalJpegCaffe2LMDBRecordSourcePartialSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         // bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
@@ -946,7 +946,7 @@ rocalMXNetRecordSource(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         // bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
@@ -1028,7 +1028,7 @@ rocalMXNetRecordSource(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
 
         if(internal_shard_count < 1 )
@@ -1109,7 +1109,7 @@ rocalMXNetRecordSourceSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
@@ -1347,7 +1347,7 @@ rocalFusedJpegCrop(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) ;
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -1596,7 +1596,7 @@ rocalJpegTFRecordSource(
         };
 
 
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
 
         if(internal_shard_count < 1 )
             THROW("internal shard count should be bigger than 0")
@@ -1669,7 +1669,7 @@ rocalJpegTFRecordSourceSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -1895,7 +1895,7 @@ rocalFusedJpegCropSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) ;
+        bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")

@@ -564,7 +564,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
 
     // Create pooling primitive
     auto %s_desc = pooling_forward::desc(prop_kind::forward_inference,
-                                            algorithm::pooling_max, %s_dst_memory.get_desc(), %s_dst_md,
+                                            algorithm::%s, %s_dst_memory.get_desc(), %s_dst_md,
                                             %s_strides, %s_kernel, %s_padding, %s_padding);
     auto %s_pd = pooling_forward::primitive_desc(%s_desc, eng);
 
@@ -580,8 +580,9 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
 
 """%(layerNumber, layerNumber, node.outputs[0], ', '.join([str(v) for v in pads]), node.outputs[0], 
     ', '.join([str(v) for v in strides]), node.outputs[0], ', '.join([str(v) for v in kernel]), node.outputs[0], 
-    node.outputs[0], node.outputs[0], node.inputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
-    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
+    node.outputs[0], node.outputs[0], "pooling_max" if node.type == 'max_pool' else "pooling_avg",
+    node.inputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
+    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], 
     node.outputs[0], node.inputs[0], node.outputs[0], layerNumber, layerNumber))
                 layerNumber += 1
             elif node.type == 'gemm':
@@ -808,9 +809,8 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     // Sum number of inputs.
     const int %s_num_src = %d;
 
-    // Scaling factors.
-    std::vector<float> %s_scales(%s_num_src);
-    std::generate(%s_scales.begin(), %s_scales.end(), [](int n = 0) { return sin(float(n)); });
+    // Scaling factors -- supports only 1
+    std::vector<float> %s_scales(%s_num_src, 1);
 
     // Create an array of memory descriptors and memory objects for src tensors.
     std::vector<memory::desc> %s_src_md;

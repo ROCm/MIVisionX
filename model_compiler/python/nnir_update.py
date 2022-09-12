@@ -26,7 +26,7 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import *
 import sys
-from nnir import *
+import nnir as ir
 
 def main():
     usage = 'Usage: python nnir-update.py [--batch-size <n>] [--fuse-ops 0|1] [--slice-groups 0|1] [--convert-fp16 0|1] [--convert-fp32 0|1] [--node_type_append 0|1] <nnirInputFolder> <nnirOutputFolder>'
@@ -66,7 +66,7 @@ def main():
     inputFolder = sys.argv[pos]
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
-    graph = IrGraph(True)
+    graph = ir.IrGraph(True)
     graph.fromFile(inputFolder)
     if batchSize > 0:
         graph.updateBatchSize(batchSize)

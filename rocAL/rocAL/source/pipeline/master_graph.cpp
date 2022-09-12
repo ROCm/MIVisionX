@@ -843,9 +843,9 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
                                 fB = _mm256_fmadd_ps(fB, pmul0, padd0);
                                 fG = _mm256_fmadd_ps(fG, pmul1, padd1);
                                 fR = _mm256_fmadd_ps(fR, pmul2, padd2);
-                                tempB = _mm256_cvtps_ph(fB, _MM_FROUND_NO_EXC);
-                                tempG = _mm256_cvtps_ph(fG, _MM_FROUND_NO_EXC);
-                                tempR = _mm256_cvtps_ph(fR, _MM_FROUND_NO_EXC);
+                                tempB = _mm256_cvtps_ph(fB, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+                                tempG = _mm256_cvtps_ph(fG, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+                                tempR = _mm256_cvtps_ph(fR, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
                                 _mm_storeu_si128((__m128i *)B_buf_16, tempB);
                                 _mm_storeu_si128((__m128i *)G_buf_16, tempG);
                                 _mm_storeu_si128((__m128i *)R_buf_16, tempR);

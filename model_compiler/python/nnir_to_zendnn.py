@@ -817,7 +817,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
     std::vector<memory> %s_src_mem;
 
 """%(layerNumber, layerNumber, node.outputs[0], num_src, node.outputs[0], 
-    node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0], node.outputs[0]))
+    node.outputs[0], node.outputs[0], node.outputs[0]))
                 for i in range(num_src):
                     f.write( \
 """    

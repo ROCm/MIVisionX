@@ -20,7 +20,7 @@
 
 import os, sys, struct
 import datetime, pytz
-from nnir import *
+import nnir as ir
 
 def generateLicenseForScript(f):
         f.write( \
@@ -1012,10 +1012,11 @@ Usage: python nnir_to_zendnn.py <nnirInputFolder> <outputFolder>
     inputFolder = sys.argv[pos]
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
-    graph = IrGraph(True)
+    graph = ir.IrGraph(True)
     graph.fromFile(inputFolder)
     print('creating C code in ' + outputFolder + ' ...')
     generateCode(graph,argmaxOutput,outputFolder)
+
 
 if __name__ == '__main__':
     main()

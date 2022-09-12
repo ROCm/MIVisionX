@@ -23,7 +23,7 @@ import datetime, pytz
 import nnir as ir
 
 def generateLicenseForScript(f):
-        f.write( \
+    f.write( \
 """################################################################################
 #
 # MIT License
@@ -187,7 +187,8 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data/weights.bin DESTINATION ${CMAKE_CURRE
 file(COPY ${IMAGE_LIST} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/images/)
 file(COPY ${IMAGE_BIN_LIST} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/images/)
 
-message("-- ${PROJECT_NAME} -- Using Compiler - Path:" ${CMAKE_CXX_COMPILER} "\tVersion:" ${CMAKE_CXX_COMPILER_VERSION} "\tCompiler:" ${CMAKE_CXX_COMPILER_ID}${ColourReset})
+message("-- ${PROJECT_NAME} -- Using Compiler - Path:" ${CMAKE_CXX_COMPILER} "\t
+        Version:" ${CMAKE_CXX_COMPILER_VERSION} "\tCompiler:" ${CMAKE_CXX_COMPILER_ID}${ColourReset})
 message("-- ${PROJECT_NAME} -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
 message("-- ${PROJECT_NAME} -- Link Libraries: ${LINK_LIBRARY_LIST}${ColourReset}")
 """)
@@ -246,7 +247,8 @@ static int initializeTensor(std::vector<float> *tensor, size_t tensorSize, FILE 
     fread(h, 1, sizeof(h), fp);
     if (h[0] != 0xf00dd1e1 || (size_t)h[1] != (tensorSize * itemsize))
     {
-        printf("ERROR: invalid data (magic,size)=(0x%x,%x) in %s at byte position %lu -- expected size is %ld\\n", h[0], h[1], binaryFilename, ftell(fp) - sizeof(h), tensorSize * itemsize);
+        printf("ERROR: invalid data (magic,size)=(0x%x,%x) in %s at byte position %lu -- expected size is %ld\\n", 
+                h[0], h[1], binaryFilename, ftell(fp) - sizeof(h), tensorSize * itemsize);
         return -1;
     }
 

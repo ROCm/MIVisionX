@@ -132,7 +132,6 @@ InferenceEngineHip::~InferenceEngineHip()
 
 int InferenceEngineHip::run()
 {
-    printf("opencv run\n");
     //////
     /// make device lock is successful
     ///

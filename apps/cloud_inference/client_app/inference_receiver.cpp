@@ -102,7 +102,7 @@ void inference_receiver::run()
                 InfComCommand reply = {
                     INFCOM_MAGIC, INFCOM_CMD_SEND_MODE,
                     { INFCOM_MODE_INFERENCE, GPUs,
-                      inputDim[0], inputDim[1], inputDim[2], outputDim[0], outputDim[1], outputDim[2], sendFileName, topKValue, 0, decodeMode },
+                      inputDim[0], inputDim[1], inputDim[2], outputDim[0], outputDim[1], outputDim[2], sendFileName, topKValue, 0, decodeMode, progress->repeat_images },
                     { 0 }
                 };
                 QString text = modelName;

@@ -315,8 +315,6 @@ inference_control::inference_control(int operationMode_, QWidget *parent)
     controlLayout->addWidget(labelGPUs, row, 0, 1, 1);
     controlLayout->addWidget(editGPUs, row, 1, 1, 1);
     controlLayout->addWidget(labelMaxGPUs, row, 2, 1, 1);
-    controlLayout->addWidget(buttonInference, row, 1 + editSpan, 1, 1);
-    connect(buttonInference, SIGNAL(released()), this, SLOT(runInference()));
     controlLayout->addWidget(labelDecodeMode, row, 3, 1, 1);
     controlLayout->addWidget(comboDecodeMode, row, 4, 1, 1);
     row++;

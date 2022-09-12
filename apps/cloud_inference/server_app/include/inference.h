@@ -220,6 +220,7 @@ protected:
     bool receiveFileNames;
     int topK;
     int decodeMode;
+    bool loop;
     int reverseInputChannelOrder;
     float preprocessMpy[3];
     float preprocessAdd[3];

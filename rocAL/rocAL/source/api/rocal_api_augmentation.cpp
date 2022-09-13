@@ -72,29 +72,23 @@ void
 get_max_resize_width_and_height(std::vector<unsigned> &src_size, std::vector<unsigned> &dst_size, RocalResizeScalingMode mode,
                                 std::vector<unsigned> &out_size)
 {
-    float max_aspect_ratio = 2.0f;
+    float max_aspect_ratio = 3.0f;
 
-    switch (mode)
-    {
-    case ROCAL_SCALING_MODE_STRETCH:
+    if(mode == ROCAL_SCALING_MODE_STRETCH)
     {
         out_size[0] = dst_size[0] ? dst_size[0] : src_size[0];   // For width dimension
         out_size[1] = dst_size[1] ? dst_size[1] : src_size[1];   // For height dimension
     }
-    break;
-    case ROCAL_SCALING_MODE_NOT_SMALLER:
+    else if(mode == ROCAL_SCALING_MODE_NOT_SMALLER)
     {
-        out_size[0] = (dst_size[0] > src_size[0] ? dst_size[0] : src_size[0]) * max_aspect_ratio;   // For width dimension
-        out_size[1] = (dst_size[1] > src_size[1] ? dst_size[1] : src_size[1]) * max_aspect_ratio;   // For height dimension
+        out_size[0] = (dst_size[0] ? dst_size[0] : dst_size[1]) * max_aspect_ratio;   // For width dimension
+        out_size[1] = (dst_size[1] ? dst_size[1] : dst_size[0]) * max_aspect_ratio;   // For height dimension
     }
-    break;
-    default:
+    else
     {
-        out_size[0] = dst_size[0] ? dst_size[0] : src_size[0] * max_aspect_ratio;   // For width dimension
-        out_size[1] = dst_size[1] ? dst_size[1] : src_size[1] * max_aspect_ratio;   // For height dimension
+        out_size[0] = dst_size[0] ? dst_size[0] : dst_size[1] * max_aspect_ratio;   // For width dimension
+        out_size[1] = dst_size[1] ? dst_size[1] : dst_size[0] * max_aspect_ratio;   // For height dimension
     }
-    }
-
 };
 
 RocalImage  ROCAL_API_CALL

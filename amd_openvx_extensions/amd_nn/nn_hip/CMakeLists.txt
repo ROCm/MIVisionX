@@ -25,7 +25,6 @@ set(NN_HIP_SOURCES
     nn_hip_kernels.cpp
     )
 
-    set(hip_library_name amdhip64)
     set_source_files_properties(${NN_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
     set(HIP_CXX_FLAGS -std=gnu++14)
 

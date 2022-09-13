@@ -11,3 +11,5 @@ rocprof_vision_tests_outputs*
 dumps*
 generatedGDFs*
 vision_report_Linux*
+amd_opencv_test_results*
+.DS_Store*

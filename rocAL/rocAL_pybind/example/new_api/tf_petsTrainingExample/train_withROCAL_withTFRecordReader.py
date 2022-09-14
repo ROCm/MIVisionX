@@ -149,7 +149,6 @@ def main():
 		while i < NUM_TRAIN_STEPS:
 
 			for t, (train_image_ndArray, train_label_ndArray) in enumerate(trainIterator, 0):
-				print("trainIteratorshape  :", train_image_ndArray.shape)
 				train_label_one_hot_list = get_label_one_hot(train_label_ndArray)
 				train_loss, _, train_accuracy = sess.run(
 					[cross_entropy_mean, train_op, accuracy],

@@ -31,6 +31,8 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
 
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[0], path, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &input_mem, sizeof(input_mem)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &in_num_dims, sizeof(in_num_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &output_mem, sizeof(output_mem)));
     if (parameters[3]) {
         ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &fp16q, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
@@ -48,6 +50,22 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
 
     if (ext.compare("onnx") == 0) {
         migraphx::onnx_options onnx_opts;
+
+        //to get the name of the input param to set batch size
+        data->prog = parse_onnx(path, onnx_opts);
+        auto param_shapes = data->prog.get_parameter_shapes();
+        auto input = param_shapes.names().back();
+
+        //set the name and batch size dimensions for parsing
+        std::string param_name, system_out;
+        param_name =  std::string(input);
+
+        std::vector<std::size_t> input_dims_vector;
+        input_dims_vector.assign(input_dims, input_dims + in_num_dims);
+        onnx_opts.set_input_parameter_shape(param_name, input_dims_vector);
+        onnx_opts.set_default_dim_value((unsigned int)input_dims[0]);  //set batch size
+        
+        //parse the onnx file
         data->prog = parse_onnx(path, onnx_opts);
         migraphx::target targ = migraphx::target("gpu");
         if (fp16q) {
@@ -74,13 +92,11 @@ static vx_status VX_CALLBACK amd_migraphx_node_initialize(vx_node node, const vx
     std::vector<size_t> inputDims = param_shapes[input].lengths();
     std::vector<size_t> outputDims = param_shapes[output].lengths();
 
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &in_num_dims, sizeof(in_num_dims)));
     if (in_num_dims != inputDims.size()) {
         delete data;
         return ERRMSG(VX_ERROR_INVALID_VALUE, "the input dimension is %zu (should be %zu)\n", in_num_dims, inputDims.size());
     }
 
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     std::stringstream tensorDims;
     std::stringstream expectedTensorDims;
     std::stringstream expectedTensorDimsInv;

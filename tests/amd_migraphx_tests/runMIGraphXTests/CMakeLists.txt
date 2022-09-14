@@ -25,7 +25,7 @@
 ################################################################################
 
 cmake_minimum_required (VERSION 3.0)
-project(migraphx_node_test)
+project(runMIGraphXTests)
 set(CMAKE_CXX_STANDARD 14)
 set(ROCM_PATH /opt/rocm CACHE PATH "default ROCm installation path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -34,9 +34,8 @@ link_directories(${ROCM_PATH}/lib)
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 find_package(migraphx QUIET)
 if(migraphx_FOUND)
-    add_executable(${PROJECT_NAME} migraphx_node_test.cpp)
+    add_executable(${PROJECT_NAME} runMIGraphXTests.cpp)
     target_link_libraries(${PROJECT_NAME} migraphx::c openvx vx_amd_migraphx)
 else()
     message("-- ERROR!: MIGraphX not Found, please install MIGrpahX!-- ${PROJECT_NAME} excluded${ColourReset}")
 endif()
-

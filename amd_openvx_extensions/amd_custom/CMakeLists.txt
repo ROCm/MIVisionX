@@ -26,11 +26,6 @@ set(CMAKE_CXX_STANDARD 14)
 list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
-    if(NOT DEFINED ENV{HSA_PATH})
-        set(HSA_PATH ${ROCM_PATH}/hsa)
-    else()
-        set(HSA_PATH $ENV{HSA_PATH})
-    endif()
     if(NOT DEFINED HIP_PATH)
         if(NOT DEFINED ENV{HIP_PATH})
             set(HIP_PATH ${ROCM_PATH}/hip)
@@ -38,7 +33,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
             set(HIP_PATH $ENV{HIP_PATH})
         endif()
     endif()
-
+    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
     find_package(HIP QUIET)
 
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
@@ -57,7 +52,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         link_directories(${HIP_PATH}/lib)
         add_subdirectory(custom_lib)
         add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
-        target_link_libraries(${PROJECT_NAME} openvx ${HIP_PATH}/lib/libamdhip64.so)
+        target_link_libraries(${PROJECT_NAME} openvx hip::host)
         # install MIVisionX libs -- {ROCM_PATH}/lib
         install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
         # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
@@ -78,7 +73,7 @@ else()
   message("-- ${Red}WARNING: GPU Support Turned OFF -- ${PROJECT_NAME} built for CPU only${ColourReset}")
   add_subdirectory(custom_lib)
   add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
-  target_link_libraries(${PROJECT_NAME} openvx ${HIP_PATH}/lib/libamdhip64.so)
+  target_link_libraries(${PROJECT_NAME} openvx hip::host)
   # install MIVisionX libs -- {ROCM_PATH}/lib
   install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
   # install include files -- {ROCM_PATH}/include/mivisionx/

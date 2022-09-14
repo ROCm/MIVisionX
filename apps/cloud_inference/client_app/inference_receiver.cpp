@@ -131,6 +131,7 @@ void inference_receiver::run()
                     if (sendFileName) {
                         QByteArray fileNameBuffer;
                         fileNameBuffer.append((*shadowFileBuffer)[nextImageToSend]);
+                        // printf("filenabuffer %s\n", fileNameBuffer.toStdString().c_str());
                         if(!connection->sendImage(nextImageToSend, fileNameBuffer, progress->errorCode, progress->message, abortRequsted)) {
                             failed = true;
                             break;

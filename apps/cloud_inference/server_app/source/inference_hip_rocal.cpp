@@ -646,10 +646,12 @@ int InferenceEngineRocalHip::run()
                         char * buff = new char [size];
                         ERRCHK(recvBuffer(sock, buff, size, clientName)); //remove redundancy
                         fileNameDir.append(std::string(buff, size));
-                        
+                        printf("filenabuffer %s\n", buff.toStdString().c_str());
                         byteStream = new char[fileNameDir.length() + 1];
                         strcpy(byteStream, fileNameDir.c_str());
-
+                        // std::cout << "fielname dir " << fileNameDir << "and " << std::endl;
+                        // printf("filename is %s and %s and %s\n", *buff, *fileNameDir.c_str(), *byteStream);
+                        fileNameMap[byteStream] = tag;
                         // FILE * fp = fopen(fileNameDir.c_str(), "rb");
                         // if(!fp) {
                         //     return error_close(sock, "filename %s (incorrect)", fileNameDir.c_str());

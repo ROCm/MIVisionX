@@ -11,6 +11,7 @@
 #include <vector>
 #include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <condition_variable>
 #include <VX/vx.h>
 #include <vx_ext_amd.h>
@@ -391,6 +392,7 @@ private:
     int                 device_id[MAX_NUM_GPU];
     hipDeviceProp_t     *hip_dev_prop[MAX_NUM_GPU];
     hipStream_t         hip_stream[MAX_NUM_GPU];
+    std::unordered_map<char*, int> fileNameMap;
 };
 #endif
 #endif

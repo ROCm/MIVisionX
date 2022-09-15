@@ -70,22 +70,16 @@ THE SOFTWARE.
 
 void
 get_max_resize_width_and_height(std::vector<unsigned> &src_size, std::vector<unsigned> &dst_size, RocalResizeScalingMode mode,
-                                std::vector<unsigned> &out_size)
-{
+                                std::vector<unsigned> &out_size) {
     float max_aspect_ratio = 3.0f;
 
-    if(mode == ROCAL_SCALING_MODE_STRETCH)
-    {
+    if(mode == ROCAL_SCALING_MODE_STRETCH) {
         out_size[0] = dst_size[0] ? dst_size[0] : src_size[0];   // For width dimension
         out_size[1] = dst_size[1] ? dst_size[1] : src_size[1];   // For height dimension
-    }
-    else if(mode == ROCAL_SCALING_MODE_NOT_SMALLER)
-    {
+    } else if(mode == ROCAL_SCALING_MODE_NOT_SMALLER) {
         out_size[0] = (dst_size[0] ? dst_size[0] : dst_size[1]) * max_aspect_ratio;   // For width dimension
         out_size[1] = (dst_size[1] ? dst_size[1] : dst_size[0]) * max_aspect_ratio;   // For height dimension
-    }
-    else
-    {
+    } else {
         out_size[0] = dst_size[0] ? dst_size[0] : dst_size[1] * max_aspect_ratio;   // For width dimension
         out_size[1] = dst_size[1] ? dst_size[1] : dst_size[0] * max_aspect_ratio;   // For height dimension
     }
@@ -559,50 +553,41 @@ rocalResize(
         RocalResizeScalingMode resize_scaling_mode;
 
         // Change the scaling mode if resize_shorter or resize_longer is specified
-        if(resize_shorter > 0)
-        {
+        if(resize_shorter > 0) {
             resize_scaling_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER;
             dst_width = dst_height = resize_shorter;
-        }
-        else if(resize_longer > 0)
-        {
+        } else if(resize_longer > 0) {
             resize_scaling_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER;
             dst_width = dst_height = resize_longer;
-        }
-        else
-        {
+        } else {
             resize_scaling_mode = scaling_mode;
             dst_width = dest_width;
             dst_height = dest_height;
         }
 
         std::vector<unsigned> maximum_size;
-        if (max_size.size())
-        {
-            if(max_size.size() == 1)
+        if (max_size.size()) {
+            if(max_size.size() == 1) {
                 maximum_size = {max_size[0], max_size[0]};
-            else if(max_size.size() == 2)
+            } else if(max_size.size() == 2) {
                 maximum_size = {max_size[0], max_size[1]}; // {width, height}
-            else
+            } else {
                 THROW("The length of max_size vector exceeds the image dimension.")
+            }
         }
 
         // Determine the max width and height to be set to the output info
         std::vector<unsigned> output_info_size(2, 0);
-        if (max_size.size() && max_size[0] != 0 && max_size[1] != 0)
-        {
+        if (max_size.size() && max_size[0] != 0 && max_size[1] != 0) {
             // If max_size is passed by the user, the resized images cannot exceed the max size,
             output_info_size = maximum_size;
-        }
-        else
-        {
+        } else {
             std::vector<unsigned> src_size = {input->info().width(), input->info().height_single()};
             std::vector<unsigned> dst_size = {dst_width, dst_height};
 
             // compute the output info width and height wrt the scaling modes and roi passed
             get_max_resize_width_and_height(src_size, dst_size, resize_scaling_mode, output_info_size);
-            if(maximum_size.size() == 2)
-            {
+            if(maximum_size.size() == 2) {
                 output_info_size[0] = max_size[0] ? max_size[0] : output_info_size[0];
                 output_info_size[1] = max_size[1] ? max_size[1] : output_info_size[1];
             }

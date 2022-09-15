@@ -35,7 +35,7 @@ void ResizeNode::create_node()
 {
     if(_node)
         return;
-    
+
     std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
     std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());
 
@@ -58,12 +58,10 @@ void ResizeNode::create_node()
 
 void ResizeNode::update_node()
 {
-
     std::vector<uint32_t> src_h_dims, src_w_dims;
     src_w_dims = _inputs[0]->info().get_roi_width_vec();
     src_h_dims = _inputs[0]->info().get_roi_height_vec();
-    for (unsigned i = 0; i < _batch_size; i++)
-    {
+    for (unsigned i = 0; i < _batch_size; i++) {
         _src_roi_size[0] = src_w_dims[i];
         _src_roi_size[1] = src_h_dims[i];
         _dst_roi_size[0] = _dest_width;
@@ -103,66 +101,49 @@ void ResizeNode::adjust_out_roi_size()
     std::vector<bool> has_size(dim, false);
     unsigned sizes_provided = 0;
     bool has_max_size = (_max_roi_size.size() > 0) ? true : false;
-    for (unsigned i = 0; i < dim; i++)
-    {
+    for (unsigned i = 0; i < dim; i++) {
         has_size[i] = (_src_roi_size[i] != 0) && (_dst_roi_size[i] != 0);
         sizes_provided += has_size[i];
         scale[i] = _src_roi_size[i] ? (_dst_roi_size[i] / static_cast<double>(_src_roi_size[i])) : 1;
-    }
-    if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH)
-    {
-        if (sizes_provided < dim)
-        {
-            for (unsigned i = 0; i < dim; i++)
-            {
+    } if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH) {
+        if (sizes_provided < dim) {
+            for (unsigned i = 0; i < dim; i++) {
                 if (!has_size[i])
                     _dst_roi_size[i] = _src_roi_size[i];
             }
         }
-        if (has_max_size)
-        {
-            for (unsigned i = 0; i < dim; i++)
-            {
+        if (has_max_size) {
+            for (unsigned i = 0; i < dim; i++) {
                 if ((_max_roi_size[i] > 0) && (_dst_roi_size[i] > _max_roi_size[i]))
                     _dst_roi_size[i] = _max_roi_size[i];
             }
         }
     }
-    else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_DEFAULT)
-    {
-        if (sizes_provided < dim)
-        {
+    else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_DEFAULT) {
+        if (sizes_provided < dim) {
             double average_scale = 1;
-            for (unsigned i = 0; i < dim; i++)
-            {
+            for (unsigned i = 0; i < dim; i++) {
                 if (has_size[i])
                     average_scale *= scale[i];
             }
             if (sizes_provided > 1)
                 average_scale = std::pow(average_scale, 1.0 / sizes_provided);
-            for(unsigned i = 0; i < dim; i++)
-            {
+            for(unsigned i = 0; i < dim; i++) {
                 if(!has_size[i])
                     _dst_roi_size[i] = std::round(_src_roi_size[i] * average_scale);
             }
         }
-        if (has_max_size)
-        {
-            for (unsigned i = 0; i < dim; i++)
-            {
+        if (has_max_size) {
+            for (unsigned i = 0; i < dim; i++) {
                 if ((_max_roi_size[i] > 0) && (_dst_roi_size[i] > _max_roi_size[i]))
                     _dst_roi_size[i] = _max_roi_size[i];
             }
         }
-    }
-    else
-    {
+    } else {
         double final_scale = 0;
         bool first = true;
-        for (unsigned i = 0; i < dim; i++)
-        {
-            if (has_size[i])
-            {
+        for (unsigned i = 0; i < dim; i++) {
+            if (has_size[i]) {
                 double s = scale[i];
                 if (first ||
                     (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER && s > final_scale) ||
@@ -172,20 +153,16 @@ void ResizeNode::adjust_out_roi_size()
                 first = false;
             }
         }
-        if(has_max_size)
-        {
-            for (unsigned i = 0; i < dim; i++)
-            {
-                if(_max_roi_size[i] > 0)
-                {
+        if(has_max_size) {
+            for (unsigned i = 0; i < dim; i++) {
+                if(_max_roi_size[i] > 0) {
                     double s = static_cast<double>(_max_roi_size[i]) / _src_roi_size[i];
                     if (s < final_scale)
                         final_scale = s;
                 }
             }
         }
-        for (unsigned i = 0; i < dim; i++)
-        {
+        for (unsigned i = 0; i < dim; i++) {
             if(!has_size[i] || (scale[i] != final_scale))
                 _dst_roi_size[i] = std::round(_src_roi_size[i] * final_scale);
         }

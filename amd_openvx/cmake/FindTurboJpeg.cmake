@@ -37,8 +37,10 @@ find_library( TurboJpeg_LIBRARIES
     NAMES libturbojpeg.so
     HINTS
     $ENV{TURBO_JPEG_PATH}/lib
+    $ENV{TURBO_JPEG_PATH}/lib64
     PATHS
-    ${TURBO_JPEG_PATH}/include
+    ${TURBO_JPEG_PATH}/lib
+    ${TURBO_JPEG_PATH}/lib64
     /usr/lib
 )
 mark_as_advanced( TurboJpeg_LIBRARIES_DIR )
@@ -47,8 +49,10 @@ find_path(TurboJpeg_LIBRARIES_DIR
     NAMES libturbojpeg.so
     HINTS
     $ENV{TURBO_JPEG_PATH}/lib
+    $ENV{TURBO_JPEG_PATH}/lib64
     PATHS
-    ${TURBO_JPEG_PATH}/include
+    ${TURBO_JPEG_PATH}/lib
+    ${TURBO_JPEG_PATH}/lib64
     /usr/lib
 )
 

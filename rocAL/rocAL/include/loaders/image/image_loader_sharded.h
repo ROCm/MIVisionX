@@ -65,6 +65,4 @@ private:
 
     Image *_output_image;
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
-    ReaderConfig _reader_config = ReaderConfig(StorageType::FILE_SYSTEM, "", "");
-    DecoderConfig _decoder_config;
 };

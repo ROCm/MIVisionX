@@ -23,7 +23,6 @@ THE SOFTWARE.
 #pragma once
 #include "node.h"
 #include "rocal_api_types.h"
-#include "parameter_rocal_crop.h"
 
 class ResizeNode : public Node
 {

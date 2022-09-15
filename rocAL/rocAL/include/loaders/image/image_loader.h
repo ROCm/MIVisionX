@@ -88,6 +88,5 @@ private:
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
     bool _decoder_keep_original = false;
     int _device_id;
-    ReaderConfig _reader_config = ReaderConfig(StorageType::FILE_SYSTEM, "", "");
-    DecoderConfig _decoder_config;
 };
+

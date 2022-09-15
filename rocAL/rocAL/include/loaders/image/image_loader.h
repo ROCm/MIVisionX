@@ -56,8 +56,6 @@ public:
     crop_image_info get_crop_image_info() override;
     void set_prefetch_queue_depth(size_t prefetch_queue_depth)  override;
     void shut_down() override;
-    ReaderConfig get_reader_config() override;
-    DecoderConfig get_decoder_config() override;
 private:
     bool is_out_of_data();
     void de_init();

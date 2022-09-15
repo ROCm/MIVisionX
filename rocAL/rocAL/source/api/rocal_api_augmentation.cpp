@@ -589,12 +589,7 @@ rocalResize(
 
         // Determine the max width and height to be set to the output info
         std::vector<unsigned> output_info_size(2, 0);
-        if((dest_width != 0 && dest_height != 0) && (resize_scaling_mode == ROCAL_SCALING_MODE_DEFAULT || resize_scaling_mode == ROCAL_SCALING_MODE_STRETCH))
-        {
-            // If both dst width and height is passed by the user, the resized images cannot exceed the given size,
-            output_info_size = {dest_width, dest_height};
-        }
-        else if (max_size.size())
+        if (max_size.size() && max_size[0] != 0 && max_size[1] != 0)
         {
             // If max_size is passed by the user, the resized images cannot exceed the max size,
             output_info_size = maximum_size;
@@ -606,6 +601,11 @@ rocalResize(
 
             // compute the output info width and height wrt the scaling modes and roi passed
             get_max_resize_width_and_height(src_size, dst_size, resize_scaling_mode, output_info_size);
+            if(maximum_size.size() == 2)
+            {
+                output_info_size[0] = max_size[0] ? max_size[0] : output_info_size[0];
+                output_info_size[1] = max_size[1] ? max_size[1] : output_info_size[1];
+            }
         }
 
         // set the width and height in the output info

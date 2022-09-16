@@ -50,7 +50,7 @@ extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor(RocalContext ro
 /// \param output_images The buffer that will be filled with output images with set_output = True
 extern "C" void ROCAL_API_CALL rocalSetOutputs(RocalContext p_context, unsigned int num_of_outputs, std::vector<RocalImage> &output_images);
 
-extern "C"  RocalStatus   ROCAL_API_CALL rocalExternalSourceFeedInput(RocalContext rali_context,std::vector<std::string> input_images, std::vector<std::string> labels,
+extern "C"  RocalStatus   ROCAL_API_CALL rocalExternalSourceFeedInput(RocalContext rali_context,std::vector<std::string> input_images, std::vector<int> labels,
                                                                     unsigned char *input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
                                                                     unsigned int max_width, unsigned int max_height, RocalExtSourceMode mode, RocalTensorLayout layout, bool eos);
 

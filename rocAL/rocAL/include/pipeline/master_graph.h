@@ -108,7 +108,7 @@ public:
     void set_sequence_reader_output() { _is_sequence_reader_output = true; }
     void set_sequence_batch_size(size_t sequence_length) { _sequence_batch_size = _user_batch_size * sequence_length; }
     void set_sequence_batch_ratio() { _sequence_batch_ratio = _sequence_batch_size / _internal_batch_size; }
-    void feed_external_input(std::vector<std::string> input_images, std::vector<std::string> labels, unsigned char *input_buffer,
+    void feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, unsigned char *input_buffer,
                              std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width,
                              unsigned int max_height, FileMode mode, RocalTensorFormat layout, bool eos);
     Status get_bbox_encoded_buffers(float **boxes_buf_ptr, int **labels_buf_ptr, size_t num_encoded_boxes);

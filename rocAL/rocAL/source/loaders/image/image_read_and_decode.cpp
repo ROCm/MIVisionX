@@ -126,7 +126,7 @@ ImageReadAndDecode::set_batch_random_bbox_crop_coords(std::vector<std::vector<fl
     _crop_coords_batch = crop_coords;
 }
 
-void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_images, std::vector<std::string> labels, unsigned char *input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
+void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, unsigned char *input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
 {
     _reader->feed_file_names(input_images, 2, eos); // Shobi check this
     // loader->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode);

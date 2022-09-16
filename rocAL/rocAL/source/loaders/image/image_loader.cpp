@@ -64,7 +64,7 @@ void ImageLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
     _prefetch_queue_depth = prefetch_queue_depth;
 }
 
-void ImageLoader::feed_external_input(std::vector<std::string> input_images, std::vector<std::string> labels, unsigned char *input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
+void ImageLoader::feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, unsigned char *input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
 {
     _external_source_reader = true;
     _external_input_eos = eos;
@@ -221,7 +221,7 @@ ImageLoader::load_routine()
                                               _decoded_img_info._original_height,
                                               _output_image->info().color_format(), _decoder_keep_original);
 
-
+            // std::cerr<<"\n Image loader CP1";
             if (load_status == LoaderModuleStatus::OK)
             {
                 if (_randombboxcrop_meta_data_reader)
@@ -229,9 +229,13 @@ ImageLoader::load_routine()
                     _crop_image_info._crop_image_coords = _image_loader->get_batch_random_bbox_crop_coords();
                     _circ_buff.set_crop_image_info(_crop_image_info);
                 }
+                // std::cerr<<"\n Image loader CP1a b c";
                 _circ_buff.set_image_info(_decoded_img_info);
+                // std::cerr<<"\n Image loader CP1a";
                 _circ_buff.push();
+                // std::cerr<<"\n Image loader CP1b";
                 _image_counter += _output_image->info().batch_size();
+                // std::cerr<<"\n Image loader CP2";
             }
         }
         if (load_status != LoaderModuleStatus::OK)
@@ -257,6 +261,7 @@ ImageLoader::load_routine()
             // It also slows down the reader thread since there is no more data to read,
             // till program ends or till reset is called
             _circ_buff.unblock_reader();
+            // std::cerr<<"\n Image loader CP3";
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     }

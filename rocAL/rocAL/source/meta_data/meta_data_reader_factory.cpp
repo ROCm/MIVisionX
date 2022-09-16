@@ -37,6 +37,7 @@ THE SOFTWARE.
 #include "tf_meta_data_reader_detection.h"
 #include "video_label_reader.h"
 #include "mxnet_meta_data_reader.h"
+#include "external_source_label_reader.h"
 
 std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& config) {
     switch(config.reader_type()) {
@@ -155,6 +156,15 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             if(config.type() != MetaDataType::Label)
                 THROW("MXNetMetaDataReader can only be used to load labels")
             auto ret = std::make_shared<MXNetMetaDataReader>();
+            ret->init(config);
+            return ret;
+        }
+        break;
+        case MetaDataReaderType::EXTERNAL_SOURCE_LABEL_READER:
+        {
+            if(config.type() != MetaDataType::Label)
+                THROW("ExternalSourceLabelReader can only be used to load labels")
+            auto ret = std::make_shared<ExternalSourceLabelReader>();
             ret->init(config);
             return ret;
         }

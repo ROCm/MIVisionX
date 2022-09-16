@@ -26,42 +26,32 @@ THE SOFTWARE.
 #include "commons.h"
 #include "meta_data.h"
 #include "meta_data_reader.h"
-#include "video_properties.h"
 
-#ifdef ROCAL_VIDEO
-class VideoLabelReader : public MetaDataReader
+class ExternalSourceLabelReader: public MetaDataReader
 {
-public:
-    void init(const MetaDataConfig &cfg) override;
-    void lookup(const std::vector<std::string> &frame_names) override;
-    void add_labels(std::vector<std::string> image_name, std::vector<int> label) override { };
-    void read_all(const std::string &path) override;
-    void release(std::string frame_name);
+public :
+    void init(const MetaDataConfig& cfg) override;
+    void lookup(const std::vector<std::string>& image_names) override;
+    void add_labels(std::vector<std::string> image_name, std::vector<int> label) override;
+    void read_all(const std::string& path) override;
+    void release(std::string image_name);
     void release() override;
-    bool set_timestamp_mode() override { _file_list_frame_num = false; return _file_list_frame_num;}
     void print_map_contents();
-    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override{ return _map_content;}
-
-    MetaDataBatch *get_output() override { return _output; }
-    VideoLabelReader();
-    ~VideoLabelReader() override { delete _output; }
+    bool set_timestamp_mode() override { return false; }
+    MetaDataBatch * get_output() override { return _output; }
+    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override { return _map_content;}
+    ExternalSourceLabelReader();
+    ~ExternalSourceLabelReader() override { delete _output; }
 private:
-    void read_files(const std::string &_path);
-    void read_text_file(const std::string &_path);
-    bool exists(const std::string &frame_name) override;
-    void add(std::string frame_name, int label, unsigned int video_frame_count = 0, unsigned int start_frame = 0);
+    void read_files(const std::string& _path);
+    bool exists(const std::string &image_name);
+    void add(std::string image_name, int label);
     std::map<std::string, std::shared_ptr<MetaData>> _map_content;
     std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
     std::string _path;
-    LabelBatch *_output;
+    LabelBatch* _output;
     DIR *_src_dir, *_sub_dir;
     struct dirent *_entity;
     std::vector<std::string> _file_names;
-    std::vector<std::string> _subfolder_video_file_names;
-    int _video_idx = 0;
-    bool _file_list_frame_num = true;
-    unsigned _sequence_length;
-    unsigned _step;
-    unsigned _stride;
+    std::vector<std::string> _subfolder_file_names;
 };
-#endif

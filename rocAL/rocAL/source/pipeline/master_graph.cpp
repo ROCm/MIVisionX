@@ -1509,12 +1509,24 @@ bool MasterGraph::no_more_processed_data()
     return (_output_routine_finished_processing && _ring_buffer.empty());
 }
 
-void MasterGraph::feed_external_input(std::vector<std::string> input_images, std::vector<std::string> labels, unsigned char *input_buffer,
+void MasterGraph::feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, unsigned char *input_buffer,
                             std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height,
                             FileMode mode, RocalTensorFormat layout, bool eos)
 {
     _external_source_eos = eos;
     _loader_module->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode, eos);
+    if(!labels.empty() && !_meta_data_reader)
+    {
+        MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::EXTERNAL_SOURCE_LABEL_READER);
+        _meta_data_reader = create_meta_data_reader(config);
+        _meta_data_reader->add_labels(input_images, labels);
+        // _meta_data_reader->init(config);
+        // _meta_data_reader->read_all(source_path);
+        if (_augmented_meta_data)
+            THROW("Metadata can only have a single output")
+        else
+            _augmented_meta_data = _meta_data_reader->get_output();
+    }
 }
 
 MasterGraph::Status

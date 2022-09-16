@@ -51,7 +51,7 @@ public:
     void shut_down() override;
     void feed_external_input(std::vector<std::string> input_images, std::vector<std::string> labels, unsigned char *input_buffer,
                              std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
-                             unsigned int max_width, unsigned int max_height, FileMode mode) override {return;} ;
+                             unsigned int max_width, unsigned int max_height, FileMode mode, bool eos) override {return;} ;
 private:
     void increment_loader_idx();
     bool is_out_of_data();

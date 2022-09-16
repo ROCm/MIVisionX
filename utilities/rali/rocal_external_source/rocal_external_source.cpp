@@ -88,7 +88,7 @@ int main(int argc, const char ** argv)
         display = atoi(argv[++argIdx]);
 
 
-    std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
+    std::cerr << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
     RocalImageColor color_format = RocalImageColor::ROCAL_COLOR_RGB_PLANAR;
     if (rgb == 0)
       color_format = RocalImageColor::ROCAL_COLOR_U8;
@@ -101,7 +101,7 @@ int main(int argc, const char ** argv)
 
     if(rocalGetStatus(handle) != ROCAL_OK)
     {
-        std::cout << "Could not create the Rocal contex\n";
+        std::cerr << "Could not create the Rocal contex\n";
         return -1;
     }
 
@@ -124,7 +124,7 @@ int main(int argc, const char ** argv)
 
     if(rocalGetStatus(handle) != ROCAL_OK)
     {
-        std::cout << "JPEG source could not initialize : "<<rocalGetErrorMessage(handle) << std::endl;
+        std::cerr << "JPEG source could not initialize : "<<rocalGetErrorMessage(handle) << std::endl;
         return -1;
     }
     // create Cifar10 meta data reader
@@ -175,18 +175,18 @@ int main(int argc, const char ** argv)
 
     if(rocalGetStatus(handle) != ROCAL_OK)
     {
-        std::cout << "Error while adding the augmentation nodes " << std::endl;
+        std::cerr << "Error while adding the augmentation nodes " << std::endl;
         auto err_msg = rocalGetErrorMessage(handle);
-        std::cout << err_msg << std::endl;
+        std::cerr << err_msg << std::endl;
     }
     // Calling the API to verify and build the augmentation graph
     if(rocalVerify(handle) != ROCAL_OK)
     {
-        std::cout << "Could not verify the augmentation graph" << std::endl;
+        std::cerr << "Could not verify the augmentation graph" << std::endl;
         return -1;
     }
 
-    std::cout << "<Remaining_images, augmentation_count> " << rocalGetRemainingImages(handle) << " " << rocalGetAugmentationBranchCount(handle) << std::endl;
+    std::cerr << "<Remaining_images, augmentation_count> " << rocalGetRemainingImages(handle) << " " << rocalGetAugmentationBranchCount(handle) << std::endl;
     // prefetch and feed data for the input pipeline
     for (int i=0; i< prefetch_queue_depth; i++) {
 
@@ -199,7 +199,7 @@ int main(int argc, const char ** argv)
     int w = rocalGetOutputWidth(handle);
     int p = (((color_format ==  RocalImageColor::ROCAL_COLOR_RGB24 ) ||
               (color_format ==  RocalImageColor::ROCAL_COLOR_RGB_PLANAR )) ? 3 : 1);
-    std::cout << "output width "<< w << " output height "<< h << " color planes "<< p << std::endl;
+    std::cerr << "output width "<< w << " output height "<< h << " color planes "<< p << std::endl;
     const unsigned number_of_cols = 1;    // no augmented case
     float out_tensor[h*w*p*inputBatchSize];
     auto cv_color_format = ((p==3) ? CV_8UC3 : CV_8UC1);
@@ -208,7 +208,8 @@ int main(int argc, const char ** argv)
     cv::Mat mat_color;
     int col_counter = 0;
     // cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
-
+    bool eos = false;
+    int total_images = file_names.size();
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
     std::vector<std::string> names;
@@ -222,14 +223,23 @@ int main(int argc, const char ** argv)
     int index = 0;
     while (!rocalIsEmpty(handle) && (iter_cnt < 100))
     {
+        // index++;
         std::vector<std::string> input_images;
         for(int i = 0; i < inputBatchSize; i++)
         {
-            input_images.push_back(std::string(folderPath1) + file_names.at(0));
+            input_images.push_back(std::string(folderPath1) + file_names.back());
             file_names.pop_back();
             std::cerr<<"\n Input images :: "<<input_images[i];
         }
-        rocalExternalSourceFeedInput(handle, input_images, input_images, NULL, {}, {}, 1, 1, RocalExtSourceMode (0), RocalTensorLayout (0));
+        if((file_names.size()) == 0)
+        {
+           eos = true;
+        }
+        if(index <= (total_images / inputBatchSize))
+        {
+            std::cerr<<"\n************************** Gonna process Batch *************************"<<index;
+            rocalExternalSourceFeedInput(handle, input_images, input_images, NULL, {}, {}, 1, 1, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
+        }
         if(rocalRun(handle) != 0)
             break;
 
@@ -238,20 +248,21 @@ int main(int argc, const char ** argv)
         // else
         //     rocalCopyToOutputTensor32(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += inputBatchSize;
-        rocalGetImageLabels(handle, labels.data());
-        unsigned imagename_size = rocalGetImageNameLen(handle,ImageNameLen);
-        char imageNames[imagename_size];
-        rocalGetImageName(handle,imageNames);
-        std::string imageNamesStr(imageNames);
+        std::cerr<<"\n &&&&&&&&&&&&&&& counter &&&&&&&&&&&&&&&&"<<counter;
+        // rocalGetImageLabels(handle, labels.data());
+        // unsigned imagename_size = rocalGetImageNameLen(handle,ImageNameLen);
+        // char imageNames[imagename_size];
+        // rocalGetImageName(handle,imageNames);
+        // std::string imageNamesStr(imageNames);
 
-        int pos = 0;
-        for(int i = 0; i < inputBatchSize; i++)
-        {
-            names[i] = imageNamesStr.substr(pos, ImageNameLen[i]);
-            pos += ImageNameLen[i];
-            std::cout << "name "<< names[i] << " label "<< labels[i] << " - ";
-        }
-        std::cout << std::endl;
+        // int pos = 0;
+        // for(int i = 0; i < inputBatchSize; i++)
+        // {
+        //     names[i] = imageNamesStr.substr(pos, ImageNameLen[i]);
+        //     pos += ImageNameLen[i];
+        //     std::cerr << "name "<< names[i] << " label "<< labels[i] << " - ";
+        // }
+        // std::cerr << std::endl;
         iter_cnt ++;
 
         if(!display)
@@ -302,11 +313,11 @@ int main(int argc, const char ** argv)
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto dur = duration_cast<microseconds>( t2 - t1 ).count();
     auto rocal_timing = rocalGetTimingInfo(handle);
-    std::cout << "Load     time "<< rocal_timing.load_time << std::endl;
-    std::cout << "Decode   time "<< rocal_timing.decode_time << std::endl;
-    std::cout << "Process  time "<< rocal_timing.process_time << std::endl;
-    std::cout << "Transfer time "<< rocal_timing.transfer_time << std::endl;
-    std::cout << ">>>>> "<< counter << " images/frames Processed. Total Elapsed Time " << dur/1000000 << " sec " << dur%1000000 << " us " << std::endl;
+    std::cerr << "Load     time "<< rocal_timing.load_time << std::endl;
+    std::cerr << "Decode   time "<< rocal_timing.decode_time << std::endl;
+    std::cerr << "Process  time "<< rocal_timing.process_time << std::endl;
+    std::cerr << "Transfer time "<< rocal_timing.transfer_time << std::endl;
+    std::cerr << ">>>>> "<< counter << " images/frames Processed. Total Elapsed Time " << dur/1000000 << " sec " << dur%1000000 << " us " << std::endl;
     rocalRelease(handle);
     mat_input.release();
     mat_output.release();

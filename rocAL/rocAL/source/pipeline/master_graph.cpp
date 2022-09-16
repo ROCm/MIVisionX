@@ -523,6 +523,8 @@ MasterGraph::reset()
 size_t
 MasterGraph::remaining_count()
 {
+    if(!_external_source_eos)
+        return _user_batch_size;
     return (_remaining_count >= 0) ? _remaining_count:0;
 }
 
@@ -972,6 +974,12 @@ void MasterGraph::output_routine()
             {
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
                 // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
+                notify_user_thread();
+                // the following call is required in case the ring buffer is waiting for more data to be loaded and there is no more data to process.
+                _ring_buffer.release_if_empty();
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            } else if(_external_source_eos) {
                 notify_user_thread();
                 // the following call is required in case the ring buffer is waiting for more data to be loaded and there is no more data to process.
                 _ring_buffer.release_if_empty();
@@ -1503,9 +1511,10 @@ bool MasterGraph::no_more_processed_data()
 
 void MasterGraph::feed_external_input(std::vector<std::string> input_images, std::vector<std::string> labels, unsigned char *input_buffer,
                             std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height,
-                            FileMode mode, RocalTensorFormat layout)
+                            FileMode mode, RocalTensorFormat layout, bool eos)
 {
-    _loader_module->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode);
+    _external_source_eos = eos;
+    _loader_module->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode, eos);
 }
 
 MasterGraph::Status

@@ -541,11 +541,11 @@ rocalResize(
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(dest_width == 0 && dest_height == 0 && resize_longer == 0 && resize_shorter == 0) // When both are zero max_width and max_height should be set and no resize to be performed
+        if((dest_width || dest_height || resize_longer || resize_shorter) == 0)
             THROW("Atleast one size 'dest_width' or 'dest_height' or 'resize_shorter' or 'resize_longer' must be specified")
-        if((dest_width != 0 || dest_height != 0) && (resize_longer != 0 || resize_shorter != 0))
+        if((dest_width || dest_height) && (resize_longer || resize_shorter))
             THROW("Only one method of specifying size can be used \ndest_width and/or dest_height\nresize_shorter\nresize_longer")
-        if(resize_longer != 0 && resize_shorter != 0)
+        if(resize_longer && resize_shorter)
             THROW("'resize_longer' and 'resize_shorter' cannot be passed together. They are mutually exclusive.")
 
         ImageInfo output_info = input->info();
@@ -553,10 +553,10 @@ rocalResize(
         RocalResizeScalingMode resize_scaling_mode;
 
         // Change the scaling mode if resize_shorter or resize_longer is specified
-        if(resize_shorter > 0) {
+        if(resize_shorter) {
             resize_scaling_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER;
             dst_width = dst_height = resize_shorter;
-        } else if(resize_longer > 0) {
+        } else if(resize_longer) {
             resize_scaling_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER;
             dst_width = dst_height = resize_longer;
         } else {

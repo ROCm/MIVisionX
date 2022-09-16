@@ -141,16 +141,14 @@ enum RocalDecoderType
 #define    ROCAL_MEMCPY_TO_DEVICE    2      // force copy to user provided device memory (gpu)
 #define    ROCAL_MEMCPY_IS_PINNED    4      // for future use
 
-enum RocalResizeScalingMode
-{
-    ROCAL_SCALING_MODE_DEFAULT = 0,     // scales wrt specified size, if only width/height is provided the other dimension is scaled according to aspect ratio
-    ROCAL_SCALING_MODE_STRETCH = 1,     // scales wrt specified size, if only width/height is provided the other dimension is not scaled
-    ROCAL_SCALING_MODE_NOT_SMALLER = 2, // scales wrt to aspect ratio, so that width/height is not lesser tha the specified dimension 
-    ROCAL_SCALING_MODE_NOT_LARGER = 3   // scales wrt to aspect ratio, so that width/height does not exceed specified dimension 
+enum RocalResizeScalingMode {
+    ROCAL_SCALING_MODE_DEFAULT = 0,     // scales wrt specified size, if only resize width/height is provided the other dimension is scaled according to aspect ratio
+    ROCAL_SCALING_MODE_STRETCH = 1,     // scales wrt specified size, if only resize width/height is provided the other dimension is not scaled
+    ROCAL_SCALING_MODE_NOT_SMALLER = 2, // scales wrt to aspect ratio, so that resize width/height is not lesser than the specified size
+    ROCAL_SCALING_MODE_NOT_LARGER = 3   // scales wrt to aspect ratio, so that resize width/height does not exceed specified size
 };
 
-enum RocalResizeInterpolationType
-{
+enum RocalResizeInterpolationType {
     ROCAL_NEAREST_NEIGHBOR_INTERPOLATION = 0,
     ROCAL_LINEAR_INTERPOLATION = 1,
     ROCAL_CUBIC_INTERPOLATION = 2,

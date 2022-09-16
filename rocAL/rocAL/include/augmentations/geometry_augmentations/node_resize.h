@@ -24,8 +24,7 @@ THE SOFTWARE.
 #include "node.h"
 #include "rocal_api_types.h"
 
-class ResizeNode : public Node
-{
+class ResizeNode : public Node {
 public:
     ResizeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     ResizeNode() = delete;

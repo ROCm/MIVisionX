@@ -56,8 +56,7 @@ void ResizeNode::create_node()
         THROW("Adding the resize (vxExtrppNode_ResizebatchPD) node failed: "+ TOSTR(status))
 }
 
-void ResizeNode::update_node()
-{
+void ResizeNode::update_node() {
     std::vector<uint32_t> src_h_dims, src_w_dims;
     src_w_dims = _inputs[0]->info().get_roi_width_vec();
     src_h_dims = _inputs[0]->info().get_roi_height_vec();
@@ -83,8 +82,7 @@ void ResizeNode::update_node()
 }
 
 void ResizeNode::init(unsigned dest_width, unsigned dest_height, RocalResizeScalingMode scaling_mode,
-                      std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type)
-{
+                      std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type) {
     _scaling_mode = scaling_mode;
     _dest_width = dest_width;
     _dest_height = dest_height;
@@ -94,8 +92,7 @@ void ResizeNode::init(unsigned dest_width, unsigned dest_height, RocalResizeScal
     _max_roi_size = max_size;
 }
 
-void ResizeNode::adjust_out_roi_size()
-{
+void ResizeNode::adjust_out_roi_size() {
     const unsigned dim = 2; // Currently supports only 2D images
     std::vector<double> scale(dim, 1);
     std::vector<bool> has_size(dim, false);

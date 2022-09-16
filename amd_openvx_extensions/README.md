@@ -8,6 +8,8 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 
 * [amd_media](amd_media): `vx_amd_media` is an OpenVX AMD media extension module. This module has mainly two OpenVX extension nodes. `com.amd.amd_media.decode` node for video/jpeg decoding and `com.amd.amd_media.encode` node for video encoding
 
+* [amd_migraphx](amd_migraphx): amd_migraphx extension integrates the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> into an OpenVX graph for inference.
+
 * [amd_nn](amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module. Learn more about neural net workflow in [Neural Net Model Compiler & Optimizer](../model_compiler#neural-net-model-compiler--optimizer)
 
 <p align="center"><img width="80%" src="../docs/images/modelCompilerWorkflow.png" /></p>

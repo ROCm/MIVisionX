@@ -29,7 +29,9 @@ from builtins import str
 from past.utils import old_div
 import nnef
 import math
-from nnir import *
+import nnir as ir
+import numpy as np
+import sys
 
 nnef2ir_attr = {
     'axis' : 'axis',
@@ -111,7 +113,7 @@ def nnef_name_to_ir_name(nnef_name):
 def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
     nnef_attribs = nnef_operation.attribs
     global nnef2ir_attr
-    attr = IrAttr()
+    attr = ir.IrAttr()
     for attrib in nnef_attribs:
         if attrib in nnef2ir_attr:
             if attrib == 'size':
@@ -194,7 +196,7 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
     return attr
 
 def nnef_tensor_to_ir_tensor(nnef_tensor):
-    nnir_tensor = IrTensor()
+    nnir_tensor = ir.IrTensor()
     nnir_tensor.setName(nnef_tensor.name)
     if hasattr(nnef_tensor.data, 'dtype'):
         if str(nnef_tensor.data.dtype) in nnef2ir_data_type:
@@ -208,7 +210,7 @@ def nnef_tensor_to_ir_tensor(nnef_tensor):
 
 def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     global nnef2ir_op_type
-    node = IrNode()
+    node = ir.IrNode()
     if nnef_operation.name in nnef2ir_op_type:
         type = nnef2ir_op_type[nnef_operation.name]
     else:
@@ -245,7 +247,7 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     
 def nnef_graph_to_ir_graph(nnef_graph):
 
-    graph = IrGraph(False)
+    graph = ir.IrGraph(False)
 
     scalarCount = 0
     hasFP64 = False
@@ -290,7 +292,7 @@ def nnef_graph_to_ir_graph(nnef_graph):
                                 shape.append(1)
                         else:
                             shape = output_tensor.shape
-                        scalar_tensor = IrTensor()
+                        scalar_tensor = ir.IrTensor()
                         scalar_tensor.setName(scalar_name)
                         scalar_tensor.setInfo('F032', shape)
                         tensor_data = np.full(shape, input_name, dtype=np.float32)

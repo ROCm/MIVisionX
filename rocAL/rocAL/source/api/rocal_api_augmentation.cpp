@@ -71,7 +71,7 @@ THE SOFTWARE.
 void
 get_max_resize_width_and_height(std::vector<unsigned> &src_size, std::vector<unsigned> &dst_size, RocalResizeScalingMode mode,
                                 std::vector<unsigned> &out_size) {
-    float max_aspect_ratio = 3.0f;
+    float max_aspect_ratio = 3.0f;  // assuming maximum aspect ratio for an image as 3.0
 
     if(mode == ROCAL_SCALING_MODE_STRETCH) {
         out_size[0] = dst_size[0] ? dst_size[0] : src_size[0];   // For width dimension

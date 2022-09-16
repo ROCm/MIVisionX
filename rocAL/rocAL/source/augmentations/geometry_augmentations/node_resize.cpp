@@ -67,8 +67,8 @@ void ResizeNode::update_node()
         _dst_roi_size[0] = _dest_width;
         _dst_roi_size[1] = _dest_height;
         adjust_out_roi_size();
-        _dst_roi_size[0] = _dst_roi_size[0] > _outputs[0]->info().width() ? _outputs[0]->info().width() : _dst_roi_size[0];
-        _dst_roi_size[1] = _dst_roi_size[1] > _outputs[0]->info().height_single() ? _outputs[0]->info().height_single() : _dst_roi_size[1];
+        _dst_roi_size[0] = std::min(_dst_roi_size[0], _outputs[0]->info().width());
+        _dst_roi_size[1] = std::min(_dst_roi_size[1], _outputs[0]->info().height_single());
         _dst_roi_width_vec.push_back(_dst_roi_size[0]);
         _dst_roi_height_vec.push_back(_dst_roi_size[1]);
     }
@@ -100,7 +100,7 @@ void ResizeNode::adjust_out_roi_size()
     std::vector<double> scale(dim, 1);
     std::vector<bool> has_size(dim, false);
     unsigned sizes_provided = 0;
-    bool has_max_size = (_max_roi_size.size() > 0) ? true : false;
+    bool has_max_size = _max_roi_size.size() > 0;
     for (unsigned i = 0; i < dim; i++) {
         has_size[i] = (_src_roi_size[i] != 0) && (_dst_roi_size[i] != 0);
         sizes_provided += has_size[i];

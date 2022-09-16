@@ -100,7 +100,7 @@ void ResizeNode::adjust_out_roi_size() {
     bool has_max_size = _max_roi_size.size() > 0;
     for (unsigned i = 0; i < dim; i++) {
         has_size[i] = (_src_roi_size[i] != 0) && (_dst_roi_size[i] != 0);
-        sizes_provided += has_size[i];
+        sizes_provided += (has_size[i] ? 1 : 0);
         scale[i] = _src_roi_size[i] ? (_dst_roi_size[i] / static_cast<double>(_src_roi_size[i])) : 1;
     } if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH) {
         if (sizes_provided < dim) {

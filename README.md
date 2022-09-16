@@ -40,7 +40,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   - [Windows](#windows-2)
 - [Docker](#docker)
   - [MIVisionX Docker](#mivisionx-docker)
-  - [Docker Workflow Sample on Ubuntu `18.04` / `20.04`](#docker-workflow-sample-on-ubuntu-1804--2004)
+  - [Docker Workflow Sample on Ubuntu `20.04`](#docker-workflow-sample-on-ubuntu-2004)
     - [Prerequisites](#prerequisites-1)
     - [Workflow](#workflow)
 - [Technical Support](#technical-support)
@@ -148,7 +148,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 #### Linux
 
 * Linux distribution
-  + **Ubuntu** - `18.04` / `20.04`
+  + **Ubuntu** - `20.04` / `22.04`
   + **CentOS** - `7` / `8`
 * Install [ROCm](https://docs.amd.com)
 * CMake 3.0 or later
@@ -171,7 +171,7 @@ For the convenience of the developer, we here provide the setup script which wil
 ###### Prerequisites for running the script
 
 * Linux distribution
-  + Ubuntu - `18.04` / `20.04`
+  + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
 * [ROCm supported hardware](https://docs.amd.com)
 * [ROCm](https://docs.amd.com)
@@ -182,7 +182,7 @@ For the convenience of the developer, we here provide the setup script which wil
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default:4.5.5)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.4)]
-                            --rpp       [RPP Version - optional (default:0.96)]
+                            --rpp       [RPP Version - optional (default:0.97)]
                             --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:no) [options:yes/no]]
                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
@@ -328,22 +328,21 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 ## Docker
 
-MIVisionX provides developers with docker images for **Ubuntu** `18.04` / `20.04` and **CentOS** `7` / `8`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
+MIVisionX provides developers with docker images for **Ubuntu** `20.04` and **CentOS** `7` / `8`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
 Docker files to build MIVisionX containers are [available](docker#mivisionx-docker)
 
 ### MIVisionX Docker
 
-* [Ubuntu 18.04](https://hub.docker.com/r/mivisionx/ubuntu-18.04)
 * [Ubuntu 20.04](https://hub.docker.com/r/mivisionx/ubuntu-20.04)
 * [CentOS 7](https://hub.docker.com/r/mivisionx/centos-7)
 * [CentOS 8](https://hub.docker.com/r/mivisionx/centos-8)
 
-### Docker Workflow Sample on Ubuntu `18.04` / `20.04`
+### Docker Workflow Sample on Ubuntu `20.04`
 
 #### Prerequisites
 
-* Ubuntu `18.04` / `20.04`
+* Ubuntu `20.04`/`22.04`
 * [rocm supported hardware](https://docs.amd.com)
 
 #### Workflow
@@ -380,13 +379,13 @@ sudo systemctl status docker
 * Step 3 - *Get Docker Image*
 
 ```
-sudo docker pull mivisionx/ubuntu-18.04
+sudo docker pull mivisionx/ubuntu-20.04
 ```
 
 * Step 4 - *Run the docker image*
 
 ```
-sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-18.04:latest
+sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-20.04:latest
 ```
   **Note:**
   * Map host directory on the docker image
@@ -395,14 +394,14 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
     + use `-v` option with docker run command: `-v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH}`
     + usage:
     ```
-    sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-18.04:latest
+    sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-20.04:latest
     ```
 
   * Display option with docker
     + Using host display
     ```
     xhost +local:root
-    sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-18.04:latest
+    sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-20.04:latest
     ```
 
     + Test display with MIVisionX sample
@@ -432,19 +431,19 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 * Windows `10` / `11`
 * Linux distribution
-  + Ubuntu - `18.04` / `20.04`
+  + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
-* ROCm: rocm-core - `5.2.0.50200-65`
-* miopen-hip - `2.16.0.50101-48`
-* miopen-opencl - `2.16.0.50101-48`
-* migraphx - `2.1.0.50101-48`
+* ROCm: rocm-core - `5.3.0.50300-36`
+* miopen-hip - `2.18.0.50300-36`
+* miopen-opencl - `2.18.0.50300-36`
+* migraphx - `2.3.0.50300-36`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
-* RPP - [0.96](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.96)
+* RPP - [0.97](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.97)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.3.6`
+* MIVisionX Setup Script - `V2.3.7`
 
 ### Known issues
 

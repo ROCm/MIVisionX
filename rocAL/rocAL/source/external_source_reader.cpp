@@ -62,6 +62,7 @@ Reader::Status ExternalSourceReader::initialize(ReaderConfig desc)
     _loop = desc.loop();
     _mode = desc.mode();
     _end_of_sequence = false;
+    _file_data.reserve(_batch_count);
     return ret;
 }
 
@@ -79,9 +80,12 @@ size_t ExternalSourceReader::open()
         if (_end_of_sequence || !ret)
           return 0;
         incremenet_read_ptr();
-        // prefix with folder_path of exists        
+        // prefix with folder_path of exists
         if (!_folder_path.empty())
-          next_file_name = _folder_path + "/" + next_file_name;
+        //   next_file_name = _folder_path + "/" + next_file_name;
+            next_file_name = next_file_name;
+        _last_id= next_file_name;
+        std::cerr<<"\n Gonna read the file :: "<<next_file_name;
         filesys::path pathObj(next_file_name);
         if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
         {
@@ -203,7 +207,7 @@ bool ExternalSourceReader::pop_file_name(std::string& file_name)
       return true;
     }else
       return false;
-    
+
 }
 
 void ExternalSourceReader::push_file_data(std::tuple<char*, size_t, int, int, int>& image)

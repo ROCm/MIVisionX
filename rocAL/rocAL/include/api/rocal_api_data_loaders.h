@@ -714,5 +714,14 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourcePartialSin
                                                             RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
                                                             RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
 
+extern "C"  RocalImage  ROCAL_API_CALL rocalJpegExternalFileSource(RocalContext p_context,
+                                                        const char* source_path,
+                                                        RocalImageColor rocal_color_format,
+                                                        bool is_output = false,
+                                                        bool shuffle = false,
+                                                        bool loop = false,
+                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
+                                                        unsigned max_width = 0, unsigned max_height = 0, RocalDecoderType rocal_decoder_type = RocalDecoderType::ROCAL_DECODER_TJPEG);
+
 #endif //MIVISIONX_ROCAL_API_DATA_LOADERS_H
 

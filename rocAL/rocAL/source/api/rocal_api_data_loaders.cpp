@@ -321,17 +321,27 @@ rocalJpegExternalFileSource(
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
 
-        context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(context->user_batch_size(),
-                                                                          source_path, "",
-                                                                          std::map<std::string, std::string>(),
-                                                                          StorageType::EXTERNAL_FILE_SOURCE,
-                                                                          decType,
-                                                                          shuffle,
-                                                                          loop,
-                                                                          context->user_batch_size(),
-                                                                          context->master_graph->mem_type(),
-                                                                          context->master_graph->meta_data_reader(),
-                                                                          decoder_keep_original);
+        // context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(context->user_batch_size(),
+        //                                                                   source_path, "",
+        //                                                                   std::map<std::string, std::string>(),
+        //                                                                   StorageType::EXTERNAL_FILE_SOURCE,
+        //                                                                   decType,
+        //                                                                   shuffle,
+        //                                                                   loop,
+        //                                                                   context->user_batch_size(),
+        //                                                                   context->master_graph->mem_type(),
+        //                                                                   context->master_graph->meta_data_reader(),
+        //                                                                   decoder_keep_original);
+        context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(0, 1,
+                                                                                        source_path, "",
+                                                                                        StorageType::EXTERNAL_FILE_SOURCE,
+                                                                                        decType,
+                                                                                        shuffle,
+                                                                                        loop,
+                                                                                        context->user_batch_size(),
+                                                                                        context->master_graph->mem_type(),
+                                                                                        context->master_graph->meta_data_reader(),
+                                                                                        decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)

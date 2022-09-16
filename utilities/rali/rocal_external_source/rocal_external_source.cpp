@@ -29,9 +29,20 @@ THE SOFTWARE.
 #include <cstdio>
 
 #include <opencv2/opencv.hpp>
-#include <opencv/highgui.h>
+// #include <opencv/highgui.h>
 
-#include "rali_api.h"
+#if USE_OPENCV_4
+#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
+#define CV_BGR2GRAY COLOR_BGR2GRAY
+#define CV_GRAY2RGB COLOR_GRAY2RGB
+#define CV_RGB2BGR COLOR_RGB2BGR
+#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
+#define CV_FILLED FILLED
+#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
+#endif
+
+
+#include "rocal_api.h"
 
 using namespace cv;
 
@@ -78,115 +89,116 @@ int main(int argc, const char ** argv)
 
 
     std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
-    RaliImageColor color_format = RaliImageColor::RALI_COLOR_RGB_PLANAR;
-    if (rgb == 0) 
-      color_format = RaliImageColor::RALI_COLOR_U8;
+    RocalImageColor color_format = RocalImageColor::ROCAL_COLOR_RGB_PLANAR;
+    if (rgb == 0)
+      color_format = RocalImageColor::ROCAL_COLOR_U8;
     else if (rgb == 1)
-      color_format = RaliImageColor::RALI_COLOR_RGB24;
+      color_format = RocalImageColor::ROCAL_COLOR_RGB24;
     else if (rgb == 2)
-      color_format = RaliImageColor::RALI_COLOR_RGB_PLANAR;
+      color_format = RocalImageColor::ROCAL_COLOR_RGB_PLANAR;
 
-    auto handle = raliCreate(inputBatchSize, processing_device?RaliProcessMode::RALI_PROCESS_GPU:RaliProcessMode::RALI_PROCESS_CPU, 0,1);
+    auto handle = rocalCreate(inputBatchSize, processing_device?RocalProcessMode::ROCAL_PROCESS_GPU:RocalProcessMode::ROCAL_PROCESS_CPU, 0,1);
 
-    if(raliGetStatus(handle) != RALI_OK)
+    if(rocalGetStatus(handle) != ROCAL_OK)
     {
-        std::cout << "Could not create the Rali contex\n";
+        std::cout << "Could not create the Rocal contex\n";
         return -1;
     }
 
 
-    /*>>>>>>>>>>>>>>>> Creating Rali parameters  <<<<<<<<<<<<<<<<*/
+    /*>>>>>>>>>>>>>>>> Creating Rocal parameters  <<<<<<<<<<<<<<<<*/
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
-    //RaliFloatParam rand_crop_area = raliCreateFloatUniformRand( 0.3, 0.5 );
-    //RaliIntParam color_temp_adj = raliCreateIntParameter(0);
+    //RocalFloatParam rand_crop_area = rocalCreateFloatUniformRand( 0.3, 0.5 );
+    //RocalIntParam color_temp_adj = rocalCreateIntParameter(0);
 
     // Creating a custom random object to set a limited number of values to randomize the rotation angle
     // create Cifar10 meta data reader
-    //raliCreateTextCifar10LabelReader(handle, folderPath1, "data_batch");
+    //rocalCreateTextCifar10LabelReader(handle, folderPath1, "data_batch");
 
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
-    RaliImage input1;
+    RocalImage input1;
 
-    input1 = raliJpegExternalFileSource(handle, folderPath1,  color_format, true, decode_width, decode_height, false, RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height, RaliDecoderType::RALI_DECODER_TJPEG);
+    input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height, RocalDecoderType::ROCAL_DECODER_TJPEG);
 
-    if(raliGetStatus(handle) != RALI_OK)
+    if(rocalGetStatus(handle) != ROCAL_OK)
     {
-        std::cout << "JPEG source could not initialize : "<<raliGetErrorMessage(handle) << std::endl;
+        std::cout << "JPEG source could not initialize : "<<rocalGetErrorMessage(handle) << std::endl;
         return -1;
     }
     // create Cifar10 meta data reader
-    //raliCreateTextCifar10LabelReader(handle, folderPath1, "data_batch");
+    //rocalCreateTextCifar10LabelReader(handle, folderPath1, "data_batch");
+    std::vector<std::string> file_names = {"000000012698.jpg", "000000053304.jpg", "000000123824.jpg", "000000180366.jpg", "000000198759.jpg", "000000239654.jpg"};
 
 #if 0
     const size_t num_values = 3;
     float values[num_values] = {0,10,135};
     double frequencies[num_values] = {1, 5, 5};
 
-    RaliFloatParam rand_angle =   raliCreateFloatRand( values , frequencies, num_values);
+    RocalFloatParam rand_angle =   rocalCreateFloatRand( values , frequencies, num_values);
     // Creating successive blur nodes to simulate a deep branch of augmentations
-    RaliImage image2 = raliCropResize(handle, image0, resize_w, resize_h, false, rand_crop_area);;
+    RocalImage image2 = rocalCropResize(handle, image0, resize_w, resize_h, false, rand_crop_area);;
     for(int i = 0 ; i < aug_depth; i++)
     {
-        image2 = raliBlurFixed(handle, image2, 17.25, (i == (aug_depth -1)) ? true:false );
+        image2 = rocalBlurFixed(handle, image2, 17.25, (i == (aug_depth -1)) ? true:false );
     }
 
 
-    RaliImage image4 = raliColorTemp(handle, image0, false, color_temp_adj);
+    RocalImage image4 = rocalColorTemp(handle, image0, false, color_temp_adj);
 
-    RaliImage image5 = raliWarpAffine(handle, image4, false);
+    RocalImage image5 = rocalWarpAffine(handle, image4, false);
 
-    RaliImage image6 = raliJitter(handle, image5, false);
+    RocalImage image6 = rocalJitter(handle, image5, false);
 
-    raliVignette(handle, image6, true);
+    rocalVignette(handle, image6, true);
 
 
 
-    RaliImage image7 = raliPixelate(handle, image0, false);
+    RocalImage image7 = rocalPixelate(handle, image0, false);
 
-    RaliImage image8 = raliSnow(handle, image0, false);
+    RocalImage image8 = rocalSnow(handle, image0, false);
 
-    RaliImage image9 = raliBlend(handle, image7, image8, false);
+    RocalImage image9 = rocalBlend(handle, image7, image8, false);
 
-    RaliImage image10 = raliLensCorrection(handle, image9, false);
+    RocalImage image10 = rocalLensCorrection(handle, image9, false);
 
-    raliExposure(handle, image10, true);
+    rocalExposure(handle, image10, true);
 #else
   // uncomment the following to add augmentation if needed
-    RaliImage image0;
+    RocalImage image0;
     int resize_w = 224, resize_h = 224;
     image0 = input1;
   // just do one augmentation to test
-    image0 = raliResize(handle, input1, resize_w, resize_h, true);
+    image0 = rocalResize(handle, input1, resize_w, resize_h, true);
 #endif
 
-    if(raliGetStatus(handle) != RALI_OK)
+    if(rocalGetStatus(handle) != ROCAL_OK)
     {
         std::cout << "Error while adding the augmentation nodes " << std::endl;
-        auto err_msg = raliGetErrorMessage(handle);
+        auto err_msg = rocalGetErrorMessage(handle);
         std::cout << err_msg << std::endl;
     }
     // Calling the API to verify and build the augmentation graph
-    if(raliVerify(handle) != RALI_OK)
+    if(rocalVerify(handle) != ROCAL_OK)
     {
         std::cout << "Could not verify the augmentation graph" << std::endl;
         return -1;
     }
 
-    std::cout << "<Remaining_images, augmentation_count> " << raliGetRemainingImages(handle) << " " << raliGetAugmentationBranchCount(handle) << std::endl;
+    std::cout << "<Remaining_images, augmentation_count> " << rocalGetRemainingImages(handle) << " " << rocalGetAugmentationBranchCount(handle) << std::endl;
     // prefetch and feed data for the input pipeline
     for (int i=0; i< prefetch_queue_depth; i++) {
-      
+
     }
 
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
-    int n = raliGetAugmentationBranchCount(handle);
-    int h = n * raliGetOutputHeight(handle);
-    int w = raliGetOutputWidth(handle);
-    int p = (((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) || 
-              (color_format ==  RaliImageColor::RALI_COLOR_RGB_PLANAR )) ? 3 : 1);
+    int n = rocalGetAugmentationBranchCount(handle);
+    int h = n * rocalGetOutputHeight(handle);
+    int w = rocalGetOutputWidth(handle);
+    int p = (((color_format ==  RocalImageColor::ROCAL_COLOR_RGB24 ) ||
+              (color_format ==  RocalImageColor::ROCAL_COLOR_RGB_PLANAR )) ? 3 : 1);
     std::cout << "output width "<< w << " output height "<< h << " color planes "<< p << std::endl;
     const unsigned number_of_cols = 1;    // no augmented case
     float out_tensor[h*w*p*inputBatchSize];
@@ -195,8 +207,8 @@ int main(int argc, const char ** argv)
     cv::Mat mat_input(h, w, cv_color_format);
     cv::Mat mat_color;
     int col_counter = 0;
-    cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
- 
+    // cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
+
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
     std::vector<std::string> names;
@@ -207,20 +219,29 @@ int main(int argc, const char ** argv)
     int iter_cnt = 0;
     float  pmul = 2.0f/255;
     float  padd = -1.0f;
-    while (!raliIsEmpty(handle) && (iter_cnt < 100))
+    int index = 0;
+    while (!rocalIsEmpty(handle) && (iter_cnt < 100))
     {
-        if(raliRun(handle) != 0)
+        std::vector<std::string> input_images;
+        for(int i = 0; i < inputBatchSize; i++)
+        {
+            input_images.push_back(std::string(folderPath1) + file_names.at(0));
+            file_names.pop_back();
+            std::cerr<<"\n Input images :: "<<input_images[i];
+        }
+        rocalExternalSourceFeedInput(handle, input_images, input_images, NULL, {}, {}, 1, 1, RocalExtSourceMode (0), RocalTensorLayout (0));
+        if(rocalRun(handle) != 0)
             break;
 
         if(display)
-            raliCopyToOutput(handle, mat_input.data, h*w*p);
-        else
-            raliCopyToOutputTensor32(handle, out_tensor, RaliTensorLayout::RALI_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
+            rocalCopyToOutput(handle, mat_input.data, h*w*p);
+        // else
+        //     rocalCopyToOutputTensor32(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += inputBatchSize;
-        raliGetImageLabels(handle, labels.data());
-        unsigned imagename_size = raliGetImageNameLen(handle,ImageNameLen);
-        char imageNames[imagename_size]; 
-        raliGetImageName(handle,imageNames);
+        rocalGetImageLabels(handle, labels.data());
+        unsigned imagename_size = rocalGetImageNameLen(handle,ImageNameLen);
+        char imageNames[imagename_size];
+        rocalGetImageName(handle,imageNames);
         std::string imageNamesStr(imageNames);
 
         int pos = 0;
@@ -235,19 +256,23 @@ int main(int argc, const char ** argv)
 
         if(!display)
             continue;
-
-        if(color_format ==  RaliImageColor::RALI_COLOR_RGB24 )
+        std::vector<int> compression_params;
+        compression_params.push_back(IMWRITE_PNG_COMPRESSION);
+        compression_params.push_back(9);
+        std::string out_filename = std::string("output") + std::to_string(index) + ".png";
+        if(color_format ==  RocalImageColor::ROCAL_COLOR_RGB24 )
         {
             mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imshow("output",mat_color);
+            // cv::imshow("output",mat_color);
+            cv::imwrite(out_filename, mat_color, compression_params);
         }
-        else if (color_format == RaliImageColor::RALI_COLOR_RGB_PLANAR )
+        else if (color_format == RocalImageColor::ROCAL_COLOR_RGB_PLANAR )
         {
             // convert planar to packed for OPENCV
             for (int j = 0; j < n ; j++) {
                 int const kWidth = w;
-                int const kHeight = raliGetOutputHeight(handle);
+                int const kHeight = rocalGetOutputHeight(handle);
                 int single_h = kHeight/inputBatchSize;
                 for (int n = 0; n<inputBatchSize; n++) {
                     unsigned  channel_size = kWidth*single_h*p;
@@ -260,26 +285,29 @@ int main(int argc, const char ** argv)
                     }
                 }
             }
-            cv::imshow("output",mat_output);
+            // cv::imshow("output",mat_output);
+            cv::imwrite(out_filename, mat_color, compression_params);
         }
         else
         {
             mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
-            cv::imshow("output",mat_output);
+            // cv::imshow("output",mat_output);
+            cv::imwrite(out_filename, mat_color, compression_params);
         }
         cv::waitKey(1);
         col_counter = (col_counter+1)%number_of_cols;
+        index++;
     }
 
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto dur = duration_cast<microseconds>( t2 - t1 ).count();
-    auto rali_timing = raliGetTimingInfo(handle);
-    std::cout << "Load     time "<< rali_timing.load_time << std::endl;
-    std::cout << "Decode   time "<< rali_timing.decode_time << std::endl;
-    std::cout << "Process  time "<< rali_timing.process_time << std::endl;
-    std::cout << "Transfer time "<< rali_timing.transfer_time << std::endl;
+    auto rocal_timing = rocalGetTimingInfo(handle);
+    std::cout << "Load     time "<< rocal_timing.load_time << std::endl;
+    std::cout << "Decode   time "<< rocal_timing.decode_time << std::endl;
+    std::cout << "Process  time "<< rocal_timing.process_time << std::endl;
+    std::cout << "Transfer time "<< rocal_timing.transfer_time << std::endl;
     std::cout << ">>>>> "<< counter << " images/frames Processed. Total Elapsed Time " << dur/1000000 << " sec " << dur%1000000 << " us " << std::endl;
-    raliRelease(handle);
+    rocalRelease(handle);
     mat_input.release();
     mat_output.release();
     return 0;

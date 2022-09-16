@@ -126,6 +126,12 @@ ImageReadAndDecode::set_batch_random_bbox_crop_coords(std::vector<std::vector<fl
     _crop_coords_batch = crop_coords;
 }
 
+void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_images, std::vector<std::string> labels, unsigned char *input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, FileMode mode)
+{
+    _reader->feed_file_names(input_images, 2, false);
+    // loader->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode);
+}
+
 LoaderModuleStatus
 ImageReadAndDecode::load(unsigned char* buff,
                          std::vector<std::string>& names,
@@ -186,8 +192,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     } else if (is_external_source) {
         auto ext_reader = std::dynamic_pointer_cast<ExternalSourceReader>(_reader);
         if (ext_reader->mode() == FileMode::RAWDATA_UNCOMPRESSED){
-          while ((file_counter != _batch_size) && _reader->count_items() > 0)
-          {
+        while ((file_counter != _batch_size) && _reader->count_items() > 0) {
               int width, height, channels;
               auto read_ptr = buff + image_size * file_counter;
               size_t fsize = _reader->open();
@@ -212,6 +217,28 @@ ImageReadAndDecode::load(unsigned char* buff,
               file_counter++;
           }
           skip_decode = true;
+        }
+        else {
+            while ((file_counter != _batch_size) && _reader->count_items() > 0) {
+                std::cerr<<"\n ImageReadAndDecode::load CP3";
+                size_t fsize = _reader->open();
+                std::cerr<<"\n  ImageReadAndDecode::load CP4  "<<fsize;
+                if (fsize == 0) {
+                    WRN("Opened file " + _reader->id() + " of size 0");
+                    continue;
+                }
+                _compressed_buff[file_counter].reserve(fsize);
+                _actual_read_size[file_counter] = _reader->read_data(_compressed_buff[file_counter].data(), fsize);
+                std::cerr<<"\n ImageReadAndDecode::load CP5";
+                _image_names[file_counter] = _reader->id();
+                std::cerr<<"\n ImageReadAndDecode::load CP6";
+                _reader->close();
+                std::cerr<<"\n ImageReadAndDecode::load CP7";
+                _compressed_image_size[file_counter] = fsize;
+                std::cerr<<"\n ImageReadAndDecode::load CP8";
+                file_counter++;
+                std::cerr<<"\n ImageReadAndDecode::load CP9";
+            }
         }
     }
     else {

@@ -793,7 +793,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
     #endif
                         }
                     }
-                    else if(output_data_type == RocalTensorDataType::FP16) 
+                    else if(output_data_type == RocalTensorDataType::FP16)
                     {
                         half *output_tensor_16 = static_cast<half *>(out_ptr);
                         auto channel_size = w * h;
@@ -1499,6 +1499,13 @@ void MasterGraph::notify_user_thread()
 bool MasterGraph::no_more_processed_data()
 {
     return (_output_routine_finished_processing && _ring_buffer.empty());
+}
+
+void MasterGraph::feed_external_input(std::vector<std::string> input_images, std::vector<std::string> labels, unsigned char *input_buffer,
+                            std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height,
+                            FileMode mode, RocalTensorFormat layout)
+{
+    _loader_module->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode);
 }
 
 MasterGraph::Status

@@ -64,7 +64,7 @@ void ImageLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
     _prefetch_queue_depth = prefetch_queue_depth;
 }
 
-void ImageLoader::feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, unsigned char *input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
+void ImageLoader::feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, std::vector<unsigned char *>input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
 {
     _external_source_reader = true;
     _external_input_eos = eos;

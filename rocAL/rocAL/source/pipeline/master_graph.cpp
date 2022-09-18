@@ -1509,7 +1509,7 @@ bool MasterGraph::no_more_processed_data()
     return (_output_routine_finished_processing && _ring_buffer.empty());
 }
 
-void MasterGraph::feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, unsigned char *input_buffer,
+void MasterGraph::feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, std::vector<unsigned char *>input_buffer,
                             std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height,
                             FileMode mode, RocalTensorFormat layout, bool eos)
 {

@@ -56,7 +56,7 @@ struct ReaderConfig
 {
     explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "",
                           const std::map<std::string, std::string> feature_key_map = std::map<std::string, std::string>(),
-                          bool shuffle = false, bool loop = false, FileMode mode = FileMode::FILENAME) : _type(type), _path(path), _json_path(json_path), 
+                          bool shuffle = false, bool loop = false, FileMode mode = FileMode::FILENAME) : _type(type), _path(path), _json_path(json_path),
                           _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop), _mode(mode) {}
     virtual StorageType type() { return _type; };
     void set_path(const std::string &path) { _path = path; }
@@ -75,6 +75,7 @@ struct ReaderConfig
     void set_sequence_length(unsigned sequence_length) { _sequence_length = sequence_length; }
     void set_frame_step(unsigned step) { _step = step; }
     void set_frame_stride(unsigned stride) { _stride = stride; }
+    void set_mode(FileMode mode) { _mode = mode; }
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
@@ -158,15 +159,15 @@ public:
     virtual std::string id() = 0;
     //! Returns the number of items remained in this resource
     virtual unsigned count_items() = 0;
-    
+
     //! return shuffle_time if applicable
     virtual unsigned long long get_shuffle_time() = 0;
 
-    //! return feed_file_names: needed if an external_source is feeding into the reader 
+    //! return feed_file_names: needed if an external_source is feeding into the reader
     virtual void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos=false) = 0;
 
-    //! return feed_data: use this for feeding raw data into the reader (mode specified compressed jpegs or raw) 
-    virtual void feed_data(const std::vector<char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width=0, int height=0, int channels=0) = 0;
+    //! return feed_data: use this for feeding raw data into the reader (mode specified compressed jpegs or raw)
+    virtual void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width=0, int height=0, int channels=0) = 0;
 
     virtual ~Reader() = default;
 };

@@ -70,7 +70,7 @@ public:
     void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos=false) override;
 
     //! receive next set of file data from external source
-    void feed_data(const std::vector<char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width=0, int height=0, int channels=0) override;
+    void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width=0, int height=0, int channels=0) override;
 
     // mode(): returs the mode for the reader
     FileMode mode() {return _mode;};
@@ -84,11 +84,11 @@ private:
     std::string _folder_path;
     std::queue<std::string> _file_names_q;
     std::vector<size_t> _file_sizes;
-    std::vector<std::tuple<char*, size_t, int, int, int>> _file_data;
-    std::queue<std::tuple<char*, size_t, int, int, int>> _images_data_q;
+    std::vector<std::tuple<unsigned char*, size_t, int, int, int>> _file_data;
+    std::queue<std::tuple<unsigned char*, size_t, int, int, int>> _images_data_q;
     std::mutex _lock;
     std::condition_variable _wait_for_input;
-    
+
     unsigned  _curr_file_idx;
     FILE* _current_fPtr;
     unsigned _current_file_size;
@@ -109,8 +109,8 @@ private:
     //!< _file_count_all_shards total_number of files in to figure out the max_batch_size (usually needed for distributed training).
     void push_file_name(const std::string& image_name);
     bool pop_file_name(std::string& file_name);
-    void push_file_data(std::tuple<char*, size_t, int, int, int>& image);
-    bool pop_file_data(std::tuple<char*, size_t, int, int, int>& image);
+    void push_file_data(std::tuple<unsigned char*, size_t, int, int, int>& image);
+    bool pop_file_data(std::tuple<unsigned char*, size_t, int, int, int>& image);
     size_t  _file_count_all_shards;
     void incremenet_read_ptr();
     int release();

@@ -69,6 +69,9 @@ int main(int argc, const char ** argv)
     int inputBatchSize = 64;
     int prefetch_queue_depth = 3;
     bool processing_device = 1;
+    int mode;
+    mode = 1; //Need to get it from the user
+    // mode = 0;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
@@ -121,7 +124,7 @@ int main(int argc, const char ** argv)
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
     RocalImage input1;
 
-    input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height, RocalDecoderType::ROCAL_DECODER_TJPEG);
+    input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height, RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
 
     if(rocalGetStatus(handle) != ROCAL_OK)
     {
@@ -131,6 +134,7 @@ int main(int argc, const char ** argv)
     DIR *_src_dir;
     struct dirent *_entity;
     std::vector<std::string> file_names;
+    std::vector<unsigned char *> input_buffer;
     if((_src_dir = opendir (folderPath1)) == nullptr)
     {
             std::cerr<<"\n ERROR: Failed opening the directory at "<<folderPath1;
@@ -145,14 +149,39 @@ int main(int argc, const char ** argv)
         std::string file_path = folderPath1;
         // file_path.append("/");
         file_path.append(_entity->d_name);
-        std::cerr<<"\n _entity->d_name:: "<<file_path;
+        // std::cerr<<"\n _entity->d_name:: "<<file_path;
         file_names.push_back(file_path);
     }
+    if(mode != 0)
+    {
+        if(mode == 1){ // Raw compressed
+            std::cerr<<"\n Coming to raw compressed ";
+            for(uint32_t i = 0; i < file_names.size(); i++) {
+                FILE* _current_fPtr;
+                _current_fPtr = fopen(file_names[i].c_str(), "rb");// Open the file,
+                if(!_current_fPtr) // Check if it is ready for reading
+                    return 0;
+                fseek(_current_fPtr, 0 , SEEK_END);// Take the file read pointer to the end
+                size_t _current_file_size = ftell(_current_fPtr);// Check how many bytes are there between and the current read pointer position (end of the file)
+                unsigned char* input_data = (unsigned char *) malloc(sizeof(unsigned char ) * _current_file_size);
+                if(_current_file_size == 0)
+                { // If file is empty continue
+                    fclose(_current_fPtr);
+                    _current_fPtr = nullptr;
+                    return 0;
+                }
+
+                fseek(_current_fPtr, 0 , SEEK_SET);// Take the file pointer back to the start
+                size_t actual_read_size = fread(input_data, sizeof(unsigned char), _current_file_size, _current_fPtr);
+                // std::cerr<<"\n actual read size ::"<<actual_read_size;
+                input_buffer.push_back(input_data);
+            }
+
+        } else { // Raw un compressed
+            std::cerr<<"\n Yet to implement";
+        }
+    }
     std::cerr<<"\n file names count :: "<<file_names.size();
-    // exit(0);
-    // create Cifar10 meta data reader
-    //rocalCreateTextCifar10LabelReader(handle, folderPath1, "data_batch");
-    // std::vector<std::string> file_names = {"000000012698.jpg", "000000053304.jpg", "000000123824.jpg", "000000180366.jpg", "000000198759.jpg", "000000239654.jpg"};
 
 #if 0
     const size_t num_values = 3;
@@ -248,13 +277,24 @@ int main(int argc, const char ** argv)
     {
         // index++;
         std::vector<std::string> input_images;
+        std::vector<unsigned char*> input_batch_buffer;
+        std::vector<unsigned> roi_width;
+        std::vector<unsigned> roi_height;
         std::vector<int> label;
+        std::cerr<<"\n batch size :: "<<inputBatchSize;
         for(int i = 0; i < inputBatchSize; i++)
         {
             // input_images.push_back(std::string(folderPath1) + file_names.back());
-            input_images.push_back(file_names.back());
-            file_names.pop_back();
-            std::cerr<<"\n Input images :: "<<input_images[i];
+            if(mode == 0) {
+                input_images.push_back(file_names.back());
+                file_names.pop_back();
+            } else {
+                input_batch_buffer.push_back(input_buffer.back());
+                input_buffer.pop_back();
+                roi_width.push_back(decode_width);
+                roi_height.push_back(decode_height);
+            }
+            // std::cerr<<"\n Input images :: "<<input_images[i];
         }
         if((file_names.size()) == 0)
         {
@@ -263,7 +303,12 @@ int main(int argc, const char ** argv)
         if(index <= (total_images / inputBatchSize))
         {
             std::cerr<<"\n************************** Gonna process Batch *************************"<<index;
-            rocalExternalSourceFeedInput(handle, input_images, label, NULL, {}, {}, 1, 1, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
+            // std::cerr<<"\n input buffer size :: "<<input_batch_buffer.size();
+            // std::cerr<<"\n file_names size :: "<<input_images.size();
+            if(mode == 0)
+                rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {}, decode_width, decode_height, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
+            else if(mode == 1)
+                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, roi_width, roi_height, decode_width, decode_height, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
         }
         if(rocalRun(handle) != 0)
             break;

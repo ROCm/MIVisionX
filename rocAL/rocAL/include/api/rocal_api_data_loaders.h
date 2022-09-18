@@ -721,7 +721,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegExternalFileSource(RocalContext 
                                                         bool shuffle = false,
                                                         bool loop = false,
                                                         RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                        unsigned max_width = 0, unsigned max_height = 0, RocalDecoderType rocal_decoder_type = RocalDecoderType::ROCAL_DECODER_TJPEG);
+                                                        unsigned max_width = 0, unsigned max_height = 0, RocalDecoderType rocal_decoder_type = RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode external_source_mode = RocalExtSourceMode::ROCAL_EXTSOURCE_FNAME);
 
 #endif //MIVISIONX_ROCAL_API_DATA_LOADERS_H
 

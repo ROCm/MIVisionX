@@ -75,6 +75,7 @@ void ExternalSourceReader::incremenet_read_ptr()
 size_t ExternalSourceReader::open()
 {
     if (_mode == FileMode::FILENAME) {
+        std::cerr<<"\n Comes to the file mode";
         std::string next_file_name;
         bool ret = pop_file_name(next_file_name);   // Get next file name: blocking call, will wait till next file is received from external source
         if (_end_of_sequence || !ret)
@@ -105,15 +106,17 @@ size_t ExternalSourceReader::open()
           }
 
           fseek(_current_fPtr, 0 , SEEK_SET);// Take the file pointer back to the start
-          _file_data[_curr_file_idx] = std::make_tuple(next_file_name.data(), (size_t)_current_file_size, 0, 0, 0);
+          _file_data[_curr_file_idx] = std::make_tuple((unsigned char *)next_file_name.data(), (size_t)_current_file_size, 0, 0, 0); // shobi check typecasting
         }
-    } else{
-        std::tuple<char*, size_t, int, int, int> image;
+    } else {
+        std::cerr<<"\n Comes to the extracted image mode ";
+        std::tuple<unsigned char*, size_t, int, int, int> image;
         pop_file_data(image);
         incremenet_read_ptr();
         _file_data[_curr_file_idx] = image;
         //_file_sizes[_curr_file_idx] = std::get<1>(image);
         _current_file_size = std::get<1>(image);
+        // std::cerr<<"\n current file size :: "<<_current_file_size;
     }
 
     return _current_file_size;
@@ -131,7 +134,7 @@ size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size)
         size_t actual_read_size = fread(buf, sizeof(unsigned char), read_size, _current_fPtr);
         return actual_read_size;
     } else {
-        char *file_data_ptr = std::get<0>(_file_data[_curr_file_idx]);
+        unsigned char *file_data_ptr = std::get<0>(_file_data[_curr_file_idx]);
         size_t size = std::get<1>(_file_data[_curr_file_idx]);
         if (size > read_size)
           THROW("Requested size doesn't match the actual size for file read")
@@ -210,7 +213,7 @@ bool ExternalSourceReader::pop_file_name(std::string& file_name)
 
 }
 
-void ExternalSourceReader::push_file_data(std::tuple<char*, size_t, int, int, int>& image)
+void ExternalSourceReader::push_file_data(std::tuple<unsigned char*, size_t, int, int, int>& image)
 {
     std::unique_lock<std::mutex> lock(_lock);
     _images_data_q.push(image);
@@ -219,7 +222,7 @@ void ExternalSourceReader::push_file_data(std::tuple<char*, size_t, int, int, in
     _wait_for_input.notify_all();
 }
 
-bool ExternalSourceReader::pop_file_data(std::tuple<char*,  size_t, int, int, int>& image)
+bool ExternalSourceReader::pop_file_data(std::tuple<unsigned char*,  size_t, int, int, int>& image)
 {
     std::unique_lock<std::mutex> lock(_lock);
     if(_images_data_q.empty() && !_end_of_sequence)
@@ -242,11 +245,19 @@ void ExternalSourceReader::feed_file_names(const std::vector<std::string>& file_
     _end_of_sequence = eos;
 }
 
-void ExternalSourceReader::feed_data(const std::vector<char *>& images, const std::vector<size_t>& image_size, int mode, bool eos, int width, int height, int channels)
+void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos, int width, int height, int channels)
 {
     for (unsigned n=0; n < images.size(); n++) {
-      std::tuple<char*, size_t, int, int, int> image =  std::make_tuple(images[n], image_size[n], width, height, channels);
-      push_file_data(image);
+        // std::cerr<<"\n n :: "<<n;
+        // // std::cerr<<"\n images[n]"<<images[n];
+        // std::cerr<<"\n image_size[n]"<<image_size[n];
+        // std::cerr<<"\n width "<<width;
+        // std::cerr<<"\n height "<<height;
+        // std::cerr<<"\n channels "<<channels;
+        std::tuple<unsigned char*, size_t, int, int, int> image =  std::make_tuple(images[n], image_size[n], width, height, channels);
+        // std::cerr<<"\n External source CP1";
+        push_file_data(image);
+        // std::cerr<<"\n External source CP2";
     }
     _end_of_sequence = eos;
 }

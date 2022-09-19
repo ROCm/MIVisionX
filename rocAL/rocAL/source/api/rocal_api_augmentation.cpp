@@ -68,22 +68,7 @@ THE SOFTWARE.
 #include "rocal_api.h"
 #include "image_source_evaluator.h"
 
-void
-get_max_resize_width_and_height(std::vector<unsigned> &src_size, std::vector<unsigned> &dst_size, RocalResizeScalingMode mode,
-                                std::vector<unsigned> &out_size) {
-    float max_aspect_ratio = 3.0f;  // assuming maximum aspect ratio for an image as 3.0
-
-    if(mode == ROCAL_SCALING_MODE_STRETCH) {
-        out_size[0] = dst_size[0] ? dst_size[0] : src_size[0];   // For width dimension
-        out_size[1] = dst_size[1] ? dst_size[1] : src_size[1];   // For height dimension
-    } else if(mode == ROCAL_SCALING_MODE_NOT_SMALLER) {
-        out_size[0] = (dst_size[0] ? dst_size[0] : dst_size[1]) * max_aspect_ratio;   // For width dimension
-        out_size[1] = (dst_size[1] ? dst_size[1] : dst_size[0]) * max_aspect_ratio;   // For height dimension
-    } else {
-        out_size[0] = dst_size[0] ? dst_size[0] : dst_size[1] * max_aspect_ratio;   // For width dimension
-        out_size[1] = dst_size[1] ? dst_size[1] : dst_size[0] * max_aspect_ratio;   // For height dimension
-    }
-};
+#define MAX_ASPECT_RATIO 3.0f
 
 RocalImage  ROCAL_API_CALL
 rocalSequenceRearrange(
@@ -528,9 +513,7 @@ rocalResize(
         std::vector<unsigned> max_size,
         unsigned resize_shorter,
         unsigned resize_longer,
-        RocalResizeInterpolationType interpolation_type
-)
-{
+        RocalResizeInterpolationType interpolation_type) {
     Image* output = nullptr;
     if ((p_context == nullptr) || (p_input == nullptr)) {
         ERR("Invalid ROCAL context or invalid input image")
@@ -541,28 +524,27 @@ rocalResize(
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if((dest_width || dest_height || resize_longer || resize_shorter) == 0)
+        if((dest_width | dest_height | resize_longer | resize_shorter) == 0)
             THROW("Atleast one size 'dest_width' or 'dest_height' or 'resize_shorter' or 'resize_longer' must be specified")
-        if((dest_width || dest_height) && (resize_longer || resize_shorter))
+        if((dest_width | dest_height) && (resize_longer | resize_shorter))
             THROW("Only one method of specifying size can be used \ndest_width and/or dest_height\nresize_shorter\nresize_longer")
         if(resize_longer && resize_shorter)
             THROW("'resize_longer' and 'resize_shorter' cannot be passed together. They are mutually exclusive.")
 
-        ImageInfo output_info = input->info();
-        unsigned dst_width, dst_height;
+        unsigned out_width, out_height;
         RocalResizeScalingMode resize_scaling_mode;
 
         // Change the scaling mode if resize_shorter or resize_longer is specified
         if(resize_shorter) {
             resize_scaling_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER;
-            dst_width = dst_height = resize_shorter;
+            out_width = out_height = resize_shorter;
         } else if(resize_longer) {
             resize_scaling_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER;
-            dst_width = dst_height = resize_longer;
+            out_width = out_height = resize_longer;
         } else {
             resize_scaling_mode = scaling_mode;
-            dst_width = dest_width;
-            dst_height = dest_height;
+            out_width = dest_width;
+            out_height = dest_height;
         }
 
         std::vector<unsigned> maximum_size;
@@ -577,33 +559,41 @@ rocalResize(
         }
 
         // Determine the max width and height to be set to the output info
-        std::vector<unsigned> output_info_size(2, 0);
+        unsigned max_out_width, max_out_height;
         if (maximum_size.size() && maximum_size[0] != 0 && maximum_size[1] != 0) {
             // If max_size is passed by the user, the resized images cannot exceed the max size,
-            output_info_size = maximum_size;
+            max_out_width = maximum_size[0];
+            max_out_height = maximum_size[1];
         } else {
-            std::vector<unsigned> src_size = {input->info().width(), input->info().height_single()};
-            std::vector<unsigned> dst_size = {dst_width, dst_height};
-
             // compute the output info width and height wrt the scaling modes and roi passed
-            get_max_resize_width_and_height(src_size, dst_size, resize_scaling_mode, output_info_size);
+            if(mode == ROCAL_SCALING_MODE_STRETCH) {
+                max_out_width = out_width ? out_width : input->info().width();
+                max_out_height = out_height ? out_height : input->info().height_single();
+            } else if(mode == ROCAL_SCALING_MODE_NOT_SMALLER) {
+                max_out_width = (out_width ? out_width : out_height) * MAX_ASPECT_RATIO;
+                max_out_height = (out_height ? out_height : out_width) * MAX_ASPECT_RATIO;
+            } else {
+                max_out_width = out_width ? out_width : out_height * MAX_ASPECT_RATIO;
+                max_out_height = out_height ? out_height : out_width * MAX_ASPECT_RATIO;
+            }
             if(maximum_size.size() == 2) {
-                output_info_size[0] = maximum_size[0] ? maximum_size[0] : output_info_size[0];
-                output_info_size[1] = maximum_size[1] ? maximum_size[1] : output_info_size[1];
+                max_out_width = maximum_size[0] ? maximum_size[0] : max_out_width;
+                max_out_height = maximum_size[1] ? maximum_size[1] : max_out_height;
             }
         }
 
         // set the width and height in the output info
         // For the resize node, user can create an image with a different width and height
-        output_info.width(output_info_size[0]);
-        output_info.height(output_info_size[1]);
+        ImageInfo output_info = input->info();
+        output_info.width(max_out_width);
+        output_info.height(max_out_height);
         output = context->master_graph->create_image(output_info, is_output);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
         output->reset_image_roi();
 
         std::shared_ptr<ResizeNode> resize_node =  context->master_graph->add_node<ResizeNode>({input}, {output});
-        resize_node->init(dst_width, dst_height, resize_scaling_mode, maximum_size, interpolation_type);
+        resize_node->init(out_width, out_height, resize_scaling_mode, maximum_size, interpolation_type);
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<ResizeMetaNode,ResizeNode>(resize_node);
     }

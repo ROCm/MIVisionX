@@ -60,7 +60,6 @@ void show_usage() {
             "  Mode 1 - Run all ONNX tests\n"
             "  Mode 2 - Run all JSON tests\n"
             "--profiler_level <range:0-N; default:1> [N = batch size][optional]\n"
-            "--mnist          <mnist-model>     \n"
             "--resnet50       <resnet50-model>  \n"
             "--googlenet      <googlenet-model> \n" 
             "--squeezenet     <resnet101-model> \n"
@@ -80,14 +79,13 @@ int main(int argc, char **argv) {
     std::string binaryFilename_googlenet_str;
     std::string binaryFilename_alexnet_str;
     std::string binaryFilename_densenet_str;
-    std::string binaryFilename_mnist_str;
     std::string inputTensor_foldername;
 
     int parameter = 0;
     int profiler_level = 1;
     int64_t freq = clockFrequency(), t0, t1;
     int N = 1000;
-    bool runMnist = false, runResnet50 = false, runVgg19 = false, runGooglenet = false, runDensenet = false, runAlexnet = false, runSqueezenet = false, runAnyImagenet = false;
+    bool runResnet50 = false, runVgg19 = false, runGooglenet = false, runDensenet = false, runAlexnet = false, runSqueezenet = false, runAnyImagenet = false;
 
     for(int arg = 1; arg < argc; arg++) {
         if (!strcasecmp(argv[arg], "--help") || !strcasecmp(argv[arg], "--H") || !strcasecmp(argv[arg], "--h")) {
@@ -117,17 +115,6 @@ int main(int argc, char **argv) {
                 std::printf("\n\nERROR: profiler level has to be between 1-7\n\n\n");
                 exit(-1);
             }
-            parameter++;
-        }
-        else if (!strcasecmp(argv[arg], "--mnist")) {
-            if ((arg + 1) == argc) {
-                std::printf("\n\nERROR: missing mnist ONNX .model file location on command-line (see help for details)\n\n\n");
-                show_usage();
-                exit(-1);
-            }
-            runMnist = true;
-            arg++;
-            binaryFilename_mnist_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--alexnet")) {

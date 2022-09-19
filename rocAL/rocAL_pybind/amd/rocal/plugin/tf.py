@@ -49,18 +49,15 @@ class ROCALGenericIteratorDetection(object):
             self.loader._name = self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
-
         if self.tensor_dtype == types.FLOAT:
-            if(types.NHWC == self.tensor_format):
-                self.out = np.zeros(( self.bs*self.n,  int(self.h/self.bs), self.w,self.p,), dtype = "float32")
-            else: 
-                self.out = np.zeros(( self.bs*self.n,self.p, int(self.h/self.bs), self.w,), dtype = "float32")
-                
+            data_type="float32"
         elif self.tensor_dtype == types.FLOAT16:
-            if(types.NHWC == self.tensor_format):
-                self.out = np.zeros(( self.bs*self.n,  int(self.h/self.bs), self.w,self.p,), dtype = "float16")
-            else: 
-                self.out = np.zeros(( self.bs*self.n,self.p, int(self.h/self.bs), self.w,), dtype = "float16")
+            data_type="float16"
+        
+        if(types.NHWC == self.tensor_format):
+            self.out = np.zeros(( self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype = data_type)
+        else: 
+            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w), dtype = data_type)
                 
     def next(self):
         return self.__next__()

@@ -70,8 +70,9 @@ int main(int argc, const char ** argv)
     int prefetch_queue_depth = 3;
     bool processing_device = 1;
     int mode;
-    mode = 1; //Need to get it from the user
+    // mode = 1; //Need to get it from the user
     // mode = 0;
+    mode = 2;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
@@ -123,14 +124,8 @@ int main(int argc, const char ** argv)
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
     RocalImage input1;
-
-    input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height, RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
-
-    if(rocalGetStatus(handle) != ROCAL_OK)
-    {
-        std::cerr << "JPEG source could not initialize : "<<rocalGetErrorMessage(handle) << std::endl;
-        return -1;
-    }
+    std::vector<uint32_t> srcsize_height, srcsize_width;
+    uint32_t maxheight = 0, maxwidth = 0;
     DIR *_src_dir;
     struct dirent *_entity;
     std::vector<std::string> file_names;
@@ -177,11 +172,63 @@ int main(int argc, const char ** argv)
                 input_buffer.push_back(input_data);
             }
 
-        } else { // Raw un compressed
-            std::cerr<<"\n Yet to implement";
+        }
+         if(mode == 2) { // Raw un compressed
+            std::cerr<<"\n Comes to raw uncompressed ";
+            srcsize_height.resize(file_names.size());
+            srcsize_width.resize(file_names.size());
+            for(uint32_t i = 0; i < file_names.size(); i++) {
+                std::cerr<<"\n Gonna read image :: "<<file_names[i];
+                Mat image;
+                image = imread(file_names[i], 1);
+
+                if(image.empty())
+                {
+                    std::cout << "Could not read the image: " << file_names[i] << std::endl;
+                    return 1;
+                }
+                srcsize_height[i] = image.rows;
+                srcsize_width[i] = image.cols;
+                if (maxheight < srcsize_height[i])
+                    maxheight = srcsize_height[i];
+                if (maxwidth < srcsize_width[i])
+                    maxwidth = srcsize_width[i];
+                std::cerr<<"\n maxwidth :: "<<maxwidth<<"\t maxheight :: "<<maxheight;
+            }
+            unsigned char * complete_image_buffer = (unsigned char *)malloc(sizeof(unsigned char) * file_names.size() * maxwidth * maxheight * 3);
+            unsigned char * temp_buffer, * temp_image;
+            unsigned long long imageDimMax = (unsigned long long)maxheight * (unsigned long long)maxwidth * 3;
+            uint32_t elementsInRowMax = maxwidth * 3;
+            for(uint32_t i = 0; i < file_names.size(); i++) {
+                temp_image = temp_buffer = complete_image_buffer + (i * imageDimMax);
+                Mat image = imread(file_names[i], 1);
+                if(image.empty()) {
+                    std::cout << "Could not read the image: " << file_names[i] << std::endl;
+                    return 1;
+                }
+                unsigned char *ip_image = image.data;
+                uint32_t elementsInRow = srcsize_width[i] * 3;
+                for (uint32_t j = 0; j < srcsize_height[i]; j++) {
+                    memcpy(temp_buffer, ip_image, elementsInRow * sizeof (unsigned char));
+                    ip_image += elementsInRow;
+                    temp_buffer += elementsInRowMax;
+                }
+                input_buffer.push_back(temp_image);
+            }
         }
     }
     std::cerr<<"\n file names count :: "<<file_names.size();
+    if(maxheight != 0 && maxwidth != 0)
+        input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, maxwidth, maxheight, RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
+    else
+        input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height, RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
+    std::cerr<<"\n API data loader call has been made";
+    if(rocalGetStatus(handle) != ROCAL_OK)
+    {
+        std::cerr << "JPEG source could not initialize : "<<rocalGetErrorMessage(handle) << std::endl;
+        return -1;
+    }
+
 
 #if 0
     const size_t num_values = 3;
@@ -289,12 +336,21 @@ int main(int argc, const char ** argv)
                 input_images.push_back(file_names.back());
                 file_names.pop_back();
             } else {
-                input_batch_buffer.push_back(input_buffer.back());
-                input_buffer.pop_back();
-                roi_width.push_back(decode_width);
-                roi_height.push_back(decode_height);
+                if(mode == 1) {
+                    input_batch_buffer.push_back(input_buffer.back());
+                    input_buffer.pop_back();
+                    roi_width.push_back(decode_width);
+                    roi_height.push_back(decode_height);
+                }
+                else {
+                    input_batch_buffer.push_back(input_buffer.back());
+                    input_buffer.pop_back();
+                    roi_width.push_back(srcsize_width.back());
+                    srcsize_width.pop_back();
+                    roi_height.push_back(srcsize_height.back());
+                    srcsize_height.pop_back();
+                }
             }
-            // std::cerr<<"\n Input images :: "<<input_images[i];
         }
         if((file_names.size()) == 0)
         {
@@ -309,6 +365,8 @@ int main(int argc, const char ** argv)
                 rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {}, decode_width, decode_height, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
             else if(mode == 1)
                 rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, roi_width, roi_height, decode_width, decode_height, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
+            else if(mode == 2)
+                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, roi_width, roi_height, maxwidth, maxheight, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
         }
         if(rocalRun(handle) != 0)
             break;

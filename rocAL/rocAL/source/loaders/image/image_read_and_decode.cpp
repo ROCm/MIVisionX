@@ -135,14 +135,22 @@ void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_imag
     // std::cerr<<"\n roi_width size:: "<<roi_width.size();
     for(unsigned int i = 0; i < roi_width.size(); i++)
         image_size[i] = (roi_width[i] * roi_height[i] * 3); // Shobi check how to get channels
-    if(mode == 0)
-    {
+    if(mode == 0) {
         std::cerr<<"\n Mode 0";
         _reader->feed_file_names(input_images, 2, eos); // Shobi check this
     }
-    else if(mode == 1)
-    {
+    else if(mode == 1) {
         std::cerr<<"\n Mode 1";
+        // std::cerr<<"\n Input buffer size :: "<<input_buffer.size();
+        // std::cerr<<"\n image_size[n]"<<image_size[0];
+        // std::cerr<<"\n width "<<max_width;
+        // std::cerr<<"\n height "<<max_height;
+        // std::cerr<<"\n channels "<<channels;
+
+        _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, 3);
+    }
+    else if(mode == 2){
+        std::cerr<<"\n Mode 2";
         // std::cerr<<"\n Input buffer size :: "<<input_buffer.size();
         // std::cerr<<"\n image_size[n]"<<image_size[0];
         // std::cerr<<"\n width "<<max_width;
@@ -254,6 +262,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                 // std::cerr<<"\n  ImageReadAndDecode::load CP4  b"<<fsize;
                 _actual_read_size[file_counter] = _reader->read_data(_compressed_buff[file_counter].data(), fsize);
                 // std::cerr<<"\n ImageReadAndDecode::load CP5";
+                // std::cerr<<"\n file name :: "<<_reader->id();
                 _image_names[file_counter] = _reader->id();
                 // std::cerr<<"\n ImageReadAndDecode::load CP6";
                 _reader->close();

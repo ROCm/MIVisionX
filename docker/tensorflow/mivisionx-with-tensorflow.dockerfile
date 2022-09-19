@@ -1,4 +1,5 @@
-FROM rocm/tensorflow:latest
+ARG TENSORFLOW_VERSION=latest
+FROM rocm/tensorflow:${TENSORFLOW_VERSION}
 
 ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT

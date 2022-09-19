@@ -31,7 +31,7 @@ import os, sys
 import onnx
 from onnx import onnx_pb
 from onnx import numpy_helper
-from nnir import *
+import nnir as ir
 
 onnx2ir_attr = {
     'axis' : 'axis',
@@ -120,7 +120,7 @@ def onnx_name_to_ir_name(name):
 
 def onnx_node_to_ir_attr(node):
     global onnx2ir_attr
-    attr = IrAttr()
+    attr = ir.IrAttr()
     for item in node.attribute:
         if item.name in onnx2ir_attr:
             name = onnx2ir_attr[item.name]
@@ -155,7 +155,7 @@ def onnx_node_to_ir_attr(node):
 
 def onnx_node_to_ir_node(onnx_node):
     global onnx2ir_op_type
-    node = IrNode()
+    node = ir.IrNode()
     if onnx_node.op_type in onnx2ir_op_type:
         type = onnx2ir_op_type[onnx_node.op_type]
     else:
@@ -167,19 +167,19 @@ def onnx_node_to_ir_node(onnx_node):
     return node
 
 def onnx_tensor_info_to_data(info, dims):
-    tensor = IrTensor()
+    tensor = ir.IrTensor()
     tensor.setName(onnx_name_to_ir_name(info.name))
     tensor.setInfo(onnx2ir_data_type[info.data_type], [int(x) for x in dims])
     return tensor
 
 def onnx_value_info_to_data(info, dims):
-    tensor = IrTensor()
+    tensor = ir.IrTensor()
     tensor.setName(onnx_name_to_ir_name(info.name))
     tensor.setInfo(onnx2ir_data_type[info.type.tensor_type.elem_type], [int(x) for x in dims])
     return tensor
 
 def onnx_graph_to_ir_graph(onnx_graph):
-    graph = IrGraph(False)
+    graph = ir.IrGraph(False)
     initializerList = []
     shapeList = []
     inputUser = False

@@ -27,7 +27,7 @@ standard_library.install_aliases()
 from builtins import *
 from builtins import str
 import os, sys, struct
-from nnir import *
+import nnir as ir
 
 def generateGraph(graph,outputFolder,label):
     fileName = outputFolder + '/graph.nnef'
@@ -135,7 +135,7 @@ def main():
     inputFolder = sys.argv[1]
     outputFolder = sys.argv[2]
     print('reading NNIR model from ' + inputFolder + ' ...')
-    graph = IrGraph(True)
+    graph = ir.IrGraph(True)
     graph.fromFile(inputFolder)
     print('creating NNEF in ' + outputFolder + ' ...')
     generateNNEF(graph,outputFolder)

@@ -29,7 +29,8 @@ from builtins import str
 from builtins import range
 import os, sys, struct, subprocess
 import datetime, pytz
-from nnir import *
+import nnir as ir
+import numpy as np
 
 tensor_type_nnir2openvx = {
     'F032' : 'VX_TYPE_FLOAT32',
@@ -2062,7 +2063,7 @@ Usage: python nnir_to_clib.py [OPTIONS] <nnirInputFolder> <outputFolder>
     inputFolder = sys.argv[pos]
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
-    graph = IrGraph(True)
+    graph = ir.IrGraph(True)
     graph.fromFile(inputFolder)
     print('creating C code in ' + outputFolder + ' ...')
     generateCode(graph,argmaxOutput,outputFolder)

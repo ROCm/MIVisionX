@@ -902,7 +902,8 @@ void inference_viewer::paintEvent(QPaintEvent *)
             if(state->sendFileName){
                 // extract only the last folder and filename for shadow
                 QStringList fileNameList = fileName.split("/");
-                QString subFileName = fileNameList.at(fileNameList.size() - 2) + "/" + fileNameList.last();
+                // QString subFileName = fileNameList.at(fileNameList.size() - 2) + "/" + fileNameList.last();
+                QString subFileName = fileNameList.last();
                 //printf("Inference viewer adding file %s to shadow array of size %d\n", subFileName.toStdString().c_str(), byteArray.size());
                 state->shadowFileBuffer.push_back(subFileName);
             }

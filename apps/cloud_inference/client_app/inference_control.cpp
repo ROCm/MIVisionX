@@ -1054,6 +1054,10 @@ void inference_control::runInference()
     display_panel->setWindowIcon(QIcon(":/images/vega_icon_150.png"));
     //display_panel->show();
 
+    if(decodeMode == 1) { // rocAL decode only suports sendFileName mode
+        sendFileName = 1;
+    }
+    
     inference_viewer * viewer = new inference_viewer(
                 editServerHost->text(), editServerPort->text().toInt(), modelName,
                 dataLabels, dataHierarchy, editImageListFile->text(), editImageFolder->text(),

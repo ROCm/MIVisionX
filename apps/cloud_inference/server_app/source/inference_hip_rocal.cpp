@@ -4,6 +4,8 @@
 #include <thread>
 #include <chrono>
 #include <dlfcn.h>
+#include <sstream>
+#include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <numeric>
@@ -65,6 +67,9 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip()
         // if(queueDeviceImageQ[i]) {
         //     queueDeviceImageQ[i]->enqueue(endOfSequenceImage);
         // }
+        if(queueDeviceNameQ[i]) {
+            queueDeviceNameQ[i]->enqueue("");
+        }
         if(threadDeviceInputCopy[i] && threadDeviceInputCopy[i]->joinable()) {
             threadDeviceInputCopy[i]->join();
         }
@@ -90,6 +95,9 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip()
         // if(queueDeviceImageQ[i]) {
         //     delete queueDeviceImageQ[i];
         // }
+        if(queueDeviceNameQ[i]) {
+            delete queueDeviceNameQ[i];
+        }
         if(queueDeviceInputMemIdle[i]) {
             delete queueDeviceInputMemIdle[i];
         }
@@ -347,10 +355,12 @@ int InferenceEngineRocalHip::run()
 #if  USE_ADVANCED_MESSAGE_Q
         queueDeviceTagQ[gpu] = new MessageQueueAdvanced<int>(MAX_DEVICE_QUEUE_DEPTH);
         // queueDeviceImageQ[gpu] = new MessageQueueAdvanced<std::tuple<char*,int>>(MAX_INPUT_QUEUE_DEPTH);
+        queueDeviceNameQ[gpu] = new MessageQueueAdvanced<std::string>(MAX_DEVICE_QUEUE_DEPTH);
 #else
         queueDeviceTagQ[gpu] = new MessageQueue<int>();
         queueDeviceTagQ[gpu]->setMaxQueueDepth(MAX_DEVICE_QUEUE_DEPTH);
         // queueDeviceImageQ[gpu] = new MessageQueue<std::tuple<char*,int>>();
+        queueDeviceNameQ[gpu] = new MessageQueue<std::string>();
 #endif
         queueDeviceInputMemIdle[gpu] = new MessageQueue<std::pair<void *, void *>>();
         queueDeviceInputMemBusy[gpu] = new MessageQueue<std::pair<void *, void *>>();
@@ -479,6 +489,7 @@ int InferenceEngineRocalHip::run()
                             outputQ.dequeue(result);
                             int tag = std::get<0>(result);
                             int label = std::get<1>(result);
+                            // printf("the tag is! %d and %d\n", tag, label);
                             if(tag < 0) {
                                 endOfSequence = true;
                                 resultCount = i;
@@ -640,18 +651,24 @@ int InferenceEngineRocalHip::run()
                         return error_close(sock, "invalid (tag:%d,size:%d) from %s", tag, size, clientName.c_str());
                     }
                     char * byteStream;
+                    // printf("tag at %d\n", tag);
                     if (receiveFileNames)
                     {
-                        std::string fileNameDir = args->getlocalShadowRootDir() + "/";
+                        // std::string fileNameDir = args->getlocalShadowRootDir() + "/";
                         char * buff = new char [size];
                         ERRCHK(recvBuffer(sock, buff, size, clientName)); //remove redundancy
-                        fileNameDir.append(std::string(buff, size));
-                        printf("filenabuffer %s\n", buff.toStdString().c_str());
-                        byteStream = new char[fileNameDir.length() + 1];
-                        strcpy(byteStream, fileNameDir.c_str());
-                        // std::cout << "fielname dir " << fileNameDir << "and " << std::endl;
-                        // printf("filename is %s and %s and %s\n", *buff, *fileNameDir.c_str(), *byteStream);
-                        fileNameMap[byteStream] = tag;
+                        // fileNameDir.append(std::string(buff, size));
+                        // byteStream = new char[fileNameDir.length() + 1];
+                        // strcpy(byteStream, fileNameDir.c_str());
+                        std::string str(buff);
+                        // std::cout << str << " " << tag << std::endl;
+                        // printf("file & tag %s and %d\n", str.c_str(), tag);
+
+                        // fileNameMap[str] = tag;
+                        if(fileNameMap.find(str) == fileNameMap.end()) {
+                            fileNameMap[str] = tag;
+                            printf("file & tag %s and %d\n", str.c_str(), tag);
+                        }
                         // FILE * fp = fopen(fileNameDir.c_str(), "rb");
                         // if(!fp) {
                         //     return error_close(sock, "filename %s (incorrect)", fileNameDir.c_str());
@@ -805,6 +822,7 @@ void InferenceEngineRocalHip::workMasterInputQ()
         // std::tuple<char*,int> endOfSequenceImage(nullptr,0);
         queueDeviceTagQ[i]->enqueue(endOfSequenceTag);
         // queueDeviceImageQ[i]->enqueue(endOfSequenceImage);
+        queueDeviceNameQ[i]->enqueue("");
     }
     args->lock();
     info("workMasterInputQ: terminated for %s [scheduled %d images]", clientName.c_str(), totalInputCount);
@@ -853,6 +871,40 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
             preprocessMpy[1], preprocessMpy[2], preprocessAdd[0], preprocessAdd[1], preprocessAdd[2], reverseInputChannelOrder) != 0) {
             printf("workDeviceInputCopy: rocalCopyToOutputTensor() failed for gpu : [%d]", gpu);
         }
+
+        std::vector<std::vector<char>> names;
+        names.resize(inputCount);
+
+        int ImageNameLen[inputCount];
+        for(int i = 0; i < inputCount; i++)
+        {
+            names[i] = std::move(std::vector<char>(rocalGetImageNameLen(rocalHandle[gpu], ImageNameLen), '\n'));
+            rocalGetImageName(rocalHandle[gpu], names[i].data());
+            std::string id(names[i].begin(), names[i].end());
+            // std::cout << "name " << id << std::endl;
+        }
+        // get image names
+        int image_name_length[inputCount];
+        int img_size = rocalGetImageNameLen(rocalHandle[gpu], image_name_length);
+        char img_name[img_size];
+        rocalGetImageName(rocalHandle[gpu], img_name);
+        // printf("the rocal image name is %s\n", img_name);
+        std::string str = img_name;
+        std::vector<std::string> v;
+        std::string delim = ".JPEG";
+        
+        size_t pos = 0;
+        while ((pos = str.find(delim)) != std::string::npos) {
+            v.push_back(str.substr(0, pos + delim.length()));
+            str.erase(0, pos + delim.length());
+        }
+
+        for (std::string i : v) {
+            if(fileNameMap.find(i) != fileNameMap.end())
+                // std::cout << i << " " << fileNameMap[i] << std::endl;
+                queueDeviceNameQ[gpu]->enqueue(i);
+        }
+
         if(rocalIsEmpty(rocalHandle[gpu])) {
             if(!loop) {
                 // rocalResetLoaders(rocalHandle[gpu]);
@@ -1058,7 +1110,50 @@ void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu)
                 endOfSequenceReached = true;
                 break;
             }
+            std::string fileName;
+            queueDeviceNameQ[gpu]->dequeue(fileName);
+            if(fileName == "") {
+                endOfSequenceReached = true;
+                break;
+            }
+            if(fileNameMap.find(fileName) != fileNameMap.end()) {
+                tag = fileNameMap[fileName];
+                printf("setting %s to %d\n", fileName.c_str(), tag);    
+            }
+            // printf("tag is %d\n", tag);
+            
+            // std::vector<std::vector<char>> names;
+            // names.resize(batchSize);
 
+            // int ImageNameLen[batchSize];
+            // for(int i = 0; i < batchSize; i++)
+            // {
+            //     names[i] = std::move(std::vector<char>(rocalGetImageNameLen(rocalHandle[gpu], ImageNameLen), '\n'));
+            //     rocalGetImageName(rocalHandle[gpu], names[i].data());
+            //     std::string id(names[i].begin(), names[i].end());
+            //     std::cout << "name " << id << std::endl;
+            // }
+            // get image names
+            // int image_name_length[batchSize];
+            // int img_size = rocalGetImageNameLen(rocalHandle[gpu], image_name_length);
+            // char img_name[img_size];
+            // rocalGetImageName(rocalHandle[gpu], img_name);
+            // // printf("the rocal image name is %s\n", img_name);
+            // std::string str = img_name;
+            // std::vector<std::string> v;
+            // std::string delim = ".JPEG";
+            
+            // size_t pos = 0;
+            // while ((pos = str.find(delim)) != std::string::npos) {
+            //     v.push_back(str.substr(0, pos + delim.length()));
+            //     str.erase(0, pos + delim.length());
+            // }
+
+            // for (std::string i : v) {
+            //     std::cout << i << " " << fileNameMap[i] << std::endl;
+            // }
+            // tag = fileNameMap[v[outputCount]];
+            // printf("tag is %d\n", tag);
             // decode, scale, and format convert into the HIP buffer
             void *buf;
             if (!useFp16)
@@ -1092,6 +1187,7 @@ void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu)
                         }
                     }
                     outputQ.enqueue(std::tuple<int,int>(tag,label));
+                    // printf("enqueueing %d and %d\n", tag, label);
                 }else {
                     // todo:: add support for fp16
                     std::vector<float>  prob_vec((float*)buf, (float*)buf + dimOutput[2]);

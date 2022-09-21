@@ -94,14 +94,14 @@ void ResizeNode::init(unsigned dest_width, unsigned dest_height, RocalResizeScal
 
 void ResizeNode::adjust_out_roi_size() {
     const unsigned dim = 2; // Currently supports only 2D images
-    std::vector<double> scale(dim, 1);
-    std::vector<bool> has_size(dim, false);
+    double scale[2];
+    bool has_size[2];
     unsigned sizes_provided = 0;
     bool has_max_size = _max_roi_size.size() > 0;
     for (unsigned i = 0; i < dim; i++) {
         has_size[i] = (_src_roi_size[i] != 0) && (_dst_roi_size[i] != 0);
         sizes_provided += has_size[i];
-        scale[i] = _src_roi_size[i] ? (_dst_roi_size[i] / static_cast<double>(_src_roi_size[i])) : 1;
+        scale[i] = _src_roi_size[i] ? (static_cast<double>(_dst_roi_size[i]) / _src_roi_size[i]) : 1;
     }
     if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH) {
         if (sizes_provided < dim) {
@@ -123,8 +123,6 @@ void ResizeNode::adjust_out_roi_size() {
                 if (has_size[i])
                     average_scale *= scale[i];
             }
-            if (sizes_provided > 1)
-                average_scale = std::pow(average_scale, 1.0 / sizes_provided);
             for(unsigned i = 0; i < dim; i++) {
                 if(!has_size[i])
                     _dst_roi_size[i] = std::round(_src_roi_size[i] * average_scale);

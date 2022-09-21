@@ -63,12 +63,9 @@ void ResizeNode::update_node() {
     for (unsigned i = 0; i < _batch_size; i++) {
         _src_width = src_w_dims[i];
         _src_height = src_h_dims[i];
-        std::cerr << "\n _src_width :" << _src_width << "  _src_height : " << _src_height << std::endl; 
         _dst_width = _out_width;
         _dst_height = _out_height;
-        std::cerr << "\n _dst_width :" << _dst_width << "  _dst_height : " << _dst_height << std::endl; 
         adjust_out_roi_size();
-        std::cerr << "\n Dest width & height  : " << _dst_width << " x "<< _dst_height << std::endl;
         _dst_width = std::min(_dst_width, _outputs[0]->info().width());
         _dst_height = std::min(_dst_height, _outputs[0]->info().height_single());
         _dst_roi_width_vec.push_back(_dst_width);

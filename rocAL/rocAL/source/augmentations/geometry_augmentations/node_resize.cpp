@@ -31,8 +31,7 @@ ResizeNode::ResizeNode(const std::vector<Image *> &inputs, const std::vector<Ima
 {
 }
 
-void ResizeNode::create_node()
-{
+void ResizeNode::create_node() {
     if(_node)
         return;
 
@@ -102,6 +101,7 @@ void ResizeNode::adjust_out_roi_size() {
         float scale_w, scale_h, scale;
         if (_dst_width != 0 && _dst_height != 0 &&
             _scaling_mode != RocalResizeScalingMode::ROCAL_SCALING_MODE_DEFAULT) {
+            scale = 1.0f;
             scale_w = static_cast<float>(_dst_width) / _src_width;
             scale_h = static_cast<float>(_dst_height) / _src_height;
             if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER) {
@@ -127,11 +127,11 @@ void ResizeNode::adjust_out_roi_size() {
         } else {
             if ((_max_width > 0) && (_dst_width > _max_width)) {
                 _dst_width = _max_width;
-                _dst_height = std::round(_src_height * (static_cast<float>(_max_width) / _src_width));
+                _dst_height = static_cast<uint>(std::round(_src_height * (static_cast<float>(_max_width) / _src_width)));
             }
             if ((_max_height > 0) && (_dst_height > _max_height)) {
                 _dst_height = _max_height;
-                _dst_width = std::round(_src_width * (static_cast<float>(_max_height) / _src_height));
+                _dst_width = static_cast<uint>(std::round(_src_width * (static_cast<float>(_max_height) / _src_height)));
             }
         }
     }

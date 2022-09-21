@@ -43,7 +43,6 @@ private:
     unsigned _out_width, _out_height;
     int _interpolation_type;
     RocalResizeScalingMode _scaling_mode;
-    float _src_width, _src_height;
-    uint32_t _dst_width, _dst_height, _max_width, _max_height;
+    uint32_t _src_width, _src_height, _dst_width, _dst_height, _max_width, _max_height;
     std::vector<uint32_t> _dst_roi_width_vec, _dst_roi_height_vec;
 };

@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.3.6"
+__version__ = "2.3.7"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -43,8 +43,8 @@ parser.add_argument('--opencv',    	type=str, default='4.5.5',
                     help='OpenCV Version - optional (default:4.5.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.4',
                     help='ProtoBuf Version - optional (default:3.12.4)')
-parser.add_argument('--rpp',   		type=str, default='0.96',
-                    help='RPP Version - optional (default:0.96)')
+parser.add_argument('--rpp',   		type=str, default='0.97',
+                    help='RPP Version - optional (default:0.97)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG V4.4.2 Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
@@ -155,7 +155,7 @@ elif os.path.exists('/usr/bin/zypper'):
     platfromInfo = platfromInfo+'-SLES'
 else:
     print("\nMIVisionX Setup on "+platfromInfo+" is unsupported\n")
-    print("\nMIVisionX Setup Supported on: Ubuntu 18/20; CentOS 7/8; RedHat 7/8; & SLES 15-SP2\n")
+    print("\nMIVisionX Setup Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 7/8; & SLES 15-SP2\n")
     exit()
 
 # MIVisionX Setup

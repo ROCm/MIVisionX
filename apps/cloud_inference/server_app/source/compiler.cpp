@@ -96,13 +96,13 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
     std::string command = "/bin/rm -rf ";
     command += modelFolder;
     info("executing: %% %s", command.c_str());
-    // if(system(command.c_str()) < 0) {
-    //     return error_close(sock, "unable to remove folder %s", modelName);
-    // }
+    if(system(command.c_str()) < 0) {
+        return error_close(sock, "unable to remove folder %s", modelName);
+    }
     // make folders
-    // if(mkdir(modelFolder.c_str(), 0700) < 0 || mkdir(buildFolder.c_str(), 0700) < 0) {
-    //     fatal("unable to create folders: %s and %s", modelFolder.c_str(), buildFolder.c_str());
-    // }
+    if(mkdir(modelFolder.c_str(), 0700) < 0 || mkdir(buildFolder.c_str(), 0700) < 0) {
+        fatal("unable to create folders: %s and %s", modelFolder.c_str(), buildFolder.c_str());
+    }
 
     //////
     /// \brief download model files
@@ -224,7 +224,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
                 +  "," + std::to_string(dimInput[1])
                 +  "," + std::to_string(dimInput[0]);
         info("executing: %% %s", command.c_str());
-        // status = system(command.c_str());
+        status = system(command.c_str());
         sprintf(cmdUpdate.message, "python caffe_to_nnir weights.caffemodel completed (%d)", status);
         cmdUpdate.data[0] = (status != 0) ? -2 : 0;
         cmdUpdate.data[1] = 25;
@@ -242,7 +242,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
         }
         command += " nnir-output nnir-output_1";
         info("executing: %% %s", command.c_str());
-        // status = system(command.c_str());
+        status = system(command.c_str());
         sprintf(cmdUpdate.message, "python nnir_update.py fuse-ops 1 <--convert-fp16 1> nnir-output nnir-output_1 completed (%d)", status);
         cmdUpdate.data[0] = (status != 0) ? -3 : 0;
         cmdUpdate.data[1] = 50;
@@ -257,7 +257,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
         command += args->getModelCompilerPath() + "/" + "nnir_to_openvx.py nnir-output_1 ."
                 +  " >>caffe2openvx.log";
         info("executing: %% %s", command.c_str());
-        // status = system(command.c_str());
+        status = system(command.c_str());
         cmdUpdate.data[0] = (status != 0) ? -4 : 0;
         cmdUpdate.data[1] = 75;
         sprintf(cmdUpdate.message, "python nnir_to_openvx completed (%d)", status);

@@ -866,7 +866,8 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
         
         RocalTensorOutputType tensor_output_type = useFp16 ? RocalTensorOutputType::ROCAL_FP16 : RocalTensorOutputType::ROCAL_FP32;
         RocalTensorLayout tensor_format = RocalTensorLayout::ROCAL_NCHW;
-
+        // rocalCopyToOutput(rocalHandle[gpu], (unsigned char*)mapped_ptr, 224*224*3*64);
+        // cv::Mat colorMat = cv::Mat(224, 224, CV_8UC3, mapped_ptr);
         if(rocalCopyToOutputTensor(rocalHandle[gpu], mapped_ptr, tensor_format, tensor_output_type, preprocessMpy[0],
             preprocessMpy[1], preprocessMpy[2], preprocessAdd[0], preprocessAdd[1], preprocessAdd[2], reverseInputChannelOrder) != 0) {
             printf("workDeviceInputCopy: rocalCopyToOutputTensor() failed for gpu : [%d]", gpu);
@@ -901,10 +902,11 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
 
         for (std::string i : v) {
             if(fileNameMap.find(i) != fileNameMap.end())
-                // std::cout << i << " " << fileNameMap[i] << std::endl;
+                std::cout << i << " " << fileNameMap[i] << std::endl;
                 queueDeviceNameQ[gpu]->enqueue(i);
         }
-
+        // cv::imshow("1", colorMat);
+        // cv::waitKey(0);
         if(rocalIsEmpty(rocalHandle[gpu])) {
             if(!loop) {
                 // rocalResetLoaders(rocalHandle[gpu]);
@@ -1117,8 +1119,8 @@ void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu)
                 break;
             }
             if(fileNameMap.find(fileName) != fileNameMap.end()) {
+                // printf("setting %s from %d to %d\n", fileName.c_str(), tag, fileNameMap[fileName]);
                 tag = fileNameMap[fileName];
-                printf("setting %s to %d\n", fileName.c_str(), tag);    
             }
             // printf("tag is %d\n", tag);
             

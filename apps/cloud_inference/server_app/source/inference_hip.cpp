@@ -1036,7 +1036,6 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
                         }
                     }
                     outputQ.enqueue(std::tuple<int,int>(tag,label));
-                    printf("enqueueing %d and %d\n", tag, label);
                 }else {
                     // todo:: add support for fp16
                     std::vector<float>  prob_vec((float*)buf, (float*)buf + dimOutput[2]);

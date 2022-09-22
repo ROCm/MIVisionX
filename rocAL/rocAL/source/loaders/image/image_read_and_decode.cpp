@@ -229,7 +229,6 @@ ImageReadAndDecode::load(unsigned char* buff,
             {
                 _decoder[i]->set_bbox_coords(_bbox_coords[i]);
             }
-            std::cerr<<"\n In image read and decode";
             if (_decoder[i]->decode(_compressed_buff[i].data(), _compressed_image_size[i], _decompressed_buff_ptrs[i],
                                     max_decoded_width, max_decoded_height,
                                     original_width, original_height,

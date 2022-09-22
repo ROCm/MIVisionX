@@ -112,7 +112,6 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
   int maxW = std::max<int>(1, original_image_height * max_wh_ratio);
   int maxH = std::max<int>(1, original_image_width * max_hw_ratio);
   int num_of_attempts = decoder_config.get_num_attemps();
-  std::cerr<<"\n NUm of attemps:"<<num_of_attempts;
   int num_attempts_left = num_of_attempts;
   // detect two impossible cases early
   if (original_image_height * maxW < min_area) {  // image too wide

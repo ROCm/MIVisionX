@@ -49,9 +49,16 @@ class ROCALGenericIteratorDetection(object):
             self.loader._name = self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
-
-        self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "uint8")
-
+        if self.tensor_dtype == types.FLOAT:
+            data_type="float32"
+        elif self.tensor_dtype == types.FLOAT16:
+            data_type="float16"
+        
+        if(types.NHWC == self.tensor_format):
+            self.out = np.zeros(( self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype = data_type)
+        else: 
+            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w), dtype = data_type)
+                
     def next(self):
         return self.__next__()
 
@@ -68,8 +75,11 @@ class ROCALGenericIteratorDetection(object):
         if self.loader.run() != 0:
             self.reset()
             raise StopIteration
-
-        self.loader.copyImage(self.out)
+        
+        if(types.NCHW == self.tensor_format):
+            self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+        else:
+            self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
 
         if(self.loader._name == "TFRecordReaderDetection"):
             self.bbox_list =[]

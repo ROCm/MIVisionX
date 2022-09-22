@@ -99,8 +99,8 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     }
     else
     {
-        constexpr static double ASPECT_RATIO_RANGE[2] = {3.0/4.0, 4.0/3.0};
-        constexpr static double AREA_RANGE[2] = {0.08, 1.0};
+        double ASPECT_RATIO_RANGE[2] = {decoder_config.get_random_aspect_ratio()[0], decoder_config.get_random_aspect_ratio()[1]};
+        double AREA_RANGE[2] = {decoder_config.get_random_area()[0], decoder_config.get_random_aspect_ratio()[1]};
         auto is_valid_crop = [](uint h, uint w, uint height, uint width)
         {
             return (0 < h && h <= height && 0 < w && w <= width);
@@ -111,8 +111,9 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
   float min_area = original_image_width * original_image_height * AREA_RANGE[0];
   int maxW = std::max<int>(1, original_image_height * max_wh_ratio);
   int maxH = std::max<int>(1, original_image_width * max_hw_ratio);
-        int num_of_attempts = 100;
-        int num_attempts_left = num_of_attempts;
+  int num_of_attempts = decoder_config.get_num_attemps();
+  std::cerr<<"\n NUm of attemps:"<<num_of_attempts;
+  int num_attempts_left = num_of_attempts;
   // detect two impossible cases early
   if (original_image_height * maxW < min_area) {  // image too wide
     crop_width = original_image_height;

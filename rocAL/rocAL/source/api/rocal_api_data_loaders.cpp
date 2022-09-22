@@ -756,19 +756,18 @@ rocalJpegCaffeLMDBRecordSourcePartialSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         bool is_output,
+        std::vector<double>& area_factor,
+        std::vector<double>& aspect_ratio,
+        unsigned num_attemps,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height,
-        RocalFloatParam p_area_factor,
-        RocalFloatParam p_aspect_ratio,
         RocalFloatParam p_x_drift_factor,
         RocalFloatParam p_y_drift_factor )
 {
     Image* output = nullptr;
-    auto area_factor  = static_cast<FloatParam*>(p_area_factor);
-    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
     auto x_drift_factor = static_cast<FloatParam*>(p_x_drift_factor);
     auto y_drift_factor = static_cast<FloatParam*>(p_y_drift_factor);
     auto context = static_cast<Context*>(p_context);
@@ -815,7 +814,7 @@ rocalJpegCaffeLMDBRecordSourcePartialSingleShard(
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
 
 
         context->master_graph->set_loop(loop);
@@ -843,19 +842,18 @@ rocalJpegCaffe2LMDBRecordSourcePartialSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         bool is_output,
+        std::vector<double>& area_factor,
+        std::vector<double>& aspect_ratio,
+        unsigned num_attemps,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height,
-        RocalFloatParam p_area_factor,
-        RocalFloatParam p_aspect_ratio,
         RocalFloatParam p_x_drift_factor,
         RocalFloatParam p_y_drift_factor )
 {
     Image* output = nullptr;
-    auto area_factor  = static_cast<FloatParam*>(p_area_factor);
-    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
     auto x_drift_factor = static_cast<FloatParam*>(p_x_drift_factor);
     auto y_drift_factor = static_cast<FloatParam*>(p_y_drift_factor);
     auto context = static_cast<Context*>(p_context);
@@ -902,7 +900,7 @@ rocalJpegCaffe2LMDBRecordSourcePartialSingleShard(
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -928,19 +926,18 @@ rocalMXNetRecordSource(
         unsigned shard_id,
         unsigned shard_count,
         bool is_output,
+        std::vector<double>& area_factor,
+        std::vector<double>& aspect_ratio,
+        unsigned num_attemps,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height,
-        RocalFloatParam p_area_factor,
-        RocalFloatParam p_aspect_ratio,
         RocalFloatParam p_x_drift_factor,
         RocalFloatParam p_y_drift_factor )
 {
     Image* output = nullptr;
-    auto area_factor  = static_cast<FloatParam*>(p_area_factor);
-    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
     auto x_drift_factor = static_cast<FloatParam*>(p_x_drift_factor);
     auto y_drift_factor = static_cast<FloatParam*>(p_y_drift_factor);
     auto context = static_cast<Context*>(p_context);
@@ -987,7 +984,7 @@ rocalMXNetRecordSource(
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
 
 
         context->master_graph->set_loop(loop);
@@ -1492,19 +1489,18 @@ rocalJpegCOCOFileSourcePartialSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         bool is_output,
+        std::vector<double>& area_factor,
+        std::vector<double>& aspect_ratio,
+        unsigned num_attemps,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height,
-        RocalFloatParam p_area_factor,
-        RocalFloatParam p_aspect_ratio,
         RocalFloatParam p_x_drift_factor,
         RocalFloatParam p_y_drift_factor )
 {
     Image* output = nullptr;
-    auto area_factor  = static_cast<FloatParam*>(p_area_factor);
-    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
     auto x_drift_factor = static_cast<FloatParam*>(p_x_drift_factor);
     auto y_drift_factor = static_cast<FloatParam*>(p_y_drift_factor);
     auto context = static_cast<Context*>(p_context);
@@ -1549,7 +1545,7 @@ rocalJpegCOCOFileSourcePartialSingleShard(
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
 
         context->master_graph->set_loop(loop);
 
@@ -1876,20 +1872,22 @@ rocalFusedJpegCropSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         bool is_output,
+        std::vector<double>& area_factor,
+        std::vector<double>& aspect_ratio,
+        unsigned num_attemps,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height,
-        RocalFloatParam p_area_factor,
-        RocalFloatParam p_aspect_ratio,
         RocalFloatParam p_x_drift_factor,
         RocalFloatParam p_y_drift_factor
         )
 {
+    
+    std::cerr<<"In rocALfusedJpeg";
+    std::cerr<<"\n num_attemps:"<<num_attemps;
     Image* output = nullptr;
-    auto area_factor  = static_cast<FloatParam*>(p_area_factor);
-    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
     auto x_drift_factor = static_cast<FloatParam*>(p_x_drift_factor);
     auto y_drift_factor = static_cast<FloatParam*>(p_y_drift_factor);
     auto context = static_cast<Context*>(p_context);
@@ -1932,7 +1930,7 @@ rocalFusedJpegCropSingleShard(
                                                                           context->user_batch_size(),
                                                                           context->master_graph->mem_type(),
                                                                           context->master_graph->meta_data_reader(),
-                                                                          area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                          num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
         context->master_graph->set_loop(loop);
 
         if(is_output)

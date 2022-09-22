@@ -46,6 +46,14 @@ public:
     virtual DecoderType type() {return _type; };
     DecoderType _type = DecoderType::TURBO_JPEG;
     std::vector<Parameter<float>*> _crop_param;
+    std::vector<double> _random_area, _random_aspect_ratio;
+    unsigned _num_attemps;
+    void set_random_area(std::vector<double>& random_area){ _random_area = std::move(random_area);}
+    void set_random_aspect_ratio(std::vector<double>& random_aspect_ratio){ _random_aspect_ratio = std::move(random_aspect_ratio);}
+    void set_num_attemps(unsigned num_attemps){ _num_attemps = num_attemps; }
+    std::vector<double> get_random_area(){ return _random_area ;}
+    std::vector<double> get_random_aspect_ratio(){ return _random_aspect_ratio;}
+    unsigned get_num_attemps() {return _num_attemps;}
     void set_crop_param(std::vector<Parameter<float>*> crop_param) { _crop_param = std::move(crop_param); };
     std::vector<float> get_crop_param(){
         std::vector<float> crop_mul(4);

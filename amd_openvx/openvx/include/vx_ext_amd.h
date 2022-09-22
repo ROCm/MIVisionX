@@ -412,7 +412,7 @@ typedef struct {
     vx_uint32 gpu_buffer_update_param_index;
 } AgoKernelGpuBufferUpdateInfo;
 
-#if defined(AMD_FLOAT_16_SUPPORT)
+#if defined(AMD_FP16_SUPPORT)
 /*! \brief A 16-bit float value.
  */
 #include <half/half.hpp>

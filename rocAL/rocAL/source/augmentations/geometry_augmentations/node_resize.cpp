@@ -103,15 +103,15 @@ void ResizeNode::adjust_out_roi_size() {
             if((_dst_height > _max_height) && (_max_height != 0)) _dst_height = _max_height;
         }
     } else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_DEFAULT) {
-        if(_dst_width == 0 and _dst_height != 0) {  // Only height is passed
+        if(_dst_width == 0 && _dst_height != 0) {  // Only height is passed
             _dst_width = static_cast<uint>(std::round(_src_width * (static_cast<float>(_dst_height) / _src_height)));
-        } else if(_dst_height == 0 and _dst_width != 0) {  // Only width is passed
+        } else if(_dst_height == 0 && _dst_width != 0) {  // Only width is passed
             _dst_height = static_cast<uint>(std::round(_src_height * (static_cast<float>(_dst_width) / _src_width)));
         }
         
         if (has_max_size) {
             if((_dst_width > _max_width) && (_max_width != 0)) _dst_width = _max_width;
-            if((_dst_height > _max_height) && (_max_height != 0)) _dst_height = _max_height;  
+            if((_dst_height > _max_height) && (_max_height != 0)) _dst_height = _max_height;
         }
     } else {
         float scale = 1.0f;
@@ -119,8 +119,7 @@ void ResizeNode::adjust_out_roi_size() {
         float scale_h = static_cast<float>(_dst_height) / _src_height;
         if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER) {
             scale = std::max(scale_w, scale_h);
-        }
-        else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER) {
+        } else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER) {
             scale = (scale_w != 0 && scale_h != 0) ? std::min(scale_w, scale_h) : ((scale_w > 0) ? scale_w : scale_h);
         }
         

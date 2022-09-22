@@ -56,7 +56,7 @@ int main(int argc, const char ** argv)
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if(argc < MIN_ARG_COUNT) {
-        printf( "Usage: rocal_external_source <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height batch_size gray_scale/rgb/rgbplanar display_on_off \n" );
+        printf( "Usage: rocal_external_source <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height batch_size gray_scale/rgb/rgbplanar display_on_off external_source_mode \n" );
         return -1;
     }
     int argIdx = 0;
@@ -71,8 +71,8 @@ int main(int argc, const char ** argv)
     bool processing_device = 1;
     int mode;
     // mode = 1; //Need to get it from the user
-    // mode = 0;
-    mode = 2;
+    mode = 0;
+    // mode = 2;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
@@ -92,7 +92,10 @@ int main(int argc, const char ** argv)
     if(argc >= argIdx+MIN_ARG_COUNT)
         display = atoi(argv[++argIdx]);
 
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        mode = atoi(argv[++argIdx]);
 
+    std::cerr<<"\n mode:: "<<mode;
     std::cerr << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
     RocalImageColor color_format = RocalImageColor::ROCAL_COLOR_RGB_PLANAR;
     if (rgb == 0)

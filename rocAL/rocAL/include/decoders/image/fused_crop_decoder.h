@@ -23,6 +23,7 @@ THE SOFTWARE.
 #pragma once
 #include "decoder.h"
 #include <turbojpeg.h>
+#include "parameter_factory.h"
 class FusedCropTJDecoder : public Decoder {
 public:
     //! Default constructor
@@ -83,4 +84,17 @@ private:
     };
     bool _is_partial_decoder = true;
     std::vector <float> _bbox_coord;
+    std::mt19937 _rand_gen;
+    int64_t seed;
+    int64_t getseed() { return ParameterFactory::instance()->get_seed(); }
+    void generate_rngs(int64_t _seed, int N)
+      {
+        std::seed_seq seq{_seed};
+        std::vector<int64_t> seeds(N);
+        seq.generate(seeds.begin(), seeds.end());
+
+        for (std::size_t i = 0; i < N; i++) {
+          _rand_gen.seed(seeds[i]);
+        }
+      }
 };

@@ -290,6 +290,7 @@ rocalJpegExternalFileSource(
     auto context = static_cast<Context*>(p_context);
     try
     {
+        uint internal_shard_count = 1;
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
         DecoderType decType = DecoderType::TURBO_JPEG; // default
@@ -322,28 +323,18 @@ rocalJpegExternalFileSource(
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
 
-        // context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(context->user_batch_size(),
-        //                                                                   source_path, "",
-        //                                                                   std::map<std::string, std::string>(),
-        //                                                                   StorageType::EXTERNAL_FILE_SOURCE,
-        //                                                                   decType,
-        //                                                                   shuffle,
-        //                                                                   loop,
-        //                                                                   context->user_batch_size(),
-        //                                                                   context->master_graph->mem_type(),
-        //                                                                   context->master_graph->meta_data_reader(),
-        //                                                                   decoder_keep_original);
-        context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(0, 1,
-                                                                                        source_path, "",
-                                                                                        StorageType::EXTERNAL_FILE_SOURCE,
-                                                                                        decType,
-                                                                                        shuffle,
-                                                                                        loop,
-                                                                                        context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(),
-                                                                                        context->master_graph->meta_data_reader(),
-                                                                                        decoder_keep_original,
-                                                                                        FileMode(external_source_mode));
+        context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
+                                                                          source_path, "",
+                                                                          std::map<std::string, std::string>(),
+                                                                          StorageType::EXTERNAL_FILE_SOURCE,
+                                                                          decType,
+                                                                          shuffle,
+                                                                          loop,
+                                                                          context->user_batch_size(),
+                                                                          context->master_graph->mem_type(),
+                                                                          context->master_graph->meta_data_reader(),
+                                                                          decoder_keep_original,
+                                                                          FileMode(external_source_mode));
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -424,7 +415,8 @@ rocalSequenceReader(
                                                                             context->master_graph->sequence_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            decoder_keep_original, "",
+                                                                            decoder_keep_original,
+                                                                            FileMode::FILENAME, "",
                                                                             sequence_length,
                                                                             step, stride);
         context->master_graph->set_loop(loop);
@@ -1874,7 +1866,7 @@ rocalRawTFRecordSource(
                                                                              context->user_batch_size(),
                                                                              context->master_graph->mem_type(),
                                                                              context->master_graph->meta_data_reader(),
-                                                                             false, record_name_prefix);
+                                                                             false, FileMode::FILENAME, record_name_prefix);
         context->master_graph->set_loop(loop);
 
         if(is_output)

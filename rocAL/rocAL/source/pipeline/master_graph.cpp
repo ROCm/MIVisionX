@@ -1419,21 +1419,6 @@ MetaDataBatch * MasterGraph::create_cifar10_label_reader(const char *source_path
     return _meta_data_reader->get_output();
 }
 
-MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDataReaderType reader_type)
-{
-    if( _meta_data_reader)
-        THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
-    _meta_data_reader = create_meta_data_reader(config);
-    _meta_data_reader->init(config);
-    _meta_data_reader->read_all(source_path);
-    if (_augmented_meta_data)
-        THROW("Metadata can only have a single output")
-    else
-        _augmented_meta_data = _meta_data_reader->get_output();
-    return _meta_data_reader->get_output();
-}
-
 const std::pair<ImageNameBatch,pMetaDataBatch>& MasterGraph::meta_data()
 {
     if(_ring_buffer.level() == 0)

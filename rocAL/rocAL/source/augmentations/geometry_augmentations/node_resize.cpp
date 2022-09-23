@@ -99,8 +99,8 @@ void ResizeNode::adjust_out_roi_size() {
         if(_dst_height == 0) _dst_height = _src_height;
 
         if (has_max_size) {
-            if((_dst_width > _max_width) && (_max_width != 0)) _dst_width = _max_width;
-            if((_dst_height > _max_height) && (_max_height != 0)) _dst_height = _max_height;
+            if(_max_width != 0) _dst_width = std::min(_dst_width, _max_width);
+            if(_max_height != 0) _dst_height = std::min(_dst_height, _max_height);
         }
     } else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_DEFAULT) {
         if(_dst_width == 0 && _dst_height != 0) {  // Only height is passed
@@ -110,8 +110,8 @@ void ResizeNode::adjust_out_roi_size() {
         }
         
         if (has_max_size) {
-            if((_dst_width > _max_width) && (_max_width != 0)) _dst_width = _max_width;
-            if((_dst_height > _max_height) && (_max_height != 0)) _dst_height = _max_height;
+            if(_max_width != 0) _dst_width = std::min(_dst_width, _max_width);
+            if(_max_height != 0) _dst_height = std::min(_dst_height, _max_height);
         }
     } else {
         float scale = 1.0f;
@@ -120,7 +120,7 @@ void ResizeNode::adjust_out_roi_size() {
         if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER) {
             scale = std::max(scale_w, scale_h);
         } else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER) {
-            scale = (scale_w != 0 && scale_h != 0) ? std::min(scale_w, scale_h) : ((scale_w > 0) ? scale_w : scale_h);
+            scale = (scale_w > 0 && scale_h > 0) ? std::min(scale_w, scale_h) : ((scale_w > 0) ? scale_w : scale_h);
         }
         
         if(has_max_size) {

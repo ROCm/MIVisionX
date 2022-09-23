@@ -59,7 +59,6 @@ from rocal_pybind.types import TRIANGULAR_INTERPOLATION
 
 _known_types = {
 
-
     OK: ("OK", OK),
     CONTEXT_INVALID: ("CONTEXT_INVALID", CONTEXT_INVALID),
    	RUNTIME_ERROR: ("RUNTIME_ERROR", RUNTIME_ERROR),
@@ -107,11 +106,9 @@ _known_types = {
 
 }
 
-
 def data_type_function(dtype):
     if dtype in _known_types:
         ret = _known_types[dtype][0]
         return ret
     else:
-        raise RuntimeError(
-            str(dtype) + " does not correspond to a known type.")
+        raise RuntimeError(str(dtype) + " does not correspond to a known type.")

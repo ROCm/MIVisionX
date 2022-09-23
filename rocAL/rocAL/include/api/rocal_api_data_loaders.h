@@ -197,7 +197,6 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartialSingleShard
                                                             unsigned shard_count,
                                                             bool is_output,
                                                             std::vector<double>& area_factor, std::vector<double>& aspect_ratio, unsigned num_attemps,
-
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE,

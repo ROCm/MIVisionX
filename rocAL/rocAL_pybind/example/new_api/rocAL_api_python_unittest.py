@@ -54,10 +54,12 @@ def main():
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         jpegs, _ = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)
-        images = fn.decoders.image_slice(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
+        images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
+        images = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
+
 
         if augmentation_name == "resize":
-            output = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300, 
+            output = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300,
                                scaling_mode=types.SCALING_MODE_NOT_SMALLER, interpolation_type=types.TRIANGULAR_INTERPOLATION)
         elif augmentation_name == "rotate":
             output = fn.rotate(images)

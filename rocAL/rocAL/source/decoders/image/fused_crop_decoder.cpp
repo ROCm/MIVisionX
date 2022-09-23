@@ -105,7 +105,6 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         {
             return (0 < h && h <= height && 0 < w && w <= width);
         };
-  float min_wh_ratio = ASPECT_RATIO_RANGE[0];
   float max_wh_ratio = ASPECT_RATIO_RANGE[1];
   float max_hw_ratio = 1 / ASPECT_RATIO_RANGE[0];
   float min_area = original_image_width * original_image_height * AREA_RANGE[0];

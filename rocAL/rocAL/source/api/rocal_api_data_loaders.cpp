@@ -1884,9 +1884,6 @@ rocalFusedJpegCropSingleShard(
         RocalFloatParam p_y_drift_factor
         )
 {
-    
-    std::cerr<<"In rocALfusedJpeg";
-    std::cerr<<"\n num_attemps:"<<num_attemps;
     Image* output = nullptr;
     auto x_drift_factor = static_cast<FloatParam*>(p_x_drift_factor);
     auto y_drift_factor = static_cast<FloatParam*>(p_y_drift_factor);

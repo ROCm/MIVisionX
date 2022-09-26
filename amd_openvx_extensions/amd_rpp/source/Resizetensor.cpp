@@ -44,14 +44,11 @@ struct ResizetensorLocalData
     RpptImagePatchPtr dstImgSize;
     RpptDesc srcDesc, dstDesc;
     RpptInterpolationType interpolation_type;
-#if ENABLE_OPENCL
-    cl_mem cl_pSrc;
-    cl_mem cl_pDst;
-#elif ENABLE_HIP
-    void *hip_pSrc;
-    void *hip_pDst;
-    RpptImagePatch *hip_dstImgSize;
-    RpptROI *hip_roiTensorPtrSrc;
+#if ENABLE_HIP
+    void *pSrc_dev;
+    void *pDst_dev;
+    RpptImagePatch *dstImgSize_dev;
+    RpptROI *roiTensorPtrSrc_dev;
 #endif
 };
 
@@ -73,14 +70,11 @@ static vx_status VX_CALLBACK refreshResizetensor(vx_node node, const vx_referenc
     }
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
-#if ENABLE_OPENCL
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
-#elif ENABLE_HIP
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
-        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
-        hipMemcpy(data->hip_dstImgSize, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice);
-        hipMemcpy(data->hip_roiTensorPtrSrc, data->roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI), hipMemcpyHostToDevice);
+#if ENABLE_HIP
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->pSrc_dev, sizeof(data->pSrc_dev)));
+        STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->pDst_dev, sizeof(data->pDst_dev)));
+        hipMemcpy(data->dstImgSize_dev, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice);
+        hipMemcpy(data->roiTensorPtrSrc_dev, data->roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI), hipMemcpyHostToDevice);
 #endif
     }
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
@@ -146,20 +140,9 @@ static vx_status VX_CALLBACK processResizetensor(vx_node node, const vx_referenc
     vx_int32 output_format_toggle = 0;
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
-#if ENABLE_OPENCL
+#if ENABLE_HIP
         refreshResizetensor(node, parameters, num, data);
-        if (df_image == VX_DF_IMAGE_U8)
-        {
-            rpp_status = rppi_resize_u8_pln1_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->dstDimensions, data->maxDstDimensions, output_format_toggle, data->nbatchSize, data->rppHandle);
-        }
-        else if (df_image == VX_DF_IMAGE_RGB)
-        {
-            rpp_status = rppi_resize_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->dstDimensions, data->maxDstDimensions, output_format_toggle, data->nbatchSize, data->rppHandle);
-        }
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#elif ENABLE_HIP
-        refreshResizetensor(node, parameters, num, data);
-        rpp_status = rppt_resize_gpu(data->hip_pSrc, data->srcDescPtr, data->hip_pDst, data->dstDescPtr, data->hip_dstImgSize, data->interpolation_type, data->hip_roiTensorPtrSrc, data->roiType, data->rppHandle);
+        rpp_status = rppt_resize_gpu(data->pSrc_dev, data->srcDescPtr, data->pDst_dev, data->dstDescPtr, data->dstImgSize_dev, data->interpolation_type, data->roiTensorPtrSrc_dev, data->roiType, data->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
@@ -177,7 +160,7 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     ResizetensorLocalData *data = new ResizetensorLocalData;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+    THROW("initialize : Resize Tensor OpenCL backend is not supported")
 #elif ENABLE_HIP
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
@@ -282,14 +265,11 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     // Set ROI tensors types for src/dst
     data->roiType = RpptRoiType::XYWH;
 #if ENABLE_HIP
-    hipMalloc(&data->hip_dstImgSize, data->nbatchSize * sizeof(RpptImagePatch));
-    hipMalloc(&data->hip_roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI));
+    hipMalloc(&data->dstImgSize_dev, data->nbatchSize * sizeof(RpptImagePatch));
+    hipMalloc(&data->roiTensorPtrSrc_dev, data->nbatchSize * sizeof(RpptROI));
 #endif
     refreshResizetensor(node, parameters, num, data);
-#if ENABLE_OPENCL
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.cmdq, data->nbatchSize);
-#elif ENABLE_HIP
+#if ENABLE_HIP
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
 #endif
@@ -305,10 +285,8 @@ static vx_status VX_CALLBACK uninitializeResizetensor(vx_node node, const vx_ref
     ResizetensorLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_HIP
-    hipFree(data->hip_dstImgSize);
-    hipFree(data->hip_roiTensorPtrSrc);
-#endif
-#if ENABLE_OPENCL || ENABLE_HIP
+    hipFree(data->dstImgSize_dev);
+    hipFree(data->roiTensorPtrSrc_dev);
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
         rppDestroyGPU(data->rppHandle);
 #endif
@@ -341,11 +319,6 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
         supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
-
-        // hardcode the affinity to  CPU for OpenCL backend to avoid VerifyGraph failure since there is no codegen callback for amd_rpp nodes
-#if ENABLE_OPENCL
-    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
-#endif
     return VX_SUCCESS;
 }
 
@@ -363,8 +336,7 @@ vx_status Resizetensor_Register(vx_context context)
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
-#if ENABLE_OPENCL || ENABLE_HIP
-    // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
+#if ENABLE_HIP
     vx_bool enableBufferAccess = vx_true_e;
     if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));

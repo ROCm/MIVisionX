@@ -56,8 +56,8 @@ void RocalCropParam::fill_crop_dims()
         if(!(_random))
         {
             // Evaluating user given crop
-            cropw_arr_val[img_idx] = (crop_w > in_width[img_idx]) ? in_width[img_idx] : crop_w;
-            croph_arr_val[img_idx] = (crop_h > in_height[img_idx]) ? in_height[img_idx] : crop_h;
+            cropw_arr_val[img_idx] = (crop_w <= in_width[img_idx] && crop_w > 0) ? crop_w : in_width[img_idx];
+            croph_arr_val[img_idx] = (crop_h <= in_height[img_idx] && crop_h > 0) ? crop_h : in_height[img_idx];
             if(_is_center_crop)
             {
                 float x_drift, y_drift;

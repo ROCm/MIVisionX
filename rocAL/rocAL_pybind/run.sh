@@ -4,7 +4,7 @@ PYTHON_VERSION=`python3 -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.versi
 DEFAULT_PYTHON=$(which python$PYTHON_VERSION) ## Gets the default python
 CONDA="conda"
 if [ -n "$CONDA_DEFAULT_ENV" ]  || [ -n "$VIRTUAL_ENV" ] || [[ "$DEFAULT_PYTHON" == *"$CONDA"* ]]; then ## Checks if it is in any env then removes packages accordingly
-    PYTHON_LIB_PATH=${DEFAULT_PYTHON/bin/lib}
+    PYTHON_LIB_PATH=${DEFAULT_PYTHON/lib}
     INSTALL_FILE_PATH_ROCAL="/site-packages/amd_rocal-1.1.0.dist-info/"
     ROCAL_PYTHON_LIB_PATH=$PYTHON_LIB_PATH$INSTALL_FILE_PATH_ROCAL
     sudo rm -r "$ROCAL_PYTHON_LIB_PATH"

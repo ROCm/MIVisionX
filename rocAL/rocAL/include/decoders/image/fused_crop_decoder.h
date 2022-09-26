@@ -87,14 +87,12 @@ private:
     std::mt19937 _rand_gen;
     int64_t seed;
     int64_t getseed() { return ParameterFactory::instance()->get_seed(); }
-    void generate_rngs(int64_t _seed, int64_t N)
-      {
-        std::seed_seq seq{_seed};
-        std::vector<int64_t> seeds(N);
-        seq.generate(seeds.begin(), seeds.end());
-
-        for (int64_t i = 0; i < N; i++) {
-          _rand_gen.seed(seeds[i]);
-        }
+    void generate_rngs(int64_t _seed, int64_t N) {
+      std::seed_seq seq{_seed};
+      std::vector<int64_t> seeds(N);
+      seq.generate(seeds.begin(), seeds.end());
+      for (int64_t i = 0; i < N; i++) {
+        _rand_gen.seed(seeds[i]);
       }
+    }
 };

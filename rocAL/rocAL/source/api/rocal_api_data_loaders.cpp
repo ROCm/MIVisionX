@@ -758,7 +758,7 @@ rocalJpegCaffeLMDBRecordSourcePartialSingleShard(
         bool is_output,
         std::vector<double>& area_factor,
         std::vector<double>& aspect_ratio,
-        unsigned num_attemps,
+        unsigned num_attempts,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
@@ -814,7 +814,7 @@ rocalJpegCaffeLMDBRecordSourcePartialSingleShard(
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            num_attempts, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
 
 
         context->master_graph->set_loop(loop);
@@ -844,7 +844,7 @@ rocalJpegCaffe2LMDBRecordSourcePartialSingleShard(
         bool is_output,
         std::vector<double>& area_factor,
         std::vector<double>& aspect_ratio,
-        unsigned num_attemps,
+        unsigned num_attempts,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
@@ -900,7 +900,7 @@ rocalJpegCaffe2LMDBRecordSourcePartialSingleShard(
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            num_attempts, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -928,7 +928,7 @@ rocalMXNetRecordSource(
         bool is_output,
         std::vector<double>& area_factor,
         std::vector<double>& aspect_ratio,
-        unsigned num_attemps,
+        unsigned num_attempts,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
@@ -984,7 +984,7 @@ rocalMXNetRecordSource(
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            num_attempts, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
 
 
         context->master_graph->set_loop(loop);
@@ -1491,7 +1491,7 @@ rocalJpegCOCOFileSourcePartialSingleShard(
         bool is_output,
         std::vector<double>& area_factor,
         std::vector<double>& aspect_ratio,
-        unsigned num_attemps,
+        unsigned num_attempts,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
@@ -1545,7 +1545,7 @@ rocalJpegCOCOFileSourcePartialSingleShard(
                                                                             context->user_batch_size(),
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
-                                                                            num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                            num_attempts, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
 
         context->master_graph->set_loop(loop);
 
@@ -1874,7 +1874,7 @@ rocalFusedJpegCropSingleShard(
         bool is_output,
         std::vector<double>& area_factor,
         std::vector<double>& aspect_ratio,
-        unsigned num_attemps,
+        unsigned num_attempts,
         bool shuffle,
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
@@ -1927,7 +1927,7 @@ rocalFusedJpegCropSingleShard(
                                                                           context->user_batch_size(),
                                                                           context->master_graph->mem_type(),
                                                                           context->master_graph->meta_data_reader(),
-                                                                          num_attemps, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
+                                                                          num_attempts, area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
         context->master_graph->set_loop(loop);
 
         if(is_output)

@@ -14,7 +14,7 @@ FusedJpegCropSingleShardNode::FusedJpegCropSingleShardNode(Image *output, Device
 
 void FusedJpegCropSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, const std::string &json_path, StorageType storage_type,
                                         DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RocalMemType mem_type, std::shared_ptr<MetaDataReader> meta_data_reader,
-                                        unsigned num_attemps, std::vector<double> &area_factor, std::vector<double> &aspect_ratio, FloatParam *x_drift, FloatParam *y_drift)
+                                        unsigned num_attempts, std::vector<double> &area_factor, std::vector<double> &aspect_ratio, FloatParam *x_drift, FloatParam *y_drift)
 {
     if(!_loader_module)
         THROW("ERROR: loader module is not set for FusedJpegCropSingleShardNode, cannot initialize")
@@ -37,7 +37,7 @@ void FusedJpegCropSingleShardNode::init(unsigned shard_id, unsigned shard_count,
     _y_drift = ParameterFactory::instance()->create_uniform_float_rand_param(Y_DRIFT_RANGE[0], Y_DRIFT_RANGE[1])->core;
     decoder_cfg.set_random_area(area_factor);
     decoder_cfg.set_random_aspect_ratio(aspect_ratio);
-    decoder_cfg.set_num_attemps(num_attemps);
+    decoder_cfg.set_num_attempts(num_attempts);
     crop_param.push_back(_x_drift);
     crop_param.push_back(_y_drift);
     decoder_cfg.set_crop_param(crop_param);

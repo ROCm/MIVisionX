@@ -30,7 +30,7 @@ FusedCropTJDecoder::FusedCropTJDecoder(){
 
 #if 0
     int num_avail_scalings = 0;
-    auto scaling_factors = tjGetScalingFactors	(&num_avail_scalings);
+    auto scaling_factors = tjGetScalingFactors	(&num_avail_scalings);  
     for(int i = 0; i < num_avail_scalings; i++) {
         if(scaling_factors[i].num < scaling_factors[i].denom) {
 
@@ -83,14 +83,14 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     };
     actual_decoded_width = max_decoded_width;
     actual_decoded_height = max_decoded_height;
-    // You need get the output of random bbox crop
+    // You need get the output of random bbox crop 
     // check the vector size for bounding box. If its more than zero go for random bbox crop
     // else go to random crop
     unsigned int crop_width, crop_height, x1, y1, x1_diff, crop_width_diff;
     if(_bbox_coord.size() != 0)
     {
         // Random bbox crop returns normalized crop cordinates
-        // hence bringing it back to absolute cordinates
+        // hence bringing it back to absolute cordinates 
         x1 = std::lround(_bbox_coord[0] * original_image_width);
         y1 = std::lround(_bbox_coord[1] * original_image_height);
         crop_width = std::lround((_bbox_coord[2]) * original_image_width);
@@ -102,15 +102,14 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         double AREA_RANGE[2] = {decoder_config.get_random_area()[0], decoder_config.get_random_aspect_ratio()[1]};
         auto is_valid_crop = [](uint h, uint w, uint height, uint width)
         {
-            return (0 < h && h <= height && 0 < w && w <= width);
+            return(h > 0 && h <= height && w > 0 && w <= width);
         };
         float max_wh_ratio = ASPECT_RATIO_RANGE[1];
         float max_hw_ratio = 1 / ASPECT_RATIO_RANGE[0];
         float min_area = original_image_width * original_image_height * AREA_RANGE[0];
         int maxW = std::max<int>(1, original_image_height * max_wh_ratio);
         int maxH = std::max<int>(1, original_image_width * max_hw_ratio);
-        int num_of_attempts = decoder_config.get_num_attemps();
-        int num_attempts_left = num_of_attempts;
+        int num_attempts_left = decoder_config.get_num_attempts();
         // detect two impossible cases early
         if (original_image_height * maxW < min_area) { // image too wide
             crop_width = original_image_height;

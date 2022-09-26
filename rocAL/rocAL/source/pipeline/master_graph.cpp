@@ -793,7 +793,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
     #endif
                         }
                     }
-                    else if(output_data_type == RocalTensorDataType::FP16)
+                    else if(output_data_type == RocalTensorDataType::FP16) 
                     {
                         half *output_tensor_16 = static_cast<half *>(out_ptr);
                         auto channel_size = w * h;

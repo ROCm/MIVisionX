@@ -44,14 +44,12 @@ class Pipeline(object):
         and `y` for mixed and gpu stages. It is not supported when both `exec_async`
         and `exec_pipelined` are set to `False`.
         Executor will buffer cpu and gpu stages separatelly,
-        and will fill the buffer queues when the first :meth:`nvidia.dali.pipeline.Pipeline.run`
+        and will fill the buffer queues when the first :meth:`amd.rocal.pipeline.Pipeline.run`
         is issued.
     `exec_async` : bool, optional, default = True
         Whether to execute the pipeline asynchronously.
-        This makes :meth:`nvidia.dali.pipeline.Pipeline.run` method
+        This makes :meth:`amd.rocal.pipeline.Pipeline.run` method
         run asynchronously with respect to the calling Python thread.
-        In order to synchronize with the pipeline one needs to call
-        :meth:`nvidia.dali.pipeline.Pipeline.outputs` method.
     `bytes_per_sample` : int, optional, default = 0
         A hint for ROCAL for how much memory to use for its tensors.
     `set_affinity` : bool, optional, default = False

@@ -141,13 +141,13 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
-    std::vector<std::vector<char>> names;
+    std::vector<std::string> names;
     std::vector<int> labels;
     names.resize(batch_size);
     labels.resize(batch_size);
     int image_name_length[batch_size];
     if(DISPLAY)
-    cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
+        cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
     int iter_cnt = 0;
 
     while (!rocalIsEmpty(handle) /*&& (iter_cnt < 100)*/)
@@ -165,10 +165,13 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
         char img_name[img_name_size];
         rocalGetImageName(handle, img_name);
 #if PRINT_NAMES_AND_LABELS
-        std::cout << "image names for batch: "<< " label "<< img_name << std::endl;
-        for(int i = 0; i < batch_size; i++)
+        std::string imageNamesStr(img_name);
+        int pos = 0;
+        for(int i = 0; i < inputBatchSize; i++)
         {
-            std::cout << "name "<< id << " label "<< labels[i] << " - ";
+            names[i] = imageNamesStr.substr(pos, ImageNameLen[i]);
+            pos += ImageNameLen[i];
+            std::cout << "name: " << names[i] << " label: "<< labels[i] << " - ";
         }
         std::cout << std::endl;
 #endif

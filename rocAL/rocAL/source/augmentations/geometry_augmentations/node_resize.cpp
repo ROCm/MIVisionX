@@ -80,6 +80,7 @@ void ResizeNode::update_node() {
 
 void ResizeNode::init(unsigned dest_width, unsigned dest_height, RocalResizeScalingMode scaling_mode,
                       std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type) {
+    _interpolation_type = (int)interpolation_type;
     _scaling_mode = scaling_mode;
     _out_width = dest_width;
     _out_height = dest_height;
@@ -102,9 +103,9 @@ void ResizeNode::adjust_out_roi_size() {
         }
     } else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_DEFAULT) {
         if (_dst_width == 0 && _dst_height != 0) {  // Only height is passed
-            _dst_width = static_cast<uint>(std::round(_src_width * (static_cast<float>(_dst_height) / _src_height)));
+            _dst_width = std::lround(_src_width * (static_cast<float>(_dst_height) / _src_height));
         } else if (_dst_height == 0 && _dst_width != 0) {  // Only width is passed
-            _dst_height = static_cast<uint>(std::round(_src_height * (static_cast<float>(_dst_width) / _src_width)));
+            _dst_height = std::lround(_src_height * (static_cast<float>(_dst_width) / _src_width));
         }
         
         if (has_max_size) {
@@ -126,7 +127,7 @@ void ResizeNode::adjust_out_roi_size() {
             if (_max_height != 0) scale = std::min(scale, static_cast<float>(_max_height) / _src_height);
         }
 
-        if ((scale_w != scale) || (_dst_width == 0)) _dst_width = static_cast<uint>(std::round(_src_width * scale));
-        if ((scale_h != scale) || (_dst_height == 0)) _dst_height = static_cast<uint>(std::round(_src_height * scale));
+        if ((scale_w != scale) || (_dst_width == 0)) _dst_width = std::lround(_src_width * scale);
+        if ((scale_h != scale) || (_dst_height == 0)) _dst_height = std::lround(_src_height * scale);
     }
 }

@@ -68,15 +68,15 @@ static vx_status VX_CALLBACK refreshResizetensor(vx_node node, const vx_referenc
         data->roiTensorPtrSrc[i].xywhROI.xy.x = 0;
         data->roiTensorPtrSrc[i].xywhROI.xy.y = 0;
     }
+#if ENABLE_HIP
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
-#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->pSrc_dev, sizeof(data->pSrc_dev)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->pDst_dev, sizeof(data->pDst_dev)));
         hipMemcpy(data->dstImgSize_dev, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice);
         hipMemcpy(data->roiTensorPtrSrc_dev, data->roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI), hipMemcpyHostToDevice);
-#endif
     }
+#endif
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
     {
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc, sizeof(vx_uint8)));
@@ -135,17 +135,14 @@ static vx_status VX_CALLBACK processResizetensor(vx_node node, const vx_referenc
     vx_status return_status = VX_SUCCESS;
     ResizetensorLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    vx_df_image df_image = VX_DF_IMAGE_VIRT;
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
-    vx_int32 output_format_toggle = 0;
+#if ENABLE_HIP
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
-#if ENABLE_HIP
         refreshResizetensor(node, parameters, num, data);
         rpp_status = rppt_resize_gpu(data->pSrc_dev, data->srcDescPtr, data->pDst_dev, data->dstDescPtr, data->dstImgSize_dev, data->interpolation_type, data->roiTensorPtrSrc_dev, data->roiType, data->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#endif
     }
+#endif
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
     {
         refreshResizetensor(node, parameters, num, data);

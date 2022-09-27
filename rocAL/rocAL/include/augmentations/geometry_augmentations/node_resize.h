@@ -40,9 +40,9 @@ protected:
     void update_node() override;
 private:
     vx_array  _dst_roi_width , _dst_roi_height;
-    unsigned _out_width, _out_height;
     int _interpolation_type;
     RocalResizeScalingMode _scaling_mode;
-    uint32_t _src_width, _src_height, _dst_width, _dst_height, _max_width, _max_height;
-    std::vector<uint32_t> _dst_roi_width_vec, _dst_roi_height_vec;
+    unsigned _src_width, _src_height, _dst_width, _dst_height, _out_width, _out_height;
+    unsigned _max_width = 0, _max_height = 0;
+    std::vector<unsigned> _dst_roi_width_vec, _dst_roi_height_vec;
 };

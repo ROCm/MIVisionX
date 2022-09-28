@@ -60,15 +60,14 @@ void show_usage() {
             "  Mode 1 - Run all ONNX tests\n"
             "  Mode 2 - Run all JSON tests\n"
             "--profiler_level <range:0-N; default:1> [N = batch size][optional]\n"
-            "--mnist          <mnist-model>     \n"
             "--resnet50       <resnet50-model>  \n"
-            "--googlenet      <googlenet-model> \n" 
+            "--googlenet      <googlenet-model> \n"
             "--squeezenet     <resnet101-model> \n"
             "--alexnet        <resnet152-model> \n"
             "--vgg19          <vgg19-model>     \n"
             "--densenet       <densenet-model>  \n"
             "\n"
-        ); 
+        );
 }
 
 int main(int argc, char **argv) {
@@ -80,14 +79,13 @@ int main(int argc, char **argv) {
     std::string binaryFilename_googlenet_str;
     std::string binaryFilename_alexnet_str;
     std::string binaryFilename_densenet_str;
-    std::string binaryFilename_mnist_str;
     std::string inputTensor_foldername;
 
     int parameter = 0;
     int profiler_level = 1;
     int64_t freq = clockFrequency(), t0, t1;
     int N = 1000;
-    bool runMnist = false, runResnet50 = false, runVgg19 = false, runGooglenet = false, runDensenet = false, runAlexnet = false, runSqueezenet = false, runAnyImagenet = false;
+    bool runResnet50 = false, runVgg19 = false, runGooglenet = false, runDensenet = false, runAlexnet = false, runSqueezenet = false, runAnyImagenet = false;
 
     for(int arg = 1; arg < argc; arg++) {
         if (!strcasecmp(argv[arg], "--help") || !strcasecmp(argv[arg], "--H") || !strcasecmp(argv[arg], "--h")) {
@@ -117,17 +115,6 @@ int main(int argc, char **argv) {
                 std::printf("\n\nERROR: profiler level has to be between 1-7\n\n\n");
                 exit(-1);
             }
-            parameter++;
-        }
-        else if (!strcasecmp(argv[arg], "--mnist")) {
-            if ((arg + 1) == argc) {
-                std::printf("\n\nERROR: missing mnist ONNX .model file location on command-line (see help for details)\n\n\n");
-                show_usage();
-                exit(-1);
-            }
-            runMnist = true;
-            arg++;
-            binaryFilename_mnist_str = (argv[arg]);
             parameter++;
         }
         else if (!strcasecmp(argv[arg], "--alexnet")) {
@@ -216,7 +203,7 @@ int main(int argc, char **argv) {
     vx_context context = vxCreateContext();
     ERROR_CHECK_OBJECT(context);
     vxRegisterLogCallback(context, log_callback, vx_false_e);
-    
+
     // load vx_nn kernels
     ERROR_CHECK_STATUS(vxLoadKernels(context, "vx_amd_migraphx"));
 
@@ -229,7 +216,7 @@ int main(int argc, char **argv) {
     vx_map_id map_id;
     void *ptr = nullptr;
     auto num_results_imagenet = 1000;
-    
+
     //create a results folder
     std::ofstream outputFile;
     auto now = std::chrono::system_clock::now();
@@ -242,7 +229,7 @@ int main(int argc, char **argv) {
 
     float mean_vec[3] = {0.485, 0.456, 0.406};
     float stddev_vec[3] = {0.229, 0.224, 0.225};
-    std::vector<float> mulVec = {1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])}, 
+    std::vector<float> mulVec = {1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])},
                         addVec = {(mean_vec[0] / stddev_vec[0]), (mean_vec[1] / stddev_vec[1]), (mean_vec[2] / stddev_vec[2])};
     //imagenet label file
     std::string labelText[1000];
@@ -252,7 +239,7 @@ int main(int argc, char **argv) {
     std::ifstream labelFile(imagenetLabelFileName);
     if(!labelFile) {
       std::cout << "failed to open label file" << std::endl;
-      return -1; 
+      return -1;
     }
     int lineNum = 0;
     while(getline(labelFile, line)) {
@@ -289,9 +276,9 @@ int main(int argc, char **argv) {
             for(size_t n = 0; n < input_dims_data_224x224[0]; n++) {
                 for(size_t c = 0; c < input_dims_data_224x224[1]; c++) {
                     for(size_t y = 0; y < input_dims_data_224x224[2]; y++) {
-                        float * buf = (float *)ptr + 
-                                        (n * input_dims_data_224x224[3] * input_dims_data_224x224[2] * input_dims_data_224x224[1] 
-                                        + c * input_dims_data_224x224[3] * input_dims_data_224x224[2] 
+                        float * buf = (float *)ptr +
+                                        (n * input_dims_data_224x224[3] * input_dims_data_224x224[2] * input_dims_data_224x224[1]
+                                        + c * input_dims_data_224x224[3] * input_dims_data_224x224[2]
                                         + y * input_dims_data_224x224[3]);
                         vx_size w = fread(buf, sizeof(float), input_dims_data_224x224[3], fp);
                         if(w != input_dims_data_224x224[3]) {
@@ -314,7 +301,7 @@ int main(int argc, char **argv) {
             if (runResnet50) {
                 //output tensor
                 vx_tensor output_tensor_resnet50 = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-                
+
                 //graph creation
                 vx_graph graph_resnet50 = vxCreateGraph(context);
                 status = vxGetStatus((vx_reference)graph_resnet50);
@@ -597,7 +584,7 @@ int main(int argc, char **argv) {
                     return status;
                 }
 
-                // release resources   
+                // release resources
                 ERROR_CHECK_STATUS(vxReleaseNode(&node_squeezenet));
                 ERROR_CHECK_STATUS(vxReleaseGraph(&graph_squeezenet));
                 ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_squeezenet));
@@ -615,7 +602,7 @@ int main(int argc, char **argv) {
                     return -1;
                 }
                 vx_node node_densenet = amdMIGraphXnode(graph_densenet, binaryFilename_densenet_str.c_str(), input_tensor_224x224, output_tensor_densenet);
-                ERROR_CHECK_OBJECT(node_densenet);  
+                ERROR_CHECK_OBJECT(node_densenet);
                 ERROR_CHECK_STATUS(vxVerifyGraph(graph_densenet));
                 ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
 
@@ -654,7 +641,7 @@ int main(int argc, char **argv) {
                     std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
                     return status;
                 }
-                
+
                 //release resources
                 ERROR_CHECK_STATUS(vxReleaseNode(&node_densenet));
                 ERROR_CHECK_STATUS(vxReleaseGraph(&graph_densenet));
@@ -666,8 +653,8 @@ int main(int argc, char **argv) {
             ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor_224x224));
         }
     }
- 
-    ERROR_CHECK_STATUS(vxReleaseContext(&context)); 
+
+    ERROR_CHECK_STATUS(vxReleaseContext(&context));
     return 0;
 }
 

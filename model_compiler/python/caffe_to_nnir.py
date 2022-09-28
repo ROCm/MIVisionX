@@ -30,7 +30,7 @@ from builtins import range
 from past.utils import old_div
 import os
 import caffe_pb2
-from nnir import *
+import nnir as ir
 import sys
 #import argparse
 import struct
@@ -66,7 +66,7 @@ def caffe_name_to_ir_name(name):
 
 # convert caffe blobs to ir tensor.
 def caffe_blob_to_ir_tensor(blob_name, blob_data_type, blob_shape):
-    tensor = IrTensor()
+    tensor = ir.IrTensor()
     tensor.setName(caffe_name_to_ir_name(blob_name))
     tensor.setInfo(blob_data_type, [int(x) for x in blob_shape])
     return tensor
@@ -78,7 +78,7 @@ def convert_caffe_bin_to_ir_bin(floatlist):
 
 # map caffe attr to ir attr.
 def caffe_attr_to_ir_attr(attribute_map):
-    attr = IrAttr()
+    attr = ir.IrAttr()
     attr_names = list(attribute_map.keys())
     for i in range(len(attr_names)):
         attributeInfo = attribute_map[attr_names[i]]
@@ -105,7 +105,7 @@ def caffe_attr_to_ir_attr(attribute_map):
 
 # map caffe node to ir node.
 def caffe_node_to_ir_node(layer_type, layer_info_map):
-    node = IrNode()
+    node = ir.IrNode()
     input_map = layer_info_map["inputs"]
     output_map = layer_info_map["outputs"]
     weight_map = {}
@@ -864,7 +864,7 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
 
 # convert caffe graph to ir graph.
 def caffe_graph_to_ir_graph(net_parameter, input_dims, verbose):
-    graph = IrGraph(False)
+    graph = ir.IrGraph(False)
     inputMap = extractInput(net_parameter, graph, input_dims)
     inputOutputMap, output_name = extractCaffeNodeInfo(net_parameter, graph, inputMap, verbose)
     outputList = extractOutput(graph, inputOutputMap, output_name, verbose)

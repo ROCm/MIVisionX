@@ -1,15 +1,15 @@
 # Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-#  
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-#  
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -97,8 +97,6 @@ elseif(MIVISIONX_BACKEND_HIP_FOUND)
 		set(ENABLE_HIP 1)
 		set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-		set(COMPILER_FOR_HIP ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR}/hipcc)
-		set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})
 		include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR})
 		link_directories(${HIP_PATH}/${CMAKE_INSTALL_LIBDIR})
 		target_link_libraries(${PROJECT_NAME} hip::host)

@@ -60,22 +60,7 @@ public:
     void unblock_writer();// Unblocks the thread currently waiting on get_write_buffer
     void push();// The latest write goes through, effectively adds one element to the buffer
     void pop();// The oldest write will be erased and overwritten in upcoming writes
-    void set_image_info(const decoded_image_info& info) {
-        // shobi
-        // std::cerr<<"\n circ buffer set image info";
-        _last_image_info._roi_height = info._roi_width;
-        _last_image_info._roi_width = info._roi_width;
-        _last_image_info._original_height = info._original_height;
-        _last_image_info._original_width = info._original_width;
-        // std::cerr<<"\n Exiting set image info";
-        // std::cerr<<"\n info._imagenames size "<<info._image_names.size();
-        // for(uint i = 0; i < info._image_names.size(); i++)
-        // {
-        //     std::cerr<<"\n Image name:: "<<info._image_names[i];
-        //     _last_image_info._image_names[i] = info._image_names[i];
-        // }
-        // std::cerr<<"\n Exiting set image info names";
-        }
+    void set_image_info(const decoded_image_info& info) { _last_image_info = info; }
     void set_crop_image_info(const crop_image_info& info) { _last_crop_image_info = info; }
     decoded_image_info& get_image_info();
     crop_image_info& get_cropped_image_info();

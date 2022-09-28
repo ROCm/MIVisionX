@@ -81,7 +81,7 @@ void ImageLoader::set_gpu_device_id(int device_id)
 size_t
 ImageLoader::remaining_count()
 {
-    if(!_external_input_eos)
+    if(!_external_input_eos && _external_source_reader)
         return _batch_size;
     return _remaining_image_count;
 }

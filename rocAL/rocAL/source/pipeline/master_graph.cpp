@@ -523,7 +523,7 @@ MasterGraph::reset()
 size_t
 MasterGraph::remaining_count()
 {
-    if(!_external_source_eos)
+    if(!_external_source_eos && _external_source_reader)
         return _user_batch_size;
     return (_remaining_count >= 0) ? _remaining_count:0;
 }

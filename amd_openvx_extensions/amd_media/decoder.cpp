@@ -34,6 +34,9 @@ THE SOFTWARE.
 #include <sstream>
 #include <stdlib.h>
 
+// Performance measurement option
+#define ENABLE_PERF_MEASURE        0
+
 // OpenCL configuration
 #define DUMP_DECODED_FRAME         0
 
@@ -699,6 +702,13 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
     AVPacket avpkt = { 0 };
     int status;
 
+#if ENABLE_PERF_MEASURE
+    std::chrono::duration<double> totalDecodeTime = {};
+    std::chrono::high_resolution_clock::time_point startTime;
+    std::chrono::high_resolution_clock::time_point endTime;
+    int frameno = 0;
+#endif
+
     for (command cmd; !eof[mediaIndex] && ((cmd = PopCommand(mediaIndex)) != cmd_abort);) {
         int gotPicture = 0;
         while (!gotPicture && !eof[mediaIndex]) 
@@ -727,6 +737,9 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                 }
                 else if (avpkt.stream_index == videoStreamIndex[mediaIndex]) {
                     // send packet to decoder
+#if ENABLE_PERF_MEASURE
+                    startTime = std::chrono::high_resolution_clock::now();
+#endif
                     status = avcodec_send_packet(videoCodecContext[mediaIndex], &avpkt);
                     if (status < 0) {
                         vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Sending packet to video decoder status:%x", AVERROR(status));
@@ -741,6 +754,11 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                 return;
             }
             int status = avcodec_receive_frame(videoCodecContext[mediaIndex], frame);
+#if ENABLE_PERF_MEASURE           
+            endTime = std::chrono::high_resolution_clock::now();
+            totalDecodeTime += endTime - startTime;
+            frameno++;
+#endif
             if (status == AVERROR(EAGAIN)) {
                 // output not available at this time: continue to send the next frame.
                 av_frame_free(&frame);
@@ -873,6 +891,9 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
             decodeFrameCount[mediaIndex]++;
             PushAck(mediaIndex, 0);
         }
+#if ENABLE_PERF_MEASURE
+        std::cout << "AMD_MEDIA_DECODER Time (ms): " << totalDecodeTime.count() * 1000 / frameno << std::endl;
+#endif
     }
 end:
     // mark eof and send ACK

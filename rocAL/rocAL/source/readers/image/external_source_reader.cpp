@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #include <cassert>
 #include <algorithm>
-#include <commons.h>
+// #include <commons.h>
 #include "external_source_reader.h"
 #include <boost/filesystem.hpp>
 
@@ -44,8 +44,11 @@ ExternalSourceReader::ExternalSourceReader()
 // return batch_size() for count_items unless end_of_sequence has been signalled.
 unsigned ExternalSourceReader::count_items()
 {
-    if (_end_of_sequence)
+    if (_end_of_sequence && _images_data_q.empty())
+    {
+        std::cerr<<"\n End of sequence encountered so returning 0";
         return 0;
+    }
     // just to make loader happy to do next batch loading
     return _batch_count;
 }
@@ -78,7 +81,7 @@ size_t ExternalSourceReader::open()
         std::cerr<<"\n Comes to the file mode";
         std::string next_file_name;
         bool ret = pop_file_name(next_file_name);   // Get next file name: blocking call, will wait till next file is received from external source
-        if (_end_of_sequence || !ret)
+        if (_end_of_sequence && !ret) // shobi check this
           return 0;
         incremenet_read_ptr();
         // prefix with folder_path of exists
@@ -90,6 +93,7 @@ size_t ExternalSourceReader::open()
         filesys::path pathObj(next_file_name);
         if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
         {
+            std::cerr<<"\n File is present";
           _current_fPtr = fopen(next_file_name.c_str(), "rb");// Open the file,
           if(!_current_fPtr) // Check if it is ready for reading
               return 0;
@@ -107,16 +111,28 @@ size_t ExternalSourceReader::open()
 
           fseek(_current_fPtr, 0 , SEEK_SET);// Take the file pointer back to the start
           _file_data[_curr_file_idx] = std::make_tuple((unsigned char *)next_file_name.data(), (size_t)_current_file_size, 0, 0, 0); // shobi check typecasting
+          std::cerr<<"\n Completed ";
         }
     } else {
         std::cerr<<"\n Comes to the extracted image mode ";
         std::tuple<unsigned char*, size_t, int, int, int> image;
-        pop_file_data(image);
+        std::cerr<<"\n ExternalSourceReader::open() CP0";
+        bool ret = pop_file_data(image);
+        std::cerr<<"\n ExternalSourceReader::open() CP1";
+        if (_end_of_sequence && !ret) // shobi check this
+        {
+            std::cerr<<"\n !!!!!!!!!!!!!!!!!! EOS || POP FAILED !!!!!!!!!!!!!!!!!!!!";
+            return 0;
+        }
+        std::cerr<<"\n ExternalSourceReader::open() CP2";
         incremenet_read_ptr();
+        std::cerr<<"\n ExternalSourceReader::open() CP3";
         _file_data[_curr_file_idx] = image;
+        std::cerr<<"\n ExternalSourceReader::open() CP4";
         //_file_sizes[_curr_file_idx] = std::get<1>(image);
         _current_file_size = std::get<1>(image);
         // std::cerr<<"\n current file size :: "<<_current_file_size;
+        std::cerr<<"\n Exits extracted image mode";
     }
 
     return _current_file_size;
@@ -134,12 +150,18 @@ size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size)
         size_t actual_read_size = fread(buf, sizeof(unsigned char), read_size, _current_fPtr);
         return actual_read_size;
     } else {
+        std::cerr<<"\n read data CP 1";
         unsigned char *file_data_ptr = std::get<0>(_file_data[_curr_file_idx]);
+        std::cerr<<"\n read data CP 2";
         size_t size = std::get<1>(_file_data[_curr_file_idx]);
+        std::cerr<<"\n read data CP 3";
         if (size > read_size)
           THROW("Requested size doesn't match the actual size for file read")
         // do a memcpy here:: todo:: avoid this and pass it direct to the loader
+        std::cerr<<"\n read data CP 4";
         memcpy(buf, (void *)file_data_ptr, size);
+        std::cerr<<"\n read data CP 5";
+        std::cerr<<"\n size:: "<<size;
         return size;
     }
 }
@@ -247,6 +269,7 @@ void ExternalSourceReader::feed_file_names(const std::vector<std::string>& file_
 
 void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos, int width, int height, int channels)
 {
+    std::cerr<<"\n ExternalSourceReader::feed_data:: "<<eos;
     for (unsigned n=0; n < images.size(); n++) {
         // std::cerr<<"\n n :: "<<n;
         // // std::cerr<<"\n images[n]"<<images[n];

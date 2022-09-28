@@ -323,15 +323,15 @@ int main(int argc, const char ** argv)
     float  pmul = 2.0f/255;
     float  padd = -1.0f;
     int index = 0;
-    while (!rocalIsEmpty(handle) && (iter_cnt < 100))
+    while (!rocalIsEmpty(handle))
     {
+        std::cerr<<"\n rocAL is not empty ";
         // index++;
         std::vector<std::string> input_images;
         std::vector<unsigned char*> input_batch_buffer;
         std::vector<unsigned> roi_width;
         std::vector<unsigned> roi_height;
         std::vector<int> label;
-        std::cerr<<"\n batch size :: "<<inputBatchSize;
         for(int i = 0; i < inputBatchSize; i++)
         {
             // input_images.push_back(std::string(folderPath1) + file_names.back());
@@ -355,7 +355,7 @@ int main(int argc, const char ** argv)
                 }
             }
         }
-        if((file_names.size()) == 0)
+        if((file_names.size()) == 0 || input_buffer.size() == 0)
         {
            eos = true;
         }

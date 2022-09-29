@@ -704,6 +704,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
 
 #if ENABLE_PERF_MEASURE
     std::chrono::duration<double> totalDecodeTime = {};
+    std::chrono::duration<double> totalTransferTime = {};
     std::chrono::high_resolution_clock::time_point startTime;
     std::chrono::high_resolution_clock::time_point endTime;
     int frameno = 0;
@@ -734,7 +735,8 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     PushAck(mediaIndex, -1);
                     av_packet_unref(&avpkt);
 #if ENABLE_PERF_MEASURE
-                    std::cout << "AMD_MEDIA_DECODER Time (ms): " << totalDecodeTime.count() * 1000 / frameno << std::endl;
+                    std::cout << "Average Decode Time per frame (ms): " << totalDecodeTime.count() * 1000 / frameno << std::endl;
+                    std::cout << "Average Transfer Time per frame (ms): " << totalTransferTime.count() * 1000 / frameno << std::endl;
 #endif
                     return;
                 }
@@ -779,6 +781,9 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
 #endif
             if (useVaapi[mediaIndex]) {
                 /* retrieve data from GPU to CPU */
+#if ENABLE_PERF_MEASURE
+                    startTime = std::chrono::high_resolution_clock::now();
+#endif
                 if ((status = av_hwframe_transfer_data(sw_frame, frame, 0)) < 0) {
                     vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: avcodec_receive_frame() failed (%x)\n", AVERROR(status));
                     eof[mediaIndex] = true;
@@ -787,6 +792,11 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     av_frame_free(&sw_frame);
                     return;
                 }
+#if ENABLE_PERF_MEASURE           
+                endTime = std::chrono::high_resolution_clock::now();
+                totalTransferTime += endTime - startTime;
+#endif
+
                 tmp_frame = sw_frame;
                 av_frame_free(&frame);
             } else {

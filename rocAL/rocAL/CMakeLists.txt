@@ -52,7 +52,7 @@ if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     find_package(HIP QUIET)
     if(HIP_FOUND)
         SET(BUILD_ROCAL true)
-        message(STATUS "rocAL -- Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION} "\tCompiler:" ${HIP_COMPILER})
+        message("-- ${White}rocAL -- Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION} "\tCompiler:" ${HIP_COMPILER} ${ColourReset})
     else()
         SET(BUILD_ROCAL false)
         message("-- ${Yellow}NOTE: rocAL library requires HIP for BACKEND=HIP, Not Found ${ColourReset}")
@@ -209,7 +209,7 @@ if(${BUILD_ROCAL})
     # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute.
     # -std=gnu++17 -- Conform to the ISO 2017 C++ standard with GNU extensions.
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -pthread -Wall -fPIC -mavx2 -mfma -mf16c -Wno-deprecated-declarations -std=gnu++17")
-    message("-- ${White}rocAL -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+    message("-- ${White}rocAL -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
 
     if(NOT FFMPEG_FOUND)
         message("-- ${Yellow}NOTE: rocAL library is going to be built without video decode functionality ${ColourReset}")

@@ -23,7 +23,7 @@ extern void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
 
 
 #if ENABLE_HIP
-InferenceEngineRocalHip::InferenceEngineRocalHip(int sock_, Arguments * args_, const std::string clientName_, InfComCommand * cmd)
+InferenceEngineRocalHip::InferenceEngineRocalHip(int sock_, Arguments * args_, const std::string clientName_, InfComCommand * cmd, const std::string folderPath_)
                   :InferenceEngineHip(sock_, args_, clientName_, cmd),
                   hip_dev_prop{ nullptr }, hip_stream{ nullptr },
                   queueDeviceInputMemIdle{ nullptr }, queueDeviceInputMemBusy{ nullptr },
@@ -34,6 +34,7 @@ InferenceEngineRocalHip::InferenceEngineRocalHip(int sock_, Arguments * args_, c
     deviceLockSuccess = true;
     receiveFileNames = true;
     // useShadowFilenames = true;
+    folderPath = folderPath_;
 }
 
 InferenceEngineRocalHip::~InferenceEngineRocalHip()
@@ -329,14 +330,9 @@ int InferenceEngineRocalHip::run()
         if((status = rocalGetStatus(rocalHandle[gpu])) != ROCAL_OK)
             fatal("InferenceEngine: rocalCreate(#%d) failed (%d)", gpu, status);
 
-        //todo : folder path from user
-        const char * folderPathTmp = "/home/hansel/MIVisionX/MIVisionX/data/images/AMD-tinyDataSet";
-        // RocalImage input = rocalJpegFileSource(rocalHandle[gpu], folderPathTmp, RocalImageColor::ROCAL_COLOR_RGB24, 1, false, false);
-        RocalImage input = rocalJpegFileSourceSingleShard(rocalHandle[gpu], folderPathTmp, RocalImageColor::ROCAL_COLOR_RGB24, gpu, GPUs, false, false, loop);
-
-        rocalCreateLabelReader(rocalHandle[gpu], folderPathTmp);
-
-        RocalImage image1 = rocalResize(rocalHandle[gpu], input, 224, 224, true); //todo : resize w/h
+        // RocalImage input = rocalJpegFileSource(rocalHandle[gpu], folderPath.c_str(), RocalImageColor::ROCAL_COLOR_RGB24, 1, false, false);
+        RocalImage input = rocalJpegFileSourceSingleShard(rocalHandle[gpu], folderPath.c_str(), RocalImageColor::ROCAL_COLOR_RGB24, gpu, GPUs, false, false, loop);
+        RocalImage image1 = rocalResize(rocalHandle[gpu], input, dimInput[1], dimInput[0], true); //todo : resize w/h
 
         if(rocalGetStatus(rocalHandle[gpu]) != ROCAL_OK)
         {
@@ -834,6 +830,8 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
     args->lock();
     info("workDeviceInputCopy: GPU#%d started for %s", gpu, clientName.c_str());
     args->unlock();
+    
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     // create HIP stream
     hipStream_t stream;
@@ -872,41 +870,46 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
             preprocessMpy[1], preprocessMpy[2], preprocessAdd[0], preprocessAdd[1], preprocessAdd[2], reverseInputChannelOrder) != 0) {
             printf("workDeviceInputCopy: rocalCopyToOutputTensor() failed for gpu : [%d]", gpu);
         }
-
-        std::vector<std::vector<char>> names;
+        // // get image names
+        // int image_name_length[inputCount];
+        // int img_size = rocalGetImageNameLen(rocalHandle[gpu], image_name_length);
+        // char img_name[img_size];
+        // rocalGetImageName(rocalHandle[gpu], img_name);
+        // // printf("the rocal image name is %s\n", img_name);
+        // std::string str = img_name;
+        // std::vector<std::string> v;
+        // std::string delim = ".JPEG";
+        
+        // size_t pos = 0;
+        // while ((pos = str.find(delim)) != std::string::npos) {
+        //     v.push_back(str.substr(0, pos + delim.length()));
+        //     str.erase(0, pos + delim.length());
+        // }
+    
+        // for (std::string i : v) {
+        //     // if(fileNameMap.find(i) != fileNameMap.end())
+        //         // std::cout << i << " " << fileNameMap[i] << std::endl;
+        //     queueDeviceNameQ[gpu]->enqueue(i);
+        // }
+        std::vector<std::string> names;
         names.resize(inputCount);
 
-        int ImageNameLen[inputCount];
-        for(int i = 0; i < inputCount; i++)
-        {
-            names[i] = std::move(std::vector<char>(rocalGetImageNameLen(rocalHandle[gpu], ImageNameLen), '\n'));
-            rocalGetImageName(rocalHandle[gpu], names[i].data());
-            std::string id(names[i].begin(), names[i].end());
-            // std::cout << "name " << id << std::endl;
-        }
-        // get image names
         int image_name_length[inputCount];
-        int img_size = rocalGetImageNameLen(rocalHandle[gpu], image_name_length);
-        char img_name[img_size];
-        rocalGetImageName(rocalHandle[gpu], img_name);
-        // printf("the rocal image name is %s\n", img_name);
-        std::string str = img_name;
-        std::vector<std::string> v;
-        std::string delim = ".JPEG";
-        
-        size_t pos = 0;
-        while ((pos = str.find(delim)) != std::string::npos) {
-            v.push_back(str.substr(0, pos + delim.length()));
-            str.erase(0, pos + delim.length());
-        }
 
-        for (std::string i : v) {
-            if(fileNameMap.find(i) != fileNameMap.end())
-                std::cout << i << " " << fileNameMap[i] << std::endl;
-                queueDeviceNameQ[gpu]->enqueue(i);
+        int img_name_size = rocalGetImageNameLen(rocalHandle[gpu], image_name_length);
+        char img_names[img_name_size];
+        rocalGetImageName(rocalHandle[gpu], img_names);
+        std::string imageNamesStr(img_names);
+
+        int pos = 0;
+
+        for(int i = 0; i < inputCount; i++) {
+            names[i] = imageNamesStr.substr(pos, image_name_length[i]);
+            pos += image_name_length[i];
+            
+            queueDeviceNameQ[gpu]->enqueue(names[i]);
         }
-        // cv::imshow("1", colorMat);
-        // cv::waitKey(0);
+        
         if(rocalIsEmpty(rocalHandle[gpu])) {
             if(!loop) {
                 // rocalResetLoaders(rocalHandle[gpu]);

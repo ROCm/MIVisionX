@@ -15,7 +15,7 @@ inference_receiver::inference_receiver(
         int GPUs_, int * inputDim_, int * outputDim_, const char * runtimeOptions_,
         QVector<QByteArray> * imageBuffer_,
         runtime_receiver_status * progress_, int sendFileName_, int topKValue_,
-        QVector<QString> * shadowFileBuffer_, int decodeMode_,
+        QVector<QString> * shadowFileBuffer_, int decodeMode_,  QString dataFolder_,
         QObject *parent) : QObject(parent)
 {
     perfRate = 0;
@@ -36,6 +36,7 @@ inference_receiver::inference_receiver(
     sendFileName = sendFileName_;
     topKValue = topKValue_;
     decodeMode = decodeMode_;
+    dataFolder = dataFolder_;
     shadowFileBuffer = shadowFileBuffer_;
 }
 
@@ -112,6 +113,9 @@ void inference_receiver::run()
                     text += runtimeOptions;
                 }
                 strncpy(reply.message, text.toStdString().c_str(), sizeof(reply.message));
+
+                QString path = dataFolder;
+                strncpy(reply.path, path.toStdString().c_str(), sizeof(reply.path));
                 connection->sendCmd(reply);
             }
             else if(cmd.command == INFCOM_CMD_SEND_IMAGES) {

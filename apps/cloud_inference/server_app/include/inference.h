@@ -351,7 +351,7 @@ private:
 class InferenceEngineRocalHip:public InferenceEngineHip
 {
 public:
-    InferenceEngineRocalHip(int sock_, Arguments * args, const std::string clientName, InfComCommand * cmd);
+    InferenceEngineRocalHip(int sock_, Arguments * args, const std::string clientName, InfComCommand * cmd, const std::string folderPath);
     ~InferenceEngineRocalHip();
     int run();
 
@@ -393,6 +393,7 @@ private:
     int                 device_id[MAX_NUM_GPU];
     hipDeviceProp_t     *hip_dev_prop[MAX_NUM_GPU];
     hipStream_t         hip_stream[MAX_NUM_GPU];
+    std::string folderPath;
     std::unordered_map<std::string, int> fileNameMap;
 };
 #endif

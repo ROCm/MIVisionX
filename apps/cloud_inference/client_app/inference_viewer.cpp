@@ -154,7 +154,7 @@ void inference_viewer::startReceiver()
     state->receiver_worker = new inference_receiver(
                 state->serverHost, state->serverPort, state->modelName,
                 state->GPUs, state->inputDim, state->outputDim, INFCOM_RUNTIME_OPTIONS,
-                &state->imageBuffer, &progress, state->sendFileName, state->topKValue, &state->shadowFileBuffer, state->decodeMode);
+                &state->imageBuffer, &progress, state->sendFileName, state->topKValue, &state->shadowFileBuffer, state->decodeMode, state->dataFolder);
     state->receiver_worker->moveToThread(state->receiver_thread);
     connect(state->receiver_worker, SIGNAL (error(QString)), this, SLOT (errorString(QString)));
     connect(state->receiver_thread, SIGNAL (started()), state->receiver_worker, SLOT (run()));

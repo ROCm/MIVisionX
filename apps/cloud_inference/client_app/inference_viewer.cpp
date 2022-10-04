@@ -902,8 +902,12 @@ void inference_viewer::paintEvent(QPaintEvent *)
             if(state->sendFileName){
                 // extract only the last folder and filename for shadow
                 QStringList fileNameList = fileName.split("/");
-                // QString subFileName = fileNameList.at(fileNameList.size() - 2) + "/" + fileNameList.last();
-                QString subFileName = fileNameList.last();
+                QString subFileName;
+                if(decodeMode == 0)
+                    subFileName = fileNameList.at(fileNameList.size() - 2) + "/" + fileNameList.last();
+                else if(decodeMode == 1)  // for rocAL mode
+                    subFileName = fileNameList.last();
+                    
                 //printf("Inference viewer adding file %s to shadow array of size %d\n", subFileName.toStdString().c_str(), byteArray.size());
                 state->shadowFileBuffer.push_back(subFileName);
             }

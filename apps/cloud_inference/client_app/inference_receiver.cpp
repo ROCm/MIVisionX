@@ -52,7 +52,6 @@ void inference_receiver::getReceivedList(QVector<int>& indexQ, QVector<int>& lab
     while(imageIndex.length() > 0) {
         indexQ.push_back(imageIndex.front());
         labelQ.push_back(imageLabel.front());
-        // printf("pushinig index %d and label %d\n", imageIndex.front(), imageLabel.front());
         summaryQ.push_back(imageSummary.front());
         imageIndex.pop_front();
         imageLabel.pop_front();
@@ -136,7 +135,6 @@ void inference_receiver::run()
                     if (sendFileName) {
                         QByteArray fileNameBuffer;
                         fileNameBuffer.append((*shadowFileBuffer)[nextImageToSend]);
-                        // printf("filenabuffer %s\n", fileNameBuffer.toStdString().c_str());
                         if(!connection->sendImage(nextImageToSend, fileNameBuffer, progress->errorCode, progress->message, abortRequsted)) {
                             failed = true;
                             break;

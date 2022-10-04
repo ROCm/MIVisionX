@@ -19,9 +19,9 @@ int main(int argc, char *argv[])
     if(argv[1]) enable_repeat_images = atoi(argv[1]);
     QApplication a(argc, argv);
     inference_control control(enable_repeat_images);
-    // QSplashScreen splash;
-    // splash.setPixmap(QPixmap(":/images/inference_app_splash.png"));
-    // splash.show(); splashDelay(2000); splash.hide();
+    QSplashScreen splash;
+    splash.setPixmap(QPixmap(":/images/inference_app_splash.png"));
+    splash.show(); splashDelay(2000); splash.hide();
     control.setWindowIcon(QIcon(":/images/vega_icon_150.png"));
     control.show();
 

@@ -374,7 +374,6 @@ protected:
     MessageQueue<std::tuple<int,char *,int>> inputQ;
     // scheduler device queues
     MessageQueue<int>                    * queueDeviceTagQ[MAX_NUM_GPU];
-    MessageQueue<std::tuple<char *,int>> * queueDeviceImageQ[MAX_NUM_GPU];
     MessageQueue<std::string>            * queueDeviceNameQ[MAX_NUM_GPU];
 
     vx_context openvx_context[MAX_NUM_GPU];

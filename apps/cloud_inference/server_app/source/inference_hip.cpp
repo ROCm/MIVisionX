@@ -606,7 +606,7 @@ int InferenceEngineHip::run()
                     ERRCHK(recvBuffer(sock, &header, sizeof(header), clientName));
                     int tag = header[0];
                     int size = header[1];
-                    // printf("tag at %d\n", tag);
+
                     // do sanity check with unreasonable parameters
                     if(tag < 0 || size <= 0 || size > 50000000) {
                         return error_close(sock, "invalid (tag:%d,size:%d) from %s", tag, size, clientName.c_str());
@@ -997,7 +997,7 @@ void InferenceEngineHip::workDeviceOutputCopy(int gpu)
             // get next item from the tag queue and check for end of input
             int tag;
             queueDeviceTagQ[gpu]->dequeue(tag);
-            // printf("tag is %d\n", tag);
+
             if(tag < 0) {
                 endOfSequenceReached = true;
                 break;

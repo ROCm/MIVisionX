@@ -88,7 +88,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
         sprintf(modelName, "%s", saveModelAs.c_str());
     }
     else {
-        sprintf(modelName, "upload/model-%08d", 133);
+        sprintf(modelName, "upload/model-%08d", args->getNextModelUploadCounter());
     }
     std::string modelFolder = args->getConfigurationDir() + "/" + modelName;
     std::string buildFolder = modelFolder + "/build";

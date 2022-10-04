@@ -137,7 +137,7 @@ bool TcpConnection::sendImage(int tag, QByteArray& byteArray, int& errorCode, QS
     int pos = 0;
     while(!abortRequested && (pos < len)) {
         int pktSize = std::min(INFCOM_MAX_PACKET_SIZE, len-pos);
-        
+
         if(send(&buf[pos], pktSize) < 0) {
             errorCode = -1;
             message.sprintf("ERROR: sendImage: write(pkt:%d) failed after %d/%d bytes - tag:%d", pktSize, pos, len, tag);

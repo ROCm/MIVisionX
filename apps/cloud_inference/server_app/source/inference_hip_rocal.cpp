@@ -31,7 +31,7 @@ InferenceEngineRocalHip::InferenceEngineRocalHip(int sock_, Arguments * args_, c
 {
     device_id[MAX_NUM_GPU-1] = {-1};
     if(!args->lockGpuDevices(GPUs, device_id))
-    deviceLockSuccess = true;
+        deviceLockSuccess = true;
     receiveFileNames = true;
     // useShadowFilenames = true;
     folderPath = folderPath_;
@@ -476,7 +476,6 @@ int InferenceEngineRocalHip::run()
                             outputQ.dequeue(result);
                             int tag = std::get<0>(result);
                             int label = std::get<1>(result);
-                            // printf("the tag is! %d and %d\n", tag, label);
                             if(tag < 0) {
                                 endOfSequence = true;
                                 resultCount = i;
@@ -645,7 +644,6 @@ int InferenceEngineRocalHip::run()
                         std::string str(buff);
                         if(fileNameMap.find(str) == fileNameMap.end()) {
                             fileNameMap[str] = tag;
-                            // printf("file & tag %s and %d\n", str.c_str(), tag);
                         }
                         delete[] buff;
                     }

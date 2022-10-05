@@ -903,9 +903,9 @@ void inference_viewer::paintEvent(QPaintEvent *)
                 // extract only the last folder and filename for shadow
                 QStringList fileNameList = fileName.split("/");
                 QString subFileName;
-                if(decodeMode == 0)
+                if(state->decodeMode == 0)
                     subFileName = fileNameList.at(fileNameList.size() - 2) + "/" + fileNameList.last();
-                else if(decodeMode == 1)  // for rocAL mode
+                else if(state->decodeMode == 1)  // for rocAL mode
                     subFileName = fileNameList.last();
                     
                 //printf("Inference viewer adding file %s to shadow array of size %d\n", subFileName.toStdString().c_str(), byteArray.size());
@@ -1042,7 +1042,6 @@ void inference_viewer::paintEvent(QPaintEvent *)
     int numRows = (height() - imageY) / (ICON_STRIDE / 4);
     int imageCount = state->resultImageIndex.size();
     int imageRows = imageCount / numCols;
-    int imageCols = imageCount % numCols;
     if(state->resultImageIndex.size() > 0) {
         while(imageRows >= numRows) {
             state->resultImageIndex.erase(state->resultImageIndex.begin(), state->resultImageIndex.begin() + 4 * numCols);
@@ -1050,7 +1049,6 @@ void inference_viewer::paintEvent(QPaintEvent *)
             state->resultImageSummary.erase(state->resultImageSummary.begin(), state->resultImageSummary.begin() + 4 * numCols);
             imageCount = state->resultImageIndex.size();
             imageRows = imageCount / numCols;
-            imageCols = imageCount % numCols;
         }
         // get received image/rate
         float imagesPerSec = state->receiver_worker->getPerfImagesPerSecond();

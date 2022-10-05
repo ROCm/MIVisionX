@@ -27,32 +27,15 @@ InferenceEngineRocalHip::InferenceEngineRocalHip(int sock_, Arguments * args_, c
                   :InferenceEngineHip(sock_, args_, clientName_, cmd),
                   hip_dev_prop{ nullptr }, hip_stream{ nullptr },
                   queueDeviceInputMemIdle{ nullptr }, queueDeviceInputMemBusy{ nullptr },
-                  queueDeviceOutputMemIdle{ nullptr }, queueDeviceOutputMemBusy{ nullptr }
-{
+                  queueDeviceOutputMemIdle{ nullptr }, queueDeviceOutputMemBusy{ nullptr } {
     device_id[MAX_NUM_GPU-1] = {-1};
     if(!args->lockGpuDevices(GPUs, device_id))
         deviceLockSuccess = true;
     receiveFileNames = true;
-    // useShadowFilenames = true;
     folderPath = folderPath_;
 }
 
-InferenceEngineRocalHip::~InferenceEngineRocalHip()
-{
-#if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER && !DONOT_RUN_INFERENCE
-    if(openvx_graph) {
-        vxReleaseGraph(&openvx_graph);
-    }
-    if(openvx_input) {
-        vxReleaseTensor(&openvx_input);
-    }
-    if(openvx_output) {
-        vxReleaseTensor(&openvx_output);
-    }
-    if(openvx_context) {
-        vxReleaseContext(&openvx_context);
-    }
-#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
+InferenceEngineRocalHip::~InferenceEngineRocalHip() {
     // wait for all threads to complete and release all resources
     std::tuple<int,char*,int> endOfSequenceInput(-1,nullptr,0);
     inputQ.enqueue(endOfSequenceInput);
@@ -118,12 +101,15 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip()
             vxReleaseContext(&openvx_context[i]);
         }
         if(hip_stream[i]) {
-          if (hipStreamDestroy(hip_stream[i]) != hipSuccess)
-              error("hipStreamDestroy failed");
-          device_id[i] = -1;
+            if (hipStreamDestroy(hip_stream[i]) != hipSuccess)
+                error("hipStreamDestroy failed");
+            device_id[i] = -1;
+        }
+        if(rocalHandle[i]) {
+            if (rocalRelease(rocalHandle[i]) != ROCAL_OK)
+                error("rocalRelease failed");
         }
     }
-#endif
     // release all device resources
     if(deviceLockSuccess) {
         args->releaseGpuDevices(GPUs, device_id);
@@ -135,8 +121,7 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip()
     PROFILER_SHUTDOWN();
 }
 
-int InferenceEngineRocalHip::run()
-{
+int InferenceEngineRocalHip::run() {
     //////
     /// make device lock is successful
     ///
@@ -147,16 +132,14 @@ int InferenceEngineRocalHip::run()
     //////
     /// check if server and client are in the same mode for data
     ///
-    if (receiveFileNames && !useShadowFilenames)
-    {
+    if (receiveFileNames && !useShadowFilenames) {
         return error_close(sock, "client is sending filenames but server is not configured with shadow folder\n");
     }
 
     //////
     /// check if client is requesting topK which is not supported
     ///
-    if (topK > 5)
-    {
+    if (topK > 5) {
         return error_close(sock, "Number of topK confidances: %d not supported\n", topK);
     }
 
@@ -165,15 +148,15 @@ int InferenceEngineRocalHip::run()
     ///
     bool found = false;
     for(size_t i = 0; i < args->getNumConfigureddModels(); i++) {
-        std::tuple<std::string,int,int,int,int,int,int,int,float,float,float,float,float,float,std::string> info = args->getConfiguredModelInfo(i);
+        std::tuple<std::string,int,int,int,int,int,int,int,float,float,float,float,float,float,std::string> 
+            info = args->getConfiguredModelInfo(i);
         if(std::get<0>(info) == modelName &&
            std::get<1>(info) == dimInput[0] &&
            std::get<2>(info) == dimInput[1] &&
            std::get<3>(info) == dimInput[2] &&
            std::get<4>(info) == dimOutput[0] &&
            std::get<5>(info) == dimOutput[1] &&
-           std::get<6>(info) == dimOutput[2])
-        {
+           std::get<6>(info) == dimOutput[2]) {
             reverseInputChannelOrder = std::get<7>(info);
             preprocessMpy[0] = std::get<8>(info);
             preprocessMpy[1] = std::get<9>(info);
@@ -188,15 +171,15 @@ int InferenceEngineRocalHip::run()
     }
     if(!found) {
         for(size_t i = 0; i < args->getNumUploadedModels(); i++) {
-            std::tuple<std::string,int,int,int,int,int,int,int,float,float,float,float,float,float> info = args->getUploadedModelInfo(i);
+            std::tuple<std::string,int,int,int,int,int,int,int,float,float,float,float,float,float> 
+                info = args->getUploadedModelInfo(i);
             if(std::get<0>(info) == modelName &&
                std::get<1>(info) == dimInput[0] &&
                std::get<2>(info) == dimInput[1] &&
                std::get<3>(info) == dimInput[2] &&
                std::get<4>(info) == dimOutput[0] &&
                std::get<5>(info) == dimOutput[1] &&
-               std::get<6>(info) == dimOutput[2])
-            {
+               std::get<6>(info) == dimOutput[2]) {
                 reverseInputChannelOrder = std::get<7>(info);
                 preprocessMpy[0] = std::get<8>(info);
                 preprocessMpy[1] = std::get<9>(info);
@@ -253,39 +236,6 @@ int InferenceEngineRocalHip::run()
     ERRCHK(recvCommand(sock, updateCmd, clientName, INFCOM_CMD_INFERENCE_INITIALIZATION));
     info(updateCmd.message);
 
-#if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER
-#if DONOT_RUN_INFERENCE
-    info("InferenceEngine: using NO_INFERENCE_SCHEDULER and DONOT_RUN_INFERENCE");
-#else
-    { // create OpenVX resources
-        info("InferenceEngine: using NO_INFERENCE_SCHEDULER");
-        vx_status status;
-        openvx_context = vxCreateContext();
-        if((status = vxGetStatus((vx_reference)openvx_context)) != VX_SUCCESS)
-            fatal("InferenceEngine: vxCreateContext() failed (%d)", status);
-        vx_size idim[4] = { (vx_size)dimInput[0], (vx_size)dimInput[1], (vx_size)dimInput[2], (vx_size)batchSize };
-        vx_size odim[4] = { (vx_size)dimOutput[0], (vx_size)dimOutput[1], (vx_size)dimOutput[2], (vx_size)batchSize };
-        openvx_input = vxCreateTensor(openvx_context, 4, idim, VX_TYPE_FLOAT32, 0);
-        openvx_output = vxCreateTensor(openvx_context, 4, odim, VX_TYPE_FLOAT32, 0);
-        if((status = vxGetStatus((vx_reference)openvx_input)) != VX_SUCCESS)
-            fatal("InferenceEngine: vxCreateTensor(input) failed (%d)", status);
-        if((status = vxGetStatus((vx_reference)openvx_output)) != VX_SUCCESS)
-            fatal("InferenceEngine: vxCreateTensor(output) failed (%d)", status);
-        //////
-        // load the model
-        openvx_graph = annCreateGraph(openvx_context, openvx_input, openvx_output, modelPath.c_str());
-        if((status = vxGetStatus((vx_reference)openvx_graph)) != VX_SUCCESS)
-            fatal("InferenceEngine: annCreateGraph() failed (%d)", status);
-
-        // send and wait for INFCOM_CMD_INFERENCE_INITIALIZATION message
-        updateCmd.data[0] = 80;
-        sprintf(updateCmd.message, "completed OpenVX graph");
-        ERRCHK(sendCommand(sock, updateCmd, clientName));
-        ERRCHK(recvCommand(sock, updateCmd, clientName, INFCOM_CMD_INFERENCE_INITIALIZATION));
-        info(updateCmd.message);
-    }
-#endif
-#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
     info("InferenceEngine: using LIBRE_INFERENCE_SCHEDULER");
     //////
     /// allocate OpenVX and HIP resources
@@ -316,7 +266,7 @@ int InferenceEngineRocalHip::run()
                     VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE,
                     &hipDevice, sizeof(hipDevice)) != VX_SUCCESS))
                 fatal("vxSetContextAttribute for hipDevice(#%d, %d) failed ", hipDevice, status);
-        }else
+        } else
             fatal("ERROR: HIP Device(%d) out of range %d", gpu);
 
         // create rocAL Handle 
@@ -327,15 +277,13 @@ int InferenceEngineRocalHip::run()
         RocalImage input = rocalJpegFileSourceSingleShard(rocalHandle[gpu], folderPath.c_str(), RocalImageColor::ROCAL_COLOR_RGB24, gpu, GPUs, false, false, loop);
         RocalImage image1 = rocalResize(rocalHandle[gpu], input, dimInput[1], dimInput[0], true); //todo : resize w/h
 
-        if(rocalGetStatus(rocalHandle[gpu]) != ROCAL_OK)
-        {
+        if(rocalGetStatus(rocalHandle[gpu]) != ROCAL_OK) {
             std::cout << "JPEG source could not initialize : "<<rocalGetErrorMessage(rocalHandle[gpu]) << std::endl;
             return -1;
         }
 
         // Calling the API to verify and build the augmentation graph
-        if(rocalVerify(rocalHandle[gpu]) != ROCAL_OK)
-        {
+        if(rocalVerify(rocalHandle[gpu]) != ROCAL_OK) {
             std::cout << "Could not verify the rocAL graph" << std::endl;
             return -1;
         }
@@ -359,21 +307,17 @@ int InferenceEngineRocalHip::run()
         for(int i = 0; i < INFERENCE_PIPE_QUEUE_DEPTH; i++) {
             memInput = nullptr, hostmemI = nullptr, memOutput = nullptr, hostmemO = nullptr;
             hipError_t err = hipHostMalloc((void **)&hostmemI, inputSizeInBytes, hipHostMallocDefault);
-            if(err != hipSuccess || !hostmemI)
-            {
+            if(err != hipSuccess || !hostmemI) {
                 fatal("InferenceEngine:hipHostMalloc of size of size %d failed<%d>", inputSizeInBytes, err);
             }
-            if (hipHostGetDevicePointer((void **)&memInput, hostmemI, 0)  != hipSuccess)
-            {
+            if (hipHostGetDevicePointer((void **)&memInput, hostmemI, 0)  != hipSuccess) {
                 fatal("InferenceEngine:hipHostGetDevicePointer of size %d failed \n", inputSizeInBytes);
             }
             err = hipHostMalloc((void **)&hostmemO, outputSizeInBytes, hipHostMallocDefault);
-            if(err != hipSuccess || !hostmemO)
-            {
+            if(err != hipSuccess || !hostmemO) {
                 fatal("InferenceEngine:hipHostMalloc of size of size %d failed<%d>", outputSizeInBytes, err);
             }
-            if (hipHostGetDevicePointer((void **)&memOutput, hostmemO, 0)  != hipSuccess)
-            {
+            if (hipHostGetDevicePointer((void **)&memOutput, hostmemO, 0)  != hipSuccess) {
                 fatal("InferenceEngine:hipHostGetDevicePointer of size %d failed \n", outputSizeInBytes);
             }
             queueDeviceInputMemIdle[gpu]->enqueue(std::make_pair(memInput, hostmemI));
@@ -430,21 +374,16 @@ int InferenceEngineRocalHip::run()
         ERRCHK(recvCommand(sock, updateCmd, clientName, INFCOM_CMD_INFERENCE_INITIALIZATION));
         info(updateCmd.message);
     }
-#endif
 
     //////
     /// start scheduler threads
     ///
-#if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER
-    // nothing to do
-#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
     threadMasterInputQ = new std::thread(&InferenceEngineRocalHip::workMasterInputQ, this);
     for(int gpu = 0; gpu < GPUs; gpu++) {
         threadDeviceInputCopy[gpu] = new std::thread(&InferenceEngineRocalHip::workDeviceInputCopy, this, gpu);
         threadDeviceProcess[gpu] = new std::thread(&InferenceEngineRocalHip::workDeviceProcess, this, gpu);
         threadDeviceOutputCopy[gpu] = new std::thread(&InferenceEngineRocalHip::workDeviceOutputCopy, this, gpu);
     }
-#endif
 
     // send and wait for INFCOM_CMD_INFERENCE_INITIALIZATION message
     updateCmd.data[0] = 100;
@@ -493,7 +432,7 @@ int InferenceEngineRocalHip::run()
                         if(endOfSequence) {
                             break;
                         }
-                    }else {
+                    } else {
                         // send topK labels
                         int maxResults = INFCOM_MAX_IMAGES_FOR_TOP1_PER_PACKET/(topK+1);
                         int resultCount = std::min(resultCountAvailable, maxResults);
@@ -527,8 +466,7 @@ int InferenceEngineRocalHip::run()
                             break;
                         }
                     }
-                }else
-                {
+                } else {
                     // Dequeue the bounding box
                     std::tuple<int,int> result;
                     std::vector<ObjectBB> bounding_boxes;
@@ -539,8 +477,7 @@ int InferenceEngineRocalHip::run()
                         endOfSequence = true;
                         resultCountAvailable--;
                         break;
-                    }else
-                    {
+                    } else {
                         int numBB = 0;
                         int numMessages = 0;
                         if (label >= 0) {
@@ -555,8 +492,7 @@ int InferenceEngineRocalHip::run()
                             };
                             ERRCHK(sendCommand(sock, cmd, clientName));
                             ERRCHK(recvCommand(sock, cmd, clientName, INFCOM_CMD_BB_INFERENCE_RESULT));
-                        } else
-                        {
+                        } else {
                             ObjectBB *pObj= &bounding_boxes[0];
                             for (int i=0, j=0; (i < numMessages && j < numBB); i++) {
                                 int numBB_per_message = std::min((numBB-j), 3);
@@ -598,12 +534,7 @@ int InferenceEngineRocalHip::run()
         // if not endOfImageRequested, request client to send images
         if(!endOfImageRequested) {
             // get number of empty slots in the input queue
-            int imageCountRequested = 0;
-#if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER
-            imageCountRequested = 1;
-#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
-            imageCountRequested = MAX_INPUT_QUEUE_DEPTH - inputQ.size();
-#endif
+            int imageCountRequested = MAX_INPUT_QUEUE_DEPTH - inputQ.size();
             if(imageCountRequested > 0) {
                 didSomething = true;
                 // send request for upto INFCOM_MAX_IMAGES_PER_PACKET images
@@ -618,11 +549,7 @@ int InferenceEngineRocalHip::run()
                 int imageCountReceived = cmd.data[0];
                 if(imageCountReceived < 0) {
                     // submit the endOfSequence indicator to scheduler
-#if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER
-                    endOfSequence = true;
-#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
                     inputQ.enqueue(std::tuple<int,char*,int>(-1,nullptr,0));
-#endif
                     endOfImageRequested = true;
                 }
                 int i = 0;
@@ -637,18 +564,16 @@ int InferenceEngineRocalHip::run()
                         return error_close(sock, "invalid (tag:%d,size:%d) from %s", tag, size, clientName.c_str());
                     }
                     char * byteStream;
-                    if (receiveFileNames)
-                    {
+                    if (receiveFileNames) {
                         char * buff = new char [size];
-                        ERRCHK(recvBuffer(sock, buff, size, clientName)); //remove redundancy
+                        ERRCHK(recvBuffer(sock, buff, size, clientName));
                         std::string str(buff);
                         if(fileNameMap.find(str) == fileNameMap.end()) {
                             fileNameMap[str] = tag;
                         }
                         delete[] buff;
                     }
-                    else
-                    {
+                    else {
                         // allocate and receive the image and EOF market
                         byteStream = new char [size];
                         ERRCHK(recvBuffer(sock, byteStream, size, clientName));
@@ -659,62 +584,8 @@ int InferenceEngineRocalHip::run()
                         return error_close(sock, "eofMarker 0x%08x (incorrect)", eofMarker);
                     }
 
-#if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER
-#if DONOT_RUN_INFERENCE
-                    // consume the input immediately since there is no scheduler
-                    // simulate the input (tag,byteStream,size) processing using a 4ms sleep
-                    int label = tag % dimOutput[2];
-                    std::this_thread::sleep_for(std::chrono::milliseconds(4));
-                    // release byteStream and keep the results in outputQ
-                    delete[] byteStream;
-                    outputQ.enqueue(std::tuple<int,int>(tag,label));
-#else
-                    // process the input immediately since there is no scheduler
-                    // decode, scale, and format convert into the OpenVX input buffer
-                    vx_map_id map_id;
-                    vx_size stride[4];
-                    float * ptr = nullptr;
-                    vx_status status;
-                    status = vxMapTensorPatch(openvx_input, 4, NULL, NULL, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-                    if(status != VX_SUCCESS) {
-                        fatal("workDeviceProcess: vxMapTensorPatch(input)) failed(%d)", status);
-                    }
-                    DecodeScaleAndConvertToTensor(dimInput[0], dimInput[1], size, (unsigned char *)byteStream, ptr, useFp16);
-                    status = vxUnmapTensorPatch(openvx_input, map_id);
-                    if(status != VX_SUCCESS) {
-                        fatal("workDeviceProcess: vxUnmapTensorPatch(input)) failed(%d)", status);
-                    }
-                    // process the graph
-                    status = vxProcessGraph(openvx_graph);
-                    if(status != VX_SUCCESS) {
-                        fatal("workDeviceProcess: vxProcessGraph()) failed(%d)", status);
-                    }
-                    ptr = nullptr;
-                    status = vxMapTensorPatch(openvx_output, 4, NULL, NULL, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-                    if(status != VX_SUCCESS) {
-                        fatal("workDeviceProcess: vxMapTensorPatch(output)) failed(%d)", status);
-                    }
-                    int label = 0;
-                    float max_prob = ptr[0];
-                    for(int c = 1; c < dimOutput[2]; c++) {
-                        float prob = ptr[c];
-                        if(prob > max_prob) {
-                            label = c;
-                            max_prob = prob;
-                        }
-                    }
-                    status = vxUnmapTensorPatch(openvx_output, map_id);
-                    if(status != VX_SUCCESS) {
-                        fatal("workDeviceProcess: vxUnmapTensorPatch(output)) failed(%d)", status);
-                    }
-                    // release byteStream and keep the results in outputQ
-                    delete[] byteStream;
-                    outputQ.enqueue(std::tuple<int,int>(tag,label));
-#endif
-#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
                     // submit the input (tag,byteStream,size) to scheduler
                     inputQ.enqueue(std::tuple<int,char*,int>(tag,byteStream,size));
-#endif
                 }
             }
         }
@@ -736,9 +607,7 @@ int InferenceEngineRocalHip::run()
     return 0;
 }
 
-#if INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
-void InferenceEngineRocalHip::workMasterInputQ()
-{
+void InferenceEngineRocalHip::workMasterInputQ() {
     args->lock();
     info("workMasterInputQ: started for %s", clientName.c_str());
     args->unlock();
@@ -780,9 +649,7 @@ void InferenceEngineRocalHip::workMasterInputQ()
     // send endOfSequence indicator to all scheduler threads
     for(int i = 0; i < GPUs; i++) {
         int endOfSequenceTag = -1;
-        // std::tuple<char*,int> endOfSequenceImage(nullptr,0);
         queueDeviceTagQ[i]->enqueue(endOfSequenceTag);
-        // queueDeviceImageQ[i]->enqueue(endOfSequenceImage);
         queueDeviceNameQ[i]->enqueue("");
     }
     args->lock();
@@ -846,7 +713,6 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
         for(int i = 0; i < inputCount; i++) {
             names[i] = imageNamesStr.substr(pos, image_name_length[i]);
             pos += image_name_length[i];
-            
             queueDeviceNameQ[gpu]->enqueue(names[i]);
         }
         
@@ -885,8 +751,7 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
     args->unlock();
 }
 
-void InferenceEngineRocalHip::workDeviceProcess(int gpu)
-{
+void InferenceEngineRocalHip::workDeviceProcess(int gpu) {
     args->lock();
     info("workDeviceProcess: GPU#%d started for %s", gpu, clientName.c_str());
     args->unlock();
@@ -915,17 +780,12 @@ void InferenceEngineRocalHip::workDeviceProcess(int gpu)
         if(status != VX_SUCCESS) {
             fatal("workDeviceProcess: vxSwapTensorHandle(output#%d) failed(%d)", gpu, status);
         }
-#if !DONOT_RUN_INFERENCE
         PROFILER_START(inference_server_app, workDeviceProcess);
         status = vxProcessGraph(openvx_graph[gpu]);
         PROFILER_STOP(inference_server_app, workDeviceProcess);
         if(status != VX_SUCCESS) {
             fatal("workDeviceProcess: vxProcessGraph(#%d) failed(%d)", gpu, status);
         }
-#else
-        info("InferenceEngine:workDeviceProcess DONOT_RUN_INFERENCE mode");
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));  // simulate some work
-#endif
         // add the input for idle queue and output to busy queue
         queueDeviceInputMemIdle[gpu]->enqueue(input);
         queueDeviceOutputMemBusy[gpu]->enqueue(output);
@@ -941,8 +801,7 @@ void InferenceEngineRocalHip::workDeviceProcess(int gpu)
     args->unlock();
 }
 
-void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu)
-{
+void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu) {
     args->lock();
     info("workDeviceOutputCopy: GPU#%d started for %s", gpu, clientName.c_str());
     args->unlock();
@@ -993,9 +852,8 @@ void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu)
             else
                 buf = (unsigned short *)host_ptr + dimOutput[0] * dimOutput[1] * dimOutput[2] * outputCount;
 
-            if (!detectBoundingBoxes)
-            {
-                if (topK < 1){
+            if (!detectBoundingBoxes) {
+                if (topK < 1) {
                     int label = 0;
                     if (!useFp16) {
                         float *out = (float *)buf;
@@ -1019,7 +877,7 @@ void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu)
                         }
                     }
                     outputQ.enqueue(std::tuple<int,int>(tag,label));
-                }else {
+                } else {
                     // todo:: add support for fp16
                     std::vector<float>  prob_vec((float*)buf, (float*)buf + dimOutput[2]);
                     std::vector<size_t> idx(prob_vec.size());
@@ -1036,8 +894,7 @@ void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu)
                     }
                     outputQTopk.enqueue(labels);
                 }
-            }else
-            {
+            }else {
                 std::vector<ObjectBB> detected_objects;
                 region->GetObjectDetections((float *)buf, BB_biases, dimOutput[2], dimOutput[1], dimOutput[0], BOUNDING_BOX_NUMBER_OF_CLASSES, dimInput[0], dimInput[1], BOUNDING_BOX_CONFIDENCE_THRESHHOLD, BOUNDING_BOX_NMS_THRESHHOLD, 13, detected_objects);
                 if (detected_objects.size() > 0) {
@@ -1073,20 +930,6 @@ void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu)
     args->lock();
     info("workDeviceOutputCopy: GPU#%d terminated for %s [processed %d batches, %d images]", gpu, clientName.c_str(), totalBatchCounter, totalImageCounter);
     args->unlock();
-}
-#endif
-
-void InferenceEngineRocalHip::dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName)
-{
-    void *host_ptr = nullptr;
-    hipError_t err = hipMemcpyDtoH(mem, host_ptr, size);
-    if(err) return;
-    FILE * fp = fopen(fileName.c_str(), "wb");
-    if (fp) {
-      fwrite(host_ptr, 1, size, fp);
-      fclose(fp);
-    }
-    printf("OK: dumped %lu bytes into %s\n", size, fileName.c_str());
 }
 
 #endif

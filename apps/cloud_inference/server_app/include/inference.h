@@ -357,19 +357,10 @@ public:
 
 protected:
 
-#if INFERENCE_SCHEDULER_MODE == NO_INFERENCE_SCHEDULER && !DONOT_RUN_INFERENCE
-    // OpenVX resources
-    vx_context openvx_context;
-    vx_tensor openvx_input;
-    vx_tensor openvx_output;
-    vx_graph openvx_graph;
-
-#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
     virtual void workMasterInputQ();
     virtual void workDeviceInputCopy(int gpu);
     virtual void workDeviceProcess(int gpu);
     virtual void workDeviceOutputCopy(int gpu);
-#endif
 
     MessageQueue<std::tuple<int,char *,int>> inputQ;
     // scheduler device queues
@@ -383,7 +374,6 @@ protected:
     RocalContext rocalHandle[MAX_NUM_GPU];
 
 private:
-    void dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName);
     MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemIdle[MAX_NUM_GPU];
     MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemBusy[MAX_NUM_GPU];
     MessageQueue<std::pair<void *, void *>>       * queueDeviceOutputMemIdle[MAX_NUM_GPU];

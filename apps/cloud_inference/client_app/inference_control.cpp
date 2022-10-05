@@ -865,7 +865,7 @@ void inference_control::runConnection()
             InfComCommand reply = {
                 INFCOM_MAGIC, INFCOM_CMD_SEND_MODE,
                 { INFCOM_MODE_CONFIGURE },
-                { 0 }
+                { 0 }, { 0 }
             };
             connection->sendCmd(reply);
         }
@@ -1054,9 +1054,7 @@ void inference_control::runInference()
     display_panel->setWindowIcon(QIcon(":/images/vega_icon_150.png"));
     //display_panel->show();
 
-    if(decodeMode == 1) { // rocAL decode only suports sendFileName mode
-        sendFileName = 1;
-    }
+    sendFileName = (decodeMode == 1); // rocAL decode only suports sendFileName mode
     
     inference_viewer * viewer = new inference_viewer(
                 editServerHost->text(), editServerPort->text().toInt(), modelName,

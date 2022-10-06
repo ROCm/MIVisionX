@@ -1,31 +1,6 @@
 from argparse import ArgumentParser
 import random
 
-# adds mutually exclusive "--name" and "--no-name" command line arguments, with
-# the result stored in a variable named "name" (with any dashes in "name"
-# replaced by underscores)
-# inspired by https://stackoverflow.com/a/31347222/2209313
-def add_bool_arg(group, name, default=False, help=''):
-    subgroup = group.add_mutually_exclusive_group(required=False)
-    name_with_underscore = name.replace('-', '_').replace(' ', '_')
-
-    truehelp = help
-    falsehelp = help
-    if help != '':
-        falsehelp = 'do not ' + falsehelp
-    if default is True:
-        if truehelp != '':
-            truehelp = truehelp + ' '
-        truehelp = truehelp + '(default)'
-    else:
-        if falsehelp != '':
-            falsehelp = falsehelp + ' '
-        falsehelp = falsehelp + '(default)'
-
-    subgroup.add_argument('--' + name, dest=name_with_underscore, action='store_true', help=truehelp)
-    subgroup.add_argument('--no-' + name, dest=name_with_underscore, action='store_false', help=falsehelp)
-    group.set_defaults(**{name_with_underscore:default})
-
 def parse_args():
     parser = ArgumentParser(description="Train Single Shot MultiBox Detector"
                                         " on COCO")
@@ -36,14 +11,17 @@ def parse_args():
                         help='image folder files')
     common_group.add_argument('--batch-size', '-b', type=int, default=10,
                         help='number of examples for each iteration')
-    add_bool_arg(common_group, 'display', default=True)
-    add_bool_arg(common_group, 'print_tensor', default=True)
-    add_bool_arg(common_group, 'classification', default=True)  # use --classification for Classification / --no-classification for Detection
-    add_bool_arg(common_group,'rocal-gpu', default=True)
-
-    common_group.add_argument('--NHWC', action='store_true',
+    common_group.add_argument('--display', default=False, action="store_true",
+                        help='--display:to display output from the pipeline')
+    common_group.add_argument('--print_tensor', default=False, action="store_true",
+                        help='--print_tensor: to print tensor output from the pipeline')
+    common_group.add_argument('--classification', default=False, action="store_true",
+                        help='--classification: to use for classification')
+    common_group.add_argument('--rocal-gpu', default=False, action="store_true",
+                        help='--use_gpu to use gpu')
+    common_group.add_argument('--NHWC', default=False, action='store_true',
                         help='run input pipeline NHWC format')
-    common_group.add_argument('--fp16', action='store_true',
+    common_group.add_argument('--fp16', default=False, action='store_true',
                         help='run input pipeline fp16 format')
     common_group.add_argument('--local-rank', type=int, default=0,
                         help='number of examples for each iteration')

@@ -4,12 +4,12 @@ from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
 import amd.rocal.fn as fn
 import os
+import cv2
 from parse_config import parse_args
 
 
 def draw_patches(img, idx):
-    #image is expected as a tensor, bboxes as numpy
-    import cv2
+    #image is expected as a tensor, bboxes as numpy array
     args = parse_args()
     if args.rocal_gpu:
         image = img.cpu().numpy()
@@ -104,13 +104,8 @@ def main():
                     cnt = cnt + 1
                     draw_patches(image_batch[element], cnt)
             data_loader.reset()
-    print('Finished Training')
-    print('Finished !!')
-
-
-
-    print("###############################################    CAFFE READER (CLASSIFCATION/ DETECTION)    ###############################################")
-    print("###############################################    SUCCESS                                    ###############################################")
+    print('Finished Training !!')
+    print("###############################################    CAFFE READER (CLASSIFCATION/ DETECTION)  SUCCESS  ###############################################")
 
 if __name__ == '__main__':
     main()

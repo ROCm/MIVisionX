@@ -27,9 +27,9 @@ def main():
     args = parse_args()
     # Args
     image_path = args.image_dataset_path
-    _rocal_cpu = False if args.rocal_gpu else True
+    _rocal_cpu = (args.rocal_gpu != True)
     batch_size = args.batch_size
-    _rocal_bbox = False if args.classification else True
+    _rocal_bbox = (args.classification == False)
     num_threads = args.num_threads
     local_rank =  args.local_rank
     world_size =  args.world_size

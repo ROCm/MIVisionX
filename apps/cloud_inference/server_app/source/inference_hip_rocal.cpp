@@ -48,8 +48,8 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
         if(queueDeviceTagQ[i]) {
             queueDeviceTagQ[i]->enqueue(endOfSequenceTag);
         }
-        if(queueDeviceNameQ[i]) {
-            queueDeviceNameQ[i]->enqueue("");
+        if(queueDeviceImageQ[i]) {
+            queueDeviceImageQ[i]->enqueue(endOfSequenceImage);
         }
         if(threadDeviceInputCopy[i] && threadDeviceInputCopy[i]->joinable()) {
             threadDeviceInputCopy[i]->join();
@@ -72,6 +72,9 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
         }
         if(queueDeviceTagQ[i]) {
             delete queueDeviceTagQ[i];
+        }
+        if(queueDeviceImageQ[i]) {
+            delete queueDeviceImageQ[i];
         }
         if(queueDeviceNameQ[i]) {
             delete queueDeviceNameQ[i];
@@ -291,10 +294,12 @@ int InferenceEngineRocalHip::run() {
         // create scheduler device queues
 #if  USE_ADVANCED_MESSAGE_Q
         queueDeviceTagQ[gpu] = new MessageQueueAdvanced<int>(MAX_DEVICE_QUEUE_DEPTH);
+        queueDeviceImageQ[gpu] = new MessageQueueAdvanced<std::tuple<char*,int>>(MAX_INPUT_QUEUE_DEPTH);
         queueDeviceNameQ[gpu] = new MessageQueueAdvanced<std::string>(MAX_DEVICE_QUEUE_DEPTH);
 #else
         queueDeviceTagQ[gpu] = new MessageQueue<int>();
         queueDeviceTagQ[gpu]->setMaxQueueDepth(MAX_DEVICE_QUEUE_DEPTH);
+        queueDeviceImageQ[gpu] = new MessageQueue<std::tuple<char*,int>>();
         queueDeviceNameQ[gpu] = new MessageQueue<std::string>();
 #endif
         queueDeviceInputMemIdle[gpu] = new MessageQueue<std::pair<void *, void *>>();
@@ -630,7 +635,9 @@ void InferenceEngineRocalHip::workMasterInputQ() {
         totalInputCount++;
 
         // add the image to selected deviceQ
+        std::tuple<char*,int> image(byteStream,size);
         queueDeviceTagQ[gpu]->enqueue(tag);
+        queueDeviceImageQ[gpu]->enqueue(image);
         PROFILER_STOP(inference_server_app, workMasterInputQ);
 
         // at the end of Batch pick another device
@@ -649,8 +656,9 @@ void InferenceEngineRocalHip::workMasterInputQ() {
     // send endOfSequence indicator to all scheduler threads
     for(int i = 0; i < GPUs; i++) {
         int endOfSequenceTag = -1;
+        std::tuple<char*,int> endOfSequenceImage(nullptr,0);
         queueDeviceTagQ[i]->enqueue(endOfSequenceTag);
-        queueDeviceNameQ[i]->enqueue("");
+        queueDeviceImageQ[i]->enqueue(endOfSequenceImage);
     }
     args->lock();
     info("workMasterInputQ: terminated for %s [scheduled %d images]", clientName.c_str(), totalInputCount);
@@ -683,13 +691,24 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
         if(mapped_ptr == nullptr) {
             fatal("workDeviceInputCopy: unexpected nullptr in queueDeviceInputMemIdle[%d] mapped_ptr", gpu);
         }
+        
         int rem_images = rocalGetRemainingImages(rocalHandle[gpu]);
         int inputCount = rem_images < batchSize ? rem_images : batchSize;
 
+        for(int i=0; i < inputCount; i++) {
+            // get next item from the input queue and check for end of input
+            std::tuple<char*,int> image;
+            queueDeviceImageQ[gpu]->dequeue(image);
+            int size = std::get<1>(image);
+            if(size == 0) {
+                endOfSequenceReached = true;
+                break;
+            }
+        }
+        
         // decode and resize using rocAL
         if(rocalRun(rocalHandle[gpu]) != 0) {
-            printf("workDeviceInputCopy: rocalRun() failed for gpu : [%d]", gpu);
-            break;
+            fatal("workDeviceInputCopy: rocalRun() failed for gpu : [%d]", gpu);
         }
         
         RocalTensorOutputType tensor_output_type = useFp16 ? RocalTensorOutputType::ROCAL_FP16 : RocalTensorOutputType::ROCAL_FP32;
@@ -697,7 +716,7 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
         
         if(rocalCopyToOutputTensor(rocalHandle[gpu], mapped_ptr, tensor_format, tensor_output_type, preprocessMpy[0],
             preprocessMpy[1], preprocessMpy[2], preprocessAdd[0], preprocessAdd[1], preprocessAdd[2], reverseInputChannelOrder) != 0) {
-            printf("workDeviceInputCopy: rocalCopyToOutputTensor() failed for gpu : [%d]", gpu);
+            fatal("workDeviceInputCopy: rocalCopyToOutputTensor() failed for gpu : [%d]", gpu);
         }
         
         std::vector<std::string> names;
@@ -745,7 +764,6 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
     // add the endOfSequenceMarker to next stage
     void* endOfSequenceMarker = nullptr;
     queueDeviceInputMemBusy[gpu]->enqueue(std::make_pair(endOfSequenceMarker, endOfSequenceMarker));
-
     args->lock();
     info("workDeviceInputCopy: GPU#%d terminated for %s [processed %d batches, %d images]", gpu, clientName.c_str(), totalBatchCounter, totalImageCounter);
     args->unlock();
@@ -837,10 +855,6 @@ void InferenceEngineRocalHip::workDeviceOutputCopy(int gpu) {
             }
             std::string fileName;
             queueDeviceNameQ[gpu]->dequeue(fileName);
-            if(fileName == "") {
-                endOfSequenceReached = true;
-                break;
-            }
             if(fileNameMap.find(fileName) != fileNameMap.end()) {
                 tag = fileNameMap[fileName];
             }

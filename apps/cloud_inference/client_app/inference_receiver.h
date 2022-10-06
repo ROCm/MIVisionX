@@ -50,7 +50,7 @@ public slots:
     void run();
 
 private:
-    static bool abortRequsted;
+    static bool abortRequested;
 
 private:
     std::mutex mutex;

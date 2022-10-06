@@ -83,7 +83,6 @@ void inference_receiver::run()
         int nextImageToSend = 0;
         InfComCommand cmd;
         while(!abortRequested && connection->recvCmd(cmd)) {
-        {
             if(abortRequested)
                 break;
             if(cmd.magic != INFCOM_MAGIC) {
@@ -234,7 +233,6 @@ void inference_receiver::run()
                 break;
             }
         }
-    }
     }
     else {
         progress->errorCode = -1;

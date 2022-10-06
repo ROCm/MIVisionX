@@ -168,17 +168,13 @@ void inference_viewer::startReceiver()
 void inference_viewer::terminate()
 {
     if(state->receiver_worker && !progress.completed && !progress.errorCode) {
-        printf("aborting reciever...");
         state->receiver_worker->abort();
-        printf("aborting reciever done");
         for(int count = 0; count < 10 && !progress.completed; count++) {
             QThread::msleep(100);
         }
-        printf("sleeping done");
     }
     state->performance.closePerformanceView();
     state->chart.closeChartView();
-    printf("closing done");
     close();
 }
 

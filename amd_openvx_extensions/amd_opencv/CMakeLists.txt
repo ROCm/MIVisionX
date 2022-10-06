@@ -126,4 +126,4 @@ else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
 endif()
 
-message("-- ${White}vx_opencv -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}vx_opencv -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

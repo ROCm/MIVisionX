@@ -60,7 +60,7 @@ def main():
 
         if augmentation_name == "resize":
             output = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300, 
-                               scaling_mode=types.SCALING_MODE_NOT_SMALLER, interpolation_type=types.LINEAR_INTERPOLATION)
+                               scaling_mode=types.SCALING_MODE_NOT_SMALLER, interpolation_type=types.TRIANGULAR_INTERPOLATION)
         elif augmentation_name == "rotate":
             output = fn.rotate(images)
         elif augmentation_name == "brightness":

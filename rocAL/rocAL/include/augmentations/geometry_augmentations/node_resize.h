@@ -33,7 +33,7 @@ public:
     vx_array get_src_width() { return _src_roi_width; }
     vx_array get_src_height() { return _src_roi_height; }
     void init(unsigned dest_width, unsigned dest_height, RocalResizeScalingMode scaling_mode,
-              std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type);
+              const std::vector<unsigned>& max_size, RocalResizeInterpolationType interpolation_type);
     void adjust_out_roi_size();
 protected:
     void create_node() override;

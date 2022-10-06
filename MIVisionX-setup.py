@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.3.7"
+__version__ = "2.3.8"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -69,6 +69,10 @@ rocalInstall = args.rocal
 reinstall = args.reinstall
 backend = args.backend
 ROCM_PATH = args.rocm_path
+
+if "ROCM_PATH" in os.environ:
+    ROCM_PATH = os.environ.get('ROCM_PATH')
+print("\nROCm PATH set to -- "+ROCM_PATH+"\n")
 
 if ffmpegInstall not in ('no', 'yes'):
     print(

@@ -27,11 +27,11 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 
 find_package(AMDRPP    REQUIRED)
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
-    find_package(OpenCL    QUIET)
+    find_package(OpenCL REQUIRED)
 elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     SET(OpenCL_FOUND FALSE)
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
-    find_package(HIP QUIET REQUIRED)
+    find_package(HIP REQUIRED)
 endif()
 
 include_directories(../../amd_openvx/openvx/include/
@@ -167,4 +167,4 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
 endif()
 
-message("-- ${White}vx_rpp -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}vx_rpp -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

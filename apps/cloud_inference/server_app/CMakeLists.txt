@@ -130,7 +130,7 @@ else()
 endif()
 
 # rocAL Support
-include_directories(${ROCM_PATH}/libexec/mivisionx/rali/python/)
+include_directories(${ROCM_PATH}/include/mivisionx/rocal)
 link_directories(${ROCM_PATH}/lib/)
 target_link_libraries(${PROJECT_NAME} rocal)
 

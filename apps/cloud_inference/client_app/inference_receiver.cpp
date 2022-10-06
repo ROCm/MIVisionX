@@ -3,11 +3,11 @@
 #include <iostream>
 #include <QThread>
 
-bool inference_receiver::abortRequsted = false;
+bool inference_receiver::abortRequested = false;
 
 void inference_receiver::abort()
 {
-    abortRequsted = true;
+    abortRequested = true;
 }
 
 inference_receiver::inference_receiver(
@@ -82,9 +82,9 @@ void inference_receiver::run()
     if(connection->connected()) {
         int nextImageToSend = 0;
         InfComCommand cmd;
-        while(!abortRequsted && connection->recvCmd(cmd)) {
+        while(!abortRequested && connection->recvCmd(cmd)) {
         {
-            if(abortRequsted)
+            if(abortRequested)
                 break;
             if(cmd.magic != INFCOM_MAGIC) {
                 progress->errorCode = -1;
@@ -135,12 +135,12 @@ void inference_receiver::run()
                     if (sendFileName) {
                         QByteArray fileNameBuffer;
                         fileNameBuffer.append((*shadowFileBuffer)[nextImageToSend]);
-                        if(!connection->sendImage(nextImageToSend, fileNameBuffer, progress->errorCode, progress->message, abortRequsted)) {
+                        if(!connection->sendImage(nextImageToSend, fileNameBuffer, progress->errorCode, progress->message, abortRequested)) {
                             failed = true;
                             break;
                         }
                     }
-                    else if(!connection->sendImage(nextImageToSend, (*imageBuffer)[nextImageToSend], progress->errorCode, progress->message, abortRequsted)) {
+                    else if(!connection->sendImage(nextImageToSend, (*imageBuffer)[nextImageToSend], progress->errorCode, progress->message, abortRequested)) {
                         failed = true;
                         break;
                     }
@@ -241,7 +241,7 @@ void inference_receiver::run()
         progress->message.sprintf("ERROR: Unable to connect to %s:%d", serverHost.toStdString().c_str(), serverPort);
     }
 
-    if(abortRequsted)
+    if(abortRequested)
         progress->message += "[stopped]";
     connection->close();
     delete connection;

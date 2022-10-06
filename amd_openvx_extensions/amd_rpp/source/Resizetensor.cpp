@@ -184,29 +184,9 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     vx_df_image df_image = VX_DF_IMAGE_VIRT;
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
     uint ip_channel = (df_image == VX_DF_IMAGE_RGB) ? 3 : 1;
-
-    // Set interpolation type
-    switch(interpolation_type)
-    {
-        case 0:
-            data->interpolation_type = RpptInterpolationType::NEAREST_NEIGHBOR;
-            break;
-        case 1:
-            data->interpolation_type = RpptInterpolationType::BILINEAR;
-            break;
-        case 2:
-            data->interpolation_type = RpptInterpolationType::BICUBIC;
-            break;
-        case 3:
-            data->interpolation_type = RpptInterpolationType::LANCZOS;
-            break;
-        case 4:
-            data->interpolation_type = RpptInterpolationType::TRIANGULAR;
-            break;
-        case 5:
-            data->interpolation_type = RpptInterpolationType::GAUSSIAN;
-            break;
-    }
+    
+    // Set the interpolartion type
+    data->interpolation_type = (RpptInterpolationType)interpolation_type;
 
     // Initializing tensor config parameters.
     data->srcDescPtr = &data->srcDesc;

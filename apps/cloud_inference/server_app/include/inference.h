@@ -192,7 +192,7 @@ class InferenceEngine {
 public:
     InferenceEngine() {}; // default constructor
     InferenceEngine(int sock, Arguments * args, const std::string clientName, InfComCommand * cmd);
-    ~InferenceEngine();
+    virtual ~InferenceEngine();
     virtual int run();
 
 protected:

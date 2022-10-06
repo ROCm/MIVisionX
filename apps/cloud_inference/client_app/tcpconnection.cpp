@@ -88,7 +88,7 @@ bool TcpConnection::sendFile(int command, const QString fileName, volatile int& 
     InfComCommand reply = {
         INFCOM_MAGIC, command,
         { byteArray.size(), 0 },
-        { 0 }
+        { 0 }, { 0 }
     };
     QStringList text = fileName.split("/");
     strncpy(reply.message, text[text.size()-1].toStdString().c_str(), sizeof(reply.message));

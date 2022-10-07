@@ -265,6 +265,20 @@ namespace rocal{
             .value("FLOAT",ROCAL_FP32)
             .value("FLOAT16",ROCAL_FP16)
             .export_values();
+        py::enum_<RocalResizeScalingMode>(types_m,"RocalResizeScalingMode","Decode size policies")
+            .value("SCALING_MODE_DEFAULT",ROCAL_SCALING_MODE_DEFAULT)
+            .value("SCALING_MODE_STRETCH",ROCAL_SCALING_MODE_STRETCH)
+            .value("SCALING_MODE_NOT_SMALLER",ROCAL_SCALING_MODE_NOT_SMALLER)
+            .value("SCALING_MODE_NOT_LARGER",ROCAL_SCALING_MODE_NOT_LARGER)
+            .export_values();
+        py::enum_<RocalResizeInterpolationType>(types_m,"RocalResizeInterpolationType","Decode size policies")
+            .value("NEAREST_NEIGHBOR_INTERPOLATION",ROCAL_NEAREST_NEIGHBOR_INTERPOLATION)
+            .value("LINEAR_INTERPOLATION",ROCAL_LINEAR_INTERPOLATION)
+            .value("CUBIC_INTERPOLATION",ROCAL_CUBIC_INTERPOLATION)
+            .value("LANCZOS_INTERPOLATION",ROCAL_LANCZOS_INTERPOLATION)
+            .value("GAUSSIAN_INTERPOLATION",ROCAL_GAUSSIAN_INTERPOLATION)
+            .value("TRIANGULAR_INTERPOLATION",ROCAL_TRIANGULAR_INTERPOLATION)
+            .export_values();
         py::enum_<RocalImageSizeEvaluationPolicy>(types_m,"RocalImageSizeEvaluationPolicy","Decode size policies")
             .value("MAX_SIZE",ROCAL_USE_MAX_SIZE)
             .value("USER_GIVEN_SIZE",ROCAL_USE_USER_GIVEN_SIZE)
@@ -605,13 +619,7 @@ namespace rocal{
             py::arg("crop_pos_x") = NULL,
             py::arg("crop_pos_y") = NULL,
             py::arg("num_of_attempts") = 20);
-        m.def("Resize",&rocalResize,
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("input"),
-            py::arg("dest_width"),
-            py::arg("dest_height"),
-            py::arg("is_output"));
+        m.def("Resize",&rocalResize, py::return_value_policy::reference);
         m.def("CropResize",&rocalCropResize,
             py::return_value_policy::reference,
             py::arg("context"),

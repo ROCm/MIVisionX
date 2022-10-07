@@ -45,10 +45,20 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalSequenceRearrange(RocalContext conte
 /// \param dest_width
 /// \param dest_height
 /// \param is_output
+/// \param scaling_mode The resize scaling_mode to resize the image.
+/// \param max_size Limits the size of the resized image.
+/// \param resize_shorter The length of the shorter dimension of the image.
+/// \param resize_longer The length of the larger dimension of the image.
+/// \param interpolation_type The type of interpolation to be used for resize.
 /// \return
 extern "C"  RocalImage  ROCAL_API_CALL rocalResize(RocalContext context, RocalImage input,
-                                                unsigned dest_width, unsigned dest_height,
-                                                bool is_output );
+                                                   unsigned dest_width, unsigned dest_height,
+                                                   bool is_output,
+                                                   RocalResizeScalingMode scaling_mode = ROCAL_SCALING_MODE_STRETCH,
+                                                   std::vector<unsigned> max_size = {},
+                                                   unsigned resize_shorter = 0,
+                                                   unsigned resize_longer = 0,
+                                                   RocalResizeInterpolationType interpolation_type = ROCAL_LINEAR_INTERPOLATION);
 
 /// Accepts U8 and RGB24 input.
 /// \param context

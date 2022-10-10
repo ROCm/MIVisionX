@@ -56,8 +56,7 @@ THE SOFTWARE.
 #include <chrono>
 #include <unistd.h>
 #if HAVE_OpenSSL
-#include <openssl/hmac.h>
-#include <openssl/md5.h>
+#include <openssl/evp.h>
 #endif
 
 #include <strings.h>
@@ -137,6 +136,8 @@ inline int64_t utilGetClockFrequency()
 ///////////////////////////////////////////////////////////////////////////
 // class CHasher for checksum computation
 ///////////////////////////////////////////////////////////////////////////
+#define M_HASH_MAX_SIZE 16
+#define M_CHECKSUM_MAX_SIZE 33
 class CHasher {
 public:
 	CHasher();
@@ -152,10 +153,11 @@ private:
 	HCRYPTPROV m_cryptProv;
 	HCRYPTHASH m_cryptHash;
 #elif HAVE_OpenSSL
-	MD5_CTX m_handle;
+	EVP_MD_CTX *mdctx;
 #endif
-	vx_uint8 m_hash[16];
-	char m_checkSum[33];
+	vx_uint8 m_hash[M_HASH_MAX_SIZE];
+	vx_uint32 m_hash_data_written;
+	char m_checkSum[M_CHECKSUM_MAX_SIZE];
 
 };
 

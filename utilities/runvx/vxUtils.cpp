@@ -320,8 +320,11 @@ void CHasher::Initialize(){
 		throw - 1;
 	}
 #elif HAVE_OpenSSL
-	if (!MD5_Init(&m_handle)) {
-		printf("ERROR: MD5_Init() failed\n");
+	if((mdctx = EVP_MD_CTX_create()) == NULL){
+		printf("runVX - OpenSSL ERROR: EVP_MD_CTX_create() failed\n");
+	}
+	if(!EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL)){
+		printf("runVX - OpenSSL ERROR: EVP_DigestInit_ex() failed\n");
 	}
 #endif
 }
@@ -338,8 +341,8 @@ void CHasher::Process(vx_uint8 * data_ptr, vx_size count){
 		throw - 1;
 	}
 #elif HAVE_OpenSSL
-	if (!MD5_Update(&m_handle, (unsigned char*)data_ptr, count)) {
-		printf("ERROR: MD5_Update(*,*,%d) failed\n", (int)count);
+	if(!EVP_DigestUpdate(mdctx, (unsigned char*)data_ptr, count)){
+		printf("runVX - OpenSSL ERROR: EVP_DigestUpdate(*,*,%d) failed\n", (int)count);
 	}
 #endif
 }
@@ -357,9 +360,10 @@ const char * CHasher::GetCheckSum(){
 		throw - 1;
 	}
 #elif HAVE_OpenSSL
-	if (!MD5_Final(m_hash, &m_handle)) {
-		printf("ERROR: MD5_Final() failed\n");
+	if(!EVP_DigestFinal_ex(mdctx, &m_hash[0], &m_hash_data_written) || m_hash_data_written > M_HASH_MAX_SIZE ){
+		printf("runVX - OpenSSL ERROR: EVP_DigestFinal_ex() failed\n");
 	}
+	EVP_MD_CTX_free(mdctx);
 #endif
 	char hex[] = "0123456789abcdef";
 	for (int i = 0; i < 16; i++){

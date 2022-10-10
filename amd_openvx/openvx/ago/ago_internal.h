@@ -104,7 +104,7 @@ THE SOFTWARE.
 #define AGO_MAX_CONVOLUTION_DIM               9 // maximum size of convolution matrix
 #define AGO_MAX_NONLINEAR_FILTER_DIM          9 // maximum size of nonlinear filter matrix the specification requires support for is 9x9
 #define AGO_OPTICALFLOWPYRLK_MAX_DIM         15 // maximum size of opticalflow block size
-#define AGO_MAX_TENSOR_DIMENSIONS             4 // maximum dimensions supported by tensor
+#define AGO_MAX_TENSOR_DIMENSIONS             6 // maximum dimensions supported by tensor
 #define AGO_MAX_OBJARR_REF 				   4096 // maximum number of references in a context for object array
 
 // AGO remap data precision

@@ -27,7 +27,6 @@ InferenceEngineHip::InferenceEngineHip(int sock_, Arguments * args_, const std::
                   queueDeviceInputMemIdle{ nullptr }, queueDeviceInputMemBusy{ nullptr },
                   queueDeviceOutputMemIdle{ nullptr }, queueDeviceOutputMemBusy{ nullptr }
 {
-  mDecodeTime = 0;
   device_id[MAX_NUM_GPU-1] = {-1};
   if(!args->lockGpuDevices(GPUs, device_id))
     deviceLockSuccess = true;

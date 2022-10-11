@@ -575,7 +575,6 @@ int InferenceEngineRocalHip::run() {
                         std::string str(byteStream, size);
                         if(fileNameMap.find(str) == fileNameMap.end()) {
                             fileNameMap[str] = tag;
-                            std::cout << str << fileNameMap.size() << std::endl;
                         }
                     }
                     else {

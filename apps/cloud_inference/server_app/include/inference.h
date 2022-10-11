@@ -188,14 +188,6 @@ private:
 };
 #endif
 
-inline int64_t clockCounter() {
-    return std::chrono::high_resolution_clock::now().time_since_epoch().count();
-}
-
-inline int64_t clockFrequency() {
-    return std::chrono::high_resolution_clock::period::den / std::chrono::high_resolution_clock::period::num;
-}
-
 class InferenceEngine {
 public:
     InferenceEngine() {}; // default constructor
@@ -216,9 +208,6 @@ protected:
     virtual void workDeviceProcess(int gpu);
     virtual void workDeviceOutputCopy(int gpu);
 #endif
-    float mDecodeTime = 0;
-    int mCount = 0;
-    int64_t freq = clockFrequency(), t0, t1;
     // configuration
     int sock;
     Arguments * args;

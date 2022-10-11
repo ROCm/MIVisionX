@@ -122,6 +122,7 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
     }
     if (region) delete region;
     PROFILER_SHUTDOWN();
+    printf("rocal destructor called\n");
 }
 
 int InferenceEngineRocalHip::run() {
@@ -638,7 +639,7 @@ void InferenceEngineRocalHip::workMasterInputQ() {
         queueDeviceTagQ[gpu]->enqueue(tag);
         queueDeviceImageQ[gpu]->enqueue(image);
         PROFILER_STOP(inference_server_app, workMasterInputQ);
-
+        
         // at the end of Batch pick another device
         inputCountInBatch++;
         if(inputCountInBatch == batchSize) {
@@ -705,6 +706,8 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
             }
         }
         
+        t0 = clockCounter();
+        mCount+=inputCount;
         // decode and resize using rocAL
         if(rocalRun(rocalHandle[gpu]) != 0) {
             fatal("workDeviceInputCopy: rocalRun() failed for gpu : [%d]", gpu);
@@ -718,6 +721,11 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
             fatal("workDeviceInputCopy: rocalCopyToOutputTensor() failed for gpu : [%d]", gpu);
         }
         
+        t1 = clockCounter();
+        mDecodeTime += (float)(t1-t0)*1000.0f/(float)freq;
+        unsigned int FPS = (unsigned int)(1000/mDecodeTime*(float)mCount);
+        std::cout << "FPS is " << FPS << std::endl;
+
         std::vector<std::string> names;
         names.resize(inputCount);
 

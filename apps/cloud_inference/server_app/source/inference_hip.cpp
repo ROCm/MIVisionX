@@ -27,6 +27,7 @@ InferenceEngineHip::InferenceEngineHip(int sock_, Arguments * args_, const std::
                   queueDeviceInputMemIdle{ nullptr }, queueDeviceInputMemBusy{ nullptr },
                   queueDeviceOutputMemIdle{ nullptr }, queueDeviceOutputMemBusy{ nullptr }
 {
+  mDecodeTime = 0;
   device_id[MAX_NUM_GPU-1] = {-1};
   if(!args->lockGpuDevices(GPUs, device_id))
     deviceLockSuccess = true;
@@ -826,6 +827,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
             }
             if (inputCount){
                 PROFILER_START(inference_server_app, workDeviceInputCopyJpegDecode);
+                t0 = clockCounter();
 #if 0            
                 if (inputCount < batchSize)
                 {
@@ -854,6 +856,9 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
                 }
 #endif 
                 PROFILER_STOP(inference_server_app, workDeviceInputCopyJpegDecode);
+                t1 = clockCounter();
+                mDecodeTime += (float)(t1-t0)*1000.0f/(float)freq;
+                std::cout << "decode time is " << mDecodeTime << std::endl;
             }
         } else {
             for(; inputCount < batchSize; inputCount++) {
@@ -874,7 +879,13 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
                     buf = (float *)mapped_ptr + dimInput[0] * dimInput[1] * dimInput[2] * inputCount;
 
                 PROFILER_START(inference_server_app, workDeviceInputCopyJpegDecode);
+                t0 = clockCounter();
+                mCount++;
                 DecodeScaleAndConvertToTensor(dimInput[0], dimInput[1], size, (unsigned char *)byteStream, (float *)buf, useFp16);
+                t1 = clockCounter();
+                mDecodeTime += (float)(t1-t0)*1000.0f/(float)freq;
+                unsigned int FPS = (unsigned int)(1000/mDecodeTime*(float)mCount);
+                std::cout << "FPS is " << FPS << std::endl;
                 PROFILER_STOP(inference_server_app, workDeviceInputCopyJpegDecode);
                 // release byteStream
                 delete[] byteStream;

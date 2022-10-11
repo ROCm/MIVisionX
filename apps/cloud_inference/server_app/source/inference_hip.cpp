@@ -634,7 +634,7 @@ int InferenceEngineHip::run()
                     }
                     else
                     {
-                        // allocate and receive the image and EOF market
+                        // allocate and receive the image and EOF marker
                         byteStream = new char [size];
                         ERRCHK(recvBuffer(sock, byteStream, size, clientName));
                     }

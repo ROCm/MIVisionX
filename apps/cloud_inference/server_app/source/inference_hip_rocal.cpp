@@ -570,16 +570,16 @@ int InferenceEngineRocalHip::run() {
                     }
                     char * byteStream;
                     if (receiveFileNames) {
-                        char * buff = new char [size];
-                        ERRCHK(recvBuffer(sock, buff, size, clientName));
-                        std::string str(buff);
+                        byteStream = new char [size];
+                        ERRCHK(recvBuffer(sock, byteStream, size, clientName));
+                        std::string str(byteStream, size);
                         if(fileNameMap.find(str) == fileNameMap.end()) {
                             fileNameMap[str] = tag;
+                            std::cout << str << fileNameMap.size() << std::endl;
                         }
-                        delete[] buff;
                     }
                     else {
-                        // allocate and receive the image and EOF market
+                        // allocate and receive the image and EOF marker
                         byteStream = new char [size];
                         ERRCHK(recvBuffer(sock, byteStream, size, clientName));
                     }

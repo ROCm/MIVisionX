@@ -157,7 +157,7 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     ResizetensorLocalData *data = new ResizetensorLocalData;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
-    THROW("initialize : Resize Tensor OpenCL backend is not supported")
+    vxAddLogEntry(NULL, VX_FAILURE, "ERROR: initialize : Resize Tensor OpenCL backend is not supported\n");
 #elif ENABLE_HIP
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif

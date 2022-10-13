@@ -95,7 +95,7 @@ CURRENTDATE=`date +"%Y-%m-%d-%T"`
 batch_size=10
 
 # python version
-ver=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\.\2/')
+ver=`python3 -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)";`
 
 
 ####################################################################################################################################

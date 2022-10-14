@@ -208,6 +208,8 @@ protected:
     virtual void workDeviceProcess(int gpu);
     virtual void workDeviceOutputCopy(int gpu);
 #endif
+    int mCount = 0;
+    float mDecodeTime = 0;
     // configuration
     int sock;
     Arguments * args;

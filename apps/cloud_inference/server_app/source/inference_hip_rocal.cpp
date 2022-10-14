@@ -19,6 +19,8 @@
 #endif
 #endif
 
+using namespace std::chrono;
+
 extern void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[]);
 
 
@@ -705,6 +707,8 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
             }
         }
         
+        high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
         // decode and resize using rocAL
         if(rocalRun(rocalHandle[gpu]) != 0) {
             fatal("workDeviceInputCopy: rocalRun() failed for gpu : [%d]", gpu);
@@ -718,6 +722,16 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
             fatal("workDeviceInputCopy: rocalCopyToOutputTensor() failed for gpu : [%d]", gpu);
         }
 
+        mCount+=inputCount;
+        high_resolution_clock::time_point t2 = high_resolution_clock::now();
+        auto dur = duration_cast<microseconds>( t2 - t1 ).count();
+        auto rocal_timing = rocalGetTimingInfo(rocalHandle[gpu]);
+        std::cout << "Load     time "<< rocal_timing.load_time << std::endl;
+        std::cout << "Decode   time "<< rocal_timing.decode_time << std::endl;
+        std::cout << "Process  time "<< rocal_timing.process_time << std::endl;
+        std::cout << "Transfer time "<< rocal_timing.transfer_time << std::endl;
+        std::cout << ">>>>> "<< mCount << " images/frames Processed." << std::endl;
+        
         std::vector<std::string> names;
         names.resize(inputCount);
 

@@ -363,15 +363,9 @@ protected:
     virtual void workDeviceProcess(int gpu);
     virtual void workDeviceOutputCopy(int gpu);
 
-    MessageQueue<std::tuple<int,char *,int>> inputQ;
     // scheduler device queues
-    MessageQueue<int>                    * queueDeviceTagQ[MAX_NUM_GPU];
     MessageQueue<std::string>            * queueDeviceNameQ[MAX_NUM_GPU];
 
-    vx_context openvx_context[MAX_NUM_GPU];
-    vx_graph openvx_graph[MAX_NUM_GPU];
-    vx_tensor openvx_input[MAX_NUM_GPU];
-    vx_tensor openvx_output[MAX_NUM_GPU];
     RocalContext rocalHandle[MAX_NUM_GPU];
 
 private:

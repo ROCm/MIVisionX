@@ -46,6 +46,15 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
     }
     std::tuple<char*,int> endOfSequenceImage(nullptr,0);
     int endOfSequenceTag = -1;
+    
+    auto rocal_timing = rocalGetTimingInfo(rocalHandle[0]);
+    std::cout << "Load     time "<< rocal_timing.load_time << std::endl;
+    std::cout << "Decode   time "<< rocal_timing.decode_time << std::endl;
+    std::cout << "Process  time "<< rocal_timing.process_time << std::endl;
+    std::cout << "Transfer time "<< rocal_timing.transfer_time << std::endl;
+    std::cout << ">>>>> "<< mCount << " images/frames Processed for #." << GPUs << std::endl;
+    std::cout << "FPS : " << 1000000 * mCount / (rocal_timing.decode_time + rocal_timing.process_time + rocal_timing.transfer_time) << std::endl;
+        
     for(int i = 0; i < GPUs; i++) {
         if(queueDeviceTagQ[i]) {
             queueDeviceTagQ[i]->enqueue(endOfSequenceTag);
@@ -114,6 +123,16 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
             if (rocalRelease(rocalHandle[i]) != ROCAL_OK)
                 error("rocalRelease failed");
         }
+    //        high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    // auto dur = duration_cast<microseconds>( t2 - t1 ).count();
+    // auto rocal_timing = rocalGetTimingInfo(rocalHandle[0]);
+    // std::cout << "Load     time "<< rocal_timing.load_time << std::endl;
+    // std::cout << "Decode   time "<< rocal_timing.decode_time << std::endl;
+    // std::cout << "Process  time "<< rocal_timing.process_time << std::endl;
+    // std::cout << "Transfer time "<< rocal_timing.transfer_time << std::endl;
+    // std::cout << ">>>>> "<< mCount << " images/frames Processed." << std::endl;
+        
+        
     }
     // release all device resources
     if(deviceLockSuccess) {
@@ -399,6 +418,7 @@ int InferenceEngineRocalHip::run() {
     ERRCHK(recvCommand(sock, updateCmd, clientName, INFCOM_CMD_INFERENCE_INITIALIZATION));
     info(updateCmd.message);
 
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
     ////////
     /// \brief keep running the inference in loop
     ///
@@ -707,8 +727,6 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
             }
         }
         
-        high_resolution_clock::time_point t1 = high_resolution_clock::now();
-
         // decode and resize using rocAL
         if(rocalRun(rocalHandle[gpu]) != 0) {
             fatal("workDeviceInputCopy: rocalRun() failed for gpu : [%d]", gpu);
@@ -723,15 +741,7 @@ void InferenceEngineRocalHip::workDeviceInputCopy(int gpu)
         }
 
         mCount+=inputCount;
-        high_resolution_clock::time_point t2 = high_resolution_clock::now();
-        auto dur = duration_cast<microseconds>( t2 - t1 ).count();
-        auto rocal_timing = rocalGetTimingInfo(rocalHandle[gpu]);
-        std::cout << "Load     time "<< rocal_timing.load_time << std::endl;
-        std::cout << "Decode   time "<< rocal_timing.decode_time << std::endl;
-        std::cout << "Process  time "<< rocal_timing.process_time << std::endl;
-        std::cout << "Transfer time "<< rocal_timing.transfer_time << std::endl;
-        std::cout << ">>>>> "<< mCount << " images/frames Processed." << std::endl;
-        
+       
         std::vector<std::string> names;
         names.resize(inputCount);
 

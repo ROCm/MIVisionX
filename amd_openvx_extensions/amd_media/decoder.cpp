@@ -128,6 +128,13 @@ private:
     std::vector<int> decodeFrameCount;
     int outputFrameCount;
     std::vector<int> LoopDec;
+#if ENABLE_PERF_MEASURE
+    std::chrono::duration<double> totalDecodeTime = {};
+    std::chrono::duration<double> totalTransferTime = {};
+    std::chrono::high_resolution_clock::time_point startTime;
+    std::chrono::high_resolution_clock::time_point endTime;
+    int frameno = 0;
+#endif
 };
 
 
@@ -288,6 +295,10 @@ CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, c
 
 CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
 {
+#if ENABLE_PERF_MEASURE
+    std::cout << "Average Decode Time per frame (ms): " << totalDecodeTime.count() * 1000 / frameno << std::endl;
+    std::cout << "Average Transfer Time per frame (ms): " << totalTransferTime.count() * 1000 / frameno << std::endl;
+#endif
     // terminate the thread
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
         if (thread[mediaIndex]) {
@@ -702,13 +713,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
     AVPacket avpkt = { 0 };
     int status;
 
-#if ENABLE_PERF_MEASURE
-    std::chrono::duration<double> totalDecodeTime = {};
-    std::chrono::duration<double> totalTransferTime = {};
-    std::chrono::high_resolution_clock::time_point startTime;
-    std::chrono::high_resolution_clock::time_point endTime;
-    int frameno = 0;
-#endif
+
 
     for (command cmd; !eof[mediaIndex] && ((cmd = PopCommand(mediaIndex)) != cmd_abort);) {
         int gotPicture = 0;
@@ -734,10 +739,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     eof[mediaIndex] = true;
                     PushAck(mediaIndex, -1);
                     av_packet_unref(&avpkt);
-#if ENABLE_PERF_MEASURE
-                    std::cout << "Average Decode Time per frame (ms): " << totalDecodeTime.count() * 1000 / frameno << std::endl;
-                    std::cout << "Average Transfer Time per frame (ms): " << totalTransferTime.count() * 1000 / frameno << std::endl;
-#endif
+
                     return;
                 }
                 else if (avpkt.stream_index == videoStreamIndex[mediaIndex]) {

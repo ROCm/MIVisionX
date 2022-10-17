@@ -48,9 +48,12 @@ InferenceEngineHip::~InferenceEngineHip()
         vxReleaseContext(&openvx_context);
     }
 #elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
-    std::cout << "Total image processed: " << mCount << std::endl;
-    std::cout << "Total decode time: " << mDecodeTime << std::endl;
-    std::cout << "FPS : " << mCount * 1000000 / mDecodeTime << std::endl;
+    
+    std::cout << "Number of GPUs " << GPUs << std::endl;
+    std::cout << "Total "<< mCount << " images/frames processed" << std::endl;
+    std::cout << "Decode   FPS " << 1000000 * mCount / mDecodeTime << std::endl;
+    std::cout << "D+P+T    FPS " << 1000000 * mCount / mProcessTime << std::endl;
+        
     // wait for all threads to complete and release all resources
     std::tuple<int,char*,int> endOfSequenceInput(-1,nullptr,0);
     inputQ.enqueue(endOfSequenceInput);
@@ -860,7 +863,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
 #endif 
                 high_resolution_clock::time_point t2 = high_resolution_clock::now();
                 auto dur = duration_cast<microseconds>( t2 - t1 ).count();
-                mDecodeTime+=dur;
+                mProcessTime+=dur;
                 PROFILER_STOP(inference_server_app, workDeviceInputCopyJpegDecode);
             }
         } else {
@@ -886,7 +889,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
                 DecodeScaleAndConvertToTensor(dimInput[0], dimInput[1], size, (unsigned char *)byteStream, (float *)buf, useFp16);
                 high_resolution_clock::time_point t2 = high_resolution_clock::now();
                 auto dur = duration_cast<microseconds>( t2 - t1 ).count();
-                mDecodeTime+=dur;
+                mProcessTime+=dur;
                 PROFILER_STOP(inference_server_app, workDeviceInputCopyJpegDecode);
                 // release byteStream
                 delete[] byteStream;

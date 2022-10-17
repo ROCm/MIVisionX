@@ -21,6 +21,8 @@
 #endif
 #endif
 
+using namespace std::chrono; 
+
 void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
 {
     size_t len = strlen(string);
@@ -203,8 +205,11 @@ InferenceEngine::~InferenceEngine()
 vx_status InferenceEngine::DecodeScaleAndConvertToTensor(vx_size width, vx_size height, int size, unsigned char *inp, float *buf, int use_fp16)
 {
     int length = width*height;
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
     cv::Mat matOrig = cv::imdecode(cv::Mat(1, size, CV_8UC1, inp), cv::IMREAD_COLOR);
-
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    auto dur = duration_cast<microseconds>( t2 - t1 ).count();
+    mDecodeTime+=dur;
 #if USE_SSE_OPTIMIZATION
     unsigned char *data_resize = nullptr;
     unsigned char * img;

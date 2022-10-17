@@ -209,7 +209,9 @@ protected:
     virtual void workDeviceOutputCopy(int gpu);
 #endif
     int mCount = 0;
+    float mLoadTime = 0;
     float mDecodeTime = 0;
+    float mProcessTime = 0;
     // configuration
     int sock;
     Arguments * args;
@@ -325,17 +327,6 @@ protected:
     virtual void workDeviceOutputCopy(int gpu);
 #endif
 
-    MessageQueue<std::tuple<int,char *,int>> inputQ;
-    // scheduler device queues
-    MessageQueue<int>                    * queueDeviceTagQ[MAX_NUM_GPU];
-    MessageQueue<std::tuple<char *,int>> * queueDeviceImageQ[MAX_NUM_GPU];
-
-    vx_context openvx_context[MAX_NUM_GPU];
-    vx_graph openvx_graph[MAX_NUM_GPU];
-    vx_tensor openvx_input[MAX_NUM_GPU];
-    vx_tensor openvx_output[MAX_NUM_GPU];
-    RocalContext rocalHandle[MAX_NUM_GPU];
-
 private:
     void dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName);
     MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemIdle[MAX_NUM_GPU];
@@ -366,6 +357,7 @@ protected:
     // scheduler device queues
     MessageQueue<std::string>            * queueDeviceNameQ[MAX_NUM_GPU];
 
+    // rocal Handles
     RocalContext rocalHandle[MAX_NUM_GPU];
 
 private:

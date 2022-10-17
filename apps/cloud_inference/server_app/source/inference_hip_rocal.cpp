@@ -48,12 +48,12 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
     int endOfSequenceTag = -1;
     
     auto rocal_timing = rocalGetTimingInfo(rocalHandle[0]);
-    std::cout << "Load     time "<< rocal_timing.load_time << std::endl;
-    std::cout << "Decode   time "<< rocal_timing.decode_time << std::endl;
-    std::cout << "Process  time "<< rocal_timing.process_time << std::endl;
-    std::cout << "Transfer time "<< rocal_timing.transfer_time << std::endl;
-    std::cout << ">>>>> "<< mCount << " images/frames Processed for #." << GPUs << std::endl;
-    std::cout << "FPS : " << 1000000 * mCount / (rocal_timing.decode_time + rocal_timing.process_time + rocal_timing.transfer_time) << std::endl;
+
+    std::cout << "Number of GPUs " << GPUs << std::endl;
+    std::cout << "Total "<< mCount << " images/frames processed" << std::endl;
+    std::cout << "Load     FPS " << 1000000 * mCount / rocal_timing.load_time << std::endl;
+    std::cout << "Decode   FPS " << 1000000 * mCount / rocal_timing.decode_time << std::endl;
+    std::cout << "D+P+T    FPS " << 1000000 * mCount / (rocal_timing.decode_time + rocal_timing.process_time + rocal_timing.transfer_time) << std::endl;
         
     for(int i = 0; i < GPUs; i++) {
         if(queueDeviceTagQ[i]) {
@@ -81,15 +81,15 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
             queueDeviceOutputMemIdle[i]->dequeue(image);
             hipFree(image.first);
         }
-        if(queueDeviceTagQ[i]) {
-            delete queueDeviceTagQ[i];
-        }
-        if(queueDeviceImageQ[i]) {
-            delete queueDeviceImageQ[i];
-        }
-        if(queueDeviceNameQ[i]) {
-            delete queueDeviceNameQ[i];
-        }
+        // if(queueDeviceTagQ[i]) {
+        //     delete queueDeviceTagQ[i];
+        // }
+        // if(queueDeviceImageQ[i]) {
+        //     delete queueDeviceImageQ[i];
+        // }
+        // if(queueDeviceNameQ[i]) {
+        //     delete queueDeviceNameQ[i];
+        // }
         if(queueDeviceInputMemIdle[i]) {
             delete queueDeviceInputMemIdle[i];
         }
@@ -123,16 +123,6 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
             if (rocalRelease(rocalHandle[i]) != ROCAL_OK)
                 error("rocalRelease failed");
         }
-    //        high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    // auto dur = duration_cast<microseconds>( t2 - t1 ).count();
-    // auto rocal_timing = rocalGetTimingInfo(rocalHandle[0]);
-    // std::cout << "Load     time "<< rocal_timing.load_time << std::endl;
-    // std::cout << "Decode   time "<< rocal_timing.decode_time << std::endl;
-    // std::cout << "Process  time "<< rocal_timing.process_time << std::endl;
-    // std::cout << "Transfer time "<< rocal_timing.transfer_time << std::endl;
-    // std::cout << ">>>>> "<< mCount << " images/frames Processed." << std::endl;
-        
-        
     }
     // release all device resources
     if(deviceLockSuccess) {

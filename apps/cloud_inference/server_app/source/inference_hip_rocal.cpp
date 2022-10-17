@@ -87,9 +87,9 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
         // if(queueDeviceImageQ[i]) {
         //     delete queueDeviceImageQ[i];
         // }
-        // if(queueDeviceNameQ[i]) {
-        //     delete queueDeviceNameQ[i];
-        // }
+        if(queueDeviceNameQ[i]) {
+            delete queueDeviceNameQ[i];
+        }
         if(queueDeviceInputMemIdle[i]) {
             delete queueDeviceInputMemIdle[i];
         }

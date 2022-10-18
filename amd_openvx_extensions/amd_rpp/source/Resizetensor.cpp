@@ -167,7 +167,11 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &interpolation_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
     data->dstDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
+    data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+    data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+    data->dstBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     data->dstBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+    data->dstImgSize = (RpptImagePatch *)malloc(sizeof(RpptImagePatch) * data->nbatchSize);
 
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));

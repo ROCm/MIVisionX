@@ -65,7 +65,7 @@ public:
         crop_mul[3] = _crop_param[3]->get();
         return crop_mul;
     };
-    private:
+private:
     std::vector<double> _random_area, _random_aspect_ratio;
     unsigned _num_attempts;
 };

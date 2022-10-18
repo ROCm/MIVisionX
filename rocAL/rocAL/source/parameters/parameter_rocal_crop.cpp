@@ -27,53 +27,41 @@ THE SOFTWARE.
 #include "parameter_rocal_crop.h"
 #include "commons.h"
 
-void RocalCropParam::set_crop_height_factor(Parameter<float>* crop_h_factor)
-{
+void RocalCropParam::set_crop_height_factor(Parameter<float>* crop_h_factor) {
     if(!crop_h_factor)
         return ;
     ParameterFactory::instance()->destroy_param(crop_height_factor);
     crop_height_factor = crop_h_factor;
 }
 
-void RocalCropParam::set_crop_width_factor(Parameter<float>* crop_w_factor)
-{
+void RocalCropParam::set_crop_width_factor(Parameter<float>* crop_w_factor) {
     if(!crop_w_factor)
         return ;
     ParameterFactory::instance()->destroy_param(crop_width_factor);
     crop_width_factor = crop_w_factor;
 }
 
-void RocalCropParam::update_array()
-{
+void RocalCropParam::update_array() {
     fill_crop_dims();
     update_crop_array();
 }
 
-void RocalCropParam::fill_crop_dims()
-{
-    for(uint img_idx =0; img_idx < batch_size; img_idx++)
-    {
-        if(!(_random))
-        {
+void RocalCropParam::fill_crop_dims() {
+    for(uint img_idx =0; img_idx < batch_size; img_idx++) {
+        if(!(_random)) {
             // Evaluating user given crop
             cropw_arr_val[img_idx] = (crop_w <= in_width[img_idx] && crop_w > 0) ? crop_w : in_width[img_idx];
             croph_arr_val[img_idx] = (crop_h <= in_height[img_idx] && crop_h > 0) ? crop_h : in_height[img_idx];
-            if(_is_center_crop)
-            {
-                float x_drift, y_drift;
-                x_drift = x_drift_factor->get();
-                y_drift = y_drift_factor->get();
-                x1_arr_val[img_idx] = static_cast<size_t>(x_drift * (in_width[img_idx]  - cropw_arr_val[img_idx]));
-                y1_arr_val[img_idx] = static_cast<size_t>(y_drift * (in_height[img_idx] - croph_arr_val[img_idx]));
+            if(_is_center_crop) {
+                x1_arr_val[img_idx] = static_cast<size_t>(x_drift_factor->get() * (in_width[img_idx] - cropw_arr_val[img_idx]));
+                y1_arr_val[img_idx] = static_cast<size_t>(y_drift_factor->get() *(in_height[img_idx] - croph_arr_val[img_idx]));
             }
-            else
-            {
+            else {
                 x1_arr_val[img_idx] = (x1 >= in_width[img_idx]) ? 0 : x1;
                 y1_arr_val[img_idx] = (y1 >= in_height[img_idx]) ? 0 : y1;
             }
         }
-        else
-        {
+        else {
             float crop_h_factor_, crop_w_factor_, x_drift, y_drift;
             crop_height_factor->renew();
             crop_h_factor_ = crop_height_factor->get();

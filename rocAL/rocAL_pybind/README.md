@@ -25,10 +25,6 @@ Install rocAL_pybind using the run.sh script
 pip3 install numpy opencv-python torch
 ````
 
-* Export `RPP` & `rocAL` library into PATH
-```
-export PATH=$PATH:/opt/rocm/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
 ```
 #### Run Test Scripts
 * Test scripts and instructions to run them can be found [here](examples/)

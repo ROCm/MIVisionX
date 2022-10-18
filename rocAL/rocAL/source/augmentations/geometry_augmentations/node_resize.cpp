@@ -31,8 +31,7 @@ ResizeNode::ResizeNode(const std::vector<Image *> &inputs, const std::vector<Ima
 {
 }
 
-void ResizeNode::create_node()
-{
+void ResizeNode::create_node() {
     if(_node)
         return;
 
@@ -48,7 +47,6 @@ void ResizeNode::create_node()
     height_status = vxAddArrayItems(_dst_roi_height, _batch_size, dst_roi_height.data(), sizeof(vx_uint32));
      if(width_status != 0 || height_status != 0)
         THROW(" vxAddArrayItems failed in the resize (vxExtrppNode_Resizetensor) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
-
    _node = vxExtrppNode_Resizetensor(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height, _interpolation_type, _batch_size);
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
@@ -60,15 +58,15 @@ void ResizeNode::update_node() {
     src_w_dims = _inputs[0]->info().get_roi_width_vec();
     src_h_dims = _inputs[0]->info().get_roi_height_vec();
     for (unsigned i = 0; i < _batch_size; i++) {
-        _src_roi_size[0] = src_w_dims[i];
-        _src_roi_size[1] = src_h_dims[i];
-        _dst_roi_size[0] = _dest_width;
-        _dst_roi_size[1] = _dest_height;
+        _src_width = src_w_dims[i];
+        _src_height = src_h_dims[i];
+        _dst_width = _out_width;
+        _dst_height = _out_height;
         adjust_out_roi_size();
-        _dst_roi_size[0] = std::min(_dst_roi_size[0], _outputs[0]->info().width());
-        _dst_roi_size[1] = std::min(_dst_roi_size[1], _outputs[0]->info().height_single());
-        _dst_roi_width_vec.push_back(_dst_roi_size[0]);
-        _dst_roi_height_vec.push_back(_dst_roi_size[1]);
+        _dst_width = std::min(_dst_width, _outputs[0]->info().width());
+        _dst_height = std::min(_dst_height, _outputs[0]->info().height_single());
+        _dst_roi_width_vec.push_back(_dst_width);
+        _dst_roi_height_vec.push_back(_dst_height);
     }
     vx_status width_status, height_status;
     width_status = vxCopyArrayRange((vx_array)_dst_roi_width, 0, _batch_size, sizeof(vx_uint32), _dst_roi_width_vec.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
@@ -81,84 +79,54 @@ void ResizeNode::update_node() {
 }
 
 void ResizeNode::init(unsigned dest_width, unsigned dest_height, RocalResizeScalingMode scaling_mode,
-                      std::vector<unsigned> max_size, RocalResizeInterpolationType interpolation_type) {
-    _scaling_mode = scaling_mode;
-    _dest_width = dest_width;
-    _dest_height = dest_height;
+                      const std::vector<unsigned>& max_size, RocalResizeInterpolationType interpolation_type) {
     _interpolation_type = (int)interpolation_type;
-    _src_roi_size.resize(2);
-    _dst_roi_size.resize(2);
-    _max_roi_size = max_size;
+    _scaling_mode = scaling_mode;
+    _out_width = dest_width;
+    _out_height = dest_height;
+    if(max_size.size() > 0) {
+        _max_width = max_size[0];
+        _max_height = max_size[1];
+    }
 }
 
 void ResizeNode::adjust_out_roi_size() {
-    const unsigned dim = 2; // Currently supports only 2D images
-    double scale[2];
-    bool has_size[2];
-    unsigned sizes_provided = 0;
-    bool has_max_size = _max_roi_size.size() > 0;
-    for (unsigned i = 0; i < dim; i++) {
-        has_size[i] = (_src_roi_size[i] != 0) && (_dst_roi_size[i] != 0);
-        sizes_provided += has_size[i];
-        scale[i] = _src_roi_size[i] ? (static_cast<double>(_dst_roi_size[i]) / _src_roi_size[i]) : 1;
-    }
+    bool has_max_size = (_max_width | _max_height) > 0;
+
     if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH) {
-        if (sizes_provided < dim) {
-            for (unsigned i = 0; i < dim; i++) {
-                if (!has_size[i])
-                    _dst_roi_size[i] = _src_roi_size[i];
-            }
-        }
+        if (!_dst_width) _dst_width = _src_width;
+        if (!_dst_height) _dst_height = _src_height;
+
         if (has_max_size) {
-            for (unsigned i = 0; i < dim; i++) {
-                if ((_max_roi_size[i] > 0) && (_dst_roi_size[i] > _max_roi_size[i]))
-                    _dst_roi_size[i] = _max_roi_size[i];
-            }
+            if (_max_width) _dst_width = std::min(_dst_width, _max_width);
+            if (_max_height) _dst_height = std::min(_dst_height, _max_height);
         }
     } else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_DEFAULT) {
-        if (sizes_provided < dim) {
-            double average_scale = 1;
-            for (unsigned i = 0; i < dim; i++) {
-                if (has_size[i])
-                    average_scale *= scale[i];
-            }
-            for(unsigned i = 0; i < dim; i++) {
-                if(!has_size[i])
-                    _dst_roi_size[i] = std::round(_src_roi_size[i] * average_scale);
-            }
+        if ((!_dst_width) & _dst_height) {  // Only height is passed
+            _dst_width = std::lround(_src_width * (static_cast<float>(_dst_height) / _src_height));
+        } else if ((!_dst_height) & _dst_width) {  // Only width is passed
+            _dst_height = std::lround(_src_height * (static_cast<float>(_dst_width) / _src_width));
         }
+        
         if (has_max_size) {
-            for (unsigned i = 0; i < dim; i++) {
-                if ((_max_roi_size[i] > 0) && (_dst_roi_size[i] > _max_roi_size[i]))
-                    _dst_roi_size[i] = _max_roi_size[i];
-            }
+            if (_max_width) _dst_width = std::min(_dst_width, _max_width);
+            if (_max_height) _dst_height = std::min(_dst_height, _max_height);
         }
     } else {
-        double final_scale = 0;
-        bool first = true;
-        for (unsigned i = 0; i < dim; i++) {
-            if (has_size[i]) {
-                double s = scale[i];
-                if (first ||
-                    (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER && s > final_scale) ||
-                    (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER && s < final_scale)) {
-                        final_scale = s;
-                    }
-                first = false;
-            }
+        float scale = 1.0f;
+        float scale_w = static_cast<float>(_dst_width) / _src_width;
+        float scale_h = static_cast<float>(_dst_height) / _src_height;
+        if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER) {
+            scale = std::max(scale_w, scale_h);
+        } else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER) {
+            scale = (scale_w > 0 && scale_h > 0) ? std::min(scale_w, scale_h) : ((scale_w > 0) ? scale_w : scale_h);
         }
-        if(has_max_size) {
-            for (unsigned i = 0; i < dim; i++) {
-                if(_max_roi_size[i] > 0) {
-                    double s = static_cast<double>(_max_roi_size[i]) / _src_roi_size[i];
-                    if (s < final_scale)
-                        final_scale = s;
-                }
-            }
+        
+        if (has_max_size) {
+            if (_max_width != 0) scale = std::min(scale, static_cast<float>(_max_width) / _src_width);
+            if (_max_height != 0) scale = std::min(scale, static_cast<float>(_max_height) / _src_height);
         }
-        for (unsigned i = 0; i < dim; i++) {
-            if(!has_size[i] || (scale[i] != final_scale))
-                _dst_roi_size[i] = std::round(_src_roi_size[i] * final_scale);
-        }
+
+        if ((scale_h != scale) || (!_dst_height)) _dst_height = std::lround(_src_height * scale);
     }
 }

@@ -20,7 +20,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
-set(VERSION "2.3.0")
+set(VERSION "2.4.0")
 
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
@@ -47,6 +47,7 @@ option(ROCAL            "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
+option(AMD_FP16_SUPPORT "Build MIVisionX with float16 Support"    OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")
@@ -101,13 +102,13 @@ if(NOT CMAKE_BUILD_TYPE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  # -O0  -- Don't Optimize output file; 
-  # -g -- generate debugging information;
-  # -Og -- Optimize for debugging experience rather than speed or size.
+  # -O0  -- Don't Optimize output file
+  # -g -- generate debugging information
+  # -Og -- Optimize for debugging experience rather than speed or size
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Og")
 else()
-  # -O3 -- Optimize output file; 
-  # -DNDEBUG -- turn off asserts.
+  # -O3 -- Optimize output file
+  # -DNDEBUG -- turn off asserts
   # -fPIC -- Generate position-independent code if possible
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -fPIC")
 endif()
@@ -120,6 +121,12 @@ message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM Modules (default:ON)]$
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
+message("-- ${Cyan}     -D AMD_FP16_SUPPORT=${AMD_FP16_SUPPORT} [Turn ON/OFF OpenVX FP16 Support (default:OFF)]${ColourReset}")
+
+if(AMD_FP16_SUPPORT)
+  add_definitions(-DAMD_FP16_SUPPORT)
+  message("-- ${Blue}MIVisionX -- -DAMD_FP16_SUPPORT definition added${ColourReset}")
+endif(AMD_FP16_SUPPORT)
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

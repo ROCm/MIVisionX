@@ -182,7 +182,7 @@ For the convenience of the developer, we here provide the setup script which wil
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default:4.5.5)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.4)]
-                            --rpp       [RPP Version - optional (default:0.97)]
+                            --rpp       [RPP Version - optional (default:0.98)]
                             --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:no) [options:yes/no]]
                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
@@ -434,16 +434,16 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
-* ROCm: rocm-core - `5.3.0.50300-36`
-* miopen-hip - `2.18.0.50300-36`
-* miopen-opencl - `2.18.0.50300-36`
-* migraphx - `2.3.0.50300-36`
+* ROCm: rocm-core - `5.3.0.50300-63`
+* miopen-hip - `2.18.0.50300-63`
+* miopen-opencl - `2.18.0.50300-63`
+* migraphx - `2.3.0.50300-63`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
-* RPP - [0.97](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.97)
+* RPP - [0.98](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.98)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.3.7`
+* MIVisionX Setup Script - `V2.3.9`
 
 ### Known issues
 

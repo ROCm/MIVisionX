@@ -40,4 +40,4 @@ export PATH=$PATH:/opt/rocm/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
 ```
 #### Run Test Scripts
-* Test scripts and instructions to run them can be found [here](example/new_api)
+* Test scripts and instructions to run them can be found [here](examples/)

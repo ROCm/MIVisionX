@@ -50,5 +50,5 @@ else
   do
     echo "Going to install $WHEEL_NAME"
   done
-  pip3 install $WHEEL_NAME
+  pip$PYTHON_VERSION install $WHEEL_NAME
 fi

@@ -22,12 +22,12 @@ def show_images(image_batch, device):
     #fig = plt.figure(figsize = (32,(32 // columns) * rows))
     gs = gridspec.GridSpec(rows, columns)
     for j in range(rows*columns):
-        print('\n Display image: ', j)
+        #print('\n Display image: ', j)
         plt.subplot(gs[j])
         img = image_batch[j]
         plt.axis("off")
         if device == "cpu":
-            plt.imshow(img) #image = img.detach().numpy()
+            plt.imshow(img)
         else:
             plt.imshow(img.cpu())
     plt.show()

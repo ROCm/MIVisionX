@@ -25,6 +25,5 @@ Install rocAL_pybind using the run.sh script
 pip3 install numpy opencv-python torch
 ````
 
-```
 #### Run Test Scripts
 * Test scripts and instructions to run them can be found [here](examples/)

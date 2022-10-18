@@ -46,12 +46,12 @@ namespace rocal{
         return ptr;
     }
 
-    py::object wrapper(RocalContext context, py::array_t<unsigned char> array)
+    py::object wrapper_copy_to_output(RocalContext context, py::array_t<unsigned char> array)
     {
         auto buf = array.request();
         unsigned char* ptr = (unsigned char*) buf.ptr;
         // call pure C++ function
-        int status = rocalCopyToOutput(context,ptr,buf.size);
+        int status = rocalCopyToOutput(context,ptr, buf.size);
         return py::cast<py::none>(Py_None);
     }
 
@@ -264,6 +264,7 @@ namespace rocal{
         py::enum_<RocalTensorOutputType>(types_m,"RocalTensorOutputType","Tensor types")
             .value("FLOAT",ROCAL_FP32)
             .value("FLOAT16",ROCAL_FP16)
+            .value("UINT8",ROCAL_U8)
             .export_values();
         py::enum_<RocalResizeScalingMode>(types_m,"RocalResizeScalingMode","Decode size policies")
             .value("SCALING_MODE_DEFAULT",ROCAL_SCALING_MODE_DEFAULT)
@@ -361,7 +362,7 @@ namespace rocal{
         m.def("GetIntValue",&rocalGetIntValue);
         m.def("GetFloatValue",&rocalGetFloatValue);
         // rocal_api_data_transfer.h
-        m.def("rocalCopyToOutput",&wrapper);
+        m.def("rocalCopyToOutput",&wrapper_copy_to_output);
         m.def("rocalCopyToOutputTensor",&wrapper_tensor);
         m.def("rocalCopyToOutputTensor32",&wrapper_tensor32);
         m.def("rocalCopyToOutputTensor16",&wrapper_tensor16);

@@ -217,7 +217,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
     {
         // run nnir model_compiler
         // step-1.1: run python3 caffe_to_nnir <.caffemodel> nnir_output --input-dims <args->getBatchSize(),dimOutput[2], dimOutput[1], dimOutput[0]>
-        command = "python3.10 ";
+        command = "python3 ";
         command += args->getModelCompilerPath() + "/" + "caffe_to_nnir.py weights.caffemodel nnir-output --input-dims";
         command += " " + std::to_string(args->getBatchSize())
                 +  "," + std::to_string(dimInput[2])
@@ -234,7 +234,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
             return error_close(sock, "command-failed(%d): %s", status, command.c_str());
         }
         // steo-1.2: todo:: nnir_update
-        command = "python3.10 ";
+        command = "python3 ";
         command += args->getModelCompilerPath() + "/" + "nnir_update.py --fuse-ops 1";  // --fuse-ops is required to fuse batch-norm at NNIR. Workaround for FP16 MIOPen bug with batchnorm
         if (args->fp16Inference())
         {
@@ -253,7 +253,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
         }
 
         // step-1.3: nnir_to_openvx
-        command = "python3.10 ";
+        command = "python3 ";
         command += args->getModelCompilerPath() + "/" + "nnir_to_openvx.py nnir-output_1 ."
                 +  " >>caffe2openvx.log";
         info("executing: %% %s", command.c_str());

@@ -17,15 +17,6 @@ Install rocAL_pybind using the run.sh script
 ```
 ./run.sh
 ```
-NOTE: If using conda environment, use:
-```
-python3 setup.py build
-python3 setup.py install
-```
-
-## Run Samples
-
-### Run `test.py`
 
 #### Prerequisites
 

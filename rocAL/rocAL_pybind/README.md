@@ -9,7 +9,7 @@ written primarily in C/C++ language can be used effectively in Python.
 ## Prerequisites
 * [rocAL C/C++ Library](../rocAL#prerequisites)
 * CMake Version 3.10 or higher
-* Python 3.6
+* Python 3
 * PIP3 - `sudo apt install python3-pip`
 
 ## Install
@@ -19,8 +19,8 @@ Install rocAL_pybind using the run.sh script
 ```
 NOTE: If using conda environment, use:
 ```
-python3.6 setup.py build
-python3.6 setup.py install
+python3 setup.py build
+python3 setup.py install
 ```
 
 ## Run Samples
@@ -36,12 +36,8 @@ pip3 install numpy opencv-python torch
 
 * Export `RPP` & `rocAL` library into PATH
 ```
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib/
+export PATH=$PATH:/opt/rocm/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib:/opt/rocm/rpp/lib
 ```
-#### Run Test Script
-
-test.py [image_folder] [cpu:0/gpu:1] [batch_size]
-
-```
-python3 example/test.py ../../data/images/AMD-tinyDataSet/ 0 4
-```
+#### Run Test Scripts
+* Test scripts and instructions to run them can be found [here](example/new_api)

@@ -363,22 +363,19 @@ CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
 #endif
 }
 
-vx_status CLoomIoMediaDecoder::SetRepeatMode(vx_int32 bRepeat)
-{
+vx_status CLoomIoMediaDecoder::SetRepeatMode(vx_int32 bRepeat) {
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
         LoopDec[mediaIndex] = bRepeat;
     }
     return VX_SUCCESS;
 }
 
-vx_status CLoomIoMediaDecoder::SetEnableUserBufferGPUMode(vx_bool bEnable)
-{
+vx_status CLoomIoMediaDecoder::SetEnableUserBufferGPUMode(vx_bool bEnable) {
     m_enableUserBufferGPU = bEnable;
     return VX_SUCCESS;
 }
 
-vx_status CLoomIoMediaDecoder::SetDeviceId(vx_int32 device_id_mask)
-{
+vx_status CLoomIoMediaDecoder::SetDeviceId(vx_int32 device_id_mask) {
     // use default of device_id_mask is -1
     bool use_default = (device_id_mask == -1);
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {

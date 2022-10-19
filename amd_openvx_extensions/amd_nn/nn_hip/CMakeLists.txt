@@ -25,13 +25,13 @@ set(NN_HIP_SOURCES
     nn_hip_kernels.cpp
     )
 
-    set(hip_library_name amdhip64)
     set_source_files_properties(${NN_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
     set(HIP_CXX_FLAGS -std=gnu++14)
-
-    set(COMPILER_FOR_HIP ${ROCM_PATH}/bin/hipcc)
+    set(COMPILER_FOR_HIP ${ROCM_PATH}/llvm/bin/clang++)
     set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")
-    add_library(nn_hip OBJECT ${NN_HIP_SOURCES})
-    set_target_properties(nn_hip PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    target_compile_definitions(nn_hip PRIVATE __HIP_PLATFORM_AMD__)
+
+    add_library(${PROJECT_NAME} OBJECT ${NN_HIP_SOURCES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
+    target_link_libraries(${PROJECT_NAME} hip::device)

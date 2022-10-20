@@ -1,14 +1,11 @@
 
 from tkinter import W
-from amd.rocal.pipeline import Pipeline
 from amd.rocal.pipeline import pipeline_def
-from amd.rocal.plugin.pytorch import ROCALGenericImageIterator
 from amd.rocal.plugin.pytorch import ROCALClassificationIterator
 import amd.rocal.fn as fn
 import amd.rocal.types as types
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import cv2
 #%matplotlib inline
 
 seed = 1549361629

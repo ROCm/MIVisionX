@@ -35,10 +35,10 @@ FusedCropTJDecoder::FusedCropTJDecoder(){
 Decoder::Status FusedCropTJDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) {
     //TODO : Use the most recent TurboJpeg API tjDecompressHeader3 which returns the color components
     if(tjDecompressHeader2(m_jpegDecompressor,
-                            input_buffer,
-                            input_size,
-                            width,
-                            height,
+                            input_buffer, 
+                            input_size, 
+                            width, 
+                            height, 
                             color_comps) != 0)
     {
         WRN("Jpeg header decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
@@ -83,34 +83,33 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         crop_height = std::lround((_bbox_coord[3]) * original_image_height);
     }
     else {
-        double ASPECT_RATIO_RANGE[2] = {decoder_config.get_random_aspect_ratio()[0], decoder_config.get_random_aspect_ratio()[1]};
-        double AREA_RANGE[2] = {decoder_config.get_random_area()[0], decoder_config.get_random_aspect_ratio()[1]};
+        double aspect_ratio_range[2] = {decoder_config.get_random_aspect_ratio()[0], decoder_config.get_random_aspect_ratio()[1]};
+        double area_range[2] = {decoder_config.get_random_area()[0], decoder_config.get_random_aspect_ratio()[1]};
         auto is_valid_crop = [](uint h, uint w, uint height, uint width) {
             return(h > 0 && h <= height && w > 0 && w <= width);
         };
-        float max_wh_ratio = ASPECT_RATIO_RANGE[1];
-        float max_hw_ratio = 1 / ASPECT_RATIO_RANGE[0];
-        float min_area = original_image_width * original_image_height * AREA_RANGE[0];
-        int maxW = std::max<int>(1, original_image_height * max_wh_ratio);
-        int maxH = std::max<int>(1, original_image_width * max_hw_ratio);
+        float max_wh_ratio = aspect_ratio_range[1];
+        float max_hw_ratio = 1 / aspect_ratio_range[0];
+        float min_area = original_image_width * original_image_height * area_range[0];
+        int max_w = std::max<int>(1, original_image_height * max_wh_ratio);
+        int max_h = std::max<int>(1, original_image_width * max_hw_ratio);
         int num_attempts_left = decoder_config.get_num_attempts();
         // detect two impossible cases early
-        if (original_image_height * maxW < min_area) { // image too wide
+        if (original_image_height * max_w < min_area) { // image too wide
             crop_width = original_image_height;
-            crop_height = maxW;
+            crop_height = max_w;
             x1 = std::uniform_int_distribution<int>(0, original_image_width - crop_width)(_rand_gen);
             y1 = std::uniform_int_distribution<int>(0, original_image_height - crop_height)(_rand_gen);
         }
-        else if (original_image_width * maxH < min_area) { // image too tall
-            crop_width = maxH;
+        else if (original_image_width * max_h < min_area) { // image too tall
+            crop_width = max_h;
             crop_height = original_image_width;
             x1 = std::uniform_int_distribution<int>(0, original_image_width - crop_width)(_rand_gen);
             y1 = std::uniform_int_distribution<int>(0, original_image_height - crop_height)(_rand_gen);
-        }
-        else {
+        } else {
             for (; num_attempts_left > 0; num_attempts_left--) {
-                std::uniform_real_distribution<double> area_dis(AREA_RANGE[0], AREA_RANGE[1]);
-                std::uniform_real_distribution<double> log_ratio_dist(std::log(ASPECT_RATIO_RANGE[0]), std::log(ASPECT_RATIO_RANGE[1]));
+                std::uniform_real_distribution<double> area_dis(area_range[0], area_range[1]);
+                std::uniform_real_distribution<double> log_ratio_dist(std::log(aspect_ratio_range[0]), std::log(aspect_ratio_range[1]));
                 double scale = area_dis(_rand_gen);
                 double target_area = scale * original_image_width * original_image_height;
                 double aspect_ratio = std::exp(log_ratio_dist(_rand_gen));
@@ -126,21 +125,16 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         // Fallback on Central Crop
         if(num_attempts_left <= 0) {
             double in_ratio;
-            float max_area = AREA_RANGE[1] * original_image_height * original_image_width;
-
+            float max_area = area_range[1] * original_image_height * original_image_width;
             in_ratio = static_cast<double>(original_image_width) / original_image_height;
-            if(in_ratio < ASPECT_RATIO_RANGE[0])
-            {
+            if(in_ratio < aspect_ratio_range[0]) {
                 crop_width =  original_image_width;
-                crop_height = static_cast<size_t>(std::round(crop_width / ASPECT_RATIO_RANGE[0]));
+                crop_height = static_cast<size_t>(std::round(crop_width / aspect_ratio_range[0]));
             }
-            else if(in_ratio > ASPECT_RATIO_RANGE[1])
-            {
+            else if(in_ratio > aspect_ratio_range[1]) {
                 crop_height = original_image_height;
-                crop_width  = static_cast<size_t>(std::round(crop_height * ASPECT_RATIO_RANGE[1]));
-            }
-            else // Whole Image
-            {
+                crop_width  = static_cast<size_t>(std::round(crop_height * aspect_ratio_range[1]));
+            } else { // Whole Image
                 crop_height = original_image_height;
                 crop_width  = original_image_width;
             }
@@ -165,8 +159,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                       max_decoded_height,
                       tjpf,
                       TJFLAG_FASTDCT, &x1_diff, &crop_width_diff,
- 		                  x1, y1, crop_width, crop_height) != 0)
-    {
+ 		                  x1, y1, crop_width, crop_height) != 0) {
         WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
         return Status::CONTENT_DECODE_FAILED;
     }

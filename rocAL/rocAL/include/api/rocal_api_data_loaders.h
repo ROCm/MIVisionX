@@ -167,7 +167,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartial(RocalConte
                                                             bool is_output,
                                                             bool shuffle = false,
                                                             bool loop = false,
-                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE_RESTRICTED,
+                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED,
                                                             unsigned max_width = 0, unsigned max_height = 0,
                                                             RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
                                                             RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
@@ -201,7 +201,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartialSingleShard
                                                             unsigned num_attempts,
                                                             bool shuffle = false,
                                                             bool loop = false,
-                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE_RESTRICTED,
+                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED,
                                                             unsigned max_width = 0, unsigned max_height = 0,
                                                             RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
 
@@ -394,7 +394,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalFusedJpegCrop(RocalContext context,
                                                         bool is_output ,
                                                         bool shuffle = false,
                                                         bool loop = false,
-                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE_RESTRICTED,
+                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED,
                                                         unsigned max_width = 0, unsigned max_height = 0,
                                                         RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
                                                         RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL);
@@ -421,7 +421,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalFusedJpegCropSingleShard(RocalContex
                                                         unsigned num_attempts,
                                                         bool shuffle = false,
                                                         bool loop = false,
-                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE_RESTRICTED,
+                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED,
                                                         unsigned max_width = 0, unsigned max_height = 0,
                                                         RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL);
 
@@ -718,7 +718,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourcePartialSin
                                                             unsigned num_attempts,
                                                             bool shuffle = false,
                                                             bool loop = false,
-                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE_RESTRICTED,
+                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED,
                                                             unsigned max_width = 0, unsigned max_height = 0,
                                                             RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
 

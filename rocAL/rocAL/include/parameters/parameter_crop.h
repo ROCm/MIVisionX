@@ -1,4 +1,3 @@
-/*
 Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -58,7 +57,7 @@ public:
         in_height = in_height_;
     }
     void set_random() {_random = true;}
-    void set_center() { _is_center_crop = true; }
+    void set_center_crop() { _is_center_crop = true; }
     void set_x_drift_factor(Parameter<float>* x_drift);
     void set_y_drift_factor(Parameter<float>* y_drift);
     std::vector<uint32_t> in_width, in_height;

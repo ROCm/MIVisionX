@@ -41,3 +41,5 @@ Examples to run all kernels:
 ./runvxTestAllScript.sh 16 16 1 ALL OCLvsHIP ../../build_ocl/install/bin ../../build_hip/install/bin
 ./runvxTestAllScript.sh 16 16 1 ALL OCLvsHIP ../../build_ocl/install/bin ../../build_hip/install/bin 2
 ```
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

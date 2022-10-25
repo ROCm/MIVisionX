@@ -82,3 +82,5 @@ SIFT_Detect.gdf
 SURF_Compute.gdf
 SURF_Detect.gdf
 ```
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

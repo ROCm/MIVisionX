@@ -25,3 +25,5 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
 * [Verify the Installation](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#verify-the-installation)
 * [Docker](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#docker)
 * [Release Notes](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#release-notes)
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

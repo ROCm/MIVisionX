@@ -29,3 +29,5 @@ OpenVX [vision function tests](vision_tests) for verification and performance
 ## Zen DNN Unit Tests
 
 [Zen DNN tests](zen_dnn_tests) for unit test, verification and performance
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

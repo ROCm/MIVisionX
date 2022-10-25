@@ -21,3 +21,5 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * [amd_winml](amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 <p align="center"><img width="80%" src="../docs/images/winmlFrameWorks.png" /></p>
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

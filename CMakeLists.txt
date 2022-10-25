@@ -20,7 +20,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
-set(VERSION "2.3.0")
+set(VERSION "2.4.0")
 
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
@@ -102,13 +102,13 @@ if(NOT CMAKE_BUILD_TYPE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  # -O0  -- Don't Optimize output file; 
-  # -g -- generate debugging information;
-  # -Og -- Optimize for debugging experience rather than speed or size.
+  # -O0  -- Don't Optimize output file
+  # -g -- generate debugging information
+  # -Og -- Optimize for debugging experience rather than speed or size
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Og")
 else()
-  # -O3 -- Optimize output file; 
-  # -DNDEBUG -- turn off asserts.
+  # -O3 -- Optimize output file
+  # -DNDEBUG -- turn off asserts
   # -fPIC -- Generate position-independent code if possible
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -fPIC")
 endif()

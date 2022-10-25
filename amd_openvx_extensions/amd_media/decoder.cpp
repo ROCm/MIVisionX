@@ -34,6 +34,9 @@ THE SOFTWARE.
 #include <sstream>
 #include <stdlib.h>
 
+// Performance measurement option
+#define ENABLE_PERF_MEASURE        1
+
 // OpenCL configuration
 #define DUMP_DECODED_FRAME         0
 
@@ -125,6 +128,13 @@ private:
     std::vector<int> decodeFrameCount;
     int outputFrameCount;
     std::vector<int> LoopDec;
+#if ENABLE_PERF_MEASURE
+    std::chrono::duration<double> totalDecodeTime = {};
+    std::chrono::duration<double> totalTransferTime = {};
+    std::chrono::high_resolution_clock::time_point startTime;
+    std::chrono::high_resolution_clock::time_point endTime;
+    int frameno = 0;
+#endif
 };
 
 
@@ -285,6 +295,10 @@ CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, c
 
 CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
 {
+#if ENABLE_PERF_MEASURE
+    std::cout << "Average Decode Time per frame (ms): " << totalDecodeTime.count() * 1000 / frameno << std::endl;
+    std::cout << "Average Transfer Time per frame (ms): " << totalTransferTime.count() * 1000 / frameno << std::endl;
+#endif
     // terminate the thread
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
         if (thread[mediaIndex]) {
@@ -699,6 +713,8 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
     AVPacket avpkt = { 0 };
     int status;
 
+
+
     for (command cmd; !eof[mediaIndex] && ((cmd = PopCommand(mediaIndex)) != cmd_abort);) {
         int gotPicture = 0;
         while (!gotPicture && !eof[mediaIndex]) 
@@ -723,10 +739,14 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     eof[mediaIndex] = true;
                     PushAck(mediaIndex, -1);
                     av_packet_unref(&avpkt);
+
                     return;
                 }
                 else if (avpkt.stream_index == videoStreamIndex[mediaIndex]) {
                     // send packet to decoder
+#if ENABLE_PERF_MEASURE
+                    startTime = std::chrono::high_resolution_clock::now();
+#endif
                     status = avcodec_send_packet(videoCodecContext[mediaIndex], &avpkt);
                     if (status < 0) {
                         vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Sending packet to video decoder status:%x", AVERROR(status));
@@ -741,6 +761,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                 return;
             }
             int status = avcodec_receive_frame(videoCodecContext[mediaIndex], frame);
+
             if (status == AVERROR(EAGAIN)) {
                 // output not available at this time: continue to send the next frame.
                 av_frame_free(&frame);
@@ -755,8 +776,16 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                 return;
             }
             gotPicture = true;
+#if ENABLE_PERF_MEASURE           
+            endTime = std::chrono::high_resolution_clock::now();
+            totalDecodeTime += endTime - startTime;
+            frameno++;
+#endif
             if (useVaapi[mediaIndex]) {
                 /* retrieve data from GPU to CPU */
+#if ENABLE_PERF_MEASURE
+                    startTime = std::chrono::high_resolution_clock::now();
+#endif
                 if ((status = av_hwframe_transfer_data(sw_frame, frame, 0)) < 0) {
                     vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: avcodec_receive_frame() failed (%x)\n", AVERROR(status));
                     eof[mediaIndex] = true;
@@ -765,6 +794,11 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     av_frame_free(&sw_frame);
                     return;
                 }
+#if ENABLE_PERF_MEASURE           
+                endTime = std::chrono::high_resolution_clock::now();
+                totalTransferTime += endTime - startTime;
+#endif
+
                 tmp_frame = sw_frame;
                 av_frame_free(&frame);
             } else {
@@ -873,6 +907,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
             decodeFrameCount[mediaIndex]++;
             PushAck(mediaIndex, 0);
         }
+
     }
 end:
     // mark eof and send ACK

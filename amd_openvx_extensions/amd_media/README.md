@@ -67,4 +67,3 @@ node com.amd.amd_media.encode vid1 yuvimg NULL aux_output gpu_mode
 ```
 
 **NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.
-

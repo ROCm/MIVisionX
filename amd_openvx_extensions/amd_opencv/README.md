@@ -82,4 +82,3 @@ The following is a list of OpenCV functions that have been included in the vx_op
 * Use CMake to configure and generate Makefile
 
 **NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.
-

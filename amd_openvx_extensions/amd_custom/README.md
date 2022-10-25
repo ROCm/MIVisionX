@@ -11,7 +11,7 @@ It is built with MIVisionX package.
 
 ### Pre-requisites
 
-* AMD OpenVX library
+* AMD OpenVX&trade; library
 * ROCM installed system with AMD GPU
 * [ROCm](https://rocmdocs.amd.com/en/latest/)
     

@@ -12,8 +12,8 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
-- [AMD OpenVX](#amd-openvx)
-- [AMD OpenVX Extensions](#amd-openvx-extensions)
+- [AMD OpenVX&trade;](#amd-openvx)
+- [AMD OpenVX&trade; Extensions](#amd-openvx-extensions)
 - [Applications](#applications)
 - [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
 - [rocAL](#rocal)
@@ -51,17 +51,17 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   - [Known issues](#known-issues)
 - [MIVisionX Dependency Map](#mivisionx-dependency-map)
 
-## AMD OpenVX
+## AMD OpenVX&trade;
 
 <p align="center"><img width="30%" src="docs/images/OpenVX_logo.png" /></p>
 
-[AMD OpenVX](amd_openvx#amd-openvx-amd_openvx) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+[AMD OpenVX&trade;](amd_openvx#amd-openvx-amd_openvx) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 <a href="https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html" target="_blank">Khronos OpenVX&trade; 1.0.1</a> conformant implementation is available in [MIVisionX Lite](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/openvx-1.0.1)
 
-## AMD OpenVX Extensions
+## AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx), which contains the AMD OpenVX Core Engine.
+The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx), which contains the AMD OpenVX&trade; Core Engine.
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX-OpenVX-Extensions.png" /></p>
 

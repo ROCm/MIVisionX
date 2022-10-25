@@ -1,4 +1,4 @@
-# AMD OpenVX OpenCV Extension Function Tests
+# AMD OpenVX&trade; OpenCV Extension Function Tests
 
 ## Script to run vision tests
 

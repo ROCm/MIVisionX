@@ -16,7 +16,7 @@ Run [neural network tests](neural_network_tests) to verify `Caffe`/`ONNX`/`NNEF`
 
 ## OpenVX Node Tests
 
-[RunVX tests](openvx_node_tests) for AMD OpenVX functionalities in HOST/OCL/HIP backends
+[RunVX tests](openvx_node_tests) for AMD OpenVX&trade; functionalities in HOST/OCL/HIP backends
 
 ## Smoke Tests
 

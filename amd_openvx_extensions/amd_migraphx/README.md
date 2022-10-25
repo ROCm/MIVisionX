@@ -6,7 +6,7 @@
 
 ### Pre-requisites
 
-* AMD OpenVX library
+* AMD OpenVX&trade; library
 * <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD MIGraphX </a>
 
 This module is built by default when building the MIVisionX.

@@ -2,7 +2,7 @@
 
 ### Help
 
-The runvxTestAllScript.sh bash script runs runvx for AMD OpenVX functionalities in HOST/OCL/HIP backends.
+The runvxTestAllScript.sh bash script runs runvx for AMD OpenVX&trade; functionalities in HOST/OCL/HIP backends.
 - It can optionally run tests for all kernels or a single kernel separately.
 - It can optionally generate .bin dumps for the image inputs/outputs.
 - It can optionally run HOST/OCL/HIP backends and also run a OCLvsHIP test to compare OCLvsHIP outputs and report inconsistencies (for all kernels or a single kernel separately).

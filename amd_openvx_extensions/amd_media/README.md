@@ -13,7 +13,7 @@
 
 ### Pre-requisites
 
-* AMD OpenVX library
+* AMD OpenVX&trade; library
 * FFMPEG 4.0 or above, installed via MIVisionX setup script or download from following link
     - [download](https://ffmpeg.org/download.html)
 * amdgpu Linux mesa driver for hardware support. Install with --no-dkms after installing ROCm.

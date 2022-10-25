@@ -1,6 +1,6 @@
-# AMD OpenVX Extensions
+# AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below OpenVX modules and utilities to extend [AMD OpenVX](../amd_openvx#amd-openvx-amd_openvx) (amd_openvx) project, which contains the AMD OpenVX Core Engine.
+The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below OpenVX modules and utilities to extend [AMD OpenVX&trade;](../amd_openvx#amd-openvx-amd_openvx) (amd_openvx) project, which contains the AMD OpenVX&trade; Core Engine.
 
 * [amd_loomsl](amd_loomsl): AMD Radeon LOOM stitching library for live 360-degree video applications
 

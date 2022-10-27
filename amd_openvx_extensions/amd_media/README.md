@@ -13,7 +13,7 @@
 
 ### Pre-requisites
 
-* AMD OpenVX library
+* AMD OpenVX&trade; library
 * FFMPEG 4.0 or above, installed via MIVisionX setup script or download from following link
     - [download](https://ffmpeg.org/download.html)
 * amdgpu Linux mesa driver for hardware support. Install with --no-dkms after installing ROCm.
@@ -65,3 +65,5 @@ data aux_output = array:UINT8,256
 data gpu_mode = scalar:BOOL,FALSE
 node com.amd.amd_media.encode vid1 yuvimg NULL aux_output gpu_mode
 ```
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

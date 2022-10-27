@@ -11,7 +11,7 @@ It is built with MIVisionX package.
 
 ### Pre-requisites
 
-* AMD OpenVX library
+* AMD OpenVX&trade; library
 * ROCM installed system with AMD GPU
 * [ROCm](https://rocmdocs.amd.com/en/latest/)
     
@@ -63,3 +63,5 @@ write output out_tensor_1.bin
 ```
 * To run the gdf using runvx use the command "runvx -affinity:GPU example.gdf"
 * After running the gdf using the runvx utility, you can see the out_tensor_1.bin will have the same data as input tensor
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

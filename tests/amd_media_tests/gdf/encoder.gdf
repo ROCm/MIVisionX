@@ -1,7 +1,7 @@
 import vx_amd_media
 
 # read input sequences
-data yuvimg  = image:1280,720,NV12:read,data/test.yuv
+data yuvimg  = image:1280,720,NV12:read,/ADD/PATH/TO/Image.yuv
 data vid1 = scalar:STRING,"encoder_output.264,4,30,0,15"
 data aux_output = array:UINT8,256
 data gpu_mode = scalar:BOOL,FALSE

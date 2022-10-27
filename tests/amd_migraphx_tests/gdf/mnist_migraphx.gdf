@@ -2,7 +2,7 @@ import vx_amd_migraphx
 import vx_nn
 
 data input = image:28,28,U008
-read input image_4.jpg
+read input image-4.png
 data a = scalar:FLOAT32,0.00392157
 data b = scalar:FLOAT32,0.0
 data reverse_channel_order = scalar:BOOL,0

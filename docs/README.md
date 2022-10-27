@@ -5,8 +5,8 @@
 
 MIVisionX toolkit is a comprehensive computer vision and machine intelligence libraries, utilities and applications bundled into a single toolkit.
 
-* [AMD OpenVX](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#amd-openvx)
-* [AMD OpenVX Extensions](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#amd-openvx-extensions)
+* [AMD OpenVX&trade;](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#amd-openvx)
+* [AMD OpenVX&trade; Extensions](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#amd-openvx-extensions)
   + [Loom 360 Video Stitch Library](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_loomsl/)
   + [Neural Net Library](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_nn/)
   + [OpenCV Extensions](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_opencv/)
@@ -25,3 +25,5 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
 * [Verify the Installation](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#verify-the-installation)
 * [Docker](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#docker)
 * [Release Notes](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#release-notes)
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

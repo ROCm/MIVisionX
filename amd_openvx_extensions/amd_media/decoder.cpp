@@ -165,7 +165,6 @@ static inline int num_hw_devices() {
 
 static int hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type, AVBufferRef *hw_device_ctx, int hw_device_id)
 {
-    //printf("hw_decoder_init called for device_id:%d\n", hw_device_id);
     int err = 0;
     char device[128] = "";
     char* pdevice = NULL;
@@ -379,7 +378,7 @@ vx_status CLoomIoMediaDecoder::SetDeviceId(vx_int32 device_id_mask) {
     // use default of device_id_mask is -1
     bool use_default = (device_id_mask == -1);
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
-        hwDeviceID[mediaIndex] = use_default? -1 : (device_id_mask & 0xF);
+        hwDeviceID[mediaIndex] = use_default ? -1 : (device_id_mask & 0xF);
         device_id_mask >>= 4;
     }
     
@@ -475,7 +474,6 @@ vx_status CLoomIoMediaDecoder::Initialize()
                 vxAddLogEntry((vx_reference)node, status, "ERROR: vaapi is not supported for this device\n");
                 return status;
             }
-            //printf("Found vaapi device for %d\n", mediaIndex);
         }
         int err = avformat_open_input(&formatContext, mediaFileName, inputFormat, nullptr);
         if (err) {
@@ -535,7 +533,7 @@ vx_status CLoomIoMediaDecoder::Initialize()
         if (useVaapi[mediaIndex]) {
             codecContext->get_format  = get_hw_format;
             int dev_id = (hwDeviceID[mediaIndex] < 0) ? mediaIndex : hwDeviceID[mediaIndex]; 
-            if (hw_decoder_init(codecContext, hw_type, hw_device_ctx, mediaIndex) < 0) {
+            if (hw_decoder_init(codecContext, hw_type, hw_device_ctx, dev_id) < 0) {
                 vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Failed to create specified HW device.\n");
                 return VX_FAILURE;
             }

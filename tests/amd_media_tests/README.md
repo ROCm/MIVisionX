@@ -6,11 +6,11 @@
 runvx -affinity:GPU -frames:0,eof file gdf/decoder.gdf
 ```
 
-**NOTE:** Make sure to edit `gdf/decoder.gdf` and add the full path to `${FULL_PATH}/MIVisionX/tests/amd_media_tests/gdf/data/test.mp4`
+**NOTE:** Make sure to edit `gdf/decoder.gdf` and add the full path to `${FULL_PATH}/MIVisionX/data/videos/AMD_driving_virtual_20.mp4`
 
 **Sample expected output:**
 ```
-INFO: reading 1920x1080 into slice#0 from $(FULL_PATH)/MIVisionX/tests/amd_media_tests/test.mp4
+INFO: reading 1920x1080 into slice#0 from XXXXXXXXX/MIVisionX/data/videos/AMD_driving_virtual_20.mp4
 csv,HEADER ,STATUS, COUNT,cur-ms,avg-ms,min-ms,clenqueue-ms,clwait-ms,clwrite-ms,clread-ms
 csv,OVERALL,  PASS,     0,      ,  0.00,  0.00,  0.00,  0.00,  0.00,  0.00 (median 0.000)
 > total elapsed time:   0.00 sec<br>

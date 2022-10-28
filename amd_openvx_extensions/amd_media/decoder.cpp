@@ -78,6 +78,7 @@ public:
     vx_status ProcessFrame(vx_image output, vx_array aux_data);
     vx_status SetRepeatMode(vx_int32 bRepeat);
     vx_status SetEnableUserBufferGPUMode(vx_bool bEnable);
+    vx_status SetDeviceId(vx_int32 device_id);
 
 protected:
     typedef enum { cmd_abort, cmd_decode } command;
@@ -128,6 +129,7 @@ private:
     std::vector<int> decodeFrameCount;
     int outputFrameCount;
     std::vector<int> LoopDec;
+    std::vector<int> hwDeviceID;
 #if ENABLE_PERF_MEASURE
     std::chrono::duration<double> totalDecodeTime = {};
     std::chrono::duration<double> totalTransferTime = {};
@@ -270,14 +272,16 @@ CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, c
       inputMediaFileName(mediaCount_), inputMediaFormatContext(mediaCount_), inputMediaFormat(mediaCount_),
       videoCodecContext(mediaCount_), conversionContext(mediaCount_), videoStreamIndex(mediaCount_),
       mutexCmd(mediaCount_), cvCmd(mediaCount_), queueCmd(mediaCount_), mutexAck(mediaCount_), cvAck(mediaCount_), queueAck(mediaCount_),
-      thread(mediaCount_), eof(mediaCount_), decodeFrameCount(mediaCount_), useVaapi(mediaCount_), mutexFrame(mediaCount_), cvFrame(mediaCount_), queueFrames(mediaCount_), LoopDec(mediaCount_)
-{
+      thread(mediaCount_), eof(mediaCount_), decodeFrameCount(mediaCount_), useVaapi(mediaCount_), mutexFrame(mediaCount_), cvFrame(mediaCount_), queueFrames(mediaCount_), 
+      LoopDec(mediaCount_), hwDeviceID(mediaCount_) {
+
     memset(decodeBuffer, 0, sizeof(decodeBuffer));
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
         inputMediaFormat[mediaIndex] = NULL;
         videoCodecContext[mediaIndex] = NULL;
         inputMediaFormatContext[mediaIndex] = NULL;
         LoopDec[mediaIndex] = 0;
+        hwDeviceID[mediaIndex] = -1;    //use default device ID
     }
     m_enableUserBufferGPU = false;   // use host buffers by default
     memset(mem, 0, sizeof(mem));
@@ -358,17 +362,26 @@ CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
 #endif
 }
 
-vx_status CLoomIoMediaDecoder::SetRepeatMode(vx_int32 bRepeat)
-{
+vx_status CLoomIoMediaDecoder::SetRepeatMode(vx_int32 bRepeat) {
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
         LoopDec[mediaIndex] = bRepeat;
     }
     return VX_SUCCESS;
 }
 
-vx_status CLoomIoMediaDecoder::SetEnableUserBufferGPUMode(vx_bool bEnable)
-{
+vx_status CLoomIoMediaDecoder::SetEnableUserBufferGPUMode(vx_bool bEnable) {
     m_enableUserBufferGPU = bEnable;
+    return VX_SUCCESS;
+}
+
+vx_status CLoomIoMediaDecoder::SetDeviceId(vx_int32 device_id_mask) {
+    // use default of device_id_mask is -1
+    bool use_default = (device_id_mask == -1);
+    for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
+        hwDeviceID[mediaIndex] = use_default ? -1 : (device_id_mask & 0xF);
+        device_id_mask >>= 4;
+    }
+    
     return VX_SUCCESS;
 }
 
@@ -461,7 +474,6 @@ vx_status CLoomIoMediaDecoder::Initialize()
                 vxAddLogEntry((vx_reference)node, status, "ERROR: vaapi is not supported for this device\n");
                 return status;
             }
-            //printf("Found vaapi device for %d\n", mediaIndex);
         }
         int err = avformat_open_input(&formatContext, mediaFileName, inputFormat, nullptr);
         if (err) {
@@ -520,7 +532,8 @@ vx_status CLoomIoMediaDecoder::Initialize()
             return -1;
         if (useVaapi[mediaIndex]) {
             codecContext->get_format  = get_hw_format;
-            if (hw_decoder_init(codecContext, hw_type, hw_device_ctx, mediaIndex) < 0) {
+            int dev_id = (hwDeviceID[mediaIndex] < 0) ? mediaIndex : hwDeviceID[mediaIndex]; 
+            if (hw_decoder_init(codecContext, hw_type, hw_device_ctx, dev_id) < 0) {
                 vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Failed to create specified HW device.\n");
                 return VX_FAILURE;
             }
@@ -608,10 +621,6 @@ vx_status CLoomIoMediaDecoder::Initialize()
         for (int i = 1; i < DECODE_BUFFER_POOL_SIZE; i++)
             PushCommand(mediaIndex, cmd_decode);
     }
-    // do we need to do this here??
-//	for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
-//		PopAck(mediaIndex);
-//	}
 
     return VX_SUCCESS;
 }
@@ -946,6 +955,10 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
         ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET, &offset, sizeof(offset)));
         if (stride == 0) stride = width; // in case stride is not set for the buffer
     }
+    int device_id = -1;
+    if (parameters[5]) {
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[5], &device_id, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    }
 
     // create and initialize decoder
     const char * s = inputMediaConfig;
@@ -967,6 +980,9 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
     }
     if (parameters[4]) {
         ERROR_CHECK_STATUS(decoder->SetEnableUserBufferGPUMode(enableUserBufferGPU));
+    }
+    if (parameters[5]) {
+        ERROR_CHECK_STATUS(decoder->SetDeviceId(device_id));
     }
     ERROR_CHECK_STATUS(decoder->Initialize());
 
@@ -1046,6 +1062,7 @@ vx_status amd_media_decode_publish(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_OPTIONAL)); // output auxiliary data (optional)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input repeat decoding at eof (optional)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input: to set enableUserBufferGPU flag
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input: to set device_id
 
     // finalize and release kernel object
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
@@ -1054,27 +1071,31 @@ vx_status amd_media_decode_publish(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode, vx_bool enable_gpu_output)
-{
+VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode, vx_bool enable_gpu_output, vx_int32 device_id_mask) {
+
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_scalar s_input = vxCreateScalar(context, VX_TYPE_STRING_AMD, input_str);
         vx_scalar s_loop = vxCreateScalar(context, VX_TYPE_INT32, &loop_decode);
         vx_scalar s_enable_gpu_out = vxCreateScalar(context, VX_TYPE_BOOL, &enable_gpu_output);
+        vx_scalar s_device_id_mask = vxCreateScalar(context, VX_TYPE_INT32, &device_id_mask);
         vx_reference params[] = {
             (vx_reference)s_input,
             (vx_reference)output,
             (vx_reference)aux_data,
             (vx_reference)s_loop,
             (vx_reference)s_enable_gpu_out,
+            (vx_reference)s_device_id_mask,
         };
         if (vxGetStatus((vx_reference)s_input) == VX_SUCCESS) {
             node = createMediaNode(graph, "com.amd.amd_media.decode", params, sizeof(params) / sizeof(params[0])); // added node to graph
             vxReleaseScalar(&s_input);
             vxReleaseScalar(&s_loop);
             vxReleaseScalar(&s_enable_gpu_out);
+            vxReleaseScalar(&s_device_id_mask);
         }
     }
+
     return node;
 }

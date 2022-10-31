@@ -326,7 +326,7 @@ namespace rocal{
         py::enum_<RocalDecoderType>(types_m,"RocalDecoderType", "Rocal Decoder Type")
             .value("DECODER_TJPEG",ROCAL_DECODER_TJPEG)
             .value("DECODER_OPENCV",ROCAL_DECODER_OPENCV)
-            .value("DECODER_HW_JEPG",ROCAL_DECODER_HW_JEPG)
+            .value("DECODER_HW_JEPG",ROCAL_DECODER_HW_JPEG)
             .value("DECODER_VIDEO_FFMPEG_SW",ROCAL_DECODER_VIDEO_FFMPEG_SW)
             .value("DECODER_VIDEO_FFMPEG_HW",ROCAL_DECODER_VIDEO_FFMPEG_HW)
             .export_values();

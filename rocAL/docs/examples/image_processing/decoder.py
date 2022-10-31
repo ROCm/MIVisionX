@@ -6,7 +6,6 @@ import amd.rocal.fn as fn
 import amd.rocal.types as types
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-#%matplotlib inline
 
 seed = 1549361629
 image_dir = "/home/rajy/work/MIVisionX-data/rocal_data/images_jpg/labels_folder"

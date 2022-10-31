@@ -39,7 +39,7 @@ extern "C" {
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode=0, vx_bool enable_opencl_output=false);
+VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode=0, vx_bool enable_opencl_output=false, vx_int32 device_id = -1);
 
 /*! \brief [Graph] Creates a Scale Layer Node.
  * \param [in] graph The handle to the graph.

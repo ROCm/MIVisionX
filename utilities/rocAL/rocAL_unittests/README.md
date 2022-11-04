@@ -10,14 +10,16 @@ This application can be used to verify the functionality of the API offered by r
 * Radeon Performance Primitives (RPP)
 
 ### build
-  ````
-  mkdir build
-  cd build
-  cmake ../
-  make
-  ````
+````
+mkdir build
+cd build
+cmake ../
+make
+````
 ### running the application
-  ````
-Go to MIVisionX-tests/rocAL-unittests
-sh run-rocAL-unittests.sh
-  ````
+
+```
+./rocAL_unittests
+
+Usage: ./rocAL_unittests reader-type pipeline-type=1(classification)2(detection)3(keypoints) <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0 one_hot_labels=num_of_classes/0  display_all=0(display_last_only)1(display_all)
+```

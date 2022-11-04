@@ -135,7 +135,8 @@ visionTestConfig = [
     '38_threshold.gdf',
     '39_warpAffine.gdf',
     '40_warpPerspective.gdf',
-    '41_xor.gdf'
+    '41_xor.gdf',
+    '42_scale_nv12_to_rgb.gdf'
 ]
 
 # OpenVX Vision Functions 1080P

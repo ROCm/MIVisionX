@@ -123,7 +123,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             }
         }
         // Fallback on Central Crop
-        if(num_attempts_left <= 0) {
+        if(!num_attempts_left) {
             double in_ratio;
             float max_area = area_range[1] * original_image_height * original_image_width;
             in_ratio = static_cast<double>(original_image_width) / original_image_height;
@@ -145,10 +145,8 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             y1 = std::uniform_int_distribution<int>(0, original_image_height - crop_height)(_rand_gen);
         }
     }
-    if(crop_width > max_decoded_width)
-        crop_width = max_decoded_width;
-    if(crop_height > max_decoded_height)
-        crop_height = max_decoded_height;
+    crop_width = std::min(crop_width, (unsigned int)max_decoded_width);
+    crop_height = std::min(crop_height, (unsigned int)max_decoded_height);
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
     if( tjDecompress2_partial(m_jpegDecompressor,
                       input_buffer,

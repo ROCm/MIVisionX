@@ -22,9 +22,11 @@ import amd.rocal.types as types
 import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
 
-def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations_file='', shard_id=0, num_shards=1, random_shuffle=False, affine=True, bytes_per_sample_hint=0, cache_batch_copy=True, cache_debug=False, cache_size=0, cache_threshold=0,
-          cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold=1000000, output_type=types.RGB,
-          preserve=False, seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
+
+def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations_file='', shard_id=0, num_shards=1, \
+    random_shuffle=False, affine=True, bytes_per_sample_hint=0, cache_batch_copy=True, cache_debug=False, cache_size=0, \
+    cache_threshold=0,cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold=1000000, \
+    output_type=types.RGB,preserve=False, seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
     b.setSeed(seed)
     reader = Pipeline._current_pipeline._reader
     if(reader == 'COCOReader'):
@@ -103,9 +105,11 @@ def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations
     return (decoded_image)
 
 
-def image_raw(*inputs, user_feature_key_map=None, path='', file_root='', annotations_file='', shard_id=0, num_shards=1, random_shuffle=False, affine=True, bytes_per_sample_hint=0, cache_batch_copy=True, cache_debug=False, cache_size=0, cache_threshold=0,
-              cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold=1000000, output_type=types.RGB,
-              preserve=False, seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
+def image_raw(*inputs, user_feature_key_map=None, path='', file_root='', annotations_file='', shard_id=0, num_shards=1, \
+    random_shuffle=False, affine=True, bytes_per_sample_hint=0, cache_batch_copy=True, cache_debug=False, cache_size=0, \
+    cache_threshold=0,cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold=1000000, \
+    output_type=types.RGB,preserve=False, seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
+    
     reader = Pipeline._current_pipeline._reader
     b.setSeed(seed)
 
@@ -121,13 +125,13 @@ def image_raw(*inputs, user_feature_key_map=None, path='', file_root='', annotat
             "out_width": 2000,
             "out_height": 2000}
         decoded_image = b.TF_ImageDecoderRaw(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
-        # decoded_image = b.TF_ImageDecoderRaw(handle, input_image, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], , is_output, shuffle, False, decode_width, decode_height)
         return (decoded_image)
 
 
-def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='', annotations_file='', num_shards=1, shard_id=0, random_shuffle=False, affine=True, bytes_per_sample_hint=0, device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold=1000000,
-                      num_attempts=10, output_type=types.RGB, preserve=False, random_area=[0.08, 1.0], random_aspect_ratio=[0.8, 1.25],
-                      seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
+def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='', annotations_file='', num_shards=1, shard_id=0, \
+    random_shuffle=False, affine=True, bytes_per_sample_hint=0, device_memory_padding=16777216, host_memory_padding=8388608, \
+    hybrid_huffman_threshold=1000000, num_attempts=10, output_type=types.RGB, preserve=False, \
+    random_area=[0.08, 1.0], random_aspect_ratio=[0.8, 1.25], seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
 
     reader = Pipeline._current_pipeline._reader
     # Internally calls the C++ Partial decoder's
@@ -210,11 +214,12 @@ def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='',
     return (crop_output_image)
 
 
-def image_slice(*inputs, file_root='', path='', annotations_file='', shard_id=0, num_shards=1, random_shuffle=False, affine=True, axes=None, axis_names="WH", bytes_per_sample_hint=0, device_memory_padding=16777216,
-                device_memory_padding_jpeg2k=0, host_memory_padding=8388608, random_aspect_ratio=[0.8, 1.25], random_area=[0.08, 1.0], num_attempts=100,
-                host_memory_padding_jpeg2k=0, hybrid_huffman_threshold=1000000,
-                memory_stats=False, normalized_anchor=True, normalized_shape=True, output_type=types.RGB,
-                preserve=False, seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
+def image_slice(*inputs, file_root='', path='', annotations_file='', shard_id=0, num_shards=1, \
+    random_shuffle=False, affine=True, axes=None,axis_names="WH", bytes_per_sample_hint=0, \
+    device_memory_padding=16777216,device_memory_padding_jpeg2k=0, host_memory_padding=8388608, \
+    random_aspect_ratio=[0.8, 1.25], random_area=[0.08, 1.0], num_attempts=100, host_memory_padding_jpeg2k=0, \
+    hybrid_huffman_threshold=1000000, memory_stats=False, normalized_anchor=True, normalized_shape=True, \
+    output_type=types.RGB, preserve=False, seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
 
     reader = Pipeline._current_pipeline._reader
     b.setSeed(seed)

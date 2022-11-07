@@ -22,10 +22,10 @@ import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.types as types
 
-def coco(*inputs,file_root, annotations_file='', bytes_per_sample_hint=0, dump_meta_files=False, dump_meta_files_path='', \
-    file_list='', initial_fill=1024,  lazy_init=False, ltrb=False, masks=False, meta_files_path='', num_shards=1, \
-    pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, ratio=False, read_ahead=False, \
-    save_img_ids=False, seed=-1, shard_id=0, shuffle_after_epoch=False, size_threshold=0.1, skip_cached_images=False, \
+def coco(*inputs,file_root, annotations_file='', bytes_per_sample_hint=0, dump_meta_files=False, dump_meta_files_path='',
+    file_list='', initial_fill=1024,  lazy_init=False, ltrb=False, masks=False, meta_files_path='', num_shards=1,
+    pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, ratio=False, read_ahead=False,
+    save_img_ids=False, seed=-1, shard_id=0, shuffle_after_epoch=False, size_threshold=0.1, skip_cached_images=False,
     skip_empty=False, stick_to_shard=False, tensor_init_bytes=1048576):
 
     Pipeline._current_pipeline._reader = "COCOReader"
@@ -37,7 +37,7 @@ def coco(*inputs,file_root, annotations_file='', bytes_per_sample_hint=0, dump_m
     meta_data = b.COCOReader(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (meta_data, labels, bboxes)
 
-def file(*inputs, file_root, bytes_per_sample_hint=0, file_list='', initial_fill='', lazy_init='', num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False,\
+def file(*inputs, file_root, bytes_per_sample_hint=0, file_list='', initial_fill='', lazy_init='', num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False,
     random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, shuffle_after_epoch=False, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576, device=None):
 
     Pipeline._current_pipeline._reader = "labelReader"
@@ -47,9 +47,9 @@ def file(*inputs, file_root, bytes_per_sample_hint=0, file_list='', initial_fill
     label_reader_meta_data = b.labelReader(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (label_reader_meta_data, labels)
 
-def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reader_type=0, bytes_per_sample_hint=0, \
-    initial_fill=1024, lazy_init=False, num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, \
-    random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, \
+def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reader_type=0, bytes_per_sample_hint=0,
+    initial_fill=1024, lazy_init=False, num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False,
+    random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False,
     tensor_init_bytes=1048576,  device=None):
     
     labels=[]
@@ -79,9 +79,9 @@ def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reade
     features["image/class/label"] = labels
     return features
 
-def caffe(*inputs, path, bbox=False, bytes_per_sample_hint=0, image_available=True, initial_fill=1024, label_available=True, \
-    lazy_init=False,  num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, \
-    read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576, \
+def caffe(*inputs, path, bbox=False, bytes_per_sample_hint=0, image_available=True, initial_fill=1024, label_available=True,
+    lazy_init=False,  num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False,
+    read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576,
     device=None):
 
     #Output
@@ -102,9 +102,9 @@ def caffe(*inputs, path, bbox=False, bytes_per_sample_hint=0, image_available=Tr
         return (caffe_reader_meta_data, labels)
 
 
-def caffe2(*inputs, path, bbox=False, additional_inputs=0, bytes_per_sample_hint=0, image_available=True, initial_fill=1024, \
-    label_type=0, lazy_init=False, num_labels=1, num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, \
-    random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, \
+def caffe2(*inputs, path, bbox=False, additional_inputs=0, bytes_per_sample_hint=0, image_available=True, initial_fill=1024,
+    label_type=0, lazy_init=False, num_labels=1, num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False,
+    random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False,
     tensor_init_bytes=1048576, device=None):
 
     #Output
@@ -122,12 +122,12 @@ def caffe2(*inputs, path, bbox=False, additional_inputs=0, bytes_per_sample_hint
     else:
         return (caffe2_meta_data, labels)
 
-def video(*inputs,sequence_length, additional_decode_surfaces=2, bytes_per_sample_hint=0, channels=3, dont_use_mmap=False, \
-    dtype=types.FLOAT, enable_frame_num=False, enable_timestamps=False, file_list="", file_list_frame_num=False, \
-    file_list_include_preceding_frame=False, file_root="", filenames=[], image_type=types.RGB, initial_fill=1024, labels="", \
-    lazy_init=False, normalized=False, num_shards=1, pad_last_batch=False, pad_sequences=False, prefetch_queue_depth=1, \
-    preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, skip_vfr_check=False, \
-    step=1,stick_to_shard=False, stride=1, tensor_init_bytes = 1048576, decoder_mode = types.SOFTWARE_DECODE, \
+def video(*inputs,sequence_length, additional_decode_surfaces=2, bytes_per_sample_hint=0, channels=3, dont_use_mmap=False,
+    dtype=types.FLOAT, enable_frame_num=False, enable_timestamps=False, file_list="", file_list_frame_num=False,
+    file_list_include_preceding_frame=False, file_root="", filenames=[], image_type=types.RGB, initial_fill=1024, labels="",
+    lazy_init=False, normalized=False, num_shards=1, pad_last_batch=False, pad_sequences=False, prefetch_queue_depth=1,
+    preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, skip_vfr_check=False,
+    step=1,stick_to_shard=False, stride=1, tensor_init_bytes = 1048576, decoder_mode = types.SOFTWARE_DECODE,
     device=None, name=None):
 
     Pipeline._current_pipeline._reader = "VideoDecoder"
@@ -140,11 +140,12 @@ def video(*inputs,sequence_length, additional_decode_surfaces=2, bytes_per_sampl
     videos = b.VideoDecoder(Pipeline._current_pipeline._handle ,*(kwargs_pybind_decoder.values()))
     return (videos)
 
-def video_resize(*inputs,sequence_length, resize_width, resize_height, additional_decode_surfaces=2, bytes_per_sample_hint=0, \
-    channels=3, dont_use_mmap=False, dtype=types.FLOAT, enable_frame_num=False,  enable_timestamps=False, file_list="", \
-    file_list_frame_num=False, file_list_include_preceding_frame=False, file_root="", filenames=[], image_type=types.RGB, \
-    initial_fill=1024, labels="", lazy_init=False, normalized=False, num_shards=1, pad_last_batch=False, pad_sequences=False, \
-    prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, \ skip_vfr_check=False,step=3, stick_to_shard=False, stride=3, tensor_init_bytes = 1048576, decoder_mode = types.SOFTWARE_DECODE, \
+def video_resize(*inputs,sequence_length, resize_width, resize_height, additional_decode_surfaces=2, bytes_per_sample_hint=0,
+    channels=3, dont_use_mmap=False, dtype=types.FLOAT, enable_frame_num=False,  enable_timestamps=False, file_list="",
+    file_list_frame_num=False, file_list_include_preceding_frame=False, file_root="", filenames=[], image_type=types.RGB,
+    initial_fill=1024, labels="", lazy_init=False, normalized=False, num_shards=1, pad_last_batch=False, pad_sequences=False,
+    prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, 
+    skip_vfr_check=False,step=3, stick_to_shard=False, stride=3, tensor_init_bytes = 1048576, decoder_mode = types.SOFTWARE_DECODE,
     device=None, name=None):
 
     Pipeline._current_pipeline._reader = "VideoDecoderResize"
@@ -157,8 +158,9 @@ def video_resize(*inputs,sequence_length, resize_width, resize_height, additiona
     videos = b.VideoDecoderResize(Pipeline._current_pipeline._handle ,*(kwargs_pybind_decoder.values()))
     return (videos, meta_data)
 
-def sequence_reader(*inputs, file_root, sequence_length, bytes_per_sample_hint=0, dont_use_mmap=False, image_type=types.RGB, \
-    initial_fill='', lazy_init='', num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, step = 3, stick_to_shard=False, stride=1, \
+def sequence_reader(*inputs, file_root, sequence_length, bytes_per_sample_hint=0, dont_use_mmap=False, image_type=types.RGB,
+    initial_fill='', lazy_init='', num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, 
+    read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, step = 3, stick_to_shard=False, stride=1,
     tensor_init_bytes=1048576, device=None):
 
     Pipeline._current_pipeline._reader = "SequenceReader"

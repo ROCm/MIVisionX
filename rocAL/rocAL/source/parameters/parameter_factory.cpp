@@ -116,6 +116,12 @@ ParameterFactory::get_seed()
     return _seed;
 }
 
+std::vector<std::mt19937>
+ParameterFactory::get_rng()
+{
+    return _rand_gen;
+}
+
 void
 ParameterFactory::set_seed(unsigned seed)
 {

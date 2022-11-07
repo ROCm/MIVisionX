@@ -77,6 +77,7 @@ public:
     void renew_parameters();
     void set_seed(unsigned seed);
     unsigned get_seed();
+    std::vector<std::mt19937>get_rng();
 
     template<typename T>
     Parameter<T>* create_uniform_rand_param(T start, T end){

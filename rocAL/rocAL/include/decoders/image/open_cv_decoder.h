@@ -65,6 +65,7 @@ public:
 
     bool is_partial_decoder() override { return _is_partial_decoder; }
     void set_bbox_coords(std::vector <float> bbox_coord) override { _bbox_coord = bbox_coord;}
+    void set_crop_window(CropWindow &crop_wind) override {};
     std::vector <float> get_bbox_coords() override { return _bbox_coord;}
     //virtual Status decode(unsigned char* input_buffer, size_t input_size,  unsigned char* output_buffer,int desired_width, int desired_height, ColorFormat desired_color);
     void initialize(int device_id) override {};

@@ -1245,7 +1245,7 @@ RocalImage  ROCAL_API_CALL
 rocalJpegCOCOFileSourceSingleShard(
         RocalContext p_context,
         const char* source_path,
-	const char* json_path,
+        const char* json_path,
         RocalImageColor rocal_color_format,
         unsigned shard_id,
         unsigned shard_count,

@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <vector>
 #include "parameter_factory.h"
+#include "parameter_random_crop_dec.h"
 
 enum class DecoderType
 {
@@ -53,6 +54,8 @@ public:
     std::vector<double> get_random_aspect_ratio() { return _random_aspect_ratio; }
     unsigned get_num_attempts() { return _num_attempts; }
     void set_crop_param(std::vector<Parameter<float>*> crop_param) { _crop_param = std::move(crop_param); };
+    void set_seed(int seed) { _seed = seed; }
+    int get_seed() { return _seed; }
     std::vector<float> get_crop_param(){
         std::vector<float> crop_mul(4);
         _crop_param[0]->renew();
@@ -67,7 +70,8 @@ public:
     };
 private:
     std::vector<double> _random_area, _random_aspect_ratio;
-    unsigned _num_attempts;
+    unsigned _num_attempts = 10;
+    int _seed = 12345;      //seed for decoder random crop
 };
 
 
@@ -122,5 +126,6 @@ public:
     virtual void initialize(int device_id) = 0;
     virtual bool is_partial_decoder() = 0;
     virtual void set_bbox_coords(std::vector <float> bbox_coords) = 0;
+    virtual void set_crop_window(CropWindow &crop_wind) = 0;
     virtual std::vector <float> get_bbox_coords() = 0;
 };

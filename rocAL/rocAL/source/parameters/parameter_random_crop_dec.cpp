@@ -22,6 +22,9 @@ THE SOFTWARE.
 #include "parameter_random_crop_dec.h"
 #include <cassert>
 
+// Initializing the random generator so all objects of the class can share it.
+thread_local std::mt19937 RocalRandomCropDecParam::_rand_gen(time(nullptr));
+
 RocalRandomCropDecParam::RocalRandomCropDecParam(
     AspectRatioRange aspect_ratio_range,
     AreaRange area_range,
@@ -35,7 +38,7 @@ RocalRandomCropDecParam::RocalRandomCropDecParam(
   , _seed(seed)
   , _num_attempts(num_attempts)
   , _batch_size(batch_size) {
-  
+
   _seeds.reserve(_batch_size);
   std::seed_seq seq{_seed};
   seq.generate(_seeds.begin(), _seeds.end());
@@ -44,7 +47,7 @@ RocalRandomCropDecParam::RocalRandomCropDecParam(
 
 CropWindow RocalRandomCropDecParam::GenerateCropWindowImpl(const Shape& shape) {
   assert(shape.size() == 2);
-  
+
   CropWindow crop;
   int H = shape[0], W = shape[1];
   if (W <= 0 || H <= 0) {

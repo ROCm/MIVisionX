@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 struct CropWindow {
   unsigned x, y, H, W;
-  CropWindow();
+  CropWindow() {}
   CropWindow(unsigned x1, unsigned y1, unsigned h, unsigned w) { x = x1, y=y1, H=h, W=w; }
   void set_shape(unsigned h, unsigned w) { H=h, W=w; }
 };

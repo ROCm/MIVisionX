@@ -133,7 +133,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Visual Studio 2019 or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* Install [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* Install [OpenCV 4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
@@ -156,7 +156,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
-* [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* [OpenCV 4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * [FFMPEG n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
   + FFMPEG is required for amd_media & mv_deploy modules
@@ -447,7 +447,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Known issues
 
-* Package install requires **OpenCV** `V-4.5.X` to execute `AMD OpenCV extensions`
+* Package install requires **OpenCV** `V-4.6.X` to execute `AMD OpenCV extensions`
 
 ## MIVisionX Dependency Map
 

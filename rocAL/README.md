@@ -38,7 +38,7 @@ rocAL can be currently used to perform the following operations either with rand
 
 ## Prerequisites
 
-*  Ubuntu `16.04`/`18.04`/`20.04`
+*  Ubuntu `20.04`/`22.04`
 *  AMD [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)
 *  OpenVX (including RPP and Media extension)
 *  Boost lib 1.66 or higher

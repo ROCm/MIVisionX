@@ -46,28 +46,14 @@ public:
     explicit DecoderConfig(DecoderType type):_type(type){}
     virtual DecoderType type() {return _type; };
     DecoderType _type = DecoderType::TURBO_JPEG;
-    std::vector<Parameter<float>*> _crop_param;
     void set_random_area(std::vector<double> &random_area) { _random_area = std::move(random_area); }
     void set_random_aspect_ratio(std::vector<double> &random_aspect_ratio) { _random_aspect_ratio = std::move(random_aspect_ratio); }
     void set_num_attempts(unsigned num_attempts) { _num_attempts = num_attempts; }
     std::vector<double> get_random_area() { return _random_area; }
     std::vector<double> get_random_aspect_ratio() { return _random_aspect_ratio; }
     unsigned get_num_attempts() { return _num_attempts; }
-    void set_crop_param(std::vector<Parameter<float>*> crop_param) { _crop_param = std::move(crop_param); };
     void set_seed(int seed) { _seed = seed; }
     int get_seed() { return _seed; }
-    std::vector<float> get_crop_param(){
-        std::vector<float> crop_mul(4);
-        _crop_param[0]->renew();
-        crop_mul[0] = _crop_param[0]->get();
-        _crop_param[1]->renew();
-        crop_mul[1] = _crop_param[1]->get();
-        _crop_param[2]->renew();
-        crop_mul[2] = _crop_param[2]->get();
-        _crop_param[3]->renew();
-        crop_mul[3] = _crop_param[3]->get();
-        return crop_mul;
-    };
 private:
     std::vector<double> _random_area, _random_aspect_ratio;
     unsigned _num_attempts = 10;

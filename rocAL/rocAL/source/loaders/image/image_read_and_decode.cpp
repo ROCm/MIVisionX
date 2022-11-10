@@ -84,13 +84,14 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _original_width.resize(_batch_size);
     _decoder_config = decoder_config;
     _random_crop_dec_param = nullptr;
-    // todo:: the following code should be enabled if random_crop_decoder is enabled. Currently it is assumed with fused_turbo_jpeg
+    // todo:: the following code should be enabled if random_crop_decoder is enabled. Currently it is assumed with fused_turbo_jpeg - shobi
     if (_decoder_config._type == DecoderType::FUSED_TURBO_JPEG) {
-      // todo:: make random_area and random_aspect_ratio as std::pair in decoder_config
+      // todo:: make random_area and random_aspect_ratio as std::pair in decoder_config - shobi
       auto random_aspec_ratio = decoder_config.get_random_aspect_ratio();
       auto random_area = decoder_config.get_random_area();
       AspectRatioRange aspect_ratio_range = std::make_pair((float)random_aspec_ratio[0], (float)random_aspec_ratio[1]);
       AreaRange area_range = std::make_pair((float)random_area[0], (float)random_area[1]);
+      decoder_config.set_seed(time(0));
       _random_crop_dec_param = new RocalRandomCropDecParam(aspect_ratio_range, area_range, (int64_t)decoder_config.get_seed(), decoder_config.get_num_attempts(), _batch_size);
     }
     if ((_decoder_config._type != DecoderType::SKIP_DECODE)) {

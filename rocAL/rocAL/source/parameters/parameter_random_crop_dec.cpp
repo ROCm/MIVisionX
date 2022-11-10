@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include <cassert>
 
 // Initializing the random generator so all objects of the class can share it.
-thread_local std::mt19937 RocalRandomCropDecParam::_rand_gen(time(nullptr));
+thread_local std::mt19937 RocalRandomCropDecParam::_rand_gen(time(0));
 
 RocalRandomCropDecParam::RocalRandomCropDecParam(
     AspectRatioRange aspect_ratio_range,
@@ -38,7 +38,6 @@ RocalRandomCropDecParam::RocalRandomCropDecParam(
   , _seed(seed)
   , _num_attempts(num_attempts)
   , _batch_size(batch_size) {
-
   _seeds.reserve(_batch_size);
   std::seed_seq seq{_seed};
   seq.generate(_seeds.begin(), _seeds.end());
@@ -110,11 +109,13 @@ CropWindow RocalRandomCropDecParam::GenerateCropWindowImpl(const Shape& shape) {
 
   crop.x = std::uniform_int_distribution<int>(0, W - crop.W)(_rand_gen);
   crop.y = std::uniform_int_distribution<int>(0, H - crop.H)(_rand_gen);
+//   std::cerr<<"\n Parameter Crop x :: "<<crop.x<<" y:: "<<crop.y<<" w:: "<<crop.W<<" h:: "<<crop.H;
   return crop;
 }
 
 // seed the rng for the instance and return the random crop window.
 CropWindow RocalRandomCropDecParam::GenerateCropWindow(const Shape& shape, const int instance) {
     _rand_gen.seed(_seeds[instance]);
+    std::cerr<<"\n Seed :: <<<"<<_seeds[instance]<<">>>";
     return GenerateCropWindowImpl(shape);
 }

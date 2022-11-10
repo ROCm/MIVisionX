@@ -27,9 +27,6 @@ THE SOFTWARE.
 
 FusedCropTJDecoder::FusedCropTJDecoder(){
     m_jpegDecompressor = tjInitDecompress();
-    //generate BatchSize of RNG's- Using a random seed
-    int64_t seed = getseed();
-    generate_rngs(seed, 256);
 };
 
 Decoder::Status FusedCropTJDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) {
@@ -86,6 +83,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         _crop_window.W = max_decoded_width;
     if(_crop_window.H > max_decoded_height)
         _crop_window.H = max_decoded_height;
+//   std::cerr<<"\n Decoder :: Crop x :: "<<_crop_window.x<<" y:: "<<_crop_window.y<<" w:: "<<_crop_window.W<<" h:: "<<_crop_window.H;
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
     if( tjDecompress2_partial(m_jpegDecompressor,
                       input_buffer,

@@ -47,7 +47,7 @@ public:
     /// for example if there are 10 images in the dataset and load_batch_count is 3, the loader repeats 2 images as if there are 12 images available.
     void init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, StorageType storage_type,
               DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RocalMemType mem_type, std::shared_ptr<MetaDataReader> meta_data_reader,
-              FloatParam *area_factor, FloatParam *aspect_ratio, FloatParam *x_drift, FloatParam *y_drift);
+              unsigned num_attempts, std::vector<double> &random_area, std::vector<double> &random_aspect_ratio);
 
     std::shared_ptr<LoaderModule> get_loader_module();
 protected:
@@ -59,8 +59,6 @@ private:
     Parameter<float>* _y_drift;
     Parameter<float>* _area_factor;
     Parameter<float>* _aspect_ratio;
-    constexpr static float X_DRIFT_RANGE [2]  = {0, 1};
-    constexpr static float Y_DRIFT_RANGE [2]  = {0, 1};
-    constexpr static float AREA_FACTOR_RANGE[2]  = {0.08, 0.99};
-    constexpr static float ASPECT_RATIO_RANGE[2] = {0.75, 1.33};
+    std::vector<double> _random_area, _random_aspect_ratio;
+    unsigned num_attempts;
 };

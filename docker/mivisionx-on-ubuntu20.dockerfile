@@ -47,5 +47,5 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev
 WORKDIR /workspace
 
 # Clone MIVisionX 
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \
         mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install

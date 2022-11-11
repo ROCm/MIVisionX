@@ -39,7 +39,7 @@ __status__ = "Shipping"
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
                     help='Setup home directory - optional (default:~/)')
-parser.add_argument('--opencv',    	type=str, default='4.6.6',
+parser.add_argument('--opencv',    	type=str, default='4.6.0',
                     help='OpenCV Version - optional (default:4.6.0)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.4',
                     help='ProtoBuf Version - optional (default:3.12.4)')

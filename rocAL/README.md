@@ -7,44 +7,60 @@ For more details, go to [docs](docs) page.
 
 rocAL can be currently used to perform the following operations either with randomized or fixed parameters:
 
-* Brightness
-* Contrast
-* Gamma
-* Blend
-* Warp Affine
-* Resize
-* CropResize
-* Rotation
-* Flip(Horizontal, Vertical and Both)
-* Blur (Gaussian 3x3)
-* Fisheye lens
-* Vignette
-* Jitter
-* Salt and pepper noise
-* Snowflakes
-* Raindrops
-* Fog
-* Color temperature
-* Lens correction
-* Pixelization
-* Exposure modification
-* Hue
-* Saturation
-* ColorTwist
-* Crop
-* Crop Mirror Normalization
-* Resize Crop Mirror
-* Random Crop
+<table>
+  <tr>
+    <th>Blend</th>
+    <th>Blur (Gaussian 3x3)</th> 
+    <th>Brightness</th>
+    <th>Color Temperature</th>
+  </tr>
+  <tr>
+    <th>ColorTwist</th>
+    <th>Contrast</th>
+    <th>Crop</th>
+    <th>Crop Mirror Normalization</th>
+  </tr>
+  <tr>
+    <th>CropResize</th>
+    <th>Exposure Modification</th> 
+    <th>Fisheye Lens</th>
+    <th>Flip (Horizontal, Vertical and Both)</th>
+  </tr>
+  <tr>
+    <th>Fog</th>
+    <th>Gamma</th> 
+    <th>Hue</th>
+    <th>Jitter</th>
+  </tr>
+  <tr>
+    <th>Lens Correction</th>
+    <th>Pixelization</th> 
+    <th>Raindrops</th>
+    <th>Random Crop</th>
+  </tr>
+  <tr>
+    <th>Resize</th>
+    <th>Resize Crop Mirror</th> 
+    <th>Rotation</th>
+    <th>Salt And Pepper Noise</th>
+  </tr>
+  <tr>
+    <th>Saturation</th>
+    <th>Snowflakes</th> 
+    <th>Vignette</th>
+    <th>Warp Affine</th>
+  </tr>
+</table>
 
 ## Prerequisites
 
 *  Ubuntu `20.04`/`22.04`
-*  AMD [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)
-*  OpenVX (including RPP and Media extension)
-*  Boost lib 1.66 or higher
-*  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or higher
-*  Half float library
-*  Google protobuf 3.11.1 or higher
+*  [AMD RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)
+*  [AMD OpenVX&trade;](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/amd_openvx) and AMD OpenVX&trade; Extensions: `VX_RPP` and `AMD Media`
+*  [Boost library](https://www.boost.org) - Version `1.66` or higher
+*  [Turbo JPEG](https://libjpeg-turbo.org/) - Version `2.0` or higher
+*  [Half-precision floating-point](https://half.sourceforge.net) library - Version `1.12.0` or higher
+*  [Google Protobuf](https://developers.google.com/protocol-buffers) - Version `3.11.1` or higher
 
 ## Build instructions
 

@@ -202,8 +202,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartialSingleShard
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED,
-                                                            unsigned max_width = 0, unsigned max_height = 0,
-                                                            RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
+                                                            unsigned max_width = 0, unsigned max_height = 0 );
 
 /// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode COCO Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
 /// \param rocal_context Rocal context
@@ -425,8 +424,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalFusedJpegCropSingleShard(RocalContex
                                                         bool shuffle = false,
                                                         bool loop = false,
                                                         RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED,
-                                                        unsigned max_width = 0, unsigned max_height = 0,
-                                                        RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL);
+                                                        unsigned max_width = 0, unsigned max_height = 0);
 
 /// Creates TensorFlow records JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
@@ -697,8 +695,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffeLMDBRecordSourcePartialSing
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0,
-                                                            RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
+                                                            unsigned max_width = 0, unsigned max_height = 0 );
 
 /// Creates JPEG image reader and partial decoder for Caffe2 LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe22 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
 /// \param rocal_context Rocal context
@@ -725,8 +722,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourcePartialSin
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED,
-                                                            unsigned max_width = 0, unsigned max_height = 0,
-                                                            RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
+                                                            unsigned max_width = 0, unsigned max_height = 0 );
 
 #endif //MIVISIONX_ROCAL_API_DATA_LOADERS_H
 

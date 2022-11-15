@@ -128,9 +128,7 @@ def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='',
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 1200,
-            "max_height": 1200,
-            "x_drift_factor": None,
-            "y_drift_factor": None}
+            "max_height": 1200}
         crop_output_image = b.COCO_ImageDecoderSliceShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
     elif (reader == "CaffeReader" or reader == "CaffeReaderDetection"):
         kwargs_pybind = {
@@ -146,9 +144,7 @@ def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='',
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 1200,
-            "max_height": 1200,
-            "x_drift_factor": None,
-            "y_drift_factor": None}
+            "max_height": 1200}
         crop_output_image = b.Caffe_ImageDecoderPartialShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
     elif (reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection"):
         kwargs_pybind = {
@@ -164,9 +160,7 @@ def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='',
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 1200,
-            "max_height": 1200,
-            "x_drift_factor": None,
-            "y_drift_factor": None}
+            "max_height": 1200}
         crop_output_image = b.Caffe2_ImageDecoderPartialShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
     else:
         kwargs_pybind = {
@@ -182,9 +176,7 @@ def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='',
             "loop": False,
             "decode_size_policy": types.USER_GIVEN_SIZE_ORIG,
             "max_width": 2000,
-            "max_height": 2000,
-            "x_drift_factor": None,
-            "y_drift_factor": None}
+            "max_height": 2000}
         crop_output_image = b.FusedDecoderCropShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
 
     return (crop_output_image)
@@ -216,9 +208,7 @@ def image_slice(*inputs, file_root='', path='', annotations_file='', shard_id=0,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 1200,
-            "max_height": 1200,
-            "x_drift_factor": None,
-            "y_drift_factor": None}
+            "max_height": 1200}
         image_decoder_slice = b.COCO_ImageDecoderSliceShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
     elif (reader == "CaffeReader" or reader == "CaffeReaderDetection"):
         kwargs_pybind = {
@@ -234,9 +224,7 @@ def image_slice(*inputs, file_root='', path='', annotations_file='', shard_id=0,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 1200,
-            "max_height": 1200,
-            "x_drift_factor": None,
-            "y_drift_factor": None}
+            "max_height": 1200}
         image_decoder_slice = b.Caffe_ImageDecoderPartialShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
     elif (reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection"):
         kwargs_pybind = {
@@ -252,9 +240,7 @@ def image_slice(*inputs, file_root='', path='', annotations_file='', shard_id=0,
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 1200,
-            "max_height": 1200,
-            "x_drift_factor": None,
-            "y_drift_factor": None}
+            "max_height": 1200}
         image_decoder_slice = b.Caffe2_ImageDecoderPartialShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
     else:
         kwargs_pybind = {
@@ -270,8 +256,6 @@ def image_slice(*inputs, file_root='', path='', annotations_file='', shard_id=0,
             "loop": False,
             "decode_size_policy": types.USER_GIVEN_SIZE_ORIG,
             "max_width": 2000,
-            "max_height": 2000,
-            "x_drift_factor": None,
-            "y_drift_factor": None}
+            "max_height": 2000}
         image_decoder_slice = b.FusedDecoderCropShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
     return (image_decoder_slice)

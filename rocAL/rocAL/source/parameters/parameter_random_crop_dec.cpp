@@ -38,9 +38,7 @@ RocalRandomCropDecParam::RocalRandomCropDecParam(
   , _seed(seed)
   , _num_attempts(num_attempts)
   , _batch_size(batch_size) {
-  _seeds.reserve(_batch_size);
-//   std::seed_seq seq{_seed};
-//   seq.generate(_seeds.begin(), _seeds.end());
+  _seeds.resize(_batch_size);
 }
 
 

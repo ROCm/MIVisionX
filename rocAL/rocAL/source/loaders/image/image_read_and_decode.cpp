@@ -209,9 +209,9 @@ ImageReadAndDecode::load(unsigned char* buff,
                 _bbox_coords = _randombboxcrop_meta_data_reader->get_batch_crop_coords(_image_names);
                 set_batch_random_bbox_crop_coords(_bbox_coords);
             }
-            // else if(_random_crop_dec_param) {
-            //     _random_crop_dec_param->generate_random_seeds();
-            // }
+            else if(_random_crop_dec_param) {
+                _random_crop_dec_param->generate_random_seeds();
+            }
     }
 
     _file_load_time.end();// Debug timing

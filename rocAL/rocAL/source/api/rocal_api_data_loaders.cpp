@@ -1353,7 +1353,6 @@ rocalFusedJpegCrop(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        std::cerr<<"\n Gonna add node";
         context->master_graph->add_node<FusedJpegCropNode>({}, {output})->init(internal_shard_count,
                                                                           source_path, "",
                                                                           StorageType::FILE_SYSTEM,

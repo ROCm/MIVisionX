@@ -35,7 +35,7 @@ FusedJpegCropNode::FusedJpegCropNode(Image *output, DeviceResources device_resou
 
 void FusedJpegCropNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, StorageType storage_type,
                            DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RocalMemType mem_type, std::shared_ptr<MetaDataReader> meta_data_reader,
-                           unsigned num_attempts, std::vector<double> &random_area, std::vector<double> &random_aspect_ratio)
+                           unsigned num_attempts, std::vector<float> &random_area, std::vector<float> &random_aspect_ratio)
 {
     if(!_loader_module)
         THROW("ERROR: loader module is not set for FusedJpegCropNode, cannot initialize")
@@ -52,6 +52,7 @@ void FusedJpegCropNode::init(unsigned internal_shard_count, const std::string &s
     decoder_cfg.set_random_area(random_area);
     decoder_cfg.set_random_aspect_ratio(random_aspect_ratio);
     decoder_cfg.set_num_attempts(num_attempts);
+    decoder_cfg.set_seed(ParameterFactory::instance()->get_seed());
     _loader_module->initialize(reader_cfg, decoder_cfg,
              mem_type,
              _batch_size);

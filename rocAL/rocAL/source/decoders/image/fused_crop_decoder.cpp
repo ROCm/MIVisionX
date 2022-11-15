@@ -99,6 +99,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         return Status::CONTENT_DECODE_FAILED;
     }
 
+    // x1-diff should be set to x offset in tensor pipeline and removed.
     if (_crop_window.x != x1_diff) {
         //std::cout << "x_off changed by tjpeg decoder " << _crop_window.x << " " << x1_diff << std::endl;
         unsigned char *src_ptr_temp, *dst_ptr_temp;

@@ -46,16 +46,16 @@ public:
     explicit DecoderConfig(DecoderType type):_type(type){}
     virtual DecoderType type() {return _type; };
     DecoderType _type = DecoderType::TURBO_JPEG;
-    void set_random_area(std::vector<double> &random_area) { _random_area = std::move(random_area); }
-    void set_random_aspect_ratio(std::vector<double> &random_aspect_ratio) { _random_aspect_ratio = std::move(random_aspect_ratio); }
+    void set_random_area(std::vector<float> &random_area) { _random_area = std::move(random_area); }
+    void set_random_aspect_ratio(std::vector<float> &random_aspect_ratio) { _random_aspect_ratio = std::move(random_aspect_ratio); }
     void set_num_attempts(unsigned num_attempts) { _num_attempts = num_attempts; }
-    std::vector<double> get_random_area() { return _random_area; }
-    std::vector<double> get_random_aspect_ratio() { return _random_aspect_ratio; }
+    std::vector<float> get_random_area() { return _random_area; }
+    std::vector<float> get_random_aspect_ratio() { return _random_aspect_ratio; }
     unsigned get_num_attempts() { return _num_attempts; }
     void set_seed(int seed) { _seed = seed; }
     int get_seed() { return _seed; }
 private:
-    std::vector<double> _random_area, _random_aspect_ratio;
+    std::vector<float> _random_area, _random_aspect_ratio;
     unsigned _num_attempts = 10;
     int _seed = 12345;      //seed for decoder random crop
 };

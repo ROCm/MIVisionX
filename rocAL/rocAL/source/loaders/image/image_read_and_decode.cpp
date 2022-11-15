@@ -91,7 +91,6 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
       auto random_area = decoder_config.get_random_area();
       AspectRatioRange aspect_ratio_range = std::make_pair((float)random_aspec_ratio[0], (float)random_aspec_ratio[1]);
       AreaRange area_range = std::make_pair((float)random_area[0], (float)random_area[1]);
-      decoder_config.set_seed(time(0));
       _random_crop_dec_param = new RocalRandomCropDecParam(aspect_ratio_range, area_range, (int64_t)decoder_config.get_seed(), decoder_config.get_num_attempts(), _batch_size);
     }
     if ((_decoder_config._type != DecoderType::SKIP_DECODE)) {
@@ -205,13 +204,14 @@ ImageReadAndDecode::load(unsigned char* buff,
             _compressed_image_size[file_counter] = fsize;
             file_counter++;
         }
-
-        if (_randombboxcrop_meta_data_reader)
-        {
-            //Fetch the crop co-ordinates for a batch of images
-            _bbox_coords = _randombboxcrop_meta_data_reader->get_batch_crop_coords(_image_names);
-            set_batch_random_bbox_crop_coords(_bbox_coords);
-        }
+            if (_randombboxcrop_meta_data_reader) {
+                //Fetch the crop co-ordinates for a batch of images
+                _bbox_coords = _randombboxcrop_meta_data_reader->get_batch_crop_coords(_image_names);
+                set_batch_random_bbox_crop_coords(_bbox_coords);
+            }
+            // else if(_random_crop_dec_param) {
+            //     _random_crop_dec_param->generate_random_seeds();
+            // }
     }
 
     _file_load_time.end();// Debug timing

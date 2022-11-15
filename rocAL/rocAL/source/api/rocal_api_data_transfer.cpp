@@ -97,33 +97,13 @@ rocalCopyToOutputTensor(RocalContext p_context, void *out_ptr, RocalTensorLayout
 RocalStatus ROCAL_API_CALL
 rocalCopyToOutput(
         RocalContext p_context,
-        void* out_ptr,
-        size_t out_size)
-{
-    auto context = static_cast<Context*>(p_context);
-    try
-    {
-        context->master_graph->copy_output(out_ptr, out_size);
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-        return ROCAL_RUNTIME_ERROR;
-    }
-    return ROCAL_OK;
-}
-
-RocalStatus ROCAL_API_CALL
-rocalCopyToOutput(
-        RocalContext p_context,
         unsigned char * out_ptr,
         size_t out_size)
 {
     auto context = static_cast<Context*>(p_context);
     try
     {
-        context->master_graph->copy_output(out_ptr);
+        context->master_graph->copy_output(out_ptr, out_size);
     }
     catch(const std::exception& e)
     {

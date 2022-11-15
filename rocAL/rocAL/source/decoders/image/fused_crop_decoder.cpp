@@ -100,6 +100,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         {
             return (h < height && w < width); 
         };
+        bool bvalid_crop = false;
         int num_of_attempts = 5;
         for(int i = 0; i < num_of_attempts; i++)
         {
@@ -110,13 +111,13 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             {
                 x1 = static_cast<size_t>(crop_mul_param[2] * (original_image_width  - crop_width));
                 y1 = static_cast<size_t>(crop_mul_param[3] * (original_image_height - crop_height));
+                bvalid_crop = true;
                 break ;
             }
         }
         constexpr static float ASPECT_RATIO_RANGE[2] = {0.75, 1.33};
         // Fallback on Central Crop
-        if( !is_valid_crop(crop_height, crop_width, original_image_height, original_image_width)) 
-        {
+        if(!bvalid_crop){
             float in_ratio;
             in_ratio = static_cast<float>(original_image_width) / original_image_height;
             if(in_ratio < ASPECT_RATIO_RANGE[0])

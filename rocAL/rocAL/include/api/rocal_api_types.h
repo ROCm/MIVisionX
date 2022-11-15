@@ -124,14 +124,15 @@ enum RocalTensorLayout
 enum RocalTensorOutputType
 {
     ROCAL_FP32 = 0,
-    ROCAL_FP16 = 1
+    ROCAL_FP16 = 1,
+    ROCAL_U8   = 2,
 };
 
 enum RocalDecoderType
 {
     ROCAL_DECODER_TJPEG = 0,
     ROCAL_DECODER_OPENCV = 1,
-    ROCAL_DECODER_HW_JEPG = 2,
+    ROCAL_DECODER_HW_JPEG = 2,
     ROCAL_DECODER_VIDEO_FFMPEG_SW = 3,
     ROCAL_DECODER_VIDEO_FFMPEG_HW = 4
 };

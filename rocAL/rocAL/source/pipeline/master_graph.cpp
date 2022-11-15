@@ -554,20 +554,6 @@ MasterGraph::timing()
 }
 
 
-MasterGraph::Status
-MasterGraph::copy_output(
-        void* out_ptr,
-        size_t out_size)
-{
-    if(no_more_processed_data())
-        return MasterGraph::Status::NO_MORE_DATA;
-
-    return Status::NOT_IMPLEMENTED;
-    _convert_time.start();
-    _convert_time.end();
-    return Status::OK;
-}
-
 #define CHECK_CL_CALL_RET(x) { cl_int ret; ret = x; if( ret != CL_SUCCESS) THROW("ocl call failed "+STR(#x)+" error "+TOSTR(ret)) }
 
 MasterGraph::Status
@@ -881,16 +867,18 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
 }
 
 MasterGraph::Status
-MasterGraph::copy_output(unsigned char *out_ptr)
+MasterGraph::copy_output(unsigned char *out_ptr, size_t out_size_in_bytes)
 {
     if(no_more_processed_data())
         return MasterGraph::Status::NO_MORE_DATA;
 
-    _convert_time.start();
     // Copies to the output context given by the user
     size_t size = output_byte_size();
-
+    if (out_size_in_bytes != (size *_output_images.size()))
+        return MasterGraph::Status::INVALID_ARGUMENTS;
     size_t dest_buf_offset = 0;
+
+    _convert_time.start();
 #if !ENABLE_HIP
     if(processing_on_device_ocl())
     {

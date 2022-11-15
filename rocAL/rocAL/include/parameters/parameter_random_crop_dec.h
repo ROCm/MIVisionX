@@ -43,9 +43,10 @@ class RocalRandomCropDecParam {
     AreaRange area_range = { 0.08, 1 },
     int64_t seed = time(0),
     int num_attempts_ = 10,
-    int batch_size = 256);
+    int batch_size = 256); // shobi need to set the exact batch size
 
   CropWindow GenerateCropWindow(const Shape& shape, const int instance);
+  void generate_random_seeds();
 
  private:
   CropWindow GenerateCropWindowImpl(const Shape& shape);

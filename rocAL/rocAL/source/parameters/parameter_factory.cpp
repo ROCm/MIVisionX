@@ -117,6 +117,13 @@ ParameterFactory::get_seed()
 }
 
 void
+ParameterFactory::regenerate_seed()
+{
+    std::random_device rd;
+    _seed = rd();
+}
+
+void
 ParameterFactory::set_seed(unsigned seed)
 {
     _seed = seed;

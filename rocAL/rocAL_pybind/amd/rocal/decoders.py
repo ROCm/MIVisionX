@@ -23,7 +23,7 @@ import rocal_pybind as b
 from amd.rocal.pipeline import Pipeline
 
 def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations_file='', shard_id=0, num_shards=1, random_shuffle=False, affine=True, bytes_per_sample_hint=0, cache_batch_copy=True, cache_debug=False, cache_size=0, cache_threshold=0,
-          cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold=1000000, output_type=types.RGB,
+          cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold=1000000, output_type=types.RGB, decoder_type=types.DECODER_TJPEG,
           preserve=False, seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
     b.setSeed(seed)
     reader = Pipeline._current_pipeline._reader
@@ -39,7 +39,9 @@ def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 0,
-            "max_height": 0}
+            "max_height": 0,
+            "dec_type": decoder_type,
+            }
         decoded_image = b.COCO_ImageDecoderShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
 
     elif (reader == "TFRecordReaderClassification" or reader == "TFRecordReaderDetection"):
@@ -54,7 +56,8 @@ def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations
             "loop": False,
             "decode_size_policy": types.USER_GIVEN_SIZE_ORIG,
             "max_width": 2000,
-            "max_height": 2000}
+            "max_height": 2000,
+            "dec_type": decoder_type}
         decoded_image = b.TF_ImageDecoder(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
 
     elif (reader == "Caffe2Reader" or reader == "Caffe2ReaderDetection"):
@@ -68,7 +71,8 @@ def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 0,
-            "max_height": 0}
+            "max_height": 0,
+            "dec_type" : decoder_type}
         decoded_image = b.Caffe2_ImageDecoderShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
 
     elif reader == "CaffeReader" or reader == "CaffeReaderDetection":
@@ -82,7 +86,8 @@ def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations
             "loop": False,
             "decode_size_policy": types.MAX_SIZE,
             "max_width": 0,
-            "max_height": 0}
+            "max_height": 0,
+            "dec_type" : decoder_type}
         decoded_image = b.Caffe_ImageDecoderShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
 
     else:
@@ -97,7 +102,7 @@ def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations
             "decode_size_policy": types.USER_GIVEN_SIZE_ORIG,
             "max_width": 2000,
             "max_height": 2000,
-            "dec_type": types.DECODER_TJPEG}
+            "dec_type": decoder_type}
         decoded_image = b.ImageDecoderShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
 
     return (decoded_image)

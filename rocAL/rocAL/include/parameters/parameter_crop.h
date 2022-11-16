@@ -82,8 +82,7 @@ protected:
     Parameter<float>* default_x_drift_factor();
     Parameter<float>* default_y_drift_factor();
     std::vector<uint32_t> x1_arr_val, y1_arr_val, croph_arr_val, cropw_arr_val, x2_arr_val, y2_arr_val;
-    bool _random;
-    bool _is_center_crop = false;
+    bool _random, _is_center_crop;
     virtual void fill_crop_dims(){};
     void update_crop_array();
 };

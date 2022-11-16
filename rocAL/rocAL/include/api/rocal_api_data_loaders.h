@@ -216,22 +216,23 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartialSingleShard
 /// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourceSingleShard(RocalContext context,
-<<<<<<< HEAD
                                                                    const char* source_path,
                                                                    const char* json_path,
                                                                    RocalImageColor color_format,
                                                                    unsigned shard_id,
                                                                    unsigned shard_count,
+                                                                   bool is_output ,
                                                                    bool shuffle = false,
                                                                    bool loop = false,
                                                                    RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                                   unsigned max_width = 0, unsigned max_height = 0);
-=======
-                                                                          const char* source_path,
-                                                                          const char* json_path,
-                                                                          RocalImageColor color_format,
-                                                                          unsigned shard_id,
-                                                                          unsigned shard_count,
+                                                                   unsigned max_width = 0, unsigned max_height = 0,
+                                                                   RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
+
+/// Creates JPEG image reader and decoder for Caffe LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
+/// If images are not Jpeg compressed they will be ignored.
+/// \param context Rocal context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rocal_color_format The color format the images will be decoded to.
 /// \param internal_shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
 /// \param shuffle Determines if the user wants to shuffle the dataset or not.

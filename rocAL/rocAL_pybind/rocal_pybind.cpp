@@ -1,25 +1,3 @@
-/*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
@@ -68,12 +46,12 @@ namespace rocal{
         return ptr;
     }
 
-    py::object wrapper_copy_to_output(RocalContext context, py::array_t<unsigned char> array)
+    py::object wrapper(RocalContext context, py::array_t<unsigned char> array)
     {
         auto buf = array.request();
         unsigned char* ptr = (unsigned char*) buf.ptr;
         // call pure C++ function
-        int status = rocalCopyToOutput(context,ptr, buf.size);
+        int status = rocalCopyToOutput(context,ptr,buf.size);
         return py::cast<py::none>(Py_None);
     }
 
@@ -286,7 +264,6 @@ namespace rocal{
         py::enum_<RocalTensorOutputType>(types_m,"RocalTensorOutputType","Tensor types")
             .value("FLOAT",ROCAL_FP32)
             .value("FLOAT16",ROCAL_FP16)
-            .value("UINT8",ROCAL_U8)
             .export_values();
         py::enum_<RocalResizeScalingMode>(types_m,"RocalResizeScalingMode","Decode size policies")
             .value("SCALING_MODE_DEFAULT",ROCAL_SCALING_MODE_DEFAULT)
@@ -384,7 +361,7 @@ namespace rocal{
         m.def("GetIntValue",&rocalGetIntValue);
         m.def("GetFloatValue",&rocalGetFloatValue);
         // rocal_api_data_transfer.h
-        m.def("rocalCopyToOutput",&wrapper_copy_to_output);
+        m.def("rocalCopyToOutput",&wrapper);
         m.def("rocalCopyToOutputTensor",&wrapper_tensor);
         m.def("rocalCopyToOutputTensor32",&wrapper_tensor32);
         m.def("rocalCopyToOutputTensor16",&wrapper_tensor16);
@@ -398,146 +375,31 @@ namespace rocal{
         m.def("ImageDecoderShard",&rocalJpegFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
             py::return_value_policy::reference);
         m.def("COCO_ImageDecoder",&rocalJpegCOCOFileSource,"Reads file from the source given and decodes it according to the policy",
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("source_path"),
-            py::arg("json_path"),
-            py::arg("color_format"),
-            py::arg("num_threads"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0,
-            py::arg("dec_type") = ROCAL_DECODER_TJPEG);
+            py::return_value_policy::reference);
         m.def("COCO_ImageDecoderShard",&rocalJpegCOCOFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("source_path"),
-	          py::arg("json_path"),
-            py::arg("color_format"),
-            py::arg("shard_id"),
-            py::arg("shard_count"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0,
-            py::arg("dec_type") = ROCAL_DECODER_TJPEG);
+            py::return_value_policy::reference);
         m.def("TF_ImageDecoder",&rocalJpegTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
-            py::return_value_policy::reference,
-            py::arg("p_context"),
-            py::arg("source_path"),
-            py::arg("rocal_color_format"),
-            py::arg("internal_shard_count"),
-            py::arg("is_output"),
-            py::arg("user_key_for_encoded"),
-            py::arg("user_key_for_filename"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0,
-            py::arg("dec_type") = ROCAL_DECODER_TJPEG);
+            py::return_value_policy::reference);
         m.def("Caffe_ImageDecoder",&rocalJpegCaffeLMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
-            py::return_value_policy::reference,
-            py::arg("p_context"),
-            py::arg("source_path"),
-            py::arg("rocal_color_format"),
-            py::arg("num_threads"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0,
-            py::arg("dec_type") = ROCAL_DECODER_TJPEG);
+            py::return_value_policy::reference);
         m.def("Caffe_ImageDecoderShard",&rocalJpegCaffeLMDBRecordSourceSingleShard, "Reads file from the source given and decodes it according to the shard id and number of shards",
-            py::return_value_policy::reference,
-            py::arg("p_context"),
-            py::arg("source_path"),
-            py::arg("rocal_color_format"),
-            py::arg("shard_id"),
-            py::arg("shard_count"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0,
-            py::arg("dec_type") = ROCAL_DECODER_TJPEG);
+            py::return_value_policy::reference);
         m.def("Caffe_ImageDecoderPartialShard",&rocalJpegCaffeLMDBRecordSourcePartialSingleShard);
         m.def("Caffe2_ImageDecoder",&rocalJpegCaffe2LMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
-            py::return_value_policy::reference,
-            py::arg("p_context"),
-            py::arg("source_path"),
-            py::arg("rocal_color_format"),
-            py::arg("num_threads"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0,
-            py::arg("dec_type") = ROCAL_DECODER_TJPEG);
+            py::return_value_policy::reference);
         m.def("Caffe2_ImageDecoderShard",&rocalJpegCaffe2LMDBRecordSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
-            py::return_value_policy::reference,
-            py::arg("p_context"),
-            py::arg("source_path"),
-            py::arg("rocal_color_format"),
-            py::arg("shard_id"),
-            py::arg("shard_count"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = ROCAL_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0,
-            py::arg("dec_type") = ROCAL_DECODER_TJPEG);
+            py::return_value_policy::reference);
         m.def("Caffe2_ImageDecoderPartialShard",&rocalJpegCaffe2LMDBRecordSourcePartialSingleShard);
         m.def("FusedDecoderCrop",&rocalFusedJpegCrop,"Reads file from the source and decodes them partially to output random crops",
             py::return_value_policy::reference);
         m.def("FusedDecoderCropShard",&rocalFusedJpegCropSingleShard,"Reads file from the source and decodes them partially to output random crops",
             py::return_value_policy::reference);
         m.def("TF_ImageDecoderRaw",&rocalRawTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
-              py::return_value_policy::reference,
-              py::arg("p_context"),
-              py::arg("source_path"),
-              py::arg("user_key_for_encoded"),
-              py::arg("user_key_for_filename"),
-              py::arg("rocal_color_format"),
-              py::arg("is_output"),
-              py::arg("shuffle") = false,
-              py::arg("loop") = false,
-              py::arg("out_width") = 0,
-              py::arg("out_height") = 0,
-              py::arg("record_name_prefix") = "");
+              py::return_value_policy::reference);
         m.def("Cifar10Decoder",&rocalRawCIFAR10Source,"Reads file from the source given and decodes it according to the policy only for TFRecords",
-              py::return_value_policy::reference,
-              py::arg("p_context"),
-              py::arg("source_path"),
-              py::arg("rocal_color_format"),
-              py::arg("is_output"),
-              py::arg("out_width") = 0,
-              py::arg("out_height") = 0,
-              py::arg("file_name_prefix") = "",
-              py::arg("loop") = false);
+              py::return_value_policy::reference);
         m.def("VideoDecoder",&rocalVideoFileSource,"Reads videos from the source given and decodes it according to the policy only for Videos as inputs",
-            py::return_value_policy::reference,
-            py::arg("p_context"),
-            py::arg("source_path"),
-            py::arg("color_format"),
-            py::arg("decoder_mode"),
-            py::arg("shard_count"),
-            py::arg("sequence_length"),
-            py::arg("shuffle") = false,
-            py::arg("is_output"),
-            py::arg("loop") = false,
-            py::arg("frame_step"),
-            py::arg("frame_stride"),
-            py::arg("file_list_frame_num") = false);
+            py::return_value_policy::reference);
         m.def("VideoDecoderResize",&rocalVideoFileResize,"Reads videos from the source given and decodes it according to the policy only for Videos as inputs. Resizes the decoded frames to the dest width and height.",
             py::return_value_policy::reference,
             py::arg("p_context"),
@@ -566,7 +428,6 @@ namespace rocal{
             py::arg("loop") = false,
             py::arg("frame_step"),
             py::arg("frame_stride"));
-
         m.def("rocalResetLoaders",&rocalResetLoaders);
         // rocal_api_augmentation.h
         m.def("SSDRandomCrop",&rocalSSDRandomCrop,

@@ -130,7 +130,7 @@ rocalJpegFileSourceSingleShard(
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
         DecoderType decType = DecoderType::TURBO_JPEG; // default
         if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
-        if (dec_type == ROCAL_DECODER_HW_JEPG) decType = DecoderType::HW_JPEG_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -213,7 +213,7 @@ rocalJpegFileSource(
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
         DecoderType decType = DecoderType::TURBO_JPEG; // default
         if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
-        if (dec_type == ROCAL_DECODER_HW_JEPG) decType = DecoderType::HW_JPEG_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -450,7 +450,8 @@ rocalJpegCaffe2LMDBRecordSource(
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -458,6 +459,9 @@ rocalJpegCaffe2LMDBRecordSource(
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(internal_shard_count < 1 )
             THROW("internal shard count should be bigger than 0")
@@ -490,7 +494,7 @@ rocalJpegCaffe2LMDBRecordSource(
                                                                              source_path, "",
                                                                              std::map<std::string, std::string>(),
                                                                              StorageType::CAFFE2_LMDB_RECORD,
-                                                                             DecoderType::TURBO_JPEG,
+                                                                             decType,
                                                                              shuffle,
                                                                              loop,
                                                                              context->user_batch_size(),
@@ -526,7 +530,8 @@ rocalJpegCaffe2LMDBRecordSourceSingleShard(
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -534,6 +539,9 @@ rocalJpegCaffe2LMDBRecordSourceSingleShard(
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -568,7 +576,7 @@ rocalJpegCaffe2LMDBRecordSourceSingleShard(
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
                                                                                         StorageType::CAFFE2_LMDB_RECORD,
-                                                                                        DecoderType::TURBO_JPEG,
+                                                                                        decType,
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
@@ -603,7 +611,8 @@ rocalJpegCaffeLMDBRecordSource(
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RocalDecoderType dec_type) 
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -611,6 +620,9 @@ rocalJpegCaffeLMDBRecordSource(
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(internal_shard_count < 1 )
             THROW("internal shard count should be bigger than 0")
@@ -643,7 +655,7 @@ rocalJpegCaffeLMDBRecordSource(
                                                                              source_path, "",
                                                                              std::map<std::string, std::string>(),
                                                                              StorageType::CAFFE_LMDB_RECORD,
-                                                                             DecoderType::TURBO_JPEG,
+                                                                             decType,
                                                                              shuffle,
                                                                              loop,
                                                                              context->user_batch_size(),
@@ -680,7 +692,8 @@ rocalJpegCaffeLMDBRecordSourceSingleShard(
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -688,6 +701,9 @@ rocalJpegCaffeLMDBRecordSourceSingleShard(
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -722,7 +738,7 @@ rocalJpegCaffeLMDBRecordSourceSingleShard(
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
                                                                                         StorageType::CAFFE_LMDB_RECORD,
-                                                                                        DecoderType::TURBO_JPEG,
+                                                                                        decType,
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
@@ -1017,7 +1033,8 @@ rocalMXNetRecordSource(
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     if (p_context == nullptr) {
@@ -1029,6 +1046,9 @@ rocalMXNetRecordSource(
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(internal_shard_count < 1 )
             THROW("internal shard count should be bigger than 0")
@@ -1061,7 +1081,7 @@ rocalMXNetRecordSource(
                                                                              source_path, "",
                                                                              std::map<std::string, std::string>(),
                                                                              StorageType::MXNET_RECORDIO,
-                                                                             DecoderType::TURBO_JPEG,
+                                                                             decType,
                                                                              shuffle,
                                                                              loop,
                                                                              context->user_batch_size(),
@@ -1098,7 +1118,8 @@ rocalMXNetRecordSourceSingleShard(
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     if (p_context == nullptr) {
@@ -1110,6 +1131,9 @@ rocalMXNetRecordSourceSingleShard(
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -1144,7 +1168,7 @@ rocalMXNetRecordSourceSingleShard(
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
                                                                                         StorageType::MXNET_RECORDIO,
-                                                                                        DecoderType::TURBO_JPEG,
+                                                                                        decType,
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
@@ -1170,17 +1194,18 @@ rocalMXNetRecordSourceSingleShard(
 
 RocalImage  ROCAL_API_CALL
 rocalJpegCOCOFileSource(
-        RocalContext p_context,
-        const char* source_path,
-	    const char* json_path,
-        RocalImageColor rocal_color_format,
-        unsigned internal_shard_count,
-        bool is_output,
-        bool shuffle,
-        bool loop,
-        RocalImageSizeEvaluationPolicy decode_size_policy,
-        unsigned max_width,
-        unsigned max_height)
+                      RocalContext p_context,
+                      const char* source_path,
+                      const char* json_path,
+                      RocalImageColor rocal_color_format,
+                      unsigned internal_shard_count,
+                      bool is_output,
+                      bool shuffle,
+                      bool loop,
+                      RocalImageSizeEvaluationPolicy decode_size_policy,
+                      unsigned max_width,
+                      unsigned max_height,
+                      RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -1188,6 +1213,9 @@ rocalJpegCOCOFileSource(
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -1218,7 +1246,7 @@ rocalJpegCOCOFileSource(
                                                                             source_path, json_path,
                                                                             std::map<std::string, std::string>(),
                                                                             StorageType::COCO_FILE_SYSTEM,
-                                                                            DecoderType::TURBO_JPEG,
+                                                                            decType,
                                                                             shuffle,
                                                                             loop,
                                                                             context->user_batch_size(),
@@ -1247,7 +1275,7 @@ RocalImage  ROCAL_API_CALL
 rocalJpegCOCOFileSourceSingleShard(
         RocalContext p_context,
         const char* source_path,
-	const char* json_path,
+        const char* json_path,
         RocalImageColor rocal_color_format,
         unsigned shard_id,
         unsigned shard_count,
@@ -1256,7 +1284,8 @@ rocalJpegCOCOFileSourceSingleShard(
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -1264,6 +1293,9 @@ rocalJpegCOCOFileSourceSingleShard(
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == ROCAL_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -1296,7 +1328,7 @@ rocalJpegCOCOFileSourceSingleShard(
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, json_path,
                                                                                         StorageType::COCO_FILE_SYSTEM,
-                                                                                        DecoderType::TURBO_JPEG,
+                                                                                        decType,
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
@@ -1580,7 +1612,8 @@ rocalJpegTFRecordSource(
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RocalDecoderType dec_type) 
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -1593,9 +1626,10 @@ rocalJpegTFRecordSource(
             {"image/encoded",user_key_for_encoded_str},
             {"image/filename",user_key_for_filename_str},
         };
-
-
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(internal_shard_count < 1 )
             THROW("internal shard count should be bigger than 0")
@@ -1627,7 +1661,7 @@ rocalJpegTFRecordSource(
                                                                              source_path, "",
                                                                              feature_key_map,
                                                                              StorageType::TF_RECORD,
-                                                                             DecoderType::TURBO_JPEG,
+                                                                             decType,
                                                                              shuffle,
                                                                              loop,
                                                                              context->user_batch_size(),
@@ -1662,13 +1696,17 @@ rocalJpegTFRecordSourceSingleShard(
         bool loop,
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RocalDecoderType dec_type) 
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     try
     {
         bool use_input_dimension = (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE) || (decode_size_policy == ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == ROCAL_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
+        if (dec_type == ROCAL_DECODER_HW_JPEG) decType = DecoderType::HW_JPEG_DEC;
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -1701,7 +1739,7 @@ rocalJpegTFRecordSourceSingleShard(
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
                                                                                         StorageType::TF_RECORD,
-                                                                                        DecoderType::TURBO_JPEG,
+                                                                                        decType,
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),

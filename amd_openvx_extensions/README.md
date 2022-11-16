@@ -1,6 +1,6 @@
-# AMD OpenVX Extensions
+# AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below OpenVX modules and utilities to extend [AMD OpenVX](../amd_openvx#amd-openvx-amd_openvx) (amd_openvx) project, which contains the AMD OpenVX Core Engine.
+The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below OpenVX modules and utilities to extend [AMD OpenVX&trade;](../amd_openvx#amd-openvx-amd_openvx) (amd_openvx) project, which contains the AMD OpenVX&trade; Core Engine.
 
 * [amd_loomsl](amd_loomsl): AMD Radeon LOOM stitching library for live 360-degree video applications
 
@@ -21,3 +21,5 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * [amd_winml](amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 <p align="center"><img width="80%" src="../docs/images/winmlFrameWorks.png" /></p>
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

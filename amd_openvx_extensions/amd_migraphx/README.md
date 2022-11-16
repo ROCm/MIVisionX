@@ -6,7 +6,7 @@
 
 ### Pre-requisites
 
-* AMD OpenVX library
+* AMD OpenVX&trade; library
 * <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD MIGraphX </a>
 
 This module is built by default when building the MIVisionX.
@@ -35,3 +35,5 @@ write output_tensor out_mnist.f32
 ```
 
 For additional examples for using the `vx_amd_migraphx` extension, please see [amd_migraphx_test](../../tests/amd_migraphx_test/) section.
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

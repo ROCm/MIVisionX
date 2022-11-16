@@ -1,4 +1,4 @@
-# AMD OpenVX OpenCV Extension Function Tests
+# AMD OpenVX&trade; OpenCV Extension Function Tests
 
 ## Script to run vision tests
 
@@ -82,3 +82,5 @@ SIFT_Detect.gdf
 SURF_Compute.gdf
 SURF_Detect.gdf
 ```
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

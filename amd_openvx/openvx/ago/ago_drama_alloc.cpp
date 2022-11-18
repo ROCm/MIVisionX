@@ -390,8 +390,12 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
                 return -1;
             }
         }
-        // create stream for graph
-        graph->hip_stream0 = context->hip_stream;
+        // create a seperate stream for graph 
+        hipError_t err = hipStreamCreate(&graph->hip_stream0);
+        if (err != hipSuccess) {
+            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipStreamCreate(%p) => %d (failed) for graph => dev%d\n", graph->hip_stream0, err, context->hip_device_id);
+            return -1;
+        }
 #endif
     }
 

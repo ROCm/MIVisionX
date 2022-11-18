@@ -111,8 +111,11 @@ int agoGpuHipReleaseContext(AgoContext * context) {
 
 int agoGpuHipReleaseGraph(AgoGraph * graph) {
     if (graph->hip_stream0) {
-        // graph->hip_stream0 is assigned from context->hip_stream and no need to destroy
-        // it here as context->hip_stream will be destroyed in agoGpuHipReleaseContext
+        hipError_t err = hipStreamDestroy(graph->hip_stream0);
+        if (err != hipSuccess) {
+            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: agoGpuHipReleaseGraph: hipStreamDestroy(%p) failed (%d)\n", graph->hip_stream0, err);
+            return -1;
+        }
         graph->hip_stream0 = NULL;
     }
     return 0;

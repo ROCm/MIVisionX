@@ -366,7 +366,7 @@ else:
                   ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
     # OpenCV 4.6.0
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
-              ' -D WITH_GTK=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )')
+              ' -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )')
     os.system('(cd '+deps_dir+'/build/OpenCV; make -j8 )')
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' make install )')

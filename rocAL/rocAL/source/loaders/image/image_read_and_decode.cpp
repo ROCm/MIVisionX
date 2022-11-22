@@ -84,9 +84,7 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _original_width.resize(_batch_size);
     _decoder_config = decoder_config;
     _random_crop_dec_param = nullptr;
-    // todo:: the following code should be enabled if random_crop_decoder is enabled. Currently it is assumed with fused_turbo_jpeg - shobi
     if (_decoder_config._type == DecoderType::FUSED_TURBO_JPEG) {
-      // todo:: make random_area and random_aspect_ratio as std::pair in decoder_config - shobi
       auto random_aspec_ratio = decoder_config.get_random_aspect_ratio();
       auto random_area = decoder_config.get_random_area();
       AspectRatioRange aspect_ratio_range = std::make_pair((float)random_aspec_ratio[0], (float)random_aspec_ratio[1]);
@@ -208,8 +206,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                 //Fetch the crop co-ordinates for a batch of images
                 _bbox_coords = _randombboxcrop_meta_data_reader->get_batch_crop_coords(_image_names);
                 set_batch_random_bbox_crop_coords(_bbox_coords);
-            }
-            else if(_random_crop_dec_param) {
+            } else if (_random_crop_dec_param) {
                 _random_crop_dec_param->generate_random_seeds();
             }
     }
@@ -236,10 +233,10 @@ ImageReadAndDecode::load(unsigned char* buff,
             _original_width[i] = original_width;
             // decode the image and get the actual decoded image width and height
             size_t scaledw, scaledh;
-            if(_decoder[i]->is_partial_decoder()){
-                if (_randombboxcrop_meta_data_reader)
-                  _decoder[i]->set_bbox_coords(_bbox_coords[i]);
-                else if(_random_crop_dec_param) {
+            if (_decoder[i]->is_partial_decoder()) {
+                if (_randombboxcrop_meta_data_reader) {
+                  _decoder[i]->set_bbox_coords(_bbox_coords[i]); 
+                } else if (_random_crop_dec_param) {
                   Shape dec_shape = {_original_height[i], _original_width[i]};
                   auto crop_window = _random_crop_dec_param->GenerateCropWindow(dec_shape, i);
                   _decoder[i]->set_crop_window(crop_window);

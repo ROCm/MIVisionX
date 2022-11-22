@@ -34,7 +34,6 @@ RocalRandomCropDecParam::RocalRandomCropDecParam(
   : _aspect_ratio_range(aspect_ratio_range)
   , _aspect_ratio_log_dis(std::log(aspect_ratio_range.first), std::log(aspect_ratio_range.second))
   , _area_dis(area_range.first, area_range.second)
-  //, _rand_gen(seed)
   , _seed(seed)
   , _num_attempts(num_attempts)
   , _batch_size(batch_size) {
@@ -55,21 +54,15 @@ CropWindow RocalRandomCropDecParam::GenerateCropWindowImpl(const Shape& shape) {
   float max_wh_ratio = _aspect_ratio_range.second;
   float max_hw_ratio = 1 / _aspect_ratio_range.first;
   float min_area = W * H * _area_dis.a();
-//   std::cerr<<"\n H:: "<<H<<"\t W:: "<<W;
   int maxW = std::max<int>(1, H * max_wh_ratio);
   int maxH = std::max<int>(1, W * max_hw_ratio);
 
   // detect two impossible cases early
   if (H * maxW < min_area) {  // image too wide
-    // std::cerr<<"\n H * maxW < min_area :: "<<H<<" * "<<maxW<<" < "<<min_area;
-    exit(0); // shobi
     crop.set_shape(H, maxW);
   } else if (W * maxH < min_area) {  // image too tall
-    //   std::cerr<<"\n W * maxH < min_area :: "<<W<<" * "<<maxH<<" < "<<min_area;
-    exit(0); // shobi
     crop.set_shape(maxH, W);
-  } else {
-    // it can still fail for very small images when size granularity matters
+  } else { // it can still fail for very small images when size granularity matters
     int attempts_left = _num_attempts;
     for (; attempts_left > 0; attempts_left--) {
       float scale = _area_dis(_rand_gen);
@@ -112,22 +105,17 @@ CropWindow RocalRandomCropDecParam::GenerateCropWindowImpl(const Shape& shape) {
 
   crop.x = std::uniform_int_distribution<int>(0, W - crop.W)(_rand_gen);
   crop.y = std::uniform_int_distribution<int>(0, H - crop.H)(_rand_gen);
-//   std::cerr<<"\n Parameter Crop x :: "<<crop.x<<" y:: "<<crop.y<<" w:: "<<crop.W<<" h:: "<<crop.H;
   return crop;
 }
 
 // seed the rng for the instance and return the random crop window.
 CropWindow RocalRandomCropDecParam::GenerateCropWindow(const Shape& shape, const int instance) {
     _rand_gen.seed(_seeds[instance]);
-    // std::cerr<<"\n Seed :: <<<"<<_seeds[instance]<<">>>";
     return GenerateCropWindowImpl(shape);
 }
 
-void RocalRandomCropDecParam::generate_random_seeds()
-{
-    // std::cerr<<"\n RocalRandomCropDecParam::generate_random_seeds";
+void RocalRandomCropDecParam::generate_random_seeds() {
     ParameterFactory::instance()->regenerate_seed(); // Renew and regenerate
-    // std::cerr<<"\n ParameterFactory::instance()->get_seed():: "<<ParameterFactory::instance()->get_seed();
     std::seed_seq seq{ParameterFactory::instance()->get_seed()};
     seq.generate(_seeds.begin(), _seeds.end());
 }

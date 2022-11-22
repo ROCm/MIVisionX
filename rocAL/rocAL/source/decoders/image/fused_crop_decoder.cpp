@@ -71,7 +71,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     // check the vector size for bounding box. If its more than zero go for random bbox crop
     // else go to random crop
     unsigned int x1_diff, crop_width_diff;
-    if(_bbox_coord.size() != 0) {
+    if (_bbox_coord.size() != 0) {
         // Random bbox crop returns normalized crop cordinates
         // hence bringing it back to absolute cordinates
         _crop_window.x = std::lround(_bbox_coord[0] * original_image_width);
@@ -79,11 +79,11 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         _crop_window.W = std::lround((_bbox_coord[2]) * original_image_width);
         _crop_window.H = std::lround((_bbox_coord[3]) * original_image_height);
     }
-    if(_crop_window.W > max_decoded_width)
+    if (_crop_window.W > max_decoded_width)
         _crop_window.W = max_decoded_width;
-    if(_crop_window.H > max_decoded_height)
+    if (_crop_window.H > max_decoded_height)
         _crop_window.H = max_decoded_height;
-//   std::cerr<<"\n Decoder :: Crop x :: "<<_crop_window.x<<" y:: "<<_crop_window.y<<" w:: "<<_crop_window.W<<" h:: "<<_crop_window.H;
+
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
     if( tjDecompress2_partial(m_jpegDecompressor,
                       input_buffer,

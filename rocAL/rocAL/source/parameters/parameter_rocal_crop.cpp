@@ -47,35 +47,33 @@ void RocalCropParam::update_array() {
 }
 
 void RocalCropParam::fill_crop_dims() {
-    for(uint img_idx =0; img_idx < batch_size; img_idx++) {
-        if(!(_random)) {
+    for(uint img_idx = 0; img_idx < batch_size; img_idx++) {
+        if (!(_random)) {
             // Evaluating user given crop
             cropw_arr_val[img_idx] = (crop_w <= in_width[img_idx] && crop_w > 0) ? crop_w : in_width[img_idx];
             croph_arr_val[img_idx] = (crop_h <= in_height[img_idx] && crop_h > 0) ? crop_h : in_height[img_idx];
-            if(_is_center_crop) {
+            if (_is_center_crop) {
                 x1_arr_val[img_idx] = static_cast<size_t>(x_drift_factor->get() * (in_width[img_idx] - cropw_arr_val[img_idx]));
                 y1_arr_val[img_idx] = static_cast<size_t>(y_drift_factor->get() *(in_height[img_idx] - croph_arr_val[img_idx]));
+            } else {
+              x1_arr_val[img_idx] = (x1 >= in_width[img_idx]) ? 0 : x1;
+              y1_arr_val[img_idx] = (y1 >= in_height[img_idx]) ? 0 : y1;
             }
-            else {
-                x1_arr_val[img_idx] = (x1 >= in_width[img_idx]) ? 0 : x1;
-                y1_arr_val[img_idx] = (y1 >= in_height[img_idx]) ? 0 : y1;
-            }
-        }
-        else {
-            float crop_h_factor_, crop_w_factor_, x_drift, y_drift;
-            crop_height_factor->renew();
-            crop_h_factor_ = crop_height_factor->get();
-            crop_width_factor->renew();
-            crop_w_factor_ = crop_width_factor->get();
-            cropw_arr_val[img_idx] = static_cast<size_t> (crop_w_factor_ * in_width[img_idx]);
-            croph_arr_val[img_idx] = static_cast<size_t> (crop_h_factor_ * in_height[img_idx]);
-            x_drift_factor->renew();
-            y_drift_factor->renew();
-            y_drift_factor->renew();
-            x_drift = x_drift_factor->get();
-            y_drift = y_drift_factor->get();
-            x1_arr_val[img_idx] = static_cast<size_t>(x_drift * (in_width[img_idx]  - cropw_arr_val[img_idx]));
-            y1_arr_val[img_idx] = static_cast<size_t>(y_drift * (in_height[img_idx] - croph_arr_val[img_idx]));
+        } else {
+          float crop_h_factor_, crop_w_factor_, x_drift, y_drift;
+          crop_height_factor->renew();
+          crop_h_factor_ = crop_height_factor->get();
+          crop_width_factor->renew();
+          crop_w_factor_ = crop_width_factor->get();
+          cropw_arr_val[img_idx] = static_cast<size_t> (crop_w_factor_ * in_width[img_idx]);
+          croph_arr_val[img_idx] = static_cast<size_t> (crop_h_factor_ * in_height[img_idx]);
+          x_drift_factor->renew();
+          y_drift_factor->renew();
+          y_drift_factor->renew();
+          x_drift = x_drift_factor->get();
+          y_drift = y_drift_factor->get();
+          x1_arr_val[img_idx] = static_cast<size_t>(x_drift * (in_width[img_idx]  - cropw_arr_val[img_idx]));
+          y1_arr_val[img_idx] = static_cast<size_t>(y_drift * (in_height[img_idx] - croph_arr_val[img_idx]));
         }
         x2_arr_val[img_idx] = x1_arr_val[img_idx] + cropw_arr_val[img_idx];
         y2_arr_val[img_idx] = y1_arr_val[img_idx] + croph_arr_val[img_idx];

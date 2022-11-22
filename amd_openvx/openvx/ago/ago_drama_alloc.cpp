@@ -403,7 +403,6 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
             agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipDeviceSynchronize => %d (failed)\n", err);
             return -1;
         }
-
 #endif
     }
 

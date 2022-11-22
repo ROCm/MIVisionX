@@ -771,7 +771,6 @@ struct AgoContext {
     int hip_num_devices;
     int hip_device_id;
     hipDevice_t hip_device;
-    hipStream_t hip_stream;
     vx_size hip_mem_alloc_size;
     vx_size hip_mem_alloc_count;
     vx_size hip_mem_release_count;

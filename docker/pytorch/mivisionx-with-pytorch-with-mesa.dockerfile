@@ -8,11 +8,14 @@ RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration 
-        && sudo apt clean && sudo apt-get clean && dpkg --add-architecture i386 && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration && \
+        sudo apt -y clean && sudo apt-get -y clean && dpkg --add-architecture i386 && \
+        sudo rm -rf /etc/apt/sources.list.d/amdgpu.list && \
+        sudo rm -rf /etc/apt/sources.list.d/rocm.list && \
         wget https://repo.radeon.com/amdgpu-install/5.3/ubuntu/focal/amdgpu-install_5.3.50300-1_all.deb && \
-        sudo apt-get install ./amdgpu-install_5.3.50300-1_all.deb && \
-        sudo amdgpu-install --usecase=graphics
+        sudo apt-get install -y ./amdgpu-install_5.3.50300-1_all.deb && \
+        sudo apt-get update -y && \
+        sudo amdgpu-install -y --usecase=graphics
 
 # install vainfo
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install vainfo

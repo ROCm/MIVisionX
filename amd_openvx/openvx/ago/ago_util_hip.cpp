@@ -85,12 +85,7 @@ int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
 
 int agoGpuHipReleaseContext(AgoContext * context) {
 
-    hipError_t status = hipDeviceReset();
-    if (status != hipSuccess) {
-        agoAddLogEntry(NULL, VX_FAILURE, "ERROR: agoGpuHipReleaseContext: hipDeviceReset failed (%d)\n", status);
-        return -1;
-    }
-        
+    // nothing to do here
     return 0;
 }
 

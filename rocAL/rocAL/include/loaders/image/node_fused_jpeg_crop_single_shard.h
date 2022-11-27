@@ -53,5 +53,5 @@ protected:
 private:
     std::shared_ptr<ImageLoader> _loader_module = nullptr;
     std::vector<float> _random_area, _random_aspect_ratio;
-    unsigned num_attempts;
+    unsigned _num_attempts;
 };

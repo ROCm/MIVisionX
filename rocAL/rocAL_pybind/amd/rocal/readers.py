@@ -39,9 +39,9 @@ def coco(*inputs, file_root, annotations_file='', bytes_per_sample_hint=0, dump_
     return (meta_data, labels, bboxes)
 
 def file(*inputs, file_root, bytes_per_sample_hint=0, file_list='', initial_fill='', lazy_init='',
-num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, 
-read_ahead=False, seed=-1, shard_id=0, shuffle_after_epoch=False, skip_cached_images=False, 
-stick_to_shard=False, tensor_init_bytes=1048576, device=None):
+         num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False,
+         read_ahead=False, seed=-1, shard_id=0, shuffle_after_epoch=False, skip_cached_images=False,
+         stick_to_shard=False, tensor_init_bytes=1048576, device=None):
 
     Pipeline._current_pipeline._reader = "labelReader"
     #Output
@@ -49,7 +49,6 @@ stick_to_shard=False, tensor_init_bytes=1048576, device=None):
     kwargs_pybind = {"source_path": file_root}
     label_reader_meta_data = b.labelReader(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (label_reader_meta_data, labels)
-
 
 def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reader_type=0,
              bytes_per_sample_hint=0, initial_fill=1024, lazy_init=False, num_shards=1, pad_last_batch=False,
@@ -83,7 +82,6 @@ def tfrecord(*inputs, path, user_feature_key_map, features, index_path="", reade
     features["image/class/label"] = labels
     return features
 
-
 def caffe(*inputs, path, bbox=False, bytes_per_sample_hint=0, image_available=True, initial_fill=1024,
           label_available=True, lazy_init=False, num_shards=1, pad_last_batch=False, prefetch_queue_depth=1,
           preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False,
@@ -106,7 +104,6 @@ def caffe(*inputs, path, bbox=False, bytes_per_sample_hint=0, image_available=Tr
     else:
         return (caffe_reader_meta_data, labels)
 
-
 def caffe2(*inputs, path, bbox=False, additional_inputs=0, bytes_per_sample_hint=0, image_available=True,
            initial_fill=1024, label_type=0, lazy_init=False, num_labels=1,  num_shards=1, pad_last_batch=False,
            prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0,
@@ -127,7 +124,6 @@ def caffe2(*inputs, path, bbox=False, additional_inputs=0, bytes_per_sample_hint
     else:
         return (caffe2_meta_data, labels)
 
-
 def video(*inputs, sequence_length, additional_decode_surfaces=2, bytes_per_sample_hint=0, channels=3,
           dont_use_mmap=False, dtype=types.FLOAT, enable_frame_num=False,  enable_timestamps=False, file_list="",
           file_list_frame_num=False, file_list_include_preceding_frame=False, file_root="", filenames=[],
@@ -147,7 +143,6 @@ def video(*inputs, sequence_length, additional_decode_surfaces=2, bytes_per_samp
     videos = b.VideoDecoder(Pipeline._current_pipeline._handle ,*(kwargs_pybind_decoder.values()))
     return (videos)
 
-
 def video_resize(*inputs, sequence_length, resize_width, resize_height, additional_decode_surfaces=2,
                  bytes_per_sample_hint=0, channels=3, dont_use_mmap=False, dtype=types.FLOAT, enable_frame_num=False,
                  enable_timestamps=False, file_list="", file_list_frame_num=False, file_list_include_preceding_frame=False,
@@ -165,7 +160,6 @@ def video_resize(*inputs, sequence_length, resize_width, resize_height, addition
 
     videos = b.VideoDecoderResize(Pipeline._current_pipeline._handle ,*(kwargs_pybind_decoder.values()))
     return (videos, meta_data)
-
 
 def sequence_reader(*inputs, file_root, sequence_length, bytes_per_sample_hint=0, dont_use_mmap=False,
                     image_type=types.RGB, initial_fill='', lazy_init='', num_shards=1, pad_last_batch=False,

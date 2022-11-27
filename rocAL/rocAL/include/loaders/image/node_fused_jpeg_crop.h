@@ -60,5 +60,5 @@ private:
     Parameter<float>* _area_factor;
     Parameter<float>* _aspect_ratio;
     std::vector<float> _random_area, _random_aspect_ratio;
-    unsigned num_attempts;
+    unsigned _num_attempts;
 };

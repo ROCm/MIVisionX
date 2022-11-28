@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
@@ -9,6 +9,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config g
 
 WORKDIR /workspace
 
-# install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
-        cmake -D BACKEND=OCL ../MIVisionX && make -j8 && make install
+# Clone MIVisionX
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \
+        mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install

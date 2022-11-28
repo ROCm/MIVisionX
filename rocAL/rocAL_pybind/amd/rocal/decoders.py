@@ -127,7 +127,6 @@ def image_raw(*inputs, user_feature_key_map=None, path='', file_root='', annotat
         # decoded_image = b.TF_ImageDecoderRaw(handle, input_image, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], , is_output, shuffle, False, decode_width, decode_height)
         return (decoded_image)
 
-
 def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='', annotations_file='', num_shards=1, shard_id=0, random_shuffle=False, affine=True, bytes_per_sample_hint=0, device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold=1000000,
                       num_attempts=10, output_type=types.RGB, preserve=False, random_area=[0.08, 1.0], random_aspect_ratio=[0.8, 1.25],
                       seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None):
@@ -202,7 +201,6 @@ def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='',
         crop_output_image = b.FusedDecoderCropShard(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
 
     return (crop_output_image)
-
 
 def image_slice(*inputs, file_root='', path='', annotations_file='', shard_id=0, num_shards=1, random_shuffle=False, affine=True, axes=None, axis_names="WH", bytes_per_sample_hint=0, device_memory_padding=16777216,
                 device_memory_padding_jpeg2k=0, host_memory_padding=8388608, random_aspect_ratio=[0.8, 1.25], random_area=[0.08, 1.0], num_attempts=100,

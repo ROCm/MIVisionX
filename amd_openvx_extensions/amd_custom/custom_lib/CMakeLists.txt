@@ -40,29 +40,34 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
-    if(NOT DEFINED ENV{HIP_PATH})
-      set(HIP_PATH ${ROCM_PATH} CACHE PATH "Path to which HIP has been installed")
-    else()
-      set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
-    endif()
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
-    find_package(HIP QUIET)
-    list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
-    include_directories(${ROCM_PATH}/include)
-    set(CUSTOM_LIB_SOURCES
-            custom_api.cpp
-            custom_copy_impl.cpp
-        )
+  # OpenMP
+  find_package(OpenMP REQUIRED)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
-    if (HIP_FOUND)
-        set(ENABLE_HIP 1)
-        add_definitions(-DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)
-        link_directories(${HIP_PATH}/lib)
-        add_library(${PROJECT_NAME} OBJECT ${CUSTOM_LIB_SOURCES})
-    else()
-        message("-- ${Red}WARNING: HIP Not Found -- ${PROJECT_NAME} not built${ColourReset}")
-    endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -fPIC -std=gnu++14")
+  if(NOT DEFINED ENV{HIP_PATH})
+    set(HIP_PATH ${ROCM_PATH} CACHE PATH "Path to which HIP has been installed")
+  else()
+    set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
+  endif()
+  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
+  find_package(HIP QUIET)
+  list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
+  include_directories(${ROCM_PATH}/include)
+  set(CUSTOM_LIB_SOURCES
+          custom_api.cpp
+          custom_copy_impl.cpp
+      )
+
+  if (HIP_FOUND)
+    set(ENABLE_HIP 1)
+    add_definitions(-DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)
+    link_directories(${HIP_PATH}/lib)
+    add_library(${PROJECT_NAME} OBJECT ${CUSTOM_LIB_SOURCES})
+  else()
+    message("-- ${Red}WARNING: HIP Not Found -- ${PROJECT_NAME} not built${ColourReset}")
+  endif()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=gnu++14")
 else()
     message("-- ${Green}${PROJECT_NAME} -- Building for CPU backend${ColourReset}")
     set(ENABLE_HIP 0)

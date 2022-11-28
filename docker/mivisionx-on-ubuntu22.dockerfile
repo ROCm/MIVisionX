@@ -39,8 +39,8 @@ RUN apt-get update -y && apt-get -y install autoconf automake libbz2-dev libssl-
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd
 RUN apt-get -y install sqlite3 libsqlite3-dev libtool build-essential && \
-    wget https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.bz2 && tar xjvf boost_1_80_0.tar.bz2 && \
-    cd boost_1_80_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
+    wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 && tar xjvf boost_1_72_0.tar.bz2 && \
+    cd boost_1_72_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
     ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11" && \
     sudo ./b2 install threading=multi link=shared --with-system --with-filesystem && \
     ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \

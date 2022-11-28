@@ -61,20 +61,6 @@ int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
     }
     context->hip_device_id = deviceID;
 
-    err = hipStreamCreate(&context->hip_stream);
-    if (err != hipSuccess) {
-        agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipStreamCreate(%p) => %d (failed)\n", context->hip_stream, err);
-        return -1;
-    }
-
-    //Force creation of the underlying HW queue associated with the HIP stream created above here;
-    // otherwise, the HW queue creation will be delayed until this stream is used in the graph
-    err = hipDeviceSynchronize();
-    if (err != hipSuccess) {
-        agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipDeviceSynchronize => %d (failed)\n", err);
-        return -1;
-    }
-
     err = hipGetDeviceProperties(&context->hip_dev_prop, deviceID);
     if (err != hipSuccess) {
         agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipGetDeviceProperties(%d) => %d (failed)\n", deviceID, err);
@@ -98,14 +84,8 @@ int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
 }
 
 int agoGpuHipReleaseContext(AgoContext * context) {
-    if (context->hip_stream) {
-        hipError_t status = hipStreamDestroy(context->hip_stream);
-        if (status != hipSuccess) {
-            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: agoGpuHipReleaseContext: hipStreamDestroy(%p) failed (%d)\n", context->hip_stream, status);
-            return -1;
-        }
-        context->hip_stream = NULL;
-    }
+
+    // nothing to do here
     return 0;
 }
 

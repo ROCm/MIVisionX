@@ -30,7 +30,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-# Changes for SWDEV-310152: 
+# Changes for RPATH Removal from Binaries:
 # Since all public interface libraries are present in same folder 
 # RPATH/RUNPATH is not required
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)

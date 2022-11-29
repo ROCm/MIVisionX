@@ -215,6 +215,7 @@ int Image::create_virtual(vx_context context, vx_graph graph)
         return -1;
 
     _context = context;
+
     // create a virtual image as the output image for this node
     vx_handle = vxCreateVirtualImage(graph, _info.width(), _info.height_batch(), VX_DF_IMAGE_VIRT);
     vx_status status;

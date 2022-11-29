@@ -34,7 +34,6 @@ THE SOFTWARE.
 #include "node_image_loader_single_shard.h"
 #include "node_cifar10_loader.h"
 #include "image_source_evaluator.h"
-#include "node_fisheye.h"
 #include "node_copy.h"
 #include "node_fused_jpeg_crop.h"
 #include "node_fused_jpeg_crop_single_shard.h"

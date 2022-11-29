@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.3.9"
+__version__ = "2.3.10"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -39,8 +39,8 @@ __status__ = "Shipping"
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
                     help='Setup home directory - optional (default:~/)')
-parser.add_argument('--opencv',    	type=str, default='4.5.5',
-                    help='OpenCV Version - optional (default:4.5.5)')
+parser.add_argument('--opencv',    	type=str, default='4.6.0',
+                    help='OpenCV Version - optional (default:4.6.0)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.4',
                     help='ProtoBuf Version - optional (default:3.12.4)')
 parser.add_argument('--rpp',   		type=str, default='0.98',
@@ -256,7 +256,9 @@ else:
                           ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
         elif "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool curl make g++ unzip')
+                      linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                      linuxSystemInstall_check+' install curl make g++ unzip libomp-dev libpthread-stubs0-dev')
         elif "SLES" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install sqlite3 sqlite3-devel libbz2-devel libopenssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
@@ -362,9 +364,9 @@ else:
                   ' install -t pattern devel_basis')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                   ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
-    # OpenCV 4.5.5
+    # OpenCV 4.6.0
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
-              ' -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )')
+              ' -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )')
     os.system('(cd '+deps_dir+'/build/OpenCV; make -j8 )')
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' make install )')

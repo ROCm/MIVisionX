@@ -6,7 +6,7 @@ This application can be used to verify the functionality of the video API offere
 ### Pre-requisites
 * Ubuntu Linux, version - `18.04` / `20.04`
 * rocAL library (Part of the MIVisionX toolkit)
-* [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* [OpenCV 4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * [FFmpeg n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Radeon Performance Primitives (RPP)
 

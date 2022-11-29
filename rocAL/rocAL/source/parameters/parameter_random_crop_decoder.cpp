@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#include "parameter_random_crop_dec.h"
+#include "parameter_random_crop_decoder.h"
 #include <cassert>
 
 // Initializing the random generator so all objects of the class can share it.
@@ -41,7 +41,7 @@ RocalRandomCropDecParam::RocalRandomCropDecParam(
 }
 
 
-CropWindow RocalRandomCropDecParam::GenerateCropWindowImpl(const Shape& shape) {
+CropWindow RocalRandomCropDecParam::generate_crop_window_implementation(const Shape& shape) {
   assert(shape.size() == 2);
 
   CropWindow crop;
@@ -76,10 +76,8 @@ CropWindow RocalRandomCropDecParam::GenerateCropWindowImpl(const Shape& shape) {
       auto h = static_cast<int>(
           std::roundf(sqrtf(target_area / ratio)));
 
-      if (w < 1)
-        w = 1;
-      if (h < 1)
-        h = 1;
+      w = std::max(1, w);
+      h = std::max(1, h);
       crop.set_shape(h, w);
 
       ratio = static_cast<float>(w) / h;
@@ -109,13 +107,13 @@ CropWindow RocalRandomCropDecParam::GenerateCropWindowImpl(const Shape& shape) {
 }
 
 // seed the rng for the instance and return the random crop window.
-CropWindow RocalRandomCropDecParam::GenerateCropWindow(const Shape& shape, const int instance) {
+CropWindow RocalRandomCropDecParam::generate_crop_window(const Shape& shape, const int instance) {
     _rand_gen.seed(_seeds[instance]);
-    return GenerateCropWindowImpl(shape);
+    return generate_crop_window_implementation(shape);
 }
 
 void RocalRandomCropDecParam::generate_random_seeds() {
-    ParameterFactory::instance()->regenerate_seed(); // Renew and regenerate
+    ParameterFactory::instance()->generate_seed(); // Renew and regenerate
     std::seed_seq seq{ParameterFactory::instance()->get_seed()};
     seq.generate(_seeds.begin(), _seeds.end());
 }

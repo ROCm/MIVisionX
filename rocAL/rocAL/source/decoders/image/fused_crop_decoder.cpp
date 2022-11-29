@@ -79,10 +79,8 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         _crop_window.W = std::lround((_bbox_coord[2]) * original_image_width);
         _crop_window.H = std::lround((_bbox_coord[3]) * original_image_height);
     }
-    if (_crop_window.W > max_decoded_width)
-        _crop_window.W = max_decoded_width;
-    if (_crop_window.H > max_decoded_height)
-        _crop_window.H = max_decoded_height;
+    _crop_window.W = std::min(_crop_window.W, (unsigned int)max_decoded_width);
+    _crop_window.H = std::min(_crop_window.H, (unsigned int)max_decoded_height);
 
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
     if( tjDecompress2_partial(m_jpegDecompressor,
@@ -101,17 +99,14 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
 
     // x1-diff should be set to x offset in tensor pipeline and removed.
     if (_crop_window.x != x1_diff) {
-        //std::cout << "x_off changed by tjpeg decoder " << _crop_window.x << " " << x1_diff << std::endl;
         unsigned char *src_ptr_temp, *dst_ptr_temp;
         unsigned int elements_in_row = max_decoded_width * planes;
         unsigned int elements_in_crop_row = _crop_window.W * planes;
-        //unsigned int remainingElements =  elements_in_row - elements_in_crop_row;
         unsigned int xoffs = (_crop_window.x - x1_diff) * planes;   // in case _crop_window.x gets adjusted by tjpeg decoder
         src_ptr_temp = output_buffer;
         dst_ptr_temp = output_buffer;
         for (unsigned int i = 0; i < _crop_window.H; i++) {
             memcpy(dst_ptr_temp, src_ptr_temp + xoffs, elements_in_crop_row * sizeof(unsigned char));
-            //memset(dst_ptr_temp + elements_in_crop_row, 0, remainingElements * sizeof(unsigned char));
             src_ptr_temp +=  elements_in_row;
             dst_ptr_temp +=  elements_in_row;
         }

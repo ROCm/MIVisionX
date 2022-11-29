@@ -123,8 +123,8 @@ void ResizeNode::adjust_out_roi_size() {
         }
         
         if (has_max_size) {
-            if (_max_width != 0) scale = std::min(scale, static_cast<float>(_max_width) / _src_width);
-            if (_max_height != 0) scale = std::min(scale, static_cast<float>(_max_height) / _src_height);
+            if (_max_width) scale = std::min(scale, static_cast<float>(_max_width) / _src_width);
+            if (_max_height) scale = std::min(scale, static_cast<float>(_max_height) / _src_height);
         }
 
         if ((scale_h != scale) || (!_dst_height)) _dst_height = std::lround(_src_height * scale);

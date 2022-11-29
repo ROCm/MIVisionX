@@ -85,9 +85,9 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _decoder_config = decoder_config;
     _random_crop_dec_param = nullptr;
     if (_decoder_config._type == DecoderType::FUSED_TURBO_JPEG) {
-      auto random_aspec_ratio = decoder_config.get_random_aspect_ratio();
+      auto random_aspect_ratio = decoder_config.get_random_aspect_ratio();
       auto random_area = decoder_config.get_random_area();
-      AspectRatioRange aspect_ratio_range = std::make_pair((float)random_aspec_ratio[0], (float)random_aspec_ratio[1]);
+      AspectRatioRange aspect_ratio_range = std::make_pair((float)random_aspect_ratio[0], (float)random_aspect_ratio[1]);
       AreaRange area_range = std::make_pair((float)random_area[0], (float)random_area[1]);
       _random_crop_dec_param = new RocalRandomCropDecParam(aspect_ratio_range, area_range, (int64_t)decoder_config.get_seed(), decoder_config.get_num_attempts(), _batch_size);
     }
@@ -237,7 +237,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                   _decoder[i]->set_bbox_coords(_bbox_coords[i]); 
                 } else if (_random_crop_dec_param) {
                   Shape dec_shape = {_original_height[i], _original_width[i]};
-                  auto crop_window = _random_crop_dec_param->GenerateCropWindow(dec_shape, i);
+                  auto crop_window = _random_crop_dec_param->generate_crop_window(dec_shape, i);
                   _decoder[i]->set_crop_window(crop_window);
                 }
             }

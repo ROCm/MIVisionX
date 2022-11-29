@@ -77,7 +77,7 @@ public:
     void renew_parameters();
     void set_seed(unsigned seed);
     unsigned get_seed();
-    void regenerate_seed();
+    void generate_seed();
 
     template<typename T>
     Parameter<T>* create_uniform_rand_param(T start, T end){

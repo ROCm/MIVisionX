@@ -39,15 +39,15 @@ using AreaRange = std::pair<float, float>;
 class RocalRandomCropDecParam {
  public:
   explicit RocalRandomCropDecParam(
-    AspectRatioRange aspect_ratio_range = { 3.0f/4, 4.0f/3 },
+    AspectRatioRange aspect_ratio_range = { 3.0f / 4, 4.0f / 3 },
     AreaRange area_range = { 0.08, 1 },
     int64_t seed = time(0),
     int num_attempts = 10,
     int batch_size = 256);
-  CropWindow GenerateCropWindow(const Shape& shape, const int instance);
+  CropWindow generate_crop_window(const Shape& shape, const int instance);
   void generate_random_seeds();
  private:
-  CropWindow GenerateCropWindowImpl(const Shape& shape);
+  CropWindow generate_crop_window_implementation(const Shape& shape);
   AspectRatioRange _aspect_ratio_range;
   // Aspect ratios are uniformly distributed on logarithmic scale.
   // This provides natural symmetry and smoothness of the distribution.

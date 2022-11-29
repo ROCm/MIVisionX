@@ -55,10 +55,6 @@ protected:
     void update_node() override {};
 private:
     std::shared_ptr<ImageLoaderSharded> _loader_module = nullptr;
-    Parameter<float>* _x_drift;
-    Parameter<float>* _y_drift;
-    Parameter<float>* _area_factor;
-    Parameter<float>* _aspect_ratio;
     std::vector<float> _random_area, _random_aspect_ratio;
     unsigned _num_attempts;
 };

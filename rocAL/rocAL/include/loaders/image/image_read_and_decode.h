@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include "reader_factory.h"
 #include "timing_debug.h"
 #include "loader_module.h"
-#include "parameter_random_crop_dec.h"
+#include "parameter_random_crop_decoder.h"
 
 /**
  * Compute the scaled value of <tt>dimension</tt> using the given scaling

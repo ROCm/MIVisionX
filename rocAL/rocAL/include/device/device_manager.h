@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 #pragma once
-#if !ENABLE_HIP
+#if ENABLE_OPECL
 #include <map>
 #include <CL/cl.h>
 #include <vx_ext_amd.h>

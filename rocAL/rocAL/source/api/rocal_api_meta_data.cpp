@@ -244,7 +244,7 @@ ROCAL_API_CALL rocalGetImageLabels(RocalContext p_context, void* buf, unsigned i
         else if (flags & ROCAL_MEMCPY_TO_HOST) {
             memcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size);
         }
-#else
+#elif ENABLE_OPENCL
         if (!flags) {
           if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size, meta_data.second->get_label_batch().data(), 0, NULL, NULL) != CL_SUCCESS)
               THROW("Invalid Data Pointer: Error copying to device memory")
@@ -336,7 +336,7 @@ ROCAL_API_CALL rocalGetOneHotImageLabels(RocalContext p_context, void* buf, int 
         hipError_t err = hipMemcpy(buf, one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses, hipMemcpyHostToDevice);
         if (err != hipSuccess)
             THROW("Invalid Data Pointer: Error copying to device memory")
-#else
+#elif ENABLE_OPENCL
         if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size * numOfClasses, one_hot_encoded, 0, NULL, NULL) != CL_SUCCESS)
             THROW("Invalid Data Pointer: Error copying to device memory")
 

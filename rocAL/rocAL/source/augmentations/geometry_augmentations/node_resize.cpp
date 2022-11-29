@@ -128,5 +128,6 @@ void ResizeNode::adjust_out_roi_size() {
         }
 
         if ((scale_h != scale) || (!_dst_height)) _dst_height = std::lround(_src_height * scale);
+        if ((scale_w != scale) || (!_dst_width)) _dst_width = std::lround(_src_width * scale);
     }
 }

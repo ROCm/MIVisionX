@@ -141,8 +141,8 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         {
             std::cout << ">>>>>>> Running PARTIAL DECODE" << std::endl;
             rocalCreateLabelReader(handle, path);
-            std::vector<float> area = { 0.08, 1 };
-            std::vector<float> aspect_ratio = { 3.0f/4, 4.0f/3 };
+            std::vector<float> area = {0.08, 1};
+            std::vector<float> aspect_ratio = {3.0f/4, 4.0f/3};
             input1 = rocalFusedJpegCrop(handle, path, color_format, num_threads, false, area, aspect_ratio, 10, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
@@ -175,8 +175,8 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
 #if defined RANDOMBBOXCROP
             rocalRandomBBoxCrop(handle, all_boxes_overlap, no_crop);
 #endif
-            std::vector<float> area = { 0.08, 1 };
-            std::vector<float> aspect_ratio = { 3.0f/4, 4.0f/3 };
+            std::vector<float> area = {0.08, 1};
+            std::vector<float> aspect_ratio = {3.0f/4, 4.0f/3};
             input1 = rocalJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, area, aspect_ratio, 10, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;

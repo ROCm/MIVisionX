@@ -119,7 +119,8 @@ void CircularBuffer::sync()
             THROW("clEnqueueUnmapMemObject of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
 
     #endif
-    }
+    } 
+    else {
 #elif ENABLE_HIP
     if (_output_mem_type== RocalMemType::HIP){
         // copy memory to host only if needed
@@ -130,12 +131,15 @@ void CircularBuffer::sync()
             }
         }
     }
-#else
+    else {
+#endif
     {
         // For the host processing no copy is needed, since data is already loaded in the host buffers
         // and handle will be swaped on it
     }
-#endif    
+#if ENABLE_HIP || ENABLE_OPENCL
+    }
+#endif
 }
 
 void CircularBuffer::push()
@@ -209,6 +213,12 @@ void CircularBuffer::init(RocalMemType output_mem_type, size_t output_mem_size, 
             clRetainMemObject((cl_mem)_dev_buffer[buffIdx]);
         }
     }
+    else {
+      for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++) {
+          // a minimum of extra MEM_ALIGNMENT is allocated
+          _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
+      }
+    }
 #elif ENABLE_HIP
     if(_output_mem_type== RocalMemType::HIP)
     {
@@ -238,12 +248,17 @@ void CircularBuffer::init(RocalMemType output_mem_type, size_t output_mem_size, 
             }
         }
     }
-#else
-    for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
-    {
-        // a minimum of extra MEM_ALIGNMENT is allocated
-        _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
+    else {
+      for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++) {
+          // a minimum of extra MEM_ALIGNMENT is allocated
+          _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
+      }
     }
+#else
+      for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++) {
+          // a minimum of extra MEM_ALIGNMENT is allocated
+          _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
+      }
 #endif
     _initialized = true;
 }
@@ -260,6 +275,7 @@ void CircularBuffer::release()
             if(clReleaseMemObject((cl_mem)_dev_buffer[buffIdx]) != CL_SUCCESS)
                 ERR("Could not release ocl memory in the circular buffer")
         }
+        else {
 #elif ENABLE_HIP
         if (_output_mem_type == RocalMemType::HIP) {
             if (_host_buffer_ptrs[buffIdx]) {
@@ -277,9 +293,14 @@ void CircularBuffer::release()
                 _dev_buffer[buffIdx] = nullptr;
             }
         }
+        else {
 #else
-        free(_host_buffer_ptrs[buffIdx]);
+          free(_host_buffer_ptrs[buffIdx]);
 #endif        
+#if ENABLE_HIP || ENABLE_OPENCL
+          free(_host_buffer_ptrs[buffIdx]);
+        }
+#endif
     }
 
     _dev_buffer.clear();

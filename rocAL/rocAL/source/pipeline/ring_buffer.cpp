@@ -189,7 +189,7 @@ void RingBuffer::init(RocalMemType mem_type, void *devres, unsigned sub_buffer_s
     }
    else
     {
-#else
+#endif
         _host_sub_buffers.resize(BUFF_DEPTH);
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
         {
@@ -200,7 +200,6 @@ void RingBuffer::init(RocalMemType mem_type, void *devres, unsigned sub_buffer_s
             for(size_t sub_buff_idx = 0; sub_buff_idx < _sub_buffer_count; sub_buff_idx++)
                 _host_sub_buffers[buffIdx][sub_buff_idx] = (unsigned char*)_host_master_buffers[buffIdx] + _sub_buffer_size * sub_buff_idx;
         }
-#endif    
 #if ENABLE_OPENCL || ENABLE_HIP
     }
 #endif    

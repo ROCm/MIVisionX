@@ -569,7 +569,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
     const size_t w = output_width();
     const size_t single_output_image_size = output_byte_size();
 
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
     if(_output_image_info.mem_type() == RocalMemType::OCL)
     {
         if(output_data_type == RocalTensorDataType::FP16)
@@ -627,7 +627,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
                                          0 , nullptr, nullptr)) != CL_SUCCESS)
             THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
     }
-#else
+#elif ENABLE_HIP
     if(_output_image_info.mem_type() == RocalMemType::HIP)
     {
         unsigned int fp16 = (output_data_type == RocalTensorDataType::FP16);
@@ -898,8 +898,7 @@ MasterGraph::copy_output(unsigned char *out_ptr, size_t out_size_in_bytes)
             dest_buf_offset += size;
         }
     }
-    else
-    {
+    else {
 #elif ENABLE_HIP
     if(processing_on_device_hip())
     {
@@ -921,12 +920,10 @@ MasterGraph::copy_output(unsigned char *out_ptr, size_t out_size_in_bytes)
             THROW("hipStreamSynchronize failed for hipMemcpy ")
 
     }
-    else
-    {
-#else
+    else {
+#endif
         // get_host_master_read_buffer is blocking if _ring_buffer is empty, and blocks this thread till internal processing thread process a new batch and store in the _ring_buffer
         memcpy(out_ptr, _ring_buffer.get_host_master_read_buffer(), size * _output_images.size());
-#endif    
 #if ENABLE_OPENCL || ENABLE_HIP
     }
 #endif    

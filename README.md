@@ -133,7 +133,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Visual Studio 2019 or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* Install [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* Install [OpenCV 4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
@@ -156,7 +156,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
-* [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* [OpenCV 4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * [FFMPEG n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
   + FFMPEG is required for amd_media & mv_deploy modules
@@ -180,7 +180,7 @@ For the convenience of the developer, we here provide the setup script which wil
 
   ```
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                            --opencv    [OpenCV Version - optional (default:4.5.5)]
+                            --opencv    [OpenCV Version - optional (default:4.6.0)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.4)]
                             --rpp       [RPP Version - optional (default:0.98)]
                             --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:no) [options:yes/no]]
@@ -439,15 +439,15 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * miopen-opencl - `2.18.0.50300-63`
 * migraphx - `2.3.0.50300-63`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
-* OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * RPP - [0.98](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.98)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.3.9`
+* MIVisionX Setup Script - `V2.3.10`
 
 ### Known issues
 
-* Package install requires **OpenCV** `V-4.5.X` to execute `AMD OpenCV extensions`
+* Package install requires **OpenCV** `V-4.6.X` to execute `AMD OpenCV extensions`
 
 ## MIVisionX Dependency Map
 

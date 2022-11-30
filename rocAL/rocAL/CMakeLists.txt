@@ -37,6 +37,8 @@ if(GPU_SUPPORT)
     find_package(OpenMP QUIET)
     set(BOOST_COMPONENTS filesystem system)
     find_package(Boost COMPONENTS ${BOOST_COMPONENTS} QUIET)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads QUIET)
 else()
     SET(BUILD_ROCAL false)
     message("-- ${Yellow}NOTE: rocAL library requires GPU_SUPPORT=ON and BACKEND=OPENCL/HIP${ColourReset}")
@@ -118,16 +120,31 @@ if(GPU_SUPPORT)
         set(BUILD_ROCAL false)
         message("-- ${Yellow}NOTE: rocAL library requires Boost, Not Found ${ColourReset}")
     endif()
+    if(NOT Threads_FOUND)
+        set(BUILD_ROCAL false)
+        message("-- ${Yellow}NOTE: rocAL library requires Threads, Not Found ${ColourReset}")
+    endif()
 endif()
 
 if(${BUILD_ROCAL})
+    # AMD OpenVX & RPP
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx vx_rpp)
     # OpenMP
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenMP::OpenMP_CXX)
+    # Threads
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} Threads::Threads)
     # BOOST
     include_directories(${Boost_INCLUDE_DIRS})
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+    # TurboJPEG
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${TurboJpeg_LIBRARIES})
+    # Protobuf
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${PROTOBUF_LIBRARIES})
+    # LMDB -- TBD: FIND PACKAGE Required
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} lmdb)
+
     # rocAL uses C++ 17 features
     set(CMAKE_CXX_STANDARD 17)
     message("-- ${Green}ROCm Augmentation Library -- rocAL module added${ColourReset}")
@@ -201,10 +218,11 @@ if(${BUILD_ROCAL})
     target_compile_definitions(${PROJECT_NAME} PUBLIC DBGLOG=0 WRNLOG=0)
     target_compile_definitions(${PROJECT_NAME} PUBLIC TFRECORD_ENABLE=0)
     message("-- ${White}rocAL built with ENABLE_SIMD")
+    #OpenCV
     if (OpenCV_FOUND)
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=1)
         include_directories(${OpenCV_INCLUDE_DIRS})
-        target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES})
+        set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${OpenCV_LIBRARIES})
         if(${OpenCV_VERSION_MAJOR} EQUAL 4)
             target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
         else()
@@ -222,12 +240,14 @@ if(${BUILD_ROCAL})
 
     if(NOT FFMPEG_FOUND)
         message("-- ${Yellow}NOTE: rocAL library is going to be built without video decode functionality ${ColourReset}")
-        target_link_libraries(${PROJECT_NAME} ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp ${LINK_LIBRARY_LIST})
+        target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
     else()
+        set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${FFMPEG_LIBRARIES})
         message("-- ${White}rocAL library is going to be built with video decode functionality ${ColourReset}")
         target_compile_definitions(${PROJECT_NAME} PUBLIC -DROCAL_VIDEO)
-        target_link_libraries(${PROJECT_NAME} ${PROTOBUF_LIBRARIES} ${FFMPEG_LIBRARIES} lmdb turbojpeg openvx vx_rpp ${LINK_LIBRARY_LIST})
+        target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
     endif()
+    message("-- ${White}rocAL -- Link Libraries: ${LINK_LIBRARY_LIST}${ColourReset}")
 
     # install MIVisionX libs -- {ROCM_PATH)/lib
     install(TARGETS rocal DESTINATION ${CMAKE_INSTALL_LIBDIR})

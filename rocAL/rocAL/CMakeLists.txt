@@ -213,20 +213,20 @@ if(${BUILD_ROCAL})
     else()
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
-    # -Wall -- Enable most warning messages; -fPIC -- Generate position-independent code if possible.
+    # -Wall -- Enable most warning messages
     # -mavx2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and AVX2 built-in functions and code generation.
     # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute.
     # -std=gnu++17 -- Conform to the ISO 2017 C++ standard with GNU extensions.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall -fPIC -mavx2 -mfma -mf16c -Wno-deprecated-declarations -std=gnu++17")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall -mavx2 -mfma -mf16c -Wno-deprecated-declarations -std=gnu++17")
     message("-- ${White}rocAL -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
 
     if(NOT FFMPEG_FOUND)
         message("-- ${Yellow}NOTE: rocAL library is going to be built without video decode functionality ${ColourReset}")
-        target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp ${LINK_LIBRARY_LIST})
+        target_link_libraries(${PROJECT_NAME} ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp ${LINK_LIBRARY_LIST})
     else()
         message("-- ${White}rocAL library is going to be built with video decode functionality ${ColourReset}")
         target_compile_definitions(${PROJECT_NAME} PUBLIC -DROCAL_VIDEO)
-        target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} ${FFMPEG_LIBRARIES} lmdb turbojpeg openvx vx_rpp ${LINK_LIBRARY_LIST})
+        target_link_libraries(${PROJECT_NAME} ${PROTOBUF_LIBRARIES} ${FFMPEG_LIBRARIES} lmdb turbojpeg openvx vx_rpp ${LINK_LIBRARY_LIST})
     endif()
 
     # install MIVisionX libs -- {ROCM_PATH)/lib

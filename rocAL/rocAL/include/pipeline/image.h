@@ -37,7 +37,6 @@ THE SOFTWARE.
 #endif
 #include "commons.h"
 
-
 /*! \brief Converts Rocal Memory type to OpenVX memory type
  *
  * @param mem input Rocal type

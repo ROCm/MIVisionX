@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 #if ENABLE_OPENCL
+
 #include <iostream>
 #include <vx_ext_amd.h>
 #include "device_manager.h"

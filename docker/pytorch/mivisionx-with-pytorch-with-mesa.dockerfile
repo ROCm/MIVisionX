@@ -1,7 +1,7 @@
 ARG PYTORCH_VERSION=latest
 FROM rocm/pytorch:${PYTORCH_VERSION}
 
-ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
 
 RUN apt-get update -y
@@ -23,8 +23,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install vainfo
 # install OpenCV & FFMPEG - Level 3
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \
         libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip && \
-        mkdir OpenCV && cd OpenCV && wget https://github.com/opencv/opencv/archive/4.5.5.zip && unzip 4.5.5.zip && \
-        mkdir build && cd build && cmake -DWITH_OPENCL=OFF ../opencv-4.5.5 && make -j8 && sudo make install && sudo ldconfig && cd
+        mkdir OpenCV && cd OpenCV && wget https://github.com/opencv/opencv/archive/4.6.0.zip && unzip 4.6.0.zip && \
+        mkdir build && cd build && cmake -DWITH_GTK=ON -DWITH_JPEG=ON -DBUILD_JPEG=ON -DWITH_OPENCL=OFF ../opencv-4.6.0 && make -j8 && sudo make install && sudo ldconfig && cd
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-essential cmake git-core libass-dev libfreetype6-dev libsdl2-dev libtool libva-dev \
         libvdpau-dev libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget zlib1g-dev \
         nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev && \
@@ -52,8 +52,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev
         git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 
-WORKDIR /workspace
+ENV MIVISIONX_WORKSPACE=/mivisionx-deps
+WORKDIR $MIVISIONX_WORKSPACE
 
 # Clone MIVisionX 
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
-        #mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \
+        mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install

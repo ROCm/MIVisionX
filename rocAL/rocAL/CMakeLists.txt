@@ -233,7 +233,7 @@ if(${BUILD_ROCAL})
     # -mf16c -- Support F16C built-in functions and code generation
     # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute
     # -std=gnu++17 -- Conform to the ISO 2017 C++ standard with GNU extensions
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall -mavx2 -mfma -mf16c -Wno-deprecated-declarations -std=gnu++17")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -mavx2 -mfma -mf16c -Wno-deprecated-declarations -std=gnu++17")
     message("-- ${White}rocAL -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
 
     if(NOT FFMPEG_FOUND)

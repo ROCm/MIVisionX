@@ -67,7 +67,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
   find_package(OpenCL QUIET)
   if(NOT OpenCL_FOUND)
       set(BUILD_ROCAL false)
-      message("-- ${Yellow}NOTE: rocAL library requires OpenCL for  BACKEND=OPENCL, Not Found ${ColourReset}")
+      message("-- ${Yellow}NOTE: rocAL library requires OpenCL for BACKEND=OPENCL, Not Found ${ColourReset}")
   endif()
 endif()
 
@@ -128,6 +128,7 @@ endif()
 
 if(${BUILD_ROCAL})
     # AMD OpenVX & RPP
+    include_directories(${AMDRPP_INCLUDE_DIRS})
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx vx_rpp)
     # OpenMP
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -139,8 +140,10 @@ if(${BUILD_ROCAL})
     include_directories(${Boost_INCLUDE_DIRS})
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
     # TurboJPEG
+    include_directories(${TurboJpeg_INCLUDE_DIRS})
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${TurboJpeg_LIBRARIES})
     # Protobuf
+    include_directories(${PROTOBUF_INCLUDE_DIRS})
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${PROTOBUF_LIBRARIES})
     # LMDB -- TBD: FIND PACKAGE Required
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} lmdb)
@@ -155,14 +158,7 @@ if(${BUILD_ROCAL})
         find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
     endif()
     include_directories(
-                ${AVUTIL_INCLUDE_DIR}
-                ${AVCODEC_INCLUDE_DIR}
-                ${SWSCALE_INCLUDE_DIR}
-                ${AVFORMAT_INCLUDE_DIR}
                 ${CMAKE_CURRENT_BINARY_DIR}
-                ${TurboJpeg_INCLUDE_DIRS}
-                ${PROTOBUF_INCLUDE_DIRS}
-                ${AMDRPP_INCLUDE_DIRS}
                 ../../amd_openvx/openvx/include/
                 ../../amd_openvx_extensions/amd_rpp/include/
                 ../../amd_openvx_extensions/amd_media/include/
@@ -202,7 +198,7 @@ if(${BUILD_ROCAL})
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
         add_dependencies(${PROJECT_NAME} rocAL_hip)
-        target_link_libraries(${PROJECT_NAME} $<TARGET_OBJECTS:rocAL_hip>)
+        set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} $<TARGET_OBJECTS:rocAL_hip>)
         target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=1)
         message("-- ${White}rocAL built with HIP Backend${ColourReset}")
@@ -232,21 +228,23 @@ if(${BUILD_ROCAL})
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
     # -Wall -- Enable most warning messages
-    # -mavx2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and AVX2 built-in functions and code generation.
-    # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute.
-    # -std=gnu++17 -- Conform to the ISO 2017 C++ standard with GNU extensions.
+    # -mavx2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and AVX2 built-in functions and code generation
+    # -mfma -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and FMA built-in functions and code generation
+    # -mf16c -- Support F16C built-in functions and code generation
+    # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute
+    # -std=gnu++17 -- Conform to the ISO 2017 C++ standard with GNU extensions
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall -mavx2 -mfma -mf16c -Wno-deprecated-declarations -std=gnu++17")
     message("-- ${White}rocAL -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
 
     if(NOT FFMPEG_FOUND)
         message("-- ${Yellow}NOTE: rocAL library is going to be built without video decode functionality ${ColourReset}")
-        target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
     else()
+        include_directories(${AVUTIL_INCLUDE_DIR} ${AVCODEC_INCLUDE_DIR} ${SWSCALE_INCLUDE_DIR} ${AVFORMAT_INCLUDE_DIR})
         set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${FFMPEG_LIBRARIES})
         message("-- ${White}rocAL library is going to be built with video decode functionality ${ColourReset}")
         target_compile_definitions(${PROJECT_NAME} PUBLIC -DROCAL_VIDEO)
-        target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
     endif()
+    target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
     message("-- ${White}rocAL -- Link Libraries: ${LINK_LIBRARY_LIST}${ColourReset}")
 
     # install MIVisionX libs -- {ROCM_PATH)/lib

@@ -29,7 +29,7 @@ CircularBuffer::CircularBuffer(void* devres):
           _level(0)
 {
 #if ENABLE_OPENCL
-    DeviceResources *ocl = static_cast<DeviceResources *>devres;
+    DeviceResources *ocl = static_cast<DeviceResources *> (devres);
     _cl_cmdq = ocl->cmd_queue, _cl_context = ocl->context, _device_id = ocl->device_id;
 #elif ENABLE_HIP
     DeviceResourcesHip *hipres = static_cast<DeviceResourcesHip *> (devres);

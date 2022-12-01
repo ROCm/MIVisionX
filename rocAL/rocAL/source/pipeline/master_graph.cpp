@@ -438,7 +438,7 @@ MasterGraph::allocate_output_tensor()
         cl_int ret = CL_SUCCESS;
         _output_tensor = nullptr;
         size_t size = output_buffer_size*sizeof(cl_float);
-        cl_mem clImgFloat  = clCreateBuffer(_device.resources().context,
+        cl_mem clImgFloat  = clCreateBuffer(_device.resources()->context,
                                             CL_MEM_READ_WRITE,
                                             size,
                                             nullptr, &ret);
@@ -584,7 +584,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
 
         auto kernel_name = (format == RocalTensorFormat::NHWC)? "copyInt8ToNHWC" : "copyInt8ToNCHW";
         cl_kernel kernel = _device["utility"][kernel_name];
-        auto queue = _device.resources().cmd_queue;
+        auto queue = _device.resources()->cmd_queue;
         unsigned dest_buf_offset = 0;
         auto output_buffers =_ring_buffer.get_read_buffers();
         for( auto&& out_image: output_buffers)
@@ -887,7 +887,7 @@ MasterGraph::copy_output(unsigned char *out_ptr, size_t out_size_in_bytes)
         {
             bool sync_flag = (--out_image_idx == 0) ? CL_TRUE : CL_FALSE;
             cl_int status;
-            if((status = clEnqueueReadBuffer(_device.resources().cmd_queue,
+            if((status = clEnqueueReadBuffer(_device.resources()->cmd_queue,
                                              (cl_mem) output_handle,
                                              sync_flag?(CL_TRUE):CL_FALSE,
                                              0,

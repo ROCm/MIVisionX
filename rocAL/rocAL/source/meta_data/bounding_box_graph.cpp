@@ -142,7 +142,7 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
         BoundingBoxLabels bb_labels;
         bb_labels.resize(bb_count);
         memcpy(bb_labels.data(), full_batch_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
-        memcpy(bb_coords, full_batch_meta_data->get_bb_cords_batch()[i].data(), full_batch_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        memcpy((void *)bb_coords, full_batch_meta_data->get_bb_cords_batch()[i].data(), full_batch_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords_xcycwh encoded_bb;
         BoundingBoxLabels encoded_labels;
         unsigned anchors_size = anchors->size() / 4; // divide the anchors_size by 4 to get the total number of anchors

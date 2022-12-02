@@ -23,7 +23,6 @@ THE SOFTWARE.
 #pragma once
 #include "decoder.h"
 #include <turbojpeg.h>
-#include "parameter_factory.h"
 class FusedCropTJDecoder : public Decoder {
 public:
     //! Default constructor

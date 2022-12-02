@@ -72,7 +72,7 @@ void CropNode::init(unsigned int crop_h, unsigned int crop_w, float x_drift_, fl
     _crop_param->set_x_drift_factor(core(x_drift));
     _crop_param->set_y_drift_factor(core(y_drift));
 }
- 
+
 void CropNode::init(unsigned int crop_h, unsigned int crop_w)
 {
     _crop_param->crop_w = crop_w;

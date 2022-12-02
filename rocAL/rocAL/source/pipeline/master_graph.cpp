@@ -287,7 +287,11 @@ MasterGraph::build()
             THROW("Dimension of the output images do not match")
 
     allocate_output_tensor();
+#if ENABLE_HIP || ENABLE_OPENCL
     _ring_buffer.init(_mem_type, (void *)_device.resources(), output_byte_size(), _output_images.size());
+#else
+    _ring_buffer.init(_mem_type, nullptr, output_byte_size(), _output_images.size());
+#endif
     if (_is_box_encoder) _ring_buffer.initBoxEncoderMetaData(_mem_type, _user_batch_size*_num_anchors*4*sizeof(float), _user_batch_size*_num_anchors*sizeof(int));
     create_single_graph();
     start_processing();
@@ -871,12 +875,13 @@ MasterGraph::copy_output(unsigned char *out_ptr, size_t out_size_in_bytes)
     size_t size = output_byte_size();
     if (out_size_in_bytes != (size *_output_images.size()))
         return MasterGraph::Status::INVALID_ARGUMENTS;
-    size_t dest_buf_offset = 0;
 
     _convert_time.start();
+
 #if ENABLE_OPENCL
     if(processing_on_device_ocl())
     {
+        size_t dest_buf_offset = 0;
         //NOTE: the CL_TRUE flag is only used on the last buffer read call,
         // to avoid unnecessary sequence of synchronizations
 
@@ -906,6 +911,7 @@ MasterGraph::copy_output(unsigned char *out_ptr, size_t out_size_in_bytes)
         // to avoid unnecessary sequence of synchronizations
 
         // get_read_buffers() calls block_if_empty() internally and blocks if buffers are empty until a new batch is processed
+        size_t dest_buf_offset = 0;
         auto output_buffers =_ring_buffer.get_read_buffers();
         for( auto&& output_handle: output_buffers)
         {

@@ -29,7 +29,7 @@ def image(*inputs, user_feature_key_map=None, path='', file_root='', annotations
     if (device == "gpu"):
         decoder_type = types.DECODER_HW_JEPG
     else:
-      decoder_type = types.DECODER_TJPEG
+        decoder_type = types.DECODER_TJPEG
     if(reader == 'COCOReader'):
         kwargs_pybind = {
             "source_path": file_root,

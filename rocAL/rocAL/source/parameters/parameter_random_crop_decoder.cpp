@@ -43,20 +43,17 @@ RocalRandomCropDecParam::RocalRandomCropDecParam(
 
 CropWindow RocalRandomCropDecParam::generate_crop_window_implementation(const Shape& shape) {
   assert(shape.size() == 2);
-
   CropWindow crop;
   int H = shape[0], W = shape[1];
   if (W <= 0 || H <= 0) {
     return crop;
   }
-
   float min_wh_ratio = _aspect_ratio_range.first;
   float max_wh_ratio = _aspect_ratio_range.second;
   float max_hw_ratio = 1 / _aspect_ratio_range.first;
   float min_area = W * H * _area_dis.a();
   int maxW = std::max<int>(1, H * max_wh_ratio);
   int maxH = std::max<int>(1, W * max_hw_ratio);
-
   // detect two impossible cases early
   if (H * maxW < min_area) {  // image too wide
     crop.set_shape(H, maxW);
@@ -66,25 +63,20 @@ CropWindow RocalRandomCropDecParam::generate_crop_window_implementation(const Sh
     int attempts_left = _num_attempts;
     for (; attempts_left > 0; attempts_left--) {
       float scale = _area_dis(_rand_gen);
-
       size_t original_area = H * W;
       float target_area = scale * original_area;
-
       float ratio = std::exp(_aspect_ratio_log_dis(_rand_gen));
       auto w = static_cast<int>(
           std::roundf(sqrtf(target_area * ratio)));
       auto h = static_cast<int>(
           std::roundf(sqrtf(target_area / ratio)));
-
       w = std::max(1, w);
       h = std::max(1, h);
       crop.set_shape(h, w);
-
       ratio = static_cast<float>(w) / h;
       if (w <= W && h <= H && ratio >= min_wh_ratio && ratio <= max_wh_ratio)
         break;
     }
-
     if (attempts_left <= 0) {
       float max_area = _area_dis.b() * W * H;
       float ratio = static_cast<float>(W)/H;
@@ -100,7 +92,6 @@ CropWindow RocalRandomCropDecParam::generate_crop_window_implementation(const Sh
       crop.H = std::max<int>(1, crop.H * std::sqrt(scale));
     }
   }
-
   crop.x = std::uniform_int_distribution<int>(0, W - crop.W)(_rand_gen);
   crop.y = std::uniform_int_distribution<int>(0, H - crop.H)(_rand_gen);
   return crop;

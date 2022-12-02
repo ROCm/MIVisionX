@@ -286,6 +286,7 @@ namespace rocal{
         py::enum_<RocalTensorOutputType>(types_m,"RocalTensorOutputType","Tensor types")
             .value("FLOAT",ROCAL_FP32)
             .value("FLOAT16",ROCAL_FP16)
+            .value("UINT8",ROCAL_U8)
             .export_values();
         py::enum_<RocalResizeScalingMode>(types_m,"RocalResizeScalingMode","Decode size policies")
             .value("SCALING_MODE_DEFAULT",ROCAL_SCALING_MODE_DEFAULT)

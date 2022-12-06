@@ -27,11 +27,8 @@ THE SOFTWARE.
 #include "vx_ext_amd.h"
 
 #ifdef ROCAL_VIDEO
-#if ENABLE_HIP
-VideoLoader::VideoLoader(DeviceResourcesHip dev_resources):
-#else
-VideoLoader::VideoLoader(DeviceResources dev_resources):
-#endif
+
+VideoLoader::VideoLoader(void *dev_resources):
 _circ_buff(dev_resources),
 _swap_handle_time("Swap_handle_time", DBG_TIMING)
 {

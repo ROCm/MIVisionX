@@ -24,11 +24,7 @@ THE SOFTWARE.
 #include "exception.h"
 
 
-#if ENABLE_HIP
-Cifar10LoaderNode::Cifar10LoaderNode(Image *output, DeviceResourcesHip device_resources):
-#else
-Cifar10LoaderNode::Cifar10LoaderNode(Image *output, DeviceResources device_resources):
-#endif
+Cifar10LoaderNode::Cifar10LoaderNode(Image *output, void *device_resources):
         Node({}, {output})
 {
     _loader_module = std::make_shared<CIFAR10DataLoader>(device_resources);

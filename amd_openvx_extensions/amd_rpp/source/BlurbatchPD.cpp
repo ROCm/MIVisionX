@@ -190,7 +190,6 @@ static vx_status VX_CALLBACK initializeBlurbatchPD(vx_node node, const vx_refere
 #elif ENABLE_HIP
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
-        hipStreamCreate(&data->handle.hipstream);
         rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
     }
 

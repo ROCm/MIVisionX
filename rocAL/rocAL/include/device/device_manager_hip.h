@@ -42,7 +42,7 @@ public:
 
     hipError_t initialize();
 
-    DeviceResourcesHip resources();
+    DeviceResourcesHip *resources();
 
     void init_hip(vx_context context);
 

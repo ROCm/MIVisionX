@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "commons.h"
 #include "context.h"
 #include "rocal_api.h"
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
 #include "CL/cl.h"
 #endif
 

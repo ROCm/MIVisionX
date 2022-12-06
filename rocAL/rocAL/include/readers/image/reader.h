@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <tuple>
 #include "meta_data_reader.h"
 
-#define CHECK_LMDB(status)          \
+#define CHECK_LMDB_RETURN_STATUS(status)          \
     do {                            \
         if(status != MDB_SUCCESS)   \
             THROW("LMDB error, " + std::string(__FILE__) + ":" + std::to_string(__LINE__) + " " + \

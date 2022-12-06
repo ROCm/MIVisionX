@@ -23,7 +23,7 @@ THE SOFTWARE.
 #pragma once
 #include <vector>
 #include <condition_variable>
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
     #include <CL/cl.h>
 #endif
 #include <queue>
@@ -47,11 +47,7 @@ struct crop_image_info
 class CircularBuffer
 {
 public:
-#if ENABLE_HIP
-    CircularBuffer(DeviceResourcesHip hipres);
-#else
-    CircularBuffer(DeviceResources ocl);
-#endif
+    CircularBuffer(void* devres);
     ~CircularBuffer();
     void init(RocalMemType output_mem_type, size_t output_mem_size, size_t buff_depth);
     void release(); // release resources
@@ -88,13 +84,13 @@ private:
      *  Pinned memory allocated on the host used for fast host to device memory transactions,
      *  or the regular host memory buffers in the host processing case.
      */
-#if !ENABLE_HIP
+#if ENABLE_HIP
+    hipStream_t _hip_stream;
+    int _hip_device_id, _hip_canMapHostMemory;
+#elif ENABLE_OPENCL
     cl_command_queue _cl_cmdq = nullptr;
     cl_context _cl_context = nullptr;
     cl_device_id _device_id = nullptr;
-#else
-    hipStream_t _hip_stream;
-    int _hip_device_id, _hip_canMapHostMemory;
 #endif
     std::vector<void *> _dev_buffer;// Actual memory allocated on the device (in the case of GPU affinity)
     std::vector<unsigned char*> _host_buffer_ptrs;

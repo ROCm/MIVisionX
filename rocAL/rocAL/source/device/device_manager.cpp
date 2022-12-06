@@ -19,7 +19,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
+
 #include <iostream>
 #include <vx_ext_amd.h>
 #include "device_manager.h"
@@ -123,9 +124,9 @@ cl_int DeviceManager::initialize() {
     return status;
 }
 
-DeviceResources DeviceManager::resources()
+DeviceResources *DeviceManager::resources()
 {
-    return _resources;
+    return &_resources;
 }
 
 void

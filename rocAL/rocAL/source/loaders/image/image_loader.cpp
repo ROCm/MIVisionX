@@ -26,13 +26,9 @@ THE SOFTWARE.
 #include "image_read_and_decode.h"
 #include "vx_ext_amd.h"
 
-#if ENABLE_HIP
-ImageLoader::ImageLoader(DeviceResourcesHip dev_resources):
-#else
-ImageLoader::ImageLoader(DeviceResources dev_resources):
-#endif
-_circ_buff(dev_resources),
-_swap_handle_time("Swap_handle_time", DBG_TIMING)
+ImageLoader::ImageLoader(void *dev_resources):
+      _circ_buff(dev_resources),
+      _swap_handle_time("Swap_handle_time", DBG_TIMING)
 {
     _output_image = nullptr;
     _mem_type = RocalMemType::HOST;

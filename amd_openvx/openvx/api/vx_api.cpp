@@ -2766,7 +2766,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     }
                 }
                 break;
-#if (ENABLE_OPENCL || ENABLE_HIP)
             case VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT:
                 if (size == sizeof(void *)) {
                     if (!kernel->finalized) {
@@ -2778,6 +2777,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     }
                 }
                 break;
+#if (ENABLE_OPENCL || ENABLE_HIP)                    
             case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK:
                 if (size == sizeof(void *)) {
                     if (!kernel->finalized) {

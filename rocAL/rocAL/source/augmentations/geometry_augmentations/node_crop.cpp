@@ -73,6 +73,7 @@ void CropNode::init(unsigned int crop_h, unsigned int crop_w, float x_drift_, fl
     _crop_param->set_y_drift_factor(core(y_drift));
 }
 
+// This init is used only for centre crop
 void CropNode::init(unsigned int crop_h, unsigned int crop_w)
 {
     _crop_param->crop_w = crop_w;

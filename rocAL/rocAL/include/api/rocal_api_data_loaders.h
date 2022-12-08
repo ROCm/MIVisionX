@@ -622,7 +622,12 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalVideoFileResize(RocalContext context
                                                         bool loop = false,
                                                         unsigned step = 0,
                                                         unsigned stride = 0,
-                                                        bool file_list_frame_num = true);
+                                                        bool file_list_frame_num = true,
+                                                        RocalResizeScalingMode scaling_mode = ROCAL_SCALING_MODE_DEFAULT,
+                                                        std::vector<unsigned> max_size = {},
+                                                        unsigned resize_shorter = 0,
+                                                        unsigned resize_longer = 0,
+                                                        RocalResizeInterpolationType interpolation_type = ROCAL_LINEAR_INTERPOLATION);
 
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode mp4 videos stored on the file systems. Resizes the decoded frames to the dest width and height. It accepts external sharding information to load a singe shard only.
 /// \param context Rocal context
@@ -656,7 +661,12 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalVideoFileResizeSingleShard(RocalCont
                                                         bool loop = false,
                                                         unsigned step = 0,
                                                         unsigned stride = 0,
-                                                        bool file_list_frame_num = true);
+                                                        bool file_list_frame_num = true,
+                                                        RocalResizeScalingMode scaling_mode = ROCAL_SCALING_MODE_DEFAULT,
+                                                        std::vector<unsigned> max_size = {},
+                                                        unsigned resize_shorter = 0,
+                                                        unsigned resize_longer = 0,
+                                                        RocalResizeInterpolationType interpolation_type = ROCAL_LINEAR_INTERPOLATION);
 
 /// Creates CIFAR10 raw data reader and loader. It allocates the resources and objects required to read raw data stored on the file systems.
 /// \param context Rocal context

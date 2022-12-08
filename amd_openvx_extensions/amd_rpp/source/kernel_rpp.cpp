@@ -1898,16 +1898,8 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
     return node;
 }
 
-#if ENABLE_OPENCL
-int getEnvironmentVariable(const char *name)
-{
-    const char *text = getenv(name);
-    if (text)
-    {
-        return atoi(text);
-    }
-    return -1;
-}
+// looks like following code is not used
+#if 0//ENABLE_OPENCL
 
 vx_status createGraphHandle(vx_node node, RPPCommonHandle **pHandle)
 {
@@ -1921,11 +1913,6 @@ vx_status createGraphHandle(vx_node node, RPPCommonHandle **pHandle)
     {
         handle = new RPPCommonHandle;
         memset(handle, 0, sizeof(*handle));
-        const char *searchEnvName = "NN_MIOPEN_SEARCH";
-        int isEnvSet = getEnvironmentVariable(searchEnvName);
-        if (isEnvSet > 0)
-            handle->exhaustiveSearch = true;
-
         handle->count = 1;
         STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &handle->cmdq, sizeof(handle->cmdq)));
     }
@@ -1938,7 +1925,6 @@ vx_status releaseGraphHandle(vx_node node, RPPCommonHandle *handle)
     handle->count--;
     if (handle->count == 0)
     {
-        //TBD: release miopen_handle
         delete handle;
         STATUS_ERROR_CHECK(vxSetModuleHandle(node, OPENVX_KHR_RPP, NULL));
     }

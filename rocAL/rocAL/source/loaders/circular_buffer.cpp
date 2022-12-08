@@ -22,28 +22,20 @@ THE SOFTWARE.
 
 #include "circular_buffer.h"
 #include "log.h"
-#if !ENABLE_HIP
-CircularBuffer::CircularBuffer(DeviceResources ocl):
-        _cl_cmdq(ocl.cmd_queue),
-        _cl_context(ocl.context),
-        _device_id(ocl.device_id),
-        _write_ptr(0),
-        _read_ptr(0),
-        _level(0)
-{
 
-}
-#else
-CircularBuffer::CircularBuffer(DeviceResourcesHip hipres):
-        _hip_stream(hipres.hip_stream),
-        _hip_device_id(hipres.device_id),
-        _hip_canMapHostMemory(hipres.dev_prop.canMapHostMemory),
-        _write_ptr(0),
-        _read_ptr(0),
-        _level(0)
+CircularBuffer::CircularBuffer(void* devres):
+          _write_ptr(0),
+          _read_ptr(0),
+          _level(0)
 {
-}
+#if ENABLE_OPENCL
+    DeviceResources *ocl = static_cast<DeviceResources *> (devres);
+    _cl_cmdq = ocl->cmd_queue, _cl_context = ocl->context, _device_id = ocl->device_id;
+#elif ENABLE_HIP
+    DeviceResourcesHip *hipres = static_cast<DeviceResourcesHip *> (devres);
+    _hip_stream = hipres->hip_stream, _hip_device_id = hipres->device_id, _hip_canMapHostMemory = hipres->dev_prop.canMapHostMemory;
 #endif
+}
 
 void CircularBuffer::reset()
 {
@@ -102,7 +94,7 @@ void CircularBuffer::sync()
 {
     if(!_initialized)
         return;
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
     cl_int err = CL_SUCCESS;
     if(_output_mem_type== RocalMemType::OCL)
     {
@@ -127,9 +119,10 @@ void CircularBuffer::sync()
             THROW("clEnqueueUnmapMemObject of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
 
     #endif
-    }
-#else
-    else if (_output_mem_type== RocalMemType::HIP){
+    } 
+    else {
+#elif ENABLE_HIP
+    if (_output_mem_type== RocalMemType::HIP){
         // copy memory to host only if needed
         if (!_hip_canMapHostMemory) {
             hipError_t err = hipMemcpy((void *)(_dev_buffer[_write_ptr]), _host_buffer_ptrs[_write_ptr], _output_mem_size, hipMemcpyHostToDevice);
@@ -138,12 +131,15 @@ void CircularBuffer::sync()
             }
         }
     }
+    else {
 #endif
-    else
     {
         // For the host processing no copy is needed, since data is already loaded in the host buffers
         // and handle will be swaped on it
     }
+#if ENABLE_HIP || ENABLE_OPENCL
+    }
+#endif
 }
 
 void CircularBuffer::push()
@@ -185,7 +181,7 @@ void CircularBuffer::init(RocalMemType output_mem_type, size_t output_mem_size, 
         THROW ("Error internal buffer size for the circular buffer should be greater than one")
 
     // Allocating buffers
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
     if(_output_mem_type== RocalMemType::OCL)
     {
         if(_cl_cmdq == nullptr || _device_id == nullptr || _cl_context == nullptr)
@@ -217,7 +213,13 @@ void CircularBuffer::init(RocalMemType output_mem_type, size_t output_mem_size, 
             clRetainMemObject((cl_mem)_dev_buffer[buffIdx]);
         }
     }
-#else
+    else {
+      for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++) {
+          // a minimum of extra MEM_ALIGNMENT is allocated
+          _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
+      }
+    }
+#elif ENABLE_HIP
     if(_output_mem_type== RocalMemType::HIP)
     {
         if(!_hip_stream  || _hip_device_id == -1 )
@@ -246,15 +248,18 @@ void CircularBuffer::init(RocalMemType output_mem_type, size_t output_mem_size, 
             }
         }
     }
-#endif
-    else
-    {
-        for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
-        {
-            // a minimum of extra MEM_ALIGNMENT is allocated
-            _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
-        }
+    else {
+      for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++) {
+          // a minimum of extra MEM_ALIGNMENT is allocated
+          _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
+      }
     }
+#else
+      for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++) {
+          // a minimum of extra MEM_ALIGNMENT is allocated
+          _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
+      }
+#endif
     _initialized = true;
 }
 
@@ -262,7 +267,7 @@ void CircularBuffer::release()
 {
     for(size_t buffIdx = 0; buffIdx < _buff_depth; buffIdx++)
     {
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
         if(_output_mem_type== RocalMemType::OCL)
         {
             if(clEnqueueUnmapMemObject(_cl_cmdq, (cl_mem)_dev_buffer[buffIdx], _host_buffer_ptrs[buffIdx], 0, NULL, NULL) != CL_SUCCESS)
@@ -270,7 +275,8 @@ void CircularBuffer::release()
             if(clReleaseMemObject((cl_mem)_dev_buffer[buffIdx]) != CL_SUCCESS)
                 ERR("Could not release ocl memory in the circular buffer")
         }
-#else
+        else {
+#elif ENABLE_HIP
         if (_output_mem_type == RocalMemType::HIP) {
             if (_host_buffer_ptrs[buffIdx]) {
                 hipError_t err = hipHostFree((void *)_host_buffer_ptrs[buffIdx]);
@@ -287,11 +293,14 @@ void CircularBuffer::release()
                 _dev_buffer[buffIdx] = nullptr;
             }
         }
-#endif
-        else
-        {
-            free(_host_buffer_ptrs[buffIdx]);
+        else {
+#else
+          free(_host_buffer_ptrs[buffIdx]);
+#endif        
+#if ENABLE_HIP || ENABLE_OPENCL
+          free(_host_buffer_ptrs[buffIdx]);
         }
+#endif
     }
 
     _dev_buffer.clear();
@@ -299,11 +308,11 @@ void CircularBuffer::release()
     _write_ptr = 0;
     _read_ptr = 0;
     _level = 0;
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
     _cl_cmdq = 0;
     _cl_context = 0;
     _device_id = 0;
-#else
+#elif ENABLE_HIP
     _hip_stream = nullptr;
     _hip_canMapHostMemory = 0;
     _hip_device_id = 0;

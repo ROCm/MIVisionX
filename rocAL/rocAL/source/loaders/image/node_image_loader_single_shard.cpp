@@ -23,11 +23,7 @@ THE SOFTWARE.
 #include "node_image_loader_single_shard.h"
 #include "exception.h"
 
-#if ENABLE_HIP
-ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, DeviceResourcesHip device_resources):
-#else
-ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, DeviceResources device_resources):
-#endif
+ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, void *device_resources):
         Node({}, {output})
 {
     _loader_module = std::make_shared<ImageLoader>(device_resources);

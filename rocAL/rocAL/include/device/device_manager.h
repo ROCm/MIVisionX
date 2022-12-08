@@ -21,7 +21,9 @@ THE SOFTWARE.
 */
 
 #pragma once
-#if !ENABLE_HIP
+
+#if ENABLE_OPENCL
+
 #include <map>
 #include <CL/cl.h>
 #include <vx_ext_amd.h>
@@ -69,7 +71,7 @@ public:
 
     cl_int initialize();
 
-    DeviceResources resources();
+    DeviceResources *resources();
 
     const CLProgram& operator[](const std::string& prog_name);
 

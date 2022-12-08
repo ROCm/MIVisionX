@@ -150,7 +150,13 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=1 -DRPP_BACKEND_HIP=1") # Currently used by rpp. To be removed.
     target_link_libraries(vx_rpp amd_rpp boost_filesystem boost_system hip::host)
 else()
-    message("-- ${Red}WARNING: OpenCL/HIP Not Found -- amd_rpp module excluded${ColourReset}")
+    message("-- ${Green}amd_rpp -- Building with CPU backend${ColourReset}")
+    set(ENABLE_OPENCL 0)
+    set(ENABLE_HIP 0)
+    add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP})
+    add_library(vx_rpp SHARED ${SOURCES})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" ) # Currently used by rpp. To be removed.
+    target_link_libraries(vx_rpp amd_rpp boost_filesystem boost_system )
 endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib

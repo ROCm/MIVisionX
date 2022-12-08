@@ -32,11 +32,7 @@ public:
     /// \param device_resources shard count from user
 
     /// internal_shard_count number of loader/decoders are created and each shard is loaded and decoded using separate and independent resources increasing the parallelism and performance.
-#if ENABLE_HIP
-    FusedJpegCropNode(Image *output, DeviceResourcesHip device_resources_hip);
-#else
-    FusedJpegCropNode(Image *output, DeviceResources device_resources);
-#endif
+    FusedJpegCropNode(Image *output, void *device_resources_hip);
     ~FusedJpegCropNode() override;
     FusedJpegCropNode() = delete;
     ///

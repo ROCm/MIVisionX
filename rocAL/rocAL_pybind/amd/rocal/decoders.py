@@ -232,8 +232,9 @@ def image_slice(*inputs, file_root='', path='', annotations_file='', shard_id=0,
 
     reader = Pipeline._current_pipeline._reader
     #Reader -> Randon BBox Crop -> ImageDecoderSlice
-    #TODO:To pass the crop co-ordinates from random_bbox_crop to image_slice in tensor branch integration, 
-    # for now calling partial decoder to match SSD training outer API's .
+    #TODO:To pass the crop co-ordinates from random_bbox_crop to image_slice 
+    #in tensor branch integration, 
+    #for now calling partial decoder to match SSD training outer API's .
     if(reader == 'COCOReader'):
 
         kwargs_pybind = {

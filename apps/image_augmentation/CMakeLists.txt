@@ -36,7 +36,12 @@ set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Changes for RPATH Removal from Binaries:
+# Since all public interface libraries are present in same folder 
+# RPATH/RUNPATH is not required
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+set(CMAKE_SKIP_INSTALL_RPATH TRUE)
 
 # Add Default libdir
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
@@ -46,7 +51,7 @@ find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
 # Application Includes & Libraries
-include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal)
 link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})
 
 add_executable(${PROJECT_NAME} image_augmentation.cpp)

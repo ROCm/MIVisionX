@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
 
 RUN apt-get update -y

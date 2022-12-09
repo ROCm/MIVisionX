@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include "commons.h"
 #include <vector>
 #include <condition_variable>
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
 #include <CL/cl.h>
 #endif
 #include <queue>
@@ -45,11 +45,7 @@ public:
     ///\param dev
     ///\param sub_buffer_size
     ///\param sub_buffer_count
-#if ENABLE_HIP
-    void initHip(RocalMemType mem_type, DeviceResourcesHip dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
-#else
-    void init(RocalMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
-#endif
+    void init(RocalMemType mem_type, void *dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
     void initBoxEncoderMetaData(RocalMemType mem_type, size_t encoded_bbox_size, size_t encoded_labels_size);
     void release_gpu_res();
     std::vector<void*> get_read_buffers() ;
@@ -88,11 +84,7 @@ private:
     std::vector<void *> _dev_labels_buffer;
     bool _dont_block = false;
     RocalMemType _mem_type;
-#if ENABLE_HIP
-    DeviceResourcesHip _devhip;
-#else
-    DeviceResources _dev;
-#endif
+    void *_dev;
     size_t _write_ptr;
     size_t _read_ptr;
     size_t _level;

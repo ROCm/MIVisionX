@@ -26,6 +26,11 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
                  cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold= 1000000, output_type = types.RGB,
                  preserve=False, seed=-1, split_stages=False, use_chunk_allocator= False, use_fast_idct = False, device = None):
     reader = Pipeline._current_pipeline._reader
+    if (device == "gpu"):
+      decoder_type = types.DECODER_HW_JEPG
+    else:
+      decoder_type = types.DECODER_TJPEG
+
     if( reader == 'COCOReader'):
         kwargs_pybind = {
             "source_path": file_root,
@@ -96,7 +101,7 @@ def image(*inputs, user_feature_key_map = None, path='', file_root ='', annotati
             "decode_size_policy": types.USER_GIVEN_SIZE,
             "max_width": 2000,
             "max_height":2000,
-            "dec_type":types.DECODER_TJPEG}
+            "dec_type":decoder_type}
         decoded_image = b.ImageDecoderShard(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
 
     return (decoded_image)

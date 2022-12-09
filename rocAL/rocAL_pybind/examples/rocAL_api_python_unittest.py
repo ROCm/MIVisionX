@@ -70,7 +70,8 @@ def main():
     # Set Params
     output_set = 0
     rocal_device = 'cpu' if rocal_cpu else 'gpu'
-    decoder_device = 'cpu' if rocal_cpu else 'gpu'
+    #hardcoding decoder_device to cpu until VCN can decode all JPEGs
+    decoder_device = 'cpu'
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         jpegs, _ = fn.readers.file(file_root=data_path, shard_id=local_rank, num_shards=world_size, random_shuffle=True)

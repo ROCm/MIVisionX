@@ -127,20 +127,20 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
     string str_key;
 
     // Creating an LMDB environment handle
-    E(mdb_env_create(&env));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_create(&env));
     // Setting the size of the memory map to use for this environment.
     // The size of the memory map is also the maximum size of the database.
-    E(mdb_env_set_mapsize(env, file_byte_size));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_set_mapsize(env, file_byte_size));
     // Opening an environment handle.
-    E(mdb_env_open(env, file_name.c_str(), 0, 0664));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_open(env, file_name.c_str(), 0, 0664));
     // Creating a transaction for use with the environment.
-    E(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
+    CHECK_LMDB_RETURN_STATUS(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
     // Opening a database in the environment.
-    E(mdb_dbi_open(txn, NULL, 0, &dbi));
+    CHECK_LMDB_RETURN_STATUS(mdb_dbi_open(txn, NULL, 0, &dbi));
 
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
-    E(mdb_cursor_open(txn, dbi, &cursor));
+    CHECK_LMDB_RETURN_STATUS(mdb_cursor_open(txn, dbi, &cursor));
 
     // Retrieve by cursor. It retrieves key/data pairs from the database
     while ((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT)) == 0)

@@ -45,9 +45,9 @@ hipError_t DeviceManagerHip::initialize() {
     return hipSuccess;
 }
 
-DeviceResourcesHip DeviceManagerHip::resources()
+DeviceResourcesHip *DeviceManagerHip::resources()
 {
-    return _resources;
+    return &_resources;
 }
 
 void DeviceManagerHip::init_hip(vx_context context)

@@ -208,19 +208,19 @@ void CaffeLMDBRecordReader::read_image_names()
 {
     int rc;
     // Creating an LMDB environment handle
-    E(mdb_env_create(&_mdb_env));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_create(&_mdb_env));
     // Setting the size of the memory map to use for this environment.
     // The size of the memory map is also the maximum size of the database.
-    E(mdb_env_set_mapsize(_mdb_env, _file_byte_size));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_set_mapsize(_mdb_env, _file_byte_size));
     // Opening an environment handle.
-    E(mdb_env_open(_mdb_env, _path.c_str(), MDB_RDONLY, 0664));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_open(_mdb_env, _path.c_str(), MDB_RDONLY, 0664));
     // Creating a transaction for use with the environment
-    E(mdb_txn_begin(_mdb_env, NULL, MDB_RDONLY, &_mdb_txn));
+    CHECK_LMDB_RETURN_STATUS(mdb_txn_begin(_mdb_env, NULL, MDB_RDONLY, &_mdb_txn));
     // Opening a database in the environment.
-    E(mdb_open(_mdb_txn, NULL, 0, &_mdb_dbi));
+    CHECK_LMDB_RETURN_STATUS(mdb_open(_mdb_txn, NULL, 0, &_mdb_dbi));
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
-    E(mdb_cursor_open(_mdb_txn, _mdb_dbi, &_mdb_cursor));
+    CHECK_LMDB_RETURN_STATUS(mdb_cursor_open(_mdb_txn, _mdb_dbi, &_mdb_cursor));
 
     // Retrieve by cursor. It retrieves key/data pairs from the database
     while ((rc = mdb_cursor_get(_mdb_cursor, &_mdb_key, &_mdb_value, MDB_NEXT)) == 0)
@@ -277,16 +277,16 @@ void CaffeLMDBRecordReader::replicate_last_batch_to_pad_partial_shard()
 void CaffeLMDBRecordReader::open_env_for_read_image()
 {
     // Creating an LMDB environment handle
-    E(mdb_env_create(&_read_mdb_env));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_create(&_read_mdb_env));
     // Setting the size of the memory map to use for this environment.
     // The size of the memory map is also the maximum size of the database.
-    E(mdb_env_set_mapsize(_read_mdb_env, _file_byte_size));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_set_mapsize(_read_mdb_env, _file_byte_size));
     // Opening an environment handle.
-    E(mdb_env_open(_read_mdb_env, _path.c_str(), MDB_RDONLY, 0664));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_open(_read_mdb_env, _path.c_str(), MDB_RDONLY, 0664));
     // Creating a transaction for use with the environment
-    E(mdb_txn_begin(_read_mdb_env, NULL, MDB_RDONLY, &_read_mdb_txn));
+    CHECK_LMDB_RETURN_STATUS(mdb_txn_begin(_read_mdb_env, NULL, MDB_RDONLY, &_read_mdb_txn));
     // Opening a database in the environment.
-    E(mdb_open(_read_mdb_txn, NULL, 0, &_read_mdb_dbi));
+    CHECK_LMDB_RETURN_STATUS(mdb_open(_read_mdb_txn, NULL, 0, &_read_mdb_dbi));
     _open_env = 1;
 }
 
@@ -299,7 +299,7 @@ void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_nam
 
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
-    E(mdb_cursor_open(_read_mdb_txn, _read_mdb_dbi, &_read_mdb_cursor));
+    CHECK_LMDB_RETURN_STATUS(mdb_cursor_open(_read_mdb_txn, _read_mdb_dbi, &_read_mdb_cursor));
 
     string checkedStr = string((char *)file_name.c_str());
     string newStr = checkedStr.substr(0, checkedStr.find(".")) + ".JPEG";

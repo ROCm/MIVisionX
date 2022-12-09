@@ -23,11 +23,7 @@ THE SOFTWARE.
 #include "node_fused_jpeg_crop.h"
 #include "exception.h"
 
-#if ENABLE_HIP
-FusedJpegCropNode::FusedJpegCropNode(Image *output, DeviceResourcesHip device_resources):
-#else
-FusedJpegCropNode::FusedJpegCropNode(Image *output, DeviceResources device_resources):
-#endif
+FusedJpegCropNode::FusedJpegCropNode(Image *output, void *device_resources):
         Node({}, {output})
 {
     _loader_module = std::make_shared<ImageLoaderSharded>(device_resources);

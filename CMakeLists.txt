@@ -52,6 +52,7 @@ option(ROCAL            "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
+option(BUILD_DEV        "Build for development only"               ON)
 option(AMD_FP16_SUPPORT "Build MIVisionX with float16 Support"    OFF)
 
 if(WIN32)
@@ -126,6 +127,7 @@ message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM Modules (default:ON)]$
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
+message("-- ${Cyan}     -D BUILD_DEV=${BUILD_DEV} [MIVisionX runtime or developement build(default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D AMD_FP16_SUPPORT=${AMD_FP16_SUPPORT} [Turn ON/OFF OpenVX FP16 Support (default:OFF)]${ColourReset}")
 
 if(AMD_FP16_SUPPORT)

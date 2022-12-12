@@ -248,18 +248,20 @@ if(${BUILD_ROCAL})
 
     # install MIVisionX libs -- {ROCM_PATH)/lib
     install(TARGETS rocal DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-    install(FILES
-        include/api/rocal_api.h
-        include/api/rocal_api_info.h
-        include/api/rocal_api_augmentation.h
-        include/api/rocal_api_data_loaders.h
-        include/api/rocal_api_types.h
-        include/api/rocal_api_data_transfer.h
-        include/api/rocal_api_parameters.h
-        include/api/rocal_api_meta_data.h
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal
-    )
+    if(BUILD_DEV)
+        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+        install(FILES
+                include/api/rocal_api.h
+                include/api/rocal_api_info.h
+                include/api/rocal_api_augmentation.h
+                include/api/rocal_api_data_loaders.h
+                include/api/rocal_api_types.h
+                include/api/rocal_api_data_transfer.h
+                include/api/rocal_api_parameters.h
+                include/api/rocal_api_meta_data.h
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal
+        )
+    endif(BUILD_DEV)
 else()
     message("-- ${Red}WARNING: rocAL module excluded ${ColourReset}")
 endif()

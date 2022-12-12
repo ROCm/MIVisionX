@@ -39,12 +39,6 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-# Changes for RPATH Removal from Binaries:
-# Since all public interface libraries are present in same folder 
-# RPATH/RUNPATH is not required
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
-set(CMAKE_SKIP_INSTALL_RPATH TRUE)
-
 # MIVisionX Default Options
 option(ENHANCED_MESSAGE "MIVisionX Enhanced Message Option"        ON)
 option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
@@ -82,6 +76,10 @@ if(APPLE)
   set(GPU_SUPPORT OFF)
   set(BACKEND "CPU")
   message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
+else()
+  # Changes for RPATH Removal from Binaries:
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+  set(CMAKE_SKIP_INSTALL_RPATH TRUE)
 endif()
 
 if(NOT DEFINED BACKEND)

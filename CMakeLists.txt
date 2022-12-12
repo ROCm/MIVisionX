@@ -144,7 +144,7 @@ else()
 endif()
 
 # install MIVisionX docs -- {ROCM_PATH}/${CMAKE_INSTALL_DATADIR}/doc/mivisionx/
-install(DIRECTORY docs DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
+install(FILES docs/README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})

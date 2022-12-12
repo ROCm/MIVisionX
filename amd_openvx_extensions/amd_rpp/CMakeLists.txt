@@ -38,8 +38,6 @@ elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
 endif()
 
 include_directories(../../amd_openvx/openvx/include/ include)
-# OpenVX
-set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx)
 # AMD RPP
 include_directories(${AMDRPP_INCLUDE_DIRS})
 set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})
@@ -134,7 +132,7 @@ list(APPEND SOURCES
     )
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
-    message("-- ${Green}amd_rpp -- Building with OpenCL${ColourReset}")
+    message("-- ${Green}vx_rpp -- Building with OpenCL${ColourReset}")
     set(ENABLE_OPENCL 1)
     set(ENABLE_HIP 0)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_OPENCL=1)
@@ -143,7 +141,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
     add_library(vx_rpp SHARED ${SOURCES})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=1 -DRPP_BACKEND_OPENCL=1") # Currently used by rpp. To be removed.
 elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-    message("-- ${Green}amd_rpp -- Building with HIP${ColourReset}")
+    message("-- ${Green}vx_rpp -- Building with HIP${ColourReset}")
     set(ENABLE_OPENCL 0)
     set(ENABLE_HIP 1)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_HIP=1 -D__HIP_PLATFORM_AMD__)
@@ -156,15 +154,26 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     # TBD -- CHECK to FIX
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=1 -DRPP_BACKEND_HIP=1") # Currently used by rpp. To be removed.
 else()
-    message("-- ${Green}amd_rpp -- Building with CPU backend${ColourReset}")
+    message("-- ${Green}vx_rpp -- Building with CPU backend${ColourReset}")
     set(ENABLE_OPENCL 0)
     set(ENABLE_HIP 0)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP})
     add_library(vx_rpp SHARED ${SOURCES})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" ) # Currently used by rpp. To be removed.
 endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenVX)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+else()
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
+endif()
+
 target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST})
 message("-- ${White}vx_rpp -- Link Libraries:${LINK_LIBRARY_LIST}${ColourReset}")
+message("-- ${White}vx_rpp -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_rpp DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -172,14 +181,3 @@ if(BUILD_DEV)
     # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
     install(FILES include/vx_ext_rpp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
 endif(BUILD_DEV)
-
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    target_link_libraries(OpenVX)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-else()
-    target_link_libraries(openvx)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
-endif()
-
-message("-- ${White}vx_rpp -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

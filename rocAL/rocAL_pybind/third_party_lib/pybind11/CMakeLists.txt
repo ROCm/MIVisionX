@@ -134,12 +134,13 @@ if (PYBIND11_INSTALL)
                                    VERSION ${${PROJECT_NAME}_VERSION}
                                    COMPATIBILITY AnyNewerVersion)
   set(CMAKE_SIZEOF_VOID_P ${_PYBIND11_CMAKE_SIZEOF_VOID_P})
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+  if(BUILD_DEV)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
                 ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
                 tools/FindPythonLibsNew.cmake
                 tools/pybind11Tools.cmake
           DESTINATION ${PYBIND11_CMAKECONFIG_INSTALL_DIR})
-
+  endif(BUILD_DEV)
   if(NOT (CMAKE_VERSION VERSION_LESS 3.0))
     if(NOT PYBIND11_EXPORT_NAME)
       set(PYBIND11_EXPORT_NAME "${PROJECT_NAME}Targets")

@@ -35,3 +35,9 @@ install (TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
 target_link_libraries(mv_compile ${CMAKE_DL_LIBS})
 
+if(BUILD_DEV)
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+    install (FILES mvdeploy_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+    install (FILES mv_extras_postproc.h DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
+    install (FILES mv_extras_postproc.cpp DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
+endif(BUILD_DEV)

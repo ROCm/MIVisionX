@@ -116,18 +116,20 @@ endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_nn DESTINATION ${CMAKE_INSTALL_LIBDIR})
-# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-# install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
-install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
-install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
-# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../samples/inference/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+if(BUILD_DEV)
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+    install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+    # install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
+    install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
+    install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
+    # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+    install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../samples/inference/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+    install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+endif(BUILD_DEV)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")

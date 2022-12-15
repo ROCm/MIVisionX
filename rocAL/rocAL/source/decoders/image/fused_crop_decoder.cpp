@@ -27,21 +27,9 @@ THE SOFTWARE.
 
 FusedCropTJDecoder::FusedCropTJDecoder(){
     m_jpegDecompressor = tjInitDecompress();
-
-#if 0
-    int num_avail_scalings = 0;
-    auto scaling_factors = tjGetScalingFactors	(&num_avail_scalings);	
-    for(int i = 0; i < num_avail_scalings; i++) {
-        if(scaling_factors[i].num < scaling_factors[i].denom) {
-
-            printf("%d / %d  - ",scaling_factors[i].num, scaling_factors[i].denom );
-        }
-    }
-#endif
 };
 
-Decoder::Status FusedCropTJDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) 
-{
+Decoder::Status FusedCropTJDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) {
     //TODO : Use the most recent TurboJpeg API tjDecompressHeader3 which returns the color components
     if(tjDecompressHeader2(m_jpegDecompressor,
                             input_buffer, 
@@ -60,8 +48,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                                   size_t max_decoded_width, size_t max_decoded_height,
                                   size_t original_image_width, size_t original_image_height,
                                   size_t &actual_decoded_width, size_t &actual_decoded_height,
-                                  Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original_size)
-{
+                                  Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original_size) {
     int tjpf = TJPF_RGB;
     int planes = 1;
     switch (desired_decoded_color_format) {
@@ -83,64 +70,17 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     // You need get the output of random bbox crop 
     // check the vector size for bounding box. If its more than zero go for random bbox crop
     // else go to random crop
-    unsigned int crop_width, crop_height, x1, y1, x1_diff, crop_width_diff;
-    if(_bbox_coord.size() != 0)
-    {
+    unsigned int x1_diff, crop_width_diff;
+    if (_bbox_coord.size() != 0) {
         // Random bbox crop returns normalized crop cordinates
-        // hence bringing it back to absolute cordinates 
-        x1 = std::lround(_bbox_coord[0] * original_image_width);
-        y1 = std::lround(_bbox_coord[1] * original_image_height);
-        crop_width = std::lround((_bbox_coord[2]) * original_image_width);
-        crop_height = std::lround((_bbox_coord[3]) * original_image_height);
+        // hence bringing it back to absolute cordinates
+        _crop_window.x = std::lround(_bbox_coord[0] * original_image_width);
+        _crop_window.y = std::lround(_bbox_coord[1] * original_image_height);
+        _crop_window.W = std::lround((_bbox_coord[2]) * original_image_width);
+        _crop_window.H = std::lround((_bbox_coord[3]) * original_image_height);
     }
-    else
-    {
-        std::vector<float> crop_mul_param =  decoder_config.get_crop_param();
-        auto is_valid_crop = [](uint h, uint w, uint height, uint width)
-        {
-            return (h < height && w < width); 
-        };
-        bool bvalid_crop = false;
-        int num_of_attempts = 5;
-        for(int i = 0; i < num_of_attempts; i++)
-        {
-            double target_area  = crop_mul_param[0] * original_image_width * original_image_height;
-            crop_width  = static_cast<size_t>(std::sqrt(target_area * crop_mul_param[1]));
-            crop_height = static_cast<size_t>(std::sqrt(target_area * (1 / crop_mul_param[1])));  
-            if(is_valid_crop(crop_height, crop_width, original_image_height, original_image_width)) 
-            {
-                x1 = static_cast<size_t>(crop_mul_param[2] * (original_image_width  - crop_width));
-                y1 = static_cast<size_t>(crop_mul_param[3] * (original_image_height - crop_height));
-                bvalid_crop = true;
-                break ;
-            }
-        }
-        constexpr static float ASPECT_RATIO_RANGE[2] = {0.75, 1.33};
-        // Fallback on Central Crop
-        if(!bvalid_crop){
-            float in_ratio;
-            in_ratio = static_cast<float>(original_image_width) / original_image_height;
-            if(in_ratio < ASPECT_RATIO_RANGE[0])
-            {
-                crop_width =  original_image_width;
-                crop_height = crop_width / ASPECT_RATIO_RANGE[0];
-            }
-            else if(in_ratio > ASPECT_RATIO_RANGE[1])
-            {
-                crop_height = original_image_height;
-                crop_width  = crop_height  * ASPECT_RATIO_RANGE[1];
-            } 
-            else
-            {
-                crop_height = original_image_height;
-                crop_width  = original_image_width;
-            }
-            x1 =  (original_image_width - crop_width) / 2;
-            y1 =  (original_image_height - crop_height) / 2;
-        }
-    }
-    
-   // std::cout<<"Fused Crop Decoder <x,y, w, h>: " << x1 << " " << y1 << " " << crop_width << " " << crop_height << std::endl;
+    _crop_window.W = std::min(_crop_window.W, (unsigned int)max_decoded_width);
+    _crop_window.H = std::min(_crop_window.H, (unsigned int)max_decoded_height);
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
     if( tjDecompress2_partial(m_jpegDecompressor,
                       input_buffer,
@@ -151,32 +91,27 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                       max_decoded_height,
                       tjpf,
                       TJFLAG_FASTDCT, &x1_diff, &crop_width_diff,
-		                  x1, y1, crop_width, crop_height) != 0)
-
-    {
+                      _crop_window.x, _crop_window.y, _crop_window.W, _crop_window.H) != 0) {
         WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
         return Status::CONTENT_DECODE_FAILED;
     }
 
-    if (x1 != x1_diff) {
-        //std::cout << "x_off changed by tjpeg decoder " << x1 << " " << x1_diff << std::endl;
+    // x1-diff should be set to x offset in tensor pipeline and removed.
+    if (_crop_window.x != x1_diff) {
         unsigned char *src_ptr_temp, *dst_ptr_temp;
         unsigned int elements_in_row = max_decoded_width * planes;
-        unsigned int elements_in_crop_row = crop_width * planes;
-        //unsigned int remainingElements =  elements_in_row - elements_in_crop_row;
-        unsigned int xoffs = (x1-x1_diff) * planes;   // in case x1 gets adjusted by tjpeg decoder
-        src_ptr_temp = output_buffer + xoffs;
+        unsigned int elements_in_crop_row = _crop_window.W * planes;
+        unsigned int xoffs = (_crop_window.x - x1_diff) * planes;   // in case _crop_window.x gets adjusted by tjpeg decoder
+        src_ptr_temp = output_buffer;
         dst_ptr_temp = output_buffer;
-        for (unsigned int i = 0; i < crop_height; i++)
-        {
+        for (unsigned int i = 0; i < _crop_window.H; i++) {
             memcpy(dst_ptr_temp, src_ptr_temp + xoffs, elements_in_crop_row * sizeof(unsigned char));
-            //memset(dst_ptr_temp + elements_in_crop_row, 0, remainingElements * sizeof(unsigned char));
             src_ptr_temp +=  elements_in_row;
             dst_ptr_temp +=  elements_in_row;
         }
     }
-    actual_decoded_width = crop_width;
-    actual_decoded_height = crop_height;
+    actual_decoded_width = _crop_window.W;
+    actual_decoded_height = _crop_window.H;
 
     return Status::OK;
 }

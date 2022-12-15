@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "reader_factory.h"
 #include "timing_debug.h"
 #include "loader_module.h"
+#include "parameter_random_crop_decoder.h"
 
 /**
  * Compute the scaled value of <tt>dimension</tt> using the given scaling
@@ -95,5 +96,6 @@ private:
     std::vector<std::vector <float>> _bbox_coords, _crop_coords_batch;
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
     pCropCord _CropCord;
+    RocalRandomCropDecParam *_random_crop_dec_param = nullptr;
 };
 

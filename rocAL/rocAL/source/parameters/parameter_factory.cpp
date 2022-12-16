@@ -72,10 +72,8 @@ bool validate_uniform_rand_param(pParam  rand_obj)
 
 ParameterFactory::ParameterFactory()
 {
-    std::random_device rd;
-    _seed = rd();
+    generate_seed();
 }
-
 ParameterFactory* ParameterFactory::instance() {
 
     if(_instance == nullptr)// For performance reasons
@@ -114,6 +112,13 @@ unsigned
 ParameterFactory::get_seed()
 {
     return _seed;
+}
+
+void
+ParameterFactory::generate_seed()
+{
+    std::random_device rd;
+    _seed = rd();
 }
 
 void

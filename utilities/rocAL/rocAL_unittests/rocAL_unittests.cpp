@@ -102,7 +102,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     unsigned int inputBatchSize = 2;
     int decode_max_width = width;
     int decode_max_height = height;
-    int pipeline_type = 1;
+    int pipeline_type;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , " << (rgb ? " Color " : " Grayscale ") << std::endl;
 
@@ -158,13 +158,13 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         {
             std::cout << ">>>>>>> Running COCO READER" << std::endl;
             pipeline_type = 2;
-            // setting the default json path to ROCAL_DATA_PATH coco sample train annotation
-            std::string json_path = rocal_data_path + "/rocal_data/coco/coco_10_img/annotations/instances_train2017.json";
             if (strcmp(rocal_data_path.c_str(), "") == 0)
             {
                 std::cout << "\n ROCAL_DATA_PATH env variable has not been set. ";
                 exit(0);
             }
+            // setting the default json path to ROCAL_DATA_PATH coco sample train annotation
+            std::string json_path = rocal_data_path + "/rocal_data/coco/coco_10_img/annotations/instances_train2017.json";
             rocalCreateCOCOReader(handle, json_path.c_str(), true);
             if (decode_max_height <= 0 || decode_max_width <= 0)
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false);
@@ -176,13 +176,13 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         {
             std::cout << ">>>>>>> Running COCO READER PARTIAL" << std::endl;
             pipeline_type = 2;
-            // setting the default json path to ROCAL_DATA_PATH coco sample train annotation
-            std::string json_path = rocal_data_path + "/rocal_data/coco/coco_10_img/annotations/instances_train2017.json";
             if (strcmp(rocal_data_path.c_str(), "") == 0)
             {
                 std::cout << "\n ROCAL_DATA_PATH env variable has not been set. ";
                 exit(0);
             }
+            // setting the default json path to ROCAL_DATA_PATH coco sample train annotation
+            std::string json_path = rocal_data_path + "/rocal_data/coco/coco_10_img/annotations/instances_train2017.json";
             rocalCreateCOCOReader(handle, json_path.c_str(), true);
 #if defined RANDOMBBOXCROP
             rocalRandomBBoxCrop(handle, all_boxes_overlap, no_crop);
@@ -255,13 +255,13 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         {
             std::cout << ">>>>>>> Running COCO KEYPOINTS READER" << std::endl;
             pipeline_type = 3;
-            // setting the default json path to ROCAL_DATA_PATH coco sample train annotation
-            std::string json_path = rocal_data_path + "/rocal_data/coco/coco_10_img/annotations/instances_train2017.json";
             if (strcmp(rocal_data_path.c_str(), "") == 0)
             {
                 std::cout << "\n ROCAL_DATA_PATH env variable has not been set. ";
                 exit(0);
             }
+            // setting the default json path to ROCAL_DATA_PATH coco sample train annotation
+            std::string json_path = rocal_data_path + "/rocal_data/coco/coco_10_img/annotations/instances_train2017.json";
             float sigma = 3.0;
             rocalCreateCOCOReaderKeyPoints(handle, json_path.c_str(), true, sigma, (unsigned)width, (unsigned)height);
             if (decode_max_height <= 0 || decode_max_width <= 0)

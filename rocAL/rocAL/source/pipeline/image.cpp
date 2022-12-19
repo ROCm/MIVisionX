@@ -81,6 +81,16 @@ const std::vector<uint32_t>& ImageInfo::get_roi_height_vec() const
     return *_roi_height;
 }
 
+const std::vector<uint32_t>& ImageInfo::get_orig_roi_width_vec() const
+{
+    return *_orig_roi_width;
+}
+
+const std::vector<uint32_t>& ImageInfo::get_orig_roi_height_vec() const
+{
+    return *_orig_roi_height;
+}
+
 
 unsigned ImageInfo::get_roi_width(int image_batch_idx) const
 {
@@ -104,6 +114,8 @@ ImageInfo::reallocate_image_roi_buffers()
 {
     _roi_height = std::make_shared<std::vector<uint32_t>>(_batch_size);
     _roi_width = std::make_shared<std::vector<uint32_t>>(_batch_size);
+    _orig_roi_height = std::make_shared<std::vector<uint32_t>>(_batch_size);
+    _orig_roi_width = std::make_shared<std::vector<uint32_t>>(_batch_size);
     for(unsigned i = 0; i < _batch_size; i++)
     {
         _roi_height->at(i) = height_single();
@@ -174,6 +186,23 @@ void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vect
 
     }
 }
+
+void Image::update_image_orig_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height)
+{
+    if(width.size() != height.size())
+        THROW("Batch size of image height and width info does not match")
+
+    if(width.size() != info().batch_size())
+        THROW("The batch size of actual image height and width different from image batch size "+ TOSTR(width.size())+ " != " +  TOSTR(info().batch_size()))
+    if(! _info._orig_roi_width || !_info._orig_roi_height)
+        THROW("ROI width or ROI height vector not created")
+    for(unsigned i = 0; i < info().batch_size(); i++)
+    {
+        _info._orig_roi_width->at(i) = width[i];
+        _info._orig_roi_height->at(i)= height[i];
+    }
+}
+
 
 Image::~Image()
 {

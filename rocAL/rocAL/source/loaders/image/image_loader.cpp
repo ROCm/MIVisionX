@@ -288,7 +288,7 @@ ImageLoader::update_output_image()
     }
     _output_names = _output_decoded_img_info._image_names;
     _output_image->update_image_roi(_output_decoded_img_info._roi_width, _output_decoded_img_info._roi_height);
-
+    _output_image->update_image_orig_roi(_output_decoded_img_info._original_width, _output_decoded_img_info._original_height);
     _circ_buff.pop();
     if (!_loop)
         _remaining_image_count -= _batch_size;

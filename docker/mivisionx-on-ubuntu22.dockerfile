@@ -11,7 +11,7 @@ RUN apt-get update -y
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
 
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration &&  \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration libstdc++-12-dev &&  \
         sudo apt-get -y clean && dpkg --add-architecture i386 && \
         wget ${ROCM_INSTALLER_REPO} && \
         sudo apt-get install -y ./${ROCM_INSTALLER_PACKAGE} && \
@@ -51,7 +51,7 @@ RUN apt-get -y install sqlite3 libsqlite3-dev libtool build-essential && \
     sudo ./b2 install threading=multi link=static --with-system --with-filesystem
 RUN git clone -b v3.21.9 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
-RUN apt-get -y install libstdc++-12-dev && git clone -b 0.98  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
+RUN git clone -b 0.98  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd
 
 WORKDIR /workspace

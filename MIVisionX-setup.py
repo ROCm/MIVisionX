@@ -321,25 +321,6 @@ else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y miopen-hip migraphx')
 
-        # Install Packages for NN Apps - Apps Requirement to be installed by Developer
-        # os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')
-        # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check+' install inxi aha build-essential')
-        # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
-        # App Requirement - Cloud Inference Client
-        # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check+' install qt5-default qtcreator')
-        # Install Packages for Apps - App Dependencies to be installed by developer
-        # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check+' install python-pip')
-        # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' yes | pip install protobuf')
-        # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' yes | pip install pytz')
-        # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' yes | pip install numpy')
-
     # Install OpenCV
     os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')
     # Install pre-reqs
@@ -398,7 +379,6 @@ else:
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
                       linuxCMake+' -DBACKEND='+backend+' ../; make -j4; sudo make install)')
-
         # Turn off for CentOS - TBD: TURN ON when RPP is supported on CentOS
         # else:
             # Nasm

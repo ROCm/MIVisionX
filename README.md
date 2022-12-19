@@ -12,10 +12,10 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
-- [AMD OpenVX&trade;](#amd-openvx)
-- [AMD OpenVX&trade; Extensions](#amd-openvx-extensions)
+- [AMD OpenVX™](#amd-openvx)
+- [AMD OpenVX™ Extensions](#amd-openvx-extensions)
 - [Applications](#applications)
-- [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
+- [Neural Net Model Compiler \& Optimizer](#neural-net-model-compiler--optimizer)
 - [rocAL](#rocal)
 - [Toolkit](#toolkit)
 - [Utilities](#utilities)
@@ -27,7 +27,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
     - [Linux](#linux)
       - [Prerequisites setup script for Linux - `MIVisionX-setup.py`](#prerequisites-setup-script-for-linux---mivisionx-setuppy)
         - [Prerequisites for running the script](#prerequisites-for-running-the-script)
-- [Build & Install MIVisionX](#build--install-mivisionx)
+- [Build \& Install MIVisionX](#build--install-mivisionx)
   - [Windows](#windows-1)
     - [Using .msi packages](#using-msi-packages)
     - [Using `Visual Studio`](#using-visual-studio)
@@ -434,10 +434,10 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
   + SLES - `15-SP2`
-* ROCm: rocm-core - `5.3.0.50300-63`
-* miopen-hip - `2.18.0.50300-63`
+* ROCm: rocm-core - `5.4.0.50400-72`
+* miopen-hip - `2.19.0.50400-72`
 * miopen-opencl - `2.18.0.50300-63`
-* migraphx - `2.3.0.50300-63`
+* migraphx - `2.4.0.50400-72`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * RPP - [0.98](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.98)

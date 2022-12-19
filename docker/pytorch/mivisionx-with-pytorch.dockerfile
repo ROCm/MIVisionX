@@ -1,7 +1,7 @@
 ARG PYTORCH_VERSION=latest
 FROM rocm/pytorch:${PYTORCH_VERSION}
 
-ENV MIVISIONX_DEPS_ROOT=/opt/mivisionx-deps
+ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
 
 RUN apt-get update -y
@@ -9,11 +9,6 @@ RUN apt-get update -y
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration 
-        #&&  \
-        #wget https://repo.radeon.com/amdgpu-install/22.20/ubuntu/focal/amdgpu-install_22.20.50200-1_all.deb && \
-        #sudo apt-get install -y ./amdgpu-install_22.20.50200-1_all.deb && \
-        #sudo apt-get update -y && \
-        #sudo amdgpu-install -y --usecase=graphics,rocm
 # install OpenCV & FFMPEG - Level 3
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \
         libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip && \
@@ -46,9 +41,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev
         git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 
-WORKDIR /workspace
+ENV MIVISIONX_WORKSPACE=/workspace
+WORKDIR $MIVISIONX_WORKSPACE
 
 # Clone MIVisionX 
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
-        #mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install
+RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \
+        mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install
 

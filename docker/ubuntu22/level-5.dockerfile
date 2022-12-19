@@ -54,7 +54,8 @@ RUN git clone -b v3.21.9 https://github.com/protocolbuffers/protobuf.git && cd p
 RUN git clone -b 0.98  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd
 
-WORKDIR /workspace
+ENV MIVISIONX_WORKSPACE=/workspace
+WORKDIR $MIVISIONX_WORKSPACE
 
 # Clone MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \

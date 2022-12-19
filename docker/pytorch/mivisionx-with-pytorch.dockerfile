@@ -1,4 +1,3 @@
-
 ARG PYTORCH_VERSION=latest
 FROM rocm/pytorch:${PYTORCH_VERSION}
 

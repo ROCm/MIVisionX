@@ -1,6 +1,5 @@
 FROM ubuntu:20.04
 
-
 ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.4.1/ubuntu/focal/amdgpu-install_5.4.50401-1_all.deb 
 ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.4.50401-1_all.deb
 
@@ -49,7 +48,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev
         git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 
-WORKDIR /workspace
+ENV MIVISIONX_WORKSPACE=/workspace
+WORKDIR $MIVISIONX_WORKSPACE
 
 # Clone MIVisionX 
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \

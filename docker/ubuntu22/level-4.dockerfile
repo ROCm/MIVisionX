@@ -34,7 +34,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
 # install MIVisionX neural net dependency - Level 4
 RUN apt-get -y install rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx
 
-WORKDIR /workspace
+ENV MIVISIONX_WORKSPACE=/workspace
+WORKDIR $MIVISIONX_WORKSPACE
 
 # Clone MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \

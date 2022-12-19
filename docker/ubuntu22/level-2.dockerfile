@@ -18,7 +18,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         sudo apt-get update -y && \
         sudo amdgpu-install -y --usecase=graphics,rocm
 
-WORKDIR /workspace
+ENV MIVISIONX_WORKSPACE=/workspace
+WORKDIR $MIVISIONX_WORKSPACE
 
 # Clone MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \

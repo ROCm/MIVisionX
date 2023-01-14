@@ -182,7 +182,7 @@ For the convenience of the developer, we here provide the setup script which wil
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default:4.6.0)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.4)]
-                            --rpp       [RPP Version - optional (default:0.98)]
+                            --rpp       [RPP Version - optional (default:0.99)]
                             --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:no) [options:yes/no]]
                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
@@ -440,7 +440,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * migraphx - `2.4.0.50400-72`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [0.98](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.98)
+* RPP - [0.99](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.99)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
 * MIVisionX Setup Script - `V2.3.10`

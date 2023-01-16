@@ -56,7 +56,7 @@ parser.add_argument('--rocal',	 	type=str, default='ON',
 parser.add_argument('--reinstall', 	type=str, default='OFF',
                     help='Remove previous setup and reinstall - optional (default:OFF) [options:ON/OFF]')
 parser.add_argument('--backend', 	type=str, default='HIP',
-                    help='MIVisionX Dependency Backend - optional (default:HIP) [options:CPU/OCL/HIP]')
+                    help='MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]')
 parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
                     help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
 args = parser.parse_args()

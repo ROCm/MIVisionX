@@ -316,16 +316,24 @@ else:
 
         if backend == 'OCL':
             os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' autoremove -y rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx')
+            if "Ubuntu" in platfromInfo:
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                          linuxSystemInstall_check+' autoremove -y rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx-devel')
+            else:
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                          linuxSystemInstall_check+' autoremove -y rocblas rocblas-devel miopen-hip miopen-hip-devel migraphx-devel')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y miopen-opencl')
         else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' autoremove -y miopengemm miopen-opencl')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y miopen-hip migraphx')
+            if "Ubuntu" in platfromInfo:
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                          ' '+linuxSystemInstall_check+' install -y miopen-hip-dev migraphx-dev')
+            else:
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                          ' '+linuxSystemInstall_check+' install -y miopen-hip-devel migraphx-devel')
 
     # Install OpenCV
     os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')

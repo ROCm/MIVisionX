@@ -396,6 +396,10 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install boost-devel clang')
+            # lmbd
+            os.system('sudo -v')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                      linuxSystemInstall_check+' install lmdb-devel')
         # turbo-JPEG - https://github.com/rrawther/libjpeg-turbo.git -- 2.0.6.2
         os.system(
             '(cd '+deps_dir+'; git clone -b 2.0.6.2 https://github.com/rrawther/libjpeg-turbo.git )')
@@ -404,7 +408,7 @@ else:
         # RPP
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
-                  linuxCMake+' -DBACKEND='+backend+' ../; make -j4; sudo make install)')
+                  linuxCMake+' -DBACKEND='+backend+' -DCMAKE_INSTALL_PREFIX='+ROCM_PATH+' ../; make -j4; sudo make install)')
 
     # Install ffmpeg
     if ffmpegInstall == 'ON' and backend != 'CPU':

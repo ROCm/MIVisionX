@@ -26,7 +26,7 @@
 find_path(AMDRPP_INCLUDE_DIRS
     NAMES rpp.h
     PATHS
-    /usr/local/include
+    /usr/local/include/rpp
     ${ROCM_PATH}/include/rpp
 )
 mark_as_advanced( AMDRPP_INCLUDE_DIRS )

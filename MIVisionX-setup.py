@@ -330,10 +330,10 @@ else:
                       linuxSystemInstall_check+' autoremove -y miopengemm miopen-opencl')
             if "Ubuntu" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y miopen-hip-dev migraphx-dev')
+                          ' '+linuxSystemInstall_check+' install -y rocblas-dev miopen-hip-dev migraphx-dev')
             else:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y miopen-hip-devel migraphx-devel')
+                          ' '+linuxSystemInstall_check+' install -y rocblas-devel miopen-hip-devel migraphx-devel')
 
     # Install OpenCV
     os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')

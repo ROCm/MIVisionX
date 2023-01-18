@@ -339,6 +339,13 @@ else:
         if inferenceInstall == 'ON':
             modelCompilerDeps = os.path.expanduser(
                 '~/.mivisionx-model-compiler-deps')
+
+            # Delete previous install
+            if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
+                os.system('sudo -v')
+                os.system('sudo rm -rf '+modelCompilerDeps)
+                print("\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
+
             if not os.path.exists(modelCompilerDeps):
                 print("STATUS: Model Compiler Deps Install - " +
                       modelCompilerDeps+"\n")

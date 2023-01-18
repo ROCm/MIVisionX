@@ -32,7 +32,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenCV QUIET)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
-#find the OPENVX backend type
+#find the OPENVX backend type - TBD: ADD FindMIVisionX.cmake
 set(OPENVX_BACKEND_OPENCL_FOUND 0)
 set(OPENVX_BACKEND_HIP_FOUND 0)
 if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)

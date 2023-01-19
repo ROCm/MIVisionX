@@ -19,8 +19,6 @@
 #endif
 #endif
 
-using namespace std::chrono;
-
 extern void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[]);
 
 
@@ -48,12 +46,6 @@ InferenceEngineRocalHip::~InferenceEngineRocalHip() {
     int endOfSequenceTag = -1;
     
     auto rocal_timing = rocalGetTimingInfo(rocalHandle[0]);
-
-    std::cout << "Number of GPUs " << GPUs << std::endl;
-    std::cout << "Total "<< mCount << " images/frames processed" << std::endl;
-    std::cout << "Load     FPS " << 1000000 * mCount / rocal_timing.load_time << std::endl;
-    std::cout << "Decode   FPS " << 1000000 * mCount / rocal_timing.decode_time << std::endl;
-    std::cout << "D+P+T    FPS " << 1000000 * mCount / (rocal_timing.decode_time + rocal_timing.process_time + rocal_timing.transfer_time) << std::endl;
         
     for(int i = 0; i < GPUs; i++) {
         if(queueDeviceTagQ[i]) {
@@ -408,7 +400,6 @@ int InferenceEngineRocalHip::run() {
     ERRCHK(recvCommand(sock, updateCmd, clientName, INFCOM_CMD_INFERENCE_INITIALIZATION));
     info(updateCmd.message);
 
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
     ////////
     /// \brief keep running the inference in loop
     ///

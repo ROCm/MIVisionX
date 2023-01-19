@@ -45,7 +45,6 @@ int connection(int sock, Arguments * args, std::string clientName)
         if(ie) {
             status = ie->run();
             delete ie;
-            std::cout << "deleted" << std::endl;
         }
     }
     else if(mode == INFCOM_MODE_SHADOW) {

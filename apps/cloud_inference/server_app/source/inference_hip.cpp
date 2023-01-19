@@ -19,7 +19,6 @@
 
 extern void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[]);
 
-using namespace std::chrono; 
 #if ENABLE_HIP
 InferenceEngineHip::InferenceEngineHip(int sock_, Arguments * args_, const std::string clientName_, InfComCommand * cmd)
                   :InferenceEngine(sock_, args_, clientName_, cmd),
@@ -47,13 +46,7 @@ InferenceEngineHip::~InferenceEngineHip()
     if(openvx_context) {
         vxReleaseContext(&openvx_context);
     }
-#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER
-    
-    std::cout << "Number of GPUs " << GPUs << std::endl;
-    std::cout << "Total "<< mCount << " images/frames processed" << std::endl;
-    std::cout << "Decode   FPS " << 1000000 * mCount / mDecodeTime << std::endl;
-    std::cout << "D+P+T    FPS " << 1000000 * mCount / mProcessTime << std::endl;
-        
+#elif INFERENCE_SCHEDULER_MODE == LIBRE_INFERENCE_SCHEDULER        
     // wait for all threads to complete and release all resources
     std::tuple<int,char*,int> endOfSequenceInput(-1,nullptr,0);
     inputQ.enqueue(endOfSequenceInput);
@@ -831,9 +824,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
                 batch_q.push_back(image);
             }
             if (inputCount){
-                PROFILER_START(inference_server_app, workDeviceInputCopyJpegDecode);
-                high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    
+                PROFILER_START(inference_server_app, workDeviceInputCopyJpegDecode);    
 #if 0            
                 if (inputCount < batchSize)
                 {
@@ -861,9 +852,6 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
                   DecodeScaleAndConvertToTensorBatch(batch_q, i, i, dimInput, (float *)mapped_ptr);
                 }
 #endif 
-                high_resolution_clock::time_point t2 = high_resolution_clock::now();
-                auto dur = duration_cast<microseconds>( t2 - t1 ).count();
-                mProcessTime+=dur;
                 PROFILER_STOP(inference_server_app, workDeviceInputCopyJpegDecode);
             }
         } else {
@@ -885,11 +873,7 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
                     buf = (float *)mapped_ptr + dimInput[0] * dimInput[1] * dimInput[2] * inputCount;
 
                 PROFILER_START(inference_server_app, workDeviceInputCopyJpegDecode);
-                high_resolution_clock::time_point t1 = high_resolution_clock::now();
                 DecodeScaleAndConvertToTensor(dimInput[0], dimInput[1], size, (unsigned char *)byteStream, (float *)buf, useFp16);
-                high_resolution_clock::time_point t2 = high_resolution_clock::now();
-                auto dur = duration_cast<microseconds>( t2 - t1 ).count();
-                mProcessTime+=dur;
                 PROFILER_STOP(inference_server_app, workDeviceInputCopyJpegDecode);
                 // release byteStream
                 delete[] byteStream;
@@ -905,7 +889,6 @@ void InferenceEngineHip::workDeviceInputCopy(int gpu)
             // update counters
             totalBatchCounter++;
             totalImageCounter += inputCount;
-            mCount+=inputCount;
         }
         else {
             // add the input back to idle queue

@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 #include <cstdio>
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
 #include <CL/cl.h>
 #endif
 #include <vx_ext_amd.h>
@@ -132,7 +132,7 @@ ImageInfo::ImageInfo(
         _height(height_),
         _color_planes(planes),
         _batch_size(batches),
-        _data_size(width_ * height_ * _batch_size * planes),
+        _data_size((static_cast<uint64_t>(width_ * height_ * _batch_size * planes))),
         _mem_type(mem_type_),
         _color_fmt(col_fmt_)
         {
@@ -164,7 +164,7 @@ void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vect
 
         if(height[i] > _info.height_single())
         {
-            ERR("Given ROI height is larger than buffer with for image[" + TOSTR(i) + "] " + TOSTR(height[i]) +" > " + TOSTR(_info.height_single()))
+            ERR("Given ROI height is larger than buffer height for image[" + TOSTR(i) + "] " + TOSTR(height[i]) +" > " + TOSTR(_info.height_single()))
             _info._roi_height->at(i) = _info.height_single();
         }
         else
@@ -287,7 +287,7 @@ int Image::create(vx_context context)
     return 0;
 }
 
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
 unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync)
 {
     if(_info._type != ImageInfo::Type::HANDLE)
@@ -317,11 +317,13 @@ unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bo
     }
     return size;
 }
+
 unsigned Image::copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync)
 {
     return 0;
 }
-#else
+
+#elif ENABLE_HIP
 unsigned Image::copy_data(hipStream_t stream, unsigned char* user_buffer, bool sync)
 {
     if(_info._type != ImageInfo::Type::HANDLE)

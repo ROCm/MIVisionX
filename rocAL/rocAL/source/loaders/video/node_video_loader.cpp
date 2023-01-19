@@ -25,11 +25,8 @@ THE SOFTWARE.
 #include <numeric>
 #include "node_video_loader.h"
 #ifdef ROCAL_VIDEO
-#if ENABLE_HIP
-VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResourcesHip device_resources):
-#else
-VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources):
-#endif
+
+VideoLoaderNode::VideoLoaderNode(Image *output, void *device_resources):
 	Node({}, {output})
 {
     _loader_module = std::make_shared<VideoLoaderSharded>(device_resources);

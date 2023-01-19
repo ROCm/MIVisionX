@@ -116,7 +116,7 @@ else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
         target_link_libraries(runvx crypto)
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations -std=gnu++14")
 endif()
 
 # install MIVisionX executables -- {ROCM_PATH}/bin

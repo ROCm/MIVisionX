@@ -1,4 +1,4 @@
-# Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2021 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,8 +58,10 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         target_link_libraries(${PROJECT_NAME} openvx migraphx::c hip::host)
         # install MIVisionX libs -- {ROCM_PATH}/lib
         install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-	install(FILES include/vx_amd_migraphx.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+        if(BUILD_DEV)
+            # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+	        install(FILES include/vx_amd_migraphx.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+        endif(BUILD_DEV)
     else()
         message("-- ${Red}WARNING: MIGraphX or HIP Not Found -- ${PROJECT_NAME} module excluded${ColourReset}")
     endif()

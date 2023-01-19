@@ -1,7 +1,29 @@
+# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 import rocal_pybind as b
 import amd.rocal.types as types
 import numpy as np
 import ctypes
+import functools
+import inspect
 
 
 class Pipeline(object):
@@ -77,13 +99,12 @@ class Pipeline(object):
                  exec_async=True, bytes_per_sample=0,
                  rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
         if(rocal_cpu):
-            # print("comes to cpu")
             self._handle = b.rocalCreate(
                 batch_size, types.CPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         else:
-            print("comes to gpu")
             self._handle = b.rocalCreate(
                 batch_size, types.GPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
+
         if(b.getStatus(self._handle) == types.OK):
             print("Pipeline has been created succesfully")
         else:
@@ -122,6 +143,7 @@ class Pipeline(object):
         self._current_pipeline = None
         self._reader = None
         self._define_graph_set = False
+        self.set_seed(self._seed)
 
     def build(self):
         """Build the pipeline using rocalVerify call
@@ -289,3 +311,134 @@ class Pipeline(object):
 
     def Timing_Info(self):
         return b.getTimingInfo(self._handle)
+
+def _discriminate_args(func, **func_kwargs):
+    """Split args on those applicable to Pipeline constructor and the decorated function."""
+    func_argspec = inspect.getfullargspec(func)
+    ctor_argspec = inspect.getfullargspec(Pipeline.__init__)
+
+    if 'debug' not in func_argspec.args and 'debug' not in func_argspec.kwonlyargs:
+        func_kwargs.pop('debug', False)
+
+    ctor_args = {}
+    fn_args = {}
+
+    if func_argspec.varkw is not None:
+        raise TypeError(
+            f"Using variadic keyword argument `**{func_argspec.varkw}` in a  "
+            f"graph-defining function is not allowed.")
+
+    for farg in func_kwargs.items():
+        is_ctor_arg = farg[0] in ctor_argspec.args or farg[0] in ctor_argspec.kwonlyargs
+        is_fn_arg = farg[0] in func_argspec.args or farg[0] in func_argspec.kwonlyargs
+        if is_fn_arg:
+            fn_args[farg[0]] = farg[1]
+            if is_ctor_arg:
+                print(
+                    "Warning: the argument `{farg[0]}` shadows a Pipeline constructor "
+                    "argument of the same name.")
+        elif is_ctor_arg:
+            ctor_args[farg[0]] = farg[1]
+        else:
+            assert False, f"This shouldn't happen. Please double-check the `{farg[0]}` argument"
+
+    return ctor_args, fn_args
+
+
+def pipeline_def(fn=None, **pipeline_kwargs):
+    """
+    Decorator that converts a graph definition function into a DALI pipeline factory.
+
+    A graph definition function is a function that returns intended pipeline outputs.
+    You can decorate this function with ``@pipeline_def``::
+
+        @pipeline_def
+        def my_pipe(flip_vertical, flip_horizontal):
+            ''' Creates a rocAL pipeline, which returns flipped and original images '''
+            data, _ = fn.readers.file(file_root=images_dir)
+            img = fn.decoders.image(data, device="mixed")
+            flipped = fn.flip(img, horizontal=flip_horizontal, vertical=flip_vertical)
+            return flipped, img
+
+    The decorated function returns a rocAL Pipeline object::
+
+        pipe = my_pipe(True, False)
+        # pipe.build()  # the pipeline is not configured properly yet
+
+    A pipeline requires additional parameters such as batch size, number of worker threads,
+    GPU device id and so on (see :meth:`nvidia.dali.Pipeline()` for a
+    complete list of pipeline parameters).
+    These parameters can be supplied as additional keyword arguments,
+    passed to the decorated function::
+
+        pipe = my_pipe(True, False, batch_size=32, num_threads=1, device_id=0)
+        pipe.build()  # the pipeline is properly configured, we can build it now
+
+    The outputs from the original function became the outputs of the Pipeline::
+
+        flipped, img = pipe.run()
+
+    When some of the pipeline parameters are fixed, they can be specified by name in the decorator::
+
+        @pipeline_def(batch_size=42, num_threads=3)
+        def my_pipe(flip_vertical, flip_horizontal):
+            ...
+
+    Any Pipeline constructor parameter passed later when calling the decorated function will
+    override the decorator-defined params::
+
+        @pipeline_def(batch_size=32, num_threads=3)
+        def my_pipe():
+            data = fn.external_source(source=my_generator)
+            return data
+
+        pipe = my_pipe(batch_size=128)  # batch_size=128 overrides batch_size=32
+
+    .. warning::
+
+        The arguments of the function being decorated can shadow pipeline constructor arguments -
+        in which case there's no way to alter their values.
+
+    .. note::
+
+        Using ``**kwargs`` (variadic keyword arguments) in graph-defining function is not allowed.
+        They may result in unwanted, silent hijacking of some arguments of the same name by
+        Pipeline constructor. Code written this way would cease to work with future versions of rocAL
+        when new parameters are added to the Pipeline constructor.
+
+    To access any pipeline arguments within the body of a ``@pipeline_def`` function, the function
+    :meth:`amd.rocal.Pipeline.current()` can be used:: ( note: this is not supported yet)
+
+        @pipeline_def()
+        def my_pipe():
+            pipe = Pipeline.current()
+            batch_size = pipe.batch_size
+            num_threads = pipe.num_threads
+            ...
+
+        pipe = my_pipe(batch_size=42, num_threads=3)
+        ...
+    """
+
+    def actual_decorator(func):
+
+        @functools.wraps(func)
+        def create_pipeline(*args, **kwargs):
+            ctor_args, fn_kwargs = _discriminate_args(func, **kwargs)
+            pipe = Pipeline(**{**pipeline_kwargs, **ctor_args})  # Merge and overwrite dict
+            with pipe:
+                pipe_outputs = func(*args, **fn_kwargs)
+                if isinstance(pipe_outputs, tuple):
+                    po = pipe_outputs
+                elif pipe_outputs is None:
+                    po = ()
+                else:
+                    po = (pipe_outputs, )
+                pipe.set_outputs(*po)
+            return pipe
+
+        # Add `is_pipeline_def` attribute to the function marked as `@pipeline_def`
+        create_pipeline._is_pipeline_def = True
+        return create_pipeline
+
+    return actual_decorator(fn) if fn else actual_decorator

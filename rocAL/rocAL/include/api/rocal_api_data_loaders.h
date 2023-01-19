@@ -37,6 +37,7 @@ THE SOFTWARE.
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegFileSource(RocalContext context,
                                                         const char* source_path,
@@ -60,6 +61,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegFileSource(RocalContext context,
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegFileSourceSingleShard(RocalContext context,
                                                                    const char* source_path,
@@ -131,17 +133,19 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalSequenceReaderSingleShard(RocalConte
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSource(RocalContext context,
-                                                        const char* source_path,
-							                            const char* json_path,
-                                                        RocalImageColor color_format,
-                                                        unsigned internal_shard_count,
-                                                        bool is_output,
-                                                        bool shuffle = false,
-                                                        bool loop = false,
-                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                        unsigned max_width = 0, unsigned max_height = 0);
+                                                              const char* source_path,
+                                                              const char* json_path,
+                                                              RocalImageColor color_format,
+                                                              unsigned internal_shard_count,
+                                                              bool is_output,
+                                                              bool shuffle = false,
+                                                              bool loop = false,
+                                                              RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
+                                                              unsigned max_width = 0, unsigned max_height = 0,
+                                                              RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
 
 /// Creates JPEG image reader and partial decoder. It allocates the resources and objects required to read and decode COCO Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
@@ -151,13 +155,12 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSource(RocalContext cont
 /// \param rocal_color_format The color format the images will be decoded to.
 /// \param shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param area_factor Determines how much area to be cropped. Ranges from from 0.08 - 1.
+/// \param aspect_ratio Determines the aspect ration of crop. Ranges from 0.75 to 1.33.
+/// \param num_attempts Maximum number of attempts to generate crop. Default 10
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
-/// \param area_factor Determines how much area to be cropped. Ranges from from 0.08 - 1.
-/// \param aspect_ratio Determines the aspect ration of crop. Ranges from 0.75 to 1.33.
-/// \param y_drift_factor - Determines from top left corder to height (crop_height), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
-/// \param x_drift_factor - Determines from top left corder to width (crop_width), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartial(RocalContext p_context,
                                                             const char* source_path,
@@ -165,12 +168,13 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartial(RocalConte
                                                             RocalImageColor rocal_color_format,
                                                             unsigned internal_shard_count,
                                                             bool is_output,
+                                                            std::vector<float>& area_factor,
+                                                            std::vector<float>& aspect_ratio,
+                                                            unsigned num_attempts,
                                                             bool shuffle = false,
                                                             bool loop = false,
-                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0,
-                                                            RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
-                                                            RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
+                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
+                                                            unsigned max_width = 0, unsigned max_height = 0);
 
 /// Creates JPEG image reader and partial decoder. It allocates the resources and objects required to read and decode COCO Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
@@ -186,8 +190,6 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartial(RocalConte
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
 /// \param area_factor Determines how much area to be cropped. Ranges from from 0.08 - 1.
 /// \param aspect_ratio Determines the aspect ration of crop. Ranges from 0.75 to 1.33.
-/// \param y_drift_factor - Determines from top left corder to height (crop_height), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
-/// \param x_drift_factor - Determines from top left corder to width (crop_width), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartialSingleShard(RocalContext p_context,
                                                             const char* source_path,
@@ -196,14 +198,13 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartialSingleShard
                                                             unsigned shard_id,
                                                             unsigned shard_count,
                                                             bool is_output,
+                                                            std::vector<float>& area_factor,
+                                                            std::vector<float>& aspect_ratio,
+                                                            unsigned num_attempts,
                                                             bool shuffle = false,
                                                             bool loop = false,
-                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0,
-                                                            RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
-                                                            RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
-
-/// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode COCO Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
+                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
+                                                            unsigned max_width = 0, unsigned max_height = 0);
 /// \param rocal_context Rocal context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param json_path Path to the COCO Json File
@@ -214,18 +215,20 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourcePartialSingleShard
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
-/// \return
-extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCOCOFileSourceSingleShard(RocalContext context,
-                                                                   const char* source_path,
-								   const char* json_path,
-                                                                   RocalImageColor color_format,
-                                                                   unsigned shard_id,
-                                                                   unsigned shard_count,
-                                                                   bool is_output ,
-                                                                   bool shuffle = false,
-                                                                   bool loop = false,
-                                                                   RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                                   unsigned max_width = 0, unsigned max_height = 0);
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
+/// \return Reference to the output image
+extern "C" RocalImage ROCAL_API_CALL rocalJpegCOCOFileSourceSingleShard(RocalContext context,
+                                                                        const char *source_path,
+                                                                        const char *json_path,
+                                                                        RocalImageColor color_format,
+                                                                        unsigned shard_id,
+                                                                        unsigned shard_count,
+                                                                        bool is_output,
+                                                                        bool shuffle = false,
+                                                                        bool loop = false,
+                                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
+                                                                        unsigned max_width = 0, unsigned max_height = 0,
+                                                                        RocalDecoderType rocal_decoder_type = RocalDecoderType::ROCAL_DECODER_TJPEG);
 
 /// Creates JPEG image reader and decoder for Caffe LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
@@ -248,7 +251,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffeLMDBRecordSource(RocalConte
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0);
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
 
 /// Creates JPEG image reader and decoder for Caffe LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe2 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
 /// \param rocal_context Rocal context
@@ -262,6 +266,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffeLMDBRecordSource(RocalConte
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffeLMDBRecordSourceSingleShard(RocalContext p_context,
                                                             const char* source_path,
@@ -272,7 +277,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffeLMDBRecordSourceSingleShard
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0);
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
 
 /// Creates JPEG image reader and decoder for Caffe2 LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe2 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
@@ -286,6 +292,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffeLMDBRecordSourceSingleShard
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSource(RocalContext context,
                                                             const char* source_path,
@@ -295,7 +302,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSource(RocalCont
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0);
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
 
 /// Creates JPEG image reader and decoder for Caffe2 LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored on the Caffe2 LMDB Records. It accepts external sharding information to load a singe shard. only
 /// \param p_context Rocal context
@@ -309,6 +317,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSource(RocalCont
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourceSingleShard(RocalContext p_context,
                                                                         const char* source_path,
@@ -319,7 +328,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourceSingleShar
                                                                         bool shuffle = false,
                                                                         bool loop = false,
                                                                         RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                                        unsigned max_width = 0, unsigned max_height = 0);
+                                                                        unsigned max_width = 0, unsigned max_height = 0,
+                                                                        RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
 
 /// Creates JPEG image reader and decoder for MXNet records. It allocates the resources and objects required to read and decode Jpeg images stored in MXNet Records. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
@@ -333,6 +343,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourceSingleShar
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalMXNetRecordSource(RocalContext context,
                                                             const char* source_path,
@@ -342,7 +353,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalMXNetRecordSource(RocalContext conte
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0);
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
 
 /// Creates JPEG image reader and decoder for MXNet records. It allocates the resources and objects required to read and decode Jpeg images stored on the MXNet records. It accepts external sharding information to load a singe shard. only
 /// \param p_context Rocal context
@@ -356,6 +368,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalMXNetRecordSource(RocalContext conte
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalMXNetRecordSourceSingleShard(RocalContext p_context,
                                                                         const char* source_path,
@@ -366,7 +379,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalMXNetRecordSourceSingleShard(RocalCo
                                                                         bool shuffle = false,
                                                                         bool loop = false,
                                                                         RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                                        unsigned max_width = 0, unsigned max_height = 0);
+                                                                        unsigned max_width = 0, unsigned max_height = 0,
+                                                                        RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
 
 /// Creates JPEG image reader and partial decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored and Crops t
@@ -375,27 +389,27 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalMXNetRecordSourceSingleShard(RocalCo
 /// \param rocal_color_format The color format the images will be decoded to.
 /// \param num_threads Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param area_factor Determines how much area to be cropped. Ranges from from 0.08 - 1.
+/// \param aspect_ratio Determines the aspect ration of crop. Ranges from 0.75 to 1.33.
+/// \param num_attempts Maximum number of attempts to generate crop. Default 10
 /// \param shuffle Determines if the user wants to shuffle the dataset or not.
 /// \param loop Determines if the user wants to indefinitely loops through images or not.
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
-/// \param area_factor Determines how much area to be cropped. Ranges from from 0.08 - 1.
-/// \param aspect_ratio Determines the aspect ration of crop. Ranges from 0.75 to 1.33.
-/// \param y_drift_factor - Determines from top left corder to height (crop_height), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
-/// \param x_drift_factor - Determines from top left corder to width (crop_width), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalFusedJpegCrop(RocalContext context,
                                                         const char* source_path,
                                                         RocalImageColor rocal_color_format,
                                                         unsigned num_threads,
                                                         bool is_output ,
+                                                        std::vector<float>& area_factor,
+                                                        std::vector<float>& aspect_ratio,
+                                                        unsigned num_attempts,
                                                         bool shuffle = false,
                                                         bool loop = false,
-                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE,
-                                                        unsigned max_width = 0, unsigned max_height = 0,
-                                                        RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
-                                                        RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL);
+                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
+                                                        unsigned max_width = 0, unsigned max_height = 0);
 
 /// Creates JPEG image reader and partial decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
 /// \param context Rocal context
@@ -404,6 +418,9 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalFusedJpegCrop(RocalContext context,
 /// \param shard_id Shard id for this loader
 /// \param shard_count Total shard count
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param area_factor Determines how much area to be cropped. Ranges from from 0.08 - 1.
+/// \param aspect_ratio Determines the aspect ration of crop. Ranges from 0.75 to 1.33.
+/// \param num_attempts Maximum number of attempts to generate crop. Default 10
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
@@ -414,12 +431,13 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalFusedJpegCropSingleShard(RocalContex
                                                         unsigned shard_id,
                                                         unsigned shard_count,
                                                         bool is_output ,
+                                                        std::vector<float>& area_factor,
+                                                        std::vector<float>& aspect_ratio,
+                                                        unsigned num_attempts,
                                                         bool shuffle = false,
                                                         bool loop = false,
-                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE,
-                                                        unsigned max_width = 0, unsigned max_height = 0,
-                                                        RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
-                                                        RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL);
+                                                        RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
+                                                        unsigned max_width = 0, unsigned max_height = 0);
 
 /// Creates TensorFlow records JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
@@ -433,6 +451,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalFusedJpegCropSingleShard(RocalContex
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
 /// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegTFRecordSource(RocalContext context,
                                                             const char* source_path,
@@ -444,7 +463,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegTFRecordSource(RocalContext cont
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0);
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
 /// Creates TensorFlow records JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
 /// \param context Rocal context
 /// \param source_path A NULL terminated char string pointing to the location of the TF records on the disk
@@ -457,7 +477,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegTFRecordSource(RocalContext cont
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
-/// \return
+/// \param rocal_decoder_type Determines the decoder_type, tjpeg or hwdec
+/// \return Reference to the output image
 extern "C"  RocalImage  ROCAL_API_CALL rocalJpegTFRecordSourceSingleShard(RocalContext context,
                                                                         const char* source_path,
                                                                         RocalImageColor rocal_color_format,
@@ -467,7 +488,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegTFRecordSourceSingleShard(RocalC
                                                                         bool shuffle = false,
                                                                         bool loop = false,
                                                                         RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                                        unsigned max_width = 0, unsigned max_height = 0);
+                                                                        unsigned max_width = 0, unsigned max_height = 0,
+                                                                        RocalDecoderType rocal_decoder_type=RocalDecoderType::ROCAL_DECODER_TJPEG);
 /// Creates Raw image loader. It allocates the resources and objects required to load images stored on the file systems.
 /// \param rocal_context Rocal context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
@@ -539,8 +561,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalVideoFileSource(RocalContext context
                                                         bool loop = false,
                                                         unsigned step = 0,
                                                         unsigned stride = 0,
-                                                        bool file_list_frame_num = true
-                                                        );
+                                                        bool file_list_frame_num = true);
 
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode mp4 videos stored on the file systems. It accepts external sharding information to load a singe shard only.
 /// \param context Rocal context
@@ -570,8 +591,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalVideoFileSourceSingleShard(RocalCont
                                                                     bool loop = false,
                                                                     unsigned step = 0,
                                                                     unsigned stride = 0,
-                                                                    bool file_list_frame_num = true
-                                                                    );
+                                                                    bool file_list_frame_num = true);
 
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode mp4 videos stored on the file systems. Resizes the decoded frames to the dest width and height.
 /// \param context Rocal context
@@ -603,8 +623,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalVideoFileResize(RocalContext context
                                                         bool loop = false,
                                                         unsigned step = 0,
                                                         unsigned stride = 0,
-                                                        bool file_list_frame_num = true
-                                                        );
+                                                        bool file_list_frame_num = true);
 
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode mp4 videos stored on the file systems. Resizes the decoded frames to the dest width and height. It accepts external sharding information to load a singe shard only.
 /// \param context Rocal context
@@ -638,8 +657,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalVideoFileResizeSingleShard(RocalCont
                                                         bool loop = false,
                                                         unsigned step = 0,
                                                         unsigned stride = 0,
-                                                        bool file_list_frame_num = true
-                                                        );
+                                                        bool file_list_frame_num = true);
 
 /// Creates CIFAR10 raw data reader and loader. It allocates the resources and objects required to read raw data stored on the file systems.
 /// \param context Rocal context
@@ -669,6 +687,9 @@ extern "C"  RocalStatus  ROCAL_API_CALL rocalResetLoaders(RocalContext context);
 /// \param shard_id Shard id for this loader
 /// \param shard_count Total shard count
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param area_factor Determines how much area to be cropped. Ranges from from 0.08 - 1.
+/// \param aspect_ratio Determines the aspect ration of crop. Ranges from 0.75 to 1.33.
+/// \param num_attempts Maximum number of attempts to generate crop. Default 10
 /// \param shuffle Determines if the user wants to shuffle the dataset or not.
 /// \param loop Determines if the user wants to indefinitely loops through images or not.
 /// \param decode_size_policy
@@ -681,12 +702,13 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffeLMDBRecordSourcePartialSing
                                                             unsigned shard_id,
                                                             unsigned shard_count,
                                                             bool is_output,
+                                                            std::vector<float>& area_factor,
+                                                            std::vector<float>& aspect_ratio,
+                                                            unsigned num_attempts,
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0,
-                                                            RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
-                                                            RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
+                                                            unsigned max_width = 0, unsigned max_height = 0);
 
 /// Creates JPEG image reader and partial decoder for Caffe2 LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe22 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
 /// \param rocal_context Rocal context
@@ -707,12 +729,13 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourcePartialSin
                                                             unsigned shard_id,
                                                             unsigned shard_count,
                                                             bool is_output,
+                                                            std::vector<float>& area_factor,
+                                                            std::vector<float>& aspect_ratio,
+                                                            unsigned num_attempts,
                                                             bool shuffle = false,
                                                             bool loop = false,
-                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MAX_SIZE,
-                                                            unsigned max_width = 0, unsigned max_height = 0,
-                                                            RocalFloatParam area_factor = NULL, RocalFloatParam aspect_ratio = NULL,
-                                                            RocalFloatParam y_drift_factor = NULL, RocalFloatParam x_drift_factor = NULL );
+                                                            RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
+                                                            unsigned max_width = 0, unsigned max_height = 0);
 
 #endif //MIVISIONX_ROCAL_API_DATA_LOADERS_H
 

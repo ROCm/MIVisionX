@@ -27,10 +27,12 @@ THE SOFTWARE.
 #include <tuple>
 #include "meta_data_reader.h"
 
-#define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
-#define CHECK_CAFFE(test, msg) \
-    ;                          \
-    ((test) ? (void)0 : ((void)fprintf(stderr, "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
+#define CHECK_LMDB_RETURN_STATUS(status)          \
+    do {                            \
+        if(status != MDB_SUCCESS)   \
+            THROW("LMDB error, " + std::string(__FILE__) + ":" + std::to_string(__LINE__) + " " + \
+            #status + ":" + std::string(mdb_strerror(status)));    \
+    } while (0)
 
 enum class StorageType
 {

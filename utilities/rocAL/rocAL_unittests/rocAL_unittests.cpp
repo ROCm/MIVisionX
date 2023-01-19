@@ -141,7 +141,9 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
         {
             std::cout << ">>>>>>> Running PARTIAL DECODE" << std::endl;
             rocalCreateLabelReader(handle, path);
-            input1 = rocalFusedJpegCrop(handle, path, color_format, num_threads, false, false);
+            std::vector<float> area = {0.08, 1};
+            std::vector<float> aspect_ratio = {3.0f/4, 4.0f/3};
+            input1 = rocalFusedJpegCrop(handle, path, color_format, num_threads, false, area, aspect_ratio, 10, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 2: //coco detection
@@ -157,7 +159,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
             if (decode_max_height <= 0 || decode_max_width <= 0)
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false);
             else
-                input1 = rocalJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+                input1 = rocalJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 3: //coco detection partial
@@ -173,7 +175,9 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
 #if defined RANDOMBBOXCROP
             rocalRandomBBoxCrop(handle, all_boxes_overlap, no_crop);
 #endif
-            input1 = rocalJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
+            std::vector<float> area = {0.08, 1};
+            std::vector<float> aspect_ratio = {3.0f/4, 4.0f/3};
+            input1 = rocalJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, area, aspect_ratio, 10, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 4: //tf classification
@@ -183,7 +187,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
             char key2[25] = "image/class/label";
             char key8[25] = "image/filename";
             rocalCreateTFReader(handle, path, true, key2, key8);
-            input1 = rocalJpegTFRecordSource(handle, path, color_format, num_threads, false, key1, key8, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+            input1 = rocalJpegTFRecordSource(handle, path, color_format, num_threads, false, key1, key8, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 5: //tf detection
@@ -198,35 +202,35 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
             char key7[25] = "image/object/bbox/ymax";
             char key8[25] = "image/filename";
             rocalCreateTFReaderDetection(handle, path, true, key2, key3, key4, key5, key6, key7, key8);
-            input1 = rocalJpegTFRecordSource(handle, path, color_format, num_threads, false, key1, key8, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+            input1 = rocalJpegTFRecordSource(handle, path, color_format, num_threads, false, key1, key8, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 6: //caffe classification
         {
             std::cout << ">>>>>>> Running CAFFE CLASSIFICATION READER" << std::endl;
             rocalCreateCaffeLMDBLabelReader(handle, path);
-            input1 = rocalJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+            input1 = rocalJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 7: //caffe detection
         {
             std::cout << ">>>>>>> Running CAFFE DETECTION READER" << std::endl;
             rocalCreateCaffeLMDBReaderDetection(handle, path);
-            input1 = rocalJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+            input1 = rocalJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 8: //caffe2 classification
         {
             std::cout << ">>>>>>> Running CAFFE2 CLASSIFICATION READER" << std::endl;
             rocalCreateCaffe2LMDBLabelReader(handle, path, true);
-            input1 = rocalJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+            input1 = rocalJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 9: //caffe2 detection
         {
             std::cout << ">>>>>>> Running CAFFE2 DETECTION READER" << std::endl;
             rocalCreateCaffe2LMDBReaderDetection(handle, path, true);
-            input1 = rocalJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+            input1 = rocalJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 10: //coco reader keypoints
@@ -243,7 +247,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
             if (decode_max_height <= 0 || decode_max_width <= 0)
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false);
             else
-                input1 = rocalJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+                input1 = rocalJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         default: //image pipeline
@@ -253,7 +257,7 @@ int test(int test_case, int reader_type, int pipeline_type, const char *path, co
             if (decode_max_height <= 0 || decode_max_width <= 0)
                 input1 = rocalJpegFileSource(handle, path, color_format, num_threads, false, true);
             else
-                input1 = rocalJpegFileSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+                input1 = rocalJpegFileSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
     }

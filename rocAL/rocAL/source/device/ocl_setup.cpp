@@ -23,7 +23,7 @@ THE SOFTWARE.
 //
 // Created by svcbuild on 11/4/19.
 //
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
 #include <vector>
 #include "log.h"
 #include "exception.h"

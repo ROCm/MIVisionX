@@ -30,11 +30,7 @@ THE SOFTWARE.
 class ImageLoaderSharded : public LoaderModule
 {
 public:
-#if ENABLE_HIP
-    explicit ImageLoaderSharded(DeviceResourcesHip dev_resources);
-#else
-    explicit ImageLoaderSharded(DeviceResources dev_resources);
-#endif
+    explicit ImageLoaderSharded(void *dev_resources);
     ~ImageLoaderSharded() override;
     LoaderModuleStatus load_next() override;
     void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RocalMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
@@ -51,11 +47,7 @@ public:
     void shut_down() override;
 private:
     void increment_loader_idx();
-#if ENABLE_HIP
-    const DeviceResourcesHip _dev_resources;
-#else
-    const DeviceResources _dev_resources;
-#endif
+    void *_dev_resources;
     bool _initialized = false;
     std::vector<std::shared_ptr<ImageLoader>> _loaders;
     size_t _loader_idx;

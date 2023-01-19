@@ -165,14 +165,10 @@ rocalExternalSourceFeedInput(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        //context->master_graph->feed_input(input, mode, layout);
-        // should call root_node process_input
         FileMode file_mode = (FileMode) mode;
-        // std::cerr<<"\n file mode :: "<<file_mode;
-        // std::cerr<<"\n Input buffer size :: "<<input_buffer.size();
         RocalTensorFormat format = (RocalTensorFormat) layout;
         context->master_graph->feed_external_input(input_images, labels, input_buffer,
-                                                    roi_width, roi_height, max_width, max_height, file_mode, format, eos);
+                                                    roi_width, roi_height, max_width, max_height, file_mode, format, eos); // Kamal
     }
     catch(const std::exception& e)
     {

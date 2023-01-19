@@ -76,7 +76,7 @@ public:
     FileMode mode() {return _mode;};
 
     // get image_dims
-    void get_dims(int& width, int& height, int& channels);
+    void get_dims(int cur_idx, int& width, int& height, int& channels);
 
 
 private:

@@ -972,14 +972,9 @@ void MasterGraph::output_routine()
             pMetaDataBatch augmented_batch_meta_data = nullptr;
             if (_loader_module->remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size))
             {
+                fflush(stderr);
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
                 // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
-                notify_user_thread();
-                // the following call is required in case the ring buffer is waiting for more data to be loaded and there is no more data to process.
-                _ring_buffer.release_if_empty();
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                continue;
-            } else if(_external_source_eos) {
                 notify_user_thread();
                 // the following call is required in case the ring buffer is waiting for more data to be loaded and there is no more data to process.
                 _ring_buffer.release_if_empty();
@@ -1513,7 +1508,7 @@ void MasterGraph::feed_external_input(std::vector<std::string> input_images, std
                             FileMode mode, RocalTensorFormat layout, bool eos)
 {
     _external_source_eos = eos;
-    _loader_module->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode, eos);
+    _loader_module->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode, eos); // kamal
     if(!labels.empty() && !_meta_data_reader)
     {
         MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::EXTERNAL_SOURCE_LABEL_READER);

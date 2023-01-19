@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include "decoder_factory.h"
 #include "image_read_and_decode.h"
 #include "external_source_reader.h"
-
+#include <unistd.h>
 std::tuple<Decoder::ColorFormat, unsigned >
 interpret_color_format(RocalColorFormat color_format )
 {
@@ -131,32 +131,20 @@ void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_imag
                              unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
 {
     std::vector<size_t> image_size; // check if its required
-    image_size.reserve(roi_width.size());
-    // std::cerr<<"\n roi_width size:: "<<roi_width.size();
-    for(unsigned int i = 0; i < roi_width.size(); i++)
-        image_size[i] = (roi_width[i] * roi_height[i] * 3); // Shobi check how to get channels
+    image_size.reserve(roi_height.size());
+    for(unsigned int i = 0; i < roi_height.size(); i++) {
+        if (mode == 2)
+            image_size[i] = (roi_width[i] * roi_height[i] * 3); // Shobi check how to get channels
+        else if (mode == 1)
+            image_size[i] = roi_height[i];
+    }
     if(mode == 0) {
-        std::cerr<<"\n Mode 0";
-        _reader->feed_file_names(input_images, 2, eos); // Shobi check this
+        _reader->feed_file_names(input_images, input_images.size(), eos); // Shobi check this
     }
     else if(mode == 1) {
-        std::cerr<<"\n Mode 1";
-        // std::cerr<<"\n Input buffer size :: "<<input_buffer.size();
-        // std::cerr<<"\n image_size[n]"<<image_size[0];
-        // std::cerr<<"\n width "<<max_width;
-        // std::cerr<<"\n height "<<max_height;
-        // std::cerr<<"\n channels "<<channels;
-
         _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, 3);
     }
     else if(mode == 2){
-        std::cerr<<"\n Mode 2";
-        // std::cerr<<"\n Input buffer size :: "<<input_buffer.size();
-        // std::cerr<<"\n image_size[n]"<<image_size[0];
-        // std::cerr<<"\n width "<<max_width;
-        // std::cerr<<"\n height "<<max_height;
-        // std::cerr<<"\n channels "<<channels;
-
         _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, 3);
     }
     // loader->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode);
@@ -189,7 +177,6 @@ ImageReadAndDecode::load(unsigned char* buff,
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
     bool is_external_source = (_reader_type == StorageType::EXTERNAL_FILE_SOURCE);
     bool skip_decode = false;
-
     // Decode with the height and size equal to a single image
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start();// Debug timing
@@ -206,7 +193,6 @@ ImageReadAndDecode::load(unsigned char* buff,
             _actual_read_size[file_counter] = _reader->read_data(read_ptr, fsize);
             if(_actual_read_size[file_counter] < fsize)
                 LOG("Reader read less than requested bytes of size: " + _actual_read_size[file_counter]);
-
             _image_names[file_counter] = _reader->id();
             _reader->close();
            // _compressed_image_size[file_counter] = fsize;
@@ -226,7 +212,6 @@ ImageReadAndDecode::load(unsigned char* buff,
               int width, height, channels;
               auto read_ptr = buff + image_size * file_counter;
               size_t fsize = _reader->open();
-              std::cerr<<"\n Reader is open";
               if (fsize == 0) {
                   WRN("Opened file " + _reader->id() + " of size 0");
                   continue;
@@ -237,8 +222,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                   LOG("Reader read less than requested bytes of size: " + _actual_read_size[file_counter]);
 
               _image_names[file_counter] = _reader->id();
-              ext_reader->get_dims(width, height, channels);
-
+              ext_reader->get_dims(file_counter, width, height, channels);
               names[file_counter] = _image_names[file_counter];
               roi_width[file_counter] = width;
               roi_height[file_counter] = height;
@@ -251,27 +235,18 @@ ImageReadAndDecode::load(unsigned char* buff,
         }
         else {
             while ((file_counter != _batch_size) && _reader->count_items() > 0) {
-                // std::cerr<<"\n ImageReadAndDecode::load CP3";
+                _reader->count_items();
                 size_t fsize = _reader->open();
-                // std::cerr<<"\n  ImageReadAndDecode::load CP4  "<<fsize;
                 if (fsize == 0) {
                     WRN("Opened file " + _reader->id() + " of size 0");
                     continue;
                 }
-                // std::cerr<<"\n  ImageReadAndDecode::load CP4  a"<<fsize;
                 _compressed_buff[file_counter].reserve(fsize);
-                // std::cerr<<"\n  ImageReadAndDecode::load CP4  b"<<fsize;
                 _actual_read_size[file_counter] = _reader->read_data(_compressed_buff[file_counter].data(), fsize);
-                // std::cerr<<"\n ImageReadAndDecode::load CP5";
-                // std::cerr<<"\n file name :: "<<_reader->id();
                 _image_names[file_counter] = _reader->id();
-                // std::cerr<<"\n ImageReadAndDecode::load CP6";
                 _reader->close();
-                // std::cerr<<"\n ImageReadAndDecode::load CP7";
                 _compressed_image_size[file_counter] = fsize;
-                // std::cerr<<"\n ImageReadAndDecode::load CP8";
                 file_counter++;
-                // std::cerr<<"\n ImageReadAndDecode::load CP9";
             }
         }
     }
@@ -298,6 +273,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         }
     }
 
+    fflush(stdout);
     _file_load_time.end();// Debug timing
 
     _decode_time.start();// Debug timing
@@ -308,7 +284,6 @@ ImageReadAndDecode::load(unsigned char* buff,
 #pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
         for (size_t i = 0; i < _batch_size; i++)
         {
-            // std::cerr<<"\n Decoding image :: "<<i;
             // initialize the actual decoded height and width with the maximum
             _actual_decoded_width[i] = max_decoded_width;
             _actual_decoded_height[i] = max_decoded_height;
@@ -334,14 +309,12 @@ ImageReadAndDecode::load(unsigned char* buff,
             _actual_decoded_width[i] = scaledw;
             _actual_decoded_height[i] = scaledh;
         }
-        // Have to take care of the reserve for vector of strings - shobi
         for (size_t i = 0; i < _batch_size; i++) {
             names[i] = _image_names[i];
             roi_width[i] = _actual_decoded_width[i];
             roi_height[i] = _actual_decoded_height[i];
             actual_width[i] = _original_width[i];
             actual_height[i] = _original_height[i];
-            // std::cerr<<"\n Updated image info for image :: "<<names[i];
         }
     }
     _bbox_coords.clear();

@@ -81,8 +81,18 @@ void ImageLoader::set_gpu_device_id(int device_id)
 size_t
 ImageLoader::remaining_count()
 {
-    if(!_external_input_eos && _external_source_reader)
-        return _batch_size;
+    if(_external_source_reader)
+    {
+        if(_image_loader->count() != 0)
+            return _batch_size;
+        else
+        {
+            if(_external_input_eos)
+                return 0;
+        }
+    }
+    //     if(!_external_input_eos && _external_source_reader)
+    //         return _batch_size;
     return _remaining_image_count;
 }
 
@@ -210,7 +220,6 @@ ImageLoader::load_routine()
 
         auto load_status = LoaderModuleStatus::NO_MORE_DATA_TO_READ;
         {
-            _decoded_img_info._image_names.reserve(_batch_size*2); // This has to be changed - shobi
             load_status = _image_loader->load(data,
                                               _decoded_img_info._image_names,
                                               _output_image->info().width(),
@@ -221,7 +230,6 @@ ImageLoader::load_routine()
                                               _decoded_img_info._original_height,
                                               _output_image->info().color_format(), _decoder_keep_original);
 
-            // std::cerr<<"\n Image loader CP1";
             if (load_status == LoaderModuleStatus::OK)
             {
                 if (_randombboxcrop_meta_data_reader)
@@ -229,13 +237,9 @@ ImageLoader::load_routine()
                     _crop_image_info._crop_image_coords = _image_loader->get_batch_random_bbox_crop_coords();
                     _circ_buff.set_crop_image_info(_crop_image_info);
                 }
-                // std::cerr<<"\n Image loader CP1a b c";
                 _circ_buff.set_image_info(_decoded_img_info);
-                // std::cerr<<"\n Image loader CP1a";
                 _circ_buff.push();
-                // std::cerr<<"\n Image loader CP1b";
                 _image_counter += _output_image->info().batch_size();
-                // std::cerr<<"\n Image loader CP2";
             }
         }
         if (load_status != LoaderModuleStatus::OK)
@@ -261,7 +265,6 @@ ImageLoader::load_routine()
             // It also slows down the reader thread since there is no more data to read,
             // till program ends or till reset is called
             _circ_buff.unblock_reader();
-            // std::cerr<<"\n Image loader CP3";
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     }

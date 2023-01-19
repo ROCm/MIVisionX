@@ -186,6 +186,7 @@ For the convenience of the developer, we here provide the setup script which wil
                             --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:ON) [options:ON/OFF]]
                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]]
+                            --inference [MIVisionX Neural Net Inference Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --reinstall [Remove previous setup and reinstall (default:OFF)[options:ON/OFF]]
                             --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]]
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]

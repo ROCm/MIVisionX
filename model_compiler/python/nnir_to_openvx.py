@@ -122,6 +122,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #find the OPENVX backend type
 set(OPENVX_BACKEND_OPENCL_FOUND 0)
 set(OPENVX_BACKEND_HIP_FOUND 0)
+#TBD: ADD FindMIVisionX.cmake
 if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)
     file(READ ${ROCM_PATH}/include/mivisionx/openvx_backend.h OPENVX_BACKEND_FILE)
     string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})

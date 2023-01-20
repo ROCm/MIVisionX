@@ -41,7 +41,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # OpenCV -- Display Component
 find_package(OpenCV REQUIRED)
 
-# Choose Backend
+# Choose Backend - TBD: ADD FindMIVisionX.cmake
 set(MIVISIONX_BACKEND_OPENCL_FOUND 0)
 set(MIVISIONX_BACKEND_HIP_FOUND 0)
 if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h)

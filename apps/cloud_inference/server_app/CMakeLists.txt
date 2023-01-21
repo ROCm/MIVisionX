@@ -44,7 +44,7 @@ find_package(OpenCV REQUIRED)
 # RPP
 find_package(AMDRPP QUIET)
 
-# Choose Backend
+# Choose Backend - TBD: ADD FindMIVisionX.cmake
 set(MIVISIONX_BACKEND_OPENCL_FOUND 0)
 set(MIVISIONX_BACKEND_HIP_FOUND 0)
 if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h)

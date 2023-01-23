@@ -182,7 +182,7 @@ elif os.path.exists('/usr/bin/zypper'):
     platfromInfo = platfromInfo+'-SLES'
 else:
     print("\nMIVisionX Setup on "+platfromInfo+" is unsupported\n")
-    print("\nMIVisionX Setup Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 7/8/9; & SLES 15-SP2\n")
+    print("\nMIVisionX Setup Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3\n")
     exit()
 
 # MIVisionX Setup
@@ -445,7 +445,7 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install clang')
-        elif "redhat" in platfromInfo:
+        elif "redhat" in platfromInfo or "SLES" in platfromInfo:
             # Nasm & Yasm
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -453,11 +453,11 @@ else:
             # JSON-cpp
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install jsoncpp')
-            # clang+boost
+                      linuxSystemInstall_check+' install jsoncpp-devel')
+            # boost
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install boost-devel clang')
+                      linuxSystemInstall_check+' install boost-devel')
             # lmbd
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +

@@ -434,7 +434,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * Linux distribution
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
-  + SLES - `15-SP2`
+  + SLES - `15-SP3`
 * ROCm: rocm-core - `5.4.0.50400-72`
 * miopen-hip - `2.19.0.50400-72`
 * miopen-opencl - `2.18.0.50300-63`

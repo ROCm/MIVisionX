@@ -27,7 +27,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Library Tests Report"
 __license__ = "MIT"
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -49,7 +49,7 @@ def write_formatted(output, f):
 parser = argparse.ArgumentParser()
 parser.add_argument('--install_directory',    type=str, default='/opt/rocm',
                     help='MIVisionX Install Directory - optional')
-parser.add_argument('--backend_type',       type=str, default='OCL',
+parser.add_argument('--backend_type',       type=str, default='HIP',
                     help='Backend type - optional (default:CPU [options:CPU/HIP/OCL])')
 args = parser.parse_args()
 
@@ -74,11 +74,26 @@ MIVisionXAbsPath = os.path.abspath(installDir)
 
 # get data
 platform_name = platform.platform()
+
+if os.path.exists('/usr/bin/yum'):
+    if not "centos" in platform_name or not "redhat" in platform_name:
+        platfromInfo = platform_name+'-CentOS-RedHat'
+elif os.path.exists('/usr/bin/apt-get'):
+    if not "Ubuntu" in platform_name:
+        platform_name = platform_name+'-Ubuntu'
+elif os.path.exists('/usr/bin/zypper'):
+    if not "SLES" in platform_name:
+        platform_name = platform_name+'-SLES'
+else:
+    print("\nMIVisionX Library Test on "+platform_name+" is unsupported")
+    print("MIVisionX Library Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+    print("MIVisionX Library Test Results maynot be accurate\n")
+
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-reportFilename = 'libraries_report_%s_%s_%s.md' % (
+reportFilename = 'MIV_lib_report_%s_%s_%s.md' % (
     backendType, platform_name, file_dtstr)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
@@ -96,10 +111,12 @@ vxu_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvxu.so')
 # level 2 - Libraries
 loom_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_loomsl.so')
 # level 3 - libraries
-media_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_amd_media.so')
 opencv_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_opencv.so')
+media_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_amd_media.so')
+custom_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_amd_custom.so')
 # level 4 - libraries
 nn_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_nn.so')
+migraphx_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_amd_migraphx.so')
 # level 5 - libraries
 rpp_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_rpp.so')
 rocal_lib = shell('ldd '+MIVisionXAbsPath+'/lib/librocal.so')
@@ -154,25 +171,6 @@ with open(reportFilename, 'w') as f:
     else:
         write_formatted(vxu_lib, f)
     f.write("\n")
-    if backendType == 'OCL':
-        # Loom Libraries
-        f.write("* Loom Library\n")
-        if not loom_lib:
-            f.write("WARNING: Loom Library Not Built\n")
-            print("WARNING: Loom Library Not Built\n")
-            warning = 1
-        else:
-            write_formatted(loom_lib, f)
-        f.write("\n")
-        # AMD Media Libraries
-        f.write("* AMD Media Library\n")
-        if not media_lib:
-            f.write("WARNING: AMD Media Library Not Built\n")
-            print("WARNING: AMD Media Library Not Built\n")
-            warning = 1
-        else:
-            write_formatted(media_lib, f)
-        f.write("\n")
     # OpenCV Ext Libraries
     f.write("* VX OpenCV Ext Library\n")
     if not opencv_lib:
@@ -183,6 +181,34 @@ with open(reportFilename, 'w') as f:
         write_formatted(opencv_lib, f)
     f.write("\n")
     if backendType == 'OCL' or backendType == 'HIP':
+        if backendType == 'OCL':
+            # Loom Libraries
+            f.write("* Loom Library\n")
+            if not loom_lib:
+                f.write("WARNING: Loom Library Not Built\n")
+                print("WARNING: Loom Library Not Built\n")
+                warning = 1
+            else:
+                write_formatted(loom_lib, f)
+            f.write("\n")
+        # AMD Media Libraries
+        f.write("* AMD Media Library\n")
+        if not media_lib:
+            f.write("WARNING: AMD Media Library Not Built\n")
+            print("WARNING: AMD Media Library Not Built\n")
+            warning = 1
+        else:
+            write_formatted(media_lib, f)
+        f.write("\n")
+        # AMD Custom Libraries
+        f.write("* AMD Custom Library\n")
+        if not custom_lib:
+            f.write("WARNING: AMD Custom Library Not Built\n")
+            print("WARNING: AMD Custom Library Not Built\n")
+            warning = 1
+        else:
+            write_formatted(custom_lib, f)
+        f.write("\n")
         # VX NN Libraries
         f.write("* VX Neural Net Library\n")
         if not nn_lib:
@@ -191,6 +217,15 @@ with open(reportFilename, 'w') as f:
             warning = 1
         else:
             write_formatted(nn_lib, f)
+        f.write("\n")
+        # VX MIGraphX Libraries
+        f.write("* VX MIGraphX Library\n")
+        if not migraphx_lib:
+            f.write("WARNING: VX MIGraphX Library Not Built\n")
+            print("WARNING: VX MIGraphX Library Not Built\n")
+            warning = 1
+        else:
+            write_formatted(migraphx_lib, f)
         f.write("\n")
         # VX RPP Libraries
         f.write("* VX RPP Library\n")

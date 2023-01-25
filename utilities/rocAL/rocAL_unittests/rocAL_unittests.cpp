@@ -122,7 +122,8 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     /*>>>>>>>>>>>>>>>> Getting the path for MIVisionX-data  <<<<<<<<<<<<<<<<*/
 
     std::string rocal_data_path;
-    rocal_data_path = std::getenv("ROCAL_DATA_PATH");
+    if(std::getenv("ROCAL_DATA_PATH"))
+        rocal_data_path = std::getenv("ROCAL_DATA_PATH");
 
     /*>>>>>>>>>>>>>>>> Creating Rocal parameters  <<<<<<<<<<<<<<<<*/
 
@@ -261,7 +262,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                 exit(0);
             }
             // setting the default json path to ROCAL_DATA_PATH coco sample train annotation
-            std::string json_path = rocal_data_path + "/rocal_data/coco/coco_10_img/annotations/instances_train2017.json";
+            std::string json_path = rocal_data_path + "/rocal_data/coco/coco_10_img_keypoints/annotations/person_keypoints_val2017.json";
             float sigma = 3.0;
             rocalCreateCOCOReaderKeyPoints(handle, json_path.c_str(), true, sigma, (unsigned)width, (unsigned)height);
             if (decode_max_height <= 0 || decode_max_width <= 0)
@@ -269,6 +270,9 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             else
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
+        break;
+        default:
+        {
             std::cout << ">>>>>>> Running IMAGE READER" << std::endl;
             pipeline_type = 1;
             rocalCreateLabelReader(handle, path);

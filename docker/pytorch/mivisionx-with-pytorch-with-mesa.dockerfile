@@ -1,6 +1,9 @@
 ARG PYTORCH_VERSION=latest
 FROM rocm/pytorch:${PYTORCH_VERSION}
 
+ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.4.1/ubuntu/focal/amdgpu-install_5.4.50401-1_all.deb 
+ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.4.50401-1_all.deb
+
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
 
@@ -12,8 +15,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         sudo apt -y clean && sudo apt-get -y clean && dpkg --add-architecture i386 && \
         sudo rm -rf /etc/apt/sources.list.d/amdgpu.list && \
         sudo rm -rf /etc/apt/sources.list.d/rocm.list && \
-        wget https://repo.radeon.com/amdgpu-install/5.3/ubuntu/focal/amdgpu-install_5.3.50300-1_all.deb && \
-        sudo apt-get install -y ./amdgpu-install_5.3.50300-1_all.deb && \
+        wget ${ROCM_INSTALLER_REPO} && \
+        sudo apt-get install -y ./${ROCM_INSTALLER_PACKAGE} && \
         sudo apt-get update -y && \
         sudo amdgpu-install -y --usecase=graphics
 
@@ -47,12 +50,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev
         sudo ./b2 install threading=multi link=shared --with-system --with-filesystem && \
         ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
         sudo ./b2 install threading=multi link=static --with-system --with-filesystem && cd ../ && \
-        git clone -b 0.98  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
+        git clone -b 0.99  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd ../../ && \
         git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 
-ENV MIVISIONX_WORKSPACE=/mivisionx-deps
+ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE
 
 # Clone MIVisionX 

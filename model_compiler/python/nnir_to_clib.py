@@ -128,18 +128,14 @@ set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-
-# Changes for RPATH Removal from Binaries:
-# Since all public interface libraries are present in same folder 
-# RPATH/RUNPATH is not required
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
-set(CMAKE_SKIP_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 #find the OPENVX backend type
 set(OPENVX_BACKEND_OPENCL_FOUND 0)
 set(OPENVX_BACKEND_HIP_FOUND 0)
+#TBD: ADD FindMIVisionX.cmake
 if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)
     file(READ ${ROCM_PATH}/include/mivisionx/openvx_backend.h OPENVX_BACKEND_FILE)
     string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})

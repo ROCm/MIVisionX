@@ -269,9 +269,6 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             else
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
-        break;
-        default: //image pipeline
-        {
             std::cout << ">>>>>>> Running IMAGE READER" << std::endl;
             pipeline_type = 1;
             rocalCreateLabelReader(handle, path);

@@ -1,5 +1,8 @@
 FROM ubuntu:22.04
 
+ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.4.1/ubuntu/jammy/amdgpu-install_5.4.50401-1_all.deb
+ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.4.50401-1_all.deb
+
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
 
@@ -8,9 +11,10 @@ RUN apt-get update -y
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
 
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration &&  \
-        wget https://repo.radeon.com/amdgpu-install/5.3/ubuntu/jammy/amdgpu-install_5.3.50300-1_all.deb && \
-        sudo apt-get install -y ./amdgpu-install_5.3.50300-1_all.deb && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration libstdc++-12-dev &&  \
+        sudo apt-get -y clean && dpkg --add-architecture i386 && \
+        wget ${ROCM_INSTALLER_REPO} && \
+        sudo apt-get install -y ./${ROCM_INSTALLER_PACKAGE} && \
         sudo apt-get update -y && \
         sudo amdgpu-install -y --usecase=graphics,rocm
 
@@ -39,18 +43,19 @@ RUN apt-get update -y && apt-get -y install autoconf automake libbz2-dev libssl-
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd
 RUN apt-get -y install sqlite3 libsqlite3-dev libtool build-essential && \
-    wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 && tar xjvf boost_1_72_0.tar.bz2 && \
-    cd boost_1_72_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
+    wget https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.bz2 && tar xjvf boost_1_80_0.tar.bz2 && \
+    cd boost_1_80_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
     ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11" && \
     sudo ./b2 install threading=multi link=shared --with-system --with-filesystem && \
     ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
     sudo ./b2 install threading=multi link=static --with-system --with-filesystem
 RUN git clone -b v3.21.9 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
-RUN git clone -b 0.98  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
+RUN git clone -b 0.99  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd
 
-WORKDIR /workspace
+ENV MIVISIONX_WORKSPACE=/workspace
+WORKDIR $MIVISIONX_WORKSPACE
 
 # Clone MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \

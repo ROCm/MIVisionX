@@ -29,12 +29,7 @@ set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-
-# Changes for RPATH Removal from Binaries:
-# Since all public interface libraries are present in same folder 
-# RPATH/RUNPATH is not required
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
-set(CMAKE_SKIP_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # Add Default libdir
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
@@ -46,7 +41,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # OpenCV -- Display Component
 find_package(OpenCV REQUIRED)
 
-# Choose Backend
+# Choose Backend - TBD: ADD FindMIVisionX.cmake
 set(MIVISIONX_BACKEND_OPENCL_FOUND 0)
 set(MIVISIONX_BACKEND_HIP_FOUND 0)
 if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h)

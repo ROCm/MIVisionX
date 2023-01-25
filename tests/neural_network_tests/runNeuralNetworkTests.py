@@ -128,8 +128,8 @@ parser.add_argument('--miopen_find',        type=int, default=1,
                     help='MIOPEN_FIND_ENFORCE mode - optional (default:1 [range:1 - 5])')
 parser.add_argument('--test_info',          type=str, default='no',
                     help='Show test info - optional (default:no [options:no/yes])')
-parser.add_argument('--backend_type',       type=str, default='OCL',
-                    help='Backend type - optional (default:HOST [options:HOST/HIP/OCL])')
+parser.add_argument('--backend_type',       type=str, default='HIP',
+                    help='Backend type - optional (default:HIP [options:HOST/HIP/OCL])')
 parser.add_argument('--install_directory',    type=str, default='/opt/rocm',
                     help='MIVisionX Install Directory - optional')
 args = parser.parse_args()

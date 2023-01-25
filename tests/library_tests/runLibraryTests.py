@@ -87,7 +87,6 @@ elif os.path.exists('/usr/bin/zypper'):
 else:
     print("\nMIVisionX Library Test on "+platform_name+" is unsupported")
     print("MIVisionX Library Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
-    print("MIVisionX Library Test Results maynot be accurate\n")
     exit(1)
 
 print("\nMIVisionX Library Test V:"+__version__+" on "+platform_name+" is supported")

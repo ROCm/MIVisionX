@@ -128,8 +128,8 @@ parser.add_argument('--miopen_find',        type=int, default=1,
                     help='MIOPEN_FIND_ENFORCE mode - optional (default:1 [range:1 - 5])')
 parser.add_argument('--test_info',          type=str, default='no',
                     help='Show test info - optional (default:no [options:no/yes])')
-parser.add_argument('--backend_type',       type=str, default='OCL',
-                    help='Backend type - optional (default:HOST [options:HOST/HIP/OCL])')
+parser.add_argument('--backend_type',       type=str, default='HIP',
+                    help='Backend type - optional (default:HIP [options:HOST/HIP/OCL])')
 parser.add_argument('--install_directory',    type=str, default='/opt/rocm',
                     help='MIVisionX Install Directory - optional')
 args = parser.parse_args()
@@ -731,6 +731,20 @@ if profileMode == 0 or profileMode == 9:
 
 # get system data
 platform_name = platform.platform()
+if os.path.exists('/usr/bin/yum'):
+    if not "centos" in platform_name or not "redhat" in platform_name:
+        platfromInfo = platform_name+'-CentOS-RedHat'
+elif os.path.exists('/usr/bin/apt-get'):
+    if not "Ubuntu" in platform_name:
+        platform_name = platform_name+'-Ubuntu'
+elif os.path.exists('/usr/bin/zypper'):
+    if not "SLES" in platform_name:
+        platform_name = platform_name+'-SLES'
+else:
+    print("\nMIVisionX Neural Network Test on "+platform_name+" is unsupported")
+    print("MIVisionX Neural Network Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+    print("\nMIVisionX Neural Network Test on "+platform_name+" is unreliable")
+
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 

@@ -80,7 +80,7 @@ void CropNode::init(unsigned int crop_h, unsigned int crop_w)
     _crop_param->crop_h = crop_h;
     _crop_param->x1 = 0; 
     _crop_param->y1 = 0;
-    _crop_param->set_center_crop();
+    _crop_param->set_fixed_crop(0.5, 0.5);    // for center_crop
 }
 
 

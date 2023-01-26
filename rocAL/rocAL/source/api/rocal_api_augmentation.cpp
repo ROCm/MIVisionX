@@ -475,6 +475,7 @@ rocalResize(
         unsigned resize_shorter,
         unsigned resize_longer,
         RocalResizeInterpolationType interpolation_type) {
+
     Image* output = nullptr;
     if ((p_context == nullptr) || (p_input == nullptr)) {
         ERR("Invalid ROCAL context or invalid input image")
@@ -1747,7 +1748,7 @@ rocalCropFixed(
         ImageInfo output_info = input->info();
         output_info.width(crop_width);
         output_info.height(crop_height);
-        output = context->master_graph->create_image(input->info(), is_output);
+        output = context->master_graph->create_image(output_info, is_output);
         output->reset_image_roi();
         std::shared_ptr<CropNode> crop_node =  context->master_graph->add_node<CropNode>({input}, {output});
         crop_node->init(crop_height, crop_width, crop_pos_x, crop_pos_y);
@@ -1786,7 +1787,7 @@ rocalCropCenterFixed(
         ImageInfo output_info = input->info();
         output_info.width(crop_width);
         output_info.height(crop_height);
-        output = context->master_graph->create_image(input->info(), is_output);
+        output = context->master_graph->create_image(output_info, is_output);
         output->reset_image_roi();
         std::shared_ptr<CropNode> crop_node =  context->master_graph->add_node<CropNode>({input}, {output});
         crop_node->init(crop_height, crop_width);

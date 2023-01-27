@@ -21,7 +21,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from amd.rocal.plugin.pytorch import ROCALClassificationIterator
+from amd.rocal.plugin.generic import ROCALClassificationIterator
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
@@ -33,7 +33,9 @@ def draw_patches(img, idx, device):
     import cv2
     args = parse_args()
     if device == "cpu":
-            image = img.detach().numpy()
+        print("draw patch --- ", type(img))
+        image = img
+        #image = img.detach().numpy()
     else:
         image = img.cpu().numpy()
     if not args.NHWC:
@@ -168,7 +170,7 @@ def main():
     # Dataloader
     data_loader = ROCALClassificationIterator(pipe,device=device)
     cnt = 0
-
+    print("dat_loader ---- ", data_loader)
     import timeit
     start = timeit.default_timer()
 
@@ -176,6 +178,7 @@ def main():
     for epoch in range(int(args.num_epochs)):
         print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):
+            print("it ---- ", type(it))
             if args.print_tensor:
                 print("**************", i, "*******************")
                 print("**************starts*******************")

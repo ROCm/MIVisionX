@@ -112,7 +112,7 @@ class Pipeline(object):
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
         self._check_ops_decoder = ["ImageDecoder", "ImageDecoderSlice" , "ImageDecoderRandomCrop", "ImageDecoderRaw"]
-        self._check_ops_reader = ["FileReader", "TFRecordReaderClassification", "TFRecordReaderDetection",
+        self._check_ops_reader = ["labelReader", "TFRecordReaderClassification", "TFRecordReaderDetection",
             "COCOReader", "Caffe2Reader", "Caffe2ReaderDetection", "CaffeReader", "CaffeReaderDetection"]
         self._batch_size = batch_size
         self._num_threads = num_threads
@@ -267,7 +267,11 @@ class Pipeline(object):
         return b.getBBCords(self._handle, array)
 
     def getImageLabels(self, array):
-        b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
+        if (isinstance(array,np.ndarray)):
+            print("in if case for numpy array!!!!")
+            b.getImageLabels(self._handle, ctypes.c_void_p(array.ctypes.data))
+        else:
+            b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
         b.rocalCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)

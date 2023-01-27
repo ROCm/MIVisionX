@@ -263,22 +263,25 @@ int InferenceEngineRocalHip::run() {
         // create OpenVX context
         vx_status status;
         openvx_context[gpu] = vxCreateContext();
-        if((status = vxGetStatus((vx_reference)openvx_context[gpu])) != VX_SUCCESS)
+        if((status = vxGetStatus((vx_reference)openvx_context[gpu])) != VX_SUCCESS) {
             fatal("InferenceEngine: vxCreateContext(#%d) failed (%d)", gpu, status);
+        }
         //set the device for context if specified.
         if (gpu < hip_num_devices) {
             int hipDevice = gpu;
-            if((status = vxSetContextAttribute(openvx_context[gpu],
-                    VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE,
-                    &hipDevice, sizeof(hipDevice)) != VX_SUCCESS))
+            status = vxSetContextAttribute(openvx_context[gpu], VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &hipDevice, sizeof(hipDevice);
+            if(status != VX_SUCCESS)) {
                 fatal("vxSetContextAttribute for hipDevice(#%d, %d) failed ", hipDevice, status);
-        } else
+            }
+        } else {
             fatal("ERROR: HIP Device(%d) out of range %d", gpu);
+        }
 
         // create rocAL Handle 
         rocalHandle[gpu] = rocalCreate(batchSize, RocalProcessMode::ROCAL_PROCESS_CPU, 0, 1);
-        if((status = rocalGetStatus(rocalHandle[gpu])) != ROCAL_OK)
+        if((status = rocalGetStatus(rocalHandle[gpu])) != ROCAL_OK) {
             fatal("InferenceEngine: rocalCreate(#%d) failed (%d)", gpu, status);
+        }
 
         RocalImage input = rocalJpegFileSourceSingleShard(rocalHandle[gpu], folderPath.c_str(), RocalImageColor::ROCAL_COLOR_RGB24, gpu, GPUs, false, false, loop);
         RocalImage image1 = rocalResize(rocalHandle[gpu], input, dimInput[1], dimInput[0], true); //todo : resize w/h

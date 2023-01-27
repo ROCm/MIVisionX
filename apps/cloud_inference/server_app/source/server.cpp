@@ -44,7 +44,6 @@ int connection(int sock, Arguments * args, std::string clientName)
         close(sock);
         return error("received incorrect response to INFCOM_CMD_SEND_MODE from %s", clientName.c_str());
     }
-
     // run proper module
     int status = 0;
     if(mode == INFCOM_MODE_CONFIGURE) {
@@ -57,7 +56,13 @@ int connection(int sock, Arguments * args, std::string clientName)
 #if ENABLE_OPENCL      
         InferenceEngine * ie = new InferenceEngine(sock, args, clientName, &cmd);
 #else
-        InferenceEngineHip * ie = new InferenceEngineHip(sock, args, clientName, &cmd);
+        InferenceEngineHip * ie;
+        int decodeMode = cmd.data[11];
+        std::string dataFolder(cmd.path);
+        if(decodeMode == 0) 
+            ie = new InferenceEngineHip(sock, args, clientName, &cmd);
+        else if(decodeMode == 1)    
+            ie = new InferenceEngineRocalHip(sock, args, clientName, &cmd, dataFolder);
 #endif        
         if(ie) {
             status = ie->run();

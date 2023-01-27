@@ -146,6 +146,7 @@ typedef struct {
     int command;
     int data[14];
     char message[128];
+    char path[128];
 } InfComCommand;
 
 #endif

@@ -93,6 +93,7 @@ public:
     bool sendScaledImages;
     int sendFileName;
     int topKValue;
+    int decodeMode;
     //test summary
     int top1Count,top2Count,top3Count,top4Count,top5Count;
     int topKPassFail[100][2];
@@ -124,7 +125,7 @@ public:
             QVector<QString> * dataLabels, QVector<QString> * dataHierarchy,
             QString dataFilename, QString dataFolder,
             int dimInput[3], int GPUs, int dimOutput[3], int maxImageDataSize,
-            bool repeat_images, bool sendScaledImages, int enableSF, int topKValue,
+            bool repeat_images, bool sendScaledImages, int enableSF, int topKValue, int decodeMode,
             QWidget *parent = 0);
     ~inference_viewer();
 

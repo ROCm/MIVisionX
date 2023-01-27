@@ -107,6 +107,7 @@ private:
     QComboBox * comboInvertInputChannels;
     QComboBox * comboPublishOptions;
     QComboBox * comboTopKResult;
+    QComboBox * comboDecodeMode;
     QLineEdit * editModelName;
     QPushButton * buttonModelFile1;
     QPushButton * buttonModelFile2;
@@ -143,6 +144,7 @@ private:
     int sendFileName;
     int enableTopK;
     int topKValue;
+    int decodeMode;
     QVector<QString> * dataLabels;
     QVector<QString> * dataHierarchy;
     QVector<QString> typeModelFile1Label;

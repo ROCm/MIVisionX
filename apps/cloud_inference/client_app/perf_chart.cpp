@@ -129,9 +129,10 @@ void perf_chart::rescaleAxis(double key) {
 void perf_chart::updateFPSValue(int fpsValue)
 {
     mFPSValue = fpsValue;
-    if (mFPSValue > mMaxFPS)
+    if (mFPSValue > mMaxFPS) {
         mMaxFPS = mFPSValue;
         ui->maxfps_lcdNumber->display(mMaxFPS);
+    }
 }
 
 void perf_chart::setGPUs(int numGPUs)

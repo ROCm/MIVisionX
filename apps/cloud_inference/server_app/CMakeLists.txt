@@ -41,6 +41,9 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # OpenCV -- Display Component
 find_package(OpenCV REQUIRED)
 
+# RPP
+find_package(AMDRPP QUIET)
+
 # Choose Backend - TBD: ADD FindMIVisionX.cmake
 set(MIVISIONX_BACKEND_OPENCL_FOUND 0)
 set(MIVISIONX_BACKEND_HIP_FOUND 0)
@@ -125,6 +128,11 @@ if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
 else()
 	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
+
+# rocAL Support
+include_directories(${ROCM_PATH}/include/mivisionx/rocal)
+link_directories(${ROCM_PATH}/lib/)
+target_link_libraries(${PROJECT_NAME} rocal)
 
 # Install Application in ROCm Bin Directory
 install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

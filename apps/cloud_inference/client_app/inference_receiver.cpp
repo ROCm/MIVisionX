@@ -135,7 +135,7 @@ void inference_receiver::run()
                 strncpy(reply.message, text.toStdString().c_str(), sizeof(reply.message));
 
                 QString path = dataFolder;
-                strncpy(reply.path, path.toStdString().c_str(), sizeof(reply.path));
+                strncpy(reply.path, path.toStdString().c_str(), sizeof(reply.path+1));
                 connection->sendCmd(reply);
             }
             else if(cmd.command == INFCOM_CMD_SEND_IMAGES) {

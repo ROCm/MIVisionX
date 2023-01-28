@@ -1,4 +1,4 @@
-# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 __author__      = "Kiriti Nagesh Gowda"
-__copyright__   = "Copyright 2018 - 2022, AMD Dataset Analysis Tool"
+__copyright__   = "Copyright 2018 - 2023, AMD Dataset Analysis Tool"
 __credits__     = ["Mike Schmit"]
 __license__     = "MIT"
 __version__     = "0.9.0"
@@ -1585,7 +1585,7 @@ print ("\t</td></tr>");
 print ("\t</table>");
 print ("\t<br><br><br>");
 #TBD: symbol
-print ("\t\t<div class=\"footer\"> <p>2018 - 2022 Advanced Micro Devices, Inc</p></div>");
+print ("\t\t<div class=\"footer\"> <p>2018 - 2023 Advanced Micro Devices, Inc</p></div>");
 print ("\t");
 print ("\n</body>");
 print ("\n</html>");

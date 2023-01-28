@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import sys
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Neural Net Test Full Report"
+__copyright__ = "Copyright 2018 - 2023, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
 __version__ = "1.1.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -835,7 +835,7 @@ with open(reportFilename, 'w') as f:
     write_formatted(lib_tree, f)
     f.write("\n")
 
-    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2021 -- runNeuralNetworkTests.py V-"+__version__+"**\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2023 -- runNeuralNetworkTests.py V-"+__version__+"**\n")
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)

@@ -1,5 +1,5 @@
 __author__      = "Kiriti Nagesh Gowda"
-__copyright__   = "Copyright 2019 - 2022, AMD MIVisionX"
+__copyright__   = "Copyright 2019 - 2023, AMD MIVisionX"
 __credits__     = ["Mike Schmit; Hansel Yang; Lakshmi Kumar;"]
 __license__     = "MIT"
 __version__     = "1.0"

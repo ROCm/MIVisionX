@@ -150,9 +150,11 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Linux distribution
   + **Ubuntu** - `20.04` / `22.04`
   + **CentOS** - `7` / `8`
+  + **RedHat** - `8` / `9`
+  + **SLES** - `15-SP3`
 * Install [ROCm](https://docs.amd.com)
 * CMake 3.0 or later
-* ROCm CMake, MIOpenGEMM & MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
+* ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
@@ -173,6 +175,8 @@ For the convenience of the developer, we here provide the setup script which wil
 * Linux distribution
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
+  + RedHat - `8` / `9`
+  + SLES - `15-SP3`
 * [ROCm supported hardware](https://docs.amd.com)
 * [ROCm](https://docs.amd.com)
 
@@ -434,6 +438,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * Linux distribution
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
+  + RedHat - `8` / `9`
   + SLES - `15-SP3`
 * ROCm: rocm-core - `5.4.0.50400-72`
 * miopen-hip - `2.19.0.50400-72`

@@ -3,7 +3,7 @@ Upstream-Name: mivisionx
 Source: https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX
 
 Files: *
-Copyright: 2015 - 2022 Advanced Micro Devices, Inc.
+Copyright: 2015 - 2023 Advanced Micro Devices, Inc.
 License: MIT
 
 License: MIT

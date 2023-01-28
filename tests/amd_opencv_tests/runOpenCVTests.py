@@ -1,4 +1,4 @@
-# Copyright (c) 2020 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2020 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import sys
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2021 - 2022, AMD MIVisionX - AMD OpenCV EXT Vision Test Full Report"
+__copyright__ = "Copyright 2021 - 2023, AMD MIVisionX - AMD OpenCV EXT Vision Test Full Report"
 __license__ = "MIT"
 __version__ = "1.0.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -268,7 +268,7 @@ with open(reportFilename, 'w') as f:
     f.write("\n")
 
     f.write(
-        "\n\n---\n**Copyright AMD ROCm MIVisionX 2021 - 2022 -- runOpenCVTests.py V-"+__version__+"**\n")
+        "\n\n---\n**Copyright AMD ROCm MIVisionX 2021 - 2023 -- runOpenCVTests.py V-"+__version__+"**\n")
     f.write("\n")
 
     # report file

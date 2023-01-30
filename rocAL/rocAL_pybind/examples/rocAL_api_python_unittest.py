@@ -27,23 +27,20 @@ import amd.rocal.fn as fn
 import amd.rocal.types as types
 from parse_config import parse_args
 import os
+import cupy as cp
 
 def draw_patches(img, idx, device):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     args = parse_args()
-    if device == "cpu":
-        print("draw patch --- ", type(img))
-        image = img
-        #image = img.detach().numpy()
-    else:
-        image = img.cpu().numpy()
+    if device == "gpu":
+        img = cp.asnumpy(img)
     if not args.NHWC:
-        image = image.transpose([1, 2, 0])
+        img = img.transpose([1, 2, 0])
     if args.fp16:
-        image = (image).astype('uint8')
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name + "/" + str(idx)+"_"+"train"+".png", image)
+        img = (img).astype('uint8')
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/FILE_READER/" + args.augmentation_name + "/" + str(idx)+"_"+"train"+".png", img)
 
 
 def main():
@@ -58,6 +55,7 @@ def main():
     num_threads = args.num_threads
     random_seed = args.seed
     local_rank =  args.local_rank
+    device_id = args.device_id
     world_size =  args.world_size
     display = True if args.display else False
     try:
@@ -68,7 +66,7 @@ def main():
     except OSError as error:
         print(error)
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu, tensor_layout=types.NHWC if args.NHWC else types.NCHW , tensor_dtype=types.FLOAT16 if args.fp16 else types.FLOAT)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=device_id, seed=random_seed, rocal_cpu=rocal_cpu, tensor_layout=types.NHWC if args.NHWC else types.NCHW , tensor_dtype=types.FLOAT16 if args.fp16 else types.FLOAT)
     # Set Params
     output_set = 0
     rocal_device = 'cpu' if rocal_cpu else 'gpu'
@@ -168,9 +166,8 @@ def main():
     # build the pipeline
     pipe.build()
     # Dataloader
-    data_loader = ROCALClassificationIterator(pipe,device=device)
+    data_loader = ROCALClassificationIterator(pipe,device=device,device_id=device_id)
     cnt = 0
-    print("dat_loader ---- ", data_loader)
     import timeit
     start = timeit.default_timer()
 
@@ -178,7 +175,6 @@ def main():
     for epoch in range(int(args.num_epochs)):
         print("EPOCH:::::", epoch)
         for i, it in enumerate(data_loader, 0):
-            print("it ---- ", type(it))
             if args.print_tensor:
                 print("**************", i, "*******************")
                 print("**************starts*******************")
@@ -189,7 +185,7 @@ def main():
             for img in it[0]:
                 cnt = cnt+1
                 if display:
-                    draw_patches(img, cnt, device)
+                    draw_patches(img, cnt, rocal_device)
 
             break
         data_loader.reset()

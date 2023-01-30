@@ -86,7 +86,8 @@ class ROCALGenericIterator(object):
                 self.labels = np.empty(self.labels_size, dtype = np.int32)
 
             else:
-                #torch_gpu_device = torch.device('cuda', self.device_id)
+                gpu_device = cp.cuda.Device(self.device_id)
+                gpu_device.use()
                 if self.tensor_dtype == types.FLOAT:
                     self.out = cp.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=cp.float32)
                 elif self.tensor_dtype == types.FLOAT16:
@@ -100,10 +101,10 @@ class ROCALGenericIterator(object):
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = np.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=np.float16)
                 self.labels = np.empty(self.labels_size, dtype = np.int32)
-                print("created out tensor and label tensor", self.out.shape, self.labels.shape)
 
             else:
-                #torch_gpu_device = cp.device('cuda', self.device_id)
+                gpu_device = cp.cuda.Device(self.device_id)
+                gpu_device.use()
                 if self.tensor_dtype == types.FLOAT:
                     self.out = cp.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=cp.float32)
                 elif self.tensor_dtype == types.FLOAT16:
@@ -120,7 +121,6 @@ class ROCALGenericIterator(object):
         return self.__next__()
 
     def __next__(self):
-        print("loader type --- ", self.loader._name)
         if(b.isEmpty(self.loader._handle)):
             raise StopIteration
 
@@ -128,8 +128,7 @@ class ROCALGenericIterator(object):
             raise StopIteration
 
         if(types.NCHW == self.tensor_format):
-            self.loader.copyToTensorNCHW(self.out, 
-                self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
+            self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
     
@@ -138,13 +137,15 @@ class ROCALGenericIterator(object):
                 self.loader.GetOneHotEncodedLabels(self.labels, self.device)
                 self.labels_tensor = self.labels.view(-1, self.bs, self.loader._numOfClasses).long()
             else:
-                print("in iterator loop --- ", self.out , self.labels)
                 if self.display:
                     for i in range(self.bs):
                         img = (self.out)
                         draw_patches(img[i], i, 0)
                 self.loader.getImageLabels(self.labels)
-                self.labels_tensor = self.labels.astype(dtype=np.int_)
+                if self.device == "cpu":
+                    self.labels_tensor = self.labels.astype(dtype=np.int_)
+                else:
+                    self.labels_tensor = self.labels.astype(dtype=cp.int_)
 
             return self.out, self.labels_tensor
 

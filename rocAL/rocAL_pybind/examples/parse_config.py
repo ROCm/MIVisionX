@@ -63,6 +63,8 @@ def parse_args():
     common_group.add_argument('--fp16', default=False, action='store_true',
                         help='run input pipeline fp16 format')
     
+    common_group.add_argument('--device-id', type=int, default=0,
+                        help='choose the GPU device for rocal GPU mode')
     common_group.add_argument('--local-rank', type=int, default=0,
                         help='number of examples for each iteration')
     common_group.add_argument('--world-size', '-w', type=int, default=1,

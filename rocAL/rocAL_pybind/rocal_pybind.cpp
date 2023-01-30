@@ -147,9 +147,47 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_cupy_tensor32(RocalContext context, size_t array_ptr,
+                                RocalTensorLayout tensor_format, float multiplier0,
+                                float multiplier1, float multiplier2, float offset0,
+                                float offset1, float offset2,
+                                bool reverse_channels)
+    {
+        float * ptr = (float*)array_ptr;
+        // call pure C++ function
+        int status = rocalCopyToOutputTensor32(context, ptr, tensor_format, multiplier0,
+                                              multiplier1, multiplier2, offset0,
+                                              offset1, offset2, reverse_channels);
+        // std::cerr<<"\n Copy failed with status :: "<<status;
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_cupy_tensor16(RocalContext context, size_t array_ptr,
+                                RocalTensorLayout tensor_format, float multiplier0,
+                                float multiplier1, float multiplier2, float offset0,
+                                float offset1, float offset2,
+                                bool reverse_channels)
+    {
+        float16 * ptr = (float16*)array_ptr;
+        // call pure C++ function
+        int status = rocalCopyToOutputTensor16(context, ptr, tensor_format, multiplier0,
+                                              multiplier1, multiplier2, offset0,
+                                              offset1, offset2, reverse_channels);
+        // std::cerr<<"\n Copy failed with status :: "<<status;
+        return py::cast<py::none>(Py_None);
+    }
+
     py::object wrapper_label_copy(RocalContext context, py::object p)
     {
         auto ptr = ctypes_void_ptr(p);
+        // call pure C++ function
+        rocalGetImageLabels(context,ptr);
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_cupy_label_copy(RocalContext context, size_t array_ptr)
+    {
+        void * ptr = (void*)array_ptr;
         // call pure C++ function
         rocalGetImageLabels(context,ptr);
         return py::cast<py::none>(Py_None);
@@ -356,6 +394,7 @@ namespace rocal{
         m.def("COCOReader",&rocalCreateCOCOReader);
         m.def("VideoMetaDataReader",&rocalCreateVideoLabelReader);
         m.def("getImageLabels",&wrapper_label_copy);
+        m.def("getCupyImageLabels",&wrapper_cupy_label_copy);
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
         m.def("rocalCopyEncodedBoxesAndLables",&wrapper_encoded_bbox_label);
@@ -388,6 +427,8 @@ namespace rocal{
         m.def("rocalCopyToOutputTensor",&wrapper_tensor);
         m.def("rocalCopyToOutputTensor32",&wrapper_tensor32);
         m.def("rocalCopyToOutputTensor16",&wrapper_tensor16);
+        m.def("rocalCopyCupyToOutputTensor32",&wrapper_cupy_tensor32);
+        m.def("rocalCopyCupyToOutputTensor16",&wrapper_cupy_tensor16);
         // rocal_api_data_loaders.h
         m.def("COCO_ImageDecoderSlice",&rocalJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference);

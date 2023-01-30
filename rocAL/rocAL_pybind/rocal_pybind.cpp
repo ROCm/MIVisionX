@@ -424,21 +424,7 @@ namespace rocal{
         m.def("VideoDecoder",&rocalVideoFileSource,"Reads videos from the source given and decodes it according to the policy only for Videos as inputs",
             py::return_value_policy::reference);
         m.def("VideoDecoderResize",&rocalVideoFileResize,"Reads videos from the source given and decodes it according to the policy only for Videos as inputs. Resizes the decoded frames to the dest width and height.",
-            py::return_value_policy::reference,
-            py::arg("p_context"),
-            py::arg("source_path"),
-            py::arg("color_format"),
-            py::arg("decoder_mode"),
-            py::arg("shard_count"),
-            py::arg("sequence_length"),
-            py::arg("dest_width"),
-            py::arg("dest_height"),
-            py::arg("shuffle") = false,
-            py::arg("is_output"),
-            py::arg("loop") = false,
-            py::arg("frame_step"),
-            py::arg("frame_stride"),
-            py::arg("file_list_frame_num") = false);
+            py::return_value_policy::reference);
         m.def("SequenceReader",&rocalSequenceReader,"Creates JPEG image reader and decoder. Reads [Frames] sequences from a directory representing a collection of streams.",
             py::return_value_policy::reference,
             py::arg("context"),

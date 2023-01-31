@@ -363,7 +363,7 @@ def _discriminate_args(func, **func_kwargs):
 
 def pipeline_def(fn=None, **pipeline_kwargs):
     """
-    Decorator that converts a graph definition function into a DALI pipeline factory.
+    Decorator that converts a graph definition function into a rocAL pipeline factory.
 
     A graph definition function is a function that returns intended pipeline outputs.
     You can decorate this function with ``@pipeline_def``::
@@ -382,7 +382,7 @@ def pipeline_def(fn=None, **pipeline_kwargs):
         # pipe.build()  # the pipeline is not configured properly yet
 
     A pipeline requires additional parameters such as batch size, number of worker threads,
-    GPU device id and so on (see :meth:`nvidia.dali.Pipeline()` for a
+    GPU device id and so on (see :meth:`amd.rocal.Pipeline()` for a
     complete list of pipeline parameters).
     These parameters can be supplied as additional keyword arguments,
     passed to the decorated function::

@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2020 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2020 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -297,7 +297,7 @@ int main(int argc, const char **argv)
                     if (color_format == RocalImageColor::ROCAL_COLOR_RGB24)
                     {
                         cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-                        cv::imwrite(save_image_path, mat_output);
+                        cv::imwrite(save_image_path, mat_color);
 			            video_writer.write(mat_color);
                     }
                     else

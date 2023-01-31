@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,11 @@ THE SOFTWARE.
 #include <iostream>
 #include <QThread>
 
-bool inference_receiver::abortRequsted = false;
+bool inference_receiver::abortRequested = false;
 
 void inference_receiver::abort()
 {
-    abortRequsted = true;
+    abortRequested = true;
 }
 
 inference_receiver::inference_receiver(
@@ -37,7 +37,7 @@ inference_receiver::inference_receiver(
         int GPUs_, int * inputDim_, int * outputDim_, const char * runtimeOptions_,
         QVector<QByteArray> * imageBuffer_,
         runtime_receiver_status * progress_, int sendFileName_, int topKValue_,
-        QVector<QString> * shadowFileBuffer_,
+        QVector<QString> * shadowFileBuffer_, int decodeMode_,  QString dataFolder_,
         QObject *parent) : QObject(parent)
 {
     perfRate = 0;
@@ -57,6 +57,8 @@ inference_receiver::inference_receiver(
     progress = progress_;
     sendFileName = sendFileName_;
     topKValue = topKValue_;
+    decodeMode = decodeMode_;
+    dataFolder = dataFolder_;
     shadowFileBuffer = shadowFileBuffer_;
 }
 
@@ -102,9 +104,8 @@ void inference_receiver::run()
     if(connection->connected()) {
         int nextImageToSend = 0;
         InfComCommand cmd;
-        while(!abortRequsted && connection->recvCmd(cmd)) {
-        {
-            if(abortRequsted)
+        while(!abortRequested && connection->recvCmd(cmd)) {
+            if(abortRequested)
                 break;
             if(cmd.magic != INFCOM_MAGIC) {
                 progress->errorCode = -1;
@@ -123,8 +124,8 @@ void inference_receiver::run()
                 InfComCommand reply = {
                     INFCOM_MAGIC, INFCOM_CMD_SEND_MODE,
                     { INFCOM_MODE_INFERENCE, GPUs,
-                      inputDim[0], inputDim[1], inputDim[2], outputDim[0], outputDim[1], outputDim[2], sendFileName, topKValue },
-                    { 0 }
+                      inputDim[0], inputDim[1], inputDim[2], outputDim[0], outputDim[1], outputDim[2], sendFileName, topKValue, 0, decodeMode, progress->repeat_images },
+                    { 0 }, { 0 }
                 };
                 QString text = modelName;
                 if(runtimeOptions || *runtimeOptions) {
@@ -132,6 +133,9 @@ void inference_receiver::run()
                     text += runtimeOptions;
                 }
                 strncpy(reply.message, text.toStdString().c_str(), sizeof(reply.message));
+
+                QString path = dataFolder;
+                strlcpy(reply.path, path.toStdString().c_str(), sizeof(reply.path));
                 connection->sendCmd(reply);
             }
             else if(cmd.command == INFCOM_CMD_SEND_IMAGES) {
@@ -142,7 +146,7 @@ void inference_receiver::run()
                 InfComCommand reply = {
                     INFCOM_MAGIC, INFCOM_CMD_SEND_IMAGES,
                     { count },
-                    { 0 }
+                    { 0 }, { 0 }
                 };
                 if(!connection->sendCmd(reply))
                     break;
@@ -152,12 +156,12 @@ void inference_receiver::run()
                     if (sendFileName) {
                         QByteArray fileNameBuffer;
                         fileNameBuffer.append((*shadowFileBuffer)[nextImageToSend]);
-                        if(!connection->sendImage(nextImageToSend, fileNameBuffer, progress->errorCode, progress->message, abortRequsted)) {
+                        if(!connection->sendImage(nextImageToSend, fileNameBuffer, progress->errorCode, progress->message, abortRequested)) {
                             failed = true;
                             break;
                         }
                     }
-                    else if(!connection->sendImage(nextImageToSend, (*imageBuffer)[nextImageToSend], progress->errorCode, progress->message, abortRequsted)) {
+                    else if(!connection->sendImage(nextImageToSend, (*imageBuffer)[nextImageToSend], progress->errorCode, progress->message, abortRequested)) {
                         failed = true;
                         break;
                     }
@@ -252,13 +256,12 @@ void inference_receiver::run()
             }
         }
     }
-    }
     else {
         progress->errorCode = -1;
         progress->message.sprintf("ERROR: Unable to connect to %s:%d", serverHost.toStdString().c_str(), serverPort);
     }
 
-    if(abortRequsted)
+    if(abortRequested)
         progress->message += "[stopped]";
     connection->close();
     delete connection;

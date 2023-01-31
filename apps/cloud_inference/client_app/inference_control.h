@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -107,6 +107,7 @@ private:
     QComboBox * comboInvertInputChannels;
     QComboBox * comboPublishOptions;
     QComboBox * comboTopKResult;
+    QComboBox * comboDecodeMode;
     QLineEdit * editModelName;
     QPushButton * buttonModelFile1;
     QPushButton * buttonModelFile2;
@@ -143,6 +144,7 @@ private:
     int sendFileName;
     int enableTopK;
     int topKValue;
+    int decodeMode;
     QVector<QString> * dataLabels;
     QVector<QString> * dataHierarchy;
     QVector<QString> typeModelFile1Label;

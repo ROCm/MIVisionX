@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -54,7 +54,7 @@ public:
             int GPUs, int * inputDim, int * outputDim, const char * runtimeOptions,
             QVector<QByteArray> * imageBuffer,
             runtime_receiver_status * progress, int sendFileName, int topKValue,
-            QVector<QString> * shadowFileBuffer,
+            QVector<QString> * shadowFileBuffer, int decodeMode, QString dataFolder,
             QObject *parent = nullptr);
     ~inference_receiver();
 
@@ -72,7 +72,7 @@ public slots:
     void run();
 
 private:
-    static bool abortRequsted;
+    static bool abortRequested;
 
 private:
     std::mutex mutex;
@@ -99,6 +99,8 @@ private:
     runtime_receiver_status * progress;
     int sendFileName;
     int topKValue;
+    int decodeMode;
+    QString dataFolder;
 };
 
 #endif // INFERENCE_RECEIVER_H

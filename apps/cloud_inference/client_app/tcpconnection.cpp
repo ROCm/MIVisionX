@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -110,7 +110,7 @@ bool TcpConnection::sendFile(int command, const QString fileName, volatile int& 
     InfComCommand reply = {
         INFCOM_MAGIC, command,
         { byteArray.size(), 0 },
-        { 0 }
+        { 0 }, { 0 }
     };
     QStringList text = fileName.split("/");
     strncpy(reply.message, text[text.size()-1].toStdString().c_str(), sizeof(reply.message));

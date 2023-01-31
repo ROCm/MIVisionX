@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33,9 +33,13 @@ THE SOFTWARE.
 #include <vector>
 #include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <condition_variable>
 #include <VX/vx.h>
 #include <vx_ext_amd.h>
+#include <rocal_api.h>
+#include <rocal_api_data_loaders.h>
+#include <rocal_api_meta_data.h>
 
 // inference scheduler modes
 //   NO_INFERENCE_SCHEDULER    - no scheduler (i.e., network connection with respond back immediately)
@@ -210,7 +214,7 @@ class InferenceEngine {
 public:
     InferenceEngine() {}; // default constructor
     InferenceEngine(int sock, Arguments * args, const std::string clientName, InfComCommand * cmd);
-    ~InferenceEngine();
+    virtual ~InferenceEngine();
     virtual int run();
 
 protected:
@@ -226,7 +230,10 @@ protected:
     virtual void workDeviceProcess(int gpu);
     virtual void workDeviceOutputCopy(int gpu);
 #endif
-
+    long mCount = 0;
+    double mLoadTime = 0;
+    double mDecodeTime = 0;
+    double mProcessTime = 0;
     // configuration
     int sock;
     Arguments * args;
@@ -238,6 +245,8 @@ protected:
     bool useShadowFilenames;
     bool receiveFileNames;
     int topK;
+    int decodeMode;
+    bool loop;
     int reverseInputChannelOrder;
     float preprocessMpy[3];
     float preprocessAdd[3];
@@ -340,16 +349,6 @@ protected:
     virtual void workDeviceOutputCopy(int gpu);
 #endif
 
-    MessageQueue<std::tuple<int,char *,int>> inputQ;
-    // scheduler device queues
-    MessageQueue<int>                    * queueDeviceTagQ[MAX_NUM_GPU];
-    MessageQueue<std::tuple<char *,int>> * queueDeviceImageQ[MAX_NUM_GPU];
-
-    vx_context openvx_context[MAX_NUM_GPU];
-    vx_graph openvx_graph[MAX_NUM_GPU];
-    vx_tensor openvx_input[MAX_NUM_GPU];
-    vx_tensor openvx_output[MAX_NUM_GPU];
-
 private:
     void dumpBuffer(hipStream_t stream, void * mem, size_t size, std::string fileName);
     MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemIdle[MAX_NUM_GPU];
@@ -361,6 +360,39 @@ private:
     hipDeviceProp_t     *hip_dev_prop[MAX_NUM_GPU];
     hipStream_t         hip_stream[MAX_NUM_GPU];
 
+};
+
+class InferenceEngineRocalHip:public InferenceEngineHip
+{
+public:
+    InferenceEngineRocalHip(int sock_, Arguments * args, const std::string clientName, InfComCommand * cmd, const std::string folderPath);
+    ~InferenceEngineRocalHip();
+    int run();
+
+protected:
+
+    virtual void workMasterInputQ();
+    virtual void workDeviceInputCopy(int gpu);
+    virtual void workDeviceProcess(int gpu);
+    virtual void workDeviceOutputCopy(int gpu);
+
+    // scheduler device queues
+    MessageQueue<std::string>            * queueDeviceNameQ[MAX_NUM_GPU];
+
+    // rocal Handles
+    RocalContext rocalHandle[MAX_NUM_GPU];
+
+private:
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemIdle[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceInputMemBusy[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceOutputMemIdle[MAX_NUM_GPU];
+    MessageQueue<std::pair<void *, void *>>       * queueDeviceOutputMemBusy[MAX_NUM_GPU];
+    // scheduler resources
+    int                 device_id[MAX_NUM_GPU];
+    hipDeviceProp_t     *hip_dev_prop[MAX_NUM_GPU];
+    hipStream_t         hip_stream[MAX_NUM_GPU];
+    std::string folderPath;
+    std::unordered_map<std::string, int> fileNameMap;
 };
 #endif
 #endif

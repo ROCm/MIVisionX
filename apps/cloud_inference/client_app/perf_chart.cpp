@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -129,9 +129,10 @@ void perf_chart::rescaleAxis(double key) {
 void perf_chart::updateFPSValue(int fpsValue)
 {
     mFPSValue = fpsValue;
-    if (mFPSValue > mMaxFPS)
+    if (mFPSValue > mMaxFPS) {
         mMaxFPS = mFPSValue;
         ui->maxfps_lcdNumber->display(mMaxFPS);
+    }
 }
 
 void perf_chart::setGPUs(int numGPUs)

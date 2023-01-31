@@ -55,7 +55,6 @@ def main():
     num_threads = args.num_threads
     random_seed = args.seed
     local_rank =  args.local_rank
-    device_id = args.device_id
     world_size =  args.world_size
     display = True if args.display else False
     try:
@@ -66,7 +65,7 @@ def main():
     except OSError as error:
         print(error)
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=device_id, seed=random_seed, rocal_cpu=rocal_cpu, tensor_layout=types.NHWC if args.NHWC else types.NCHW , tensor_dtype=types.FLOAT16 if args.fp16 else types.FLOAT)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads, device_id=local_rank, seed=random_seed, rocal_cpu=rocal_cpu, tensor_layout=types.NHWC if args.NHWC else types.NCHW , tensor_dtype=types.FLOAT16 if args.fp16 else types.FLOAT)
     # Set Params
     output_set = 0
     rocal_device = 'cpu' if rocal_cpu else 'gpu'
@@ -166,7 +165,7 @@ def main():
     # build the pipeline
     pipe.build()
     # Dataloader
-    data_loader = ROCALClassificationIterator(pipe,device=device,device_id=device_id)
+    data_loader = ROCALClassificationIterator(pipe,device=device,device_id=local_rank)
     cnt = 0
     import timeit
     start = timeit.default_timer()

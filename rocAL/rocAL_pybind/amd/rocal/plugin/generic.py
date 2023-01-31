@@ -86,13 +86,12 @@ class ROCALGenericIterator(object):
                 self.labels = np.empty(self.labels_size, dtype = np.int32)
 
             else:
-                gpu_device = cp.cuda.Device(self.device_id)
-                gpu_device.use()
-                if self.tensor_dtype == types.FLOAT:
-                    self.out = cp.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=cp.float32)
-                elif self.tensor_dtype == types.FLOAT16:
-                    self.out = cp.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=cp.float16)
-                self.labels = cp.empty(self.labels_size, dtype = cp.int32)
+                with cp.cuda.Device(device=self.device_id):
+                    if self.tensor_dtype == types.FLOAT:
+                        self.out = cp.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=cp.float32)
+                    elif self.tensor_dtype == types.FLOAT16:
+                        self.out = cp.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=cp.float16)
+                    self.labels = cp.empty(self.labels_size, dtype = cp.int32)
 
         else: #NHWC
             if self.device == "cpu":
@@ -103,13 +102,12 @@ class ROCALGenericIterator(object):
                 self.labels = np.empty(self.labels_size, dtype = np.int32)
 
             else:
-                gpu_device = cp.cuda.Device(self.device_id)
-                gpu_device.use()
-                if self.tensor_dtype == types.FLOAT:
-                    self.out = cp.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=cp.float32)
-                elif self.tensor_dtype == types.FLOAT16:
-                    self.out = cp.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=cp.float16)
-                self.labels = cp.empty(self.labels_size, dtype = cp.int32)
+                with cp.cuda.Device(device=self.device_id):
+                    if self.tensor_dtype == types.FLOAT:
+                        self.out = cp.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=cp.float32)
+                    elif self.tensor_dtype == types.FLOAT16:
+                        self.out = cp.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=cp.float16)
+                    self.labels = cp.empty(self.labels_size, dtype = cp.int32)
 
 
         if self.bs != 0:
@@ -145,7 +143,8 @@ class ROCALGenericIterator(object):
                 if self.device == "cpu":
                     self.labels_tensor = self.labels.astype(dtype=np.int_)
                 else:
-                    self.labels_tensor = self.labels.astype(dtype=cp.int_)
+                    with cp.cuda.Device(device=self.device_id):
+                        self.labels_tensor = self.labels.astype(dtype=cp.int_)
 
             return self.out, self.labels_tensor
 

@@ -283,7 +283,7 @@ class Pipeline(object):
 
     def getImageLabels(self, array):
         if (isinstance(array,np.ndarray)):
-            b.getImageLabels(self._handle, ctypes.c_void_p(array.ctypes.data))
+            b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
         elif (isinstance(array,cp.ndarray)):
             b.getCupyImageLabels(self._handle, array.data.ptr)
         else:
@@ -297,10 +297,6 @@ class Pipeline(object):
 
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
-
-    def GetImageLabels(self, array):
-        return b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
-
 
     def GetBoundingBox(self,array):
         return array

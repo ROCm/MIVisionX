@@ -286,7 +286,7 @@ class Pipeline(object):
             b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
         elif (isinstance(array,cp.ndarray)):
             b.getCupyImageLabels(self._handle, array.data.ptr)
-        else:
+        else: #pytorch tensor
             b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):

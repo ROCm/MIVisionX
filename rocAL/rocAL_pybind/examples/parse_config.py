@@ -64,7 +64,7 @@ def parse_args():
                         help='run input pipeline fp16 format')
     
     common_group.add_argument('--local-rank', type=int, default=0,
-                        help='GPU ID used by rocAL pipeline')
+                        help='Device ID used by rocAL pipeline')
     common_group.add_argument('--world-size', '-w', type=int, default=1,
                         help='number of partitions to split the dataset')
     common_group.add_argument('--num-threads', '-nt', type=int, default=1,

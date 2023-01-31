@@ -48,7 +48,7 @@ void ResizeNode::create_node() {
      if(width_status != 0 || height_status != 0)
         THROW(" vxAddArrayItems failed in the resize (vxExtrppNode_ResizebatchPD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
 #if ENABLE_OPENCL
-    // fall back to batch_pd version since there is no tensor implementation for OPENCL
+    // fall back to batch_pd version since there is no tensor implementation for OPENCL    
     _node = vxExtrppNode_ResizebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height, _batch_size);
 #else
    _node = vxExtrppNode_Resizetensor(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height, _interpolation_type, _batch_size);
@@ -83,12 +83,6 @@ void ResizeNode::update_node() {
         _dst_roi_width_vec.push_back(_dst_width);
         _dst_roi_height_vec.push_back(_dst_height);
     }
-    std::cerr<<"\n***************************************** Now Resized dims ***********************************";
-    for (size_t i = 0; i < _batch_size; i++) {
-            std::cerr<<"\n i :: "<<i<<" "<<_dst_roi_width_vec[i]<<" "<<_dst_roi_height_vec[i];
-    }
-    std::cerr<<"\n***************************************** Resized dims ***********************************";
-
     vx_status width_status, height_status;
     width_status = vxCopyArrayRange((vx_array)_dst_roi_width, 0, _batch_size, sizeof(vx_uint32), _dst_roi_width_vec.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     height_status = vxCopyArrayRange((vx_array)_dst_roi_height, 0, _batch_size, sizeof(vx_uint32), _dst_roi_height_vec.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
@@ -128,7 +122,7 @@ void ResizeNode::adjust_out_roi_size() {
         } else if ((!_dst_height) & _dst_width) {  // Only width is passed
             _dst_height = std::lround(_src_height * (static_cast<float>(_dst_width) / _src_width));
         }
-
+        
         if (has_max_size) {
             if (_max_width) _dst_width = std::min(_dst_width, _max_width);
             if (_max_height) _dst_height = std::min(_dst_height, _max_height);
@@ -142,7 +136,7 @@ void ResizeNode::adjust_out_roi_size() {
         } else if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_LARGER) {
             scale = (scale_w > 0 && scale_h > 0) ? std::min(scale_w, scale_h) : ((scale_w > 0) ? scale_w : scale_h);
         }
-
+        
         if (has_max_size) {
             if (_max_width) scale = std::min(scale, static_cast<float>(_max_width) / _src_width);
             if (_max_height) scale = std::min(scale, static_cast<float>(_max_height) / _src_height);

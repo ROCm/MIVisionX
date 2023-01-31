@@ -29,7 +29,7 @@ THE SOFTWARE.
 #include "rocal_api.h"
 #include "image_source_evaluator.h"
 
-#define MAX_ASPECT_RATIO 3.0f
+#define MAX_ASPECT_RATIO 6.0f
 
 RocalImage  ROCAL_API_CALL
 rocalSequenceRearrange(

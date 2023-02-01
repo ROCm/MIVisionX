@@ -6,6 +6,7 @@
 
 ### Building the required Pytorch Rocm docker
 * Use the instructions in the [docker section](../../../../docker) to build the required [Pytorch docker](../../../../docker/pytorch)
+* Upgrade pip to the latest version.
 * Run requirements.sh to install the required packages.
 
 ### Running the training

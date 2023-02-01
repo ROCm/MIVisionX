@@ -94,7 +94,7 @@ class Pipeline(object):
     _handle = None
     _current_pipeline = None
 
-    def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=-1,
+    def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=1,
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
                  rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):

@@ -112,8 +112,8 @@ struct ImageInfo
     uint32_t * get_roi_height() const;
     const std::vector<uint32_t>& get_roi_width_vec() const;
     const std::vector<uint32_t>& get_roi_height_vec() const;
-    const std::vector<uint32_t>& get_orig_roi_width_vec() const;
-    const std::vector<uint32_t>& get_orig_roi_height_vec() const;
+    const std::vector<uint32_t>& get_original_roi_width_vec() const;
+    const std::vector<uint32_t>& get_original_roi_height_vec() const;
 
 private:
     Type _type = Type::UNKNOWN;//!< image type, whether is virtual image, created from handle or is a regular image
@@ -126,8 +126,8 @@ private:
     RocalColorFormat _color_fmt;//!< color format of the image
     std::shared_ptr<std::vector<uint32_t>> _roi_width;//!< The actual image width stored in the buffer, it's always smaller than _width/_batch_size. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one and observed for all.
     std::shared_ptr<std::vector<uint32_t>> _roi_height;//!< The actual image height stored in the buffer, it's always smaller than _height. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one changes can be observed for all.
-    std::shared_ptr<std::vector<uint32_t>> _orig_roi_width;//!< The actual image width stored in the buffer, it's always smaller than _width/_batch_size. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one and observed for all.
-    std::shared_ptr<std::vector<uint32_t>> _orig_roi_height;//!< The actual image height stored in the buffer, it's always smaller than _height. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one changes can be observed for all.
+    std::shared_ptr<std::vector<uint32_t>> _original_roi_width;//!< The original image width decoded by the turbojpeg library before scaling to _roi_width
+    std::shared_ptr<std::vector<uint32_t>> _original_roi_height;//!< The original image height decoded by the turbojpeg library before scaling to _roi_height
 
     void reallocate_image_roi_buffers();
 
@@ -167,7 +167,7 @@ struct Image
 
     int create(vx_context context);
     void update_image_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height);
-    void update_image_orig_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height);
+    void update_image_original_roi(const std::vector<uint32_t> &original_width, const std::vector<uint32_t> &original_height);
     void reset_image_roi() { _info.reallocate_image_roi_buffers(); }
     // create_from_handle() no internal memory allocation is done here since image's handle should be swapped with external buffers before usage
     int create_from_handle(vx_context context);

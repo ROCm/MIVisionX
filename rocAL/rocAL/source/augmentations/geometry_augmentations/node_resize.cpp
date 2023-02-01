@@ -60,21 +60,21 @@ void ResizeNode::create_node() {
 
 void ResizeNode::update_node() {
     std::vector<uint32_t> src_h_dims, src_w_dims;
-    std::vector<uint32_t> orig_h_dims, orig_w_dims;
+    std::vector<uint32_t> original_h_dims, original_w_dims;
     src_w_dims = _inputs[0]->info().get_roi_width_vec();
     src_h_dims = _inputs[0]->info().get_roi_height_vec();
-    orig_w_dims = _inputs[0]->info().get_orig_roi_width_vec();
-    orig_h_dims = _inputs[0]->info().get_orig_roi_height_vec();
+    original_w_dims = _inputs[0]->info().get_original_roi_width_vec();
+    original_h_dims = _inputs[0]->info().get_original_roi_height_vec();
     for (unsigned i = 0; i < _batch_size; i++) {
         _src_width = src_w_dims[i];
         _src_height = src_h_dims[i];
         _dst_width = _out_width;
         _dst_height = _out_height;
         if (_scaling_mode == RocalResizeScalingMode::ROCAL_SCALING_MODE_NOT_SMALLER) {
-            if(orig_w_dims[i] > orig_h_dims[i])
-                _dst_width = (_dst_width * orig_w_dims[i])/orig_h_dims[i];
+            if(original_w_dims[i] > original_h_dims[i])
+                _dst_width *= (original_w_dims[i] / original_h_dims[i]);
             else
-                _dst_height = (_dst_height * orig_h_dims[i]/orig_w_dims[i]);
+                _dst_height *= (original_h_dims[i] / original_w_dims[i]);
         }
         else
             adjust_out_roi_size();

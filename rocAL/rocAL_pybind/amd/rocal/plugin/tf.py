@@ -159,7 +159,7 @@ class ROCALGenericIteratorDetection(object):
                 self.labels = np.reshape(self.labels, (-1, self.bs, self.loader._numOfClasses))
             else:
                 self.labels = np.zeros((self.bs),dtype = "int32")
-                self.loader.GetImageLabels(self.labels)
+                self.loader.getImageLabels(self.labels)
 
             if self.tensor_dtype == types.FLOAT:
                 return self.out.astype(np.float32), self.labels

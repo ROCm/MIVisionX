@@ -55,4 +55,4 @@ RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX
 RUN cd ~/models/research/ && \
 protoc object_detection/protos/*.proto --python_out=. && \
 cp object_detection/packages/tf2/setup.py . && \
-pip3 install --use-feature=2020-resolver .
+pip3 install .

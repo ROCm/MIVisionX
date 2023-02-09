@@ -47,6 +47,7 @@ THE SOFTWARE.
 #include "node_hue.h"
 #include "node_saturation.h"
 #include "node_crop_mirror_normalize.h"
+#include "node_resize_mirror_normalize.h"
 #include "node_resize_crop_mirror.h"
 #include "node_ssd_random_crop.h"
 #include "node_crop.h"

@@ -227,10 +227,6 @@ class Pipeline(object):
             else: #torch tensor
                 return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
 
-    def GetOneHotEncodedLabels_TF(self, array):
-        # Host destination only
-        return b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
-
     def set_outputs(self, *output_list):
         self._output_list_length = len(output_list)
         b.setOutputImages(self._handle,len(output_list),output_list)

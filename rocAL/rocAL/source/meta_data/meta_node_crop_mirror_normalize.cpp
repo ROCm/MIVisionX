@@ -32,7 +32,7 @@ void CropMirrorNormalizeMetaNode::initialize()
     _src_height_val.resize(_batch_size);
     _src_width_val.resize(_batch_size);
 }
-void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
+void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_data, bool segmentation)
 {
     initialize();
     if(_batch_size != input_meta_data->size())

@@ -22,7 +22,6 @@
 
 PYTHON_VERSION=`python3 -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)";` ##Gets the Python3 version
 DEFAULT_PYTHON=$(which python$PYTHON_VERSION) ## Gets the default python
-
 sudo rm -r ./amd_rocal.egg-info/
 sudo rm -r ./build
 sudo rm -r ./dist

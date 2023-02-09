@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,33 +21,31 @@ THE SOFTWARE.
 */
 
 #pragma once
-#include <set>
-#include <memory>
-#include "bounding_box_graph.h"
-#include "meta_data.h"
 #include "node.h"
-#include "node_ssd_random_crop.h"
+#include "parameter_factory.h"
 #include "parameter_vx.h"
 
-class SSDRandomCropMetaNode : public MetaNode
+class ResizeMirrorNormalizeNode : public Node
 {
 public:
-    SSDRandomCropMetaNode(){};
-    void update_parameters(MetaDataBatch *input_meta_data, bool segmentation) override;
-    std::shared_ptr<SSDRandomCropNode> _node = nullptr;
-    std::vector<uint32_t> in_width, in_height;
-    void set_threshold(float threshold) { _threshold = threshold; }
-    void set_num_of_attempts(int num_of_attempts){_num_of_attempts = num_of_attempts;}
-    Parameter<float> *x_drift_factor;
-    Parameter<float> *y_drift_factor;
-
+    ResizeMirrorNormalizeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
+    ResizeMirrorNormalizeNode() = delete;
+    void init(std::vector<float>& mean,  std::vector<float>& std_dev, IntParam *mirror);
+    vx_array get_dst_width() { return _dst_roi_width; }
+    vx_array get_dst_height() { return _dst_roi_height;}
+    vx_array get_src_width() { return _src_roi_width; }
+    vx_array get_src_height() { return _src_roi_height; }
+    vx_array return_mirror(){ return _mirror.default_array();  }
+protected:
+    void create_node() override;
+    void update_node() override;
 private:
-    std::shared_ptr<RocalRandomCropParam> _meta_crop_param;
-    vx_array _crop_width, _crop_height, _x1, _y1;
-    std::vector<uint> _crop_width_val, _crop_height_val, _x1_val, _y1_val;
-    unsigned int _dst_width, _dst_height;
-    float _threshold = 0.5;
-    int   _num_of_attempts = 20;
-    bool  _enitire_iou = true; // For entire_iou - true and For relative iou - false
-    void initialize();
+    vx_array  _dst_roi_width , _dst_roi_height ;
+    std::vector<uint> _dest_width_val, _dest_height_val;
+    std::vector<vx_float32> _mean_vx, _std_dev_vx;
+    vx_array _mean_array, _std_dev_array;
+    std::vector<float> _mean;
+    std::vector<float> _std_dev; 
+    ParameterVX<int> _mirror;
+    constexpr static int   MIRROR_RANGE [2] =  {0, 1};
 };

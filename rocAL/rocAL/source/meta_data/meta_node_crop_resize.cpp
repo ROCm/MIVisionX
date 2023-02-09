@@ -29,7 +29,7 @@ void CropResizeMetaNode::initialize()
     _y2_val.resize(_batch_size);
 }
 
-void CropResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
+void CropResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data, bool segmentation)
 {
     initialize();
     if(_batch_size != input_meta_data->size())

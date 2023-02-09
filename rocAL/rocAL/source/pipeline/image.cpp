@@ -132,7 +132,7 @@ ImageInfo::ImageInfo(
         _height(height_),
         _color_planes(planes),
         _batch_size(batches),
-        _data_size((static_cast<uint64_t>(width_ * height_ * _batch_size * planes))),
+        _data_size(((uint64_t)width_ * height_ * _batch_size * planes / 8) * 8 + 8),
         _mem_type(mem_type_),
         _color_fmt(col_fmt_)
         {

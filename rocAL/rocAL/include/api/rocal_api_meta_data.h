@@ -61,7 +61,7 @@ extern "C" RocalMetaData ROCAL_API_CALL rocalCreateTFReaderDetection(RocalContex
 /// \param rocal_context
 /// \param source_path path to the coco json file
 /// \return RocalMetaData object, can be used to inquire about the rocal's output (processed) tensors
-extern "C" RocalMetaData ROCAL_API_CALL rocalCreateCOCOReader(RocalContext rocal_context, const char* source_path, bool is_output);
+extern "C" RocalMetaData ROCAL_API_CALL rocalCreateCOCOReader(RocalContext rocal_context, const char* source_path, bool is_output, bool mask);
 
 ///
 /// \param rocal_context
@@ -133,9 +133,21 @@ extern "C" unsigned ROCAL_API_CALL rocalGetBoundingBoxCount(RocalContext rocal_c
 
 ///
 /// \param rocal_context
+/// \param buf the imageIdx in the output batch
+/// \return The size of the buffer needs to be provided by user to get mask box info associated with image_idx in the output batch.
+extern "C" unsigned ROCAL_API_CALL rocalGetMaskCount(RocalContext rocal_context, int* buf );
+
+///
+/// \param rocal_context
+/// \param bufcount The user's buffer that will be filled with poylgon size for the mask info
+/// \param buf The user's buffer that will be filled with mask info for the images in the output batch. It needs to be of size returned by a call to the rocalGetMaskCount
+extern "C" void ROCAL_API_CALL rocalGetMaskCoordinates(RocalContext rocal_context, int* bufcount, float* buf);
+
+///
+/// \param rocal_context
 /// \param buf The user's buffer that will be filled with bounding box label info for the images in the output batch. It needs to be of size returned by a call to the rocalGetBoundingBoxCount
 extern "C" void ROCAL_API_CALL rocalGetBoundingBoxLabel(RocalContext rocal_context, int* buf);
-extern "C" void ROCAL_API_CALL rocalGetBoundingBoxCords(RocalContext rocal_context, float* buf);
+extern "C" void ROCAL_API_CALL rocalGetBoundingBoxCords(RocalContext rocal_context, double* buf);
 
 extern "C" void ROCAL_API_CALL rocalGetImageSizes(RocalContext rocal_context, int* buf);
 
@@ -176,7 +188,7 @@ extern "C" void ROCAL_API_CALL rocalBoxEncoder(RocalContext p_context, std::vect
 
 /// \param boxes_buf  user's buffer that will be filled with encoded bounding boxes . Its needs to be at least of size batch_size.
 /// \param labels_buf  user's buffer that will be filled with encoded labels . Its needs to be at least of size batch_size.
-extern "C" void ROCAL_API_CALL rocalCopyEncodedBoxesAndLables(RocalContext p_context, float* boxes_buf, int* labels_buf);
+extern "C" void ROCAL_API_CALL rocalCopyEncodedBoxesAndLables(RocalContext p_context, double* boxes_buf, int* labels_buf);
 
 /// \param boxes_buf  ptr to user's buffer that will be filled with encoded bounding boxes . Its needs to be at least of size batch_size.
 /// \param labels_buf  user's buffer that will be filled with encoded labels . Its needs to be at least of size batch_size.

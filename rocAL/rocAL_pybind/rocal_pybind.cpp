@@ -221,10 +221,10 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_encoded_bbox_label(RocalContext context, py::array_t<float>bboxes_array, py::array_t<int>labels_array)
+    py::object wrapper_encoded_bbox_label(RocalContext context, py::array_t<double>bboxes_array, py::array_t<int>labels_array)
     {
         auto bboxes_buf = bboxes_array.request();
-        float* bboxes_ptr = (float*) bboxes_buf.ptr;
+        double* bboxes_ptr = (double*) bboxes_buf.ptr;
         auto labels_buf = labels_array.request();
         int* labels_ptr = (int*) labels_buf.ptr;
         // call pure C++ function
@@ -254,12 +254,32 @@ namespace rocal{
     }
 
 
-    py::object wrapper_BB_cord_copy(RocalContext context, py::array_t<float> array)
+    py::object wrapper_BB_cord_copy(RocalContext context, py::array_t<double> array)
+    {
+        auto buf = array.request();
+        double* ptr = (double*) buf.ptr;
+        // call pure C++ function
+        rocalGetBoundingBoxCords(context,ptr);
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_Mask_count(RocalContext context, py::array_t<int> array)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        int count = rocalGetMaskCount(context,ptr);
+        return py::cast(count);
+    }
+
+    py::object wrapper_Mask_Coordinates(RocalContext context, py::array_t<int> array_count, py::array_t<float> array)
     {
         auto buf = array.request();
         float* ptr = (float*) buf.ptr;
+        auto buf_count = array_count.request();
+        int* ptr1 = (int*) buf_count.ptr;
         // call pure C++ function
-        rocalGetBoundingBoxCords(context,ptr);
+        rocalGetMaskCoordinates(context, ptr1, ptr);
         return py::cast<py::none>(Py_None);
     }
 
@@ -269,6 +289,24 @@ namespace rocal{
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
         rocalGetImageSizes(context,ptr);
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_ROI_width_copy(RocalContext context, py::array_t<unsigned int> array)
+    {
+        auto buf = array.request();
+        unsigned int* ptr = (unsigned int*) buf.ptr;
+        // call pure C++ function
+        rocalGetOutputResizeWidth(context,ptr);
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_ROI_height_copy(RocalContext context, py::array_t<unsigned int> array)
+    {
+        auto buf = array.request();
+        unsigned int* ptr = (unsigned int*) buf.ptr;
+        // call pure C++ function
+        rocalGetOutputResizeHeight(context,ptr);
         return py::cast<py::none>(Py_None);
     }
 
@@ -400,6 +438,10 @@ namespace rocal{
         m.def("rocalCopyEncodedBoxesAndLables",&wrapper_encoded_bbox_label);
         m.def("rocalGetEncodedBoxesAndLables",&wrapper_get_encoded_bbox_label);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
+        m.def("getOutputROIWidth",&wrapper_ROI_width_copy);
+        m.def("getOutputROIHeight",&wrapper_ROI_height_copy);
+        m.def("getMaskCount", &wrapper_Mask_count);
+        m.def("getMaskCoordinates", &wrapper_Mask_Coordinates);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
         m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy);
         m.def("isEmpty",&rocalIsEmpty);
@@ -492,6 +534,16 @@ namespace rocal{
             py::arg("crop_pos_y") = NULL,
             py::arg("num_of_attempts") = 20);
         m.def("Resize",&rocalResize, py::return_value_policy::reference);
+        m.def("ResizeMirrorNormalize", &rocalResizeMirrorNormalize,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("resize_min"),
+            py::arg("resize_max"),
+            py::arg("mean"),
+            py::arg("std_dev"),
+            py::arg("is_output"),
+            py::arg("mirror") = NULL);
         m.def("CropResize",&rocalCropResize,
             py::return_value_policy::reference,
             py::arg("context"),

@@ -21,15 +21,38 @@ THE SOFTWARE.
 */
 #include "bounding_box_graph.h"
 
-void BoundingBoxGraph::process(MetaDataBatch *meta_data)
+void BoundingBoxGraph::process(MetaDataBatch *meta_data, bool segmentation)
 {
     for (auto &meta_node : _meta_nodes)
     {
-        meta_node->update_parameters(meta_data);
+        meta_node->update_parameters(meta_data, segmentation);
     }
 }
 
 //update_meta_data is not required since the bbox are normalized in the very beggining -> removed the call in master graph also except for MaskRCNN
+void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info, bool segmentation)
+{
+    std::vector<uint32_t> original_height = decode_image_info._original_height;
+    std::vector<uint32_t> original_width = decode_image_info._original_width;
+    std::vector<uint32_t> roi_width = decode_image_info._roi_width;
+    std::vector<uint32_t> roi_height = decode_image_info._roi_height;
+    for (int i = 0; i < input_meta_data->size(); i++)
+    {
+        float _dst_to_src_width_ratio = roi_width[i] / float(original_width[i]);
+        float _dst_to_src_height_ratio = roi_height[i] / float(original_height[i]);
+        unsigned bb_count = input_meta_data->get_bb_labels_batch()[i].size();
+        if (segmentation)
+        {
+            auto mask_data_ptr = input_meta_data->get_mask_cords_batch()[i].data();
+            int mask_size = input_meta_data->get_mask_cords_batch()[i].size();
+            for (int idx = 0; idx < mask_size; idx += 2)
+            {
+                mask_data_ptr[idx] = mask_data_ptr[idx] * _dst_to_src_width_ratio;
+                mask_data_ptr[idx + 1] = mask_data_ptr[idx + 1] * _dst_to_src_height_ratio;
+            }
+        }
+    }
+}
 
 inline float ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const float &box1_area, const BoundingBoxCord &box2)
 {

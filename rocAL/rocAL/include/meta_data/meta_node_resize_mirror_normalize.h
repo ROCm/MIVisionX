@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,14 +20,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "meta_node_resize.h"
-void ResizeMetaNode::initialize()
+#pragma once
+#include <set>
+#include <memory>
+#include "bounding_box_graph.h"
+#include "meta_data.h"
+#include "node.h"
+#include "node_resize_mirror_normalize.h"
+#include "parameter_vx.h"
+class ResizeMirrorNormalizeMetaNode:public MetaNode
 {
-    _src_height_val.resize(_batch_size);
-    _src_width_val.resize(_batch_size);
-}
-void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data, bool segmentation)
-{
-    initialize();
-    // nothing to do in normalized coordinates
-}
+    public:
+        ResizeMirrorNormalizeMetaNode() {};
+        void update_parameters(MetaDataBatch* input_meta_data, bool segmentation)override;
+        std::shared_ptr<ResizeMirrorNormalizeNode> _node = nullptr;
+    private:
+        void initialize();
+        vx_array _src_width, _src_height, _dst_width, _dst_height, _mirror;
+        std::vector<uint> _src_width_val, _src_height_val, _dst_width_val, _dst_height_val, _mirror_val;
+        float _dst_to_src_width_ratio, _dst_to_src_height_ratio;
+};

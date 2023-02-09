@@ -281,6 +281,12 @@ class Pipeline(object):
     def GetBBCords(self, array):
         return b.getBBCords(self._handle, array)
 
+    def GetMaskCount(self, array):
+        return b.getMaskCount(self._handle, array)
+
+    def GetMaskCoordinates(self, array_count, array):
+        return b.getMaskCoordinates(self._handle, array_count, array)
+
     def getImageLabels(self, array):
         if (isinstance(array,np.ndarray)):
             b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
@@ -298,6 +304,10 @@ class Pipeline(object):
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
 
+    def GetImageLabels(self, array):
+        return b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
+
+
     def GetBoundingBox(self,array):
         return array
 
@@ -309,6 +319,12 @@ class Pipeline(object):
 
     def getOutputHeight(self):
         return b.getOutputHeight(self._handle)
+
+    def getOutputROIWidth(self, array):
+        return b.getOutputROIWidth(self._handle, array)
+
+    def getOutputROIHeight(self, array):
+        return b.getOutputROIHeight(self._handle, array)
 
     def getOutputImageCount(self):
         return b.getOutputImageCount(self._handle)

@@ -81,12 +81,12 @@ const std::vector<uint32_t>& ImageInfo::get_roi_height_vec() const
     return *_roi_height;
 }
 
-const std::vector<uint32_t>& ImageInfo::get_original_roi_width_vec() const
+const std::vector<uint32_t>& ImageInfo::get_original_width_vec() const
 {
     return *_original_roi_width;
 }
 
-const std::vector<uint32_t>& ImageInfo::get_original_roi_height_vec() const
+const std::vector<uint32_t>& ImageInfo::get_original_height_vec() const
 {
     return *_original_roi_height;
 }
@@ -187,7 +187,7 @@ void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vect
     }
 }
 
-void Image::update_image_original_roi(const std::vector<uint32_t> &original_width, const std::vector<uint32_t> &original_height)
+void Image::update_image_original_dims(const std::vector<uint32_t> &original_width, const std::vector<uint32_t> &original_height)
 {
     if(original_width.size() != original_height.size())
         THROW("Batch size of image height and width info does not match")

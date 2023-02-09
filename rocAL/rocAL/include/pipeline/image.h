@@ -112,8 +112,8 @@ struct ImageInfo
     uint32_t * get_roi_height() const;
     const std::vector<uint32_t>& get_roi_width_vec() const;
     const std::vector<uint32_t>& get_roi_height_vec() const;
-    const std::vector<uint32_t>& get_original_roi_width_vec() const;
-    const std::vector<uint32_t>& get_original_roi_height_vec() const;
+    const std::vector<uint32_t>& get_original_width_vec() const;
+    const std::vector<uint32_t>& get_original_height_vec() const;
 
 private:
     Type _type = Type::UNKNOWN;//!< image type, whether is virtual image, created from handle or is a regular image
@@ -167,7 +167,7 @@ struct Image
 
     int create(vx_context context);
     void update_image_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height);
-    void update_image_original_roi(const std::vector<uint32_t> &original_width, const std::vector<uint32_t> &original_height);
+    void update_image_original_dims(const std::vector<uint32_t> &original_width, const std::vector<uint32_t> &original_height);
     void reset_image_roi() { _info.reallocate_image_roi_buffers(); }
     // create_from_handle() no internal memory allocation is done here since image's handle should be swapped with external buffers before usage
     int create_from_handle(vx_context context);

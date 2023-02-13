@@ -62,9 +62,11 @@ void COCOMetaDataReader::lookup(const std::vector<std::string> &image_names)
         _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
         _output->get_img_sizes_batch()[i] = it->second->get_img_size();
         if (_mask)
+        {
             _output->get_mask_cords_batch()[i] = it->second->get_mask_cords();
             _output->get_mask_polygons_count_batch()[i] = it->second->get_polygon_count();
             _output->get_mask_vertices_count_batch()[i] = it->second->get_vertices_count();
+        }
     }
 }
 

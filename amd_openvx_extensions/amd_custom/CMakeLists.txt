@@ -44,6 +44,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND OpenMP_FOUND)
 
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -msse4.2")
     endif()
@@ -52,6 +53,10 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND OpenMP_FOUND)
 
     include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include ./custom_lib)
 
+    list(APPEND SOURCES
+            source/custom_kernels.cpp
+            source/custom_layer.cpp
+        )
 
     if (HIP_FOUND)
         message("-- ${Green}${PROJECT_NAME} -- Building with HIP backend${ColourReset}")

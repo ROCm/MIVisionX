@@ -426,6 +426,7 @@ ROCAL_API_CALL rocalGetMaskCoordinates(RocalContext p_context, int *bufcount, fl
         }
     }
 }
+
 void
 ROCAL_API_CALL rocalGetImageSizes(RocalContext p_context, int* buf)
 {

@@ -172,6 +172,7 @@ static vx_status VX_CALLBACK processResizeMirrorNormalizebatchPD(vx_node node, c
 		status = rppt_resize_mirror_normalize_host(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->dstImgSize, RpptInterpolationType::BILINEAR, data->mean, data->std_dev, data->mirror, data->roiTensorPtrSrc, data->roiType, data->rppHandle);
 		return status;
 	}
+	return status;
 }
 
 static vx_status VX_CALLBACK initializeResizeMirrorNormalizebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)

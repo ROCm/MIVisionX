@@ -40,7 +40,6 @@ void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_
     {
         float _dst_to_src_width_ratio = roi_width[i] / float(original_width[i]);
         float _dst_to_src_height_ratio = roi_height[i] / float(original_height[i]);
-        unsigned bb_count = input_meta_data->get_bb_labels_batch()[i].size();
         if (segmentation)
         {
             auto mask_data_ptr = input_meta_data->get_mask_cords_batch()[i].data();

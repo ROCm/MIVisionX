@@ -130,10 +130,10 @@ void COCOMetaDataReader::print_map_contents()
             for (unsigned int i = 0; i < bb_coords.size(); i++)
             {
                 std::cout << "\nNumber of polygons for object[ << " << i << "]:" << polygon_size[i];
-                for (unsigned j = 0; j < polygon_size[i]; j++)
+                for (int j = 0; j < polygon_size[i]; j++)
                 {
                     std::cout << "\nPolygon size :" << vertices_count[i][j] << "Elements::";
-                    for (unsigned k = 0; k < vertices_count[i][j]; k++, count++)
+                    for (int k = 0; k < vertices_count[i][j]; k++, count++)
                         std::cout << "\t " << mask_cords[count + vertices_count[i][j]];
                 }
             }

@@ -567,6 +567,57 @@ rocalResize(
     return output;
 }
 
+RocalImage  ROCAL_API_CALL
+rocalResizeMirrorNormalize(
+            RocalContext p_context,
+            RocalImage p_input,
+            unsigned dest_width,
+            unsigned dest_height,
+            std::vector<float> &mean,
+            std::vector<float> &std_dev,
+            bool is_output,
+            RocalIntParam p_mirror)
+{
+    if(!p_context || !p_input || dest_width == 0 || dest_height == 0 )
+        THROW("Null values passed as input")
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto mirror = static_cast<IntParam *>(p_mirror);
+    for(unsigned i = 0; i < mean.size(); i++)
+    {
+        mean[i] = 0;
+        std_dev[i] = 1;
+    }
+
+   try
+    {
+        // For the resize mirror normalize resize node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+        output_info.width(dest_width);
+        output_info.height(dest_height);
+        output = context->master_graph->create_image(output_info, is_output);
+        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
+        output->reset_image_roi();
+
+        std::shared_ptr<ResizeMirrorNormalizeNode> rmn_node =  context->master_graph->add_node<ResizeMirrorNormalizeNode>({input}, {output});
+        // RPP doesn't support returning float buffers so passing 0 and 1 as mean and std and doing normalization in rocAL
+        // TODO: To be removed with rocAL Tensor support
+        // rmn_node->init(0, 1, mirror);
+        rmn_node->init(mean,std_dev,mirror);
+        // TODO: Uncomment the below lines once RMN meta node is added to ToT
+        // if (context->master_graph->meta_data_graph())
+        //     context->master_graph->meta_add_node<ResizeMirrorNormalizeMetaNode,ResizeMirrorNormalizeNode>(rmn_node);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+
 RocalImage ROCAL_API_CALL
 rocalBrightness(
         RocalContext p_context,

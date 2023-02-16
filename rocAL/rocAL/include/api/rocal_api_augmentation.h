@@ -65,6 +65,21 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalResize(RocalContext context, RocalIm
 /// \param input
 /// \param dest_width
 /// \param dest_height
+/// \param mean
+/// \param std_dev
+/// \param is_output
+/// \param p_mirror
+/// \return
+extern "C"  RocalImage  ROCAL_API_CALL rocalResizeMirrorNormalize(RocalContext p_context, RocalImage p_input,
+                                                            unsigned dest_width, unsigned dest_height,
+                                                            std::vector<float> &mean, std::vector<float> &std_dev,
+                                                            bool is_output, RocalIntParam p_mirror = NULL);
+
+/// Accepts U8 and RGB24 input.
+/// \param context
+/// \param input
+/// \param dest_width
+/// \param dest_height
 /// \param is_output
 /// \param area
 /// \param x_center_drift

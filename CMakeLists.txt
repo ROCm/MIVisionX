@@ -78,10 +78,6 @@ if(APPLE)
   set(ROCAL OFF)
   set(BACKEND "CPU")
   message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
-else()
-  # Changes for RPATH Removal from Binaries:
-  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
-  set(CMAKE_SKIP_INSTALL_RPATH TRUE)
 endif()
 
 if(NOT DEFINED BACKEND)

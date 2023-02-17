@@ -33,7 +33,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
             set(HIP_PATH $ENV{HIP_PATH})
         endif()
     endif()
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
+    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     find_package(HIP QUIET)
 
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)

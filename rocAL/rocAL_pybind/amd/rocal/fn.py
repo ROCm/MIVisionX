@@ -284,8 +284,8 @@ def resize(*inputs, bytes_per_sample_hint=0, image_type=0, interp_type=1, mag_fi
     return (resized_image)
 
 def resize_mirror_normalize(*inputs, bytes_per_sample_hint=0, resize_min=0, resize_max=0, 
-                             image_type=0, mean=[0.0], mirror=1, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False,
-                             preserve=False, seed=1, std=[1.0], device=None):
+                            image_type=0, mean=[0.0], mirror=1, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False,
+                            preserve=False, seed=1, std=[1.0], device=None):
     
     #Set Seed
     b.setSeed(seed)

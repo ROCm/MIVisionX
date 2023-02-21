@@ -27,9 +27,7 @@ struct ResizeMirrorNormalizeTensorLocalData {
 	rppHandle_t rppHandle;
 	Rpp32u device_type;
 	Rpp32u nbatchSize;
-	RppiSize *srcDimensions;
 	RppiSize maxSrcDimensions;
-	RppiSize *dstDimensions;
 	RppiSize maxDstDimensions;
 	RppPtr_t pSrc;
 	RppPtr_t pDst;
@@ -66,10 +64,10 @@ static vx_status VX_CALLBACK refreshResizeMirrorNormalizeTensor(vx_node node, co
 	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->nbatchSize, sizeof(Rpp32u), data->dstBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->nbatchSize, sizeof(Rpp32u), data->dstBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	for(int i = 0; i < data->nbatchSize; i++) {
-		data->srcDimensions[i].width = data->roiTensorPtrSrc[i].xywhROI.roiWidth = data->srcBatch_width[i];
-        data->srcDimensions[i].height = data->roiTensorPtrSrc[i].xywhROI.roiHeight = data->srcBatch_height[i];
-        data->dstDimensions[i].width = data->dstImgSize[i].width = data->dstBatch_width[i];
-        data->dstDimensions[i].height = data->dstImgSize[i].height = data->dstBatch_height[i];
+		data->roiTensorPtrSrc[i].xywhROI.roiWidth = data->srcBatch_width[i];
+        data->roiTensorPtrSrc[i].xywhROI.roiHeight = data->srcBatch_height[i];
+        data->dstImgSize[i].width = data->dstBatch_width[i];
+        data->dstImgSize[i].height = data->dstBatch_height[i];
         data->roiTensorPtrSrc[i].xywhROI.xy.x = 0;
         data->roiTensorPtrSrc[i].xywhROI.xy.y = 0;
 	}
@@ -168,8 +166,6 @@ static vx_status VX_CALLBACK initializeResizeMirrorNormalizeTensor(vx_node node,
 	data->mean = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize * 3);
 	data->std_dev = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize * 3);
 	data->mirror = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->nbatchSize);
-	data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
-	data->dstDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
 	data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
 	data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
 	data->dstBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
@@ -265,8 +261,6 @@ static vx_status VX_CALLBACK uninitializeResizeMirrorNormalizeTensor(vx_node nod
 	free(data->mean);
 	free(data->std_dev);
 	free(data->mirror);
-	free(data->srcDimensions);
-	free(data->dstDimensions);
 	free(data->srcBatch_width);
 	free(data->srcBatch_height);
 	free(data->dstBatch_width);

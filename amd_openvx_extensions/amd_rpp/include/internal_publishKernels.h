@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include "internal_rpp.h"
 
 extern "C" SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context);
-vx_status ADD_KERENEL(std::function<vx_status(vx_context)>);
+vx_status ADD_KERNEL(std::function<vx_status(vx_context)>);
 vx_status get_kernels_to_publish();
 
 vx_status AbsoluteDifferencebatchPD_Register(vx_context);

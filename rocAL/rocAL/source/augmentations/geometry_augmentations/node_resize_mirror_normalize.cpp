@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include "exception.h"
 
 ResizeMirrorNormalizeNode::ResizeMirrorNormalizeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs), _mirror(MIRROR_RANGE[0], MIRROR_RANGE[1])
+        Node(inputs, outputs), _mirror(_mirror_range[0], _mirror_range[1])
 {
 }
 

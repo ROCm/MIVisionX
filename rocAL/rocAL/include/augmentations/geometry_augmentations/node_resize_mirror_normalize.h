@@ -46,5 +46,5 @@ private:
     std::vector<float> _mean;
     std::vector<float> _std_dev; 
     ParameterVX<int> _mirror;
-    constexpr static int MIRROR_RANGE [2] = {0, 1};
+    constexpr static int _mirror_range[2] = {0, 1};
 };

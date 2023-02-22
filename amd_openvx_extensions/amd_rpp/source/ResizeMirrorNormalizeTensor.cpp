@@ -40,10 +40,10 @@ struct ResizeMirrorNormalizeTensorLocalData {
 	Rpp32u *dstBatch_width;
 	Rpp32u *dstBatch_height;
 	RpptDescPtr srcDescPtr, dstDescPtr;
-    RpptROIPtr roiTensorPtrSrc;
-    RpptRoiType roiType;
-    RpptImagePatchPtr dstImgSize;
-    RpptDesc srcDesc, dstDesc;
+	RpptROIPtr roiTensorPtrSrc;
+	RpptRoiType roiType;
+	RpptImagePatchPtr dstImgSize;
+	RpptDesc srcDesc, dstDesc;
 #if ENABLE_HIP
 	void *hip_pSrc;
 	void *hip_pDst;
@@ -58,23 +58,23 @@ static vx_status VX_CALLBACK refreshResizeMirrorNormalizeTensor(vx_node node, co
 	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[6], 0, data->nbatchSize * 3, sizeof(vx_float32), data->mean, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[7], 0, data->nbatchSize * 3, sizeof(vx_float32), data->std_dev, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[8], 0, data->nbatchSize, sizeof(vx_uint32), data->mirror, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[9], &data->chnShift));
+	STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[9], &data->chnShift));
 	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u), data->srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u), data->srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->nbatchSize, sizeof(Rpp32u), data->dstBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->nbatchSize, sizeof(Rpp32u), data->dstBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	for(int i = 0; i < data->nbatchSize; i++) {
 		data->roiTensorPtrSrc[i].xywhROI.roiWidth = data->srcBatch_width[i];
-        data->roiTensorPtrSrc[i].xywhROI.roiHeight = data->srcBatch_height[i];
-        data->dstImgSize[i].width = data->dstBatch_width[i];
-        data->dstImgSize[i].height = data->dstBatch_height[i];
-        data->roiTensorPtrSrc[i].xywhROI.xy.x = 0;
-        data->roiTensorPtrSrc[i].xywhROI.xy.y = 0;
+		data->roiTensorPtrSrc[i].xywhROI.roiHeight = data->srcBatch_height[i];
+		data->dstImgSize[i].width = data->dstBatch_width[i];
+		data->dstImgSize[i].height = data->dstBatch_height[i];
+		data->roiTensorPtrSrc[i].xywhROI.xy.x = 0;
+		data->roiTensorPtrSrc[i].xywhROI.xy.y = 0;
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
-    	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
+		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
+		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
 		hipMemcpy(data->d_dstImgSize, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice);
 		hipMemcpy(data->d_roiTensorPtrSrc, data->roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI), hipMemcpyHostToDevice);
 	}
@@ -137,10 +137,10 @@ static vx_status VX_CALLBACK processResizeMirrorNormalizeTensor(vx_node node, co
 
 #if ENABLE_HIP
 	if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
-        refreshResizeMirrorNormalizeTensor(node, parameters, num, data);
-        status = rppt_resize_mirror_normalize_gpu((void *)data->hip_pSrc, data->srcDescPtr, (void *)data->hip_pDst, data->dstDescPtr, data->d_dstImgSize, RpptInterpolationType::BILINEAR, data->mean, data->std_dev, data->mirror, data->d_roiTensorPtrSrc, data->roiType, data->rppHandle);
-        return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-        return return_status;
+		refreshResizeMirrorNormalizeTensor(node, parameters, num, data);
+		status = rppt_resize_mirror_normalize_gpu(static_cast<void *>(data->hip_pSrc), data->srcDescPtr, static_cast<void *>(data->hip_pDst), data->dstDescPtr, data->d_dstImgSize, RpptInterpolationType::BILINEAR, data->mean, data->std_dev, data->mirror, data->d_roiTensorPtrSrc, data->roiType, data->rppHandle);
+		return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+		return return_status;
 	}
 #endif
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -159,51 +159,51 @@ static vx_status VX_CALLBACK initializeResizeMirrorNormalizeTensor(vx_node node,
 #if ENABLE_OPENCL
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
 #elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
+	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
 	STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[11], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &data->nbatchSize));
-	data->mean = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize * 3);
-	data->std_dev = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize * 3);
-	data->mirror = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->nbatchSize);
-	data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	data->dstBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	data->dstBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	data->dstImgSize = (RpptImagePatch *)malloc(sizeof(RpptImagePatch) * data->nbatchSize);
+	data->mean = static_cast<vx_float32 *>(malloc(sizeof(vx_float32) * data->nbatchSize * 3));
+	data->std_dev = static_cast<vx_float32 *>(malloc(sizeof(vx_float32) * data->nbatchSize * 3));
+	data->mirror = static_cast<vx_uint32 *>(malloc(sizeof(vx_uint32) * data->nbatchSize));
+	data->srcBatch_width = static_cast<Rpp32u *>(malloc(sizeof(Rpp32u) * data->nbatchSize));
+	data->srcBatch_height = static_cast<Rpp32u *>(malloc(sizeof(Rpp32u) * data->nbatchSize));
+	data->dstBatch_width = static_cast<Rpp32u *>(malloc(sizeof(Rpp32u) * data->nbatchSize));
+	data->dstBatch_height = static_cast<Rpp32u *>(malloc(sizeof(Rpp32u) * data->nbatchSize));
+	data->dstImgSize = static_cast<RpptImagePatch *>(malloc(sizeof(RpptImagePatch) * data->nbatchSize));
 
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
-    data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_HEIGHT, &data->maxDstDimensions.height, sizeof(data->maxDstDimensions.height)));
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_WIDTH, &data->maxDstDimensions.width, sizeof(data->maxDstDimensions.width)));
-    data->maxDstDimensions.height = data->maxDstDimensions.height / data->nbatchSize;
+	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
+	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
+	data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
+	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_HEIGHT, &data->maxDstDimensions.height, sizeof(data->maxDstDimensions.height)));
+	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_WIDTH, &data->maxDstDimensions.width, sizeof(data->maxDstDimensions.width)));
+	data->maxDstDimensions.height = data->maxDstDimensions.height / data->nbatchSize;
 
-    // Check if it is a RGB or single channel U8 input
-    vx_df_image df_image = VX_DF_IMAGE_VIRT;
-    STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
-    uint ip_channel = (df_image == VX_DF_IMAGE_RGB) ? 3 : 1;
+	// Check if it is a RGB or single channel U8 input
+	vx_df_image df_image = VX_DF_IMAGE_VIRT;
+	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
+	uint ip_channel = (df_image == VX_DF_IMAGE_RGB) ? 3 : 1;
 
-    // Initializing tensor config parameters.
-    data->srcDescPtr = &data->srcDesc;
-    data->dstDescPtr = &data->dstDesc;
+	// Initializing tensor config parameters.
+	data->srcDescPtr = &data->srcDesc;
+	data->dstDescPtr = &data->dstDesc;
 
-    data->srcDescPtr->dataType = RpptDataType::U8;
-    data->dstDescPtr->dataType = RpptDataType::U8;
+	data->srcDescPtr->dataType = RpptDataType::U8;
+	data->dstDescPtr->dataType = RpptDataType::U8;
 
-    // Set numDims, offset, n/c/h/w values for src/dst
-    data->srcDescPtr->numDims = 4;
-    data->dstDescPtr->numDims = 4;
-    data->srcDescPtr->offsetInBytes = 0;
-    data->dstDescPtr->offsetInBytes = 0;
-    data->srcDescPtr->n = data->nbatchSize;
-    data->srcDescPtr->h = data->maxSrcDimensions.height;
-    data->srcDescPtr->w = data->maxSrcDimensions.width;
-    data->srcDescPtr->c = ip_channel;
-    data->dstDescPtr->n = data->nbatchSize;
-    data->dstDescPtr->h = data->maxDstDimensions.height;
-    data->dstDescPtr->w = data->maxDstDimensions.width;
-    data->dstDescPtr->c = ip_channel;
+	// Set numDims, offset, n/c/h/w values for src/dst
+	data->srcDescPtr->numDims = 4;
+	data->dstDescPtr->numDims = 4;
+	data->srcDescPtr->offsetInBytes = 0;
+	data->dstDescPtr->offsetInBytes = 0;
+	data->srcDescPtr->n = data->nbatchSize;
+	data->srcDescPtr->h = data->maxSrcDimensions.height;
+	data->srcDescPtr->w = data->maxSrcDimensions.width;
+	data->srcDescPtr->c = ip_channel;
+	data->dstDescPtr->n = data->nbatchSize;
+	data->dstDescPtr->h = data->maxDstDimensions.height;
+	data->dstDescPtr->w = data->maxDstDimensions.width;
+	data->dstDescPtr->c = ip_channel;
    
 	data->srcDescPtr->layout = RpptLayout::NHWC;
 	data->dstDescPtr->layout = RpptLayout::NHWC;
@@ -219,14 +219,14 @@ static vx_status VX_CALLBACK initializeResizeMirrorNormalizeTensor(vx_node node,
 	data->dstDescPtr->strides.cStride = 1;
 
 
-    // Initialize ROI tensors for src/dst
-    data->roiTensorPtrSrc  = (RpptROI *) calloc(data->nbatchSize, sizeof(RpptROI));
+	// Initialize ROI tensors for src/dst
+	data->roiTensorPtrSrc  = static_cast<RpptROI *>(calloc(data->nbatchSize, sizeof(RpptROI)));
 
-    // Set ROI tensors types for src/dst
-    data->roiType = RpptRoiType::XYWH;
+	// Set ROI tensors types for src/dst
+	data->roiType = RpptRoiType::XYWH;
 #if ENABLE_HIP
-    hipMalloc(&data->d_dstImgSize, data->nbatchSize * sizeof(RpptImagePatch));
-    hipMalloc(&data->d_roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI));
+	hipMalloc(&data->d_dstImgSize, data->nbatchSize * sizeof(RpptImagePatch));
+	hipMalloc(&data->d_roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI));
 #endif
 	refreshResizeMirrorNormalizeTensor(node, parameters, num, data);
 #if ENABLE_OPENCL
@@ -249,8 +249,8 @@ static vx_status VX_CALLBACK uninitializeResizeMirrorNormalizeTensor(vx_node nod
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
 #if ENABLE_HIP
-    hipFree(data->d_dstImgSize);
-    hipFree(data->d_roiTensorPtrSrc);
+	hipFree(data->d_dstImgSize);
+	hipFree(data->d_roiTensorPtrSrc);
 #endif
 #if ENABLE_OPENCL || ENABLE_HIP
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
@@ -266,7 +266,7 @@ static vx_status VX_CALLBACK uninitializeResizeMirrorNormalizeTensor(vx_node nod
 	free(data->dstBatch_width);
 	free(data->dstBatch_height);
 	free(data->roiTensorPtrSrc);
-    free(data->dstImgSize);
+	free(data->dstImgSize);
 	delete(data);
 	return VX_SUCCESS;
 }
@@ -275,18 +275,18 @@ static vx_status VX_CALLBACK uninitializeResizeMirrorNormalizeTensor(vx_node nod
 // TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
 
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
-                                                  vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
-                                                  vx_uint32 &supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+												  vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
+												  vx_uint32 &supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
 )
 {
-    vx_context context = vxGetContext((vx_reference)graph);
-    AgoTargetAffinityInfo affinity;
-    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
-    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
-    else
-        supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
-    return VX_SUCCESS;
+	vx_context context = vxGetContext((vx_reference)graph);
+	AgoTargetAffinityInfo affinity;
+	vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
+	if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+		supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+	else
+		supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+	return VX_SUCCESS;
 }
 
 vx_status ResizeMirrorNormalizeTensor_Register(vx_context context)
@@ -323,9 +323,9 @@ vx_status ResizeMirrorNormalizeTensor_Register(vx_context context)
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
+		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    	PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 10, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 10, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 11, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
 	}

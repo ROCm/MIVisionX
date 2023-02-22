@@ -61,14 +61,16 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalResize(RocalContext context, RocalIm
                                                    RocalResizeInterpolationType interpolation_type = ROCAL_LINEAR_INTERPOLATION);
 
 /// Accepts U8 and RGB24 input.
-/// \param context
-/// \param input
-/// \param dest_width
-/// \param dest_height
-/// \param mean
-/// \param std_dev
-/// \param is_output
-/// \param p_mirror
+/// \param context Rocal context
+/// \param input Input Rocal Image
+/// \param dest_width The output width
+/// \param dest_height The output height
+/// \param mean The channel mean values
+/// \param std_dev The channel standard deviation values
+/// \param is_output True: the output image is needed by user and will be copied to output buffers using the data
+/// transfer API calls. False: the output image is just an intermediate image, user is not interested in
+/// using it directly. This option allows certain optimizations to be achieved.
+/// \param p_mirror Parameter to enable horizontal flip for output image.
 /// \return
 extern "C"  RocalImage  ROCAL_API_CALL rocalResizeMirrorNormalize(RocalContext p_context, RocalImage p_input,
                                                                   unsigned dest_width, unsigned dest_height,

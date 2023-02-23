@@ -148,14 +148,20 @@ def video_resize(*inputs, sequence_length, resize_width, resize_height, addition
                  file_root="", filenames=[], image_type=types.RGB, initial_fill=1024, labels="", lazy_init=False, normalized=False,
                  num_shards=1, pad_last_batch=False, pad_sequences=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False,
                  read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, skip_vfr_check=False, step=3, stick_to_shard=False,
-                 stride=3, tensor_init_bytes=1048576, decoder_mode=types.SOFTWARE_DECODE, device=None, name=None):
+                 stride=3, tensor_init_bytes=1048576, decoder_mode=types.SOFTWARE_DECODE, device=None, name=None,
+                 scaling_mode=types.SCALING_MODE_DEFAULT, interpolation_type=types.LINEAR_INTERPOLATION,
+                 resize_longer=0, resize_shorter=0, max_size=[]):
 
     Pipeline._current_pipeline._reader = "VideoDecoderResize"
     #Output
     videos = []
     kwargs_pybind_reader = {"source_path": file_root,"sequence_length":sequence_length,"frame_step":step,"frame_stride":stride,"file_list_frame_num":file_list_frame_num} #VideoMetaDataReader
     meta_data = b.VideoMetaDataReader(Pipeline._current_pipeline._handle ,*(kwargs_pybind_reader.values()))
-    kwargs_pybind_decoder = {"source_path": file_root,"color_format":image_type,"decoder_mode":decoder_mode,"shard_count":num_shards,"sequence_length":sequence_length,"resize_width":resize_width, "resize_height":resize_height,"shuffle":random_shuffle ,"is_output":False,"loop":False, "frame_step":step,"frame_stride":stride, "file_list_frame_num":file_list_frame_num } #VideoDecoder
+    kwargs_pybind_decoder = {"source_path": file_root, "color_format":image_type, "decoder_mode":decoder_mode, "shard_count":num_shards,
+                            "sequence_length":sequence_length, "resize_width":resize_width, "resize_height":resize_height,
+                            "shuffle":random_shuffle , "is_output":False, "loop":False, "frame_step":step,"frame_stride":stride,
+                            "file_list_frame_num":file_list_frame_num, "scaling_mode":scaling_mode ,"max_size":max_size,
+                            "resize_shorter": resize_shorter, "resize_longer": resize_longer,"interpolation_type": interpolation_type }
 
     videos = b.VideoDecoderResize(Pipeline._current_pipeline._handle ,*(kwargs_pybind_decoder.values()))
     return (videos, meta_data)

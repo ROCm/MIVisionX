@@ -32,7 +32,7 @@ python generate-visualization.py
 ## Sample 
 
 ````
-python generate-visualization.py -i sample/boundingBoxCompare-results.csv -d ../../data/images/AMD-dataSet-416X416/ -o outputFolder/ -l sample/labels.csv -f objectDetectionVisualized -g sample/groundTruthFile.csv -t boundingBoxToolFile.csv
+python generate-visualization.py -i sample/boundingBoxCompare-results.csv -d ../../../data/images/AMD-dataSet-416X416/ -o outputFolder/ -l sample/labels.csv -f objectDetectionVisualized -g sample/groundTruthFile.csv -t sample/boundingBoxToolFile.csv
 
 ````
 

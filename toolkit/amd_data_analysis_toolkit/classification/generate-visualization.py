@@ -189,7 +189,7 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
     # 0 to 4 are top1 to top5 data
     topk = 5
     logger.debug("Comprehenive csv generation")
-    labelSummary = np.zeros(shape=(len(labelLines), topk+2), dtype=np.int)
+    labelSummary = np.zeros(shape=(len(labelLines), topk+2), dtype=int)
 
     topCounts = [0] * topk
     topTotProb = [0] * topk

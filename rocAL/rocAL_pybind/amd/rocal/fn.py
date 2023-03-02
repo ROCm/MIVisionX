@@ -286,9 +286,6 @@ def resize(*inputs, bytes_per_sample_hint=0, image_type=0, interp_type=1, mag_fi
 def resize_mirror_normalize(*inputs, bytes_per_sample_hint=0, resize_min=0, resize_max=0, 
                             image_type=0, mean=[0.0], mirror=1, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False,
                             preserve=False, seed=1, std=[1.0], device=None):
-    
-    #Set Seed
-    b.setSeed(seed)
 
     if isinstance(mirror,int):
         if(mirror == 0):
@@ -299,7 +296,6 @@ def resize_mirror_normalize(*inputs, bytes_per_sample_hint=0, resize_min=0, resi
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0], "resize_min":resize_min, "resize_max":resize_max, "mean":mean, "std_dev":std,
                      "is_output": False, "mirror": mirror}
-    b.setSeed(seed)
     rmn = b.ResizeMirrorNormalize(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     Pipeline._current_pipeline._tensor_layout = output_layout
     Pipeline._current_pipeline._tensor_dtype = output_dtype

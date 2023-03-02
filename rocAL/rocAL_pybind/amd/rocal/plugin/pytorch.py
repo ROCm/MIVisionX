@@ -63,6 +63,8 @@ class ROCALGenericIterator(object):
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
+        self.index = 0
+        self.eos = False
         if self.loader._name is None:
             self.loader._name= self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
@@ -105,17 +107,47 @@ class ROCALGenericIterator(object):
             self.len = b.getRemainingImages(self.loader._handle)//self.bs
         else:
             self.len = b.getRemainingImages(self.loader._handle)
+        self.num_batches = self.loader._external_source.n //self.bs if self.loader._external_source.n%self.bs == 0 else (self.loader._external_source.n //self.bs + 1)
 
     def next(self):
         return self.__next__()
 
     def __next__(self):
+        print("In the next__ of the iterator")
+
         if(b.isEmpty(self.loader._handle)):
+            print("Iter stopeed ?")
             raise StopIteration
-
+        print("self.loader._external_source_operator", self.loader._external_source_operator)
+        if (self.loader._external_source_operator):
+            print("Yes its ESO")
+            print(self.index + 1)
+            if (self.index + 1) == self.num_batches:
+                print("The EOS is true")
+                self.eos = True
+            #External Source Operator "ON"
+            if (self.index+1) <= self.num_batches:
+                if self.loader._external_source_mode == types.EXTSOURCE_FNAME:
+                    kwargs_pybind = {"handle":self.loader._handle,"source_input_images":next(self.loader._external_source)[0],"labels":next(self.loader._external_source)[1], "input_batch_buffer":[],"roi_width":[], "roi_height":[], "decoded_width":self.loader._external_source_user_given_width, "decoded_height":self.loader._external_source_user_given_height, "external_source_mode":self.loader._external_source_mode, "rocal_tensor_layout":types.NCHW, "eos":self.eos } # Check the Mode your passing
+                    b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
+                # if self.loader._external_source_mode == types.EXTSOURCE_RAW_COMPRESSED:
         if self.loader.run() != 0:
+            print("Stop iter")
             raise StopIteration
-
+        print("Cross")
+        '''
+            if(index <= (total_images / inputBatchSize))
+            {
+            if(mode == 0)
+                rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {}, decode_width, decode_height, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
+            else if(mode == 1)
+                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, {}, roi_height, decode_width, decode_height, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
+            else if(mode == 2)
+                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, roi_width, roi_height, maxwidth, maxheight, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
+            }
+        '''
+    
+        self.index = self.index + 1
         self.loader.copyToTensor(
             self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
 
@@ -195,7 +227,9 @@ class ROCALGenericIterator(object):
         return self.len
 
     def __del__(self):
-        b.rocalRelease(self.loader._handle)
+        print("rocAL Release")
+        # b.rocalRelease(self.loader._handle)
+        print("rocAL Release done")
 
 
 class ROCALClassificationIterator(ROCALGenericIterator):

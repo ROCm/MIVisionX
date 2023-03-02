@@ -122,6 +122,9 @@ class Pipeline(object):
         self._current_pipeline = None
         self._reader = None
         self._define_graph_set = False
+        self._external_source_operator = False
+        self._external_source = None
+        self._external_source_mode = None
 
     def build(self):
         """Build the pipeline using rocalVerify call

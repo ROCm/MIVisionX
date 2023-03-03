@@ -134,6 +134,16 @@ def main():
                                               image_type=types.RGB,
                                               mean=[0, 0, 0],
                                               std=[1, 1, 1])
+        elif augmentation_name == "resize_mirror_normalize":
+            output = fn.resize_mirror_normalize(images,
+                                            device="gpu",
+                                            output_dtype=types.FLOAT16 if args.fp16 else types.FLOAT,
+                                            output_layout=types.NHWC if args.NHWC else types.NCHW,
+                                            resize_min = 1344,
+                                            resize_max = 1344,
+                                            image_type=types.RGB,
+                                            mean=[0, 0, 0],
+                                            std=[1, 1, 1])
         elif augmentation_name == "nop":
             output = fn.nop(images)
         elif augmentation_name == "centre_crop":

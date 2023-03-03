@@ -632,7 +632,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
             THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
     }
 #elif ENABLE_HIP
-    if(_output_image_info.mem_type() == RocalMemType::HIP)
+    if((_output_image_info.mem_type() == RocalMemType::HIP) || (_output_image_info.mem_type() == RocalMemType::HOST))
     {
         unsigned int fp16 = (output_data_type == RocalTensorDataType::FP16);
 
@@ -657,7 +657,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
         }
     }
 #endif
-    if(_output_image_info.mem_type() == RocalMemType::HOST)
+    if(false)
     {
         float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
         float offset[3] = {offset0, offset1, offset2 };
@@ -667,7 +667,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
         for( auto&& out_image: output_buffers)
         {
             unsigned int single_image_size = w * c * h;
-            #pragma omp parallel for num_threads(_internal_batch_size)
+            #pragma omp parallel for num_threads(16)
             for(unsigned int batchCount = 0; batchCount < n; batchCount ++)
             {
                 size_t dest_buf_offset = dest_buf_offset_start + single_image_size*batchCount;

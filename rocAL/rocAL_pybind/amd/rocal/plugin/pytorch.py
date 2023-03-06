@@ -88,7 +88,7 @@ class ROCALGenericIterator(object):
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
         self.labels_size = ((self.bs*self.loader._numOfClasses) if (self.loader._oneHotEncoding == True) else self.bs)
-        if tensor_layout == types.NCHW:
+        if self.tensor_format == types.NCHW:
             # if self.device == "cpu":
             #     if self.tensor_dtype == types.FLOAT:
             #         self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)

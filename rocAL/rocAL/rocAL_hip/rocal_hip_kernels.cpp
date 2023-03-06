@@ -271,21 +271,12 @@ int HipExecCopyInt8ToNCHW(
 {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = w, globalThreads_y = h;
-    void *inp_image_u8_hip;
-    auto return_status = hipMalloc(&inp_image_u8_hip, sizeof(uchar) * n * c * h * w);
-    if (return_status != hipSuccess) {
-        std::cout << "hipMalloc failed: " << return_status << std::endl;
-    }
-    return_status = hipMemcpy(inp_image_u8_hip, inp_image_u8, sizeof(uchar) * n * c * h * w, hipMemcpyHostToDevice);
-    if (return_status != hipSuccess) {
-        std::cout << "hipMemcpy failed: " << return_status << std::endl;
-    }
     if (!fp16)
     {
         hipLaunchKernelGGL(Hip_CopyInt8ToNCHW_fp32,
                            dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                            dim3(localThreads_x, localThreads_y),
-                           0, stream, (const uchar *)inp_image_u8_hip, output_tensor, dst_buf_offset,
+                           0, stream, (const uchar *)inp_image_u8, output_tensor, dst_buf_offset,
                            make_uint4(n, c, h, w),
                            make_float3(multiplier0, multiplier1, multiplier2), make_float3(offset0, offset1, offset2),
                            reverse_channels);
@@ -295,14 +286,10 @@ int HipExecCopyInt8ToNCHW(
         hipLaunchKernelGGL(Hip_CopyInt8ToNCHW_fp16,
                            dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                            dim3(localThreads_x, localThreads_y),
-                           0, stream, (const uchar *)inp_image_u8_hip, output_tensor, dst_buf_offset,
+                           0, stream, (const uchar *)inp_image_u8, output_tensor, dst_buf_offset,
                            make_uint4(n, c, h, w),
                            make_float3(multiplier0, multiplier1, multiplier2), make_float3(offset0, offset1, offset2),
                            reverse_channels);
-    }
-    return_status = hipFree(inp_image_u8_hip);
-    if (return_status != hipSuccess) {
-        std:: cout << "hipFree failed: " << return_status << std::endl;
     }
     return 0;
 }

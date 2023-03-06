@@ -632,7 +632,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
             THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
     }
 #elif ENABLE_HIP
-    if((_output_image_info.mem_type() == RocalMemType::HIP) || (_output_image_info.mem_type() == RocalMemType::HOST))
+    if(_output_image_info.mem_type() == RocalMemType::HIP)
     {
         unsigned int fp16 = (output_data_type == RocalTensorDataType::FP16);
 
@@ -657,6 +657,44 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
         }
     }
 #endif
+    if(_output_image_info.mem_type() == RocalMemType::HOST)
+    {
+        unsigned int fp16 = (output_data_type == RocalTensorDataType::FP16);
+
+        auto output_buffers =_ring_buffer.get_read_buffers();
+        unsigned dest_buf_offset = 0;
+        // copy hip buffer to out_ptr
+        // todo:: add callback routing to exchange memory pointer to avoid extra copy
+        for( auto&& out_image: output_buffers)
+        {
+            auto img_buffer = out_image;
+            void *img_buffer_hip;
+            auto return_status = hipMalloc(&img_buffer_hip, sizeof(unsigned char) * n * c * h * w);
+            if (return_status != hipSuccess) {
+                THROW("hipMalloc failed with status " + TOSTR(return_status))
+            }
+            return_status = hipMemcpy(img_buffer_hip, (const void *)img_buffer, sizeof(unsigned char) * n * c * h * w, hipMemcpyHostToDevice);
+            if (return_status != hipSuccess) {
+                THROW("hipMemcpy failed with status " + TOSTR(return_status))
+            }
+            if (format == RocalTensorFormat::NHWC)
+            {
+                HipExecCopyInt8ToNHWC(_device.resources()->hip_stream, (const void *)img_buffer_hip, out_ptr, dest_buf_offset, n, c, h, w,
+                                        multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
+
+            }else
+            {
+                HipExecCopyInt8ToNCHW(_device.resources()->hip_stream, (const void *)img_buffer_hip, out_ptr, dest_buf_offset, n, c, h, w,
+                                        multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
+            }
+            dest_buf_offset += single_output_image_size;
+            return_status = hipFree(img_buffer_hip);
+            if (return_status != hipSuccess) {
+                THROW("hipFree failed with status " + TOSTR(return_status))
+            }
+        }
+
+    }
     if(false)
     {
         float multiplier[3] = {multiplier0, multiplier1, multiplier2 };

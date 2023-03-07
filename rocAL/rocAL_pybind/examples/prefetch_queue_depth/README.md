@@ -10,21 +10,23 @@ This  test  aims to evaluate the prefetch queue depth support and the perfomance
 * Depending on the machine configuration decreasing or increasing   prefetch_queue_depth helps in achieving better performance.
 
 ## Running the app
-python3.6 ./prefetch_queue_depth.py  <path to the dataset> <cpu/gpu> <batch_size> <prefetch_queue_depth>
+`python3 ./prefetch_queue_depth.py  <path to the dataset> <cpu/gpu> <batch_size> <prefetch_queue_depth>`
 
 ## Example
-* Run with 10 images and batch size 2 on AMD Ryzen 9 3950X 16-Core Processor with nproc - 32.
+* Run with 10 images and batch size 2 on AMD EPYC 7552 48-Core Processor with nproc - 192.
 
 prefetch_queue_depth as 2
 
-root@rocal:/media/MIVisionX/rocAL/rocAL_pybind# python3.6 ./prefetch_queue_depth.py /media/samples/ cpu 2 2
-OK: loaded 80 kernels from libvx_rpp.so
+```
+OK: loaded 82 kernels from libvx_rpp.so
 Pipeline has been created succesfully
-Time taken (averaged over 10 runs)  10424 milli seconds
+Time taken (averaged over 10 runs)  10513 milli seconds
+```
 
 prefetch_queue_depth as 4
 
-root@rocal:/media/MIVisionX/rocAL/rocAL_pybind# python3.6 ./prefetch_queue_depth.py /media/samples/ cpu 2 4
-OK: loaded 80 kernels from libvx_rpp.so
+```
+OK: loaded 82 kernels from libvx_rpp.so
 Pipeline has been created succesfully
-Time taken (averaged over 10 runs)  10397 milli seconds
+Time taken (averaged over 10 runs)  10491 milli seconds
+```

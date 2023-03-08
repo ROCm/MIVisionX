@@ -24,8 +24,7 @@ THE SOFTWARE.
 
 struct ResizetensorLocalData
 {
-    RPPCommonHandle handle;
-    rppHandle_t rppHandle;
+    RPPCommonHandle * handle;
     Rpp32u device_type;
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
@@ -139,14 +138,14 @@ static vx_status VX_CALLBACK processResizetensor(vx_node node, const vx_referenc
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
         refreshResizetensor(node, parameters, num, data);
-        rpp_status = rppt_resize_gpu(data->pSrc_dev, data->srcDescPtr, data->pDst_dev, data->dstDescPtr, data->dstImgSize_dev, data->interpolation_type, data->roiTensorPtrSrc_dev, data->roiType, data->rppHandle);
+        rpp_status = rppt_resize_gpu(data->pSrc_dev, data->srcDescPtr, data->pDst_dev, data->dstDescPtr, data->dstImgSize_dev, data->interpolation_type, data->roiTensorPtrSrc_dev, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
 #endif
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
     {
         refreshResizetensor(node, parameters, num, data);
-        rpp_status = rppt_resize_host(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->dstImgSize, data->interpolation_type, data->roiTensorPtrSrc, data->roiType, data->rppHandle);
+        rpp_status = rppt_resize_host(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->dstImgSize, data->interpolation_type, data->roiTensorPtrSrc, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -246,13 +245,7 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     hipMalloc(&data->roiTensorPtrSrc_dev, data->nbatchSize * sizeof(RpptROI));
 #endif
     refreshResizetensor(node, parameters, num, data);
-#if ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppCreateWithBatchSize(&data->rppHandle, data->nbatchSize);
-
+    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, data->srcDescPtr->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -264,11 +257,7 @@ static vx_status VX_CALLBACK uninitializeResizetensor(vx_node node, const vx_ref
 #if ENABLE_HIP
     hipFree(data->dstImgSize_dev);
     hipFree(data->roiTensorPtrSrc_dev);
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppDestroyGPU(data->rppHandle);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppDestroyHost(data->rppHandle);
+    STATUS_ERROR_CHECK(releaseGraphHandle(node, data->handle, data->deviceType));
     free(data->srcDimensions);
     free(data->dstDimensions);
     free(data->srcBatch_width);

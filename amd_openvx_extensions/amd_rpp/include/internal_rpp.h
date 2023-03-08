@@ -60,14 +60,14 @@ struct RPPCommonHandle {
 #elif ENABLE_HIP
     hipStream_t hipstream;
 #endif
-    void* cpuHandle = NULL;
+    rppHandle_t rppHandle;
     int count;
 };
 
 //! Brief The utility functions
 vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx_uint32 num);
-vx_status createGraphHandle(vx_node node, RPPCommonHandle ** pHandle);
-vx_status releaseGraphHandle(vx_node node, RPPCommonHandle * handle);
+vx_status createGraphHandle(vx_node node, RPPCommonHandle ** pHandle, Rpp32u batchSize, Rpp32u deviceType);
+vx_status releaseGraphHandle(vx_node node, RPPCommonHandle * handle, Rpp32u deviceType);
 
 class Kernellist
 {

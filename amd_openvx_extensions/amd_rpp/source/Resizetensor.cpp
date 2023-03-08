@@ -158,7 +158,7 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
 #if ENABLE_OPENCL
     vxAddLogEntry(NULL, VX_FAILURE, "ERROR: initialize : Resize Tensor OpenCL backend is not supported\n");
 #elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle->hipstream, sizeof(data->handle->hipstream)));
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[7], &data->nbatchSize));
@@ -245,7 +245,7 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     hipMalloc(&data->roiTensorPtrSrc_dev, data->nbatchSize * sizeof(RpptROI));
 #endif
     refreshResizetensor(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, data->srcDescPtr->n, data->deviceType));
+    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, data->srcDescPtr->n, data->device_type));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -257,7 +257,8 @@ static vx_status VX_CALLBACK uninitializeResizetensor(vx_node node, const vx_ref
 #if ENABLE_HIP
     hipFree(data->dstImgSize_dev);
     hipFree(data->roiTensorPtrSrc_dev);
-    STATUS_ERROR_CHECK(releaseGraphHandle(node, data->handle, data->deviceType));
+#endif
+    STATUS_ERROR_CHECK(releaseGraphHandle(node, data->handle, data->device_type));
     free(data->srcDimensions);
     free(data->dstDimensions);
     free(data->srcBatch_width);

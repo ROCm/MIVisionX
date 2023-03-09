@@ -34,6 +34,13 @@ vx_uint32 getGraphAffinity(vx_graph graph)
     return affinity.device_type;
 }
 
+vx_uint32 getGraphCPUNumThreads(vx_graph graph)
+{
+    vx_uint32 cpu_num_threads;
+    vxQueryGraph(graph, VX_GRAPH_ATTRIBUTE_AMD_CPU_NUM_THREADS, &cpu_num_threads, sizeof(cpu_num_threads));
+    return cpu_num_threads;
+}
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPD(vx_graph graph, vx_image pSrc, vx_array srcImgWidth, vx_array srcImgHeight, vx_image pDst, vx_array alpha, vx_array beta, vx_uint32 nbatchSize)
 {
     vx_node node = NULL;
@@ -1855,6 +1862,7 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
     vx_status status = VX_SUCCESS;
     vx_node node = 0;
     vx_context context = vxGetContext((vx_reference)graph);
+    vx_uint32 cpu_num_threads = getGraphCPUNumThreads(graph);
     if (vxGetStatus((vx_reference)context) != VX_SUCCESS)
     {
         return NULL;
@@ -1895,12 +1903,15 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
         vxAddLogEntry((vx_reference)graph, VX_ERROR_INVALID_PARAMETERS, "createNode: failed to retrieve kernel enum %d\n", kernelEnum);
         status = VX_ERROR_NOT_SUPPORTED;
     }
+    vxSetNodeAttribute(node, VX_NODE_ATTRIBUTE_AMD_CPU_NUM_THREADS, &cpu_num_threads, sizeof(cpu_num_threads));
     return node;
 }
 
 vx_status createGraphHandle(vx_node node, RPPCommonHandle **pHandle, Rpp32u batchSize, Rpp32u deviceType) {
     RPPCommonHandle *handle = NULL;
     STATUS_ERROR_CHECK(vxGetModuleHandle(node, OPENVX_KHR_RPP, (void **)&handle));
+    vx_uint32 cpu_num_threads;
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_CPU_NUM_THREADS, &cpu_num_threads, sizeof(cpu_num_threads)));
 
     if (handle) {
         handle->count++;
@@ -1922,6 +1933,7 @@ vx_status createGraphHandle(vx_node node, RPPCommonHandle **pHandle, Rpp32u batc
         }
         
         STATUS_ERROR_CHECK(vxSetModuleHandle(node, OPENVX_KHR_RPP, handle));
+        // handle->rppHandle->numThreads = cpu_num_threads;
     }
     *pHandle = handle;
     return VX_SUCCESS;

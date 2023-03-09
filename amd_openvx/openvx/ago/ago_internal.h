@@ -605,6 +605,7 @@ struct AgoNode {
     vx_uint32 hierarchical_level;
     vx_status status;
     vx_perf_t perf;
+    vx_uint32 cpu_num_threads;
     vx_bool local_data_change_is_enabled;
     vx_bool local_data_set_by_implementation;
     struct { bool enable; int paramIndexScalar; int paramIndexArray; } gpu_scalar_array_output_sync;
@@ -665,6 +666,7 @@ struct AgoGraph {
     bool detectedInvalidNode;
     vx_int32 status;
     vx_perf_t perf;
+    vx_uint32 cpu_num_threads;
     vx_enum state;
     bool reverify;
     struct AgoGraphPerfInternalInfo_ { // shall be identical to AgoGraphPerfInternalInfo in amd_ext_amd.h

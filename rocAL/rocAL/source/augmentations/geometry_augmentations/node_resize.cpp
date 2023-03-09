@@ -60,8 +60,9 @@ void ResizeNode::create_node() {
 
 void ResizeNode::update_node() {
     std::vector<uint32_t> src_h_dims, src_w_dims;
-    src_w_dims = _inputs[0]->info().get_roi_width_vec();
-    src_h_dims = _inputs[0]->info().get_roi_height_vec();
+    // Using original width and height instead of the decoded width and height for computing resize dimensions
+    src_w_dims = _inputs[0]->info().get_original_width_vec();
+    src_h_dims = _inputs[0]->info().get_original_height_vec();
     for (unsigned i = 0; i < _batch_size; i++) {
         _src_width = src_w_dims[i];
         _src_height = src_h_dims[i];

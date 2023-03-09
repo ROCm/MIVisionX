@@ -226,7 +226,27 @@ ImageReadAndDecode::load(unsigned char* buff,
             int original_width, original_height, jpeg_sub_samp;
             if (_decoder[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height,
                                          &jpeg_sub_samp) != Decoder::Status::OK) {
-                    continue;
+                    // Substituting the image which failed decoding with other image from the same batch
+                    int j = ((i + 1) != _batch_size) ? _batch_size - 1 : _batch_size - 2;
+                    while ((j >= 0)) 
+                    {
+                        if (_decoder[i]->decode_info(_compressed_buff[j].data(), _actual_read_size[j], &original_width, &original_height,
+                            &jpeg_sub_samp) == Decoder::Status::OK) 
+                        {
+                                _image_names[i] =  _image_names[j];
+                                _compressed_buff[i] =  _compressed_buff[j];
+                                _actual_read_size[i] =  _actual_read_size[j];
+                                _compressed_image_size[i] =  _compressed_image_size[j];
+                                break;                                
+
+                        }
+                        else
+                            j--;
+                        if(j < 0) 
+                        {
+                            THROW("All images in the batch failed decoding\n");
+                        }                                    
+                    }
             }
             _original_height[i] = original_height;
             _original_width[i] = original_width;

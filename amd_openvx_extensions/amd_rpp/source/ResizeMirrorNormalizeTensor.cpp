@@ -71,8 +71,8 @@ static vx_status VX_CALLBACK refreshResizeMirrorNormalizeTensor(vx_node node, co
 		data->roiTensorPtrSrc[i].xywhROI.xy.x = 0;
 		data->roiTensorPtrSrc[i].xywhROI.xy.y = 0;
 	}
-	if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
+	if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
 		hipMemcpy(data->d_dstImgSize, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice);

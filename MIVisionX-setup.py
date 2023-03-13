@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.4.0"
+__version__ = "2.4.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -365,7 +365,8 @@ else:
             if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
                 os.system('sudo -v')
                 os.system('sudo rm -rf '+modelCompilerDeps)
-                print("\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
+                print(
+                    "\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
 
             if not os.path.exists(modelCompilerDeps):
                 print("STATUS: Model Compiler Deps Install - " +
@@ -471,6 +472,18 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
                   linuxCMake+' -DBACKEND='+backend+' -DCMAKE_INSTALL_PREFIX='+ROCM_PATH+' ../; make -j4; sudo make install)')
+        # CuPy Install
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                  linuxSystemInstall_check+' autoremove -y miopengemm miopen-opencl')
+        if "Ubuntu" in platfromInfo:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y hipblas hipsparse rocrand rocthrust hipcub git g++ hipfft rocfft python3-dev')
+        else:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y hipblas hipsparse rocrand rocthrust hipcub git g++ hipfft rocfft python3-devel')
+        os.system('sudo -v')
+        os.system('(cd '+deps_dir+'; git clone https://github.com/ROCmSoftwarePlatform/cupy.git; export CUPY_INSTALL_USE_HIP=1; export ROCM_HOME=/opt/rocm; cd cupy; git submodule update --init; pip install -e . --no-cache-dir -vvvv)')
 
     # Install ffmpeg
     if ffmpegInstall == 'ON' and backend != 'CPU':

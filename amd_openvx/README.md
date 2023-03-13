@@ -152,7 +152,7 @@ To provide a basic set of vision processing functions. This set of functions is 
   * **vx_loomsl**: Radeon LOOM stitching library for live 360-degree video applications
   * **vx_nn**: OpenVX neural network module that was built on top of [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen)
   * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels
-  * **vx_rpp**: OpenVX extension providing an interface to some of the Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) functions. This extension is used to enable [rocAL](../rocAL/README.md) to perform image augmentation.
+  * **vx_rpp**: OpenVX extension providing an interface to some of the ROCm Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) functions. This extension is used to enable [rocAL](../rocAL/README.md) to perform image augmentation.
   * **vx_winml**: OpenVX module that implemented a mechanism to access Windows Machine Learning(WinML) functionality as OpenVX kernels
 
 ## Pre-requisites

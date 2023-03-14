@@ -62,8 +62,8 @@ def main():
 	pipe.build()
 	imageIterator = ROCAL_iterator(pipe)
 	start = datetime.datetime.now()
-	for i in range(0, 10):
-		for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
+	for _ in range(0, 10):
+		for _, (image_batch, image_tensor) in enumerate(imageIterator, 0):
 			time.sleep(1)
 		imageIterator.reset()
 	end = datetime.datetime.now()

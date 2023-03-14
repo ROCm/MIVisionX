@@ -24,6 +24,7 @@ import amd.rocal.fn as fn
 import amd.rocal.types as types
 import sys
 import datetime
+import time
 
 def HybridTrainPipe(batch_size, num_threads, device_id, data_dir, rocal_cpu = True, prefetch_queue_depth = 2):
     world_size = 1
@@ -63,7 +64,7 @@ def main():
 	start = datetime.datetime.now()
 	for i in range(0, 10):
 		for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
-			continue
+			time.sleep(1)
 		imageIterator.reset()
 	end = datetime.datetime.now()
 	print("Time taken (averaged over 10 runs) ",int((end - start).total_seconds() * 1000),"milli seconds")

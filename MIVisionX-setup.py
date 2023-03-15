@@ -475,8 +475,6 @@ else:
         # CuPy Install
         os.system('sudo -v')
         os.system(linuxSystemInstall+' update')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                  linuxSystemInstall_check+' autoremove -y miopengemm miopen-opencl')
         if "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3-dev')

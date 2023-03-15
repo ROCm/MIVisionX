@@ -381,7 +381,7 @@ else:
                     os.system(
                         'sudo '+linuxSystemInstall+' ' +
                         linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
-                os.system('sudo pip3 install future pytz numpy')
+                os.system('sudo pip3 install future pytz numpy==1.21')
                 # Install CAFFE Deps
                 os.system('sudo pip3 install google protobuf==3.12.4')
                 # Install ONNX Deps

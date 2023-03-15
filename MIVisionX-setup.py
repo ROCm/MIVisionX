@@ -474,14 +474,15 @@ else:
                   linuxCMake+' -DBACKEND='+backend+' -DCMAKE_INSTALL_PREFIX='+ROCM_PATH+' ../; make -j4; sudo make install)')
         # CuPy Install
         os.system('sudo -v')
+        os.system(linuxSystemInstall+' update')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                   linuxSystemInstall_check+' autoremove -y miopengemm miopen-opencl')
         if "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y hipblas hipsparse rocrand rocthrust hipcub git g++ hipfft rocfft python3-dev')
+                      ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3-dev')
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y hipblas hipsparse rocrand rocthrust hipcub git g++ hipfft rocfft python3-devel')
+                      ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-devel hipcub-devel python3-devel')
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'; git clone https://github.com/ROCmSoftwarePlatform/cupy.git; export CUPY_INSTALL_USE_HIP=1; export ROCM_HOME=/opt/rocm; cd cupy; git submodule update --init; pip install -e . --no-cache-dir -vvvv)')
 

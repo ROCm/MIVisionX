@@ -483,6 +483,7 @@ else:
                       ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-devel hipcub-devel python3-devel')
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'; git clone https://github.com/ROCmSoftwarePlatform/cupy.git; export CUPY_INSTALL_USE_HIP=1; export ROCM_HOME=/opt/rocm; cd cupy; git submodule update --init; pip install -e . --no-cache-dir -vvvv)')
+        os.system('pip install numpy==1.21')
 
     # Install ffmpeg
     if ffmpegInstall == 'ON' and backend != 'CPU':

@@ -64,19 +64,17 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 * protobuf
 * google
 ```
-pip3 install google protobuf
+sudo pip3 install google==3.0.0 protobuf==3.12.4
 ```
-**Note:** For Ubuntu `18.04` use `pip3 install google protobuf==3.12.4`
 
 #### ONNX
 
 * protobuf
 * onnx
 ``` 
-pip3 install protobuf onnx
+sudo pip3 install protobuf==3.12.4 onnx==1.11.0
 ```
 **Note:** 
-* For Ubuntu `18.04` use `pip3 install protobuf==3.12.4 onnx`
 * ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)
 
 #### NNEF

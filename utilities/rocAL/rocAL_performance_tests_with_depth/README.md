@@ -8,7 +8,7 @@ This is very similar to the rocAL Performance Tests app except it takes an extra
 * Ubuntu Linux, [version `16.04` or later](https://www.microsoft.com/software-download/windows10)
 * rocAL library (Part of the MIVisionX toolkit)
 * [OpenCV 3.1](https://github.com/opencv/opencv/releases) or higher
-* Radeon Performance Primitives (RPP)
+* ROCm Performance Primitives (RPP)
 
 ### build
   ````

@@ -7,7 +7,7 @@ This application can be used to verify the functionality of the API offered by r
 * Ubuntu Linux, [version `16.04` or later](https://www.microsoft.com/software-download/windows10)
 * rocAL library (Part of the MIVisionX toolkit)
 * [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
-* Radeon Performance Primitives (RPP)
+* ROCm Performance Primitives (RPP)
 
 ### build
 ````

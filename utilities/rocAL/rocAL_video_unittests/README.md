@@ -8,7 +8,7 @@ This application can be used to verify the functionality of the video API offere
 * rocAL library (Part of the MIVisionX toolkit)
 * [OpenCV 4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * [FFmpeg n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
-* Radeon Performance Primitives (RPP)
+* ROCm Performance Primitives (RPP)
 
 ### Running the application
 Executing the below command will build and run the application for the specified test case.

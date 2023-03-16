@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.4.0"
+__version__ = "2.4.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -365,7 +365,8 @@ else:
             if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
                 os.system('sudo -v')
                 os.system('sudo rm -rf '+modelCompilerDeps)
-                print("\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
+                print(
+                    "\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
 
             if not os.path.exists(modelCompilerDeps):
                 print("STATUS: Model Compiler Deps Install - " +
@@ -380,11 +381,11 @@ else:
                     os.system(
                         'sudo '+linuxSystemInstall+' ' +
                         linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
-                os.system('sudo pip3 install future pytz numpy')
+                os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
                 # Install CAFFE Deps
-                os.system('sudo pip3 install google protobuf==3.12.4')
+                os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
                 # Install ONNX Deps
-                os.system('sudo pip3 install onnx')
+                os.system('sudo pip3 install onnx==1.11.0')
                 # Install NNEF Deps
                 os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
                 os.system(
@@ -471,6 +472,18 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
                   linuxCMake+' -DBACKEND='+backend+' -DCMAKE_INSTALL_PREFIX='+ROCM_PATH+' ../; make -j4; sudo make install)')
+        # CuPy Install
+        os.system('sudo -v')
+        os.system(linuxSystemInstall+' update')
+        if "Ubuntu" in platfromInfo:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3-dev')
+        else:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-devel hipcub-devel python3-devel')
+        os.system('sudo -v')
+        os.system('(cd '+deps_dir+'; git clone https://github.com/ROCmSoftwarePlatform/cupy.git; export CUPY_INSTALL_USE_HIP=1; export ROCM_HOME=/opt/rocm; cd cupy; git submodule update --init; pip install -e . --no-cache-dir -vvvv)')
+        os.system('pip install numpy==1.21')
 
     # Install ffmpeg
     if ffmpegInstall == 'ON' and backend != 'CPU':

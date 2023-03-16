@@ -64,7 +64,7 @@ rocAL can be currently used to perform the following operations either with rand
 
 ## Build instructions
 
-rocAL builds and installs as part of the MIVisonX toolkit. rocAL depends on the AMD's Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for rocAL to build. rocAL also needs the Turbo JPEG library to decode input JPEG images.
+rocAL builds and installs as part of the MIVisonX toolkit. rocAL depends on the AMD's ROCm Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for rocAL to build. rocAL also needs the Turbo JPEG library to decode input JPEG images.
 
 1. Make sure to have the AMD's RPP library installed. Please refer to the [RPP's page](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp) for instructions on how to install RPP.
 2. Make sure you've installed the Turbo JPEG library version 2.0 or later, refer to the section below.

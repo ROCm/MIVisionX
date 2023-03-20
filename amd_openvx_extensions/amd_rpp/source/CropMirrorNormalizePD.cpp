@@ -185,6 +185,7 @@ static vx_status VX_CALLBACK processCropMirrorNormalizebatchPD(vx_node node, con
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
+            std::cerr<<"\ndata->start_x "<<data->start_x[0]<<" data->start_y  "<<data->start_y[0] <<" data->mean "<<data->mean[0]<<"  data->std_dev, data->mirror,  "<<data->std_dev[0]<<"   " <<data->mirror[0]<<"\n";
             rpp_status = rppi_crop_mirror_normalize_u8_pkd3_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->dstDimensions, data->maxDstDimensions, data->start_x, data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift, data->nbatchSize, data->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;

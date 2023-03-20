@@ -534,6 +534,30 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalCropMirrorNormalize(RocalContext con
                                                             std::vector<float> &std_dev,
                                                             bool is_output ,
                                                             RocalIntParam mirror = NULL);
+    
+extern "C"  RocalImage  ROCAL_API_CALL rocalCropMirrorNormalizeFixed(RocalContext context, RocalImage input,
+                                                            unsigned crop_depth,
+                                                            unsigned crop_height,
+                                                            unsigned crop_width,
+                                                            float start_x,
+                                                            float start_y,
+                                                            float start_z,
+                                                            std::vector<float> &mean,
+                                                            std::vector<float> &std_dev,
+                                                            bool is_output ,
+                                                            int p_mirror);
+
+extern "C"  RocalImage  ROCAL_API_CALL rocalCropCenterMirrorNormalizeFixed(RocalContext context, RocalImage input,
+                                                            unsigned crop_depth,
+                                                            unsigned crop_height,
+                                                            unsigned crop_width,
+                                                            float start_x,
+                                                            float start_y,
+                                                            float start_z,
+                                                            std::vector<float> &mean,
+                                                            std::vector<float> &std_dev,
+                                                            bool is_output ,
+                                                            int p_mirror);
 
 extern "C" RocalImage  ROCAL_API_CALL rocalCrop(RocalContext context, RocalImage input, bool is_output,
                                              RocalFloatParam crop_width = NULL,

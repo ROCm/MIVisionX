@@ -170,7 +170,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             if (decode_max_height <= 0 || decode_max_width <= 0)
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false);
             else
-                input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
+                input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 3: //coco detection partial
@@ -271,6 +271,13 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
+        case 11: //mxnet reader
+        {
+            std::cout << ">>>>>>> Running MXNET CLASSIFICATION READER" << std::endl;
+            rocalCreateMXNetReader(handle, path, true);
+            input1 = rocalMXNetRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
+        }
+        break;
         default:
         {
             std::cout << ">>>>>>> Running IMAGE READER" << std::endl;
@@ -292,7 +299,8 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
 
     int resize_w = width, resize_h = height; // height and width
 
-    RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false);
+    // RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false);
+    RocalImage image0 = input1;
 
     RocalImage image1;
 
@@ -303,7 +311,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         std::cout << ">>>>>>> Running "
                   << "rocalResize" << std::endl;
         //auto image_int = rocalResize(handle, image0, resize_w , resize_h , false);
-        image1 = rocalResize(handle, image0, resize_w, resize_h, true);
+        image1 = rocalResize(handle, image0, 400, 400, true);
     }
     break;
     case 1:
@@ -510,7 +518,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     {
         std::cout << ">>>>>>> Running "
                   << "rocalRotateFixed" << std::endl;
-        image1 = rocalRotateFixed(handle, image0, 45, true);
+        image1 = rocalRotateFixed(handle, image0, 50, true);
     }
     break;
     case 32:
@@ -545,7 +553,8 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     {
         std::cout << ">>>>>>> Running "
                   << "rocalBlendFixed" << std::endl;
-        RocalImage image0_b = rocalRotate(handle, image0, false);
+        // RocalImage image0_b = rocalRotate(handle, image0, false);
+        RocalImage image0_b = rocalRotateFixed(handle, image0, 50, false);
         image1 = rocalBlendFixed(handle, image0, image0_b, 0.5, true);
     }
     break;
@@ -651,21 +660,21 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     {
         std::cout << ">>>>>>> Running "
                   << "rocalCropFixed" << std::endl;
-        image1 = rocalCropFixed(handle, input1, 50, 50, 1, true, 0, 0, 2);
+        image1 = rocalCropFixed(handle, input1, 250, 250, 1, true, 0, 0, 2);
     }
     break;
     case 52:
     {
         std::cout << ">>>>>>> Running "
                   << "rocalCropCenterFixed" << std::endl;
-        image1 = rocalCropCenterFixed(handle, image0, 100, 100, 2, true);
+        image1 = rocalCropCenterFixed(handle, image0, 250, 250, 2, true);
     }
     break;
     case 53:
     {
         std::cout << ">>>>>>> Running "
                   << "rocalResizeCropMirrorFixed" << std::endl;
-        image1 = rocalResizeCropMirrorFixed(handle, image0, 100, 100, true, 50, 50, 0);
+        image1 = rocalResizeCropMirrorFixed(handle, image0, 300, 300, true, 250, 250, 0);
     }
     break;
     case 54:
@@ -673,6 +682,24 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         std::cout << ">>>>>>> Running "
                   << "rocalSSDRandomCrop" << std::endl;
         image1 = rocalSSDRandomCrop(handle, input1, true);
+    }
+    break;
+    case 55:
+    {
+        std::cout << ">>>>>>> Running "
+                  << "rocalCropMirrorNormalizeFixed" << std::endl;
+        std::vector<float> mean;
+        std::vector<float> std_dev;
+        image1 = rocalCropMirrorNormalizeFixed(handle, image0, 1, 300, 300, 0.2, 0.2, 1, mean, std_dev, true,1);
+    }
+    break;
+    case 56:
+    {
+        std::cout << ">>>>>>> Running "
+                  << "rocalCropMirrorNormalizeFixed_center crop" << std::endl;
+        std::vector<float> mean;
+        std::vector<float> std_dev;
+        image1 = rocalCropCenterMirrorNormalizeFixed(handle, image0, 1, 250, 250, 0.5, 0.5, 1, mean, std_dev, true,0);
     }
     break;
 
@@ -826,7 +853,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             if(DISPLAY)
                 cv::imshow("output",mat_output);
             else
-                cv::imwrite(out_filename, mat_output, compression_params);
+                cv::imwrite(out_filename, mat_color, compression_params);
         }
         else
         {

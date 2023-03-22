@@ -54,7 +54,7 @@ fi
 # caffe2 classification
 ./rocAL_unittests 8 $caffe2_path ${output_path}CropCenter_rgb_${device}  $width $height 52 $cpu 1 0 $display
 ./rocAL_unittests 8 $caffe2_path ${output_path}ResizeCropMirror_rgb_${device}  $width $height 53 $cpu 1 0 $display
-./rocAL_unittests 8 $caffe2_path ${output_path}Resize_rgb_${device}_lanczos_Default_caffe2Classification  $width $height 0 $cpu 1 0 $display 3 0
+./rocAL_unittests 8 $caffe2_path ${output_path}Resize_rgb_${device}_lanczos_default_caffe2Classification  $width $height 0 $cpu 1 0 $display 3 0
 
 # caffe2 detection
 ./rocAL_unittests 9 $caffe2_path ${output_path}FishEye_rgb_${device}  $width $height 10 $cpu 1 0 $display
@@ -62,7 +62,7 @@ fi
 ./rocAL_unittests 9 $caffe2_path ${output_path}CropMirrorNormalize_rgb_${device}  $width $height 55 $cpu 1 0 $display
 
 #mxnet 
-./rocAL_unittests 11 $mxnet_path ${output_path}Resize_rgb_${device}_gaussian_Default_mxnet  $width $height 0 $cpu 1 0 $display 5 0 5 0 
+./rocAL_unittests 11 $mxnet_path ${output_path}Resize_rgb_${device}_gaussian_default_mxnet  $width $height 0 $cpu 1 0 $display 5 0 5 0 
 ./rocAL_unittests 11 $mxnet_path ${output_path}Pixelate_rgb_${device}  $width $height 19 $cpu 1 0 $display
 ./rocAL_unittests 11 $mxnet_path ${output_path}CropMirrorNormalize_rgb_${device}  $width $height 55 $cpu 1 0 $display
 
@@ -93,15 +93,15 @@ fi
 #resize
 # Last two parameter are interpolation type and scaling mode
 
-./rocAL_unittests 0 $image_path ${output_path}Resize_rgb_${device}_bilinear_Default_FileReader  $width $height 0 $cpu 1 0 $display 1 0 
-./rocAL_unittests 2 $coco_detection_path ${output_path}Resize_rgb_${device}_bilinear_Stretch_coco  $width $height 0 $cpu 1 0 $display 1 1
-./rocAL_unittests 4 $tf_classification_path ${output_path}Resize_rgb_${device}_bilinear_NotSmaller_tfClassification $width $height 0 $cpu 1 0 $display 1 2
-./rocAL_unittests 5 $tf_detection_path ${output_path}Resize_rgb_${device}_bilinear_Notlarger_tfDetection  $width $height 0 $cpu 1 0 $display 1 3
-./rocAL_unittests 6 $caffe_path ${output_path}Resize_rgb_${device}_bicubic_Default_caffeClassification  $width $height 0 $cpu 1 0 $display 1 0
-./rocAL_unittests 7 $caffe_path ${output_path}Resize_rgb_${device}_nearestneighbour_Default_caffeDetection  $width $height 0 $cpu 1 0 $display 0 0 
-./rocAL_unittests 8 $caffe2_path ${output_path}Resize_rgb_${device}_lanczos_Default_caffe2Classification  $width $height 0 $cpu 1 0 $display 3 0
-./rocAL_unittests 9 $caffe2_path ${output_path}Resize_rgb_${device}_triangular_Default_caffe2Detection  $width $height 0 $cpu 1 0 $display 4 0
-./rocAL_unittests 11 $mxnet_path ${output_path}Resize_rgb_${device}_gaussian_Default_mxnet  $width $height 0 $cpu 1 0 $display 5 0 5 0 
+./rocAL_unittests 0 $image_path ${output_path}Resize_rgb_${device}_bilinear_default_FileReader  $width $height 0 $cpu 1 0 $display 1 0 
+./rocAL_unittests 2 $coco_detection_path ${output_path}Resize_rgb_${device}_bilinear_stretch_coco  $width $height 0 $cpu 1 0 $display 1 1
+./rocAL_unittests 4 $tf_classification_path ${output_path}Resize_rgb_${device}_bilinear_notsmaller_tfClassification $width $height 0 $cpu 1 0 $display 1 2
+./rocAL_unittests 5 $tf_detection_path ${output_path}Resize_rgb_${device}_bilinear_notlarger_tfDetection  $width $height 0 $cpu 1 0 $display 1 3
+./rocAL_unittests 6 $caffe_path ${output_path}Resize_rgb_${device}_bicubic_default_caffeClassification  $width $height 0 $cpu 1 0 $display 1 0
+./rocAL_unittests 7 $caffe_path ${output_path}Resize_rgb_${device}_nearestneighbour_default_caffeDetection  $width $height 0 $cpu 1 0 $display 0 0 
+./rocAL_unittests 8 $caffe2_path ${output_path}Resize_rgb_${device}_lanczos_default_caffe2Classification  $width $height 0 $cpu 1 0 $display 3 0
+./rocAL_unittests 9 $caffe2_path ${output_path}Resize_rgb_${device}_triangular_default_caffe2Detection  $width $height 0 $cpu 1 0 $display 4 0
+./rocAL_unittests 11 $mxnet_path ${output_path}Resize_rgb_${device}_gaussian_default_mxnet  $width $height 0 $cpu 1 0 $display 5 0 5 0 
 
 
 

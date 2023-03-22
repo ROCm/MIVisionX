@@ -250,6 +250,7 @@ Reader::Status FileSourceReader::open_folder()
         _file_count_all_shards++;
         incremenet_file_id();
     }
+    std::sort(_file_names.begin(), _file_names.end());
     if(_file_names.empty())
         WRN("FileReader ShardID ["+ TOSTR(_shard_id)+ "] Did not load any file from " + _folder_path)
 

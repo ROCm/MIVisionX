@@ -51,8 +51,71 @@ using namespace cv;
 //#define RANDOMBBOXCROP
 
 using namespace std::chrono;
+std::string get_interpolation_type(unsigned int val, RocalResizeInterpolationType &interpolationType)
+{
+    switch(val)
+    {
+        case 0:
+        {
+            interpolationType = ROCAL_NEAREST_NEIGHBOR_INTERPOLATION;
+            return "NearestNeighbor";
+        }
+        case 2:
+        {
+            interpolationType = ROCAL_CUBIC_INTERPOLATION;
+            return "Bicubic";
+        }
+        case 3:
+        {
+            interpolationType = ROCAL_LANCZOS_INTERPOLATION;
+            return "Lanczos";
+        }
+        case 4:
+        {
+            interpolationType = ROCAL_GAUSSIAN_INTERPOLATION;
+            return "Triangular";
+        }
+        case 5:
+        {
+            interpolationType = ROCAL_TRIANGULAR_INTERPOLATION;
+            return "Gaussian";
+        }
+        default:
+        {
+            interpolationType = ROCAL_LINEAR_INTERPOLATION;
+            return "Bilinear";
+        }
+    }
+}
 
-int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes, int display_all);
+std::string get_scaling_mode(unsigned int val, RocalResizeScalingMode &scale_mode)
+{
+    switch(val)
+    {
+        case 0:
+        {
+            scale_mode = ROCAL_SCALING_MODE_DEFAULT;
+            return "Default";
+        }
+        case 2:
+        {
+            scale_mode = ROCAL_SCALING_MODE_DEFAULT;
+            return "NotSmaller";
+        }
+        case 3:
+        {
+            scale_mode = ROCAL_SCALING_MODE_NOT_LARGER;
+            return "Notlarger";
+        }
+        default:
+        {
+             scale_mode = ROCAL_SCALING_MODE_STRETCH;
+            return "Stretch";
+        }
+    }
+}
+
+int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes, int display_all, int resize_interpolation_type, int resize_scaling_mode);
 int main(int argc, const char **argv)
 {
     // check command-line usage
@@ -91,12 +154,15 @@ int main(int argc, const char **argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         display_all = atoi(argv[++argIdx]);
 
-    test(test_case, reader_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all);
+    bool additionalParamCase=(test_case == 0);
+    unsigned int resize_interpolation_type = additionalParamCase ? atoi(argv[++argIdx]) : 1;
+    unsigned int resize_scaling_mode = additionalParamCase ? atoi(argv[++argIdx]) : 1;
+    test(test_case, reader_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all,  resize_interpolation_type,resize_scaling_mode);
 
     return 0;
 }
 
-int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all)
+int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all, int resize_interpolation_type, int resize_scaling_mode )
 {
     size_t num_threads = 1;
     unsigned int inputBatchSize = 2;
@@ -303,15 +369,31 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     RocalImage image0 = input1;
 
     RocalImage image1;
-
+    std::string interpolationTypeName,scaling_node_Name;
+    RocalResizeInterpolationType interpolationType = RocalResizeInterpolationType::ROCAL_LINEAR_INTERPOLATION;
+    RocalResizeScalingMode scale_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH;
     switch (test_case)
     {
     case 0:
     {
         std::cout << ">>>>>>> Running "
                   << "rocalResize" << std::endl;
+        resize_w = 400;
+        resize_h = 400;
         //auto image_int = rocalResize(handle, image0, resize_w , resize_h , false);
-        image1 = rocalResize(handle, image0, 400, 400, true);
+        interpolationTypeName = get_interpolation_type(resize_interpolation_type, interpolationType);
+        scaling_node_Name = get_scaling_mode(resize_scaling_mode, scale_mode);
+        std::cerr<<"\n interpolationTypeName "<<interpolationTypeName;
+        std::cerr<<"\n scaling_node_Name "<<scaling_node_Name;
+        if (scale_mode != ROCAL_SCALING_MODE_DEFAULT && interpolationType != ROCAL_LINEAR_INTERPOLATION) { // (golden output available for bilinear interpolation for this  
+            std::cerr<<"Running x scaling mode with Bilinear interpolation for comparison \n";
+            interpolationType = ROCAL_LINEAR_INTERPOLATION;
+        }
+        if(scale_mode == ROCAL_SCALING_MODE_STRETCH) //For golden Output comparison 
+            image1 = rocalResize(handle, image0, resize_w,0, true,scale_mode,{},0,0,interpolationType);
+        else
+            image1 = rocalResize(handle, image0, resize_w, resize_h, true,scale_mode,{},0,0,interpolationType);
+
     }
     break;
     case 1:
@@ -853,7 +935,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             if(DISPLAY)
                 cv::imshow("output",mat_output);
             else
-                cv::imwrite(out_filename, mat_color, compression_params);
+            cv::imwrite(out_filename, mat_color, compression_params);
         }
         else
         {

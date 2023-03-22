@@ -36,9 +36,9 @@ fi
 ./rocAL_unittests 4 $tf_classification_path ${output_path}Blur_rgb_${device}  $width $height 35 $cpu 1 0 $display
 
 #tf detection
-./rocAL_unittests 5 $tf_detection_path ${output_path}Jitter_rgb_${device}  $width $height 39 $cpu 1 0 $display
+./rocAL_unittests 5 $tf_detection_path ${output_path}CropMirrorNormalize_rgb_${device}_tfDetection  $width $height 55 $cpu 1 0 $display
 ./rocAL_unittests 5 $tf_detection_path ${output_path}ColorTemp_rgb_${device}  $width $height 43 $cpu 1 0 $display
-./rocAL_unittests 5 $tf_detection_path ${output_path}CropResize_rgb_${device} $width $height 30 $cpu 1 0 $display 
+./rocAL_unittests 5 $tf_detection_path ${output_path}Crop_rgb_${device}_tfDetection  $width $height 51 $cpu 1 0 $display
 
 
 # caffe classification
@@ -49,7 +49,7 @@ fi
 # caffe detection
 ./rocAL_unittests 7 $caffe_path ${output_path}Saturation_rgb_${device}  $width $height 49 $cpu 1 0 $display
 ./rocAL_unittests 7 $caffe_path ${output_path}ColorTwist_rgb_${device}  $width $height 50 $cpu 1 0 $display
-./rocAL_unittests 7 $caffe_path ${output_path}Crop_rgb_${device}  $width $height 51 $cpu 1 0 $display
+./rocAL_unittests 7 $caffe_path ${output_path}Crop_rgb_${device}_caffeDetection  $width $height 51 $cpu 1 0 $display
 
 # caffe2 classification
 ./rocAL_unittests 8 $caffe2_path ${output_path}CropCenter_rgb_${device}  $width $height 52 $cpu 1 0 $display

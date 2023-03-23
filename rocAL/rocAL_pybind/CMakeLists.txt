@@ -19,7 +19,10 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.0)
-project(rocal_pybind)
+project(rocAL_pybind)
+
+set(TARGET_NAME rocAL_pybind)
+option(ROCAL_PYTHON  "Build rocAL Python Package" ON)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
@@ -47,66 +50,138 @@ if(GPU_SUPPORT)
     endif()
 endif()
 
-if(NOT OpenCL_FOUND)
-    set(BUILD_ROCAL_PYBIND false)
-    message("-- ${Yellow}NOTE: rocAL pybind requires OpenCL, Not Found${ColourReset}")
-endif()
-if(NOT HIP_FOUND)
-    set(BUILD_ROCAL_PYBIND false)
-    message("-- ${Yellow}rocAL pybind requires HIP, Not Found${ColourReset}")
-endif()
-if(NOT AMDRPP_FOUND)
-    set(BUILD_ROCAL_PYBIND false)
-    message("-- ${Yellow}NOTE: rocAL pybind requires AMDRPP, Not Found${ColourReset}")
-else()
-    #find the RPP backend type
-    set(RPP_BACKEND_OPENCL_FOUND 0)
-    set(RPP_BACKEND_HIP_FOUND 0)
-    if(EXISTS ${AMDRPP_INCLUDE_DIRS}/rpp_backend.h)
-        file(READ ${AMDRPP_INCLUDE_DIRS}/rpp_backend.h RPP_BACKEND_FILE)
-        string(REGEX MATCH "RPP_BACKEND_OPENCL ([0-9]*)" _ ${RPP_BACKEND_FILE})
-        set(RPP_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-        string(REGEX MATCH "RPP_BACKEND_HIP ([0-9]*)" _ ${RPP_BACKEND_FILE})
-        set(RPP_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
-    else()
-        message("-- ${Red}WARNING: ${AMDRPP_INCLUDE_DIRS}/rpp_backend.h file Not Found. please run the setup script to install latest RPP package ${ColourReset}")
-    endif()
-    if ("${BACKEND}" STREQUAL "OPENCL" AND OpenCL_FOUND)
-        if (NOT RPP_BACKEND_OPENCL_FOUND)
-            set(BUILD_ROCAL_PYBIND false)
-            message("-- ${Red}WARNING: RPP with OpenCL backend Not Found (HINT: run setup script with the OCL backend first!) -- rocAL pybind module excluded${ColourReset}")
-        endif()
-    elseif("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-        if (NOT RPP_BACKEND_HIP_FOUND)
-            set(BUILD_ROCAL_PYBIND false)
-            message("-- ${Red}WARNING: RPP with the HIP backend Not Found (HINT: run setup script with the HIP backend first!) -- rocAL pybind module excluded${ColourReset}")
-        endif()
-    else()
+if(ROCAL_PYTHON)
+    if(NOT OpenCL_FOUND)
         set(BUILD_ROCAL_PYBIND false)
-        message("-- ${Red}WARNING: GPU support with OpenCL or HIP Not Found -- rocAL Pybind module excluded${ColourReset}")
+        message("-- ${Yellow}NOTE: rocAL pybind requires OpenCL, Not Found${ColourReset}")
     endif()
-endif()
+    if(NOT HIP_FOUND)
+        set(BUILD_ROCAL_PYBIND false)
+        message("-- ${Yellow}rocAL pybind requires HIP, Not Found${ColourReset}")
+    endif()
+    if(NOT AMDRPP_FOUND)
+        set(BUILD_ROCAL_PYBIND false)
+        message("-- ${Yellow}NOTE: rocAL pybind requires AMDRPP, Not Found${ColourReset}")
+    else()
+        #find the RPP backend type
+        set(RPP_BACKEND_OPENCL_FOUND 0)
+        set(RPP_BACKEND_HIP_FOUND 0)
+        if(EXISTS ${AMDRPP_INCLUDE_DIRS}/rpp_backend.h)
+            file(READ ${AMDRPP_INCLUDE_DIRS}/rpp_backend.h RPP_BACKEND_FILE)
+            string(REGEX MATCH "RPP_BACKEND_OPENCL ([0-9]*)" _ ${RPP_BACKEND_FILE})
+            set(RPP_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+            string(REGEX MATCH "RPP_BACKEND_HIP ([0-9]*)" _ ${RPP_BACKEND_FILE})
+            set(RPP_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+        else()
+            message("-- ${Red}WARNING: ${AMDRPP_INCLUDE_DIRS}/rpp_backend.h file Not Found. please run the setup script to install latest RPP package ${ColourReset}")
+        endif()
+        if ("${BACKEND}" STREQUAL "OPENCL" AND OpenCL_FOUND)
+            if (NOT RPP_BACKEND_OPENCL_FOUND)
+                set(BUILD_ROCAL_PYBIND false)
+                message("-- ${Red}WARNING: RPP with OpenCL backend Not Found (HINT: run setup script with the OCL backend first!) -- rocAL pybind module excluded${ColourReset}")
+            endif()
+        elseif("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
+            if (NOT RPP_BACKEND_HIP_FOUND)
+                set(BUILD_ROCAL_PYBIND false)
+                message("-- ${Red}WARNING: RPP with the HIP backend Not Found (HINT: run setup script with the HIP backend first!) -- rocAL pybind module excluded${ColourReset}")
+            endif()
+        else()
+            set(BUILD_ROCAL_PYBIND false)
+            message("-- ${Red}WARNING: GPU support with OpenCL or HIP Not Found -- rocAL Pybind module excluded${ColourReset}")
+        endif()
+    endif()
 
-if(NOT TurboJpeg_FOUND)
-    set(BUILD_ROCAL_PYBIND false)
-    message("-- ${Yellow}NOTE: rocAL pybind requires TurboJpeg, Not Found${ColourReset}")
-endif()
+    if(NOT TurboJpeg_FOUND)
+        set(BUILD_ROCAL_PYBIND false)
+        message("-- ${Yellow}NOTE: rocAL pybind requires TurboJpeg, Not Found${ColourReset}")
+    endif()
 
-if(${BUILD_ROCAL_PYBIND})
 
-    link_directories(${ROCM_PATH}/lib)
+    if(${BUILD_ROCAL_PYBIND})
 
-    include_directories(../rocAL/include/api/
-                        third_party_lib/
-                        ../../amd_openvx/openvx/include/)
+        find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+        include_directories(${Python3_INCLUDE_DIRS})
+        # avoid setting the default installation path to /usr/local
+        if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+            set(CMAKE_INSTALL_PREFIX ${Python3_STDARCH} CACHE PATH "rocAL default installation path" FORCE)
+        endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+        set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+        add_subdirectory(third_party_lib/pybind11)
+        include_directories(third_party_lib/pybind11/include/)
 
-    add_subdirectory(third_party_lib/pybind11)
+        # AMD RPP
+        include_directories(${AMDRPP_INCLUDE_DIRS})
+        set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})
+        # MIVisionX
+        include_directories(${MIVisionX_INCLUDE_DIRS})
+        set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${OPENVX_LIBRARIES} ${VXRPP_LIBRARIES})
+        # TurboJPEG
+        include_directories(${TurboJpeg_INCLUDE_DIRS})
+        set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${TurboJpeg_LIBRARIES})
+        # rocAL
+        set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rocal)
+        include_directories(../rocAL/include/api/)
 
-    pybind11_add_module(rocal_pybind rocal_pybind.cpp)
-    target_link_libraries(rocal_pybind PRIVATE rocal  vx_rpp amd_rpp)
-    message("-- ${White}rocal_pybind -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
-    install(TARGETS rocal_pybind DESTINATION lib)
-    message("-- ${Green}ROCm Augmentation Library Python Binding - rocal_pybind module added ${ColourReset}")
-else()
-    message("-- ${Red}WARNING: rocAL Pybind module excluded ${ColourReset}")
+        file(GLOB_RECURSE pyfiles amd/*.py)
+        file(GLOB_RECURSE sources *.cpp)
+
+        pybind11_add_module(rocal_pybind MODULE ${sources})
+        target_link_libraries(rocal_pybind PRIVATE ${LINK_LIBRARY_LIST})
+        add_dependencies(rocal_pybind rocal)
+        message("-- ${White}rocal_pybind -- Link Libraries: ${LINK_LIBRARY_LIST}${ColourReset}")
+        message("-- ${White}rocal_pybind -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
+
+        set_target_properties(rocal_pybind PROPERTIES
+            PREFIX "${PYTHON_MODULE_PREFIX}"
+            SUFFIX "${PYTHON_MODULE_EXTENSION}"
+            LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${TARGET_NAME}/${CMAKE_INSTALL_LIBDIR}")
+        set(TARGET_PYMODULE_NAME "${PYTHON_MODULE_PREFIX}rocal_pybind${PYTHON_MODULE_EXTENSION}")
+
+        CONFIGURE_FILE(amd/__init__.py
+                ${CMAKE_BINARY_DIR}/${TARGET_NAME}/__init__.py @ONLY
+                )
+        CONFIGURE_FILE(setup.py
+                ${CMAKE_BINARY_DIR}/setup.py @ONLY
+                )
+        CONFIGURE_FILE(getrocALwheelname.py
+                ${CMAKE_BINARY_DIR}/getrocALwheelname.py @ONLY
+                )
+        CONFIGURE_FILE(rocal_pybind.cpp
+                ${CMAKE_BINARY_DIR}/rocal_pybind.cpp @ONLY
+                )
+
+        foreach (filename ${pyfiles})
+            get_filename_component(target "${filename}" REALPATH)
+            #to maintain folder structure
+            file(RELATIVE_PATH ITEM_PATH_REL ${CMAKE_CURRENT_SOURCE_DIR} ${filename})
+            message(STATUS "Copying ${filename} to ${TARGET_NAME}/${ITEM_PATH_REL}")
+            configure_file("${filename}" "${CMAKE_BINARY_DIR}/${TARGET_NAME}/${ITEM_PATH_REL}" COPYONLY)
+        endforeach (filename)
+
+        execute_process(COMMAND "${Python3_EXECUTABLE}" getrocALwheelname.py OUTPUT_VARIABLE PY_WHEELFILE
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+        message(STATUS "Detected rocAL Python wheel filename ${PY_WHEELFILE}")
+        
+        add_custom_target(PyPackageBuild
+            COMMAND "${Python3_EXECUTABLE}" -m pip wheel .
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+            COMMENT "Building python wheel package"
+            )
+
+        add_dependencies(PyPackageBuild rocal_pybind)
+
+        set_target_properties(PyPackageBuild PROPERTIES Package_Name ${PY_WHEELFILE})
+        add_custom_target(PyPackageInstall
+                COMMAND "${Python3_EXECUTABLE}" -m pip install --upgrade --force-reinstall --no-deps "${PY_WHEELFILE}"
+                WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                COMMENT "Installing wheel file"
+                )
+        add_dependencies(PyPackageInstall PyPackageBuild)
+        
+        #install rocAL pybind libs
+        install(FILES ${CMAKE_BINARY_DIR}/${TARGET_NAME}/${CMAKE_INSTALL_LIBDIR}/${TARGET_PYMODULE_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
+        message("-- ${Green}Radeon Augmentation Library Python Binding - rocal_pybind module added ${ColourReset}")
+    else()
+        message("-- ${Red}WARNING: rocAL PyBind Module excluded - Dependency Failure${ColourReset}")
+    endif()        
 endif()

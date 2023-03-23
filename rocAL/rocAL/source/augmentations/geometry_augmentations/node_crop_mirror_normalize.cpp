@@ -89,33 +89,3 @@ void CropMirrorNormalizeNode::init(int crop_h, int crop_w, float anchor_x, float
     _std_dev = std_dev;
     _mirror.set_param(core(mirror));
 }
-
-void CropMirrorNormalizeNode::init(int crop_h, int crop_w, float anchor_x, float anchor_y, float mean, float std_dev, int mirror)
-{
-    // current implementation does a fixed crop with specified dims and anchor
-    _crop_param->x1 = anchor_x;
-    _crop_param->y1 = anchor_y;
-    _crop_param->crop_h = crop_h;
-    _crop_param->crop_w = crop_w;
-
-    _crop_param->set_fixed_crop(anchor_x, anchor_y);
-    // _crop_param->set_fixed_crop(0.5, 0.5);
-    _mean = mean;
-    _std_dev = std_dev;
-    _mirror.set_param(mirror);
-}
-
-
-void CropMirrorNormalizeNode::init(int crop_h, int crop_w, float mean, float std_dev, int mirror)
-{
-    // current implementation does a fixed crop with specified dims and anchor
-    _crop_param->x1 = 0;
-    _crop_param->y1 = 0;
-    _crop_param->crop_h = crop_h;
-    _crop_param->crop_w = crop_w;
-
-    _crop_param->set_fixed_crop(0.5, 0.5);
-    _mean = mean;
-    _std_dev = std_dev;
-    _mirror.set_param(mirror);
-}

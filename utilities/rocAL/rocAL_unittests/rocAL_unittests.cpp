@@ -92,10 +92,10 @@ std::string get_scaling_mode(unsigned int val, RocalResizeScalingMode &scale_mod
 {
     switch(val)
     {
-        case 0:
+        case 1:
         {
-            scale_mode = ROCAL_SCALING_MODE_DEFAULT;
-            return "Default";
+            scale_mode = ROCAL_SCALING_MODE_STRETCH;
+            return "Stretch";
         }
         case 2:
         {
@@ -109,8 +109,9 @@ std::string get_scaling_mode(unsigned int val, RocalResizeScalingMode &scale_mod
         }
         default:
         {
-             scale_mode = ROCAL_SCALING_MODE_STRETCH;
-            return "Stretch";
+            scale_mode = ROCAL_SCALING_MODE_DEFAULT;
+            return "Default";
+             
         }
     }
 }
@@ -138,6 +139,8 @@ int main(int argc, const char **argv)
     bool gpu = 1;
     int test_case = 3; // For Rotate
     int num_of_classes = 0;
+    int resize_interpolation_type = 1; // For Bilinear interpolations
+    int resize_scaling_mode = 0; // For Default scaling mode
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         test_case = atoi(argv[++argIdx]);
@@ -153,10 +156,13 @@ int main(int argc, const char **argv)
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         display_all = atoi(argv[++argIdx]);
+    
+    if (argc >= argIdx + MIN_ARG_COUNT)
+        resize_interpolation_type = atoi(argv[++argIdx]);
+    
+    if (argc >= argIdx + MIN_ARG_COUNT)
+        resize_scaling_mode = atoi(argv[++argIdx]);
 
-    bool additionalParamCase=(test_case == 0);
-    unsigned int resize_interpolation_type = additionalParamCase ? atoi(argv[++argIdx]) : 1;
-    unsigned int resize_scaling_mode = additionalParamCase ? atoi(argv[++argIdx]) : 1;
     test(test_case, reader_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all,  resize_interpolation_type,resize_scaling_mode);
 
     return 0;
@@ -197,6 +203,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
     RocalIntParam color_temp_adj = rocalCreateIntParameter(-50);
+    RocalIntParam mirror = rocalCreateIntParameter(1);
 
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
@@ -339,7 +346,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         break;
         case 11: //mxnet reader
         {
-            std::cout << ">>>>>>> Running MXNET CLASSIFICATION READER" << std::endl;
+            std::cout << ">>>>>>> Running MXNET READER" << std::endl;
             rocalCreateMXNetReader(handle, path, true);
             input1 = rocalMXNetRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
@@ -571,7 +578,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                   << "rocalCropMirrorNormalize" << std::endl;
         std::vector<float> mean;
         std::vector<float> std_dev;
-        image1 = rocalCropMirrorNormalize(handle, image0, 1, 200, 200, 50, 50, 1, mean, std_dev, true);
+        image1 = rocalCropMirrorNormalize(handle, image0, 1, 300, 300, 0.2, 0.2, 1, mean, std_dev, true, mirror);
     }
     break;
     case 26:
@@ -769,19 +776,10 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     case 55:
     {
         std::cout << ">>>>>>> Running "
-                  << "rocalCropMirrorNormalizeFixed" << std::endl;
-        std::vector<float> mean;
-        std::vector<float> std_dev;
-        image1 = rocalCropMirrorNormalizeFixed(handle, image0, 1, 300, 300, 0.2, 0.2, 1, mean, std_dev, true,1);
-    }
-    break;
-    case 56:
-    {
-        std::cout << ">>>>>>> Running "
                   << "rocalCropMirrorNormalizeFixed_center crop" << std::endl;
         std::vector<float> mean;
         std::vector<float> std_dev;
-        image1 = rocalCropCenterMirrorNormalizeFixed(handle, image0, 1, 250, 250, 0.5, 0.5, 1, mean, std_dev, true,0);
+        image1 = rocalCropMirrorNormalize(handle, image0, 1, 250, 250, 0.5, 0.5, 0.5, mean, std_dev, true);
     }
     break;
 

@@ -9,6 +9,11 @@ cmake ..
 make -j$nproc
 
 export ROCAL_DATA_PATH=/media/unittest/MIVisionX-data/ # path to be changed by the User
+if [$ROCAL_DATA_PATH == ""]
+then 
+    echo "Need to export ROCAL_DATA_PATH"
+fi
+
 image_path=${ROCAL_DATA_PATH}/rocal_data/coco/coco_10_img/train_10images_2017/
 coco_classification_path=${ROCAL_DATA_PATH}/rocal_data/coco/coco_10_img/train_10images_2017/
 coco_detection_path=${ROCAL_DATA_PATH}/rocal_data/coco/coco_10_img/train_10images_2017/
@@ -71,23 +76,23 @@ fi
 # caffe2 detection
 ./rocAL_unittests 9 $caffe2_path ${output_path}FishEye_rgb_${device_name} $width $height 10 $device 1 0 $display
 ./rocAL_unittests 9 $caffe2_path ${output_path}Pixelate_rgb_${device_name} $width $height 19 $device 1 0 $display
-./rocAL_unittests 9 $caffe2_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffe2Detection $width $height 55 $device 1 0 $display
+./rocAL_unittests 9 $caffe2_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffe2Detection $width $height 25 $device 1 0 $display
 
 #mxnet 
 ./rocAL_unittests 11 $mxnet_path ${output_path}Jitter_rgb_${device_name} $width $height 39 $device 1 0 $display
 ./rocAL_unittests 11 $mxnet_path ${output_path}Pixelate_rgb_${device_name} $width $height 19 $device 1 0 $display
-./rocAL_unittests 11 $mxnet_path ${output_path}CropMirrorNormalize_rgb_${device_name}_mxnet $width $height 55 $device 1 0 $display
+./rocAL_unittests 11 $mxnet_path ${output_path}CropMirrorNormalize_rgb_${device_name}_mxnet $width $height 25 $device 1 0 $display
 
 #CMN 
-./rocAL_unittests 0 $image_path ${output_path}CropMirrorNormalize_rgb_${device_name}_FileReader $width $height 55 $device 1 0 $display
-./rocAL_unittests 2 $coco_detection_path ${output_path}CropMirrorNormalize_rgb_${device_name}_coco $width $height 55 $device 1 0 $display
-./rocAL_unittests 4 $tf_classification_path ${output_path}CropMirrorNormalize_rgb_${device_name}_tfClassification $width $height 55 $device 1 0 $display
-./rocAL_unittests 5 $tf_detection_path ${output_path}CropMirrorNormalize_rgb_${device_name}_tfDetection $width $height 55 $device 1 0 $display
-./rocAL_unittests 6 $caffe_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffeClassification $width $height 55 $device 1 0 $display
-./rocAL_unittests 7 $caffe_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffeDetection $width $height 55 $device 1 0 $display
-./rocAL_unittests 8 $caffe2_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffe2Classification $width $height 55 $device 1 0 $display
-./rocAL_unittests 9 $caffe2_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffe2Detection $width $height 55 $device 1 0 $display
-./rocAL_unittests 11 $mxnet_path ${output_path}CropMirrorNormalize_rgb_${device_name}_mxnet $width $height 55 $device 1 0 $display
+./rocAL_unittests 0 $image_path ${output_path}CropMirrorNormalize_rgb_${device_name}_FileReader $width $height 25 $device 1 0 $display
+./rocAL_unittests 2 $coco_detection_path ${output_path}CropMirrorNormalize_rgb_${device_name}_coco $width $height 25 $device 1 0 $display
+./rocAL_unittests 4 $tf_classification_path ${output_path}CropMirrorNormalize_rgb_${device_name}_tfClassification $width $height 25 $device 1 0 $display
+./rocAL_unittests 5 $tf_detection_path ${output_path}CropMirrorNormalize_rgb_${device_name}_tfDetection $width $height 25 $device 1 0 $display
+./rocAL_unittests 6 $caffe_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffeClassification $width $height 25 $device 1 0 $display
+./rocAL_unittests 7 $caffe_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffeDetection $width $height 25 $device 1 0 $display
+./rocAL_unittests 8 $caffe2_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffe2Classification $width $height 25 $device 1 0 $display
+./rocAL_unittests 9 $caffe2_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffe2Detection $width $height 25 $device 1 0 $display
+./rocAL_unittests 11 $mxnet_path ${output_path}CropMirrorNormalize_rgb_${device_name}_mxnet $width $height 25 $device 1 0 $display
 
 # crop
 ./rocAL_unittests 0 $image_path ${output_path}Crop_rgb_${device_name}_FileReader $width $height 51 $device 1 0 $display

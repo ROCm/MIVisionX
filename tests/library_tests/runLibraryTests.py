@@ -27,7 +27,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD MIVisionX - Library Tests Report"
 __license__ = "MIT"
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -63,7 +63,7 @@ if backendType not in ('CPU', 'HIP', 'OCL'):
 
 # check install
 runVX_exe = installDir+'/bin/runvx'
-if(os.path.isfile(runVX_exe)):
+if (os.path.isfile(runVX_exe)):
     print("STATUS: MIVisionX Install Path Found - "+installDir)
 else:
     print("\nERROR: MIVisionX Install Path Not Found\n")
@@ -89,7 +89,8 @@ else:
     print("MIVisionX Library Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
     exit(1)
 
-print("\nMIVisionX Library Test V:"+__version__+" on "+platform_name+" is supported")
+print("\nMIVisionX Library Test V:"+__version__ +
+      " on "+platform_name+" is supported")
 
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
@@ -182,17 +183,35 @@ with open(reportFilename, 'w') as f:
     else:
         write_formatted(opencv_lib, f)
     f.write("\n")
+    # VX RPP Libraries
+    f.write("* VX RPP Library\n")
+    if not rpp_lib:
+        f.write("WARNING: VX RPP Library Not Built\n")
+        print("WARNING: VX RPP Library Not Built\n")
+        warning = 1
+    else:
+        write_formatted(rpp_lib, f)
+    f.write("\n")
+    # rocAL Libraries
+    f.write("* rocAL Library\n")
+    if not rocal_lib:
+        f.write("WARNING: rocAL Library Not Built\n")
+        print("WARNING: rocAL Library Not Built\n")
+        warning = 1
+    else:
+        write_formatted(rocal_lib, f)
+    f.write("\n")
+    if backendType == 'OCL':
+        # Loom Libraries
+        f.write("* Loom Library\n")
+        if not loom_lib:
+            f.write("WARNING: Loom Library Not Built\n")
+            print("WARNING: Loom Library Not Built\n")
+            warning = 1
+        else:
+            write_formatted(loom_lib, f)
+        f.write("\n")
     if backendType == 'OCL' or backendType == 'HIP':
-        if backendType == 'OCL':
-            # Loom Libraries
-            f.write("* Loom Library\n")
-            if not loom_lib:
-                f.write("WARNING: Loom Library Not Built\n")
-                print("WARNING: Loom Library Not Built\n")
-                warning = 1
-            else:
-                write_formatted(loom_lib, f)
-            f.write("\n")
         # AMD Media Libraries
         f.write("* AMD Media Library\n")
         if not media_lib:
@@ -211,42 +230,25 @@ with open(reportFilename, 'w') as f:
         else:
             write_formatted(custom_lib, f)
         f.write("\n")
-        # VX NN Libraries
-        f.write("* VX Neural Net Library\n")
-        if not nn_lib:
-            f.write("WARNING: VX Neural Net Library Not Built\n")
-            print("WARNING: VX Neural Net Library Not Built\n")
-            warning = 1
-        else:
-            write_formatted(nn_lib, f)
-        f.write("\n")
-        # VX MIGraphX Libraries
-        f.write("* VX MIGraphX Library\n")
-        if not migraphx_lib:
-            f.write("WARNING: VX MIGraphX Library Not Built\n")
-            print("WARNING: VX MIGraphX Library Not Built\n")
-            warning = 1
-        else:
-            write_formatted(migraphx_lib, f)
-        f.write("\n")
-        # VX RPP Libraries
-        f.write("* VX RPP Library\n")
-        if not rpp_lib:
-            f.write("WARNING: VX RPP Library Not Built\n")
-            print("WARNING: VX RPP Library Not Built\n")
-            warning = 1
-        else:
-            write_formatted(rpp_lib, f)
-        f.write("\n")
-        # rocAL Libraries
-        f.write("* rocAL Library\n")
-        if not rocal_lib:
-            f.write("WARNING: rocAL Library Not Built\n")
-            print("WARNING: rocAL Library Not Built\n")
-            warning = 1
-        else:
-            write_formatted(rocal_lib, f)
-        f.write("\n")
+        if backendType == 'HIP':
+            # VX NN Libraries
+            f.write("* VX Neural Net Library\n")
+            if not nn_lib:
+                f.write("WARNING: VX Neural Net Library Not Built\n")
+                print("WARNING: VX Neural Net Library Not Built\n")
+                warning = 1
+            else:
+                write_formatted(nn_lib, f)
+            f.write("\n")
+            # VX MIGraphX Libraries
+            f.write("* VX MIGraphX Library\n")
+            if not migraphx_lib:
+                f.write("WARNING: VX MIGraphX Library Not Built\n")
+                print("WARNING: VX MIGraphX Library Not Built\n")
+                warning = 1
+            else:
+                write_formatted(migraphx_lib, f)
+            f.write("\n")
 
     f.write("\nExecutables Report\n")
     f.write("--------\n")
@@ -279,6 +281,7 @@ with open(reportFilename, 'w') as f:
         else:
             write_formatted(loom_exe, f)
         f.write("\n")
+    if backendType == 'OCL' or backendType == 'HIP':
         # MV Compile
         f.write("* MV Compile\n")
         if not mv_compile_exe:

@@ -52,67 +52,52 @@ using namespace cv;
 
 using namespace std::chrono;
 
-std::string get_interpolation_type(unsigned int val, RocalResizeInterpolationType &interpolation_type)
-{
-    switch(val)
-    {
-        case 0:
-        {
+std::string get_interpolation_type(unsigned int val, RocalResizeInterpolationType &interpolation_type) {
+    switch(val) {
+        case 0: {
             interpolation_type = ROCAL_NEAREST_NEIGHBOR_INTERPOLATION;
             return "NearestNeighbor";
         }
-        case 2:
-        {
+        case 2: {
             interpolation_type = ROCAL_CUBIC_INTERPOLATION;
             return "Bicubic";
         }
-        case 3:
-        {
+        case 3: {
             interpolation_type = ROCAL_LANCZOS_INTERPOLATION;
             return "Lanczos";
         }
-        case 4:
-        {
+        case 4: {
             interpolation_type = ROCAL_GAUSSIAN_INTERPOLATION;
             return "Triangular";
         }
-        case 5:
-        {
+        case 5: {
             interpolation_type = ROCAL_TRIANGULAR_INTERPOLATION;
             return "Gaussian";
         }
-        default:
-        {
+        default: {
             interpolation_type = ROCAL_LINEAR_INTERPOLATION;
             return "Bilinear";
         }
     }
 }
 
-std::string get_scaling_mode(unsigned int val, RocalResizeScalingMode &scale_mode)
-{
-    switch(val)
-    {
-        case 1:
-        {
+std::string get_scaling_mode(unsigned int val, RocalResizeScalingMode &scale_mode) {
+    switch(val) {
+        case 1: {
             scale_mode = ROCAL_SCALING_MODE_STRETCH;
             return "Stretch";
         }
-        case 2:
-        {
+        case 2: {
             scale_mode = ROCAL_SCALING_MODE_DEFAULT;
             return "NotSmaller";
         }
-        case 3:
-        {
+        case 3: {
             scale_mode = ROCAL_SCALING_MODE_NOT_LARGER;
             return "Notlarger";
         }
-        default:
-        {
+        default: {
             scale_mode = ROCAL_SCALING_MODE_DEFAULT;
             return "Default";
-             
         }
     }
 }
@@ -376,10 +361,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     RocalImage image0 = input1;
     // RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false); // uncomment when processing images of different size
 
-    RocalImage image1;
-    std::string interpolation_type_name, scaling_node_name;
-    RocalResizeInterpolationType interpolation_type = RocalResizeInterpolationType::ROCAL_LINEAR_INTERPOLATION;
-    RocalResizeScalingMode scale_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH;
+    RocalImage image1;  
 
     switch (test_case)
     {
@@ -389,19 +371,21 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                   << "rocalResize" << std::endl;
         resize_w = 400;
         resize_h = 400;
+        std::string interpolation_type_name, scaling_node_name;
+        RocalResizeInterpolationType interpolation_type;
+        RocalResizeScalingMode scale_mode;
         interpolation_type_name = get_interpolation_type(resize_interpolation_type, interpolation_type);
         scaling_node_name = get_scaling_mode(resize_scaling_mode, scale_mode);
-        std::cerr<<"\n interpolation_type_name " << interpolation_type_name;
-        std::cerr<<"\n scaling_node_name " << scaling_node_name;
+        std::cerr<<" \n Interpolation_type_name " << interpolation_type_name;
+        std::cerr<<" \n Scaling_node_name " << scaling_node_name;
         if (scale_mode != ROCAL_SCALING_MODE_DEFAULT && interpolation_type != ROCAL_LINEAR_INTERPOLATION) { // (Reference output available for bilinear interpolation for this  
-            std::cerr<<"Running x scaling mode with Bilinear interpolation for comparison \n";
+            std::cerr<<" \n Running "<< scaling_node_name << " scaling mode with Bilinear interpolation for comparison \n";
             interpolation_type = ROCAL_LINEAR_INTERPOLATION;
         }
         if(scale_mode == ROCAL_SCALING_MODE_STRETCH) // For reference Output comparison 
             image1 = rocalResize(handle, image0, resize_w, 0, true, scale_mode, {}, 0, 0, interpolation_type);
         else
             image1 = rocalResize(handle, image0, resize_w, resize_h, true, scale_mode, {}, 0, 0, interpolation_type);
-
     }
     break;
     case 1:

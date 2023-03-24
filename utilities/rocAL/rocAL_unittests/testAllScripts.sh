@@ -56,7 +56,7 @@ fi
 #tf detection
 ./rocAL_unittests 5 $tf_detection_path ${output_path}SNPNoise_rgb_${device_name} $width $height 40 $device 1 0 $display
 ./rocAL_unittests 5 $tf_detection_path ${output_path}ColorTemp_rgb_${device_name} $width $height 43 $device 1 0 $display
-./rocAL_unittests 5 $tf_detection_path ${output_path}Crop_rgb_${device_name}_tfDetection $width $height 51 $device 1 0 $display
+./rocAL_unittests 5 $tf_detection_path ${output_path}Fog_rgb_${device_name} $width $height 44 $device 1 0 $display
 
 # caffe classification
 ./rocAL_unittests 6 $caffe_path ${output_path}Rotate_rgb_${device_name} $width $height 31 $device 1 0 $display

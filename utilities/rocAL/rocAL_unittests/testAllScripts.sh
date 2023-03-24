@@ -1,4 +1,17 @@
 #!/bin/bash
+if [$ROCAL_DATA_PATH == ""]
+then 
+    echo "Need to export ROCAL_DATA_PATH"
+    exit
+fi
+
+if [ -z "$1" ]
+  then
+    echo "No device argument supplied."
+    echo "Usage : ./testAllScript.sh 0(for HOST)/1(for HIP backend)"
+    exit
+fi
+
 if [ -d build ];then 
     rm -rf ./build/*
 else
@@ -7,12 +20,6 @@ fi
 cd build
 cmake ..
 make -j$nproc
-
-if [$ROCAL_DATA_PATH == ""]
-then 
-    echo "Need to export ROCAL_DATA_PATH"
-    exit
-fi
 
 image_path=${ROCAL_DATA_PATH}/rocal_data/coco/coco_10_img/train_10images_2017/
 coco_classification_path=${ROCAL_DATA_PATH}/rocal_data/coco/coco_10_img/train_10images_2017/

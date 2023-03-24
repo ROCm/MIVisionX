@@ -13,9 +13,7 @@ written primarily in C/C++ language can be used effectively in Python.
 * PIP3 - `sudo apt install python3-pip`
 
 ## Install
-Install rocAL_pybind using the run.sh script
-```
-./run.sh
+rocAL_pybind installs during MIVisionX build(../../README.md)
 ```
 
 #### Prerequisites

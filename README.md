@@ -271,6 +271,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     cd build-hip
     cmake ../
     make -j8
+    cmake --build . --target PyPackageInstall (needed to build rocAL_pybind package)
     sudo make install
     ```
 
@@ -287,6 +288,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     cd build-ocl
     cmake -DBACKEND=OPENCL ../
     make -j8
+    cmake --build . --target PyPackageInstall (needed to build rocAL_pybind package)
     sudo make install
     ```
 

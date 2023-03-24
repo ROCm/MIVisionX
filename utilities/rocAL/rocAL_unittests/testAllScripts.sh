@@ -29,14 +29,12 @@ tf_detection_path=${ROCAL_DATA_PATH}/rocal_data/tf/detection/
 caffe_path=${ROCAL_DATA_PATH}/rocal_data/caffe/classification/
 caffe2_path=${ROCAL_DATA_PATH}/rocal_data/caffe2/classification/
 mxnet_path=${ROCAL_DATA_PATH}/rocal_data/mxnet/
-output_path=../OUTPUT_FOLDER_$(date +%Y-%m-%d_%H-%M-%S)/
 display=0
 device=$1
 width=640 
 height=480
 device_name="host"
 
-mkdir $output_path
 if [ $device -eq 1 ]
 then 
     device_name="hip"
@@ -44,6 +42,9 @@ then
 else
     echo "Running on HOST Backend"
 fi
+
+output_path="../OUTPUT_FOLDER_$(date +%Y-%m-%d_%H-%M-%S)_"$device_name"/"
+mkdir $output_path
 
  #FileSource Reader
 ./rocAL_unittests 0 $image_path ${output_path}LensCorrection_rgb_${device_name} $width $height 45 $device 1 0 $display

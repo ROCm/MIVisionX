@@ -361,7 +361,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     RocalImage image0 = input1;
     // RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false); // uncomment when processing images of different size
 
-    RocalImage image1;  
+    RocalImage image1;
 
     switch (test_case)
     {

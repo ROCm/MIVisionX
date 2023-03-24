@@ -51,6 +51,7 @@ using namespace cv;
 //#define RANDOMBBOXCROP
 
 using namespace std::chrono;
+
 std::string get_interpolation_type(unsigned int val, RocalResizeInterpolationType &interpolationType)
 {
     switch(val)
@@ -163,12 +164,12 @@ int main(int argc, const char **argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         resize_scaling_mode = atoi(argv[++argIdx]);
 
-    test(test_case, reader_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all,  resize_interpolation_type,resize_scaling_mode);
+    test(test_case, reader_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all, resize_interpolation_type, resize_scaling_mode);
 
     return 0;
 }
 
-int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all, int resize_interpolation_type, int resize_scaling_mode )
+int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all, int resize_interpolation_type, int resize_scaling_mode)
 {
     size_t num_threads = 1;
     unsigned int inputBatchSize = 2;
@@ -344,7 +345,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
-        case 11: //mxnet reader
+        case 11: // mxnet reader
         {
             std::cout << ">>>>>>> Running MXNET READER" << std::endl;
             rocalCreateMXNetReader(handle, path, true);
@@ -390,16 +391,16 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         //auto image_int = rocalResize(handle, image0, resize_w , resize_h , false);
         interpolationTypeName = get_interpolation_type(resize_interpolation_type, interpolationType);
         scaling_node_Name = get_scaling_mode(resize_scaling_mode, scale_mode);
-        std::cerr<<"\n interpolationTypeName "<<interpolationTypeName;
-        std::cerr<<"\n scaling_node_Name "<<scaling_node_Name;
+        std::cerr<<"\n interpolationTypeName " << interpolationTypeName;
+        std::cerr<<"\n scaling_node_Name " << scaling_node_Name;
         if (scale_mode != ROCAL_SCALING_MODE_DEFAULT && interpolationType != ROCAL_LINEAR_INTERPOLATION) { // (golden output available for bilinear interpolation for this  
             std::cerr<<"Running x scaling mode with Bilinear interpolation for comparison \n";
             interpolationType = ROCAL_LINEAR_INTERPOLATION;
         }
-        if(scale_mode == ROCAL_SCALING_MODE_STRETCH) //For golden Output comparison 
-            image1 = rocalResize(handle, image0, resize_w,0, true,scale_mode,{},0,0,interpolationType);
+        if(scale_mode == ROCAL_SCALING_MODE_STRETCH) // For golden Output comparison 
+            image1 = rocalResize(handle, image0, resize_w, 0, true, scale_mode, {}, 0, 0, interpolationType);
         else
-            image1 = rocalResize(handle, image0, resize_w, resize_h, true,scale_mode,{},0,0,interpolationType);
+            image1 = rocalResize(handle, image0, resize_w, resize_h, true, scale_mode, {}, 0, 0, interpolationType);
 
     }
     break;

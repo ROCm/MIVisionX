@@ -1676,6 +1676,7 @@ ROCAL_API_CALL rocalCropMirrorNormalize(RocalContext p_context, RocalImage p_inp
     return output;
 }
 
+
 RocalImage ROCAL_API_CALL
 rocalCrop(
         RocalContext p_context,

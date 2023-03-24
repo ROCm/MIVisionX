@@ -13,8 +13,7 @@ written primarily in C/C++ language can be used effectively in Python.
 * PIP3 - `sudo apt install python3-pip`
 
 ## Install
-rocAL_pybind installs during MIVisionX build(../../README.md)
-```
+rocAL_pybind installs during [MIVisionX build](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx)
 
 #### Prerequisites
 

@@ -27,6 +27,7 @@ if sys.version_info < (3, 0):
 
 class BinaryDistribution(Distribution):
     """Distribution which always forces a binary package with platform name"""
+    @classmethod
     def has_ext_modules(self):
         return True
 

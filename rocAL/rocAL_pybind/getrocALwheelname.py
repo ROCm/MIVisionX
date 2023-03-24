@@ -1,6 +1,7 @@
 from setuptools.dist import Distribution
 
 class BinaryDistribution(Distribution):
+    @classmethod
     def has_ext_modules(foo):
         return True
 

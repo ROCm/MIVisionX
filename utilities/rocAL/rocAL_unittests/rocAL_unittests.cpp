@@ -377,7 +377,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     // RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false); // uncomment when processing images of different size
 
     RocalImage image1;
-    std::string interpolation_type_name,scaling_node_name;
+    std::string interpolation_type_name, scaling_node_name;
     RocalResizeInterpolationType interpolationType = RocalResizeInterpolationType::ROCAL_LINEAR_INTERPOLATION;
     RocalResizeScalingMode scale_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH;
 

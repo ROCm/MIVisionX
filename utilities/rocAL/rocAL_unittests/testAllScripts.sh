@@ -8,10 +8,10 @@ cd build
 cmake ..
 make -j$nproc
 
-export ROCAL_DATA_PATH=/media/unittest/MIVisionX-data/ # path to be changed by the User
 if [$ROCAL_DATA_PATH == ""]
 then 
     echo "Need to export ROCAL_DATA_PATH"
+    exit
 fi
 
 image_path=${ROCAL_DATA_PATH}/rocal_data/coco/coco_10_img/train_10images_2017/
@@ -76,7 +76,7 @@ fi
 # caffe2 detection
 ./rocAL_unittests 9 $caffe2_path ${output_path}FishEye_rgb_${device_name} $width $height 10 $device 1 0 $display
 ./rocAL_unittests 9 $caffe2_path ${output_path}Pixelate_rgb_${device_name} $width $height 19 $device 1 0 $display
-./rocAL_unittests 9 $caffe2_path ${output_path}CropMirrorNormalize_rgb_${device_name}_caffe2Detection $width $height 25 $device 1 0 $display
+./rocAL_unittests 9 $caffe2_path ${output_path}CropCenter_rgb_${device_name}_cmn $width $height 55 $device 1 0 $display
 
 #mxnet 
 ./rocAL_unittests 11 $mxnet_path ${output_path}Jitter_rgb_${device_name} $width $height 39 $device 1 0 $display

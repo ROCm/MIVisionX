@@ -121,7 +121,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
 int main(int argc, const char **argv)
 {
     // check command-line usage
-    const int MIN_ARG_COUNT = 2;
+    const int MIN_ARG_COUNT = 4;
     if (argc < MIN_ARG_COUNT)
     {
         printf("Usage: rocal_unittests reader-type <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0 one_hot_labels=num_of_classes/0  display_all=0(display_last_only)1(display_all)\n");
@@ -373,13 +373,14 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
 
     int resize_w = width, resize_h = height; // height and width
 
-    // RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false);
     RocalImage image0 = input1;
+    // RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false); // uncomment when processing images of different size
 
     RocalImage image1;
-    std::string interpolationTypeName,scaling_node_Name;
+    std::string interpolation_type_name,scaling_node_name;
     RocalResizeInterpolationType interpolationType = RocalResizeInterpolationType::ROCAL_LINEAR_INTERPOLATION;
     RocalResizeScalingMode scale_mode = RocalResizeScalingMode::ROCAL_SCALING_MODE_STRETCH;
+
     switch (test_case)
     {
     case 0:
@@ -388,16 +389,15 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                   << "rocalResize" << std::endl;
         resize_w = 400;
         resize_h = 400;
-        //auto image_int = rocalResize(handle, image0, resize_w , resize_h , false);
-        interpolationTypeName = get_interpolation_type(resize_interpolation_type, interpolationType);
-        scaling_node_Name = get_scaling_mode(resize_scaling_mode, scale_mode);
-        std::cerr<<"\n interpolationTypeName " << interpolationTypeName;
-        std::cerr<<"\n scaling_node_Name " << scaling_node_Name;
-        if (scale_mode != ROCAL_SCALING_MODE_DEFAULT && interpolationType != ROCAL_LINEAR_INTERPOLATION) { // (golden output available for bilinear interpolation for this  
+        interpolation_type_name = get_interpolation_type(resize_interpolation_type, interpolationType);
+        scaling_node_name = get_scaling_mode(resize_scaling_mode, scale_mode);
+        std::cerr<<"\n interpolation_type_name " << interpolation_type_name;
+        std::cerr<<"\n scaling_node_name " << scaling_node_name;
+        if (scale_mode != ROCAL_SCALING_MODE_DEFAULT && interpolationType != ROCAL_LINEAR_INTERPOLATION) { // (Reference output available for bilinear interpolation for this  
             std::cerr<<"Running x scaling mode with Bilinear interpolation for comparison \n";
             interpolationType = ROCAL_LINEAR_INTERPOLATION;
         }
-        if(scale_mode == ROCAL_SCALING_MODE_STRETCH) // For golden Output comparison 
+        if(scale_mode == ROCAL_SCALING_MODE_STRETCH) // For reference Output comparison 
             image1 = rocalResize(handle, image0, resize_w, 0, true, scale_mode, {}, 0, 0, interpolationType);
         else
             image1 = rocalResize(handle, image0, resize_w, resize_h, true, scale_mode, {}, 0, 0, interpolationType);
@@ -643,7 +643,6 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     {
         std::cout << ">>>>>>> Running "
                   << "rocalBlendFixed" << std::endl;
-        // RocalImage image0_b = rocalRotate(handle, image0, false);
         RocalImage image0_b = rocalRotateFixed(handle, image0, 50, false);
         image1 = rocalBlendFixed(handle, image0, image0_b, 0.5, true);
     }
@@ -934,7 +933,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             if(DISPLAY)
                 cv::imshow("output",mat_output);
             else
-            cv::imwrite(out_filename, mat_color, compression_params);
+                cv::imwrite(out_filename, mat_color, compression_params);
         }
         else
         {

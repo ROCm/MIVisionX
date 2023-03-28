@@ -35,30 +35,29 @@ rgb=1
 dev_start=0
 dev_end=1
 rgb_start=0
-rgb_end=1
+rgb_end=0
 if [ "$#" -gt 0 ]; then 
-    if [ "$1" -eq 0 ]; then
+    if [ "$1" -eq 0 ]; then # For only HOST backend
         dev_start=0
         dev_end=0
-    elif [ "$1" -eq 1 ]; then 
+    elif [ "$1" -eq 1 ]; then # For only HIP backend
         dev_start=1
         dev_end=1
-    elif [ "$1" -eq 2 ]; then 
+    elif [ "$1" -eq 2 ]; then # For both HOST and HIP backend
         dev_start=0
         dev_end=1
     fi
 fi
 
 if [ "$#" -gt 1 ]; then
-    if [ "$2" -eq 0 ]; then
+    if [ "$2" -eq 0 ]; then # For only RGB inputs
         rgb_start=0
         rgb_end=0
-    elif [ "$2" -eq 1 ]; then 
-        rgb_start=1
-        rgb_end=1
-    elif [ "$2" -eq 2 ]; then 
-        rgb_start=0
-        rgb_end=1
+    elif [ "$2" -eq 1 ]; then # For only Greyscale inputs
+        echo "Grayscale support not added yet"
+        exit
+    elif [ "$2" -eq 2 ]; then # For both RGB and Greyscale inputs
+        echo "Grayscale support not added yet, Testing for only RGB inputs"
     fi
 fi
 
@@ -69,9 +68,9 @@ do
     if [ $device -eq 1 ]
     then 
         device_name="hip"
-        echo "Running HIP Backend"
+        echo "Running HIP Backend..."
     else
-        echo "Running on HOST Backend"
+        echo "Running HOST Backend..."
     fi
     for ((rgb=$rgb_start;rgb<=$rgb_end;rgb++))
     do 
@@ -143,7 +142,7 @@ do
         ./rocAL_unittests 11 $mxnet_path ${output_path}Crop_${rgb_name[$rgb]}_${device_name}_mxnet $width $height 51 $device $rgb 0 $display
 
         #resize
-        # Last two parameter are interpolation type and scaling mode
+        # Last two parameters are interpolation type and scaling mode
         ./rocAL_unittests 0 $image_path ${output_path}Resize_${rgb_name[$rgb]}_${device_name}_bilinear_default_FileReader $width $height 0 $device $rgb 0 $display 1 0 
         ./rocAL_unittests 2 $coco_detection_path ${output_path}Resize_${rgb_name[$rgb]}_${device_name}_bilinear_stretch_coco $width $height 0 $device $rgb 0 $display 1 1
         ./rocAL_unittests 4 $tf_classification_path ${output_path}Resize_${rgb_name[$rgb]}_${device_name}_bilinear_notsmaller_tfClassification $width $height 0 $device $rgb 0 $display 1 2
@@ -158,5 +157,6 @@ do
 done
 
 echo $(pwd)
- # comparing rocAL outputs with GOLDEN ouptut
+
+# Run python script to compare rocAL outputs with golden ouptuts
 python $cwd/pixel_comparison/image_comparison.py $golden_output_path $output_path

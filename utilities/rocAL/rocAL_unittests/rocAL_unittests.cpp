@@ -68,11 +68,11 @@ std::string get_interpolation_type(unsigned int val, RocalResizeInterpolationTyp
         }
         case 4: {
             interpolation_type = ROCAL_GAUSSIAN_INTERPOLATION;
-            return "Triangular";
+            return "Gaussian";
         }
         case 5: {
             interpolation_type = ROCAL_TRIANGULAR_INTERPOLATION;
-            return "Gaussian";
+            return "Triangular";
         }
         default: {
             interpolation_type = ROCAL_LINEAR_INTERPOLATION;
@@ -88,7 +88,7 @@ std::string get_scaling_mode(unsigned int val, RocalResizeScalingMode &scale_mod
             return "Stretch";
         }
         case 2: {
-            scale_mode = ROCAL_SCALING_MODE_DEFAULT;
+            scale_mode = ROCAL_SCALING_MODE_NOT_SMALLER;
             return "NotSmaller";
         }
         case 3: {
@@ -563,7 +563,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                   << "rocalCropMirrorNormalize" << std::endl;
         std::vector<float> mean;
         std::vector<float> std_dev;
-        image1 = rocalCropMirrorNormalize(handle, image0, 1, 300, 300, 0.2, 0.2, 1, mean, std_dev, true, mirror);
+        image1 = rocalCropMirrorNormalize(handle, image0, 1, 224, 224, 0.2, 0.2, 1, mean, std_dev, true, mirror);
     }
     break;
     case 26:
@@ -733,14 +733,14 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     {
         std::cout << ">>>>>>> Running "
                   << "rocalCropFixed" << std::endl;
-        image1 = rocalCropFixed(handle, input1, 250, 250, 1, true, 0, 0, 2);
+        image1 = rocalCropFixed(handle, input1, 224, 224, 1, true, 0, 0, 2);
     }
     break;
     case 52:
     {
         std::cout << ">>>>>>> Running "
                   << "rocalCropCenterFixed" << std::endl;
-        image1 = rocalCropCenterFixed(handle, image0, 250, 250, 2, true);
+        image1 = rocalCropCenterFixed(handle, image0, 224, 224, 2, true);
     }
     break;
     case 53:
@@ -763,7 +763,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                   << "rocalCropMirrorNormalizeFixed_center crop" << std::endl;
         std::vector<float> mean;
         std::vector<float> std_dev;
-        image1 = rocalCropMirrorNormalize(handle, image0, 1, 250, 250, 0.5, 0.5, 0.5, mean, std_dev, true);
+        image1 = rocalCropMirrorNormalize(handle, image0, 1, 224, 224, 0.5, 0.5, 0.5, mean, std_dev, true);
     }
     break;
 

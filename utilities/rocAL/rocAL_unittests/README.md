@@ -9,7 +9,6 @@ This application can be used to verify the functionality of the API offered by r
 * [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Radeon Performance Primitives (RPP)
 * Python
-* OpenCV 3.4+
 
 ### Build Instructions
 ````

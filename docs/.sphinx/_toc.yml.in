@@ -4,4 +4,41 @@ root: index
 subtrees:
   - numbered: False
     entries:
-    - file: build-levels
+    - file: amd-openvx
+    - file: amd-openvx-extensions
+    - file: applications
+    - file: neural-net-model-compiler--optimizer
+    - file: rocal
+    - file: toolkit
+    - file: utilities
+    - file: prerequisites
+    - file: hardware
+    - file: operating-system
+        #- file: windows
+        #- file: macos
+        #- file: linux
+        #- file: prerequisites-setup-script-for-linux---mivisionx-setuppy
+        #    - file: prerequisites-for-running-the-script
+    - file: build--install-mivisionx
+    - file: windows-1
+        #- file: using-msi-packages
+        #- file: using-visual-studio
+    - file: macos-1
+    - file: linux-1
+        #- file: using-apt-get--yum
+        #- file: using-mivisionx-setuppy
+    - file: verify-the-installation
+    - file: linux--macos
+    - file: windows-2
+    - file: docker
+    - file: mivisionx-docker
+    - file: docker-workflow-sample-on-ubuntu-2004
+        #- file: prerequisites-1
+        #- file: workflow
+    - file: technical-support
+    - file: release-notes
+    - file: latest-release-1
+    - file: changelog
+    - file: tested-configurations
+    - file: known-issues
+    - file: mivisionx-dependency-map

@@ -10,14 +10,14 @@ This application can be used to verify the functionality of the API offered by r
 * Radeon Performance Primitives (RPP)
 * Python
 
-### Build Instructions
+### Build
 ````
 mkdir build
 cd build
 cmake ../
 make
 ````
-### Running the application
+## Running the application
 
 ```
 ./rocAL_unittests
@@ -34,5 +34,15 @@ Input data is available in the following link : [MIVisionX-data](https://github.
 `export ROCAL_DATA_PATH=<path_to_MIVIsionX-data>`
 
 ```
-./testAllScripts.sh <device_type 0/1/2> <rgb 0/1/2>
+./testAllScripts.sh <device_type 0/1/2> <color_format 0/1/2>
 ```
+
+Device Type
+* Option 0 - For only HOST backend
+* Option 1 - For only HIP backend
+* Option 2 - For both HOST and HIP backend
+
+Color Format
+* Option 0 - For only Greyscale inputs
+* Option 1 - For only RGB inputs
+* Option 2 - For both Greyscale and RGB inputs

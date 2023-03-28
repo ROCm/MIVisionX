@@ -34,8 +34,9 @@ rgb_name=("gray" "rgb")
 rgb=1
 dev_start=0
 dev_end=1
-rgb_start=0
-rgb_end=0
+rgb_start=1
+rgb_end=1
+
 if [ "$#" -gt 0 ]; then 
     if [ "$1" -eq 0 ]; then # For only HOST backend
         dev_start=0
@@ -50,12 +51,12 @@ if [ "$#" -gt 0 ]; then
 fi
 
 if [ "$#" -gt 1 ]; then
-    if [ "$2" -eq 0 ]; then # For only RGB inputs
-        rgb_start=0
-        rgb_end=0
-    elif [ "$2" -eq 1 ]; then # For only Greyscale inputs
+    if [ "$2" -eq 0 ]; then # For only Greyscale inputs
         echo "Grayscale support not added yet"
         exit
+    elif [ "$2" -eq 1 ]; then # For only RGB inputs
+        rgb_start=1
+        rgb_end=1
     elif [ "$2" -eq 2 ]; then # For both RGB and Greyscale inputs
         echo "Grayscale support not added yet, Testing for only RGB inputs"
     fi

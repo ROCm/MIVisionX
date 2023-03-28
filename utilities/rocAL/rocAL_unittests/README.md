@@ -27,7 +27,7 @@ Usage: ./rocAL_unittests reader-type pipeline-type=1(classification)2(detection)
 
 ### Output verification 
 
-The bash script `testAllScript.sh` can be used to run all the different test cases provided by rocAL. A python script is also provided to check the correctness of the outputs.
+The bash script `testAllScript.sh` can be used to run and dump the outputs for all test cases in rocAL and run the python script to verify the correctness of the generated outputs with the golden outputs.
 
 Input data is available in the following link : [MIVisionX-data](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data)
 

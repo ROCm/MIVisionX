@@ -3435,13 +3435,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
                 break;
             case VX_NODE_ATTRIBUTE_AMD_CPU_NUM_THREADS:
                 if (size == sizeof(vx_uint32)) {
-                    *(vx_uint32 *)ptr = node->cpu_num_threads;
+                    AgoGraph * graph = (AgoGraph *)node->ref.scope;
+                    *(vx_uint32 *)ptr = graph->cpu_num_threads;
                     status = VX_SUCCESS;
                 }
                 break;
 #if ENABLE_OPENCL
             case VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE:
-                if (size == sizeof(vx_uint32)) {
+                if (size == sizeof(cl_command_queue)) {
                     AgoGraph * graph = (AgoGraph *)node->ref.scope;
                     *(cl_command_queue *)ptr = graph->opencl_cmdq;
                     status = VX_SUCCESS;
@@ -3523,12 +3524,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetNodeAttribute(vx_node node, vx_enum attr
             case VX_NODE_ATTRIBUTE_AMD_AFFINITY:
                 if (size == sizeof(AgoTargetAffinityInfo_)) {
                     node->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
-                    status = VX_SUCCESS;
-                }
-                break;
-            case VX_NODE_ATTRIBUTE_AMD_CPU_NUM_THREADS:
-                if (size == sizeof(vx_uint32)) {
-                    node->cpu_num_threads = *(vx_uint32 *)ptr;
                     status = VX_SUCCESS;
                 }
                 break;

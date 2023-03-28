@@ -96,11 +96,16 @@ if(ROCAL_PYTHON)
         message("-- ${Yellow}NOTE: rocAL pybind requires TurboJpeg, Not Found${ColourReset}")
     endif()
 
+    find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+    include_directories(${Python3_INCLUDE_DIRS})
+    if(NOT Python3_FOUND)
+        set(BUILD_ROCAL_PYBIND false)
+        message("-- ${Yellow}NOTE: rocAL pybind requires Python3, Not Found${ColourReset}")
+    endif()
+
 
     if(${BUILD_ROCAL_PYBIND})
 
-        find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-        include_directories(${Python3_INCLUDE_DIRS})
         # avoid setting the default installation path to /usr/local
         if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
             set(CMAKE_INSTALL_PREFIX ${Python3_STDARCH} CACHE PATH "rocAL default installation path" FORCE)

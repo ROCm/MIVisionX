@@ -12,6 +12,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
+- [Documentation](#documentation)
 - [AMD OpenVX™](#amd-openvx)
 - [AMD OpenVX™ Extensions](#amd-openvx-extensions)
 - [Applications](#applications)
@@ -50,6 +51,18 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   - [Tested configurations](#tested-configurations)
   - [Known issues](#known-issues)
 - [MIVisionX Dependency Map](#mivisionx-dependency-map)
+
+## Documentation
+
+Run the steps below to build documentation locally.
+
+```
+cd docs
+
+pip3 install -r .sphinx/requirements.txt
+
+python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+```
 
 ## AMD OpenVX&trade;
 

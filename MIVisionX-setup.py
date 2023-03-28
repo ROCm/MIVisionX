@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.4.0"
+__version__ = "2.4.2"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -116,7 +116,7 @@ if backend not in ('OCL', 'HIP', 'CPU'):
     exit()
 
 # check ROCm installation
-if os.path.exists(ROCM_PATH):
+if os.path.exists(ROCM_PATH) and backend != 'CPU':
     print("\nROCm Installation Found -- "+ROCM_PATH+"\n")
     os.system('echo ROCm Info -- && '+ROCM_PATH+'/bin/rocminfo')
 else:
@@ -125,11 +125,10 @@ else:
         print(
             "WARNING: Set ROCm Path with \"--rocm_path\" option for full installation [Default:/opt/rocm]\n")
         print("WARNING: Limited dependencies will be installed\n")
+        backend = 'CPU'
     else:
-        print("\nCPU Only Install\n")
-    ffmpegInstall = 'OFF'
+        print("\nSTATUS: CPU Backend Install\n")
     neuralNetInstall = 'OFF'
-    rocalInstall = 'OFF'
     inferenceInstall = 'OFF'
 
 # get platfrom info
@@ -207,7 +206,7 @@ if os.path.exists(deps_dir):
         os.system('(cd '+deps_dir+'/build/OpenCV; sudo ' +
                   linuxFlag+' make install -j8)')
 
-    if neuralNetInstall == 'ON' and backend != 'CPU':
+    if neuralNetInstall == 'ON':
         os.system('sudo -v')
         if backend == 'OCL':
             if "Ubuntu" in platfromInfo:
@@ -228,21 +227,21 @@ if os.path.exists(deps_dir):
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                           ' '+linuxSystemInstall_check+' install -y rocblas-devel miopen-hip-devel migraphx-devel')
 
-    if (rocalInstall == 'ON' or neuralNetInstall == 'ON') and backend != 'CPU':
+    if (rocalInstall == 'ON' or neuralNetInstall == 'ON'):
         # ProtoBuf
         if os.path.exists(deps_dir+'/protobuf-'+ProtoBufVersion):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                       '; sudo '+linuxFlag+' make install -j8)')
 
-    if rocalInstall == 'ON' and backend != 'CPU':
+    if rocalInstall == 'ON':
         # RPP
         if os.path.exists(deps_dir+'/rpp/build-'+backend):
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/rpp/build-'+backend+'; sudo ' +
                       linuxFlag+' make install -j8)')
 
-    if ffmpegInstall == 'ON' and backend != 'CPU':
+    if ffmpegInstall == 'ON':
         # FFMPEG
         if os.path.exists(deps_dir+'/FFmpeg-n4.4.2'):
             os.system('sudo -v')
@@ -266,16 +265,16 @@ else:
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
     os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
-    if (rocalInstall == 'ON' or neuralNetInstall == 'ON') and backend != 'CPU':
+    if (rocalInstall == 'ON' or neuralNetInstall == 'ON'):
         os.system(
             '(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v'+ProtoBufVersion+'.zip )')
         os.system('(cd '+deps_dir+'; unzip v'+ProtoBufVersion+'.zip )')
-    if ffmpegInstall == 'ON' and backend != 'CPU':
+    if ffmpegInstall == 'ON':
         os.system(
             '(cd '+deps_dir+'; wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.4.2.zip && unzip n4.4.2.zip )')
 
     # Install
-    if (rocalInstall == 'ON' or neuralNetInstall == 'ON') and backend != 'CPU':
+    if (rocalInstall == 'ON' or neuralNetInstall == 'ON'):
         # package dependencies
         os.system('sudo -v')
         if "centos" in platfromInfo or "redhat" in platfromInfo:
@@ -329,7 +328,7 @@ else:
         os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                   '; sudo '+linuxFlag+' ldconfig )')
 
-    if neuralNetInstall == 'ON' and backend != 'CPU':
+    if neuralNetInstall == 'ON':
         # Remove Previous Install - MIOpen
         os.system('sudo -v')
         if os.path.exists(ROCM_PATH+'/miopen'):
@@ -365,7 +364,8 @@ else:
             if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
                 os.system('sudo -v')
                 os.system('sudo rm -rf '+modelCompilerDeps)
-                print("\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
+                print(
+                    "\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
 
             if not os.path.exists(modelCompilerDeps):
                 print("STATUS: Model Compiler Deps Install - " +
@@ -380,11 +380,11 @@ else:
                     os.system(
                         'sudo '+linuxSystemInstall+' ' +
                         linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
-                os.system('sudo pip3 install future pytz numpy')
+                os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
                 # Install CAFFE Deps
-                os.system('sudo pip3 install google protobuf==3.12.4')
+                os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
                 # Install ONNX Deps
-                os.system('sudo pip3 install onnx')
+                os.system('sudo pip3 install onnx==1.11.0')
                 # Install NNEF Deps
                 os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
                 os.system(
@@ -430,7 +430,7 @@ else:
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
 
-    if rocalInstall == 'ON' and backend != 'CPU':
+    if rocalInstall == 'ON':
         # Install RPP
         if "Ubuntu" in platfromInfo:
             # Install Packages for rocAL
@@ -471,9 +471,21 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
                   linuxCMake+' -DBACKEND='+backend+' -DCMAKE_INSTALL_PREFIX='+ROCM_PATH+' ../; make -j4; sudo make install)')
+        # CuPy Install
+        os.system('sudo -v')
+        os.system(linuxSystemInstall+' update')
+        if "Ubuntu" in platfromInfo:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3-dev')
+        else:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-devel hipcub-devel python3-devel')
+        os.system('sudo -v')
+        os.system('(cd '+deps_dir+'; git clone https://github.com/ROCmSoftwarePlatform/cupy.git; export CUPY_INSTALL_USE_HIP=1; export ROCM_HOME=/opt/rocm; cd cupy; git submodule update --init; pip install -e . --no-cache-dir -vvvv)')
+        os.system('pip install numpy==1.21')
 
     # Install ffmpeg
-    if ffmpegInstall == 'ON' and backend != 'CPU':
+    if ffmpegInstall == 'ON':
         if "Ubuntu" in platfromInfo:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +

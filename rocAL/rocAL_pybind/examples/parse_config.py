@@ -64,11 +64,11 @@ def parse_args():
                         help='run input pipeline fp16 format')
     
     common_group.add_argument('--local-rank', type=int, default=0,
-                        help='number of examples for each iteration')
+                        help='Device ID used by rocAL pipeline')
     common_group.add_argument('--world-size', '-w', type=int, default=1,
-                        help='number of examples for each iteration')
+                        help='number of partitions to split the dataset')
     common_group.add_argument('--num-threads', '-nt', type=int, default=1,
-                        help='number of examples for each iteration')
+                        help='number of CPU threads used by the rocAL pipeline.')
     common_group.add_argument('--num-epochs', '-e', type=int, default=1,
                         help='number of epochs to run')
     common_group.add_argument('--seed', '-s', type=int, default=random.SystemRandom().randint(0, 2**32 - 1),

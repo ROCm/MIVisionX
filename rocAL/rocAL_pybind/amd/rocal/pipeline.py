@@ -21,6 +21,7 @@
 import rocal_pybind as b
 import amd.rocal.types as types
 import numpy as np
+import cupy as cp
 import ctypes
 import functools
 import inspect
@@ -94,7 +95,7 @@ class Pipeline(object):
     _handle = None
     _current_pipeline = None
 
-    def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=-1,
+    def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=1,
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
                  rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
@@ -112,7 +113,7 @@ class Pipeline(object):
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
         self._check_ops_decoder = ["ImageDecoder", "ImageDecoderSlice" , "ImageDecoderRandomCrop", "ImageDecoderRaw"]
-        self._check_ops_reader = ["FileReader", "TFRecordReaderClassification", "TFRecordReaderDetection",
+        self._check_ops_reader = ["labelReader", "TFRecordReaderClassification", "TFRecordReaderDetection",
             "COCOReader", "Caffe2Reader", "Caffe2ReaderDetection", "CaffeReader", "CaffeReaderDetection"]
         self._batch_size = batch_size
         self._num_threads = num_threads
@@ -183,32 +184,48 @@ class Pipeline(object):
                                     multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
-        out = np.frombuffer(array, dtype=array.dtype)
-        if tensor_dtype == types.FLOAT:
-            b.rocalCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+        if(self._rocal_cpu):
+            out = np.frombuffer(array, dtype=array.dtype)
+            if tensor_dtype == types.FLOAT:
+                b.rocalCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            elif tensor_dtype == types.FLOAT16:
+                b.rocalCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
-        elif tensor_dtype == types.FLOAT16:
-            b.rocalCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+        else:
+            if tensor_dtype == types.FLOAT:
+                b.rocalCopyCupyToOutputTensor32(self._handle, array.data.ptr, types.NHWC,
+                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            elif tensor_dtype == types.FLOAT16:
+                b.rocalCopyCupyToOutputTensor16(self._handle, ctypes.c_void_p(array.ctypes.data), types.NHWC,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
-
     def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
-        out = np.frombuffer(array, dtype=array.dtype)
-        if tensor_dtype == types.FLOAT:
-            b.rocalCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+        if(self._rocal_cpu):
+            out = np.frombuffer(array, dtype=array.dtype)
+            if tensor_dtype == types.FLOAT:
+                b.rocalCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            elif tensor_dtype == types.FLOAT16:
+                b.rocalCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        else:
+            if tensor_dtype == types.FLOAT:
+                b.rocalCopyCupyToOutputTensor32(self._handle, array.data.ptr, types.NCHW,
+                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            elif tensor_dtype == types.FLOAT16:
+                b.rocalCopyCupyToOutputTensor16(self._handle, ctypes.c_void_p(array.ctypes.data), types.NCHW,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
-        elif tensor_dtype == types.FLOAT16:
-            b.rocalCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
-                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
-
     def GetOneHotEncodedLabels(self, array, device):
         if device=="cpu":
-            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
+            if (isinstance(array,np.ndarray)):
+                b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
+            else: #torch tensor
+                return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
         if device=="gpu":
-            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
-
-    def GetOneHotEncodedLabels_TF(self, array):
-        # Host destination only
-        return b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
+            if (isinstance(array,cp.ndarray)):
+                b.getOneHotEncodedLabels(self._handle, array.data.ptr, self._numOfClasses, 1)
+            else: #torch tensor
+                return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
 
     def set_outputs(self, *output_list):
         self._output_list_length = len(output_list)
@@ -267,7 +284,12 @@ class Pipeline(object):
         return b.getBBCords(self._handle, array)
 
     def getImageLabels(self, array):
-        b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
+        if (isinstance(array,np.ndarray)):
+            b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
+        elif (isinstance(array,cp.ndarray)):
+            b.getCupyImageLabels(self._handle, array.data.ptr)
+        else: #pytorch tensor
+            b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
         b.rocalCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)
@@ -277,10 +299,6 @@ class Pipeline(object):
 
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
-
-    def GetImageLabels(self, array):
-        return b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
-
 
     def GetBoundingBox(self,array):
         return array
@@ -347,7 +365,7 @@ def _discriminate_args(func, **func_kwargs):
 
 def pipeline_def(fn=None, **pipeline_kwargs):
     """
-    Decorator that converts a graph definition function into a DALI pipeline factory.
+    Decorator that converts a graph definition function into a rocAL pipeline factory.
 
     A graph definition function is a function that returns intended pipeline outputs.
     You can decorate this function with ``@pipeline_def``::
@@ -366,7 +384,7 @@ def pipeline_def(fn=None, **pipeline_kwargs):
         # pipe.build()  # the pipeline is not configured properly yet
 
     A pipeline requires additional parameters such as batch size, number of worker threads,
-    GPU device id and so on (see :meth:`nvidia.dali.Pipeline()` for a
+    GPU device id and so on (see :meth:`amd.rocal.Pipeline()` for a
     complete list of pipeline parameters).
     These parameters can be supplied as additional keyword arguments,
     passed to the decorated function::

@@ -217,13 +217,15 @@ class Pipeline(object):
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
     def GetOneHotEncodedLabels(self, array, device):
         if device=="cpu":
-            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
+            if (isinstance(array,np.ndarray)):
+                b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
+            else: #torch tensor
+                return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
         if device=="gpu":
-            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
-
-    def GetOneHotEncodedLabels_TF(self, array):
-        # Host destination only
-        return b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
+            if (isinstance(array,cp.ndarray)):
+                b.getOneHotEncodedLabels(self._handle, array.data.ptr, self._numOfClasses, 1)
+            else: #torch tensor
+                return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
 
     def set_outputs(self, *output_list):
         self._output_list_length = len(output_list)

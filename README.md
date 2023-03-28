@@ -70,7 +70,7 @@ The OpenVX framework provides a mechanism to add new vision functionality to Ope
 * [amd_migraphx](amd_openvx_extensions/amd_migraphx): amd_migraphx extension integrates the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> into an OpenVX graph. This extension allows developers to combine the vision funcions in OpenVX with the MIGraphX and build an end-to-end application for inference.
 * [amd_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
 * [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
-* [amd_rpp](amd_openvx_extensions/amd_rpp): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (Radeon Performance Primitives) functions. This extension is used to enable [rocAL](rocAL/README.md) to perform image augmentation.
+* [amd_rpp](amd_openvx_extensions/amd_rpp): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (ROCm Performance Primitives) functions. This extension is used to enable [rocAL](rocAL/README.md) to perform image augmentation.
 * [amd_winml](amd_openvx_extensions/amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 ## Applications
@@ -440,16 +440,16 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + CentOS - `7` / `8`
   + RedHat - `8` / `9`
   + SLES - `15-SP3`
-* ROCm: rocm-core - `5.4.0.50400-72`
-* miopen-hip - `2.19.0.50400-72`
+* ROCm: rocm-core - `5.5.0.50500-21`
+* miopen-hip - `2.19.0.50500-21`
 * miopen-opencl - `2.18.0.50300-63`
-* migraphx - `2.4.0.50400-72`
+* migraphx - `2.5.0.50500-21`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * RPP - [0.99](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.99)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.4.0`
+* MIVisionX Setup Script - `V2.4.2`
 
 ### Known issues
 

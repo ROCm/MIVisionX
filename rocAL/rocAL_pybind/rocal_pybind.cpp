@@ -492,6 +492,16 @@ namespace rocal{
             py::arg("crop_pos_y") = NULL,
             py::arg("num_of_attempts") = 20);
         m.def("Resize",&rocalResize, py::return_value_policy::reference);
+        m.def("ResizeMirrorNormalize", &rocalResizeMirrorNormalize,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("resize_min"),
+            py::arg("resize_max"),
+            py::arg("mean"),
+            py::arg("std_dev"),
+            py::arg("is_output"),
+            py::arg("mirror") = NULL);
         m.def("CropResize",&rocalCropResize,
             py::return_value_policy::reference,
             py::arg("context"),

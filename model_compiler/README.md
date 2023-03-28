@@ -4,14 +4,14 @@
 
 Neural Net Model Compiler & Optimizer converts pre-trained neural network models to MIVisionX runtime code for optimized inference.
 
-- [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
+- [Neural Net Model Compiler \& Optimizer](#neural-net-model-compiler--optimizer)
   - [MIVisionX RunTime](#mivisionx-runtime)
     - [Pre-requisites](#pre-requisites)
       - [Caffe](#caffe)
       - [ONNX](#onnx)
       - [NNEF](#nnef)
   - [Model Compiler Samples - Run Efficient Inference](#model-compiler-samples---run-efficient-inference)
-  - [Model Compiler & Optimizer Usage](#model-compiler--optimizer-usage)
+  - [Model Compiler \& Optimizer Usage](#model-compiler--optimizer-usage)
     - [Step 1 - Convert Pre-trained model to AMD NNIR](#step-1---convert-pre-trained-model-to-amd-nnir)
       - [Caffe](#caffe-1)
       - [ONNX](#onnx-1)
@@ -21,7 +21,7 @@ Neural Net Model Compiler & Optimizer converts pre-trained neural network models
   - [Sample workflow for Model Compiler](#sample-workflow-for-model-compiler)
     - [Trained Caffe Model conversion to AMD NNIR to OpenVX Graph](#trained-caffe-model-conversion-to-amd-nnir-to-openvx-graph)
   - [Examples for OpenVX C code generation](#examples-for-openvx-c-code-generation)
-  - [Models & Operators currently supported](#models--operators-currently-supported)
+  - [Models \& Operators currently supported](#models--operators-currently-supported)
     - [Models](#models)
     - [Operators](#operators)
   - [Contributing to Model Compiler](#contributing-to-model-compiler)
@@ -39,8 +39,9 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 ### Pre-requisites
 
 * Linux
-  + Ubuntu `18.04` / `20.04`
+  + Ubuntu `20.04` / `22.04`
   + CentOS `7` / `8`
+  + RHEL `8` / `9`
 * [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) installed
 * Linux Packages
   + Ubuntu
@@ -53,7 +54,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
   ```
 * PIP3 Packages
   ```
-  pip3 install pytz numpy future
+  sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21
   ```
 
 **Note:** MIVisionX installs model compiler scripts at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
@@ -63,19 +64,17 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 * protobuf
 * google
 ```
-pip3 install google protobuf
+sudo pip3 install google==3.0.0 protobuf==3.12.4
 ```
-**Note:** For Ubuntu `18.04` use `pip3 install google protobuf==3.12.4`
 
 #### ONNX
 
 * protobuf
 * onnx
 ``` 
-pip3 install protobuf onnx
+sudo pip3 install protobuf==3.12.4 onnx==1.11.0
 ```
 **Note:** 
-* For Ubuntu `18.04` use `pip3 install protobuf==3.12.4 onnx`
 * ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)
 
 #### NNEF

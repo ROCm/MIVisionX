@@ -25,7 +25,7 @@ THE SOFTWARE.
 struct CopyLocalData
 {
 
-    RPPCommonHandle handle;
+    RPPCommonHandle *handle;
     RppiSize dimensions;
     RppPtr_t pSrc;
     RppPtr_t pDst;

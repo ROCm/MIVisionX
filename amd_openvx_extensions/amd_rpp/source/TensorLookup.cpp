@@ -24,8 +24,7 @@ THE SOFTWARE.
 
 struct TensorLookupLocalData
 {
-    RPPCommonHandle handle;
-    rppHandle_t rppHandle;
+    RPPCommonHandle *handle;
     Rpp32u device_type;
     Rpp8u *pSrc;
     Rpp8u *luPtr;
@@ -152,12 +151,7 @@ static vx_status VX_CALLBACK uninitializeTensorLookup(vx_node node, const vx_ref
 {
     TensorLookupLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppDestroyGPU(data->rppHandle);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppDestroyHost(data->rppHandle);
+    STATUS_ERROR_CHECK(releaseGraphHandle(node, data->handle, data->device_type));
     delete (data);
     return VX_SUCCESS;
 }

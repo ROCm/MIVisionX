@@ -300,7 +300,6 @@ rocalSequenceReader(
         // Set sequence batch size and batch ratio in master graph as it varies according to sequence length
         context->master_graph->set_sequence_reader_output();
         context->master_graph->set_sequence_batch_size(sequence_length);
-        context->master_graph->set_sequence_batch_ratio();
         bool decoder_keep_original = true;
 
         // This has been introduced to support variable width and height video frames in future.
@@ -384,7 +383,6 @@ rocalSequenceReaderSingleShard(
         // Set sequence batch size and batch ratio in master graph as it varies according to sequence length
         context->master_graph->set_sequence_reader_output();
         context->master_graph->set_sequence_batch_size(sequence_length);
-        context->master_graph->set_sequence_batch_ratio();
         bool decoder_keep_original = true;
 
         // This has been introduced to support variable width and height video frames in future.

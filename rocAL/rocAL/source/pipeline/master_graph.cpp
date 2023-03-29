@@ -259,7 +259,10 @@ void
 MasterGraph::create_single_graph()
 {
     if (_cpu_num_threads <= 0) {
-        THROW("User should pass the num_threads value during pipeline creation");
+        const unsigned DEFAULT_SMT_COUNT = 2;
+        unsigned THREAD_COUNT = std::thread::hardware_concurrency();
+        size_t CORE_COUNT = THREAD_COUNT / DEFAULT_SMT_COUNT;
+        _cpu_num_threads = CORE_COUNT / _shard_count;
     }
     
     // Actual graph creating and calls into adding nodes to graph is deferred and is happening here to enable potential future optimizations

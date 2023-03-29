@@ -95,6 +95,7 @@ public:
     }
     void set_output(Image* output_image);
     void set_cpu_num_threads(size_t cpu_num_threads) { _cpu_num_threads = cpu_num_threads; }
+    void set_shard_count(size_t shard_count) { _shard_count = shard_count; }
     bool empty() { return (remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size)); }
     size_t internal_batch_size() { return _internal_batch_size; }
     size_t sequence_batch_size() { return _sequence_batch_size; }
@@ -156,6 +157,7 @@ private:
     const size_t _user_batch_size;//!< Batch size provided by the user
     vx_context _context;
     size_t _cpu_num_threads;
+    size_t _shard_count = 1;
     const RocalMemType _mem_type;//!< Is set according to the _affinity, if GPU, is set to CL, otherwise host
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
     std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;

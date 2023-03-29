@@ -168,7 +168,7 @@ static vx_status VX_CALLBACK processScalebatchPD(vx_node node, const vx_referenc
         refreshScalebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_scale_u8_pln1_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->dstDimensions, data->maxDstDimensions, data->percentage, data->nbatchSize, data->hnadle->rppHandle);
+            rpp_status = rppi_scale_u8_pln1_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->dstDimensions, data->maxDstDimensions, data->percentage, data->nbatchSize, data->handle->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {

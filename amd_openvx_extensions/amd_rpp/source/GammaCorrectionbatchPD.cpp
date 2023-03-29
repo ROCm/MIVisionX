@@ -170,7 +170,7 @@ static vx_status VX_CALLBACK processGammaCorrectionbatchPD(vx_node node, const v
 static vx_status VX_CALLBACK initializeGammaCorrectionbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
     GammaCorrectionbatchPDLocalData *data = new GammaCorrectionbatchPDLocalData;
-    memset(data, 0, sizeof(*data));f
+    memset(data, 0, sizeof(*data));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[5], &data->nbatchSize));
     data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);

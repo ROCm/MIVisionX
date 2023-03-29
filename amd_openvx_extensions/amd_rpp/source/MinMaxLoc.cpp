@@ -164,7 +164,7 @@ static vx_status VX_CALLBACK initializeMinMaxLoc(vx_node node, const vx_referenc
     memset(data, 0, sizeof(*data));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshMinMaxLoc(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, data->nbatchSize, data->device_type));
+    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, 1, data->device_type));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }

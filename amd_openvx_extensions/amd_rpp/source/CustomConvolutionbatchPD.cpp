@@ -161,7 +161,7 @@ static vx_status VX_CALLBACK processCustomConvolutionbatchPD(vx_node node, const
         refreshCustomConvolutionbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_custom_convolution_u8_pln1_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->kernel, data->kernelSize, data->nbatchSize, data->handle>rppHandle);
+            rpp_status = rppi_custom_convolution_u8_pln1_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->kernel, data->kernelSize, data->nbatchSize, data->handle->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {

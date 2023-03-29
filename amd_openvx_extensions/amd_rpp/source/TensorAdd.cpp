@@ -168,7 +168,7 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
     data->cl_pSrc2 = clCreateBuffer(theContext, CL_MEM_READ_ONLY, bytes, NULL, NULL);
     data->cl_pDst = clCreateBuffer(theContext, CL_MEM_WRITE_ONLY, bytes, NULL, NULL);
 #elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle->hipstream, sizeof(data->handle->hipstream)));
     size_t arr_size;
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     size_t bytes = arr_size * sizeof(Rpp8u);
@@ -185,7 +185,7 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshTensorAdd(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, data->nbatchSize, data->device_type));
+    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, 1, data->device_type));
 
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;

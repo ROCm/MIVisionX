@@ -159,7 +159,7 @@ static vx_status VX_CALLBACK processMaxbatchPD(vx_node node, const vx_reference 
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_max_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc1, (void *)data->hip_pSrc2, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->nbatchSize, data->hnadle->rppHandle);
+            rpp_status = rppi_max_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc1, (void *)data->hip_pSrc2, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 

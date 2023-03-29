@@ -173,7 +173,7 @@ static vx_status VX_CALLBACK processMultiplybatchPD(vx_node node, const vx_refer
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_multiply_u8_pkd3_batchPD_host(data->pSrc1, data->pSrc2, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->nbatchSize, data->hnadle->rppHandle);
+            rpp_status = rppi_multiply_u8_pkd3_batchPD_host(data->pSrc1, data->pSrc2, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }

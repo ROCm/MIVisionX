@@ -99,6 +99,12 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
         }
     }
     _reader = create_reader(reader_config);
+
+    _shard_count = reader_config.get_shard_count();
+    const unsigned DEFAULT_SMT_COUNT = 2;
+    unsigned THREAD_COUNT = std::thread::hardware_concurrency();
+    size_t CORE_COUNT = THREAD_COUNT / DEFAULT_SMT_COUNT;
+    _num_threads = CORE_COUNT / _shard_count;
 }
 
 void
@@ -217,7 +223,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         for (size_t i = 0; i < _batch_size; i++)
             _decompressed_buff_ptrs[i] = buff + image_size * i;
 
-#pragma omp parallel for num_threads(8)  // default(none) TBD: option disabled in Ubuntu 20.04
+#pragma omp parallel for num_threads(_num_threads)  // default(none) TBD: option disabled in Ubuntu 20.04
         for (size_t i = 0; i < _batch_size; i++)
         {
             // initialize the actual decoded height and width with the maximum

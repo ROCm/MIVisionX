@@ -258,8 +258,12 @@ MasterGraph::decrease_image_count()
 void
 MasterGraph::create_single_graph()
 {
+    if (_cpu_num_threads <= 0) {
+        THROW("User should pass the num_threads value during pipeline creation");
+    }
+    
     // Actual graph creating and calls into adding nodes to graph is deferred and is happening here to enable potential future optimizations
-    _graph = std::make_shared<Graph>(_context, _affinity, 0, _gpu_id);
+    _graph = std::make_shared<Graph>(_context, _affinity, 0, _cpu_num_threads, _gpu_id);
     for(auto& node: _nodes)
     {
         // Any image not yet created can be created as virtual image

@@ -103,14 +103,14 @@ namespace rocal{
                                 RocalTensorLayout tensor_format, RocalTensorOutputType tensor_output_type, float multiplier0,
                                 float multiplier1, float multiplier2, float offset0,
                                 float offset1, float offset2,
-                                bool reverse_channels)
+                                bool reverse_channels, bool normalization_on_device)
     {
         auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
 
         int status = rocalCopyToOutputTensor(context, ptr, tensor_format, tensor_output_type, multiplier0,
                                               multiplier1, multiplier2, offset0,
-                                              offset1, offset2, reverse_channels);
+                                              offset1, offset2, reverse_channels, normalization_on_device);
         // std::cerr<<"\n Copy failed with status :: "<<status;
         return py::cast<py::none>(Py_None);
     }

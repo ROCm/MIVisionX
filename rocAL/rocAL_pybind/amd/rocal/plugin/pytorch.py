@@ -69,7 +69,7 @@ class ROCALGenericImageIterator(object):
 
 
 class ROCALGenericIterator(object):
-    def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT, display=False, device="cpu", device_id =0):
+    def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT, display=False, device="cpu", device_id =0, normalization_on_device = False):
         self.loader = pipeline
         self.tensor_format =tensor_layout
         self.multiplier = multiplier
@@ -79,6 +79,7 @@ class ROCALGenericIterator(object):
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
         self.display = display
+        self.normalization_on_device = normalization_on_device
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
@@ -89,23 +90,23 @@ class ROCALGenericIterator(object):
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
         self.labels_size = ((self.bs*self.loader._numOfClasses) if (self.loader._oneHotEncoding == True) else self.bs)
         if self.tensor_format == types.NCHW:
-            # if self.device == "cpu":
-            #     if self.tensor_dtype == types.FLOAT:
-            #         self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
-            #     elif self.tensor_dtype == types.FLOAT16:
-            #         self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
-            #     self.labels = torch.empty(self.labels_size, dtype = torch.int32)
+            if self.device == "cpu" and not self.normalization_on_device:
+                if self.tensor_dtype == types.FLOAT:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
+                elif self.tensor_dtype == types.FLOAT16:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32)
 
-            # else:
-            torch_gpu_device = torch.device('cuda', self.device_id)
-            if self.tensor_dtype == types.FLOAT:
-                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device = torch_gpu_device)
-            elif self.tensor_dtype == types.FLOAT16:
-                self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device = torch_gpu_device)
-            self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
+            else:
+                torch_gpu_device = torch.device('cuda', self.device_id)
+                if self.tensor_dtype == types.FLOAT:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device = torch_gpu_device)
+                elif self.tensor_dtype == types.FLOAT16:
+                    self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device = torch_gpu_device)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
 
         else: #NHWC
-            if self.device == "cpu":
+            if self.device == "cpu" and not self.normalization_on_device:
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
@@ -137,7 +138,7 @@ class ROCALGenericIterator(object):
             raise StopIteration
 
         self.loader.copyToTensor(
-            self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
+            self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype, self.normalization_on_device)
 
         if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):
             self.lis = []  # Empty list for bboxes

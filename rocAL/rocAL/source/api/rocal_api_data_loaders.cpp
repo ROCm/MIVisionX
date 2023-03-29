@@ -163,7 +163,7 @@ rocalJpegFileSourceSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -244,7 +244,7 @@ rocalJpegFileSource(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                           source_path, "",
@@ -325,7 +325,7 @@ rocalSequenceReader(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                             source_path, "",
@@ -412,7 +412,7 @@ rocalSequenceReaderSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -494,7 +494,7 @@ rocalJpegCaffe2LMDBRecordSource(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                              source_path, "",
@@ -578,7 +578,7 @@ rocalJpegCaffe2LMDBRecordSourceSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -657,7 +657,7 @@ rocalJpegCaffeLMDBRecordSource(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                              source_path, "",
@@ -742,7 +742,7 @@ rocalJpegCaffeLMDBRecordSourceSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -824,7 +824,7 @@ rocalJpegCaffeLMDBRecordSourcePartialSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                             source_path, "",
@@ -907,7 +907,7 @@ rocalJpegCaffe2LMDBRecordSourcePartialSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                             source_path, "",
@@ -988,7 +988,7 @@ rocalMXNetRecordSource(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                             source_path, "",
@@ -1073,7 +1073,7 @@ rocalMXNetRecordSource(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                              source_path, "",
@@ -1162,7 +1162,7 @@ rocalMXNetRecordSourceSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -1240,7 +1240,7 @@ rocalJpegCOCOFileSource(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                             source_path, json_path,
@@ -1324,7 +1324,7 @@ rocalJpegCOCOFileSourceSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, json_path,
@@ -1399,7 +1399,7 @@ rocalFusedJpegCrop(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
         context->master_graph->add_node<FusedJpegCropNode>({}, {output})->init(internal_shard_count,
                                                                           source_path, "",
                                                                           StorageType::FILE_SYSTEM,
@@ -1476,7 +1476,7 @@ rocalJpegCOCOFileSourcePartial(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<FusedJpegCropNode>({}, {output})->init(internal_shard_count,
                                                                             source_path, json_path,
@@ -1558,7 +1558,7 @@ rocalJpegCOCOFileSourcePartialSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                             source_path, json_path,
@@ -1645,7 +1645,7 @@ rocalJpegTFRecordSource(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                              source_path, "",
@@ -1725,7 +1725,7 @@ rocalJpegTFRecordSourceSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -1798,7 +1798,7 @@ rocalRawTFRecordSource(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                              source_path, "",
@@ -1870,7 +1870,7 @@ rocalRawTFRecordSourceSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -1947,7 +1947,7 @@ rocalFusedJpegCropSingleShard(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                           source_path, "",
                                                                           StorageType::FILE_SYSTEM,
@@ -2024,7 +2024,7 @@ rocalVideoFileSource(
                               color_format );
 
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                             source_path,
@@ -2115,7 +2115,7 @@ rocalVideoFileSourceSingleShard(
                               color_format );
 
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path,
@@ -2207,7 +2207,7 @@ rocalVideoFileResize(
                               color_format );
 
         Image* output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(internal_shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                             source_path,
                                                                             VideoStorageType::VIDEO_FILE_SYSTEM,
@@ -2388,7 +2388,7 @@ rocalVideoFileResizeSingleShard(
                               color_format );
 
         Image* output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->set_shard_count(shard_count);
+        output = context->master_graph->calculate_cpu_num_threads(shard_count);
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path,
                                                                                         VideoStorageType::VIDEO_FILE_SYSTEM,

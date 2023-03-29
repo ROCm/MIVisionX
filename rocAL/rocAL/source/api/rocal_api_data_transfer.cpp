@@ -74,7 +74,7 @@ rocalCopyToOutputTensor16(RocalContext p_context, half *out_ptr, RocalTensorLayo
 RocalStatus ROCAL_API_CALL
 rocalCopyToOutputTensor(RocalContext p_context, void *out_ptr, RocalTensorLayout tensor_format, RocalTensorOutputType tensor_output_type, float multiplier0,
                        float multiplier1, float multiplier2, float offset0, float offset1, float offset2,
-                       bool reverse_channels)
+                       bool reverse_channels, bool normalization_on_device)
 {
     auto context = static_cast<Context*>(p_context);
     try
@@ -82,7 +82,7 @@ rocalCopyToOutputTensor(RocalContext p_context, void *out_ptr, RocalTensorLayout
         auto tensor_layout = (tensor_format == ROCAL_NHWC) ?  RocalTensorFormat::NHWC : RocalTensorFormat::NCHW;
         auto tensor_output_data_type = (tensor_output_type == ROCAL_FP32) ? RocalTensorDataType::FP32 : RocalTensorDataType::FP16;
         context->master_graph->copy_out_tensor(out_ptr, tensor_layout, multiplier0, multiplier1, multiplier2,
-                offset0, offset1, offset2, reverse_channels, tensor_output_data_type);
+                offset0, offset1, offset2, reverse_channels, tensor_output_data_type, normalization_on_device);
     }
     catch(const std::exception& e)
     {

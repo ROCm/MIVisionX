@@ -48,12 +48,12 @@ class MasterGraph
 {
 public:
     enum class Status { OK = 0,  NOT_RUNNING = 1, NO_MORE_DATA = 2, NOT_IMPLEMENTED = 3, INVALID_ARGUMENTS };
-    MasterGraph(size_t batch_size, RocalAffinity affinity, int gpu_id, size_t prefetch_queue_depth, RocalTensorDataType output_tensor_data_type);
+    MasterGraph(size_t batch_size, RocalAffinity affinity, size_t cpu_thread_count, int gpu_id, size_t prefetch_queue_depth, RocalTensorDataType output_tensor_data_type);
     ~MasterGraph();
     Status reset();
     size_t remaining_count();
     MasterGraph::Status copy_out_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
-                    float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type);
+                    float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type, bool normalization_on_device = false);
     Status copy_output(unsigned char* out_ptr, size_t out_size_in_bytes);
     Status copy_out_tensor_planar(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
                     float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type);
@@ -94,8 +94,7 @@ public:
         _output_images = output_images;
     }
     void set_output(Image* output_image);
-    void set_cpu_num_threads(size_t cpu_num_threads) { _cpu_num_threads = cpu_num_threads; }
-    void set_shard_count(size_t shard_count) { _shard_count = shard_count; }
+    void calculate_cpu_num_threads(size_t shard_count);
     bool empty() { return (remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size)); }
     size_t internal_batch_size() { return _internal_batch_size; }
     size_t sequence_batch_size() { return _sequence_batch_size; }
@@ -157,7 +156,6 @@ private:
     const size_t _user_batch_size;//!< Batch size provided by the user
     vx_context _context;
     size_t _cpu_num_threads;
-    size_t _shard_count = 1;
     const RocalMemType _mem_type;//!< Is set according to the _affinity, if GPU, is set to CL, otherwise host
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
     std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;

@@ -42,7 +42,7 @@ extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor(RocalContext ro
                                                               RocalTensorLayout tensor_format, RocalTensorOutputType tensor_output_type,
                                                               float multiplier0, float multiplier1, float multiplier2, float offset0,
                                                               float offset1, float offset2,
-                                                              bool reverse_channels);
+                                                              bool reverse_channels, bool normalization_on_device);
 ///
 /// \param rocal_context
 /// \param output_images The buffer that will be filled with output images with set_output = True

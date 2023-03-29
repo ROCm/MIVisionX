@@ -111,11 +111,12 @@ MasterGraph::~MasterGraph()
     release();
 }
 
-MasterGraph::MasterGraph(size_t batch_size, RocalAffinity affinity, int gpu_id, size_t prefetch_queue_depth, RocalTensorDataType output_tensor_data_type):
+MasterGraph::MasterGraph(size_t batch_size, RocalAffinity affinity, size_t cpu_thread_count, int gpu_id, size_t prefetch_queue_depth, RocalTensorDataType output_tensor_data_type):
         _ring_buffer(prefetch_queue_depth),
         _output_tensor(nullptr),
         _graph(nullptr),
         _affinity(affinity),
+        _cpu_num_threads(cpu_thread_count),
         _gpu_id(gpu_id),
         _convert_time("Conversion Time", DBG_TIMING),
         _process_time("Process Time", DBG_TIMING),
@@ -256,7 +257,7 @@ MasterGraph::decrease_image_count()
 }
 
 void
-MasterGraph::create_single_graph()
+MasterGraph::calculate_cpu_num_threads(size_t shard_count)
 {
     if (_cpu_num_threads <= 0) {
         const unsigned DEFAULT_SMT_COUNT = 2;
@@ -264,7 +265,12 @@ MasterGraph::create_single_graph()
         size_t CORE_COUNT = THREAD_COUNT / DEFAULT_SMT_COUNT;
         _cpu_num_threads = CORE_COUNT / _shard_count;
     }
-    
+    // Use _cpu_num_threads if user has already passed non-negative num_threads
+}
+
+void
+MasterGraph::create_single_graph()
+{
     // Actual graph creating and calls into adding nodes to graph is deferred and is happening here to enable potential future optimizations
     _graph = std::make_shared<Graph>(_context, _affinity, 0, _cpu_num_threads, _gpu_id);
     for(auto& node: _nodes)
@@ -564,7 +570,7 @@ MasterGraph::timing()
 
 MasterGraph::Status
 MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1,
-                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type)
+                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type, bool normalization_on_device)
 {
     if(no_more_processed_data())
         return MasterGraph::Status::NO_MORE_DATA;
@@ -664,7 +670,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
         }
     }
 #endif
-    if(_output_image_info.mem_type() == RocalMemType::HOST)
+    if((_output_image_info.mem_type() == RocalMemType::HOST) && normalization_on_device)
     {
         unsigned int fp16 = (output_data_type == RocalTensorDataType::FP16);
 
@@ -702,7 +708,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
         }
 
     }
-    if(false)
+    else
     {
         float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
         float offset[3] = {offset0, offset1, offset2 };

@@ -1,5 +1,4 @@
 from PIL import Image
-import cv2 as cv
 import os
 import sys
 import datetime
@@ -95,8 +94,8 @@ for aug_name in rocal_output_dir_list:
                 passed_case_count=passed_case_count+1
                 logging.info("PASSED")
         else:
-            logging.info("Skipping the testcase as file not found ",rocal_file_path)
+            logging.info("Skipping the testcase as file not found %s",rocal_file_path)
     else:
-        logging.info("File not found in ref_output_folder ", golden_file_path)
+        logging.info("File not found in ref_output_folder %s", golden_file_path)
 logging.info("Total case passed --> {} / {} ".format(passed_case_count,total_case_count))
 logging.info("Total case failed --> {} / {} ".format(failed_case_count,total_case_count))

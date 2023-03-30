@@ -425,7 +425,7 @@ MasterGraph::output_width()
 size_t
 MasterGraph::output_height()
 {
-    return _output_image_info.height_batch() * (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size);
+    return _output_image_info.height_batch() * (_is_sequence_reader_output ? _sequence_batch_size : 1);
 }
 
 void

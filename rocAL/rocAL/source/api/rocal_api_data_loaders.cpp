@@ -158,12 +158,12 @@ rocalJpegFileSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -239,7 +239,7 @@ rocalJpegFileSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -319,7 +319,7 @@ rocalSequenceReader(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -405,12 +405,12 @@ rocalSequenceReaderSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -487,7 +487,7 @@ rocalJpegCaffe2LMDBRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -571,12 +571,12 @@ rocalJpegCaffe2LMDBRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -650,7 +650,7 @@ rocalJpegCaffeLMDBRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -735,12 +735,12 @@ rocalJpegCaffeLMDBRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -817,12 +817,12 @@ rocalJpegCaffeLMDBRecordSourcePartialSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                             source_path, "",
@@ -900,12 +900,12 @@ rocalJpegCaffe2LMDBRecordSourcePartialSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                             source_path, "",
@@ -981,12 +981,12 @@ rocalMXNetRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                             source_path, "",
@@ -1066,7 +1066,7 @@ rocalMXNetRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1155,12 +1155,12 @@ rocalMXNetRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -1233,7 +1233,7 @@ rocalJpegCOCOFileSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1317,12 +1317,12 @@ rocalJpegCOCOFileSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, json_path,
@@ -1392,7 +1392,7 @@ rocalFusedJpegCrop(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1469,12 +1469,12 @@ rocalJpegCOCOFileSourcePartial(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<FusedJpegCropNode>({}, {output})->init(internal_shard_count,
                                                                             source_path, json_path,
@@ -1551,12 +1551,12 @@ rocalJpegCOCOFileSourcePartialSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                             source_path, json_path,
@@ -1638,7 +1638,7 @@ rocalJpegTFRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1718,12 +1718,12 @@ rocalJpegTFRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -1791,7 +1791,7 @@ rocalRawTFRecordSource(
 
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto info = ImageInfo(out_width, out_height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1863,12 +1863,12 @@ rocalRawTFRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(out_width)+ " height = "+ TOSTR(out_height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(out_width, out_height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path, "",
@@ -1940,12 +1940,12 @@ rocalFusedJpegCropSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
         context->master_graph->add_node<FusedJpegCropSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                           source_path, "",
                                                                           StorageType::FILE_SYSTEM,
@@ -2016,7 +2016,7 @@ rocalVideoFileSource(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto decoder_mode = convert_decoder_mode(rocal_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->internal_batch_size() * sequence_length,
+                              context->user_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -2107,13 +2107,13 @@ rocalVideoFileSourceSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto decoder_mode = convert_decoder_mode(rocal_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->internal_batch_size() * sequence_length,
+                              context->user_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
 
         output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path,
@@ -2199,7 +2199,7 @@ rocalVideoFileResize(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto decoder_mode = convert_decoder_mode(rocal_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->internal_batch_size() * sequence_length,
+                              context->user_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -2380,13 +2380,13 @@ rocalVideoFileResizeSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto decoder_mode = convert_decoder_mode(rocal_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->internal_batch_size() * sequence_length,
+                              context->user_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
 
         Image* output = context->master_graph->create_loader_output_image(info);
-        output = context->master_graph->calculate_cpu_num_threads(shard_count);
+        context->master_graph->calculate_cpu_num_threads(shard_count);
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path,
                                                                                         VideoStorageType::VIDEO_FILE_SYSTEM,
@@ -2534,7 +2534,7 @@ rocalRawCIFAR10Source(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );

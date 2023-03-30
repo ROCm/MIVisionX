@@ -261,7 +261,7 @@ MasterGraph::calculate_cpu_num_threads(size_t shard_count)
         const unsigned DEFAULT_SMT_COUNT = 2;
         unsigned THREAD_COUNT = std::thread::hardware_concurrency();
         size_t CORE_COUNT = THREAD_COUNT / DEFAULT_SMT_COUNT;
-        _cpu_num_threads = CORE_COUNT / _shard_count;
+        _cpu_num_threads = CORE_COUNT / shard_count;
     }
     // Use _cpu_num_threads if user has already passed non-negative num_threads
 }
@@ -425,7 +425,7 @@ MasterGraph::output_width()
 size_t
 MasterGraph::output_height()
 {
-    return _output_image_info.height_batch() * (_is_sequence_reader_output ? _sequence_batch_ratio : _user_to_internal_batch_ratio);
+    return _output_image_info.height_batch() * (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size);
 }
 
 void

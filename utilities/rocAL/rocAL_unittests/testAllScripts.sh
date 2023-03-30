@@ -9,7 +9,7 @@ cd build
 cmake ..
 make -j$nproc
 
-if [ $ROCAL_DATA_PATH == "" ]
+if [[ $ROCAL_DATA_PATH == "" ]]
 then 
     echo "Need to export ROCAL_DATA_PATH"
     exit

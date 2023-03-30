@@ -114,17 +114,11 @@ class ROCALGenericIterator(object):
         return self.__next__()
 
     def __next__(self):
-        print("In the next__ of the iterator")
-
         if(b.isEmpty(self.loader._handle)):
-            print("Iter stopeed ?")
             raise StopIteration
-        print("self.loader._external_source_operator", self.loader._external_source_operator)
         if (self.loader._external_source_operator):
-            print("Yes its ESO")
             print(self.index + 1)
             if (self.index + 1) == self.num_batches:
-                print("The EOS is true")
                 self.eos = True
             #External Source Operator "ON"
             if (self.index+1) <= self.num_batches:
@@ -173,20 +167,7 @@ class ROCALGenericIterator(object):
                         "eos":self.eos } # Check the Mode your passing
                     b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
         if self.loader.run() != 0:
-            print("Stop iter")
             raise StopIteration
-        print("Cross")
-        '''
-            if(index <= (total_images / inputBatchSize))
-            {
-            if(mode == 0)
-                rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {}, decode_width, decode_height, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
-            else if(mode == 1)
-                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, {}, roi_height, decode_width, decode_height, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
-            else if(mode == 2)
-                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, roi_width, roi_height, maxwidth, maxheight, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
-            }
-        '''
     
         self.index = self.index + 1
         self.loader.copyToTensor(
@@ -268,9 +249,7 @@ class ROCALGenericIterator(object):
         return self.len
 
     def __del__(self):
-        print("rocAL Release")
         # b.rocalRelease(self.loader._handle)
-        print("rocAL Release done")
 
 
 class ROCALClassificationIterator(ROCALGenericIterator):

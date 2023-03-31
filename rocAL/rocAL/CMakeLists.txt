@@ -120,9 +120,11 @@ if(NOT Threads_FOUND)
 endif()
 
 if(${BUILD_ROCAL})
-    # AMD OpenVX & RPP
-    include_directories(${AMDRPP_INCLUDE_DIRS})
+    # AMD OpenVX & VX_RPP
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx vx_rpp)
+    # AMD RPP
+    include_directories(${AMDRPP_INCLUDE_DIRS})
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})
     # OpenMP
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")

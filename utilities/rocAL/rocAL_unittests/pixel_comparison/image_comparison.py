@@ -4,15 +4,15 @@ import sys
 import datetime
 import logging
 
-
-def compare_pixels(img1, img2, aug_name, width, height):
-    pixeldiff = [0,0,0,0,0,0]
+def compare_pixels(img1, img2, aug_name, width, height, image_offset = 0):
+    pixel_difference = [0,0,0,0,0,0]
     if'rgb' in aug_name:
         pixels1 = img1.load()
         pixels2 = img2.load()
-        tot_count = width * height * 3
+        total_valid_pixel_count = width * height * 3
         for wt in range(width):
             for ht in range(height):
+                ht = ht + image_offset
                 if pixels1[wt,ht] != pixels2[wt,ht]:
                     r = abs(pixels1[wt,ht][0]-pixels2[wt,ht][0])
                     g = abs(pixels1[wt,ht][1]-pixels2[wt,ht][1])
@@ -23,25 +23,26 @@ def compare_pixels(img1, img2, aug_name, width, height):
                         g = 5
                     if(b > 4):
                         b = 5
-                    pixeldiff[r] += 1
-                    pixeldiff[g] += 1
-                    pixeldiff[b] += 1
+                    pixel_difference[r] += 1
+                    pixel_difference[g] += 1
+                    pixel_difference[b] += 1
                 else:
-                    pixeldiff[0] += 3
+                    pixel_difference[0] += 3
     else:
         pixels1 = img1.convert('L').load()
         pixels2 = img2.convert('L').load()
-        tot_count = width * height * 1
-        for i in range(width):
-            for j in range(height):
-                if pixels1[i,j] != pixels2[i,j]:
-                    pixel = abs(pixels1[i,j]-pixels2[i,j])
+        total_valid_pixel_count = width * height * 1
+        for wt in range(width):
+            for ht in range(height):
+                ht = ht + image_offset
+                if pixels1[wt,ht] != pixels2[wt,ht]:
+                    pixel = abs(pixels1[wt,ht]-pixels2[wt,ht])
                     if(pixel > 4):
                         pixel = 5
-                    pixeldiff[pixel] += 1
+                    pixel_difference[pixel] += 1
                 else:
-                    pixeldiff[0] += 1 
-    return pixeldiff, tot_count
+                    pixel_difference[0] += 1 
+    return pixel_difference, total_valid_pixel_count
 
 def main():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S_")
@@ -67,7 +68,7 @@ def main():
     for aug_name in rocal_output_dir_list:
         temp = aug_name.split('.')
         file_name_s = temp[0].split('_')
-        if(len(file_name_s)>3):
+        if(len(file_name_s) > 3):
             file_name_s.pop()
             golden_file_path = "_".join(file_name_s) + ".png"
         else:
@@ -97,7 +98,26 @@ def main():
                     exit()
 
                 # Compare the pixel values for each image
-                pixeldiff, tot_count = compare_pixels(img1, img2, aug_name, img1.size[0], img1.size[1]) 
+                pixeldiff = None
+                tot_count = 0
+                if 'larger' in aug_name:
+                    resize_width = 400
+                    resize_height = 300
+                    image_offset = 400
+                    pixeldiff, tot_count = compare_pixels(img1, img2, aug_name, resize_width, resize_height)
+                    pixeldiff2, tot_count2 = compare_pixels(img1, img2, aug_name, resize_width, resize_height, image_offset)
+                    pixeldiff = [x + y for x, y in zip(pixeldiff, pixeldiff2)]
+                    tot_count = tot_count + tot_count2
+                elif 'smaller' in aug_name:
+                    resize_width = 533
+                    resize_height = 400
+                    image_offset = 2400
+                    pixeldiff, tot_count = compare_pixels(img1, img2, aug_name, resize_width, resize_height)
+                    pixeldiff2, tot_count2 = compare_pixels(img1, img2, aug_name, resize_width, resize_height, image_offset)
+                    pixeldiff = [x + y for x, y in zip(pixeldiff, pixeldiff2)]
+                    tot_count = tot_count + tot_count2
+                else:
+                    pixeldiff, tot_count = compare_pixels(img1, img2, aug_name, img1.size[0], img1.size[1]) 
                 total_pixel_diff = 0
                 for pix_diff in range(1,6):
                     total_pixel_diff += pixeldiff[pix_diff]

@@ -98,7 +98,7 @@ class Pipeline(object):
     def __init__(self, batch_size=-1, num_threads=0, device_id=-1, seed=1,
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
-                 rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
+                 rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT, normalization_on_device = False):
         if(rocal_cpu):
             self._handle = b.rocalCreate(
                 batch_size, types.CPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
@@ -118,6 +118,7 @@ class Pipeline(object):
         self._batch_size = batch_size
         self._num_threads = num_threads
         self._device_id = device_id
+        self._normalization_on_device = normalization_on_device
         self._seed = seed
         self._exec_pipelined = exec_pipelined
         self._prefetch_queue_depth = prefetch_queue_depth
@@ -178,10 +179,10 @@ class Pipeline(object):
         b.rocalCopyToOutput(
             self._handle, np.ascontiguousarray(out, dtype=array.dtype))
 
-    def copyToTensor(self, array,  multiplier, offset, reverse_channels, tensor_format, tensor_dtype, normalization_on_device):
+    def copyToTensor(self, array,  multiplier, offset, reverse_channels, tensor_format, tensor_dtype):
 
         b.rocalCopyToOutputTensor(self._handle, ctypes.c_void_p(array.data_ptr()), tensor_format, tensor_dtype,
-                                    multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), (1 if normalization_on_device else 0))
+                                    multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), (1 if self._normalization_on_device else 0))
 
     def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         if(self._rocal_cpu):

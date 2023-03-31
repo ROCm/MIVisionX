@@ -37,7 +37,7 @@ rgb_name=("gray" "rgb")
 rgb=1
 dev_start=0
 dev_end=1
-rgb_start=1
+rgb_start=0
 rgb_end=1
 
 if [ "$#" -gt 0 ]; then 

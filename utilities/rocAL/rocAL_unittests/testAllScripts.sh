@@ -37,7 +37,7 @@ rgb_name=("gray" "rgb")
 rgb=1
 dev_start=0
 dev_end=1
-rgb_start=1
+rgb_start=0
 rgb_end=1
 
 if [ "$#" -gt 0 ]; then 
@@ -55,13 +55,14 @@ fi
 
 if [ "$#" -gt 1 ]; then
     if [ "$2" -eq 0 ]; then # For only Greyscale inputs
-        echo "Grayscale support not added yet"
-        exit
+        rgb_start=0
+        rgb_end=0
     elif [ "$2" -eq 1 ]; then # For only RGB inputs
         rgb_start=1
         rgb_end=1
     elif [ "$2" -eq 2 ]; then # For both RGB and Greyscale inputs
-        echo "Grayscale support not added yet, Testing for only RGB inputs"
+        rgb_start=0
+        rgb_end=1
     fi
 fi
 
@@ -152,7 +153,7 @@ do
         ./rocAL_unittests 4 "$tf_classification_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_bilinear_notsmaller_tfClassification" $width $height 0 $device $rgb 0 $display 1 2
         ./rocAL_unittests 5 "$tf_detection_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_bilinear_notlarger_tfDetection" $width $height 0 $device $rgb 0 $display 1 3
         ./rocAL_unittests 6 "$caffe_classification_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_bicubic_default_caffeClassification" $width $height 0 $device $rgb 0 $display 2 0
-        # ./rocAL_unittests 7 "$caffe_detection_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_nearestneighbour_default_caffeDetection" $width $height 0 $device $rgb 0 $display 0 0 
+        # ./rocAL_unittests 7 "$caffe_detection_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_nearestneighbor_default_caffeDetection" $width $height 0 $device $rgb 0 $display 0 0
         ./rocAL_unittests 8 "$caffe2_classification_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_lanczos_default_caffe2Classification" $width $height 0 $device $rgb 0 $display 3 0
         ./rocAL_unittests 9 "$caffe2_detection_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_triangular_default_caffe2Detection" $width $height 0 $device $rgb 0 $display 5 0
         ./rocAL_unittests 11 "$mxnet_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_gaussian_default_mxnet" $width $height 0 $device $rgb 0 $display 4 0 

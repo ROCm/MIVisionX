@@ -158,7 +158,7 @@ elseif(AMDRPP_FOUND AND "${BACKEND}" STREQUAL "CPU")
     add_subdirectory(amd_rpp)
     message("-- ${Green}AMD ROCm Performance Primitives -- amd_rpp module added with CPU only backend support${ColourReset}")
 else()
-    message("-- ${Red}WARNING: AMDRPP Not Found -- amd_rpp module excluded${ColourReset}")
+    message("-- ${Red}WARNING:AMD RPP Not Found -- OpenVX Extension amd_rpp module excluded${ColourReset}")
 endif()
 
 if(OpenCV_FOUND)

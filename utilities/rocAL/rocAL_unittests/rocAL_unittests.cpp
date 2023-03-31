@@ -360,9 +360,12 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
 
     RocalImage image0 = input1;
     // RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false); // uncomment when processing images of different size
-
     RocalImage image1;
-
+    
+    if((test_case == 48 || test_case == 98) && rgb == 0) {
+        std::cout << "Not a valid option! Exiting!\n";
+        return -1;
+    }
     switch (test_case)
     {
     case 0:
@@ -747,7 +750,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     {
         std::cout << ">>>>>>> Running "
                   << "rocalResizeCropMirrorFixed" << std::endl;
-        image1 = rocalResizeCropMirrorFixed(handle, image0, 300, 300, true, 250, 250, 0);
+        image1 = rocalResizeCropMirrorFixed(handle, image0, 300, 300, true, 250, 250, mirror);
     }
     break;
     case 54:

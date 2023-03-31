@@ -81,8 +81,6 @@ def main():
             logging.info("Running %s",augmentation_name)
             passed_case_count=passed_case_count+1
             logging.info("PASSED ")
-        elif(file_name_s[0] == 'ColorTwist' and file_name_s[1]== 'gray'):
-            continue
         elif golden_file_path in golden_output_dir_list:
             total_case_count=total_case_count+1
             ref_file_path = ref_output_path+golden_file_path

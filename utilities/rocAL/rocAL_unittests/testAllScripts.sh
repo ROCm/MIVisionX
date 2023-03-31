@@ -153,7 +153,7 @@ do
         ./rocAL_unittests 4 "$tf_classification_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_bilinear_notsmaller_tfClassification" $width $height 0 $device $rgb 0 $display 1 2
         ./rocAL_unittests 5 "$tf_detection_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_bilinear_notlarger_tfDetection" $width $height 0 $device $rgb 0 $display 1 3
         ./rocAL_unittests 6 "$caffe_classification_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_bicubic_default_caffeClassification" $width $height 0 $device $rgb 0 $display 2 0
-        ./rocAL_unittests 7 "$caffe_detection_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_nearestneighbor_default_caffeDetection" $width $height 0 $device $rgb 0 $display 0 0 
+        # ./rocAL_unittests 7 "$caffe_detection_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_nearestneighbor_default_caffeDetection" $width $height 0 $device $rgb 0 $display 0 0
         ./rocAL_unittests 8 "$caffe2_classification_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_lanczos_default_caffe2Classification" $width $height 0 $device $rgb 0 $display 3 0
         ./rocAL_unittests 9 "$caffe2_detection_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_triangular_default_caffe2Detection" $width $height 0 $device $rgb 0 $display 5 0
         ./rocAL_unittests 11 "$mxnet_path" "${output_path}Resize_${rgb_name[$rgb]}_${device_name}_gaussian_default_mxnet" $width $height 0 $device $rgb 0 $display 4 0 

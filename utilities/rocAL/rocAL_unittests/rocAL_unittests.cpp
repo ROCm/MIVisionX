@@ -362,7 +362,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     // RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false); // uncomment when processing images of different size
     RocalImage image1;
     
-    if((test_case == 48 || test_case == 49) && rgb == 0) {
+    if((test_case == 48 || test_case == 49 || test_case == 50) && rgb == 0) {
         std::cout << "Not a valid option! Exiting!\n";
         return -1;
     }

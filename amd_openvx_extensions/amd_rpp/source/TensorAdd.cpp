@@ -63,7 +63,7 @@ static vx_status VX_CALLBACK refreshTensorAdd(vx_node node, const vx_reference *
 #if ENABLE_OPENCL
         cl_context theContext;
         cl_command_queue theQueue;
-        theQueue = data->handle.cmdq;
+        theQueue = data->handle->cmdq;
         clGetCommandQueueInfo(theQueue,
                               CL_QUEUE_CONTEXT,
                               sizeof(cl_context), &theContext, NULL);
@@ -120,7 +120,7 @@ static vx_status VX_CALLBACK processTensorAdd(vx_node node, const vx_reference *
         refreshTensorAdd(node, parameters, num, data);
         rpp_status = rppi_tensor_add_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue, data->handle->rppHandle);
         cl_command_queue theQueue;
-        theQueue = data->handle.cmdq;
+        theQueue = data->handle->cmdq;
         cl_int err;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);
@@ -154,10 +154,10 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
     TensorAddLocalData *data = new TensorAddLocalData;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle->cmdq, sizeof(data->handle->cmdq)));
     cl_context theContext;     // theContext
     cl_command_queue theQueue; // command theQueue
-    theQueue = data->handle.cmdq;
+    theQueue = data->handle->cmdq;
     clGetCommandQueueInfo(theQueue,
                           CL_QUEUE_CONTEXT,
                           sizeof(cl_context), &theContext, NULL);

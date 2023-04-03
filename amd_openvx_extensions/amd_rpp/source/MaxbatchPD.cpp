@@ -140,7 +140,7 @@ static vx_status VX_CALLBACK processMaxbatchPD(vx_node node, const vx_reference 
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
 #if ENABLE_OPENCL
-        cl_command_queue handle = data->handle.cmdq;
+        cl_command_queue handle = data->handle->cmdq;
         refreshMaxbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {

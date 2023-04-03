@@ -66,7 +66,7 @@ static vx_status VX_CALLBACK refreshTensorMatrixMultiply(vx_node node, const vx_
 #if ENABLE_OPENCL
         cl_context theContext;
         cl_command_queue theQueue;
-        theQueue = data->handle.cmdq;
+        theQueue = data->handle->cmdq;
         clGetCommandQueueInfo(theQueue,
                               CL_QUEUE_CONTEXT,
                               sizeof(cl_context), &theContext, NULL);
@@ -119,7 +119,7 @@ static vx_status VX_CALLBACK processTensorMatrixMultiply(vx_node node, const vx_
         refreshTensorMatrixMultiply(node, parameters, num, data);
         rpp_status = rppi_tensor_matrix_multiply_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst, data->tensorDimensionsValue1, data->tensorDimensionsValue2, data->handle->rppHandle);
         cl_command_queue theQueue;
-        theQueue = data->handle.cmdq;
+        theQueue = data->handle->cmdq;
         cl_int err;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);
@@ -153,10 +153,10 @@ static vx_status VX_CALLBACK initializeTensorMatrixMultiply(vx_node node, const 
     TensorMatrixMultiplyLocalData *data = new TensorMatrixMultiplyLocalData;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle->cmdq, sizeof(data->handle->cmdq)));
     cl_context theContext;     // theContext
     cl_command_queue theQueue; // command theQueue
-    theQueue = data->handle.cmdq;
+    theQueue = data->handle->cmdq;
     clGetCommandQueueInfo(theQueue,
                           CL_QUEUE_CONTEXT,
                           sizeof(cl_context), &theContext, NULL);

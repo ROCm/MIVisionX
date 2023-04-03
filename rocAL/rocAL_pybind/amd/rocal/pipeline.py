@@ -98,7 +98,7 @@ class Pipeline(object):
     def __init__(self, batch_size=-1, num_threads=0, device_id=-1, seed=1,
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
-                 rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT, normalization_on_device = False):
+                 rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT, normalization_on_device = False, copy_labels_to_device = False):
         if(rocal_cpu):
             self._handle = b.rocalCreate(
                 batch_size, types.CPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
@@ -119,6 +119,7 @@ class Pipeline(object):
         self._num_threads = num_threads
         self._device_id = device_id
         self._normalization_on_device = normalization_on_device
+        self._copy_labels_to_device = copy_labels_to_device
         self._seed = seed
         self._exec_pipelined = exec_pipelined
         self._prefetch_queue_depth = prefetch_queue_depth
@@ -286,11 +287,12 @@ class Pipeline(object):
 
     def getImageLabels(self, array):
         if (isinstance(array,np.ndarray)):
-            b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
+            b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), (1 if self._copy_labels_to_device else 0))
         elif (isinstance(array,cp.ndarray)):
+            # Not passing copy_labels_to_device since if cupy arrays are already device memory
             b.getCupyImageLabels(self._handle, array.data.ptr)
         else: #pytorch tensor
-            b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()))
+            b.getImageLabels(self._handle, ctypes.c_void_p(array.data_ptr()), (1 if self._copy_labels_to_device else 0))
 
     def copyEncodedBoxesAndLables(self, bbox_array, label_array):
         b.rocalCopyEncodedBoxesAndLables(self._handle, bbox_array, label_array)

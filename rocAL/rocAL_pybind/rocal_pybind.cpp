@@ -177,11 +177,11 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_label_copy(RocalContext context, py::object p)
+    py::object wrapper_label_copy(RocalContext context, py::object p, int copy_labels_to_device)
     {
         auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
-        rocalGetImageLabels(context,ptr);
+        rocalGetImageLabels(context,ptr, copy_labels_to_device);
         return py::cast<py::none>(Py_None);
     }
 

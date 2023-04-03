@@ -164,4 +164,4 @@ done
 pwd
 
 # Run python script to compare rocAL outputs with golden ouptuts
-python "$cwd"/pixel_comparison/image_comparison.py "$golden_output_path" "$output_path"
+python3 "$cwd"/pixel_comparison/image_comparison.py "$golden_output_path" "$output_path"

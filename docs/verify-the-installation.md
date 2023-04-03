@@ -20,7 +20,7 @@
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
   runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
   ```
-  **Note:** More samples are available [here](samples#samples)
+  **Note:** More samples are available [here](samples/README.md#samples)
 
   **Note:** For `macOS` use `export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/rocm/lib`
 

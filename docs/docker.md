@@ -2,7 +2,7 @@
 
 MIVisionX provides developers with docker images for **Ubuntu** `20.04` and **CentOS** `7` / `8`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
-Docker files to build MIVisionX containers are [available](docker#mivisionx-docker)
+Docker files to build MIVisionX containers are [available](docker/README.md)
 
 ### MIVisionX Docker
 

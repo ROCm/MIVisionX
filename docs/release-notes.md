@@ -6,7 +6,7 @@
 
 ### Changelog
 
-Review all notable [changes](CHANGELOG.md#changelog) with the latest release
+Review all notable [changes](../CHANGELOG.md#changelog) with the latest release
 
 ### Tested configurations
 

@@ -38,7 +38,7 @@
   + **SLES** - `15-SP3`
 * Install [ROCm](https://docs.amd.com)
 * CMake 3.0 or later
-* ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
+* ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
@@ -46,7 +46,7 @@
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * [FFMPEG n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
   + FFMPEG is required for amd_media & mv_deploy modules
-* [rocAL](rocAL#prerequisites) Prerequisites
+* [rocAL](rocAL/README.md#prerequisites) Prerequisites
 
 ##### Prerequisites setup script for Linux - `MIVisionX-setup.py`
 

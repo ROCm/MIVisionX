@@ -2,7 +2,7 @@
 
 This Sample Inference Application supports:
 
-* connect to [inference_server_app](../server_app#mivisionx-inference-server) 
+* connect to [inference_server_app](../server_app/README.md#mivisionx-inference-server) 
   * queries number of GPUs on the server
   * queries pre-loaded neural network models on the server
   * upload pre-trained CAFFE models (optional)
@@ -23,7 +23,7 @@ This Sample Inference Application supports:
   * optionally, pick list of input images from a .txt or .csv file
   * optionally, specify max number of images to be processed from folder or image list
 
-If you want to run a simple test, use [annInferenceApp.py](annInferenceApp.py) (a python script) to simply pick a network model to classify local images.
+If you want to run a simple test, use [annInferenceApp.py](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/apps/cloud_inference/client_app/annInferenceApp.py) (a python script) to simply pick a network model to classify local images.
 ````
 % python annInferenceApp.py [-v] -host:<hostname> -port:<port> -model:<modelName>
                             [-synset:<synset.txt>] [-output:<output.csv>]

@@ -108,7 +108,7 @@ make
 
 MIVisionX samples using [LoomShell](../utilities/loom_shell#radeon-loomshell)
 
-[![Loom Stitch](../docs/images/loom-4.png)](https://youtu.be/E8pPU04iZjw)
+[![Loom Stitch](../images/loom-4.png)](https://youtu.be/E8pPU04iZjw)
 
 **Note:** 
 

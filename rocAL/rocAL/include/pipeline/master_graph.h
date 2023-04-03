@@ -149,6 +149,7 @@ private:
 #endif
     std::shared_ptr<Graph> _graph = nullptr;
     RocalAffinity _affinity;
+    size_t _cpu_num_threads;//!< Defines the number of CPU threads used for processing
     const int _gpu_id;//!< Defines the device id used for processing
     pLoaderModule _loader_module; //!< Keeps the loader module used to feed the input the images of the graph
 #ifdef ROCAL_VIDEO
@@ -157,7 +158,6 @@ private:
     TimingDBG _convert_time, _process_time, _bencode_time;
     const size_t _user_batch_size;//!< Batch size provided by the user
     vx_context _context;
-    size_t _cpu_num_threads;
     const RocalMemType _mem_type;//!< Is set according to the _affinity, if GPU, is set to CL, otherwise host
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
     std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;

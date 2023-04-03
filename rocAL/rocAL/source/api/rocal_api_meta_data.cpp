@@ -231,7 +231,7 @@ ROCAL_API_CALL rocalGetImageLabels(RocalContext p_context, void* buf, unsigned i
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
 
-    if (context->affinity == RocalAffinity::CPU)
+    if (context->affinity == RocalAffinity::CPU) {
         if (!flags) {
             memcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size);
         }
@@ -240,6 +240,7 @@ ROCAL_API_CALL rocalGetImageLabels(RocalContext p_context, void* buf, unsigned i
             if (err != hipSuccess)
                 THROW("Invalid Data Pointer: Error copying to device memory")
         }
+    }
     else
     {
 #if ENABLE_HIP

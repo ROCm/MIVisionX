@@ -18,7 +18,7 @@ The following is a list of WinML functions that have been included in the vx_win
  getTopKLabels com.winml.get_top_k_labels
 ```
 
-**NOTE:** For the list of OpenVX API calls for WinML-interop refer include/[vx_ext_winml.h](include/vx_ext_winml.h)
+**NOTE:** For the list of OpenVX API calls for WinML-interop refer include/[vx_ext_winml.h](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/amd_openvx_extensions/amd_winml/include/vx_ext_winml.h)
 
 ## Build Instructions
 
@@ -42,17 +42,17 @@ The following is a list of WinML functions that have been included in the vx_win
 
 ### MIVisionX WinML Validate
 
-This [utility](utilities/MIVisionX-WinML-Validate#mivisionx-onnx-model-validation) can be used to test and verify the ONNX model on the Windows platform. If the ONNX model is supported by this utility, the amd_winml extension can import the ONNX model and add other OpenVX nodes for pre & post-processing in a single OpenVX graph to run efficient inference.
+This [utility](utilities/MIVisionX-WinML-Validate/README.md) can be used to test and verify the ONNX model on the Windows platform. If the ONNX model is supported by this utility, the amd_winml extension can import the ONNX model and add other OpenVX nodes for pre & post-processing in a single OpenVX graph to run efficient inference.
 
-**NOTE:** [Samples](utilities/MIVisionX-WinML-Validate/sample#sample) are available
+**NOTE:** [Samples](utilities/MIVisionX-WinML-Validate/sample/README.md) are available
 
 ## Samples
 
-[Samples](samples#samples) to run inference on a single image and a live camera is provided in the samples folder.
+[Samples](samples/README.md) to run inference on a single image and a live camera is provided in the samples folder.
 
-* [SqueezeNet](samples#sample---squeezenet)
-  + [Single Image Inference](samples#winml-imagegdf---single-image-inference)
-  + [Live Inference](samples#winml-livegdf---live-inference-using-a-camera)
-* [FER+ Emotion Recognition](samples#sample---fer-emotion-recognition)
-* [VGG 19](samples#sample---vgg19)
-* [Multiple Models](samples#winml-live-multiplemodelsgdf---live-inference-using-a-camera)
+* [SqueezeNet](samples/README.md#sample---squeezenet)
+  + [Single Image Inference](samples/README.md#winml-imagegdf---single-image-inference)
+  + [Live Inference](samples/README.md#winml-livegdf---live-inference-using-a-camera)
+* [FER+ Emotion Recognition](samples/README.md#sample---fer-emotion-recognition)
+* [VGG 19](samples/README.md#sample---vgg19)
+* [Multiple Models](samples/README.md#winml-live-multiplemodelsgdf---live-inference-using-a-camera)

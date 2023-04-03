@@ -28,7 +28,7 @@ The following is a list of RPP functions that have been included in the vx_rpp m
     Vignette                    org.rpp.Vignette
     Warp affine                 org.rpp.WarpAffine
 
-**NOTE** - For list of OpenVX API calls for RPP-interop refer include/[vx_ext_rpp.h](include/vx_ext_rpp.h)
+**NOTE** - For list of OpenVX API calls for RPP-interop refer include/[vx_ext_rpp.h](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/amd_openvx_extensions/amd_rpp/include/vx_ext_rpp.h)
 
 ## Build Instructions
 

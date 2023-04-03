@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -57,9 +57,10 @@ public:
 
     ~TJDecoder() override;
     void initialize(int device_id) override {};
-    bool is_partial_decoder() override { return _is_partial_decoder; } ;
-    void set_bbox_coords(std::vector <float> bbox_coord) override { _bbox_coord = bbox_coord;};
-    std::vector <float> get_bbox_coords() override { return _bbox_coord;}
+    bool is_partial_decoder() override { return _is_partial_decoder; }
+    void set_bbox_coords(std::vector <float> bbox_coord) override { _bbox_coord = bbox_coord; }
+    void set_crop_window(CropWindow &crop_window) override { _crop_window = crop_window; }
+    std::vector <float> get_bbox_coords() override { return _bbox_coord; }
 private:
     tjhandle m_jpegDecompressor;
     const static unsigned SCALING_FACTORS_COUNT =  16;
@@ -84,4 +85,5 @@ private:
     bool _is_partial_decoder = false;
     std::vector <float> _bbox_coord;
     const static unsigned _max_scaling_factor = 8;
+    CropWindow _crop_window;
 };

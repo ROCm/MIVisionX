@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -56,10 +56,12 @@ target_link_libraries(vx_loomsl ${OpenCL_LIBRARIES} openvx)
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_loomsl DESTINATION ${CMAKE_INSTALL_LIBDIR})
-# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES live_stitch_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../samples/loom_360_stitch DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+if(BUILD_DEV)
+	# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+	install(FILES live_stitch_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+	# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+	install(DIRECTORY ../../samples/loom_360_stitch DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+endif(BUILD_DEV)
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
@@ -68,4 +70,4 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
 endif()
 
-message("-- ${White}amd_loom -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}amd_loom -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

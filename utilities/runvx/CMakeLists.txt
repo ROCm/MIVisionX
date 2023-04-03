@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -62,10 +62,10 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
         message("-- ${Yellow}NOTE: OpenCL Not Found -- runVX built for CPU only${ColourReset}")
     endif()
 elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
+    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     find_package(HIP QUIET)
     if(HIP_FOUND)
-        message(STATUS "Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION})
+        message("-- ${White}runVX -- Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION} "\tCompiler:" ${HIP_COMPILER} ${ColourReset})
         set(ENABLE_HIP 1)
         set_target_properties(runvx PROPERTIES LINKER_LANGUAGE CXX)
         set_target_properties(runvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -116,7 +116,7 @@ else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
         target_link_libraries(runvx crypto)
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations -std=gnu++14")
 endif()
 
 # install MIVisionX executables -- {ROCM_PATH}/bin
@@ -124,4 +124,4 @@ install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR})
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
 install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
 
-message("-- ${White}runVX -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}runVX -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

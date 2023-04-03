@@ -1,3 +1,25 @@
+/*
+Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #include "inference_viewer.h"
 #include "ui_inference_viewer.h"
 #include <QPainter>
@@ -77,7 +99,7 @@ inference_state::inference_state()
 inference_viewer::inference_viewer(QString serverHost, int serverPort, QString modelName,
         QVector<QString> * dataLabels, QVector<QString> * dataHierarchy, QString dataFilename, QString dataFolder,
         int dimInput[3], int GPUs, int dimOutput[3], int maxImageDataSize,
-        bool repeat_images, bool sendScaledImages, int sendFileName_, int topKValue,
+        bool repeat_images, bool sendScaledImages, int sendFileName_, int topKValue, int decodeMode,
         QWidget *parent) :
     QWidget(parent),
     ui(new Ui::inference_viewer),
@@ -102,6 +124,7 @@ inference_viewer::inference_viewer(QString serverHost, int serverPort, QString m
     state->sendScaledImages = sendScaledImages;
     state->sendFileName = sendFileName_;
     state->topKValue = topKValue;
+    state->decodeMode = decodeMode;
     progress.completed = false;
     progress.errorCode = 0;
     progress.repeat_images = repeat_images;
@@ -153,7 +176,7 @@ void inference_viewer::startReceiver()
     state->receiver_worker = new inference_receiver(
                 state->serverHost, state->serverPort, state->modelName,
                 state->GPUs, state->inputDim, state->outputDim, INFCOM_RUNTIME_OPTIONS,
-                &state->imageBuffer, &progress, state->sendFileName, state->topKValue, &state->shadowFileBuffer);
+                &state->imageBuffer, &progress, state->sendFileName, state->topKValue, &state->shadowFileBuffer, state->decodeMode, state->dataFolder);
     state->receiver_worker->moveToThread(state->receiver_thread);
     connect(state->receiver_worker, SIGNAL (error(QString)), this, SLOT (errorString(QString)));
     connect(state->receiver_thread, SIGNAL (started()), state->receiver_worker, SLOT (run()));
@@ -901,7 +924,12 @@ void inference_viewer::paintEvent(QPaintEvent *)
             if(state->sendFileName){
                 // extract only the last folder and filename for shadow
                 QStringList fileNameList = fileName.split("/");
-                QString subFileName = fileNameList.at(fileNameList.size() - 2) + "/" + fileNameList.last();
+                QString subFileName;
+                if(state->decodeMode == 0)
+                    subFileName = fileNameList.at(fileNameList.size() - 2) + "/" + fileNameList.last();
+                else if(state->decodeMode == 1)  // for rocAL mode
+                    subFileName = fileNameList.last();
+                    
                 //printf("Inference viewer adding file %s to shadow array of size %d\n", subFileName.toStdString().c_str(), byteArray.size());
                 state->shadowFileBuffer.push_back(subFileName);
             }
@@ -1036,7 +1064,6 @@ void inference_viewer::paintEvent(QPaintEvent *)
     int numRows = (height() - imageY) / (ICON_STRIDE / 4);
     int imageCount = state->resultImageIndex.size();
     int imageRows = imageCount / numCols;
-    int imageCols = imageCount % numCols;
     if(state->resultImageIndex.size() > 0) {
         while(imageRows >= numRows) {
             state->resultImageIndex.erase(state->resultImageIndex.begin(), state->resultImageIndex.begin() + 4 * numCols);
@@ -1044,7 +1071,6 @@ void inference_viewer::paintEvent(QPaintEvent *)
             state->resultImageSummary.erase(state->resultImageSummary.begin(), state->resultImageSummary.begin() + 4 * numCols);
             imageCount = state->resultImageIndex.size();
             imageRows = imageCount / numCols;
-            imageCols = imageCount % numCols;
         }
         // get received image/rate
         float imagesPerSec = state->receiver_worker->getPerfImagesPerSecond();

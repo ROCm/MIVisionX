@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,11 +31,7 @@ THE SOFTWARE.
 class VideoLoaderSharded : public VideoLoaderModule
 {
 public:
-#if ENABLE_HIP
-    explicit VideoLoaderSharded(DeviceResourcesHip dev_resources);
-#else
-    explicit VideoLoaderSharded(DeviceResources dev_resources);
-#endif
+    explicit VideoLoaderSharded(void *dev_resources);
     ~VideoLoaderSharded() override;
     VideoLoaderModuleStatus load_next() override;
     void initialize(VideoReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RocalMemType mem_type, unsigned batch_size, bool keep_orig_size = false) override;
@@ -52,11 +48,7 @@ public:
     Timing timing() override;
 private:
     void increment_loader_idx();
-#if ENABLE_HIP
-    const DeviceResourcesHip _dev_resources;
-#else
-    const DeviceResources _dev_resources;
-#endif
+    void *_dev_resources;
     bool _initialized = false;
     std::vector<std::shared_ptr<VideoLoader>> _loaders;
     size_t _loader_idx;

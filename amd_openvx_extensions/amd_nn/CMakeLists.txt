@@ -1,4 +1,4 @@
-# Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,8 +32,8 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     list(APPEND PACKAGE_DEPENDS PACKAGE OpenCL)
 elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     set(OpenCL_FOUND FALSE)
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
-    find_package(HIP QUIET REQUIRED)
+    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
+    find_package(HIP REQUIRED)
     find_package(rocblas PATHS ${ROCM_PATH} REQUIRED)
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
 endif()
@@ -116,18 +116,20 @@ endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_nn DESTINATION ${CMAKE_INSTALL_LIBDIR})
-# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-# install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
-install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
-install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
-# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../samples/inference/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+if(BUILD_DEV)
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+    install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+    # install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
+    install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
+    install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
+    # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+    install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../samples/inference/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+    install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+endif(BUILD_DEV)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
@@ -136,4 +138,4 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
 endif()
 
-message("-- ${White}amd_nn -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}amd_nn -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

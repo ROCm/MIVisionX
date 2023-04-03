@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -124,14 +124,15 @@ enum RocalTensorLayout
 enum RocalTensorOutputType
 {
     ROCAL_FP32 = 0,
-    ROCAL_FP16 = 1
+    ROCAL_FP16 = 1,
+    ROCAL_U8   = 2,
 };
 
 enum RocalDecoderType
 {
     ROCAL_DECODER_TJPEG = 0,
     ROCAL_DECODER_OPENCV = 1,
-    ROCAL_DECODER_HW_JEPG = 2,
+    ROCAL_DECODER_HW_JPEG = 2,
     ROCAL_DECODER_VIDEO_FFMPEG_SW = 3,
     ROCAL_DECODER_VIDEO_FFMPEG_HW = 4
 };
@@ -145,6 +146,22 @@ enum RocalExtSourceMode
     ROCAL_EXTSOURCE_FNAME = 0,
     ROCAL_EXTSOURCE_RAW_COMPRESSED = 1,
     ROCAL_EXTSOURCE_RAW_UNCOMPRESSED = 2,
+};
+
+enum RocalResizeScalingMode {
+    ROCAL_SCALING_MODE_DEFAULT = 0,     // scales wrt specified size, if only resize width/height is provided the other dimension is scaled according to aspect ratio
+    ROCAL_SCALING_MODE_STRETCH = 1,     // scales wrt specified size, if only resize width/height is provided the other dimension is not scaled
+    ROCAL_SCALING_MODE_NOT_SMALLER = 2, // scales wrt to aspect ratio, so that resize width/height is not lesser than the specified size
+    ROCAL_SCALING_MODE_NOT_LARGER = 3   // scales wrt to aspect ratio, so that resize width/height does not exceed specified size
+};
+
+enum RocalResizeInterpolationType {
+    ROCAL_NEAREST_NEIGHBOR_INTERPOLATION = 0,
+    ROCAL_LINEAR_INTERPOLATION = 1,
+    ROCAL_CUBIC_INTERPOLATION = 2,
+    ROCAL_LANCZOS_INTERPOLATION = 3,
+    ROCAL_GAUSSIAN_INTERPOLATION = 4,
+    ROCAL_TRIANGULAR_INTERPOLATION = 5
 };
 
 #endif //MIVISIONX_ROCAL_API_TYPES_H

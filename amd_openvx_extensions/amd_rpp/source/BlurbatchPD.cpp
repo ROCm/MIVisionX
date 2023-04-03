@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -190,7 +190,6 @@ static vx_status VX_CALLBACK initializeBlurbatchPD(vx_node node, const vx_refere
 #elif ENABLE_HIP
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
-        hipStreamCreate(&data->handle.hipstream);
         rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
     }
 

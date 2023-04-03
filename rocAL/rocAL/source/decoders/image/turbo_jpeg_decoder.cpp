@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -112,7 +112,7 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
                             max_decoded_width * planes,
                             max_decoded_height,
                             tjpf,
-                            TJFLAG_FASTDCT,
+                            TJFLAG_ACCURATEDCT,
                             crop_width, crop_height) != 0)
 
             {
@@ -142,7 +142,7 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
                             max_decoded_width * planes,
                             max_decoded_height,
                             tjpf,
-                            TJFLAG_FASTDCT) != 0) {
+                            TJFLAG_ACCURATEDCT) != 0) {
                 // try decode to original dim and scale using OpenCV
                 WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
                 return Status::CONTENT_DECODE_FAILED;
@@ -194,7 +194,7 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
                             max_decoded_width * planes,
                             max_decoded_height,
                             tjpf,
-                            TJFLAG_FASTDCT,
+                            TJFLAG_ACCURATEDCT,
                             crop_width, crop_height) != 0)
 
             {
@@ -224,7 +224,7 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
                             max_decoded_width * planes,
                             actual_decoded_height,
                             tjpf,
-                            TJFLAG_FASTDCT) != 0) {
+                            TJFLAG_ACCURATEDCT) != 0) {
                 WRN("KO::Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
                 return Status::CONTENT_DECODE_FAILED;
             }

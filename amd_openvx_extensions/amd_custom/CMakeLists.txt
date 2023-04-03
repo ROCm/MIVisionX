@@ -1,4 +1,4 @@
-# Copyright (c) 2017 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,31 @@ project(vx_amd_custom)
 
 set(CMAKE_CXX_STANDARD 14)
 
-list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
+list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 
-if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
+# OpenMP
+find_package(OpenMP QUIET)
+
+if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND OpenMP_FOUND)
     if(NOT DEFINED HIP_PATH)
         if(NOT DEFINED ENV{HIP_PATH})
-            set(HIP_PATH ${ROCM_PATH}/hip)
+            set(HIP_PATH ${ROCM_PATH})
         else()
             set(HIP_PATH $ENV{HIP_PATH})
         endif()
     endif()
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
+    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     find_package(HIP QUIET)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenMP::OpenMP_CXX)
+
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -msse4.2")
+    endif()
 
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
 
@@ -52,20 +65,15 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         link_directories(${HIP_PATH}/lib)
         add_subdirectory(custom_lib)
         add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
-        target_link_libraries(${PROJECT_NAME} openvx hip::host)
-        # install MIVisionX libs -- {ROCM_PATH}/lib
+        target_link_libraries(${PROJECT_NAME} openvx hip::host ${LINK_LIBRARY_LIST})
+        # install MIVisionX libs -- {ROCM_PATH}/lib -- TBD: Remove duplicate install 
         install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-	      install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+        if(BUILD_DEV)
+            # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+	        install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+        endif(BUILD_DEV)
     else()
         message("-- ${Red}WARNING: HIP Not Found -- ${PROJECT_NAME} module excluded${ColourReset}")
-    endif()
-
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -fopenmp -std=c++14")
     endif()
 else()
   set(ENABLE_HIP 0)
@@ -76,6 +84,8 @@ else()
   target_link_libraries(${PROJECT_NAME} openvx hip::host)
   # install MIVisionX libs -- {ROCM_PATH}/lib
   install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-  # install include files -- {ROCM_PATH}/include/mivisionx/
-  install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+  if(BUILD_DEV)
+    # install include files -- {ROCM_PATH}/include/mivisionx/
+    install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+  endif(BUILD_DEV)
 endif()

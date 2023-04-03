@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenCV QUIET)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
-#find the OPENVX backend type
+#find the OPENVX backend type - TBD: ADD FindMIVisionX.cmake
 set(OPENVX_BACKEND_OPENCL_FOUND 0)
 set(OPENVX_BACKEND_HIP_FOUND 0)
 if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)

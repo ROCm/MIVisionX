@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "commons.h"
 #include "context.h"
 #include "rocal_api.h"
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
 #include "CL/cl.h"
 #endif
 
@@ -97,33 +97,13 @@ rocalCopyToOutputTensor(RocalContext p_context, void *out_ptr, RocalTensorLayout
 RocalStatus ROCAL_API_CALL
 rocalCopyToOutput(
         RocalContext p_context,
-        void* out_ptr,
-        size_t out_size)
-{
-    auto context = static_cast<Context*>(p_context);
-    try
-    {
-        context->master_graph->copy_output(out_ptr, out_size);
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-        return ROCAL_RUNTIME_ERROR;
-    }
-    return ROCAL_OK;
-}
-
-RocalStatus ROCAL_API_CALL
-rocalCopyToOutput(
-        RocalContext p_context,
         unsigned char * out_ptr,
         size_t out_size)
 {
     auto context = static_cast<Context*>(p_context);
     try
     {
-        context->master_graph->copy_output(out_ptr);
+        context->master_graph->copy_output(out_ptr, out_size);
     }
     catch(const std::exception& e)
     {

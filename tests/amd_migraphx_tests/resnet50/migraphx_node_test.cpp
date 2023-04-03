@@ -1,3 +1,25 @@
+/*
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #include "vx_amd_migraphx.h"
 #include <cstring>
 #include <random>
@@ -46,6 +68,16 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
             printf("\n");
         fflush(stdout);
     }
+}
+
+inline int64_t clockCounter()
+{
+    return std::chrono::high_resolution_clock::now().time_since_epoch().count();
+}
+
+inline int64_t clockFrequency()
+{
+    return std::chrono::high_resolution_clock::period::den / std::chrono::high_resolution_clock::period::num;
 }
 
 int main(int argc, char **argv) {
@@ -222,7 +254,23 @@ int main(int argc, char **argv) {
     ERROR_CHECK_OBJECT(node);
 
     ERROR_CHECK_STATUS(vxVerifyGraph(graph));
+    
+    // graph process timing
+    int64_t freq = clockFrequency(), t0, t1;
+    t0 = clockCounter();
     ERROR_CHECK_STATUS(vxProcessGraph(graph));
+    t1 = clockCounter();
+    printf("OK: vxProcessGraph() took %.3f msec (1st iteration)\n", (float)(t1-t0)*1000.0f/(float)freq);
+
+    t0 = clockCounter();
+    int N = 100;
+    for(int i = 0; i < N; i++) {
+        status = vxProcessGraph(graph);
+        if(status != VX_SUCCESS)
+            break;
+    }
+    t1 = clockCounter();
+    printf("OK: vxProcessGraph() took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
 
     status = vxMapTensorPatch(output_tensor, output_num_of_dims, nullptr, nullptr, &map_id, stride,
         (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
@@ -256,6 +304,9 @@ int main(int argc, char **argv) {
     ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor));
     ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor));
     ERROR_CHECK_STATUS(vxReleaseContext(&context));
+    
+    printf("OK: successful\n");
+
     return 0;
 }
 

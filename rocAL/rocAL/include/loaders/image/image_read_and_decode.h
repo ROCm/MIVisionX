@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "reader_factory.h"
 #include "timing_debug.h"
 #include "loader_module.h"
+#include "parameter_random_crop_decoder.h"
 
 /**
  * Compute the scaled value of <tt>dimension</tt> using the given scaling
@@ -98,4 +99,5 @@ protected:
     std::vector<std::vector <float>> _bbox_coords, _crop_coords_batch;
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
     pCropCord _CropCord;
+    RocalRandomCropDecParam *_random_crop_dec_param = nullptr;
 };

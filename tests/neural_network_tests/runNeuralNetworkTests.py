@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import sys
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Neural Net Test Full Report"
+__copyright__ = "Copyright 2018 - 2023, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
 __version__ = "1.1.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -128,8 +128,8 @@ parser.add_argument('--miopen_find',        type=int, default=1,
                     help='MIOPEN_FIND_ENFORCE mode - optional (default:1 [range:1 - 5])')
 parser.add_argument('--test_info',          type=str, default='no',
                     help='Show test info - optional (default:no [options:no/yes])')
-parser.add_argument('--backend_type',       type=str, default='OCL',
-                    help='Backend type - optional (default:HOST [options:HOST/HIP/OCL])')
+parser.add_argument('--backend_type',       type=str, default='HIP',
+                    help='Backend type - optional (default:HIP [options:HOST/HIP/OCL])')
 parser.add_argument('--install_directory',    type=str, default='/opt/rocm',
                     help='MIVisionX Install Directory - optional')
 args = parser.parse_args()
@@ -252,11 +252,11 @@ if not os.path.exists(modelCompilerDeps):
         os.system(
             'sudo '+linuxSystemInstall+' ' +
             linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
-    os.system('sudo pip3 install future pytz numpy')
+    os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
     # Install CAFFE Deps
-    os.system('sudo pip3 install google protobuf==3.12.4')
+    os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
     # Install ONNX Deps
-    os.system('sudo pip3 install onnx')
+    os.system('sudo pip3 install onnx==1.11.0')
     # Install NNEF Deps
     os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
     os.system(
@@ -731,6 +731,20 @@ if profileMode == 0 or profileMode == 9:
 
 # get system data
 platform_name = platform.platform()
+if os.path.exists('/usr/bin/yum'):
+    if not "centos" in platform_name or not "redhat" in platform_name:
+        platfromInfo = platform_name+'-CentOS-RedHat'
+elif os.path.exists('/usr/bin/apt-get'):
+    if not "Ubuntu" in platform_name:
+        platform_name = platform_name+'-Ubuntu'
+elif os.path.exists('/usr/bin/zypper'):
+    if not "SLES" in platform_name:
+        platform_name = platform_name+'-SLES'
+else:
+    print("\nMIVisionX Neural Network Test on "+platform_name+" is unsupported")
+    print("MIVisionX Neural Network Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+    print("\nMIVisionX Neural Network Test on "+platform_name+" is unreliable")
+
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
@@ -821,7 +835,7 @@ with open(reportFilename, 'w') as f:
     write_formatted(lib_tree, f)
     f.write("\n")
 
-    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2021 -- runNeuralNetworkTests.py V-"+__version__+"**\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2023 -- runNeuralNetworkTests.py V-"+__version__+"**\n")
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)

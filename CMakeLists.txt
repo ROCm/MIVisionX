@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
-set(VERSION "2.3.0")
+set(VERSION "2.4.0")
 
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
@@ -47,6 +47,7 @@ option(ROCAL            "Build MIVisionX with ROCAL Support"       ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
+option(BUILD_DEV        "Build MIVisionX Development Package"      ON)
 option(AMD_FP16_SUPPORT "Build MIVisionX with float16 Support"    OFF)
 
 if(WIN32)
@@ -74,6 +75,7 @@ message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${Colour
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
   set(GPU_SUPPORT OFF)
+  set(ROCAL OFF)
   set(BACKEND "CPU")
   message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
 endif()
@@ -102,13 +104,13 @@ if(NOT CMAKE_BUILD_TYPE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-  # -O0  -- Don't Optimize output file; 
-  # -g -- generate debugging information;
-  # -Og -- Optimize for debugging experience rather than speed or size.
+  # -O0  -- Don't Optimize output file
+  # -g -- generate debugging information
+  # -Og -- Optimize for debugging experience rather than speed or size
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Og")
 else()
-  # -O3 -- Optimize output file; 
-  # -DNDEBUG -- turn off asserts.
+  # -O3 -- Optimize output file
+  # -DNDEBUG -- turn off asserts
   # -fPIC -- Generate position-independent code if possible
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -fPIC")
 endif()
@@ -121,6 +123,7 @@ message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM Modules (default:ON)]$
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
+message("-- ${Cyan}     -D BUILD_DEV=${BUILD_DEV} [MIVisionX Developement/Runtime Build(default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D AMD_FP16_SUPPORT=${AMD_FP16_SUPPORT} [Turn ON/OFF OpenVX FP16 Support (default:OFF)]${ColourReset}")
 
 if(AMD_FP16_SUPPORT)
@@ -139,14 +142,14 @@ else()
 endif()
 
 # install MIVisionX docs -- {ROCM_PATH}/${CMAKE_INSTALL_DATADIR}/doc/mivisionx/
-install(DIRECTORY docs DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
+install(FILES docs/README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})
 set(CPACK_PACKAGE_NAME          "mivisionx")
 set(CPACK_PACKAGE_LICENSE       "MIT")
 set(CPACK_PACKAGE_CONTACT       "MIVisionX Support <mivisionx.support@amd.com>")
-set(CPACK_PACKAGE_VENDOR        "AMD Radeon")
+set(CPACK_PACKAGE_VENDOR        "AMD ROCm")
 set(CPACK_PACKAGE_ICON          "${CMAKE_SOURCE_DIR}/docs/images/MIVisionX.bmp")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")

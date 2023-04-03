@@ -1,3 +1,25 @@
+/*
+Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #include "inference.h"
 #include "netutil.h"
 #include "common.h"
@@ -38,7 +60,8 @@ InferenceEngine::InferenceEngine(int sock_, Arguments * args_, const std::string
       GPUs{ cmd->data[1] },
       dimInput{ cmd->data[2], cmd->data[3], cmd->data[4] },
       dimOutput{ cmd->data[5], cmd->data[6], cmd->data[7] },
-      receiveFileNames { (bool)cmd->data[8] }, topK { cmd->data[9] }, detectBoundingBoxes { cmd->data[10] },
+      receiveFileNames { (bool)cmd->data[8] }, topK { cmd->data[9] }, 
+      detectBoundingBoxes { cmd->data[10] }, decodeMode { cmd->data[11] }, loop { (bool)cmd->data[12] },
       reverseInputChannelOrder{ 0 }, preprocessMpy{ 1, 1, 1 }, preprocessAdd{ 0, 0, 0 },
       moduleHandle{ nullptr }, annCreateGraph{ nullptr }, annAddtoGraph { nullptr},
       deviceLockSuccess{ false }, useShadowFilenames{ false }
@@ -90,7 +113,7 @@ InferenceEngine::InferenceEngine(int sock_, Arguments * args_, const std::string
     if(!args->lockGpuDevices(GPUs, device_id))
         deviceLockSuccess = true;
 #endif
-    if (!args->getlocalShadowRootDir().empty()){
+    if (!args->getlocalShadowRootDir().empty() || decodeMode == 1){
         useShadowFilenames = true;
         std::cout << "INFO::inferenceserver is running with LocalShadowFolder and infcom command receiving only filenames" << std::endl;
     }
@@ -203,7 +226,6 @@ vx_status InferenceEngine::DecodeScaleAndConvertToTensor(vx_size width, vx_size 
 {
     int length = width*height;
     cv::Mat matOrig = cv::imdecode(cv::Mat(1, size, CV_8UC1, inp), cv::IMREAD_COLOR);
-
 #if USE_SSE_OPTIMIZATION
     unsigned char *data_resize = nullptr;
     unsigned char * img;
@@ -1053,7 +1075,7 @@ int InferenceEngine::run()
                     }
                     else
                     {
-                        // allocate and receive the image and EOF market
+                        // allocate and receive the image and EOF marker
                         byteStream = new char [size];
                         ERRCHK(recvBuffer(sock, byteStream, size, clientName));
                     }

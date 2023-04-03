@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 #include <cstdio>
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
 #include <CL/cl.h>
 #endif
 #include <vx_ext_amd.h>
@@ -81,6 +81,16 @@ const std::vector<uint32_t>& ImageInfo::get_roi_height_vec() const
     return *_roi_height;
 }
 
+const std::vector<uint32_t>& ImageInfo::get_original_width_vec() const
+{
+    return *_original_width;
+}
+
+const std::vector<uint32_t>& ImageInfo::get_original_height_vec() const
+{
+    return *_original_height;
+}
+
 
 unsigned ImageInfo::get_roi_width(int image_batch_idx) const
 {
@@ -104,6 +114,8 @@ ImageInfo::reallocate_image_roi_buffers()
 {
     _roi_height = std::make_shared<std::vector<uint32_t>>(_batch_size);
     _roi_width = std::make_shared<std::vector<uint32_t>>(_batch_size);
+    _original_height = std::make_shared<std::vector<uint32_t>>(_batch_size);
+    _original_width = std::make_shared<std::vector<uint32_t>>(_batch_size);
     for(unsigned i = 0; i < _batch_size; i++)
     {
         _roi_height->at(i) = height_single();
@@ -132,7 +144,7 @@ ImageInfo::ImageInfo(
         _height(height_),
         _color_planes(planes),
         _batch_size(batches),
-        _data_size(width_ * height_ * _batch_size * planes),
+        _data_size((static_cast<uint64_t>(width_ * height_ * _batch_size * planes))),
         _mem_type(mem_type_),
         _color_fmt(col_fmt_)
         {
@@ -164,7 +176,7 @@ void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vect
 
         if(height[i] > _info.height_single())
         {
-            ERR("Given ROI height is larger than buffer with for image[" + TOSTR(i) + "] " + TOSTR(height[i]) +" > " + TOSTR(_info.height_single()))
+            ERR("Given ROI height is larger than buffer height for image[" + TOSTR(i) + "] " + TOSTR(height[i]) +" > " + TOSTR(_info.height_single()))
             _info._roi_height->at(i) = _info.height_single();
         }
         else
@@ -172,6 +184,22 @@ void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vect
             _info._roi_height->at(i)= height[i];
         }
 
+    }
+}
+
+void Image::update_image_original_dims(const std::vector<uint32_t> &original_width, const std::vector<uint32_t> &original_height)
+{
+    if(original_width.size() != original_height.size())
+        THROW("Batch size of image height and width info does not match")
+
+    if(original_width.size() != info().batch_size())
+        THROW("The batch size of actual image height and width different from image batch size "+ TOSTR(original_width.size())+ " != " +  TOSTR(info().batch_size()))
+    if(!_info._original_width || !_info._original_height)
+        THROW("ROI width or ROI height vector not created")
+    for(unsigned i = 0; i < info().batch_size(); i++)
+    {
+        _info._original_width->at(i) = original_width[i];
+        _info._original_height->at(i)= original_height[i];
     }
 }
 
@@ -287,7 +315,7 @@ int Image::create(vx_context context)
     return 0;
 }
 
-#if !ENABLE_HIP
+#if ENABLE_OPENCL
 unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync)
 {
     if(_info._type != ImageInfo::Type::HANDLE)
@@ -317,11 +345,13 @@ unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bo
     }
     return size;
 }
+
 unsigned Image::copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync)
 {
     return 0;
 }
-#else
+
+#elif ENABLE_HIP
 unsigned Image::copy_data(hipStream_t stream, unsigned char* user_buffer, bool sync)
 {
     if(_info._type != ImageInfo::Type::HANDLE)

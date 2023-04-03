@@ -12,10 +12,10 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
-- [AMD OpenVX](#amd-openvx)
-- [AMD OpenVX Extensions](#amd-openvx-extensions)
+- [AMD OpenVX™](#amd-openvx)
+- [AMD OpenVX™ Extensions](#amd-openvx-extensions)
 - [Applications](#applications)
-- [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
+- [Neural Net Model Compiler \& Optimizer](#neural-net-model-compiler--optimizer)
 - [rocAL](#rocal)
 - [Toolkit](#toolkit)
 - [Utilities](#utilities)
@@ -27,7 +27,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
     - [Linux](#linux)
       - [Prerequisites setup script for Linux - `MIVisionX-setup.py`](#prerequisites-setup-script-for-linux---mivisionx-setuppy)
         - [Prerequisites for running the script](#prerequisites-for-running-the-script)
-- [Build & Install MIVisionX](#build--install-mivisionx)
+- [Build \& Install MIVisionX](#build--install-mivisionx)
   - [Windows](#windows-1)
     - [Using .msi packages](#using-msi-packages)
     - [Using `Visual Studio`](#using-visual-studio)
@@ -51,17 +51,17 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   - [Known issues](#known-issues)
 - [MIVisionX Dependency Map](#mivisionx-dependency-map)
 
-## AMD OpenVX
+## AMD OpenVX&trade;
 
 <p align="center"><img width="30%" src="docs/images/OpenVX_logo.png" /></p>
 
-[AMD OpenVX](amd_openvx#amd-openvx-amd_openvx) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+[AMD OpenVX&trade;](amd_openvx#amd-openvx-amd_openvx) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 <a href="https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html" target="_blank">Khronos OpenVX&trade; 1.0.1</a> conformant implementation is available in [MIVisionX Lite](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/openvx-1.0.1)
 
-## AMD OpenVX Extensions
+## AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx), which contains the AMD OpenVX Core Engine.
+The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx), which contains the AMD OpenVX&trade; Core Engine.
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX-OpenVX-Extensions.png" /></p>
 
@@ -70,7 +70,7 @@ The OpenVX framework provides a mechanism to add new vision functionality to Ope
 * [amd_migraphx](amd_openvx_extensions/amd_migraphx): amd_migraphx extension integrates the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> into an OpenVX graph. This extension allows developers to combine the vision funcions in OpenVX with the MIGraphX and build an end-to-end application for inference.
 * [amd_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
 * [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
-* [amd_rpp](amd_openvx_extensions/amd_rpp): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (Radeon Performance Primitives) functions. This extension is used to enable [rocAL](rocAL/README.md) to perform image augmentation.
+* [amd_rpp](amd_openvx_extensions/amd_rpp): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (ROCm Performance Primitives) functions. This extension is used to enable [rocAL](rocAL/README.md) to perform image augmentation.
 * [amd_winml](amd_openvx_extensions/amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 ## Applications
@@ -133,7 +133,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Visual Studio 2019 or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* Install [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* Install [OpenCV 4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
@@ -150,13 +150,15 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Linux distribution
   + **Ubuntu** - `20.04` / `22.04`
   + **CentOS** - `7` / `8`
+  + **RedHat** - `8` / `9`
+  + **SLES** - `15-SP3`
 * Install [ROCm](https://docs.amd.com)
 * CMake 3.0 or later
-* ROCm CMake, MIOpenGEMM & MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
+* ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
-* [OpenCV 4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
+* [OpenCV 4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * [FFMPEG n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
   + FFMPEG is required for amd_media & mv_deploy modules
@@ -173,6 +175,8 @@ For the convenience of the developer, we here provide the setup script which wil
 * Linux distribution
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
+  + RedHat - `8` / `9`
+  + SLES - `15-SP3`
 * [ROCm supported hardware](https://docs.amd.com)
 * [ROCm](https://docs.amd.com)
 
@@ -180,14 +184,15 @@ For the convenience of the developer, we here provide the setup script which wil
 
   ```
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                            --opencv    [OpenCV Version - optional (default:4.5.5)]
+                            --opencv    [OpenCV Version - optional (default:4.6.0)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.4)]
-                            --rpp       [RPP Version - optional (default:0.97)]
-                            --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:no) [options:yes/no]]
-                            --rocal     [MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]]
-                            --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
-                            --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
-                            --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:OCL/HIP]]
+                            --rpp       [RPP Version - optional (default:1.0.0)]
+                            --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:ON) [options:ON/OFF]]
+                            --rocal     [MIVisionX rocAL Dependency Install - optional (default:ON) [options:ON/OFF]]
+                            --neural_net[MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]]
+                            --inference [MIVisionX Neural Net Inference Dependency Install - optional (default:ON) [options:ON/OFF]]
+                            --reinstall [Remove previous setup and reinstall (default:OFF)[options:ON/OFF]]
+                            --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]]
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
   ```
     **Note:**
@@ -273,7 +278,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
     + run the setup script to install all the dependencies required by the **OPENCL** GPU backend:
     ```
-    python MIVisionX-setup.py --reinstall yes --backend OCL
+    python MIVisionX-setup.py --reinstall ON --backend OCL
     ```
 
     + run the below commands to build MIVisionX with the **OPENCL** GPU backend:
@@ -433,21 +438,22 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * Linux distribution
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
-  + SLES - `15-SP2`
-* ROCm: rocm-core - `5.3.0.50300-36`
-* miopen-hip - `2.18.0.50300-36`
-* miopen-opencl - `2.18.0.50300-36`
-* migraphx - `2.3.0.50300-36`
+  + RedHat - `8` / `9`
+  + SLES - `15-SP3`
+* ROCm: rocm-core - `5.5.0.50500-21`
+* miopen-hip - `2.19.0.50500-21`
+* miopen-opencl - `2.18.0.50300-63`
+* migraphx - `2.5.0.50500-21`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
-* OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
-* RPP - [0.97](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.97)
+* OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
+* RPP - [1.0.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.0.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.3.7`
+* MIVisionX Setup Script - `V2.4.2`
 
 ### Known issues
 
-* Package install requires **OpenCV** `V-4.5.X` to execute `AMD OpenCV extensions`
+* Package install requires **OpenCV** `V-4.6.X` to execute `AMD OpenCV extensions`
 
 ## MIVisionX Dependency Map
 
@@ -463,3 +469,5 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 | `Level_3`   | OpenCV <br> FFMPEG <br> +Level 2                   | amd_openvx <br> amd_openvx_extensions <br> utilities                      | ![#1589F0](docs/images/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](docs/images/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](docs/images/blue_square.png) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#1589F0](docs/images/blue_square.png) `loom_shell` - 360 Stitch App <br> ![#1589F0](docs/images/blue_square.png) `runcl` - OpenCL&trade; program debug App <br> ![#c5f015](docs/images/green_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#c5f015](docs/images/green_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#c5f015](docs/images/green_square.png) `mv_compile` - Neural Net Model Compile <br> ![#c5f015](docs/images/green_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON                                                                                                                                                                                                                                                                                                                                                                                                                                                               | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-3?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
 | `Level_4`   | MIOpenGEMM <br> MIOpen <br> ProtoBuf <br> +Level 3 | amd_openvx <br>  amd_openvx_extensions <br> apps <br> utilities           | ![#1589F0](docs/images/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](docs/images/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](docs/images/blue_square.png) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#1589F0](docs/images/blue_square.png) `loom_shell` - 360 Stitch App <br> ![#1589F0](docs/images/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](docs/images/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](docs/images/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](docs/images/blue_square.png) `runcl` - OpenCL&trade; program debug App <br> ![#1589F0](docs/images/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br> ![#c5f015](docs/images/green_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br> ![#c5f015](docs/images/green_square.png) `inference_server_app` - Cloud Inference App                                                                                                                                                                                                                                                                       | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-4?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
 | `Level_5`   | AMD_RPP <br> rocAL deps <br> +Level 4              | amd_openvx <br> amd_openvx_extensions <br> apps <br> rocAL <br> utilities | ![#1589F0](docs/images/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](docs/images/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](docs/images/blue_square.png) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#1589F0](docs/images/blue_square.png) `loom_shell` - 360 Stitch App <br> ![#1589F0](docs/images/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](docs/images/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](docs/images/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](docs/images/blue_square.png) `runcl` - OpenCL&trade; program debug App <br> ![#1589F0](docs/images/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br>  ![#1589F0](docs/images/blue_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br>  ![#1589F0](docs/images/blue_square.png) `inference_server_app` - Cloud Inference App <br> ![#c5f015](docs/images/green_square.png) `libvx_rpp.so` - OpenVX&trade; RPP Extension <br> ![#c5f015](docs/images/green_square.png) `librocal.so` - Radeon Augmentation Library <br> ![#c5f015](docs/images/green_square.png) `rocal_pybind.so` - rocAL Pybind Lib | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-5?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

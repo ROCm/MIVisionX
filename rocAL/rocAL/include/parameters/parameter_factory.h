@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -77,6 +77,7 @@ public:
     void renew_parameters();
     void set_seed(unsigned seed);
     unsigned get_seed();
+    void generate_seed();
 
     template<typename T>
     Parameter<T>* create_uniform_rand_param(T start, T end){

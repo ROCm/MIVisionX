@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
             set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
         endif()
     endif()
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
+    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     find_package(HIP QUIET)
     if(HIP_FOUND)
         add_subdirectory(openvx/hipvx)

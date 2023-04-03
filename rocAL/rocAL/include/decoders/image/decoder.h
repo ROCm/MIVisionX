@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <iostream>
 #include <vector>
 #include "parameter_factory.h"
+#include "parameter_random_crop_decoder.h"
 
 enum class DecoderType
 {
@@ -45,20 +46,18 @@ public:
     explicit DecoderConfig(DecoderType type):_type(type){}
     virtual DecoderType type() {return _type; };
     DecoderType _type = DecoderType::TURBO_JPEG;
-    std::vector<Parameter<float>*> _crop_param;
-    void set_crop_param(std::vector<Parameter<float>*> crop_param) { _crop_param = std::move(crop_param); };
-    std::vector<float> get_crop_param(){
-        std::vector<float> crop_mul(4);
-        _crop_param[0]->renew();
-        crop_mul[0] = _crop_param[0]->get();
-        _crop_param[1]->renew();
-        crop_mul[1] = _crop_param[1]->get();
-        _crop_param[2]->renew();
-        crop_mul[2] = _crop_param[2]->get();
-        _crop_param[3]->renew();
-        crop_mul[3] = _crop_param[3]->get();
-        return crop_mul;
-    };
+    void set_random_area(std::vector<float> &random_area) { _random_area = std::move(random_area); }
+    void set_random_aspect_ratio(std::vector<float> &random_aspect_ratio) { _random_aspect_ratio = std::move(random_aspect_ratio); }
+    void set_num_attempts(unsigned num_attempts) { _num_attempts = num_attempts; }
+    std::vector<float> get_random_area() { return _random_area; }
+    std::vector<float> get_random_aspect_ratio() { return _random_aspect_ratio; }
+    unsigned get_num_attempts() { return _num_attempts; }
+    void set_seed(int seed) { _seed = seed; }
+    int get_seed() { return _seed; }
+private:
+    std::vector<float> _random_area, _random_aspect_ratio;
+    unsigned _num_attempts = 10;
+    int _seed = std::time(0); //seed for decoder random crop
 };
 
 
@@ -114,4 +113,5 @@ public:
     virtual bool is_partial_decoder() = 0;
     virtual void set_bbox_coords(std::vector <float> bbox_coords) = 0;
     virtual std::vector <float> get_bbox_coords() = 0;
+    virtual void set_crop_window(CropWindow &crop_window) = 0;
 };

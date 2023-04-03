@@ -1,4 +1,4 @@
-# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 __author__      = "Kiriti Nagesh Gowda"
-__copyright__   = "Copyright 2018 - 2022, AMD Dataset Analysis Tool"
+__copyright__   = "Copyright 2018 - 2023, AMD Dataset Analysis Tool"
 __credits__     = ["Mike Schmit"]
 __license__     = "MIT"
 __version__     = "0.9.0"
@@ -77,7 +77,7 @@ if inputCSVFile == '' or outputDirectory == '' or labelFile == '' or groundTruth
 
 
 if not os.path.exists(inputImageDirectory):
-    print "ERROR Invalid Input Image Directory";
+    print("ERROR Invalid Input Image Directory")
     exit();
 
 if not os.path.exists(outputDirectory):
@@ -172,7 +172,7 @@ accuracyMatch = float(totalMatch)/totalBoundingBox*100
 accuracyMismatch = float(totalMismatch)/totalBoundingBox*100
 
 #Results Summary 
-print "resultsSummary.txt generation .."
+print("resultsSummary.txt generation ..")
 orig_stdout = sys.stdout
 sys.stdout = open(resultsDirectory+'/resultsSummary.txt','w')
 print("\n\n ***************** OBJECT DETECTION SUMMARY ***************** \n");
@@ -197,13 +197,13 @@ print("\n*****Statistics*****");
 print('Match Accuracy -- '+str(np.around(accuracyMatch,decimals=2))+' %');
 print('Mismatch Accuracy -- '+str(np.around(accuracyMismatch,decimals=2))+' %');
 sys.stdout = orig_stdout
-print "resultsSummary.txt generated"
+print("resultsSummary.txt generated")
 
 #generate label summary
 labelMatch = []
-for i in xrange(20):
+for i in range(20):
     labelMatch.append([])
-    for j in xrange(8):
+    for j in range(8):
         labelMatch[i].append(0)
 
 for i in range(labelElements):
@@ -243,17 +243,17 @@ for i in range(labelElements):
     labelMatch[i][3] = numBoxes
 
 # Label Summary
-print "labelSummary.csv generation .."
+print("labelSummary.csv generation ..")
 orig_stdout = sys.stdout
 sys.stdout = open(resultsDirectory+'/labelSummary.csv','w')
 print("Label ID, Label Description, Images in DataBase, Bounding Boxes in DataBase, Bounding Boxes Matched, Bounding Boxes Mismatched, Bounding Boxes Unknown, Bounding Boxes Not Found ");
 for i in range(20):
     print("%s,%s,%d,%d,%d,%d,%d,%d"%(labelMatch[i][0], labelMatch[i][1], labelMatch[i][2], labelMatch[i][3], labelMatch[i][4], labelMatch[i][5], labelMatch[i][6], labelMatch[i][7]));
 sys.stdout = orig_stdout
-print "labelSummary.csv generated"
+print("labelSummary.csv generated")
 
 # generate html file
-print "index.html generation .."
+print("index.html generation ..")
 #orig_stdout = sys.stdout
 sys.stdout = open(toolKit_dir+'/index.html','w')
 
@@ -722,7 +722,7 @@ confidence_mismatch_boxes = [round(elem,2) for elem in confidence_mismatch_boxes
 """
 sys.stdout = orig_stdout
 print confidence_match_boxes
-print "len = ", len(confidence_match_boxes)
+print("len = ", len(confidence_match_boxes))
 """
 freq_match = collections.Counter(confidence_match_boxes)
 fVal = 0.99
@@ -734,8 +734,8 @@ while i >= 0:
     i = i-1
 freq_match = collections.OrderedDict(sorted(freq_match.items()))
 
-keys_match = freq_match.keys()
-values_match = freq_match.values()
+keys_match = list(freq_match.keys())
+values_match = list(freq_match.values())
 
 freq_mismatch = collections.Counter(confidence_mismatch_boxes)
 fVal = 0.99
@@ -747,8 +747,8 @@ while i >= 0:
     i = i-1
 freq_mismatch = collections.OrderedDict(sorted(freq_mismatch.items()))
 
-keys_mismatch = freq_mismatch.keys()
-values_mismatch = freq_mismatch.values()
+keys_mismatch = list(freq_mismatch.keys())
+values_mismatch = list(freq_mismatch.values())
 
 #Cummulative Success/Failure
 print("\tgoogle.charts.load('current', {packages: ['corechart', 'line']});");
@@ -977,20 +977,20 @@ gtText = []
 boxText = []
 conf = []
 
-for i in xrange(gtElements):
+for i in range(gtElements):
     gtText.append([])
     boxText.append([])
     conf.append([])
-    for j in xrange(16):
+    for j in range(16):
         gtText[i].append("")
         boxText[i].append("")
         conf[i].append("")
 
 #should hold 15 bounding boxes per image as of now!!!!!!!!!!!!!
 
-for i in xrange(gtElements):
+for i in range(gtElements):
     n = 1
-    for j in xrange(1,16):
+    for j in range(1,16):
         if n < len(gtLines[i]):
             gtText[i][0] = gtLines[i][0]
             gtText[i][j] = gtLines[i][n]
@@ -998,49 +998,49 @@ for i in xrange(gtElements):
 
 #should hold 15 bounding boxes per image as of now!!!!!!!!!!!!!
 
-for i in xrange(boxElements):
+for i in range(boxElements):
     n = 1
-    for j in xrange(1,16):
+    for j in range(1,16):
         if n < len(boxLines[i]):
             boxText[i][0] = boxLines[i][0]
             boxText[i][j] = boxLines[i][n]
         n = n+6
 
 
-for i in xrange(boxElements):
+for i in range(boxElements):
     n = 6
-    for j in xrange(1,16):
+    for j in range(1,16):
         if n < len(boxLines[i]):
             conf[i][0] = boxLines[i][0]
             conf[i][j] = boxLines[i][n]
         n = n+6
 checked_box = [False] * len(dirs)  
 checked_gt = [False] * len(dirs) 
-for i in xrange(len(dirs)):
+for i in range(len(dirs)):
     print("\t\t<tr>");
     print("\t\t<td height=\"17\" align=\"center\"><img id=\"myImg%d\" src=\"%s/%s\" alt=\"green: Bounding Box Tool Output <br> blue: Ground Truth Output <br>Showing as many boxes as chosen(defualt: all boxes)\" width=\"30\" height=\"30\"></td>"
         %(i,dataFolder,dirs[i]));
     print("\t\t<td height=\"17\" align=\"center\"><a href=\"%s/%s\" target=\"_blank\">%s</a></td>"
         %(dataFolder,dirs[i], dirs[i]));
     print("\t\t<td align = \"left\">");
-    for j in xrange(len(gtText)):
+    for j in range(len(gtText)):
         if gtText[j][0] == dirs[i]:
             gtlabelTxt = ",".join(string for string in gtText[j][1:] if len(string) > 0)
             print("\t\t%s"%(gtlabelTxt.replace(',', '<br>')));
     print("\t\t</td>");
     print("\t\t<td align=\"left\" >");
-    for k in xrange(len(boxText)):
+    for k in range(len(boxText)):
         if boxText[k][0] == dirs[i]:
             boxlabelTxt = ",".join(string for string in boxText[k][1:] if len(string) > 0)
             print("\t\t%s"%(boxlabelTxt.replace(',', '<br>')));
     print("\t\t</td>");    
     print("\t\t<td align=\"left\" >");
-    for k in xrange(len(conf)):
+    for k in range(len(conf)):
         if conf[k][0] == dirs[i]:
             confValue = ",".join(string for string in conf[k][1:] if len(string) > 0)
             print("\t\t%s"%(confValue.replace(',', '<br>')));
     print("\t\t</td>");    
-    for k in xrange(len(boxLines)):
+    for k in range(len(boxLines)):
         if boxLines[k][0] == dirs[i]:
             x = []
             y = []
@@ -1099,7 +1099,7 @@ for i in xrange(len(dirs)):
             print("\t\tmyModal.src = \"ctx\";");
             if x and y and w  and h and label:
                 print("\t\tmyModal.onload = drawBoundingBox({},{},{},{},{},{});".format(x,y,w,h,label,c));
-    for k in xrange(len(gtLines)):
+    for k in range(len(gtLines)):
         if gtLines[k][0] == dirs[i]:
             x = []
             y = []
@@ -1126,17 +1126,17 @@ for i in xrange(len(dirs)):
                 nh += 6
             checked_gt[i] = True
             if checked_box[i] ==  True:
-            	if x and y and w  and h and label:
-            		print("\t\tmyModal.onload = drawBoundingBoxGT({},{},{},{},{});".format(x,y,w,h,label));
-            		print("\t\t}");
+                if x and y and w  and h and label:
+                    print("\t\tmyModal.onload = drawBoundingBoxGT({},{},{},{},{});".format(x,y,w,h,label));
+                    print("\t\t}");
             elif checked_box[i] == False:
-            	print("\t\t</tr>");
-            	print("\t\t");
-            	print("\t\t<script>");                
-            	print("\t\tvar modal = document.getElementById('myModal');");
-            	print("\t\tvar img%d = document.getElementById(\"myImg%d\");"%(i,i));
-            	print("\t\tvar modalImg = document.getElementById(\"img01\");");
-            	print("\t\tvar captionText = document.getElementById(\"caption\");");
+                print("\t\t</tr>");
+                print("\t\t");
+                print("\t\t<script>");                
+                print("\t\tvar modal = document.getElementById('myModal');");
+                print("\t\tvar img%d = document.getElementById(\"myImg%d\");"%(i,i));
+                print("\t\tvar modalImg = document.getElementById(\"img01\");");
+                print("\t\tvar captionText = document.getElementById(\"caption\");");
                 print("\t\tvar image = img%d.addEventListener(\"click\", onImgClick, false);"%(i));
                 print("\t\tfunction onImgClick(myImg%d) {"%(i)); 
                 print("\t\tif(document.boxTypeForm.TypeOfBox[1].checked == true) {")
@@ -1165,7 +1165,7 @@ for i in xrange(len(dirs)):
             print("\t\tcaptionText.innerHTML = this.alt;");
             print("\t\tmyModal.src = \"ctx\";");
             if x and y and w  and h and label:
-            	print("\t\tmyModal.onload = drawBoundingBoxGT({},{},{},{},{});".format(x,y,w,h,label));
+                print("\t\tmyModal.onload = drawBoundingBoxGT({},{},{},{},{});".format(x,y,w,h,label));
             print("\t\t}");
 
     if checked_gt[i] == False and checked_box[i] == True:        
@@ -1177,7 +1177,7 @@ for i in xrange(len(dirs)):
         print("\t\tmodal.style.display = \"block\";");
         print("\t\tcaptionText.innerHTML = this.alt;");
         print("\t\tmyModal.src = \"ctx\";");
-    	print("\t\t}");
+        print("\t\t}");
 
     if checked_box[i] == True or checked_gt[i] == True:
         print("\t\tvar span = document.getElementsByClassName(\"modal\")[0];");
@@ -1186,7 +1186,7 @@ for i in xrange(len(dirs)):
         print("\t\t</script>");     
         print("\t\t");
     if checked_box[i] == False and checked_gt[i] == False:
-    	print("\t\t");
+        print("\t\t");
         print("\t\t<script>");
         print("\t\tvar modal = document.getElementById('myModal');");
         print("\t\tvar img%d = document.getElementById(\"myImg%d\");"%(i,i));       
@@ -1240,7 +1240,7 @@ with open(SummaryFileName) as savedResultFile:
     savedResultElements = len(savedResultDataBase)
 
 sys.stdout = orig_stdout
-print "results saved in backup drive"
+print("results saved in backup drive")
 
 
 sys.stdout = open(toolKit_dir+'/index.html','a')
@@ -1373,12 +1373,12 @@ print("\t");
 print("\t");
 
 top1ModelScore = [];
-for i in xrange(100):
+for i in range(100):
     top1ModelScore.append([])
-    for j in xrange(3):
+    for j in range(3):
         top1ModelScore[i].append(0)
 
-for i in xrange(100):
+for i in range(100):
     top1ModelScore[i][0] = 0;
     top1ModelScore[i][1] = 0; 
     top1ModelScore[i][2] = 0; 
@@ -1585,11 +1585,11 @@ print ("\t</td></tr>");
 print ("\t</table>");
 print ("\t<br><br><br>");
 #TBD: symbol
-print ("\t\t<div class=\"footer\"> <p>2018 - 2022 Advanced Micro Devices, Inc</p></div>");
+print ("\t\t<div class=\"footer\"> <p>2018 - 2023 Advanced Micro Devices, Inc</p></div>");
 print ("\t");
 print ("\n</body>");
 print ("\n</html>");
 
 sys.stdout = orig_stdout
-print "index.html generated"
+print("index.html generated")
 exit (0)

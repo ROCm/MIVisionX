@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,9 @@ THE SOFTWARE.
 */
 
 #pragma once
-#if !ENABLE_HIP
+
+#if ENABLE_OPENCL
+
 #include <map>
 #include <CL/cl.h>
 #include <vx_ext_amd.h>
@@ -69,7 +71,7 @@ public:
 
     cl_int initialize();
 
-    DeviceResources resources();
+    DeviceResources *resources();
 
     const CLProgram& operator[](const std::string& prog_name);
 

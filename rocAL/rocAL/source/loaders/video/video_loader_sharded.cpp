@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,8 @@ THE SOFTWARE.
 
 #include "video_loader_sharded.h"
 #ifdef ROCAL_VIDEO
-#if ENABLE_HIP
-VideoLoaderSharded::VideoLoaderSharded(DeviceResourcesHip dev_resources):
-#else
-VideoLoaderSharded::VideoLoaderSharded(DeviceResources dev_resources):
-#endif
+
+VideoLoaderSharded::VideoLoaderSharded(void *dev_resources):
 _dev_resources(dev_resources)
 {
     _loader_idx = 0;

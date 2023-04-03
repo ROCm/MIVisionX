@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -62,14 +62,12 @@ struct RPPCommonHandle {
 #endif
     void* cpuHandle = NULL;
     int count;
-    bool exhaustiveSearch;
 };
 
 //! Brief The utility functions
 vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx_uint32 num);
 vx_status createGraphHandle(vx_node node, RPPCommonHandle ** pHandle);
 vx_status releaseGraphHandle(vx_node node, RPPCommonHandle * handle);
-int getEnvironmentVariable(const char* name);
 
 class Kernellist
 {

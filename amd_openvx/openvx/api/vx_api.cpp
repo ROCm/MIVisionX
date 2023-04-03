@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -2766,7 +2766,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     }
                 }
                 break;
-#if (ENABLE_OPENCL || ENABLE_HIP)
             case VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT:
                 if (size == sizeof(void *)) {
                     if (!kernel->finalized) {
@@ -2778,6 +2777,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     }
                 }
                 break;
+#if (ENABLE_OPENCL || ENABLE_HIP)                    
             case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK:
                 if (size == sizeof(void *)) {
                     if (!kernel->finalized) {
@@ -2960,7 +2960,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 #else
             agoSetEnvironmentVariable("AGO_DEFAULT_TARGET", "CPU");
 #endif
-    }
+        }
 
         // verify graph per OpenVX specification
         status = agoVerifyGraph(graph);

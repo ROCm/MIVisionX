@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -84,6 +84,14 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _original_height.resize(_batch_size);
     _original_width.resize(_batch_size);
     _decoder_config = decoder_config;
+    _random_crop_dec_param = nullptr;
+    if (_decoder_config._type == DecoderType::FUSED_TURBO_JPEG) {
+      auto random_aspect_ratio = decoder_config.get_random_aspect_ratio();
+      auto random_area = decoder_config.get_random_area();
+      AspectRatioRange aspect_ratio_range = std::make_pair((float)random_aspect_ratio[0], (float)random_aspect_ratio[1]);
+      AreaRange area_range = std::make_pair((float)random_area[0], (float)random_area[1]);
+      _random_crop_dec_param = new RocalRandomCropDecParam(aspect_ratio_range, area_range, (int64_t)decoder_config.get_seed(), decoder_config.get_num_attempts(), _batch_size);
+    }
     if ((_decoder_config._type != DecoderType::SKIP_DECODE)) {
         for (int i = 0; i < batch_size; i++) {
             _compressed_buff[i].resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
@@ -264,12 +272,12 @@ ImageReadAndDecode::load(unsigned char* buff,
             _compressed_image_size[file_counter] = fsize;
             file_counter++;
         }
-
-        if (_randombboxcrop_meta_data_reader)
-        {
+        if (_randombboxcrop_meta_data_reader) {
             //Fetch the crop co-ordinates for a batch of images
             _bbox_coords = _randombboxcrop_meta_data_reader->get_batch_crop_coords(_image_names);
             set_batch_random_bbox_crop_coords(_bbox_coords);
+        } else if (_random_crop_dec_param) {
+            _random_crop_dec_param->generate_random_seeds();
         }
     }
 
@@ -290,15 +298,40 @@ ImageReadAndDecode::load(unsigned char* buff,
             int original_width, original_height, jpeg_sub_samp;
             if (_decoder[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height,
                                          &jpeg_sub_samp) != Decoder::Status::OK) {
-                    continue;
+                    // Substituting the image which failed decoding with other image from the same batch
+                    int j = ((i + 1) != _batch_size) ? _batch_size - 1 : _batch_size - 2;
+                    while ((j >= 0)) 
+                    {
+                        if (_decoder[i]->decode_info(_compressed_buff[j].data(), _actual_read_size[j], &original_width, &original_height,
+                            &jpeg_sub_samp) == Decoder::Status::OK) 
+                        {
+                                _image_names[i] =  _image_names[j];
+                                _compressed_buff[i] =  _compressed_buff[j];
+                                _actual_read_size[i] =  _actual_read_size[j];
+                                _compressed_image_size[i] =  _compressed_image_size[j];
+                                break;                                
+
+                        }
+                        else
+                            j--;
+                        if(j < 0) 
+                        {
+                            THROW("All images in the batch failed decoding\n");
+                        }                                    
+                    }
             }
             _original_height[i] = original_height;
             _original_width[i] = original_width;
             // decode the image and get the actual decoded image width and height
             size_t scaledw, scaledh;
-            if(_decoder[i]->is_partial_decoder() && _randombboxcrop_meta_data_reader)
-            {
-                _decoder[i]->set_bbox_coords(_bbox_coords[i]);
+            if (_decoder[i]->is_partial_decoder()) {
+                if (_randombboxcrop_meta_data_reader) {
+                  _decoder[i]->set_bbox_coords(_bbox_coords[i]); 
+                } else if (_random_crop_dec_param) {
+                  Shape dec_shape = {_original_height[i], _original_width[i]};
+                  auto crop_window = _random_crop_dec_param->generate_crop_window(dec_shape, i);
+                  _decoder[i]->set_crop_window(crop_window);
+                }
             }
             if (_decoder[i]->decode(_compressed_buff[i].data(), _compressed_image_size[i], _decompressed_buff_ptrs[i],
                                     max_decoded_width, max_decoded_height,

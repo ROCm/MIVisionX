@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -111,7 +111,9 @@ extern "C"
         VX_KERNEL_RPP_TENSORLOOKUP = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x4e,
         VX_KERNEL_RPP_VIGNETTEBATCHPD = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x4f,
         VX_KERNEL_RPP_WARPAFFINEBATCHPD = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x50,
-        VX_KERNEL_RPP_WARPPERSPECTIVEBATCHPD = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x51
+        VX_KERNEL_RPP_WARPPERSPECTIVEBATCHPD = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x51,
+        VX_KERNEL_RPP_RESIZETENSOR = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x52,
+        VX_KERNEL_RPP_RESIZEMIRRORNORMALIZETENSOR = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x53,
     };
 
 #ifdef __cplusplus

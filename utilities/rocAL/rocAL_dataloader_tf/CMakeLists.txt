@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2018 - 2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,13 +27,27 @@ cmake_minimum_required(VERSION 3.0)
 
 project(rocAL_dataloader_tf)
 
+set(CMAKE_CXX_STANDARD 14)
+
+# ROCm Path
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+
+# avoid setting the default installation path to /usr/local
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# Add Default libdir
+set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
+include(GNUInstallDirs)
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
-include_directories(${ROCM_PATH}/include/mivisionx/rocal)
+include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal)
 link_directories(${ROCM_PATH}/lib/)
 file(GLOB My_Source_Files ./*.cpp)
 add_executable(${PROJECT_NAME} ${My_Source_Files})

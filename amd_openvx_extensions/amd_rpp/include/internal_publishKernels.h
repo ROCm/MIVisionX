@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include "internal_rpp.h"
 
 extern "C" SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context);
-vx_status ADD_KERENEL(std::function<vx_status(vx_context)>);
+vx_status ADD_KERNEL(std::function<vx_status(vx_context)>);
 vx_status get_kernels_to_publish();
 
 vx_status AbsoluteDifferencebatchPD_Register(vx_context);
@@ -99,6 +99,7 @@ vx_status remap_Register(vx_context);
 vx_status ResizebatchPD_Register(vx_context);
 vx_status ResizeCropbatchPD_Register(vx_context);
 vx_status ResizeCropMirrorPD_Register(vx_context);
+vx_status ResizeMirrorNormalizeTensor_Register(vx_context);
 vx_status RotatebatchPD_Register(vx_context);
 vx_status SaturationbatchPD_Register(vx_context);
 vx_status ScalebatchPD_Register(vx_context);
@@ -115,6 +116,7 @@ vx_status ThresholdingbatchPD_Register(vx_context);
 vx_status VignettebatchPD_Register(vx_context);
 vx_status WarpAffinebatchPD_Register(vx_context);
 vx_status WarpPerspectivebatchPD_Register(vx_context);
+vx_status Resizetensor_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOP_NAME                          "org.rpp.Nop"
@@ -196,6 +198,8 @@ vx_status WarpPerspectivebatchPD_Register(vx_context);
 #define VX_KERNEL_RPP_CROPMIRRORNORMALIZEBATCHPD_NAME        	"org.rpp.CropMirrorNormalizebatchPD"
 #define VX_KERNEL_RPP_CROPPD_NAME   							"org.rpp.CropPD"
 #define VX_KERNEL_RPP_RESIZECROPMIRRORPD_NAME      				"org.rpp.ResizeCropMirrorPD"
+#define VX_KERNEL_RPP_RESIZEMIRRORNORMALIZETENSOR_NAME        	"org.rpp.ResizeMirrorNormalizeTensor"
 #define VX_KERNEL_RPP_SEQUENCEREARRANGE_NAME                    "org.rpp.SequenceRearrange"
+#define VX_KERNEL_RPP_RESIZETENSOR_NAME      					"org.rpp.Resizetensor"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

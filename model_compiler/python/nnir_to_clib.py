@@ -1,4 +1,4 @@
-# Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -53,7 +53,7 @@ def generateLicenseForCPP(f):
 """/*
 MIT License
 
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -83,7 +83,7 @@ def generateLicenseForScript(f):
 #
 # MIT License
 #
-# Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -135,6 +135,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 #find the OPENVX backend type
 set(OPENVX_BACKEND_OPENCL_FOUND 0)
 set(OPENVX_BACKEND_HIP_FOUND 0)
+#TBD: ADD FindMIVisionX.cmake
 if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)
     file(READ ${ROCM_PATH}/include/mivisionx/openvx_backend.h OPENVX_BACKEND_FILE)
     string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -52,11 +52,9 @@ public:
     ~MasterGraph();
     Status reset();
     size_t remaining_count();
-    MasterGraph::Status copy_output(unsigned char *out_ptr);
-    MasterGraph::Status
-    copy_out_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
+    MasterGraph::Status copy_out_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
                     float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type);
-    Status copy_output(void* out_ptr, size_t out_size);
+    Status copy_output(unsigned char* out_ptr, size_t out_size_in_bytes);
     Status copy_out_tensor_planar(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
                     float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type);
     size_t output_width();
@@ -115,7 +113,7 @@ public:
     Status get_bbox_encoded_buffers(float **boxes_buf_ptr, int **labels_buf_ptr, size_t num_encoded_boxes);
     size_t bounding_box_batch_count(int* buf, pMetaDataBatch meta_data_batch);
 #if ENABLE_OPENCL
-    cl_command_queue get_ocl_cmd_q() { return _device.resources().cmd_queue; }
+    cl_command_queue get_ocl_cmd_q() { return _device.resources()->cmd_queue; }
 #endif
 private:
     Status update_node_parameters();
@@ -144,11 +142,10 @@ private:
     std::list<std::shared_ptr<Node>> _root_nodes;//!< List of all root nodes (image/video loaders)
     std::list<std::shared_ptr<Node>> _meta_data_nodes;//!< List of nodes where meta data has to be updated after augmentation
     std::map<Image*, std::shared_ptr<Node>> _image_map;//!< key: image, value : Parent node
-#if ENABLE_HIP
     void * _output_tensor;//!< In the GPU processing case , is used to convert the U8 samples to float32 before they are being transfered back to host
+#if ENABLE_HIP
     DeviceManagerHip   _device;//!< Keeps the device related constructs needed for running on GPU
-#else
-    void* _output_tensor;//!< In the GPU processing case , is used to convert the U8 samples to float32 before they are being transfered back to host
+#elif ENABLE_OPENCL
     DeviceManager   _device;//!< Keeps the device related constructs needed for running on GPU
 #endif
     std::shared_ptr<Graph> _graph = nullptr;
@@ -216,7 +213,7 @@ std::shared_ptr<T> MasterGraph::add_node(const std::vector<Image *> &inputs, con
     }
 
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+        _image_map.insert(std::make_pair(output, node));
 
     return node;
 }
@@ -239,12 +236,16 @@ template<> inline std::shared_ptr<ImageLoaderNode> MasterGraph::add_node(const s
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<ImageLoaderNode>(outputs[0], _device.resources());
+#if ENABLE_HIP || ENABLE_OPENCL
+    auto node = std::make_shared<ImageLoaderNode>(outputs[0], (void *)_device.resources());
+#else
+    auto node = std::make_shared<ImageLoaderNode>(outputs[0], nullptr);
+#endif
     _loader_module = node->get_loader_module();
     _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+        _image_map.insert(std::make_pair(output, node));
 
     return node;
 }
@@ -252,12 +253,16 @@ template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_n
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
+#if ENABLE_HIP || ENABLE_OPENCL
+    auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], (void *)_device.resources());
+#else
+    auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], nullptr);
+#endif    
     _loader_module = node->get_loader_module();
     _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+        _image_map.insert(std::make_pair(output, node));
 
     return node;
 }
@@ -265,13 +270,17 @@ template<> inline std::shared_ptr<FusedJpegCropNode> MasterGraph::add_node(const
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<FusedJpegCropNode>(outputs[0], _device.resources());
+#if ENABLE_HIP || ENABLE_OPENCL
+    auto node = std::make_shared<FusedJpegCropNode>(outputs[0], (void *)_device.resources());
+#else
+    auto node = std::make_shared<FusedJpegCropNode>(outputs[0], nullptr);
+#endif
     _loader_module = node->get_loader_module();
     _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _loader_module->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+        _image_map.insert(std::make_pair(output, node));
 
     return node;
 }
@@ -280,13 +289,17 @@ template<> inline std::shared_ptr<FusedJpegCropSingleShardNode> MasterGraph::add
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], _device.resources());
+#if ENABLE_HIP || ENABLE_OPENCL
+    auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], (void *)_device.resources());
+#else
+    auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], nullptr);
+#endif    
     _loader_module = node->get_loader_module();
     _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _loader_module->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+        _image_map.insert(std::make_pair(output, node));
 
     return node;
 }
@@ -298,12 +311,16 @@ template<> inline std::shared_ptr<Cifar10LoaderNode> MasterGraph::add_node(const
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<Cifar10LoaderNode>(outputs[0], _device.resources());
+#if ENABLE_HIP || ENABLE_OPENCL
+    auto node = std::make_shared<Cifar10LoaderNode>(outputs[0], (void *)_device.resources());
+#else
+    auto node = std::make_shared<Cifar10LoaderNode>(outputs[0], nullptr);
+#endif
     _loader_module = node->get_loader_module();
     _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+        _image_map.insert(std::make_pair(output, node));
 
     return node;
 }
@@ -316,12 +333,16 @@ template<> inline std::shared_ptr<VideoLoaderNode> MasterGraph::add_node(const s
 {
     if(_video_loader_module)
         THROW("A video loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<VideoLoaderNode>(outputs[0], _device.resources());
+#if ENABLE_HIP || ENABLE_OPENCL
+    auto node = std::make_shared<VideoLoaderNode>(outputs[0], (void *)_device.resources());
+#else    
+    auto node = std::make_shared<VideoLoaderNode>(outputs[0], nullptr);
+#endif    
     _video_loader_module = node->get_loader_module();
     _video_loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+        _image_map.insert(std::make_pair(output, node));
 
     return node;
 }
@@ -329,12 +350,16 @@ template<> inline std::shared_ptr<VideoLoaderSingleShardNode> MasterGraph::add_n
 {
     if(_video_loader_module)
         THROW("A video loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<VideoLoaderSingleShardNode>(outputs[0], _device.resources());
+#if ENABLE_HIP || ENABLE_OPENCL
+    auto node = std::make_shared<VideoLoaderSingleShardNode>(outputs[0], (void *)_device.resources());
+#else
+    auto node = std::make_shared<VideoLoaderSingleShardNode>(outputs[0], nullptr);
+#endif    
     _video_loader_module = node->get_loader_module();
     _video_loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+        _image_map.insert(std::make_pair(output, node));
 
     return node;
 }

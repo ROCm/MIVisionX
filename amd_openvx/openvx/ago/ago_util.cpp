@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -3342,7 +3342,7 @@ AgoContext::AgoContext()
       , opencl_mem_alloc_size{ 0 }, opencl_mem_alloc_count{ 0 }, opencl_mem_release_count{ 0 }
       , opencl_cmdq_properties{ 0 }
 #elif ENABLE_HIP
-    , hip_context_imported{ false },  hip_stream{ nullptr }, hip_num_devices{ 0 }, hip_device_id { -1 }
+    , hip_context_imported{ false }, hip_num_devices{ 0 }, hip_device_id { -1 }
     , hip_mem_alloc_size{ 0 }, hip_mem_alloc_count{ 0 }, hip_mem_release_count{ 0 }
 
 #endif

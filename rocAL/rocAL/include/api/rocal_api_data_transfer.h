@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -37,8 +37,6 @@ extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor16(RocalContext 
                                                               float multiplier1, float multiplier2, float offset0,
                                                               float offset1, float offset2,
                                                               bool reverse_channels);
-
-extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutput(RocalContext context, unsigned char * out_ptr, size_t out_size);
 
 extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor(RocalContext rocal_context, void *out_ptr,
                                                               RocalTensorLayout tensor_format, RocalTensorOutputType tensor_output_type,

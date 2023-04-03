@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -77,11 +77,15 @@ void CropMirrorNormalizeNode::update_node()
     _mirror.update_array();
 }
 
-void CropMirrorNormalizeNode::init(int crop_h, int crop_w, float start_x, float start_y, float mean, float std_dev, IntParam *mirror)
+void CropMirrorNormalizeNode::init(int crop_h, int crop_w, float anchor_x, float anchor_y, float mean, float std_dev, IntParam *mirror)
 {
+    // current implementation does a fixed crop with specified dims and anchor
+    _crop_param->x1 = 0;
+    _crop_param->y1 = 0;
     _crop_param->crop_h = crop_h;
     _crop_param->crop_w = crop_w;
-    _mean   = mean;
+    _crop_param->set_fixed_crop(anchor_x, anchor_y);
+    _mean = mean;
     _std_dev = std_dev;
     _mirror.set_param(core(mirror));
 }

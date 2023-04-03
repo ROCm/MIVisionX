@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -45,9 +45,9 @@ hipError_t DeviceManagerHip::initialize() {
     return hipSuccess;
 }
 
-DeviceResourcesHip DeviceManagerHip::resources()
+DeviceResourcesHip *DeviceManagerHip::resources()
 {
-    return _resources;
+    return &_resources;
 }
 
 void DeviceManagerHip::init_hip(vx_context context)

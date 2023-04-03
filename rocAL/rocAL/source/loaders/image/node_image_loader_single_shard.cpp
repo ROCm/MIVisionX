@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,7 @@ THE SOFTWARE.
 #include "node_image_loader_single_shard.h"
 #include "exception.h"
 
-#if ENABLE_HIP
-ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, DeviceResourcesHip device_resources):
-#else
-ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, DeviceResources device_resources):
-#endif
+ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, void *device_resources):
         Node({}, {output})
 {
     _loader_module = std::make_shared<ImageLoader>(device_resources);

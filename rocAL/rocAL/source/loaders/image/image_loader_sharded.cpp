@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,7 @@ THE SOFTWARE.
 
 #include "image_loader_sharded.h"
 
-#if ENABLE_HIP
-ImageLoaderSharded::ImageLoaderSharded(DeviceResourcesHip dev_resources):
-#else
-ImageLoaderSharded::ImageLoaderSharded(DeviceResources dev_resources):
-#endif
+ImageLoaderSharded::ImageLoaderSharded(void *dev_resources):
         _dev_resources(dev_resources)
 {
     _loader_idx = 0;

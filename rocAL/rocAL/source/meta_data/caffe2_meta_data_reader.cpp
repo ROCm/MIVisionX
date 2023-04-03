@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -104,32 +104,32 @@ void Caffe2MetaDataReader::read_all(const std::string &path)
 
 void Caffe2MetaDataReader::read_lmdb_record(std::string file_name, uint file_byte_size)
 {
-	int rc;
-	MDB_env *env;
-	MDB_dbi dbi;
-	MDB_val key, data;
-	MDB_txn *txn;
-	MDB_cursor *cursor;
+    int rc;
+    MDB_env *env;
+    MDB_dbi dbi;
+    MDB_val key, data;
+    MDB_txn *txn;
+    MDB_cursor *cursor;
     string str_key;
 
     // Creating an LMDB environment handle
-	E(mdb_env_create(&env));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_create(&env));
     // Setting the size of the memory map to use for this environment.
     // The size of the memory map is also the maximum size of the database.
-    E(mdb_env_set_mapsize(env, file_byte_size));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_set_mapsize(env, file_byte_size));
     // Opening an environment handle.
-	E(mdb_env_open(env, file_name.c_str(), 0, 0664));
+    CHECK_LMDB_RETURN_STATUS(mdb_env_open(env, file_name.c_str(), 0, 0664));
     // Creating a transaction for use with the environment.
-	E(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
+    CHECK_LMDB_RETURN_STATUS(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
     // Opening a database in the environment.
-	E(mdb_dbi_open(txn, NULL, 0, &dbi));
+    CHECK_LMDB_RETURN_STATUS(mdb_dbi_open(txn, NULL, 0, &dbi));
 
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
-	E(mdb_cursor_open(txn, dbi, &cursor));
+    CHECK_LMDB_RETURN_STATUS(mdb_cursor_open(txn, dbi, &cursor));
 
     // Retrieve by cursor. It retrieves key/data pairs from the database
-	while((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT)) == 0)
+    while((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT)) == 0)
     {
         // Reading the key value for each record from LMDB
         str_key = string((char *) key.mv_data);
@@ -162,10 +162,10 @@ void Caffe2MetaDataReader::read_lmdb_record(std::string file_name, uint file_byt
     }
 
     // Closing all the LMDB environment and cursor handles
-	mdb_cursor_close(cursor);
-	mdb_txn_abort(txn);
-	mdb_close(env, dbi);
-	mdb_env_close(env);
+    mdb_cursor_close(cursor);
+    mdb_txn_abort(txn);
+    mdb_close(env, dbi);
+    mdb_env_close(env);
 }
 
 

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -104,7 +104,7 @@ THE SOFTWARE.
 #define AGO_MAX_CONVOLUTION_DIM               9 // maximum size of convolution matrix
 #define AGO_MAX_NONLINEAR_FILTER_DIM          9 // maximum size of nonlinear filter matrix the specification requires support for is 9x9
 #define AGO_OPTICALFLOWPYRLK_MAX_DIM         15 // maximum size of opticalflow block size
-#define AGO_MAX_TENSOR_DIMENSIONS             4 // maximum dimensions supported by tensor
+#define AGO_MAX_TENSOR_DIMENSIONS             6 // maximum dimensions supported by tensor
 #define AGO_MAX_OBJARR_REF 				   4096 // maximum number of references in a context for object array
 
 // AGO remap data precision
@@ -771,7 +771,6 @@ struct AgoContext {
     int hip_num_devices;
     int hip_device_id;
     hipDevice_t hip_device;
-    hipStream_t hip_stream;
     vx_size hip_mem_alloc_size;
     vx_size hip_mem_alloc_count;
     vx_size hip_mem_release_count;

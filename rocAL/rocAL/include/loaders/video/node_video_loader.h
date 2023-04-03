@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,11 +30,7 @@ THE SOFTWARE.
 class VideoLoaderNode : public Node
 {
 public:
-#if ENABLE_HIP
-    VideoLoaderNode(Image *output, DeviceResourcesHip device_resources);
-#else
-    VideoLoaderNode(Image *output, DeviceResources device_resources);
-#endif
+    VideoLoaderNode(Image *output, void * device_resources);
     ~VideoLoaderNode() override;
     VideoLoaderNode() = delete;
     ///

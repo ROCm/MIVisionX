@@ -1,5 +1,5 @@
-# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
-#
+# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+# 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -41,7 +41,10 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 # OpenCV -- Display Component
 find_package(OpenCV REQUIRED)
 
-# Choose Backend
+# RPP
+find_package(AMDRPP QUIET)
+
+# Choose Backend - TBD: ADD FindMIVisionX.cmake
 set(MIVISIONX_BACKEND_OPENCL_FOUND 0)
 set(MIVISIONX_BACKEND_HIP_FOUND 0)
 if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/openvx_backend.h)
@@ -90,7 +93,7 @@ elseif(MIVISIONX_BACKEND_HIP_FOUND)
 			set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
 		endif()
 	endif()
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
+    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     find_package(HIP QUIET)
 	if(HIP_FOUND)
 		message(STATUS "${PROJECT_NAME} -- Using HIP - Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION})
@@ -125,6 +128,11 @@ if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
 else()
 	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
+
+# rocAL Support
+include_directories(${ROCM_PATH}/include/mivisionx/rocal)
+link_directories(${ROCM_PATH}/lib/)
+target_link_libraries(${PROJECT_NAME} rocal)
 
 # Install Application in ROCm Bin Directory
 install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

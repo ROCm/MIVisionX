@@ -1,4 +1,4 @@
-# Copyright (c) 2020 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2020 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import sys
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2022, AMD MIVisionX - Vision Test Full Report"
+__copyright__ = "Copyright 2018 - 2023, AMD MIVisionX - Vision Test Full Report"
 __license__ = "MIT"
 __version__ = "1.3.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -135,7 +135,8 @@ visionTestConfig = [
     '38_threshold.gdf',
     '39_warpAffine.gdf',
     '40_warpPerspective.gdf',
-    '41_xor.gdf'
+    '41_xor.gdf',
+    '42_scale_nv12_to_rgb.gdf'
 ]
 
 # OpenVX Vision Functions 1080P
@@ -711,6 +712,20 @@ else:
 
     # get data
     platform_name = platform.platform()
+    if os.path.exists('/usr/bin/yum'):
+        if not "centos" in platform_name or not "redhat" in platform_name:
+            platfromInfo = platform_name+'-CentOS-RedHat'
+    elif os.path.exists('/usr/bin/apt-get'):
+        if not "Ubuntu" in platform_name:
+            platform_name = platform_name+'-Ubuntu'
+    elif os.path.exists('/usr/bin/zypper'):
+        if not "SLES" in platform_name:
+            platform_name = platform_name+'-SLES'
+    else:
+        print("\nMIVisionX Vision Test on "+platform_name+" is unsupported")
+        print("MIVisionX Vision Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+        print("\nMIVisionX Vision Test on "+platform_name+" is unreliable")
+
     platform_name_fq = shell('hostname --all-fqdns')
     platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
@@ -768,7 +783,7 @@ else:
         f.write("\n")
 
         f.write(
-            "\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2022 -- runVisionTests.py V-"+__version__+"**\n")
+            "\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2023 -- runVisionTests.py V-"+__version__+"**\n")
         f.write("\n")
 
         # report file

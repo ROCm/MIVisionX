@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -281,7 +281,7 @@ Decoder::Status HWJpegDecoder::decode(unsigned char *input_buffer, size_t input_
         ret = avcodec_send_packet(_video_dec_ctx, &pkt);
         if (ret < 0)
         {
-            ERR("HardWareVideoDecoder::Decode Error while sending packet to the decoder\n");
+            ERR("HardWareJpegDecoder::Decode Error while sending packet to the decoder\n");
             status = Status::CONTENT_DECODE_FAILED;
             break;
         }

@@ -16,7 +16,7 @@ Run [neural network tests](neural_network_tests) to verify `Caffe`/`ONNX`/`NNEF`
 
 ## OpenVX Node Tests
 
-[RunVX tests](openvx_node_tests) for AMD OpenVX functionalities in HOST/OCL/HIP backends
+[RunVX tests](openvx_node_tests) for AMD OpenVX&trade; functionalities in HOST/OCL/HIP backends
 
 ## Smoke Tests
 
@@ -29,3 +29,5 @@ OpenVX [vision function tests](vision_tests) for verification and performance
 ## Zen DNN Unit Tests
 
 [Zen DNN tests](zen_dnn_tests) for unit test, verification and performance
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

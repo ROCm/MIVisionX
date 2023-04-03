@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -138,11 +138,12 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
     {
         BoundingBoxCord *bbox_anchors = reinterpret_cast<BoundingBoxCord *>(anchors->data());
         auto bb_count = full_batch_meta_data->get_bb_labels_batch()[i].size();
-        BoundingBoxCord bb_coords[bb_count];
+        std::vector<BoundingBoxCord> bb_coords;
         BoundingBoxLabels bb_labels;
         bb_labels.resize(bb_count);
+        bb_coords.resize(bb_count);
         memcpy(bb_labels.data(), full_batch_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
-        memcpy(bb_coords, full_batch_meta_data->get_bb_cords_batch()[i].data(), full_batch_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        memcpy((void *)bb_coords.data(), full_batch_meta_data->get_bb_cords_batch()[i].data(), full_batch_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords_xcycwh encoded_bb;
         BoundingBoxLabels encoded_labels;
         unsigned anchors_size = anchors->size() / 4; // divide the anchors_size by 4 to get the total number of anchors
@@ -219,8 +220,8 @@ void BoundingBoxGraph::update_box_encoder_meta_data(std::vector<float> *anchors,
         BoundingBoxCords * encoded_bb_ltrb = (BoundingBoxCords*)&encoded_bb;
         full_batch_meta_data->get_bb_cords_batch()[i] = (*encoded_bb_ltrb);
         full_batch_meta_data->get_bb_labels_batch()[i] = encoded_labels;
-        //encoded_bb.clear();
-        //encoded_labels.clear();
+        bb_coords.clear();
+        bb_labels.clear();
     }
 }
 

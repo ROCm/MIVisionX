@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -61,20 +61,6 @@ int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
     }
     context->hip_device_id = deviceID;
 
-    err = hipStreamCreate(&context->hip_stream);
-    if (err != hipSuccess) {
-        agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipStreamCreate(%p) => %d (failed)\n", context->hip_stream, err);
-        return -1;
-    }
-
-    //Force creation of the underlying HW queue associated with the HIP stream created above here;
-    // otherwise, the HW queue creation will be delayed until this stream is used in the graph
-    err = hipDeviceSynchronize();
-    if (err != hipSuccess) {
-        agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipDeviceSynchronize => %d (failed)\n", err);
-        return -1;
-    }
-
     err = hipGetDeviceProperties(&context->hip_dev_prop, deviceID);
     if (err != hipSuccess) {
         agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipGetDeviceProperties(%d) => %d (failed)\n", deviceID, err);
@@ -98,21 +84,18 @@ int agoGpuHipCreateContext(AgoContext *context, int deviceID) {
 }
 
 int agoGpuHipReleaseContext(AgoContext * context) {
-    if (context->hip_stream) {
-        hipError_t status = hipStreamDestroy(context->hip_stream);
-        if (status != hipSuccess) {
-            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: agoGpuHipReleaseContext: hipStreamDestroy(%p) failed (%d)\n", context->hip_stream, status);
-            return -1;
-        }
-        context->hip_stream = NULL;
-    }
+
+    // nothing to do here
     return 0;
 }
 
 int agoGpuHipReleaseGraph(AgoGraph * graph) {
     if (graph->hip_stream0) {
-        // graph->hip_stream0 is assigned from context->hip_stream and no need to destroy
-        // it here as context->hip_stream will be destroyed in agoGpuHipReleaseContext
+        hipError_t err = hipStreamDestroy(graph->hip_stream0);
+        if (err != hipSuccess) {
+            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: agoGpuHipReleaseGraph: hipStreamDestroy(%p) failed (%d)\n", graph->hip_stream0, err);
+            return -1;
+        }
         graph->hip_stream0 = NULL;
     }
     return 0;

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -390,8 +390,19 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
                 return -1;
             }
         }
-        // create stream for graph
-        graph->hip_stream0 = context->hip_stream;
+        // create a seperate stream for graph 
+        hipError_t err = hipStreamCreate(&graph->hip_stream0);
+        if (err != hipSuccess) {
+            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipStreamCreate(%p) => %d (failed) for graph => dev%d\n", graph->hip_stream0, err, context->hip_device_id);
+            return -1;
+        }
+        //Force creation of the underlying HW queue associated with the HIP stream created above here;
+        // otherwise, the HW queue creation will be delayed until this stream is used in the graph
+        err = hipDeviceSynchronize();
+        if (err != hipSuccess) {
+            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipDeviceSynchronize => %d (failed)\n", err);
+            return -1;
+        }
 #endif
     }
 

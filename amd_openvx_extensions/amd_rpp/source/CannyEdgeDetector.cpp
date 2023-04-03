@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -159,11 +159,11 @@ static vx_status VX_CALLBACK processCannyEdgeDetector(vx_node node, const vx_ref
         refreshCannyEdgeDetector(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_canny_edge_detector_u8_pln1_batchPD_gpu(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->max, data->min, data->nbatchSize, data->rppHandle);
+            rpp_status = rppi_canny_edge_detector_u8_pln1_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->max, data->min, data->nbatchSize, data->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_canny_edge_detector_u8_pkd3_batchPD_gpu(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->max, data->min, data->nbatchSize, data->rppHandle);
+            rpp_status = rppi_canny_edge_detector_u8_pkd3_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->max, data->min, data->nbatchSize, data->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }

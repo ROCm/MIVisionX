@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -83,10 +83,8 @@ if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     endif()
 elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     SET(OpenCL_FOUND FALSE)
-    list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/hip ${ROCM_PATH})
-    find_package(HIP QUIET)
     if(HIP_FOUND)
-        message(STATUS "Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION})
+        message("-- ${White}AMD OpenVX -- Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION} "\tCompiler:" ${HIP_COMPILER} ${ColourReset})
         set(ENABLE_HIP 1)
         set_target_properties(openvx PROPERTIES LINKER_LANGUAGE CXX)
         set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -111,15 +109,18 @@ target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
 target_compile_definitions(vxu PUBLIC ENABLE_HIP=${ENABLE_HIP})
 target_link_libraries(vxu openvx)
 
-configure_file("${PROJECT_SOURCE_DIR}/include/openvx_backend.h.in" "${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h")
-install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS openvx DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS vxu DESTINATION ${CMAKE_INSTALL_LIBDIR})
-# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_ext_amd.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-install (FILES
+
+if(BUILD_DEV)
+    # install MIVisionX backend type files -- {ROCM_PATH}/include/mivisionx/
+    configure_file("${PROJECT_SOURCE_DIR}/include/openvx_backend.h.in" "${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h")
+    install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+    install(FILES include/vx_ext_amd.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+    install(FILES
             include/VX/vx.h
             include/VX/vx_api.h
             include/VX/vx_compatibility.h
@@ -141,11 +142,12 @@ install (FILES
             include/VX/vx_vendors.h
             include/VX/vxu.h
 	    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX)
-# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-install(DIRECTORY ../../samples/c_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-install(DIRECTORY ../../samples/images DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+    # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+    install(DIRECTORY ../../apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
+    install(DIRECTORY ../../samples/c_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+    install(DIRECTORY ../../samples/images DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+endif(BUILD_DEV)
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
@@ -155,4 +157,4 @@ else()
     target_link_libraries(openvx dl m)
 endif()
 
-message("-- ${White}OpenVX -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}AMD OpenVX -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

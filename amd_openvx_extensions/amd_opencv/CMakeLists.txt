@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -97,7 +97,7 @@ list(APPEND SOURCES
 add_library(vx_opencv SHARED ${SOURCES})
 
 if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
-    message("-- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
+    message("-- ${White}OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X${ColourReset}")
     include_directories(${OpenCV_INCLUDE_DIRS})
     target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
     if(${OpenCV_VERSION_MAJOR} EQUAL 4)
@@ -114,9 +114,10 @@ target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_opencv DESTINATION ${CMAKE_INSTALL_LIBDIR})
-# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_ext_opencv.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-
+if(BUILD_DEV)
+	# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+	install(FILES include/vx_ext_opencv.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+endif(BUILD_DEV)
 if(WIN32)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
@@ -126,4 +127,4 @@ else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
 endif()
 
-message("-- ${White}vx_opencv -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+message("-- ${White}vx_opencv -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

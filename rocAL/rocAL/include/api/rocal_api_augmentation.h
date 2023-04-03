@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -45,10 +45,37 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalSequenceRearrange(RocalContext conte
 /// \param dest_width
 /// \param dest_height
 /// \param is_output
+/// \param scaling_mode The resize scaling_mode to resize the image.
+/// \param max_size Limits the size of the resized image.
+/// \param resize_shorter The length of the shorter dimension of the image.
+/// \param resize_longer The length of the larger dimension of the image.
+/// \param interpolation_type The type of interpolation to be used for resize.
 /// \return
 extern "C"  RocalImage  ROCAL_API_CALL rocalResize(RocalContext context, RocalImage input,
-                                                unsigned dest_width, unsigned dest_height,
-                                                bool is_output );
+                                                   unsigned dest_width, unsigned dest_height,
+                                                   bool is_output,
+                                                   RocalResizeScalingMode scaling_mode = ROCAL_SCALING_MODE_STRETCH,
+                                                   std::vector<unsigned> max_size = {},
+                                                   unsigned resize_shorter = 0,
+                                                   unsigned resize_longer = 0,
+                                                   RocalResizeInterpolationType interpolation_type = ROCAL_LINEAR_INTERPOLATION);
+
+/// Accepts U8 and RGB24 input.
+/// \param context Rocal context
+/// \param input Input Rocal Image
+/// \param dest_width The output width
+/// \param dest_height The output height
+/// \param mean The channel mean values
+/// \param std_dev The channel standard deviation values
+/// \param is_output True: the output image is needed by user and will be copied to output buffers using the data
+/// transfer API calls. False: the output image is just an intermediate image, user is not interested in
+/// using it directly. This option allows certain optimizations to be achieved.
+/// \param p_mirror Parameter to enable horizontal flip for output image.
+/// \return
+extern "C"  RocalImage  ROCAL_API_CALL rocalResizeMirrorNormalize(RocalContext p_context, RocalImage p_input,
+                                                                  unsigned dest_width, unsigned dest_height,
+                                                                  std::vector<float> &mean, std::vector<float> &std_dev,
+                                                                  bool is_output, RocalIntParam p_mirror = NULL);
 
 /// Accepts U8 and RGB24 input.
 /// \param context

@@ -167,8 +167,8 @@ To provide a basic set of vision processing functions. This set of functions is 
 
 Build this project to generate AMD OpenVX&trade; library 
 
-* Refer to [openvx/include/VX](openvx/include/VX) for Khronos OpenVX standard header files.
-* Refer to [openvx/include/vx_ext_amd.h](openvx/include/vx_ext_amd.h) for vendor extensions in AMD OpenVX&trade; library
+* Refer to [openvx/include/VX](../../amd_openvx/openvx/include/VX) for Khronos OpenVX standard header files.
+* Refer to [openvx/include/vx_ext_amd.h](../../amd_openvx/openvx/include/vx_ext_amd.h) for vendor extensions in AMD OpenVX&trade; library
 
 ### Build using `Visual Studio`
 

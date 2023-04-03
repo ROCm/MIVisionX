@@ -303,7 +303,7 @@ class Pipeline(object):
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
 
-    def GetBoundingBox(self,array):
+    def GetBoundingBox(self, array):
         return array
 
     def GetImageNameLength(self,idx):

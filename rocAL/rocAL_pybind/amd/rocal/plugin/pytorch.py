@@ -137,10 +137,8 @@ class ROCALGenericIterator(object):
         if(b.isEmpty(self.loader._handle)):
             raise StopIteration
         if (self.loader._external_source_operator):
-            print(self.index + 1)
             if (self.index + 1) == self.num_batches:
                 self.eos = True
-            #External Source Operator "ON"
             if (self.index+1) <= self.num_batches:
                 if self.loader._external_source_mode == types.EXTSOURCE_FNAME:
                     kwargs_pybind = {
@@ -154,9 +152,12 @@ class ROCALGenericIterator(object):
                         "decoded_height":self.loader._external_source_user_given_height, 
                         "external_source_mode":self.loader._external_source_mode, 
                         "rocal_tensor_layout":types.NCHW, 
-                        "eos":self.eos } # Check the Mode your passing
+                        "eos":self.eos }
                     b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
                 if self.loader._external_source_mode == types.EXTSOURCE_RAW_COMPRESSED:
+                    print("Support for EXTSOURCE_RAW_COMPRESSED / Mode 1 does not exist ")
+                    exit(0)
+                    '''
                     kwargs_pybind = {
                         "handle":self.loader._handle,
                         "source_input_images":[],
@@ -168,9 +169,13 @@ class ROCALGenericIterator(object):
                         "decoded_height":self.loader._external_source_user_given_height, 
                         "external_source_mode":self.loader._external_source_mode, 
                         "rocal_tensor_layout":types.NCHW, 
-                        "eos":self.eos } # Check the Mode your passing
+                        "eos":self.eos }
                     b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
+                    '''
                 if self.loader._external_source_mode == types.EXTSOURCE_RAW_UNCOMPRESSED:
+                    print("Support for EXTSOURCE_RAW_UNCOMPRESSED / Mode 2 does not exist ")
+                    exit(0)
+                    '''
                     data_loader_source = next(self.loader._external_source)
                     kwargs_pybind = {
                         "handle":self.loader._handle,
@@ -184,8 +189,9 @@ class ROCALGenericIterator(object):
                         "decoded_height":data_loader_source[4], 
                         "external_source_mode":self.loader._external_source_mode, 
                         "rocal_tensor_layout":types.NCHW, 
-                        "eos":self.eos } # Check the Mode your passing
+                        "eos":self.eos }
                     b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
+                    '''
         if self.loader.run() != 0:
             raise StopIteration
     

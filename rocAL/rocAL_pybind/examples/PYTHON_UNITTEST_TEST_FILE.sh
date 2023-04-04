@@ -144,6 +144,7 @@ rocAL_api_python_unittest=1
     python"$ver" rocAL_api_python_unittest.py --image-dataset-path $data_dir --augmentation-name resize_brightness_jitter --batch-size $batch_size --display --NHWC --local-rank 0 --world-size $gpus_per_node --num-threads 1 --num-epochs 2 --$backend_arg --$print_tensor_arg 2>&1 | tee -a run.rocAL_api_log.${CURRENTDATE}
     python"$ver" rocAL_api_python_unittest.py --image-dataset-path $data_dir --augmentation-name vignetter_blur --batch-size $batch_size --display --NHWC --local-rank 0 --world-size $gpus_per_node --num-threads 1 --num-epochs 2 --$backend_arg --$print_tensor_arg 2>&1 | tee -a run.rocAL_api_log.${CURRENTDATE}
     python"$ver" rocAL_api_python_unittest.py --image-dataset-path $data_dir --augmentation-name snow --batch-size $batch_size --display --NHWC --local-rank 0 --world-size $gpus_per_node --num-threads 1 --num-epochs 2 --$backend_arg --$print_tensor_arg 2>&1 | tee -a run.rocAL_api_log.${CURRENTDATE}
+    python"$ver" rocAL_api_python_unittest.py --image-dataset-path "$data_dir" --augmentation-name resize_mirror_normalize --batch-size "$batch_size" --display --NHWC --local-rank 0 --world-size "$gpus_per_node" --num-threads 1 --num-epochs 2 --"$backend_arg" --"$print_tensor_arg" 2>&1 | tee -a run.rocAL_api_log."${CURRENTDATE}"
 
 
 ####################################################################################################################################

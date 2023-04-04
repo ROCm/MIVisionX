@@ -40,12 +40,11 @@ protected:
     void create_node() override;
     void update_node() override;
 private:
-    vx_array  _dst_roi_width , _dst_roi_height ;
+    vx_array _dst_roi_width, _dst_roi_height;
     std::vector<uint> _dest_width_val, _dest_height_val;
-    std::vector<vx_float32> _mean_vx, _std_dev_vx;
     vx_array _mean_array, _std_dev_array;
     std::vector<float> _mean;
     std::vector<float> _std_dev; 
     ParameterVX<int> _mirror;
-    constexpr static int   MIRROR_RANGE [2] =  {0, 1};
+    constexpr static int _mirror_range[2] = {0, 1};
 };

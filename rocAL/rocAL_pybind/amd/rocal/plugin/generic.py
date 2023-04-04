@@ -133,7 +133,7 @@ class ROCALGenericIterator(object):
         if(self.loader._name == "labelReader"):
             if(self.loader._oneHotEncoding == True):
                 self.loader.GetOneHotEncodedLabels(self.labels, self.device)
-                self.labels_tensor = self.labels.view(-1, self.bs, self.loader._numOfClasses).long()
+                self.labels_tensor = self.labels.reshape(-1, self.bs, self.loader._numOfClasses)
             else:
                 if self.display:
                     for i in range(self.bs):

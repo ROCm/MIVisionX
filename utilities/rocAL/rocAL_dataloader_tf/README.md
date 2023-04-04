@@ -8,7 +8,7 @@ This application demonstrates a basic usage of rocAL's C API to load TfRecords f
 *  rocAL library (Part of the MIVisionX toolkit)
 *  [OpenCV 3.1](https://github.com/opencv/opencv/releases) or higher
 *  Google protobuf 3.11.1 or higher
-*  Radeon Performance Primitives (RPP)
+*  ROCm Performance Primitives (RPP)
 
 ### build
   ````

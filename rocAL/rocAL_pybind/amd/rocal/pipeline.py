@@ -95,7 +95,7 @@ class Pipeline(object):
     _handle = None
     _current_pipeline = None
 
-    def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=-1,
+    def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=1,
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
                  rocal_cpu=False, max_streams=-1, default_cuda_stream_priority=0, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
@@ -217,13 +217,15 @@ class Pipeline(object):
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
     def GetOneHotEncodedLabels(self, array, device):
         if device=="cpu":
-            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
+            if (isinstance(array,np.ndarray)):
+                b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
+            else: #torch tensor
+                return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 0)
         if device=="gpu":
-            return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
-
-    def GetOneHotEncodedLabels_TF(self, array):
-        # Host destination only
-        return b.getOneHotEncodedLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p), self._numOfClasses, 0)
+            if (isinstance(array,cp.ndarray)):
+                b.getOneHotEncodedLabels(self._handle, array.data.ptr, self._numOfClasses, 1)
+            else: #torch tensor
+                return b.getOneHotEncodedLabels(self._handle, ctypes.c_void_p(array.data_ptr()), self._numOfClasses, 1)
 
     def set_outputs(self, *output_list):
         self._output_list_length = len(output_list)
@@ -303,10 +305,6 @@ class Pipeline(object):
 
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
-
-    def GetImageLabels(self, array):
-        return b.getImageLabels(self._handle, array.ctypes.data_as(ctypes.c_void_p))
-
 
     def GetBoundingBox(self,array):
         return array

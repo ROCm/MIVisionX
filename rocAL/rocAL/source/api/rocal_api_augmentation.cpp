@@ -29,7 +29,8 @@ THE SOFTWARE.
 #include "rocal_api.h"
 #include "image_source_evaluator.h"
 
-#define MAX_ASPECT_RATIO 3.0f
+// Calculated from the largest resize shorter dimension in imagenet validation dataset
+#define MAX_ASPECT_RATIO 6.0f
 
 RocalImage  ROCAL_API_CALL
 rocalSequenceRearrange(
@@ -584,8 +585,7 @@ rocalResizeMirrorNormalize(
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto mirror = static_cast<IntParam *>(p_mirror);
-    for(unsigned i = 0; i < mean.size(); i++)
-    {
+    for(unsigned i = 0; i < mean.size(); i++) {
         mean[i] = 0;
         std_dev[i] = 1;
     }

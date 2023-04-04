@@ -9,7 +9,7 @@ These pipelines are programmable by the user using both C++ and Python APIs.
 *    Full processing pipeline support for data_loading, meta-data loading, augmentations, and data-format conversions for training and inference.
 *    Being able to do processing on CPU or Radeon GPU (with OpenCL or HIP backend)
 *    Ease of integration with framework plugins in Python
-*    Support variety of augmentation operations through AMD’s Radeon Performance Primitives (RPP).
+*    Support variety of augmentation operations through AMD’s ROCm Performance Primitives (RPP).
 *    All available public and open-sourced under ROCm.
 
 ## Prerequisites

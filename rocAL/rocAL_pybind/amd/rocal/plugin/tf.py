@@ -155,7 +155,7 @@ class ROCALGenericIteratorDetection(object):
         elif (self.loader._name == "TFRecordReaderClassification"):
             if(self.loader._oneHotEncoding == True):
                 self.labels = np.zeros((self.bs)*(self.loader._numOfClasses),dtype = "int32")
-                self.loader.GetOneHotEncodedLabels_TF(self.labels)
+                self.loader.GetOneHotEncodedLabels(self.labels, device="cpu")
                 self.labels = np.reshape(self.labels, (-1, self.bs, self.loader._numOfClasses))
             else:
                 self.labels = np.zeros((self.bs),dtype = "int32")

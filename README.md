@@ -440,12 +440,12 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * Linux distribution
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
-  + RedHat - `8` / `9`
+  + RHEL - `8` / `9`
   + SLES - `15-SP3`
-* ROCm: rocm-core - `5.5.0.50500-21`
-* miopen-hip - `2.19.0.50500-21`
+* ROCm: rocm-core - `5.4.3.50403-121`
+* miopen-hip - `2.19.0.50403-121`
 * miopen-opencl - `2.18.0.50300-63`
-* migraphx - `2.5.0.50500-21`
+* migraphx - `2.4.0.50403-121`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * RPP - [1.0.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.0.0)

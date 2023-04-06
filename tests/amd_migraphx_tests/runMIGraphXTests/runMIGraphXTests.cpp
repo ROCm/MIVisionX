@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
 
     float mean_vec[3] = {0.485, 0.456, 0.406};
     float stddev_vec[3] = {0.229, 0.224, 0.225};
-    std::vector<float> mulVec = {1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])},
+    std::vector<float> mulVec = {1 / (255 * stddev_vec[0]), 1 / (255 * stddev_vec[1]), 1 / (255 * stddev_vec[2])}, 
                         addVec = {(mean_vec[0] / stddev_vec[0]), (mean_vec[1] / stddev_vec[1]), (mean_vec[2] / stddev_vec[2])};
     //imagenet label file
     std::string labelText[1000];

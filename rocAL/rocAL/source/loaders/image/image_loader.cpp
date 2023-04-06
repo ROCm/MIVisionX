@@ -87,8 +87,6 @@ ImageLoader::remaining_count()
                 return 0;
         }
     }
-    //     if(!_external_input_eos && _external_source_reader)
-    //         return _batch_size;
     return _remaining_image_count;
 }
 

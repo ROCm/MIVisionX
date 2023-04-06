@@ -46,6 +46,7 @@ void ExternalSourceLabelReader::init(const MetaDataConfig& cfg)
     _path = cfg.path();
     _output = new LabelBatch();
 }
+
 bool ExternalSourceLabelReader::exists(const std::string& image_name)
 {
     return _map_content.find(image_name) != _map_content.end();

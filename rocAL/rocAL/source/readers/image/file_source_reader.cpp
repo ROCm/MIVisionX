@@ -78,7 +78,6 @@ Reader::Status FileSourceReader::initialize(ReaderConfig desc)
         std::random_shuffle(_file_names.begin(), _file_names.end());
     _shuffle_time.end();
     return ret;
-
 }
 
 void FileSourceReader::incremenet_read_ptr()

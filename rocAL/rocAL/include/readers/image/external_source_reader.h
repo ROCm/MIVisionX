@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include "commons.h"
 #include "timing_debug.h"
 
-#if 1
 class ExternalSourceReader : public Reader {
 public:
     //! Looks up the folder which contains the files, amd loads the image names
@@ -120,4 +119,4 @@ private:
     void replicate_last_batch_to_pad_partial_shard();
     FileMode _mode;
 };
-#endif
+

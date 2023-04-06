@@ -963,7 +963,6 @@ void MasterGraph::output_routine()
             pMetaDataBatch augmented_batch_meta_data = nullptr;
             if (_loader_module->remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size))
             {
-                fflush(stderr);
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
                 // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
                 notify_user_thread();
@@ -1505,8 +1504,6 @@ void MasterGraph::feed_external_input(std::vector<std::string> input_images, std
         MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::EXTERNAL_SOURCE_LABEL_READER);
         _meta_data_reader = create_meta_data_reader(config);
         _meta_data_reader->add_labels(input_images, labels);
-        // _meta_data_reader->init(config);
-        // _meta_data_reader->read_all(source_path);
         if (_augmented_meta_data)
             THROW("Metadata can only have a single output")
         else

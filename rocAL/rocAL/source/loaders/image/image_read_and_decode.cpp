@@ -23,10 +23,10 @@ THE SOFTWARE.
 
 #include <iterator>
 #include <cstring>
+#include <unistd.h>
 #include "decoder_factory.h"
 #include "image_read_and_decode.h"
 #include "external_source_reader.h"
-#include <unistd.h>
 std::tuple<Decoder::ColorFormat, unsigned >
 interpret_color_format(RocalColorFormat color_format )
 {
@@ -147,7 +147,7 @@ void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_imag
             image_size[i] = roi_height[i];
     }
     if(mode == 0) {
-        _reader->feed_file_names(input_images, input_images.size(), eos); // Shobi check this
+        _reader->feed_file_names(input_images, input_images.size(), eos);
     }
     else if(mode == 1) {
         _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, 3);
@@ -155,7 +155,6 @@ void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_imag
     else if(mode == 2){
         _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, 3);
     }
-    // loader->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode);
 }
 
 LoaderModuleStatus
@@ -281,7 +280,6 @@ ImageReadAndDecode::load(unsigned char* buff,
         }
     }
 
-    fflush(stdout);
     _file_load_time.end();// Debug timing
 
     _decode_time.start();// Debug timing

@@ -171,13 +171,16 @@ ExternalSourceReader::~ExternalSourceReader()
 int
 ExternalSourceReader::release()
 {
-    if(!_current_fPtr)
-        return 0;
-    fclose(_current_fPtr);
-    _current_fPtr = nullptr;
-    _end_of_sequence = false;   // reset for looping
+    if (_mode != FileMode::FILENAME) {
+        if(!_current_fPtr)
+            return 0;
+        fclose(_current_fPtr);
+        _current_fPtr = nullptr;
+        _end_of_sequence = false;   // reset for looping
+    }
     return 0;
 }
+
 
 void ExternalSourceReader::reset()
 {

@@ -74,6 +74,7 @@ def main():
             for img in it[0]:
                 cnt = cnt+1
                 draw_patches(img, cnt, device)
+            print("Image Dumped")
 
 if __name__ == '__main__':
     main()

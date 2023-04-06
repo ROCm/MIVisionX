@@ -275,7 +275,8 @@ class ROCALGenericIterator(object):
         return self.len
 
     def __del__(self):
-        # b.rocalRelease(self.loader._handle)
+        print("rocAL Release")
+        b.rocalRelease(self.loader._handle)
 
 
 class ROCALClassificationIterator(ROCALGenericIterator):

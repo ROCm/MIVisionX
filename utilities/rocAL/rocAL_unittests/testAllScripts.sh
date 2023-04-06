@@ -1,7 +1,7 @@
 #!/bin/bash
 cwd=$(pwd)
 if [ -d build ];then 
-    rm -rf ./build/*
+    sudo rm -rf ./build/*
 else
     mkdir build
 fi

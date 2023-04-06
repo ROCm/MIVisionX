@@ -46,9 +46,11 @@ def compare_pixels(img1, img2, aug_name, width, height, image_offset = 0):
 
 def main():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S_")
-    logging.basicConfig(filename = '../log_file_' + timestamp + '.log', level = logging.INFO)
+    handlers = [logging.FileHandler('../log_file_' + timestamp + '.log'), logging.StreamHandler()]
+    logging.basicConfig(level = logging.INFO, handlers = handlers)
     if( len(sys.argv) < 3 ):
         logging.error('Pass atleast 2 arguments (python image_comparison.py <ref_output_folder_path> <rocal_ouput_folder_path>')
+        exit()
 
     # Open the two images
     ref_output_path = sys.argv[1]
@@ -56,6 +58,7 @@ def main():
 
     if not (os.path.exists(ref_output_path) and os.path.exists(rocal_output_path)):
         logging.error("Path does not Exists")
+        exit()
 
     total_case_count = 0
     passed_case_count = 0
@@ -119,7 +122,7 @@ def main():
                 total_pixel_diff = 0
                 for pix_diff in range(1,6):
                     total_pixel_diff += pixeldiff[pix_diff]
-                if (total_pixel_diff > 10):
+                if (total_pixel_diff):
                     failed_case_list.append(golden_file_path)
                     failed_case_count=failed_case_count+1
                     logging.info("FAILED")

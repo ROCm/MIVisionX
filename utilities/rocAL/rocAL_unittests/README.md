@@ -11,7 +11,7 @@ This application can be used to verify the functionality of the API offered by r
 * Python
 * Pillow
 
-Install Pillow library using `pip install Pillow`
+Install Pillow library using `python3 -m pip install Pillow`
 
 ### Build
 ````
@@ -34,7 +34,7 @@ The bash script `testAllScript.sh` can be used to run and dump the outputs for a
 
 Input data is available in the following link : [MIVisionX-data](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data)
 
-`export ROCAL_DATA_PATH=<path_to_MIVIsionX-data>`
+`export ROCAL_DATA_PATH=<absolute_path_to_MIVIsionX-data>`
 
 ```
 ./testAllScripts.sh <device_type 0/1/2> <color_format 0/1/2>

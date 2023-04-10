@@ -142,7 +142,7 @@ void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_imag
     image_size.reserve(roi_height.size());
     for(unsigned int i = 0; i < roi_height.size(); i++) {
         if (mode == 2)
-            image_size[i] = (roi_width[i] * roi_height[i] * channels); // Shobi check how to get channels
+            image_size[i] = (roi_width[i] * roi_height[i] * channels);
         else if (mode == 1)
             image_size[i] = roi_height[i];
     }

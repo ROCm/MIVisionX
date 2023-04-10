@@ -28,9 +28,8 @@ THE SOFTWARE.
 #include <chrono>
 #include <cstdio>
 #include <dirent.h>
-
 #include <opencv2/opencv.hpp>
-// #include <opencv/highgui.h>
+#include "rocal_api.h"
 
 #if USE_OPENCV_4
 #define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
@@ -41,9 +40,6 @@ THE SOFTWARE.
 #define CV_FILLED FILLED
 #define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
 #endif
-
-
-#include "rocal_api.h"
 
 using namespace cv;
 
@@ -227,33 +223,22 @@ int main(int argc, const char ** argv)
     {
         image2 = rocalBlurFixed(handle, image2, 17.25, (i == (aug_depth -1)) ? true:false );
     }
-
-
     RocalImage image4 = rocalColorTemp(handle, image0, false, color_temp_adj);
-
     RocalImage image5 = rocalWarpAffine(handle, image4, false);
-
     RocalImage image6 = rocalJitter(handle, image5, false);
-
     rocalVignette(handle, image6, true);
 
-
-
     RocalImage image7 = rocalPixelate(handle, image0, false);
-
     RocalImage image8 = rocalSnow(handle, image0, false);
-
     RocalImage image9 = rocalBlend(handle, image7, image8, false);
-
     RocalImage image10 = rocalLensCorrection(handle, image9, false);
-
     rocalExposure(handle, image10, true);
 #else
-  // uncomment the following to add augmentation if needed
+    // uncomment the following to add augmentation if needed
     RocalImage image0;
     int resize_w = decode_width , resize_h = decode_height ;
     image0 = input1;
-  // just do one augmentation to test
+    // just do one augmentation to test
     image0 = rocalResize(handle, input1, resize_w, resize_h, true);
 #endif
 
@@ -411,7 +396,7 @@ int main(int argc, const char ** argv)
     std::cerr << "Process  time "<< rocal_timing.process_time << std::endl;
     std::cerr << "Transfer time "<< rocal_timing.transfer_time << std::endl;
     std::cerr << ">>>>> "<< counter << " images/frames Processed. Total Elapsed Time " << dur/1000000 << " sec " << dur%1000000 << " us " << std::endl;
-    rocalRelease(handle); 
+    rocalRelease(handle);
     mat_input.release();
     mat_output.release();
     return 0;

@@ -143,9 +143,9 @@ enum RocalDecoderType
 #define    ROCAL_MEMCPY_IS_PINNED    4      // for future use
 enum RocalExtSourceMode
 {
-    ROCAL_EXTSOURCE_FNAME = 0,
-    ROCAL_EXTSOURCE_RAW_COMPRESSED = 1,
-    ROCAL_EXTSOURCE_RAW_UNCOMPRESSED = 2,
+    ROCAL_EXTSOURCE_FNAME = 0,              // file mode (list of filename given as input)
+    ROCAL_EXTSOURCE_RAW_COMPRESSED = 1,     // Compressed Raw buffer for set of images
+    ROCAL_EXTSOURCE_RAW_UNCOMPRESSED = 2,   // Uncompressed Raw buffer for set of images
 };
 
 enum RocalResizeScalingMode {

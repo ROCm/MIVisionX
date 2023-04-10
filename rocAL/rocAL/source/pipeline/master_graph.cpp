@@ -127,7 +127,7 @@ MasterGraph::MasterGraph(size_t batch_size, RocalAffinity affinity, int gpu_id, 
         _mem_type ((_affinity == RocalAffinity::GPU) ? RocalMemType::OCL : RocalMemType::HOST),
 #else
         _mem_type (RocalMemType::HOST),
-#endif        
+#endif
         _first_run(true),
         _processing(false),
         _internal_batch_size(compute_optimum_internal_batch_size(batch_size, affinity)),
@@ -934,7 +934,7 @@ MasterGraph::copy_output(unsigned char *out_ptr, size_t out_size_in_bytes)
         memcpy(out_ptr, _ring_buffer.get_host_master_read_buffer(), size * _output_images.size());
 #if ENABLE_OPENCL || ENABLE_HIP
     }
-#endif    
+#endif
     _convert_time.end();
     return Status::OK;
 }
@@ -1493,17 +1493,17 @@ bool MasterGraph::no_more_processed_data()
     return (_output_routine_finished_processing && _ring_buffer.empty());
 }
 
-void MasterGraph::feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, std::vector<unsigned char *>input_buffer,
+void MasterGraph::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *>input_buffer,
                             std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height,
                             FileMode mode, RocalTensorFormat layout, bool eos)
 {
     _external_source_eos = eos;
-    _loader_module->feed_external_input(input_images, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode, eos); // kamal
+    _loader_module->feed_external_input(input_images_names, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode, eos);
     if(!labels.empty() && !_meta_data_reader)
     {
         MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::EXTERNAL_SOURCE_LABEL_READER);
         _meta_data_reader = create_meta_data_reader(config);
-        _meta_data_reader->add_labels(input_images, labels);
+        _meta_data_reader->add_labels(input_images_names, labels);
         if (_augmented_meta_data)
             THROW("Metadata can only have a single output")
         else
@@ -1511,7 +1511,7 @@ void MasterGraph::feed_external_input(std::vector<std::string> input_images, std
     }
     else if(!labels.empty() && _meta_data_reader)
     {
-        _meta_data_reader->add_labels(input_images, labels);
+        _meta_data_reader->add_labels(input_images_names, labels);
     }
 }
 

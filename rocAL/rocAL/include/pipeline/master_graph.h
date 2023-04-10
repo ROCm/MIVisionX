@@ -106,10 +106,10 @@ public:
     void set_sequence_reader_output() { _is_sequence_reader_output = true; }
     void set_sequence_batch_size(size_t sequence_length) { _sequence_batch_size = _user_batch_size * sequence_length; }
     void set_sequence_batch_ratio() { _sequence_batch_ratio = _sequence_batch_size / _internal_batch_size; }
-    void feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, std::vector<unsigned char *>input_buffer,
+    void feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *>input_buffer,
                              std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width,
                              unsigned int max_height, FileMode mode, RocalTensorFormat layout, bool eos);
-    void set_external_source_reader_flag() { _external_source_reader = true; };
+    void set_external_source_reader_flag() { _external_source_reader = true; }
     Status get_bbox_encoded_buffers(float **boxes_buf_ptr, int **labels_buf_ptr, size_t num_encoded_boxes);
     size_t bounding_box_batch_count(int* buf, pMetaDataBatch meta_data_batch);
 #if ENABLE_OPENCL
@@ -188,8 +188,8 @@ private:
     float _scale; // Rescales the box and anchor values before the offset is calculated (for example, to return to the absolute values).
     bool _offset; // Returns normalized offsets ((encoded_bboxes*scale - anchors*scale) - mean) / stds in EncodedBBoxes that use std and the mean and scale arguments if offset="True"
     std::vector<float> _means, _stds; //_means:  [x y w h] mean values for normalization _stds: [x y w h] standard deviations for offset normalization.
-    bool _external_source_eos = false;
-    bool _external_source_reader = false;
+    bool _external_source_eos = false; // If last batch, _external_source_eos will true
+    bool _external_source_reader = false; // Set to true if external source reader on
 #if ENABLE_HIP
     BoxEncoderGpu *_box_encoder_gpu = nullptr;
 #endif
@@ -257,7 +257,7 @@ template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_n
     auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], (void *)_device.resources());
 #else
     auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], nullptr);
-#endif    
+#endif
     _loader_module = node->get_loader_module();
     _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
@@ -293,7 +293,7 @@ template<> inline std::shared_ptr<FusedJpegCropSingleShardNode> MasterGraph::add
     auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], (void *)_device.resources());
 #else
     auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], nullptr);
-#endif    
+#endif
     _loader_module = node->get_loader_module();
     _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _loader_module->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
@@ -335,9 +335,9 @@ template<> inline std::shared_ptr<VideoLoaderNode> MasterGraph::add_node(const s
         THROW("A video loader already exists, cannot have more than one loader")
 #if ENABLE_HIP || ENABLE_OPENCL
     auto node = std::make_shared<VideoLoaderNode>(outputs[0], (void *)_device.resources());
-#else    
+#else
     auto node = std::make_shared<VideoLoaderNode>(outputs[0], nullptr);
-#endif    
+#endif
     _video_loader_module = node->get_loader_module();
     _video_loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
@@ -354,7 +354,7 @@ template<> inline std::shared_ptr<VideoLoaderSingleShardNode> MasterGraph::add_n
     auto node = std::make_shared<VideoLoaderSingleShardNode>(outputs[0], (void *)_device.resources());
 #else
     auto node = std::make_shared<VideoLoaderSingleShardNode>(outputs[0], nullptr);
-#endif    
+#endif
     _video_loader_module = node->get_loader_module();
     _video_loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);

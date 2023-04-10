@@ -45,7 +45,7 @@ ExternalSourceReader::ExternalSourceReader()
 unsigned ExternalSourceReader::count_items()
 {
     if (_mode == FileMode::FILENAME) {
-        if (_end_of_sequence && _file_names_q.empty()) {
+        if (_end_of_sequence && _file_names_que.empty()) {
         return 0;
         }
     } else {
@@ -84,11 +84,10 @@ size_t ExternalSourceReader::open()
     if (_mode == FileMode::FILENAME) {
         std::string next_file_name;
         bool ret = pop_file_name(next_file_name);   // Get next file name: blocking call, will wait till next file is received from external source
-        if (_end_of_sequence && !ret) // shobi check this
+        if (_end_of_sequence && !ret)
           return 0;
         // prefix with folder_path of exists
         if (!_folder_path.empty())
-        //   next_file_name = _folder_path + "/" + next_file_name;
             next_file_name = next_file_name;
         _last_id= next_file_name;
         filesys::path pathObj(next_file_name);
@@ -97,11 +96,8 @@ size_t ExternalSourceReader::open()
           _current_fPtr = fopen(next_file_name.c_str(), "rb");// Open the file,
           if(!_current_fPtr) // Check if it is ready for reading
               return 0;
-
           fseek(_current_fPtr, 0 , SEEK_END);// Take the file read pointer to the end
-
           _current_file_size = ftell(_current_fPtr);// Check how many bytes are there between and the current read pointer position (end of the file)
-
           if(_current_file_size == 0)
           { // If file is empty continue
               fclose(_current_fPtr);
@@ -115,7 +111,7 @@ size_t ExternalSourceReader::open()
     } else {
         std::tuple<unsigned char*, size_t, int, int, int> image;
         bool ret = pop_file_data(image);
-        if (_end_of_sequence && !ret) // shobi check this
+        if (_end_of_sequence && !ret)
         {
             std::cerr<<"\n !!!!!!!!!!!!!!!!!! EOS || POP FAILED !!!!!!!!!!!!!!!!!!!!";
             return 0;
@@ -134,8 +130,7 @@ size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size)
             return 0;
 
         // Requested read size bigger than the file size? just read as many bytes as the file size
-        read_size = (read_size > _current_file_size) ? _current_file_size : read_size;
-
+        read_size = std::min((unsigned int)read_size,_current_file_size);
         size_t actual_read_size = fread(buf, sizeof(unsigned char), read_size, _current_fPtr);
         return actual_read_size;
     } else {
@@ -201,7 +196,7 @@ size_t ExternalSourceReader::get_file_shard_id()
 void ExternalSourceReader::push_file_name(const std::string& file_name)
 {
     std::unique_lock<std::mutex> lock(_lock);
-    _file_names_q.push(file_name);
+    _file_names_que.push(file_name);
     lock.unlock();
     // notify waiting thread of new data
     _wait_for_input.notify_all();
@@ -210,11 +205,11 @@ void ExternalSourceReader::push_file_name(const std::string& file_name)
 bool ExternalSourceReader::pop_file_name(std::string& file_name)
 {
     std::unique_lock<std::mutex> lock(_lock);
-    if(_file_names_q.empty() && !_end_of_sequence)
+    if(_file_names_que.empty() && !_end_of_sequence)
         _wait_for_input.wait(lock);
-    if (!_file_names_q.empty()) {
-      file_name = _file_names_q.front();
-      _file_names_q.pop();
+    if (!_file_names_que.empty()) {
+      file_name = _file_names_que.front();
+      _file_names_que.pop();
       return true;
     }else
       return false;

@@ -55,6 +55,7 @@ public:
     //! Returns the name of the latest file opened
     std::string id() override { return _last_id;};
 
+    //! Return batch_size() for count_items unless end_of_sequence has been signalled
     unsigned count_items() override;
 
     ~ExternalSourceReader() override;
@@ -66,7 +67,7 @@ public:
     ExternalSourceReader();
 
     //! receive next set of filenames from external source
-    void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos=false) override;
+    void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos = false) override;
 
     //! receive next set of file data from external source
     void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width=0, int height=0, int channels=0) override;
@@ -81,7 +82,7 @@ public:
 private:
     //! opens the folder containnig the images
     std::string _folder_path;
-    std::queue<std::string> _file_names_q;
+    std::queue<std::string> _file_names_que;
     std::vector<size_t> _file_sizes;
     std::vector<std::tuple<unsigned char*, size_t, int, int, int>> _file_data;
     std::queue<std::tuple<unsigned char*, size_t, int, int, int>> _images_data_q;

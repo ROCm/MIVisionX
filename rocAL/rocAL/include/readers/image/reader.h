@@ -90,7 +90,7 @@ struct ReaderConfig
     void set_file_prefix(const std::string &prefix) { _file_prefix = prefix; }
     std::string file_prefix() { return _file_prefix; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
-    virtual FileMode mode() { return _mode; };
+    virtual FileMode mode() { return _mode; }
 private:
     StorageType _type = StorageType::FILE_SYSTEM;
     std::string _path = "";

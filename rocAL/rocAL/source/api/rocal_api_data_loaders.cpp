@@ -299,22 +299,14 @@ rocalJpegExternalFileSource(
             THROW("use_max_size is not supported in external source reader");
 
         // user need to specify this
-        if(max_width == 0 || max_height == 0)
-        {
-            THROW("Invalid input max width and height");
-        }
-        else
-        {
-            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
-        }
+        if(max_width == 0 || max_height == 0) { THROW("Invalid input max width and height"); }
+        else { LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height)) }
 
         auto [width, height] = std::make_tuple(max_width, max_height);
-
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
-
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
-        context->set_internal_batch_size(context->user_batch_size());   // for external_source internal batch size has to be same as user
+        context->set_internal_batch_size(context->user_batch_size());   // User defined batch size is the inetrnal batch size of extrenal source reader
 
         auto info = ImageInfo(width, height,
                               context->internal_batch_size(),
@@ -324,17 +316,17 @@ rocalJpegExternalFileSource(
         output = context->master_graph->create_loader_output_image(info);
         context->master_graph->set_external_source_reader_flag(); // kamal
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path, "",
-                                                                          std::map<std::string, std::string>(),
-                                                                          StorageType::EXTERNAL_FILE_SOURCE,
-                                                                          decType,
-                                                                          shuffle,
-                                                                          loop,
-                                                                          context->user_batch_size(),
-                                                                          context->master_graph->mem_type(),
-                                                                          context->master_graph->meta_data_reader(),
-                                                                          decoder_keep_original,
-                                                                          FileMode(external_source_mode)); // kamal
+                                                         source_path, "",
+                                                         std::map<std::string, std::string>(),
+                                                         StorageType::EXTERNAL_FILE_SOURCE,
+                                                         decType,
+                                                         shuffle,
+                                                         loop,
+                                                         context->user_batch_size(),
+                                                         context->master_graph->mem_type(),
+                                                         context->master_graph->meta_data_reader(),
+                                                         decoder_keep_original,
+                                                         FileMode(external_source_mode)); // kamal
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -696,7 +688,7 @@ rocalJpegCaffeLMDBRecordSource(
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height,
-        RocalDecoderType dec_type) 
+        RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -1667,7 +1659,7 @@ rocalJpegTFRecordSource(
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height,
-        RocalDecoderType dec_type) 
+        RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -1751,7 +1743,7 @@ rocalJpegTFRecordSourceSingleShard(
         RocalImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height,
-        RocalDecoderType dec_type) 
+        RocalDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);

@@ -134,7 +134,7 @@ ImageReadAndDecode::set_batch_random_bbox_crop_coords(std::vector<std::vector<fl
     _crop_coords_batch = crop_coords;
 }
 
-void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_images, std::vector<int> labels, std::vector<unsigned char *> input_buffer,
+void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *> input_buffer,
                              std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
                              unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
 {
@@ -147,7 +147,7 @@ void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_imag
             image_size[i] = roi_height[i];
     }
     if(mode == 0) {
-        _reader->feed_file_names(input_images, input_images.size(), eos);
+        _reader->feed_file_names(input_images_names, input_images_names.size(), eos);
     }
     else if(mode == 1) {
         _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, 3);
@@ -214,7 +214,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         //_file_load_time.end();// Debug timing
     } else if (is_external_source) {
         auto ext_reader = std::dynamic_pointer_cast<ExternalSourceReader>(_reader);
-        if (ext_reader->mode() == FileMode::RAWDATA_UNCOMPRESSED){
+        if (ext_reader->mode() == FileMode::RAWDATA_UNCOMPRESSED) {
         while ((file_counter != _batch_size) && _reader->count_items() > 0) {
               int width, height, channels;
               auto read_ptr = buff + image_size * file_counter;
@@ -298,24 +298,24 @@ ImageReadAndDecode::load(unsigned char* buff,
                                          &jpeg_sub_samp) != Decoder::Status::OK) {
                     // Substituting the image which failed decoding with other image from the same batch
                     int j = ((i + 1) != _batch_size) ? _batch_size - 1 : _batch_size - 2;
-                    while ((j >= 0)) 
+                    while ((j >= 0))
                     {
                         if (_decoder[i]->decode_info(_compressed_buff[j].data(), _actual_read_size[j], &original_width, &original_height,
-                            &jpeg_sub_samp) == Decoder::Status::OK) 
+                            &jpeg_sub_samp) == Decoder::Status::OK)
                         {
                                 _image_names[i] =  _image_names[j];
                                 _compressed_buff[i] =  _compressed_buff[j];
                                 _actual_read_size[i] =  _actual_read_size[j];
                                 _compressed_image_size[i] =  _compressed_image_size[j];
-                                break;                                
+                                break;
 
                         }
                         else
                             j--;
-                        if(j < 0) 
+                        if(j < 0)
                         {
                             THROW("All images in the batch failed decoding\n");
-                        }                                    
+                        }
                     }
             }
             _original_height[i] = original_height;
@@ -324,7 +324,7 @@ ImageReadAndDecode::load(unsigned char* buff,
             size_t scaledw, scaledh;
             if (_decoder[i]->is_partial_decoder()) {
                 if (_randombboxcrop_meta_data_reader) {
-                  _decoder[i]->set_bbox_coords(_bbox_coords[i]); 
+                  _decoder[i]->set_bbox_coords(_bbox_coords[i]);
                 } else if (_random_crop_dec_param) {
                   Shape dec_shape = {_original_height[i], _original_width[i]};
                   auto crop_window = _random_crop_dec_param->generate_crop_window(dec_shape, i);

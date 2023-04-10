@@ -50,9 +50,9 @@ extern "C" void ROCAL_API_CALL rocalSetOutputs(RocalContext p_context, unsigned 
 
 /// Creates JPEG external source image reader
 /// \param rocal_context Rocal context
-/// \param input_images Strings pointing to the location on the disk 
+/// \param input_images Strings pointing to the location on the disk
 /// \param labels Labels whose values is passed by the user using an external source
-/// \param input_buffer Compressed or uncompressed input buffer 
+/// \param input_buffer Compressed or uncompressed input buffer
 /// \param roi_width The roi width of the images
 /// \param roi_height The roi height of the images
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
@@ -60,7 +60,7 @@ extern "C" void ROCAL_API_CALL rocalSetOutputs(RocalContext p_context, unsigned 
 /// \param mode Determines the mode of the source passed from the user - file_names / uncompressed data / compressed data
 /// \param layout Determines the layout of the images - NCHW / NHWC
 /// \return Reference to the output image
-extern "C"  RocalStatus   ROCAL_API_CALL rocalExternalSourceFeedInput(RocalContext rali_context,std::vector<std::string> input_images, std::vector<int> labels,
+extern "C"  RocalStatus   ROCAL_API_CALL rocalExternalSourceFeedInput(RocalContext rali_context,std::vector<std::string> input_images_names, std::vector<int> labels,
                                                                       std::vector<unsigned char *> input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
                                                                       unsigned int max_width, unsigned int max_height, RocalExtSourceMode mode, RocalTensorLayout layout, bool eos);
 

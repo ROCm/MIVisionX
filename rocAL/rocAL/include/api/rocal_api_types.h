@@ -141,6 +141,7 @@ enum RocalDecoderType
 #define    ROCAL_MEMCPY_TO_HOST      1      // force copy to user provided host memory
 #define    ROCAL_MEMCPY_TO_DEVICE    2      // force copy to user provided device memory (gpu)
 #define    ROCAL_MEMCPY_IS_PINNED    4      // for future use
+
 enum RocalExtSourceMode
 {
     ROCAL_EXTSOURCE_FNAME = 0,              // file mode (list of filename given as input)

@@ -100,7 +100,7 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
         }
     }
     _reader = create_reader(reader_config);
-    _reader_type = reader_config.type();
+    _storage_type = reader_config.type();
 }
 
 void
@@ -182,7 +182,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     const unsigned output_planes = std::get<1>(ret);
     const bool keep_original = decoder_keep_original;
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
-    bool is_external_source = (_reader_type == StorageType::EXTERNAL_FILE_SOURCE);
+    bool is_external_source = (_storage_type == StorageType::EXTERNAL_FILE_SOURCE);
     bool skip_decode = false;
     // Decode with the height and size equal to a single image
     // File read is done serially since I/O parallelization does not work very well.

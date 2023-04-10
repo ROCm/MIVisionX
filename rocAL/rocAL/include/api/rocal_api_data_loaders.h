@@ -749,7 +749,7 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegCaffe2LMDBRecordSourcePartialSin
 
 /// Creates JPEG external source image reader
 /// \param rocal_context Rocal context
-/// \param source_path A NULL terminated char string pointing to the location on the disk 
+/// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rocal_color_format The color format the images will be decoded to.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
 /// \param shuffle Determines if the user wants to shuffle the dataset or not.
@@ -767,7 +767,8 @@ extern "C"  RocalImage  ROCAL_API_CALL rocalJpegExternalFileSource(RocalContext 
                                                         bool shuffle = false,
                                                         bool loop = false,
                                                         RocalImageSizeEvaluationPolicy decode_size_policy = ROCAL_USE_MOST_FREQUENT_SIZE,
-                                                        unsigned max_width = 0, unsigned max_height = 0, RocalDecoderType rocal_decoder_type = RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode external_source_mode = RocalExtSourceMode::ROCAL_EXTSOURCE_FNAME);
+                                                        unsigned max_width = 0, unsigned max_height = 0, RocalDecoderType rocal_decoder_type = RocalDecoderType::ROCAL_DECODER_TJPEG,
+                                                        RocalExtSourceMode external_source_mode = RocalExtSourceMode::ROCAL_EXTSOURCE_FNAME);
 
 #endif //MIVISIONX_ROCAL_API_DATA_LOADERS_H
 

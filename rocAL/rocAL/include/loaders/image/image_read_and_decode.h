@@ -81,7 +81,7 @@ public:
 protected:
     std::vector<std::shared_ptr<Decoder>> _decoder;
     std::shared_ptr<Reader> _reader;
-    StorageType _reader_type;
+    StorageType _storage_type;
     std::vector<std::vector<unsigned char>> _compressed_buff;
     std::vector<size_t> _actual_read_size;
     std::vector<std::string> _image_names;

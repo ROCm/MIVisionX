@@ -61,8 +61,8 @@ public:
     ~ExternalSourceReader() override;
 
     int close() override;
-    // not supported for external_source
-    unsigned long long get_shuffle_time() {return 0;};
+    // get_shuffle_time() not applicable for external_source reader
+    unsigned long long get_shuffle_time() {return 0;}
 
     ExternalSourceReader();
 

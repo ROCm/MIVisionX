@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #include <cassert>
 #include <algorithm>
-// #include <commons.h>
 #include "external_source_reader.h"
 #include <boost/filesystem.hpp>
 
@@ -113,7 +112,7 @@ size_t ExternalSourceReader::open()
         bool ret = pop_file_data(image);
         if (_end_of_sequence && !ret)
         {
-            std::cerr<<"\n !!!!!!!!!!!!!!!!!! EOS || POP FAILED !!!!!!!!!!!!!!!!!!!!";
+            std::cerr<<"\n EOS || POP FAILED ";
             return 0;
         }
         _file_data[_curr_file_idx] = image;
@@ -130,7 +129,7 @@ size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size)
             return 0;
 
         // Requested read size bigger than the file size? just read as many bytes as the file size
-        read_size = std::min((unsigned int)read_size,_current_file_size);
+        read_size = std::min(static_cast<unsigned int>(read_size),_current_file_size);
         size_t actual_read_size = fread(buf, sizeof(unsigned char), read_size, _current_fPtr);
         return actual_read_size;
     } else {
@@ -139,7 +138,7 @@ size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size)
         incremenet_read_ptr();
         if (size > read_size)
           THROW("Requested size doesn't match the actual size for file read")
-        memcpy(buf, (void *)file_data_ptr, size);
+        memcpy(buf, static_cast<void *>(file_data_ptr), size);
         return size;
     }
 }
@@ -242,7 +241,7 @@ bool ExternalSourceReader::pop_file_data(std::tuple<unsigned char*,  size_t, int
 
 void ExternalSourceReader::feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos)
 {
-    for (unsigned n=0; n < num_images; n++) {
+    for (unsigned n = 0; n < num_images; n++) {
       push_file_name(file_names[n]);
     }
     _end_of_sequence = eos;
@@ -250,7 +249,7 @@ void ExternalSourceReader::feed_file_names(const std::vector<std::string>& file_
 
 void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos, int width, int height, int channels)
 {
-    for (unsigned n=0; n < images.size(); n++) {
+    for (unsigned n = 0; n < images.size(); n++) {
         std::tuple<unsigned char*, size_t, int, int, int> image =  std::make_tuple(images[n], image_size[n], width, height, channels);
         push_file_data(image);
     }

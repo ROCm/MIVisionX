@@ -254,7 +254,7 @@ MasterGraph::decrease_image_count()
         _remaining_count -= (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size);
 }
 
-void
+size_t
 MasterGraph::calculate_cpu_num_threads(size_t shard_count)
 {
     if (_cpu_num_threads <= 0) {
@@ -270,6 +270,7 @@ MasterGraph::calculate_cpu_num_threads(size_t shard_count)
         _cpu_num_threads = core_count / shard_count;
     }
     // Use _cpu_num_threads if user has already passed non-negative num_threads
+    return _cpu_num_threads;
 }
 
 void

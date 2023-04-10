@@ -94,7 +94,7 @@ public:
         _output_images = output_images;
     }
     void set_output(Image* output_image);
-    void calculate_cpu_num_threads(size_t shard_count);
+    size_t calculate_cpu_num_threads(size_t shard_count);
     bool empty() { return (remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size)); }
     size_t sequence_batch_size() { return _sequence_batch_size; }
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }

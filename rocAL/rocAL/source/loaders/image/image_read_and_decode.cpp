@@ -98,13 +98,8 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
             _decoder[i]->initialize(device_id);
         }
     }
+    _num_threads = reader_config.get_cpu_num_threads();
     _reader = create_reader(reader_config);
-
-    _shard_count = reader_config.get_shard_count();
-    const unsigned DEFAULT_SMT_COUNT = 2;
-    unsigned THREAD_COUNT = std::thread::hardware_concurrency();
-    size_t CORE_COUNT = THREAD_COUNT / DEFAULT_SMT_COUNT;
-    _num_threads = CORE_COUNT / _shard_count;
 }
 
 void

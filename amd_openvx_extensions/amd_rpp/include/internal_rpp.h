@@ -54,7 +54,7 @@ using namespace std;
 #define MAX_KERNELS 500
 
 //! Brief Common data shared across all nodes in a graph
-struct RPPCommonHandle {
+struct vxRppHandle {
 #if ENABLE_OPENCL
     cl_command_queue cmdq;
 #elif ENABLE_HIP
@@ -66,8 +66,8 @@ struct RPPCommonHandle {
 
 //! Brief The utility functions
 vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx_uint32 num);
-vx_status createGraphHandle(vx_node node, RPPCommonHandle ** pHandle, Rpp32u batchSize, Rpp32u deviceType);
-vx_status releaseGraphHandle(vx_node node, RPPCommonHandle * handle, Rpp32u deviceType);
+vx_status createRPPHandle(vx_node node, vxRppHandle ** pHandle, Rpp32u batchSize, Rpp32u deviceType);
+vx_status releaseRPPHandle(vx_node node, vxRppHandle * handle, Rpp32u deviceType);
 
 class Kernellist
 {

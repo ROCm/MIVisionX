@@ -1925,8 +1925,8 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
     return node;
 }
 
-vx_status createGraphHandle(vx_node node, RPPCommonHandle **pHandle, Rpp32u batchSize, Rpp32u deviceType) {
-    RPPCommonHandle *handle = NULL;
+vx_status createRPPHandle(vx_node node, vxRppHandle **pHandle, Rpp32u batchSize, Rpp32u deviceType) {
+    vxRppHandle *handle = NULL;
     STATUS_ERROR_CHECK(vxGetModuleHandle(node, OPENVX_KHR_RPP, (void **)&handle));
     vx_uint32 cpu_num_threads;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_CPU_NUM_THREADS, &cpu_num_threads, sizeof(cpu_num_threads)));
@@ -1934,7 +1934,7 @@ vx_status createGraphHandle(vx_node node, RPPCommonHandle **pHandle, Rpp32u batc
     if (handle) {
         handle->count++;
     } else {
-        handle = new RPPCommonHandle;
+        handle = new vxRppHandle;
         memset(handle, 0, sizeof(*handle));
         handle->count = 1;
         
@@ -1956,7 +1956,7 @@ vx_status createGraphHandle(vx_node node, RPPCommonHandle **pHandle, Rpp32u batc
     return VX_SUCCESS;
 }
 
-vx_status releaseGraphHandle(vx_node node, RPPCommonHandle *handle, Rpp32u deviceType) {
+vx_status releaseRPPHandle(vx_node node, vxRppHandle *handle, Rpp32u deviceType) {
     handle->count--;
     if (handle->count == 0) {
         if(deviceType == AGO_TARGET_AFFINITY_GPU) {

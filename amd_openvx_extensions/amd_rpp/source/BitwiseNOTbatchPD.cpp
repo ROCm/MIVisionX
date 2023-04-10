@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 struct BitwiseNOTbatchPDLocalData
 {
-    RPPCommonHandle *handle;
+    vxRppHandle *handle;
     Rpp32u device_type;
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
@@ -177,7 +177,7 @@ static vx_status VX_CALLBACK initializeBitwiseNOTbatchPD(vx_node node, const vx_
     memset(data, 0, sizeof(*data));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshBitwiseNOTbatchPD(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, data->nbatchSize, data->device_type));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->nbatchSize, data->device_type));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -186,7 +186,7 @@ static vx_status VX_CALLBACK uninitializeBitwiseNOTbatchPD(vx_node node, const v
 {
     BitwiseNOTbatchPDLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    STATUS_ERROR_CHECK(releaseGraphHandle(node, data->handle, data->device_type));
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     delete (data);
     return VX_SUCCESS;
 }

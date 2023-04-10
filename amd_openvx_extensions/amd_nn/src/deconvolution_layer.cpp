@@ -134,7 +134,7 @@ static vx_status VX_CALLBACK initializeDeconvolutionLayer(vx_node node, const vx
 {
     DeconvolutionLayerLocalData * data = new DeconvolutionLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
 
     //deconvolution params.
     vx_nn_deconvolution_params_t params;
@@ -292,7 +292,7 @@ static vx_status VX_CALLBACK uninitializeDeconvolutionLayer(vx_node node, const 
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->weight_desc));
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->bias_desc));
     if (data) {
-        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

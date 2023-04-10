@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 struct ColorTwistbatchPDLocalData
 {
-    RPPCommonHandle *handle;
+    vxRppHandle *handle;
     Rpp32u device_type;
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
@@ -177,7 +177,7 @@ static vx_status VX_CALLBACK initializeColorTwistbatchPD(vx_node node, const vx_
     data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
 
     refreshColorTwistbatchPD(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, data->nbatchSize, data->device_type));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->nbatchSize, data->device_type));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -186,7 +186,7 @@ static vx_status VX_CALLBACK uninitializeColorTwistbatchPD(vx_node node, const v
 {
     ColorTwistbatchPDLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    STATUS_ERROR_CHECK(releaseGraphHandle(node, data->handle, data->device_type));
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     free(data->alpha);
     free(data->beta);
     free(data->hue);

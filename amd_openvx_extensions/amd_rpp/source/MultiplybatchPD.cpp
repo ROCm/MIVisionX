@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 struct MultiplybatchPDLocalData
 {
-    RPPCommonHandle *handle;
+    vxRppHandle *handle;
     Rpp32u device_type;
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
@@ -190,7 +190,7 @@ static vx_status VX_CALLBACK initializeMultiplybatchPD(vx_node node, const vx_re
     data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     refreshMultiplybatchPD(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, data->nbatchSize, data->device_type));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->nbatchSize, data->device_type));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -199,7 +199,7 @@ static vx_status VX_CALLBACK uninitializeMultiplybatchPD(vx_node node, const vx_
 {
     MultiplybatchPDLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    STATUS_ERROR_CHECK(releaseGraphHandle(node, data->handle, data->device_type));
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     free(data->srcBatch_height);
     free(data->srcBatch_width);
     free(data->srcDimensions);

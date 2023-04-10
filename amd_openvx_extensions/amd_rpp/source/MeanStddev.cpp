@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 struct MeanStddevLocalData
 {
-    RPPCommonHandle *handle;
+    vxRppHandle *handle;
     RppiSize srcDimensions;
     Rpp32u device_type;
     RppPtr_t pSrc;
@@ -148,7 +148,7 @@ static vx_status VX_CALLBACK initializeMeanStddev(vx_node node, const vx_referen
     memset(data, 0, sizeof(*data));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshMeanStddev(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createGraphHandle(node, &data->handle, 1, data->device_type));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, 1, data->device_type));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -157,7 +157,7 @@ static vx_status VX_CALLBACK uninitializeMeanStddev(vx_node node, const vx_refer
 {
     MeanStddevLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    STATUS_ERROR_CHECK(releaseGraphHandle(node, data->handle, data->device_type));
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     delete (data);
     return VX_SUCCESS;
 }

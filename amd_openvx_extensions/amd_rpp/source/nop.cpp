@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 struct NopLocalData
 {
-    RPPCommonHandle *handle;
+    vxRppHandle *handle;
     RppiSize dimensions;
     RppPtr_t pSrc;
     RppPtr_t pDst;

@@ -108,7 +108,7 @@ static vx_status VX_CALLBACK initializeReshapeLayer(vx_node node, const vx_refer
     vx_enum type;
     ReshapeLayerLocalData * data = new ReshapeLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, dims, sizeof(dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     // check if the input and output tensors are aliased
@@ -124,7 +124,7 @@ static vx_status VX_CALLBACK uninitializeReshapeLayer(vx_node node, const vx_ref
     ReshapeLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data) {
-        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

@@ -396,7 +396,7 @@ int main(int argc, const char ** argv)
     std::cerr << "Process  time "<< rocal_timing.process_time << std::endl;
     std::cerr << "Transfer time "<< rocal_timing.transfer_time << std::endl;
     std::cerr << ">>>>> "<< counter << " images/frames Processed. Total Elapsed Time " << dur/1000000 << " sec " << dur%1000000 << " us " << std::endl;
-    //rocalRelease(handle);
+    rocalRelease(handle);
     mat_input.release();
     mat_output.release();
     return 0;

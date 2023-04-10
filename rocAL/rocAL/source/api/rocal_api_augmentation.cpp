@@ -29,9 +29,6 @@ THE SOFTWARE.
 #include "rocal_api.h"
 #include "image_source_evaluator.h"
 
-// Calculated from the largest resize shorter dimension in imagenet validation dataset
-#define MAX_ASPECT_RATIO 6.0f
-
 RocalImage  ROCAL_API_CALL
 rocalSequenceRearrange(
             RocalContext p_context,

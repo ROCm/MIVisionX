@@ -258,10 +258,16 @@ void
 MasterGraph::calculate_cpu_num_threads(size_t shard_count)
 {
     if (_cpu_num_threads <= 0) {
-        const unsigned DEFAULT_SMT_COUNT = 2;
-        unsigned THREAD_COUNT = std::thread::hardware_concurrency();
-        size_t CORE_COUNT = THREAD_COUNT / DEFAULT_SMT_COUNT;
-        _cpu_num_threads = CORE_COUNT / shard_count;
+        const unsigned minimum_cpu_thread_count = 2;
+        const unsigned default_smt_count = 2;
+        unsigned thread_count = std::thread::hardware_concurrency();
+        if(thread_count < minimum_cpu_thread_count)
+        {
+            thread_count = minimum_cpu_thread_count;
+            WRN("hardware_concurrency() call failed, assuming rocAL can run " + TOSTR(thread_count) + " threads")
+        }
+        size_t core_count = thread_count / default_smt_count;
+        _cpu_num_threads = core_count / shard_count;
     }
     // Use _cpu_num_threads if user has already passed non-negative num_threads
 }
@@ -667,7 +673,6 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
             dest_buf_offset += single_output_image_size;
         }
     }
-#endif
     if((_output_image_info.mem_type() == RocalMemType::HOST))
     {
         if(normalization_on_device)
@@ -708,7 +713,11 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
             }
 
         }
-        else
+    }
+#endif
+    if((_output_image_info.mem_type() == RocalMemType::HOST))
+    {        
+        if(!normalization_on_device)
         {
             float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
             float offset[3] = {offset0, offset1, offset2 };

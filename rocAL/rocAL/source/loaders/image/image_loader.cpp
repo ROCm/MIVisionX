@@ -60,11 +60,11 @@ void ImageLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
     _prefetch_queue_depth = prefetch_queue_depth;
 }
 
-void ImageLoader::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *>input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
+void ImageLoader::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *>input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, int channels, FileMode mode, bool eos)
 {
     _external_source_reader = true;
     _external_input_eos = eos;
-    _image_loader->feed_external_input(input_images_names, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode, eos);
+    _image_loader->feed_external_input(input_images_names, labels, input_buffer, roi_width, roi_height, max_width, max_height, channels, mode, eos);
 }
 
 void ImageLoader::set_gpu_device_id(int device_id)

@@ -1494,11 +1494,11 @@ bool MasterGraph::no_more_processed_data()
 }
 
 void MasterGraph::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *>input_buffer,
-                            std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height,
+                            std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, int channels,
                             FileMode mode, RocalTensorFormat layout, bool eos)
 {
     _external_source_eos = eos;
-    _loader_module->feed_external_input(input_images_names, labels, input_buffer, roi_width, roi_height, max_width, max_height, mode, eos);
+    _loader_module->feed_external_input(input_images_names, labels, input_buffer, roi_width, roi_height, max_width, max_height, channels, mode, eos);
     if(!labels.empty() && !_meta_data_reader)
     {
         MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::EXTERNAL_SOURCE_LABEL_READER);

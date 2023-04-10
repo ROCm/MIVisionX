@@ -76,7 +76,7 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _compressed_buff.resize(batch_size);
     _decoder.resize(batch_size);
     _actual_read_size.resize(batch_size);
-    _image_names.resize(batch_size); // Check shobi
+    _image_names.resize(batch_size);
     _compressed_image_size.resize(batch_size);
     _decompressed_buff_ptrs.resize(_batch_size);
     _actual_decoded_width.resize(_batch_size);
@@ -136,13 +136,13 @@ ImageReadAndDecode::set_batch_random_bbox_crop_coords(std::vector<std::vector<fl
 
 void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *> input_buffer,
                              std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
-                             unsigned int max_width, unsigned int max_height, FileMode mode, bool eos)
+                             unsigned int max_width, unsigned int max_height, int channels,  FileMode mode, bool eos)
 {
     std::vector<size_t> image_size; // check if its required
     image_size.reserve(roi_height.size());
     for(unsigned int i = 0; i < roi_height.size(); i++) {
         if (mode == 2)
-            image_size[i] = (roi_width[i] * roi_height[i] * 3); // Shobi check how to get channels
+            image_size[i] = (roi_width[i] * roi_height[i] * channels); // Shobi check how to get channels
         else if (mode == 1)
             image_size[i] = roi_height[i];
     }

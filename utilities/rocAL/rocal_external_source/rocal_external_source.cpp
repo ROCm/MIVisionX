@@ -201,7 +201,7 @@ int main(int argc, const char ** argv)
         }
     }
     if(maxheight != 0 && maxwidth != 0)
-        input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, maxwidth, maxheight, RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode)); // kamal - Call to file
+        input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, maxwidth, maxheight, RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
     else
         input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height, RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
     if(rocalGetStatus(handle) != ROCAL_OK)
@@ -329,11 +329,11 @@ int main(int argc, const char ** argv)
         if(index <= (total_images / inputBatchSize))
         {
             if(mode == 0)
-                rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {}, decode_width, decode_height, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
+                rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {}, decode_width, decode_height, 3, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
             else if(mode == 1)
-                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, {}, roi_height, decode_width, decode_height, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
+                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, {}, roi_height, decode_width, decode_height, 3, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
             else if(mode == 2)
-                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, roi_width, roi_height, maxwidth, maxheight, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
+                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, roi_width, roi_height, maxwidth, maxheight, 3, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
         }
         if(rocalRun(handle) != 0)
             break;

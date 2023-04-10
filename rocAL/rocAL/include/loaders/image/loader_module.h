@@ -62,7 +62,8 @@ public:
     virtual void shut_down() = 0;
     // External Source reader
     virtual void feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *> input_buffer,
-                                     std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, FileMode mode, bool eos) = 0;
+                                     std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height,
+                                     int channels, FileMode mode, bool eos) = 0;
 };
 
 using pLoaderModule = std::shared_ptr<LoaderModule>;

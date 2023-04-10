@@ -1,4 +1,4 @@
-# rali_dataloader application
+# rocal_external_source application
 This application demonstrates a basic usage of rocAL's C API to load images from external source and add augmentations and and displays the output images.
 
 ## Build Instructions
@@ -20,5 +20,6 @@ This application demonstrates a basic usage of rocAL's C API to load images from
   ````
 ### running the application  
   ````
-  rali_dataloader <path-to-image-dataset>
+  rocal_external_source <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height batch_size gray_scale/rgb/rgbplanar display_on_off external_source_mode
+
   ````

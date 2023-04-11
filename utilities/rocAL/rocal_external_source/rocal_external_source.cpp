@@ -51,7 +51,7 @@ int main(int argc, const char ** argv)
 {
     const int MIN_ARG_COUNT = 2;
     if(argc < MIN_ARG_COUNT) {
-        printf( "Usage: rocal_external_source <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height batch_size gray_scale/rgb/rgbplanar display_on_off external_source_mode \n" );
+        printf( "Usage: rocal_external_source <image_dataset_folder> <processing_device=1/cpu=0>  decode_width decode_height batch_size gray_scale/rgb/rgbplanar display_on_off external_source_mode \n" );
         return -1;
     }
     int argIdx = 0;

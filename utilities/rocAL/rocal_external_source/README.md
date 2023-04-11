@@ -20,6 +20,6 @@ This application demonstrates a basic usage of rocAL's C API to load images from
   ````
 ### running the application  
   ````
-  rocal_external_source <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height batch_size gray_scale/rgb/rgbplanar display_on_off external_source_mode
+  rocal_external_source <image_dataset_folder> <processing_device=1/cpu=0>  decode_width decode_height batch_size gray_scale/rgb/rgbplanar display_on_off external_source_mode
 
   ````

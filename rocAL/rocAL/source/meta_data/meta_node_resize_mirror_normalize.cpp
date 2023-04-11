@@ -30,7 +30,7 @@ void ResizeMirrorNormalizeMetaNode::initialize()
     _dst_height_val.resize(_batch_size);
     _mirror_val.resize(_batch_size);
 }
-void ResizeMirrorNormalizeMetaNode::update_parameters(MetaDataBatch *input_meta_data, bool segmentation)
+void ResizeMirrorNormalizeMetaNode::update_parameters(MetaDataBatch *input_meta_data, const bool segmentation)
 {
     initialize();
     if (_batch_size != input_meta_data->size())

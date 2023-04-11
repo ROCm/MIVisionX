@@ -66,7 +66,6 @@ void ROCAL_API_CALL rocalGetOutputResizeHeight(RocalContext p_context, unsigned 
     memcpy(buf, resize_height_vec.data(), resize_height_vec.size() * sizeof(uint32_t));
 }
 
-
 int ROCAL_API_CALL rocalGetOutputColorFormat(RocalContext p_context)
 {
     auto context = static_cast<Context *>(p_context);

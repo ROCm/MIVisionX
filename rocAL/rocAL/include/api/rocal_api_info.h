@@ -34,14 +34,14 @@ extern "C" int ROCAL_API_CALL rocalGetOutputWidth(RocalContext rocal_context);
 extern "C" int ROCAL_API_CALL rocalGetOutputHeight(RocalContext rocal_context);
 
 ///
-/// \param rocal_context
-/// \param buf
+/// \param rocal_context Rocal context
+/// \param buf user buffer provided to be filled with output image width for images in the output batch.
 /// \return The width of the ROCAL's output image in pixels
 extern "C" void ROCAL_API_CALL rocalGetOutputResizeWidth(RocalContext rocal_context, unsigned int* buf);
 
 ///
-/// \param rocal_context
-/// \param buf
+/// \param rocal_context Rocal context
+/// \param buf user buffer provided to be filled with output image height for images in the output batch.
 /// \return The height of the ROCAL's output image in pixels. It includes all images in the batch.
 extern "C" void ROCAL_API_CALL rocalGetOutputResizeHeight(RocalContext rocal_context, unsigned int* buf);
 

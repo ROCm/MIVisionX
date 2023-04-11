@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 #include "bounding_box_graph.h"
 
-void BoundingBoxGraph::process(MetaDataBatch *meta_data, bool segmentation)
+void BoundingBoxGraph::process(MetaDataBatch *meta_data, const bool segmentation)
 {
     for (auto &meta_node : _meta_nodes)
     {
@@ -30,7 +30,7 @@ void BoundingBoxGraph::process(MetaDataBatch *meta_data, bool segmentation)
 }
 
 //update_meta_data is not required since the bbox are normalized in the very beggining -> removed the call in master graph also except for MaskRCNN
-void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info, bool segmentation)
+void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info, const bool segmentation)
 {
     std::vector<uint32_t> original_height = decode_image_info._original_height;
     std::vector<uint32_t> original_width = decode_image_info._original_width;

@@ -601,9 +601,6 @@ rocalResizeMirrorNormalize(
         output->reset_image_roi();
 
         std::shared_ptr<ResizeMirrorNormalizeNode> rmn_node =  context->master_graph->add_node<ResizeMirrorNormalizeNode>({input}, {output});
-        // RPP doesn't support returning float buffers so passing 0 and 1 as mean and std and doing normalization in rocAL
-        // TODO: To be removed with rocAL Tensor support
-        // rmn_node->init(0, 1, mirror);
         rmn_node->init(mean,std_dev,mirror);
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<ResizeMirrorNormalizeMetaNode,ResizeMirrorNormalizeNode>(rmn_node);
@@ -615,7 +612,6 @@ rocalResizeMirrorNormalize(
     }
     return output;
 }
-
 
 RocalImage ROCAL_API_CALL
 rocalBrightness(

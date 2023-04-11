@@ -32,7 +32,7 @@ class CropResizeMetaNode:public MetaNode
 {
     public:
         CropResizeMetaNode() {};
-        void update_parameters(MetaDataBatch* input_meta_data, bool segmentation)override;
+        void update_parameters(MetaDataBatch* input_meta_data, const bool segmentation)override;
         std::shared_ptr<CropResizeNode> _node = nullptr;
     private:
         void initialize();

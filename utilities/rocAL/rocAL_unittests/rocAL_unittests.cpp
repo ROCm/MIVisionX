@@ -767,7 +767,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                     std::cerr << "\n Number of box:  " << bb_label_count[i];
                 int bb_labels[size];
                 rocalGetBoundingBoxLabel(handle, bb_labels);
-                float bb_coords[size * 4];
+                double bb_coords[size * 4];
                 rocalGetBoundingBoxCords(handle, bb_coords);
                 int img_sizes_batch[inputBatchSize * 2];
                 rocalGetImageSizes(handle, img_sizes_batch);

@@ -34,8 +34,7 @@ THE SOFTWARE.
 using namespace std;
 namespace filesys = boost::filesystem;
 
-Caffe2LMDBRecordReader::Caffe2LMDBRecordReader():
-_shuffle_time("shuffle_time", DBG_TIMING)
+Caffe2LMDBRecordReader::Caffe2LMDBRecordReader()
 {
     _src_dir = nullptr;
     _sub_dir = nullptr;
@@ -79,10 +78,8 @@ Reader::Status Caffe2LMDBRecordReader::initialize(ReaderConfig desc)
         }
     }
     //shuffle dataset if set
-    _shuffle_time.start();
     if( ret==Reader::Status::OK && _shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
-    _shuffle_time.end();
 
     return ret;
 
@@ -133,10 +130,8 @@ Caffe2LMDBRecordReader::release()
 
 void Caffe2LMDBRecordReader::reset()
 {
-    _shuffle_time.start();
     if(_shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
-    _shuffle_time.end();
     _read_counter = 0;
     _curr_file_idx = 0;
 }

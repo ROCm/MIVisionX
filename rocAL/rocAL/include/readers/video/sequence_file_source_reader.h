@@ -60,7 +60,6 @@ public:
     ~SequenceFileSourceReader() override;
 
     int close() override;
-    unsigned long long get_shuffle_time() override {return _shuffle_time.get_timing();};
 
     SequenceFileSourceReader();
 
@@ -105,6 +104,5 @@ private:
     void incremenet_sequence_id() { _sequence_id++; }
     void replicate_last_sequence_to_fill_last_shard();
     void replicate_last_batch_to_pad_partial_shard();
-    TimingDBG _shuffle_time;
 };
 

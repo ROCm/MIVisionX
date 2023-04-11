@@ -32,8 +32,7 @@ THE SOFTWARE.
 namespace filesys = boost::filesystem;
 #define USE_STDIO_FILE 0
 
-COCOFileSourceReader::COCOFileSourceReader():
-_shuffle_time("shuffle_time", DBG_TIMING)
+COCOFileSourceReader::COCOFileSourceReader()
 {
     _src_dir = nullptr;
     _sub_dir = nullptr;
@@ -88,10 +87,8 @@ Reader::Status COCOFileSourceReader::initialize(ReaderConfig desc)
         }
     }
     //shuffle dataset if set
-    _shuffle_time.start();
     if (ret == Reader::Status::OK && _shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
-    _shuffle_time.end();
     return ret;
 }
 

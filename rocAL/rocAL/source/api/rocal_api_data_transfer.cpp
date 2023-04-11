@@ -127,7 +127,6 @@ ROCAL_API_CALL rocalSetOutputs(RocalContext p_context, unsigned int num_of_outpu
     }
 }
 
-//todo:: change input to tensor
 RocalStatus ROCAL_API_CALL
 rocalExternalSourceFeedInput(
         RocalContext p_context,

@@ -158,7 +158,7 @@ rocalJpegFileSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -238,7 +238,7 @@ rocalJpegFileSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -306,10 +306,10 @@ rocalJpegExternalFileSource(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
-        context->set_internal_batch_size(context->user_batch_size());   // User defined batch size is the inetrnal batch size of extrenal source reader
+         // User defined batch size is the inetrnal batch size of extrenal source reader
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -371,7 +371,6 @@ rocalSequenceReader(
         // Set sequence batch size and batch ratio in master graph as it varies according to sequence length
         context->master_graph->set_sequence_reader_output();
         context->master_graph->set_sequence_batch_size(sequence_length);
-        context->master_graph->set_sequence_batch_ratio();
         bool decoder_keep_original = true;
 
         // This has been introduced to support variable width and height video frames in future.
@@ -391,7 +390,7 @@ rocalSequenceReader(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -455,7 +454,6 @@ rocalSequenceReaderSingleShard(
         // Set sequence batch size and batch ratio in master graph as it varies according to sequence length
         context->master_graph->set_sequence_reader_output();
         context->master_graph->set_sequence_batch_size(sequence_length);
-        context->master_graph->set_sequence_batch_ratio();
         bool decoder_keep_original = true;
 
         // This has been introduced to support variable width and height video frames in future.
@@ -478,7 +476,7 @@ rocalSequenceReaderSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -560,7 +558,7 @@ rocalJpegCaffe2LMDBRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -643,7 +641,7 @@ rocalJpegCaffe2LMDBRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -721,7 +719,7 @@ rocalJpegCaffeLMDBRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -805,7 +803,7 @@ rocalJpegCaffeLMDBRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -886,7 +884,7 @@ rocalJpegCaffeLMDBRecordSourcePartialSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -968,7 +966,7 @@ rocalJpegCaffe2LMDBRecordSourcePartialSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1048,7 +1046,7 @@ rocalMXNetRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1132,7 +1130,7 @@ rocalMXNetRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1220,7 +1218,7 @@ rocalMXNetRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1297,7 +1295,7 @@ rocalJpegCOCOFileSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1380,7 +1378,7 @@ rocalJpegCOCOFileSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1454,7 +1452,7 @@ rocalFusedJpegCrop(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1530,7 +1528,7 @@ rocalJpegCOCOFileSourcePartial(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1611,7 +1609,7 @@ rocalJpegCOCOFileSourcePartialSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1697,7 +1695,7 @@ rocalJpegTFRecordSource(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1777,7 +1775,7 @@ rocalJpegTFRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1850,7 +1848,7 @@ rocalRawTFRecordSource(
 
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto info = ImageInfo(out_width, out_height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1920,7 +1918,7 @@ rocalRawTFRecordSourceSingleShard(
         INFO("Internal buffer size width = "+ TOSTR(out_width)+ " height = "+ TOSTR(out_height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(out_width, out_height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -1997,7 +1995,7 @@ rocalFusedJpegCropSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -2072,7 +2070,7 @@ rocalVideoFileSource(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto decoder_mode = convert_decoder_mode(rocal_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->internal_batch_size() * sequence_length,
+                              context->user_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -2162,7 +2160,7 @@ rocalVideoFileSourceSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto decoder_mode = convert_decoder_mode(rocal_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->internal_batch_size() * sequence_length,
+                              context->user_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -2253,7 +2251,7 @@ rocalVideoFileResize(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto decoder_mode = convert_decoder_mode(rocal_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->internal_batch_size() * sequence_length,
+                              context->user_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -2433,7 +2431,7 @@ rocalVideoFileResizeSingleShard(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
         auto decoder_mode = convert_decoder_mode(rocal_decode_device);
         auto info = ImageInfo(video_prop.width, video_prop.height,
-                              context->internal_batch_size() * sequence_length,
+                              context->user_batch_size() * sequence_length,
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );
@@ -2586,7 +2584,7 @@ rocalRawCIFAR10Source(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->user_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );

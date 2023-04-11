@@ -26,7 +26,7 @@ void ResizeMetaNode::initialize()
     _src_height_val.resize(_batch_size);
     _src_width_val.resize(_batch_size);
 }
-void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data, const bool segmentation)
+void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
 {
     initialize();
     // nothing to do in normalized coordinates

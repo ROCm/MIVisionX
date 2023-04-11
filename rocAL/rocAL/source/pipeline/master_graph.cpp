@@ -1057,9 +1057,9 @@ void MasterGraph::output_routine()
                         }
                         else
                         {
-                            _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info, _is_segmentation);
+                            _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
                         }
-                        _meta_data_graph->process(_augmented_meta_data, _is_segmentation);
+                        _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
                         full_batch_meta_data->concatenate(_augmented_meta_data);
@@ -1199,7 +1199,7 @@ void MasterGraph::output_routine_video()
                 {
                     if (_meta_data_graph)
                     {
-                        _meta_data_graph->process(_augmented_meta_data, _is_segmentation);
+                        _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
                         full_batch_meta_data->concatenate(_augmented_meta_data);
@@ -1265,13 +1265,11 @@ void MasterGraph::stop_processing()
         _output_thread.join();
 }
 
-MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, bool mask, MetaDataReaderType reader_type, MetaDataType label_type, float sigma, unsigned pose_output_width, unsigned pose_output_height)
+MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output, MetaDataReaderType reader_type, MetaDataType metadata_type, float sigma, unsigned pose_output_width, unsigned pose_output_height)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    if(mask)
-        _is_segmentation = true;
-    MetaDataConfig config(label_type, reader_type, source_path, std::map<std::string, std::string>(), std::string(), mask);
+    MetaDataConfig config(metadata_type, reader_type, source_path, std::map<std::string, std::string>(), std::string());
     config.set_out_img_width(pose_output_width);
     config.set_out_img_height(pose_output_height);
     _meta_data_graph = create_meta_data_graph(config);

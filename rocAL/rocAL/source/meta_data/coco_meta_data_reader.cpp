@@ -32,8 +32,9 @@ using namespace std;
 void COCOMetaDataReader::init(const MetaDataConfig &cfg)
 {
     _path = cfg.path();
-    _mask = cfg.mask();
+    _mask = cfg.type() == MetaDataType::PolygonMask ? true : false;
     _output = new BoundingBoxBatch();
+    _output->set_metadata_type(cfg.type());
 }
 
 bool COCOMetaDataReader::exists(const std::string &image_name)

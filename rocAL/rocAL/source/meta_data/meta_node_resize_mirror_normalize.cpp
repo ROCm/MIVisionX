@@ -30,7 +30,7 @@ void ResizeMirrorNormalizeMetaNode::initialize()
     _dst_height_val.resize(_batch_size);
     _mirror_val.resize(_batch_size);
 }
-void ResizeMirrorNormalizeMetaNode::update_parameters(MetaDataBatch *input_meta_data, const bool segmentation)
+void ResizeMirrorNormalizeMetaNode::update_parameters(MetaDataBatch *input_meta_data)
 {
     initialize();
     if (_batch_size != input_meta_data->size())
@@ -62,7 +62,7 @@ void ResizeMirrorNormalizeMetaNode::update_parameters(MetaDataBatch *input_meta_
         memcpy((void *)coords_buf.data(), input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
-        if (segmentation)
+        if (input_meta_data->metadata_type() == MetaDataType::PolygonMask)
         {
             // auto ptr = mask_data;
             auto mask_data_ptr = input_meta_data->get_mask_cords_batch()[i].data();

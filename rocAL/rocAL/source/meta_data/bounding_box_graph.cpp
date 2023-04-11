@@ -21,16 +21,16 @@ THE SOFTWARE.
 */
 #include "bounding_box_graph.h"
 
-void BoundingBoxGraph::process(MetaDataBatch *meta_data, const bool segmentation)
+void BoundingBoxGraph::process(MetaDataBatch *meta_data)
 {
     for (auto &meta_node : _meta_nodes)
     {
-        meta_node->update_parameters(meta_data, segmentation);
+        meta_node->update_parameters(meta_data);
     }
 }
 
 //update_meta_data is not required since the bbox are normalized in the very beggining -> removed the call in master graph also except for MaskRCNN
-void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info, const bool segmentation)
+void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_image_info decode_image_info)
 {
     std::vector<uint32_t> original_height = decode_image_info._original_height;
     std::vector<uint32_t> original_width = decode_image_info._original_width;
@@ -40,7 +40,7 @@ void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_
     {
         float _dst_to_src_width_ratio = roi_width[i] / float(original_width[i]);
         float _dst_to_src_height_ratio = roi_height[i] / float(original_height[i]);
-        if (segmentation)
+        if (input_meta_data->metadata_type() == MetaDataType::PolygonMask)
         {
             auto mask_data_ptr = input_meta_data->get_mask_cords_batch()[i].data();
             int mask_size = input_meta_data->get_mask_cords_batch()[i].size();

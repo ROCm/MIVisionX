@@ -56,6 +56,14 @@ typedef std::vector<float> Joint,JointVisibility,ScoreBatch,RotationBatch;
 typedef std::vector<std::vector<float>> Joints,JointsVisibility, CenterBatch, ScaleBatch;
 typedef std::vector<std::vector<std::vector<float>>> JointsBatch, JointsVisibilityBatch;
 
+enum class MetaDataType
+{
+    Label,
+    BoundingBox,
+    PolygonMask,
+    KeyPoints
+};
+
 typedef struct
 {
     int image_id;
@@ -179,6 +187,8 @@ struct MetaDataBatch
         return this;
     }
     virtual std::shared_ptr<MetaDataBatch> clone()  = 0;
+    void set_metadata_type(MetaDataType metadata_type) { _type = metadata_type; }
+    MetaDataType metadata_type() { return _type; }
     std::vector<int>& get_label_batch() { return _label_id; }
     std::vector<BoundingBoxCords>& get_bb_cords_batch() { return _bb_cords; }
     std::vector<BoundingBoxCords_xcycwh>& get_bb_cords_batch_xcycxwh() { return _bb_cords_xcycwh; }
@@ -198,6 +208,7 @@ protected:
     std::vector<MaskCords> _mask_cords = {};
     std::vector<std::vector<int>> _polygon_counts = {};
     std::vector<std::vector<std::vector<int>>> _vertices_counts = {};
+    MetaDataType _type;
 };
 
 struct LabelBatch : public MetaDataBatch

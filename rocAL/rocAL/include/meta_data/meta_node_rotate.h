@@ -36,7 +36,7 @@ class RotateMetaNode:public MetaNode
 {
     public:
         RotateMetaNode() {};
-        void update_parameters(MetaDataBatch* input_meta_data, const bool segmentation)override;
+        void update_parameters(MetaDataBatch* input_meta_data)override;
         std::shared_ptr<RotateNode> _node = nullptr;
     private:
         void initialize();

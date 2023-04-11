@@ -101,6 +101,10 @@ int main(int argc, const char ** argv)
     else if (rgb == 2)
       color_format = RocalImageColor::ROCAL_COLOR_RGB_PLANAR;
 
+    int channels = 3;
+    if (rgb == 0)
+        channels = 1;
+
     auto handle = rocalCreate(inputBatchSize, processing_device?RocalProcessMode::ROCAL_PROCESS_GPU:RocalProcessMode::ROCAL_PROCESS_CPU, 0,1);
 
     if(rocalGetStatus(handle) != ROCAL_OK)
@@ -329,11 +333,11 @@ int main(int argc, const char ** argv)
         if(index <= (total_images / inputBatchSize))
         {
             if(mode == 0)
-                rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {}, decode_width, decode_height, 3, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
+                rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {}, decode_width, decode_height, channels, RocalExtSourceMode (0), RocalTensorLayout (0), eos);
             else if(mode == 1)
-                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, {}, roi_height, decode_width, decode_height, 3, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
+                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, {}, roi_height, decode_width, decode_height, channels, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
             else if(mode == 2)
-                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, roi_width, roi_height, maxwidth, maxheight, 3, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
+                rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, roi_width, roi_height, maxwidth, maxheight, channels, RocalExtSourceMode (mode), RocalTensorLayout (0), eos);
         }
         if(rocalRun(handle) != 0)
             break;

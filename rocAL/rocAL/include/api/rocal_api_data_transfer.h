@@ -57,6 +57,7 @@ extern "C" void ROCAL_API_CALL rocalSetOutputs(RocalContext p_context, unsigned 
 /// \param roi_height The roi height of the images
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param channels The number of channels for the image
 /// \param mode Determines the mode of the source passed from the user - file_names / uncompressed data / compressed data
 /// \param layout Determines the layout of the images - NCHW / NHWC
 /// \return Reference to the output image

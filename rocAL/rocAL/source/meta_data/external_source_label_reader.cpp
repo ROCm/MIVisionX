@@ -114,13 +114,3 @@ void ExternalSourceLabelReader::lookup(const std::vector<std::string>& image_nam
         _output->get_label_batch()[i] = it->second->get_label();
     }
 }
-
-void ExternalSourceLabelReader::read_all(const std::string& _path)
-{
-
-}
-
-void ExternalSourceLabelReader::read_files(const std::string& _path)
-{
-
-}

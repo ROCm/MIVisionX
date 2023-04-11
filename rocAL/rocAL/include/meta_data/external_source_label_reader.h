@@ -33,7 +33,7 @@ public :
     void init(const MetaDataConfig& cfg) override;
     void lookup(const std::vector<std::string>& image_names) override;
     void add_labels(std::vector<std::string> image_name, std::vector<int> label) override;
-    void read_all(const std::string& path) override;
+    void read_all(const std::string& path) override { };
     void release(std::string image_name);
     void release() override;
     void print_map_contents();
@@ -43,7 +43,7 @@ public :
     ExternalSourceLabelReader();
     ~ExternalSourceLabelReader() override { delete _output; }
 private:
-    void read_files(const std::string& _path);
+    void read_files(const std::string& _path) { };
     bool exists(const std::string &image_name);
     void add(std::string image_name, int label);
     std::map<std::string, std::shared_ptr<MetaData>> _map_content;

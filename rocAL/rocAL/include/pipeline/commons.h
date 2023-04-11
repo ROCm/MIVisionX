@@ -95,7 +95,6 @@ struct Timing
     long long unsigned label_load_time= 0;
     long long unsigned bb_load_time= 0;
     long long unsigned mask_load_time = 0;
-    long long unsigned shuffle_time = 0;
     long long unsigned video_read_time= 0;
     long long unsigned video_decode_time= 0;
     long long unsigned video_process_time= 0;

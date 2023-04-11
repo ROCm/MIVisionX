@@ -51,7 +51,6 @@ VideoReadAndDecode::timing()
     Timing t;
     t.video_decode_time = _decode_time.get_timing();
     t.video_read_time = _file_load_time.get_timing();
-    t.shuffle_time = _video_reader->get_shuffle_time();
     return t;
 }
 

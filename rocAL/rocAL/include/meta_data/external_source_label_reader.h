@@ -29,7 +29,7 @@ THE SOFTWARE.
 
 class ExternalSourceLabelReader: public MetaDataReader
 {
-public :
+public:
     void init(const MetaDataConfig& cfg) override;
     void lookup(const std::vector<std::string>& image_names) override;
     void add_labels(std::vector<std::string> image_name, std::vector<int> label) override;
@@ -39,7 +39,7 @@ public :
     void print_map_contents();
     bool set_timestamp_mode() override { return false; }
     MetaDataBatch * get_output() override { return _output; }
-    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override { return _map_content;}
+    const std::map<std::string, std::shared_ptr<MetaData>> & get_map_content() override { return _map_content; }
     ExternalSourceLabelReader();
     ~ExternalSourceLabelReader() override { delete _output; }
 private:

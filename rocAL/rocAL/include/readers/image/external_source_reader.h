@@ -53,7 +53,7 @@ public:
     void reset() override;
 
     //! Returns the name of the latest file opened
-    std::string id() override { return _last_id;};
+    std::string id() override { return _last_id; }
 
     //! Return batch_size() for count_items unless end_of_sequence has been signalled
     unsigned count_items() override;
@@ -62,7 +62,7 @@ public:
 
     int close() override;
     // get_shuffle_time() not applicable for external_source reader
-    unsigned long long get_shuffle_time() {return 0;}
+    unsigned long long get_shuffle_time() { return 0; }
 
     ExternalSourceReader();
 
@@ -73,7 +73,7 @@ public:
     void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width=0, int height=0, int channels=0) override;
 
     // mode(): returs the mode for the reader
-    FileMode mode() {return _mode;};
+    FileMode mode() { return _mode; }
 
     // get image_dims
     void get_dims(int cur_idx, int& width, int& height, int& channels);

@@ -68,7 +68,7 @@ public:
     vx_status Initialize();
     vx_status ProcessFrame(vx_image input_image, vx_array input_aux, vx_array output_aux);
     vx_status UpdateBufferGPU(vx_image input_image, vx_array input_aux);
-    void SetEnableUserBufferGPUMode(vx_bool bEnable) { m_enableUserBufferGPU = bEnable;};
+    void SetEnableUserBufferGPUMode(vx_bool bEnable) { m_enableUserBufferGPU = bEnable; }
     vx_bool m_enableUserBufferGPU;
 
 protected:
@@ -154,7 +154,7 @@ int CLoomIoMediaEncoder::PopAck()
 CLoomIoMediaEncoder::CLoomIoMediaEncoder(vx_node node_, const char ioConfig_[], vx_uint32 width_, vx_uint32 height_, vx_df_image format_, vx_uint32 stride_, vx_uint32 offset_, vx_size input_aux_data_max_size_)
     : node{ node_ }, ioConfig(ioConfig_), width{ width_ }, height{ height_ }, format{ format_ },
       stride{ static_cast<int>(stride_) }, offset{ static_cast<int>(offset_) }, input_aux_data_max_size{ input_aux_data_max_size_ },
-      inputFrameCount{ 0 }, encodeFrameCount{ 0 }, threadTerminated{ false }, inputFormat{ AV_PIX_FMT_UYVY422 }, 
+      inputFrameCount{ 0 }, encodeFrameCount{ 0 }, threadTerminated{ false }, inputFormat{ AV_PIX_FMT_UYVY422 },
       fpOutput{ nullptr }, formatContext{ nullptr }, videoStream{ nullptr }, outputAuxBuffer{ nullptr }, outputAuxLength{ 0 },
       videoCodecContext{ nullptr }, videoCodec{ nullptr }, conversionContext{ nullptr }, thread{ nullptr },
       mbps{ DEFAULT_MBPS }, fps{ DEFAULT_FPS }, gopsize{ DEFAULT_GOPSIZE }, bframes{ DEFAULT_BFRAMES }
@@ -406,7 +406,7 @@ vx_status CLoomIoMediaEncoder::ProcessFrame(vx_image input_image, vx_array input
         return VX_ERROR_GRAPH_ABANDONED;
     }
 
-    if (m_enableUserBufferGPU) {        
+    if (m_enableUserBufferGPU) {
         UpdateBufferGPU(input_image, input_aux);
        // just submit GPU buffer for encoding
         PushCommand(cmd_encode);

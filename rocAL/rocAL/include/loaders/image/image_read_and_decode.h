@@ -48,7 +48,7 @@ public:
     virtual size_t count();
     void reset();
     void create(ReaderConfig reader_config, DecoderConfig decoder_config, int batch_size, int device_id=0);
-    void set_bbox_vector(std::vector<std::vector <float>> bbox_coords) { _bbox_coords = bbox_coords;};
+    void set_bbox_vector(std::vector<std::vector <float>> bbox_coords) { _bbox_coords = bbox_coords; }
     void set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader);
     std::vector<std::vector <float>> get_batch_random_bbox_crop_coords();
     void set_batch_random_bbox_crop_coords(std::vector<std::vector <float>> batch_crop_coords);
@@ -74,7 +74,7 @@ public:
             bool decoder_keep_original=false);
     void feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *> input_buffer,
                              std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
-                             unsigned int max_width, unsigned int max_height, int channels, FileMode mode, bool eos) ;
+                             unsigned int max_width, unsigned int max_height, int channels, FileMode mode, bool eos);
     //! returns timing info or other status information
     Timing timing();
 

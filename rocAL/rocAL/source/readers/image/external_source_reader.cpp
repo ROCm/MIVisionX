@@ -74,8 +74,7 @@ Reader::Status ExternalSourceReader::initialize(ReaderConfig desc)
 void ExternalSourceReader::incremenet_read_ptr()
 {
     _read_counter++;
-    // _curr_file_idx++;
-        _curr_file_idx = (_curr_file_idx + 1) % _batch_count;
+    _curr_file_idx = (_curr_file_idx + 1) % _batch_count;
 }
 
 size_t ExternalSourceReader::open()
@@ -104,7 +103,7 @@ size_t ExternalSourceReader::open()
               return 0;
           }
           fseek(_current_fPtr, 0 , SEEK_SET);// Take the file pointer back to the start
-          _file_data[_curr_file_idx] = std::make_tuple((unsigned char *)next_file_name.data(), (size_t)_current_file_size, 0, 0, 0); // shobi check typecasting
+          _file_data[_curr_file_idx] = std::make_tuple((unsigned char *)next_file_name.data(), (size_t)_current_file_size, 0, 0, 0);
           incremenet_read_ptr();
         }
     } else {
@@ -255,7 +254,3 @@ void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images,
     }
     _end_of_sequence = eos;
 }
-
-
-
-

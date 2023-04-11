@@ -149,10 +149,7 @@ void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_imag
     if(mode == 0) {
         _reader->feed_file_names(input_images_names, input_images_names.size(), eos);
     }
-    else if(mode == 1) {
-        _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, 3);
-    }
-    else if(mode == 2){
+    else if(mode == 1 || mode == 2) {
         _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, 3);
     }
 }
@@ -200,8 +197,10 @@ ImageReadAndDecode::load(unsigned char* buff,
             _actual_read_size[file_counter] = _reader->read_data(read_ptr, fsize);
             if(_actual_read_size[file_counter] < fsize)
                 LOG("Reader read less than requested bytes of size: " + _actual_read_size[file_counter]);
+
             _image_names[file_counter] = _reader->id();
             _reader->close();
+
            // _compressed_image_size[file_counter] = fsize;
             names[file_counter] = _image_names[file_counter];
             roi_width[file_counter] = max_decoded_width;

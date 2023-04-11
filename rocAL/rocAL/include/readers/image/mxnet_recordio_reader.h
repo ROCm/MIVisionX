@@ -54,7 +54,7 @@ public:
     void reset() override;
 
     //! Returns the id of the latest file opened
-    std::string id() override { return _last_id;};
+    std::string id() override { return _last_id; }
 
     unsigned count_items() override;
 
@@ -64,13 +64,13 @@ public:
 
     MXNetRecordIOReader();
 
-    unsigned long long get_shuffle_time() override {return 0;}
+    unsigned long long get_shuffle_time() override { return 0; }
 
     //! return feed_data: not implemented
-    void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos=false) override {return;};
+    void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos=false) override { return; }
 
     //! return feed_data: not implemented
-    void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width=0, int height=0, int channels=0) override{return;};
+    void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width=0, int height=0, int channels=0) override{ return; }
 
 
 private:

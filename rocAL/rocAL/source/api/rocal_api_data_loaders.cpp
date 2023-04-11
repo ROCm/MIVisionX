@@ -316,17 +316,17 @@ rocalJpegExternalFileSource(
         output = context->master_graph->create_loader_output_image(info);
         context->master_graph->set_external_source_reader_flag();
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                         source_path, "",
-                                                         std::map<std::string, std::string>(),
-                                                         StorageType::EXTERNAL_FILE_SOURCE,
-                                                         decType,
-                                                         shuffle,
-                                                         loop,
-                                                         context->user_batch_size(),
-                                                         context->master_graph->mem_type(),
-                                                         context->master_graph->meta_data_reader(),
-                                                         decoder_keep_original,
-                                                         FileMode(external_source_mode));
+                                                                            source_path, "",
+                                                                            std::map<std::string, std::string>(),
+                                                                            StorageType::EXTERNAL_FILE_SOURCE,
+                                                                            decType,
+                                                                            shuffle,
+                                                                            loop,
+                                                                            context->user_batch_size(),
+                                                                            context->master_graph->mem_type(),
+                                                                            context->master_graph->meta_data_reader(),
+                                                                            decoder_keep_original,
+                                                                            FileMode(external_source_mode));
         context->master_graph->set_loop(loop);
 
         if(is_output)

@@ -87,8 +87,8 @@ private:
     size_t _image_counter = 0;//!< How many images have been loaded already
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
     bool _decoder_keep_original = false;
-    bool _external_source_reader = false; // Set to true if external source reader
-    bool _external_input_eos = false;
+    bool _external_source_reader = false; //!< Set to true if external source reader
+    bool _external_input_eos = false; //!< Set to true for last batch for the sequence
     int _device_id;
 };
 

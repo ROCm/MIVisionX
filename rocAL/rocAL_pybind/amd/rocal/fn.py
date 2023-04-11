@@ -227,7 +227,7 @@ def rain(*inputs, rain=None, rain_width = None, rain_height = None, rain_transpa
     return (rain_image)
 
 def resize(*inputs, bytes_per_sample_hint=0, image_type=0, interp_type=1, mag_filter=1, max_size=[], min_filter=1,
-            minibatch_size=32, preserve=False, resize_longer=0, resize_shorter=0, resize_x=0, resize_y=0, 
+            minibatch_size=32, preserve=False, resize_longer=0, resize_shorter=0, resize_x=0, resize_y=0,
             scaling_mode=types.SCALING_MODE_DEFAULT, interpolation_type=types.LINEAR_INTERPOLATION,
             save_attrs=False, seed=1, temp_buffer_hint=0, device = None):
     """
@@ -278,12 +278,12 @@ def resize(*inputs, bytes_per_sample_hint=0, image_type=0, interp_type=1, mag_fi
 
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0], "dest_width": resize_x, "dest_height": resize_y,
-                     "is_output": False, "scaling_mode": scaling_mode, "max_size": max_size, "resize_shorter": resize_shorter, 
+                     "is_output": False, "scaling_mode": scaling_mode, "max_size": max_size, "resize_shorter": resize_shorter,
                      "resize_longer": resize_longer, "interpolation_type": interpolation_type }
     resized_image = b.Resize(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (resized_image)
 
-def resize_mirror_normalize(*inputs, bytes_per_sample_hint=0, resize_min=0, resize_max=0, 
+def resize_mirror_normalize(*inputs, bytes_per_sample_hint=0, resize_min=0, resize_max=0,
                             image_type=0, mean=[0.0], mirror=1, output_dtype=types.FLOAT, output_layout=types.NCHW, pad_output=False,
                             preserve=False, seed=1, std=[1.0], device=None):
 
@@ -598,7 +598,7 @@ def external_source(*inputs, source, device=None, color_format=types.RGB, random
     Pipeline._current_pipeline._external_source_mode = mode
     Pipeline._current_pipeline._external_source_user_given_width = max_width
     Pipeline._current_pipeline._external_source_user_given_height = max_heigth
-    kwargs_pybind = {"source_path":source.images_dir, "rocal_color_format":color_format, "is_output":False, "shuffle": random_shuffle, "loop":False, "decode_size_policy": types.USER_GIVEN_SIZE,
-            "max_width": 2000, "max_height": 2000, "dec_type":types.DECODER_TJPEG, "external_source_mode":mode} # Check the Mode your passing
-    external_source_operator = b.ExternalFileSource(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
+    kwargs_pybind = {"source_path" : source.images_dir, "rocal_color_format" : color_format, "is_output" : False, "shuffle" : random_shuffle, "loop" : False, "decode_size_policy" : types.USER_GIVEN_SIZE,
+            "max_width" : 2000, "max_height" : 2000, "dec_type" : types.DECODER_TJPEG, "external_source_mode" : mode}
+    external_source_operator = b.ExternalFileSource(Pipeline._current_pipeline._handle, *(kwargs_pybind.values()))
     return (external_source_operator, []) # Labels is Empty

@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 - 2022 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2018 - 2023 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -49,7 +49,6 @@ using namespace std::chrono;
 
 int main(int argc, const char ** argv)
 {
-    // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if(argc < MIN_ARG_COUNT) {
         printf( "Usage: rocal_external_source <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height batch_size gray_scale/rgb/rgbplanar display_on_off external_source_mode \n" );
@@ -58,17 +57,13 @@ int main(int argc, const char ** argv)
     int argIdx = 0;
     const char * folderPath1 = argv[++argIdx];
     bool display = 0;// Display the images
-    //int aug_depth = 1;// how deep is the augmentation tree
     int rgb = 2;// process color images
     int decode_width = 224;
     int decode_height = 224;
     int inputBatchSize = 64;
     int prefetch_queue_depth = 3;
     bool processing_device = 1;
-    int mode;
-    // mode = 1; //Need to get it from the user
-    mode = 0;
-    // mode = 2;
+    int mode = -1;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
@@ -107,8 +102,7 @@ int main(int argc, const char ** argv)
 
     auto handle = rocalCreate(inputBatchSize, processing_device?RocalProcessMode::ROCAL_PROCESS_GPU:RocalProcessMode::ROCAL_PROCESS_CPU, 0,1);
 
-    if(rocalGetStatus(handle) != ROCAL_OK)
-    {
+    if(rocalGetStatus(handle) != ROCAL_OK) {
         std::cerr << "Could not create the Rocal contex\n";
         return -1;
     }
@@ -121,14 +115,12 @@ int main(int argc, const char ** argv)
     struct dirent *_entity;
     std::vector<std::string> file_names;
     std::vector<unsigned char *> input_buffer;
-    if((_src_dir = opendir (folderPath1)) == nullptr)
-    {
+    if((_src_dir = opendir (folderPath1)) == nullptr) {
             std::cerr<<"\n ERROR: Failed opening the directory at "<<folderPath1;
             exit(0);
     }
 
-    while((_entity = readdir (_src_dir)) != nullptr)
-    {
+    while((_entity = readdir (_src_dir)) != nullptr) {
         if(_entity->d_type != DT_REG)
             continue;
 
@@ -136,8 +128,7 @@ int main(int argc, const char ** argv)
         file_path.append(_entity->d_name);
         file_names.push_back(file_path);
     }
-    if(mode != 0)
-    {
+    if(mode != 0) {
         if(mode == 1){ // Raw compressed
             srcsize_height.resize(file_names.size());
             srcsize_width.resize(file_names.size());
@@ -149,8 +140,7 @@ int main(int argc, const char ** argv)
                 fseek(_current_fPtr, 0 , SEEK_END);// Take the file read pointer to the end
                 size_t _current_file_size = ftell(_current_fPtr);// Check how many bytes are there between and the current read pointer position (end of the file)
                 unsigned char* input_data = (unsigned char *) malloc(sizeof(unsigned char ) * _current_file_size);
-                if(_current_file_size == 0)
-                { // If file is empty continue
+                if(_current_file_size == 0) { // If file is empty continue
                     fclose(_current_fPtr);
                     _current_fPtr = nullptr;
                     return 0;
@@ -161,16 +151,14 @@ int main(int argc, const char ** argv)
                 input_buffer.push_back(input_data);
                 srcsize_height[i] = actual_read_size;
             }
-
         }
-         if(mode == 2) { // Raw un compressed
+        if(mode == 2) { // Raw un compressed
             srcsize_height.resize(file_names.size());
             srcsize_width.resize(file_names.size());
             for(uint32_t i = 0; i < file_names.size(); i++) {
                 Mat image;
                 image = imread(file_names[i], 1);
-                if(image.empty())
-                {
+                if(image.empty()) {
                     std::cout << "Could not read the image: " << file_names[i] << std::endl;
                     return 1;
                 }
@@ -208,8 +196,7 @@ int main(int argc, const char ** argv)
         input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, maxwidth, maxheight, RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
     else
         input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false, ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height, RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
-    if(rocalGetStatus(handle) != ROCAL_OK)
-    {
+    if(rocalGetStatus(handle) != ROCAL_OK) {
         std::cerr << "JPEG source could not initialize : "<<rocalGetErrorMessage(handle) << std::endl;
         return -1;
     }
@@ -246,15 +233,13 @@ int main(int argc, const char ** argv)
     image0 = rocalResize(handle, input1, resize_w, resize_h, true);
 #endif
 
-    if(rocalGetStatus(handle) != ROCAL_OK)
-    {
+    if(rocalGetStatus(handle) != ROCAL_OK) {
         std::cerr << "Error while adding the augmentation nodes " << std::endl;
         auto err_msg = rocalGetErrorMessage(handle);
         std::cerr << err_msg << std::endl;
     }
     // Calling the API to verify and build the augmentation graph
-    if(rocalVerify(handle) != ROCAL_OK)
-    {
+    if(rocalVerify(handle) != ROCAL_OK) {
         std::cerr << "Could not verify the augmentation graph" << std::endl;
         return -1;
     }
@@ -293,20 +278,17 @@ int main(int argc, const char ** argv)
     float  pmul = 2.0f/255;
     float  padd = -1.0f;
     int index = 0;
-    while (!rocalIsEmpty(handle))
-    {
+    while (!rocalIsEmpty(handle)) {
         std::vector<std::string> input_images;
         std::vector<unsigned char*> input_batch_buffer;
         std::vector<unsigned> roi_width;
         std::vector<unsigned> roi_height;
         std::vector<int> label;
-        for(int i = 0; i < inputBatchSize; i++)
-        {
+        for(int i = 0; i < inputBatchSize; i++) {
             if(mode == 0) {
                 input_images.push_back(file_names.back());
                 file_names.pop_back();
-                if((file_names.size()) == 0)
-                {
+                if((file_names.size()) == 0) {
                     eos = true;
                 }
             } else {
@@ -315,8 +297,7 @@ int main(int argc, const char ** argv)
                     input_buffer.pop_back();
                     roi_height.push_back(srcsize_height.back());
                     srcsize_height.pop_back();
-                }
-                else {
+                } else {
                     input_batch_buffer.push_back(input_buffer.back());
                     input_buffer.pop_back();
                     roi_width.push_back(srcsize_width.back());
@@ -324,8 +305,7 @@ int main(int argc, const char ** argv)
                     roi_height.push_back(srcsize_height.back());
                     srcsize_height.pop_back();
                 }
-                if((file_names.size()) == 0 || input_buffer.size() == 0)
-                {
+                if((file_names.size()) == 0 || input_buffer.size() == 0) {
                     eos = true;
                 }
             }
@@ -345,7 +325,7 @@ int main(int argc, const char ** argv)
         if(display)
             rocalCopyToOutput(handle, mat_input.data, h*w*p);
         counter += inputBatchSize;
-        iter_cnt ++;
+        iter_cnt++;
 
         if(!display)
             continue;
@@ -353,15 +333,12 @@ int main(int argc, const char ** argv)
         compression_params.push_back(IMWRITE_PNG_COMPRESSION);
         compression_params.push_back(9);
         std::string out_filename = std::string("output") + std::to_string(index) + ".png";
-        if(color_format ==  RocalImageColor::ROCAL_COLOR_RGB24 )
-        {
+        if(color_format ==  RocalImageColor::ROCAL_COLOR_RGB24 ) {
             mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
             // cv::imshow("output",mat_color);
             cv::imwrite(out_filename, mat_color, compression_params);
-        }
-        else if (color_format == RocalImageColor::ROCAL_COLOR_RGB_PLANAR )
-        {
+        } else if (color_format == RocalImageColor::ROCAL_COLOR_RGB_PLANAR ) {
             // convert planar to packed for OPENCV
             for (int j = 0; j < n ; j++) {
                 int const kWidth = w;
@@ -380,9 +357,7 @@ int main(int argc, const char ** argv)
             }
             // cv::imshow("output",mat_output);
             cv::imwrite(out_filename, mat_color, compression_params);
-        }
-        else
-        {
+        } else {
             mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
             // cv::imshow("output",mat_output);
             cv::imwrite(out_filename, mat_color, compression_params);

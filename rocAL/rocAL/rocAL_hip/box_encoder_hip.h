@@ -53,7 +53,7 @@ public:
     }
     void Run(pMetaDataBatch full_batch_meta_data, float *encoded_boxes_data, int *encoded_labels_data);
 
-    virtual ~BoxEncoderGpu() { UnInitialize();};
+    virtual ~BoxEncoderGpu() { UnInitialize(); }
 
 protected:
     void Initialize(int cur_batch_size) {

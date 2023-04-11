@@ -8,7 +8,6 @@ import amd.rocal.fn as fn
 import amd.rocal.types as types
 
 def main():
-
     batch_size = 3
     data_dir = "/media/MIVisionX-data/rocal_data/coco/coco_10_img/train_10images_2017/" # Pass the data directory
     device = "cpu"
@@ -47,11 +46,11 @@ def main():
                 label.append(1) # Label is some random variable for now - iser can modify acording to use case
                 self.i = (self.i + 1) % self.n
             return batch, label
-    
+
     # Mode 0
     eii = ExternalInputIteratorMode0(batch_size)
 
-    #Create the pipeline 
+    #Create the pipeline
     external_source_pipeline_mode0 = Pipeline(batch_size=batch_size, num_threads=1, device_id=0, seed=1, rocal_cpu=True, tensor_layout=types.NCHW , tensor_dtype=types.FLOAT)
 
     with external_source_pipeline_mode0:

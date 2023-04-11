@@ -63,21 +63,15 @@ void ExternalSourceLabelReader::add(std::string image_name, int label)
 }
  void  ExternalSourceLabelReader::add_labels(std::vector<std::string> image_name, std::vector<int> label)
  {
-    if(image_name.size() != label.size())
-    {
-        THROW("ERROR: Image name and labels should have same size")
-    }
+    if(image_name.size() != label.size()) { THROW("ERROR: Image name and labels should have same size") }
     for(int i = 0; i < image_name.size(); i++)
-    {
         add(image_name[i], label[i]);
-    }
  }
 void ExternalSourceLabelReader::print_map_contents()
 {
     std::cerr << "\nMap contents: \n";
-    for (auto& elem : _map_content) {
+    for (auto& elem : _map_content)
         std::cerr << "Name :\t " << elem.first << "\t ID:  " << elem.second->get_label() << std::endl;
-    }
 }
 
 void ExternalSourceLabelReader::release()

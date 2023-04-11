@@ -144,14 +144,15 @@ class ROCALGenericIterator(object):
                     kwargs_pybind = {
                         "handle":self.loader._handle,
                         "source_input_images":next(self.loader._external_source)[0],
-                        "labels":next(self.loader._external_source)[1], 
+                        "labels":next(self.loader._external_source)[1],
                         "input_batch_buffer":[],
                         "roi_width":[],
                         "roi_height":[],
-                        "decoded_width":self.loader._external_source_user_given_width, 
-                        "decoded_height":self.loader._external_source_user_given_height, 
-                        "external_source_mode":self.loader._external_source_mode, 
-                        "rocal_tensor_layout":types.NCHW, 
+                        "decoded_width":self.loader._external_source_user_given_width,
+                        "decoded_height":self.loader._external_source_user_given_height,
+                        "channels": self.p,
+                        "external_source_mode":self.loader._external_source_mode,
+                        "rocal_tensor_layout":types.NCHW,
                         "eos":self.eos }
                     b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
                 if self.loader._external_source_mode == types.EXTSOURCE_RAW_COMPRESSED:
@@ -164,11 +165,12 @@ class ROCALGenericIterator(object):
                         "labels":next(self.loader._external_source)[1],
                         "input_batch_buffer":next(self.loader._external_source)[0],
                         "roi_width":[],
-                        "roi_height":next(self.loader._external_source)[2], 
-                        "decoded_width":self.loader._external_source_user_given_width, 
-                        "decoded_height":self.loader._external_source_user_given_height, 
-                        "external_source_mode":self.loader._external_source_mode, 
-                        "rocal_tensor_layout":types.NCHW, 
+                        "roi_height":next(self.loader._external_source)[2],
+                        "decoded_width":self.loader._external_source_user_given_width,
+                        "decoded_height":self.loader._external_source_user_given_height,
+                        "channels": self.p,
+                        "external_source_mode":self.loader._external_source_mode,
+                        "rocal_tensor_layout":types.NCHW,
                         "eos":self.eos }
                     b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
                     '''
@@ -184,17 +186,18 @@ class ROCALGenericIterator(object):
                         "input_batch_buffer":data_loader_source[0],
                         # ctypes.c_void_p(array.data_ptr())
                         "roi_width":data_loader_source[3],
-                        "roi_height":data_loader_source[2], 
-                        "decoded_width":data_loader_source[5], 
-                        "decoded_height":data_loader_source[4], 
-                        "external_source_mode":self.loader._external_source_mode, 
-                        "rocal_tensor_layout":types.NCHW, 
+                        "roi_height":data_loader_source[2],
+                        "decoded_width":data_loader_source[5],
+                        "decoded_height":data_loader_source[4],
+                        "channels": self.p,
+                        "external_source_mode":self.loader._external_source_mode,
+                        "rocal_tensor_layout":types.NCHW,
                         "eos":self.eos }
                     b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
                     '''
         if self.loader.run() != 0:
             raise StopIteration
-    
+
         self.index = self.index + 1
         self.loader.copyToTensor(
             self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)

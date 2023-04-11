@@ -1,25 +1,32 @@
 import types
-import collections
-import numpy as np
 from random import shuffle
 from amd.rocal.pipeline import Pipeline
 from amd.rocal.plugin.pytorch import ROCALClassificationIterator
 import amd.rocal.fn as fn
 import amd.rocal.types as types
+import os
 
 def main():
     batch_size = 3
-    data_dir = "/media/MIVisionX-data/rocal_data/coco/coco_10_img/train_10images_2017/" # Pass the data directory
+    data_dir = os.environ["ROCAL_DATA_PATH"] + "/coco/coco_10_img/train_10images_2017/"
     device = "cpu"
 
-    def draw_patches(img, idx, device):
-    #image is expected as a tensor, bboxes as numpy
+    try:
+        path = "OUTPUT_IMAGES_PYTHON/NEW_API/EXTERNAL_SOURCE_READER/"
+        isExist = os.path.exists(path)
+        if not isExist:
+            os.makedirs(path)
+    except OSError as error:
+        print(error)
+
+    #image is expected as a tensor
+    def draw_patches(image, idx):
         import cv2
-        image = img.detach().numpy()
+        image = image.detach().numpy()
         image = image.transpose([1, 2, 0]) # NCHW
         image = (image).astype('uint8')
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(str(idx)+"_"+"train"+".png", image)
+        cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/EXTERNAL_SOURCE_READER/" + str(idx)+"_"+"train"+".png", image)
 
     #Define the Data Source for all image samples - User needs to define their own source
     class ExternalInputIteratorMode0(object):
@@ -43,19 +50,19 @@ def main():
             for i in range(self.batch_size):
                 jpeg_filename = self.files[self.i]
                 batch.append(jpeg_filename)
-                label.append(1) # Label is some random variable for now - iser can modify acording to use case
+                label.append(1) # Label is some random variable for testing - user can modify acording to use case
                 self.i = (self.i + 1) % self.n
             return batch, label
 
     # Mode 0
-    eii = ExternalInputIteratorMode0(batch_size)
+    external_input_source = ExternalInputIteratorMode0(batch_size)
 
     #Create the pipeline
-    external_source_pipeline_mode0 = Pipeline(batch_size=batch_size, num_threads=1, device_id=0, seed=1, rocal_cpu=True, tensor_layout=types.NCHW , tensor_dtype=types.FLOAT)
+    external_source_pipeline_mode0 = Pipeline(batch_size = batch_size, num_threads = 1, device_id = 0, seed = 1, rocal_cpu = True, tensor_layout = types.NCHW , tensor_dtype = types.FLOAT)
 
     with external_source_pipeline_mode0:
-        jpegs, labels = fn.external_source(source=eii, mode=types.EXTSOURCE_FNAME)
-        output = fn.resize(jpegs, resize_x=300, resize_y=300)
+        jpegs, labels = fn.external_source(source = external_input_source, mode = types.EXTSOURCE_FNAME)
+        output = fn.resize(jpegs, resize_x = 300, resize_y = 300)
         external_source_pipeline_mode0.set_outputs(output)
 
     # build the external_source_pipeline_mode0
@@ -72,7 +79,7 @@ def main():
             print("**************", i, "*******************")
             for img in it[0]:
                 cnt = cnt+1
-                draw_patches(img, cnt, device)
+                draw_patches(img, cnt)
             print("Image Dumped")
 
 if __name__ == '__main__':

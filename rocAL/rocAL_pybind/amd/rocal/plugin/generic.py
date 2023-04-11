@@ -72,6 +72,8 @@ class ROCALGenericIterator(object):
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
+        self.index = 0
+        self.eos = False
         if self.loader._name is None:
             self.loader._name= self.loader._reader
         color_format = b.getOutputColorFormat(self.loader._handle)
@@ -114,6 +116,7 @@ class ROCALGenericIterator(object):
             self.len = b.getRemainingImages(self.loader._handle)//self.bs
         else:
             self.len = b.getRemainingImages(self.loader._handle)
+        self.num_batches = self.loader._external_source.n // self.bs if self.loader._external_source.n % self.bs == 0 else (self.loader._external_source.n // self.bs + 1)
 
     def next(self):
         return self.__next__()
@@ -122,9 +125,36 @@ class ROCALGenericIterator(object):
         if(b.isEmpty(self.loader._handle)):
             raise StopIteration
 
+        if (self.loader._external_source_operator):
+            if (self.index + 1) == self.num_batches:
+                self.eos = True
+            if (self.index + 1) <= self.num_batches:
+                if self.loader._external_source_mode == types.EXTSOURCE_FNAME:
+                    kwargs_pybind = {
+                        "handle":self.loader._handle,
+                        "source_input_images":next(self.loader._external_source)[0],
+                        "labels":next(self.loader._external_source)[1],
+                        "input_batch_buffer":[],
+                        "roi_width":[],
+                        "roi_height":[],
+                        "decoded_width":self.loader._external_source_user_given_width,
+                        "decoded_height":self.loader._external_source_user_given_height,
+                        "channels":self.p,
+                        "external_source_mode":self.loader._external_source_mode,
+                        "rocal_tensor_layout":types.NCHW,
+                        "eos":self.eos }
+                    b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
+                if self.loader._external_source_mode == types.EXTSOURCE_RAW_COMPRESSED:
+                    print("Support for EXTSOURCE_RAW_COMPRESSED / Mode 1 does not exist ")
+                    exit(0)
+                if self.loader._external_source_mode == types.EXTSOURCE_RAW_UNCOMPRESSED:
+                    print("Support for EXTSOURCE_RAW_UNCOMPRESSED / Mode 2 does not exist ")
+                    exit(0)
+
         if self.loader.run() != 0:
             raise StopIteration
 
+        self.index = self.index + 1
         if(types.NCHW == self.tensor_format):
             self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:

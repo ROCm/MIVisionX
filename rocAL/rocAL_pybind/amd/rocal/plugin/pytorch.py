@@ -20,7 +20,6 @@
 
 import torch
 import numpy as np
-import ctypes
 import rocal_pybind as b
 import amd.rocal.types as types
 
@@ -128,7 +127,7 @@ class ROCALGenericIterator(object):
             self.len = b.getRemainingImages(self.loader._handle)//self.bs
         else:
             self.len = b.getRemainingImages(self.loader._handle)
-        self.num_batches = self.loader._external_source.n //self.bs if self.loader._external_source.n%self.bs == 0 else (self.loader._external_source.n //self.bs + 1)
+        self.num_batches = self.loader._external_source.n // self.bs if self.loader._external_source.n % self.bs == 0 else (self.loader._external_source.n // self.bs + 1)
 
     def next(self):
         return self.__next__()
@@ -139,7 +138,7 @@ class ROCALGenericIterator(object):
         if (self.loader._external_source_operator):
             if (self.index + 1) == self.num_batches:
                 self.eos = True
-            if (self.index+1) <= self.num_batches:
+            if (self.index + 1) <= self.num_batches:
                 if self.loader._external_source_mode == types.EXTSOURCE_FNAME:
                     kwargs_pybind = {
                         "handle":self.loader._handle,
@@ -150,7 +149,7 @@ class ROCALGenericIterator(object):
                         "roi_height":[],
                         "decoded_width":self.loader._external_source_user_given_width,
                         "decoded_height":self.loader._external_source_user_given_height,
-                        "channels": self.p,
+                        "channels":self.p,
                         "external_source_mode":self.loader._external_source_mode,
                         "rocal_tensor_layout":types.NCHW,
                         "eos":self.eos }
@@ -158,43 +157,9 @@ class ROCALGenericIterator(object):
                 if self.loader._external_source_mode == types.EXTSOURCE_RAW_COMPRESSED:
                     print("Support for EXTSOURCE_RAW_COMPRESSED / Mode 1 does not exist ")
                     exit(0)
-                    '''
-                    kwargs_pybind = {
-                        "handle":self.loader._handle,
-                        "source_input_images":[],
-                        "labels":next(self.loader._external_source)[1],
-                        "input_batch_buffer":next(self.loader._external_source)[0],
-                        "roi_width":[],
-                        "roi_height":next(self.loader._external_source)[2],
-                        "decoded_width":self.loader._external_source_user_given_width,
-                        "decoded_height":self.loader._external_source_user_given_height,
-                        "channels": self.p,
-                        "external_source_mode":self.loader._external_source_mode,
-                        "rocal_tensor_layout":types.NCHW,
-                        "eos":self.eos }
-                    b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
-                    '''
                 if self.loader._external_source_mode == types.EXTSOURCE_RAW_UNCOMPRESSED:
                     print("Support for EXTSOURCE_RAW_UNCOMPRESSED / Mode 2 does not exist ")
                     exit(0)
-                    '''
-                    data_loader_source = next(self.loader._external_source)
-                    kwargs_pybind = {
-                        "handle":self.loader._handle,
-                        "source_input_images":[],
-                        "labels":data_loader_source[1],
-                        "input_batch_buffer":data_loader_source[0],
-                        # ctypes.c_void_p(array.data_ptr())
-                        "roi_width":data_loader_source[3],
-                        "roi_height":data_loader_source[2],
-                        "decoded_width":data_loader_source[5],
-                        "decoded_height":data_loader_source[4],
-                        "channels": self.p,
-                        "external_source_mode":self.loader._external_source_mode,
-                        "rocal_tensor_layout":types.NCHW,
-                        "eos":self.eos }
-                    b.ExternalSourceFeedInput(*(kwargs_pybind.values()))
-                    '''
         if self.loader.run() != 0:
             raise StopIteration
 
@@ -278,7 +243,6 @@ class ROCALGenericIterator(object):
         return self.len
 
     def __del__(self):
-        print("rocAL Release")
         b.rocalRelease(self.loader._handle)
 
 

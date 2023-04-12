@@ -45,7 +45,7 @@ class ImageReadAndDecode
 public:
     ImageReadAndDecode();
     ~ImageReadAndDecode();
-    virtual size_t count();
+    size_t count();
     void reset();
     void create(ReaderConfig reader_config, DecoderConfig decoder_config, int batch_size, int device_id=0);
     void set_bbox_vector(std::vector<std::vector <float>> bbox_coords) { _bbox_coords = bbox_coords; }
@@ -61,7 +61,7 @@ public:
     /// \param roi_width is set by the load() function tp the width of the region that decoded image is located. It's less than max_width and is either equal to the original image width if original image width is smaller than max_width or downscaled if necessary to fit the max_width criterion.
     /// \param roi_height  is set by the load() function tp the width of the region that decoded image is located.It's less than max_height and is either equal to the original image height if original image height is smaller than max_height or downscaled if necessary to fit the max_height criterion.
     /// \param output_color_format defines what color format user expects decoder to decode images into if capable of doing so supported is
-    virtual LoaderModuleStatus load(
+    LoaderModuleStatus load(
             unsigned char* buff,
             std::vector<std::string>& names,
             const size_t  max_decoded_width,
@@ -78,7 +78,7 @@ public:
     //! returns timing info or other status information
     Timing timing();
 
-protected:
+private:
     std::vector<std::shared_ptr<Decoder>> _decoder;
     std::shared_ptr<Reader> _reader;
     StorageType _storage_type;

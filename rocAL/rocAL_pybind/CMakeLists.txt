@@ -110,8 +110,8 @@ if(ROCAL_PYTHON)
 
         # avoid setting the default installation path to /usr/local
         if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-            message("-- ${Green}NOTE: rocAL default installation path -- ${Python3_SITEARCH} ${ColourReset}")
-            set(CMAKE_INSTALL_PREFIX ${Python3_SITEARCH} CACHE PATH "rocAL default installation path" FORCE)
+            message("-- ${Green}NOTE: rocAL default installation path -- ${Python3_STDARCH} ${ColourReset}")
+            set(CMAKE_INSTALL_PREFIX ${Python3_STDARCH} CACHE PATH "rocAL default installation path" FORCE)
         endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
         add_subdirectory(third_party_lib/pybind11)

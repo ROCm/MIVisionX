@@ -158,7 +158,7 @@ struct BoundingBox : public MetaData
     void set_bb_cords_xcycwh(BoundingBoxCords_xcycwh bb_cords_xcycwh) { _bb_cords_xcycwh =std::move(bb_cords_xcycwh); }
     void set_bb_labels(BoundingBoxLabels bb_label_ids) { _bb_label_ids = std::move(bb_label_ids); }
     void set_img_size(ImgSize img_size) { _img_size = std::move(img_size); }
-    void set_mask_cords(MaskCords mask_cords) { _mask_cords = std::move(mask_cords);}
+    void set_mask_cords(MaskCords mask_cords) { _mask_cords = std::move(mask_cords); }
     void set_polygon_counts(std::vector<int> polygon_count) { _polygon_count = std::move(polygon_count); }
     void set_vertices_counts(std::vector<std::vector<int>> vertices_count) { _vertices_count = std::move(vertices_count); }
 };

@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "node.h"
 #include "node_resize_mirror_normalize.h"
 #include "parameter_vx.h"
+
 class ResizeMirrorNormalizeMetaNode:public MetaNode
 {
     public:

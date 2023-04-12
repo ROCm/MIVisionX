@@ -32,7 +32,6 @@ using namespace std;
 void COCOMetaDataReader::init(const MetaDataConfig &cfg)
 {
     _path = cfg.path();
-    _meta_data_type = cfg.type();
     _output = new BoundingBoxBatch();
     _output->set_metadata_type(cfg.type());
 }
@@ -62,7 +61,7 @@ void COCOMetaDataReader::lookup(const std::vector<std::string> &image_names)
         _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
         _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
         _output->get_img_sizes_batch()[i] = it->second->get_img_size();
-        if (_meta_data_type == MetaDataType::PolygonMask)
+        if (_output->metadata_type() == MetaDataType::PolygonMask)
         {
             _output->get_mask_cords_batch()[i] = it->second->get_mask_cords();
             _output->get_mask_polygons_count_batch()[i] = it->second->get_polygon_count();
@@ -124,7 +123,7 @@ void COCOMetaDataReader::print_map_contents()
         {
             std::cout << " l : " << bb_coords[i].l << " t: :" << bb_coords[i].t << " r : " << bb_coords[i].r << " b: :" << bb_coords[i].b << "Label Id : " << bb_labels[i] << std::endl;
         }
-        if (_meta_data_type == MetaDataType::PolygonMask)
+        if (_output->metadata_type() == MetaDataType::PolygonMask)
         {
             int count = 0;
             std::cout << "\nNumber of objects : " << bb_coords.size() << std::endl;
@@ -282,7 +281,7 @@ void COCOMetaDataReader::read_all(const std::string &path)
                             ++i;
                         }
                     }
-                    else if ((_meta_data_type == MetaDataType::PolygonMask) && 0 == std::strcmp(internal_key, "segmentation"))
+                    else if ((_output->metadata_type() == MetaDataType::PolygonMask) && 0 == std::strcmp(internal_key, "segmentation"))
                     {
                         if (parser.PeekType() == kObjectType)
                         {
@@ -324,7 +323,7 @@ void COCOMetaDataReader::read_all(const std::string &path)
 
                 auto it = _map_img_sizes.find(file_name);
                 ImgSize image_size = it->second; //Normalizing the co-ordinates & convert to "ltrb" format                                
-                if ((_meta_data_type == MetaDataType::PolygonMask) && iscrowd == 0)
+                if ((_output->metadata_type() == MetaDataType::PolygonMask) && iscrowd == 0)
                 {
                     box.l = bbox[0] / image_size.w;
                     box.t = bbox[1] / image_size.h;
@@ -343,7 +342,7 @@ void COCOMetaDataReader::read_all(const std::string &path)
                     bb_coords.clear();
                     bb_labels.clear();
                 }
-                else if (!(_meta_data_type == MetaDataType::PolygonMask))
+                else if (!(_output->metadata_type() == MetaDataType::PolygonMask))
                 {
                     box.l = bbox[0] / image_size.w;
                     box.t = bbox[1] / image_size.h;

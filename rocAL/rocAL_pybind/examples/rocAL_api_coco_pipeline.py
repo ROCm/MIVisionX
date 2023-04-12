@@ -131,7 +131,7 @@ class ROCALCOCOIterator(object):
             self.bboxes_label_count)
         # 1D labels & bboxes array
         if self.device == "cpu":
-          self.encoded_bboxes = np.zeros((self.count_batch*4), dtype="float32")
+          self.encoded_bboxes = np.zeros((self.count_batch*4), dtype="float64")
           self.encoded_labels = np.zeros(self.count_batch, dtype="int32")
           self.loader.copyEncodedBoxesAndLables(self.encoded_bboxes, self.encoded_labels)
           encoded_bboxes_tensor = torch.tensor(self.encoded_bboxes).view(self.bs, -1, 4).contiguous()

@@ -150,7 +150,7 @@ class ROCALGenericIterator(object):
             self.labels = np.zeros(self.count_batch, dtype="int32")
             self.loader.GetBBLabels(self.labels)
             # 1D bboxes array in a batch
-            self.bboxes = np.zeros((self.count_batch*4), dtype="float32")
+            self.bboxes = np.zeros((self.count_batch*4), dtype="float64")
             self.loader.GetBBCords(self.bboxes)
             #Image sizes of a batch
             self.img_size = np.zeros((self.bs * 2),dtype = "int32")

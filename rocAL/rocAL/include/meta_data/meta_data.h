@@ -267,9 +267,12 @@ struct BoundingBoxBatch: public MetaDataBatch
         _bb_cords.resize(batch_size);
         _bb_label_ids.resize(batch_size);
         _img_sizes.resize(batch_size);
-        _mask_cords.resize(batch_size);
-        _polygon_counts.resize(batch_size);
-        _vertices_counts.resize(batch_size);
+        if (_type == MetaDataType::PolygonMask)
+        {
+            _mask_cords.resize(batch_size);
+            _polygon_counts.resize(batch_size);
+            _vertices_counts.resize(batch_size);
+        }
     }
     int size() override
     {

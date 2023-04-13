@@ -11,6 +11,7 @@ written primarily in C/C++ language can be used effectively in Python.
 * CMake Version 3.10 or higher
 * Python 3
 * PIP3 - `sudo apt install python3-pip`
+* [CuPy for rocm](https://github.com/ROCmSoftwarePlatform/cupy)
 
 ## Install
 rocAL_pybind installs during [MIVisionX build](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx)

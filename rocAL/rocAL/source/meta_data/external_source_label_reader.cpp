@@ -24,15 +24,9 @@ THE SOFTWARE.
 #include <iostream>
 #include <utility>
 #include <algorithm>
-#include <boost/filesystem.hpp>
 #include "commons.h"
 #include "exception.h"
 #include "external_source_label_reader.h"
-
-
-using namespace std;
-
-namespace filesys = boost::filesystem;
 
 ExternalSourceLabelReader::ExternalSourceLabelReader() {}
 
@@ -51,7 +45,7 @@ void ExternalSourceLabelReader::add(std::string image_name, int label) {
         WRN("Entity with the same name exists")
         return;
     }
-    _map_content.insert(pair<std::string, std::shared_ptr<Label>>(image_name, info));
+    _map_content.insert(std::pair<std::string, std::shared_ptr<Label>>(image_name, info));
 }
 
 void  ExternalSourceLabelReader::add_labels(std::vector<std::string> image_name, std::vector<int> label) {

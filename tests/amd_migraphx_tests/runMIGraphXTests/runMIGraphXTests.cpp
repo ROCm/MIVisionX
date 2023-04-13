@@ -89,7 +89,7 @@ void show_usage() {
             "--vgg19          <vgg19-model>     \n"
             "--densenet       <densenet-model>  \n"
             "\n"
-        );
+        ); 
 }
 
 int main(int argc, char **argv) {
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
     vx_context context = vxCreateContext();
     ERROR_CHECK_OBJECT(context);
     vxRegisterLogCallback(context, log_callback, vx_false_e);
-
+    
     // load vx_nn kernels
     ERROR_CHECK_STATUS(vxLoadKernels(context, "vx_amd_migraphx"));
 
@@ -238,7 +238,7 @@ int main(int argc, char **argv) {
     vx_map_id map_id;
     void *ptr = nullptr;
     auto num_results_imagenet = 1000;
-
+    
     //create a results folder
     std::ofstream outputFile;
     auto now = std::chrono::system_clock::now();
@@ -261,7 +261,7 @@ int main(int argc, char **argv) {
     std::ifstream labelFile(imagenetLabelFileName);
     if(!labelFile) {
       std::cout << "failed to open label file" << std::endl;
-      return -1;
+      return -1; 
     }
     int lineNum = 0;
     while(getline(labelFile, line)) {
@@ -298,9 +298,9 @@ int main(int argc, char **argv) {
             for(size_t n = 0; n < input_dims_data_224x224[0]; n++) {
                 for(size_t c = 0; c < input_dims_data_224x224[1]; c++) {
                     for(size_t y = 0; y < input_dims_data_224x224[2]; y++) {
-                        float * buf = (float *)ptr +
-                                        (n * input_dims_data_224x224[3] * input_dims_data_224x224[2] * input_dims_data_224x224[1]
-                                        + c * input_dims_data_224x224[3] * input_dims_data_224x224[2]
+                        float * buf = (float *)ptr + 
+                                        (n * input_dims_data_224x224[3] * input_dims_data_224x224[2] * input_dims_data_224x224[1] 
+                                        + c * input_dims_data_224x224[3] * input_dims_data_224x224[2] 
                                         + y * input_dims_data_224x224[3]);
                         vx_size w = fread(buf, sizeof(float), input_dims_data_224x224[3], fp);
                         if(w != input_dims_data_224x224[3]) {
@@ -323,7 +323,7 @@ int main(int argc, char **argv) {
             if (runResnet50) {
                 //output tensor
                 vx_tensor output_tensor_resnet50 = vxCreateTensor(context, output_num_of_dims_2, output_dims_data_1x1000, VX_TYPE_FLOAT32, 0);
-
+                
                 //graph creation
                 vx_graph graph_resnet50 = vxCreateGraph(context);
                 status = vxGetStatus((vx_reference)graph_resnet50);
@@ -606,7 +606,7 @@ int main(int argc, char **argv) {
                     return status;
                 }
 
-                // release resources
+                // release resources   
                 ERROR_CHECK_STATUS(vxReleaseNode(&node_squeezenet));
                 ERROR_CHECK_STATUS(vxReleaseGraph(&graph_squeezenet));
                 ERROR_CHECK_STATUS(vxReleaseTensor(&output_tensor_squeezenet));
@@ -624,7 +624,7 @@ int main(int argc, char **argv) {
                     return -1;
                 }
                 vx_node node_densenet = amdMIGraphXnode(graph_densenet, binaryFilename_densenet_str.c_str(), input_tensor_224x224, output_tensor_densenet);
-                ERROR_CHECK_OBJECT(node_densenet);
+                ERROR_CHECK_OBJECT(node_densenet);  
                 ERROR_CHECK_STATUS(vxVerifyGraph(graph_densenet));
                 ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet));
 
@@ -663,7 +663,7 @@ int main(int argc, char **argv) {
                     std::cerr << "ERROR: vxUnmapTensorPatch() failed for output_tensor" << std::endl;
                     return status;
                 }
-
+                
                 //release resources
                 ERROR_CHECK_STATUS(vxReleaseNode(&node_densenet));
                 ERROR_CHECK_STATUS(vxReleaseGraph(&graph_densenet));
@@ -675,8 +675,8 @@ int main(int argc, char **argv) {
             ERROR_CHECK_STATUS(vxReleaseTensor(&input_tensor_224x224));
         }
     }
-
-    ERROR_CHECK_STATUS(vxReleaseContext(&context));
+ 
+    ERROR_CHECK_STATUS(vxReleaseContext(&context)); 
     return 0;
 }
 

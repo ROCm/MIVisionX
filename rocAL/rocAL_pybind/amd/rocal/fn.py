@@ -227,7 +227,7 @@ def rain(*inputs, rain=None, rain_width = None, rain_height = None, rain_transpa
     return (rain_image)
 
 def resize(*inputs, bytes_per_sample_hint=0, image_type=0, interp_type=1, mag_filter=1, max_size=[], min_filter=1,
-            minibatch_size=32, preserve=False, resize_longer=0, resize_shorter=0, resize_x=0, resize_y=0,
+            minibatch_size=32, preserve=False, resize_longer=0, resize_shorter=0, resize_x=0, resize_y=0, 
             scaling_mode=types.SCALING_MODE_DEFAULT, interpolation_type=types.LINEAR_INTERPOLATION,
             save_attrs=False, seed=1, temp_buffer_hint=0, device = None):
     """

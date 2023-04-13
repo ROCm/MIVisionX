@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "decoder_factory.h"
 #include "image_read_and_decode.h"
 #include "external_source_reader.h"
+
 std::tuple<Decoder::ColorFormat, unsigned >
 interpret_color_format(RocalColorFormat color_format )
 {
@@ -138,7 +139,7 @@ void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_imag
                              std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
                              unsigned int max_width, unsigned int max_height, int channels,  FileMode mode, bool eos)
 {
-    std::vector<size_t> image_size; // check if its required
+    std::vector<size_t> image_size;
     image_size.reserve(roi_height.size());
     for(unsigned int i = 0; i < roi_height.size(); i++) {
         if (mode == 2)

@@ -36,14 +36,10 @@ namespace filesys = boost::filesystem;
 
 ExternalSourceLabelReader::ExternalSourceLabelReader()
 {
-    _src_dir = nullptr;
-    _entity = nullptr;
-    _sub_dir = nullptr;
 }
 
 void ExternalSourceLabelReader::init(const MetaDataConfig& cfg)
 {
-    _path = cfg.path();
     _output = new LabelBatch();
 }
 
@@ -51,6 +47,7 @@ bool ExternalSourceLabelReader::exists(const std::string& image_name)
 {
     return _map_content.find(image_name) != _map_content.end();
 }
+
 void ExternalSourceLabelReader::add(std::string image_name, int label)
 {
     pMetaData info = std::make_shared<Label>(label);
@@ -61,12 +58,14 @@ void ExternalSourceLabelReader::add(std::string image_name, int label)
     }
     _map_content.insert(pair<std::string, std::shared_ptr<Label>>(image_name, info));
 }
- void  ExternalSourceLabelReader::add_labels(std::vector<std::string> image_name, std::vector<int> label)
- {
+
+void  ExternalSourceLabelReader::add_labels(std::vector<std::string> image_name, std::vector<int> label)
+{
     if(image_name.size() != label.size()) { THROW("ERROR: Image name and labels should have same size") }
-    for(int i = 0; i < image_name.size(); i++)
+    for(uint i = 0; i < image_name.size(); i++)
         add(image_name[i], label[i]);
- }
+}
+
 void ExternalSourceLabelReader::print_map_contents()
 {
     std::cerr << "\nMap contents: \n";

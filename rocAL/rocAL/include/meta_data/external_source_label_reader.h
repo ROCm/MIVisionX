@@ -48,10 +48,7 @@ private:
     void add(std::string image_name, int label);
     std::map<std::string, std::shared_ptr<MetaData>> _map_content;
     std::map<std::string, std::shared_ptr<MetaData>>::iterator _itr;
-    std::string _path;
     LabelBatch* _output;
-    DIR *_src_dir, *_sub_dir;
-    struct dirent *_entity;
     std::vector<std::string> _file_names;
     std::vector<std::string> _subfolder_file_names;
 };

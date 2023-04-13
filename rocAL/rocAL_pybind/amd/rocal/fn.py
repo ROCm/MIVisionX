@@ -278,7 +278,7 @@ def resize(*inputs, bytes_per_sample_hint=0, image_type=0, interp_type=1, mag_fi
 
     # pybind call arguments
     kwargs_pybind = {"input_image0": inputs[0], "dest_width": resize_x, "dest_height": resize_y,
-                     "is_output": False, "scaling_mode": scaling_mode, "max_size": max_size, "resize_shorter": resize_shorter,
+                     "is_output": False, "scaling_mode": scaling_mode, "max_size": max_size, "resize_shorter": resize_shorter, 
                      "resize_longer": resize_longer, "interpolation_type": interpolation_type }
     resized_image = b.Resize(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     return (resized_image)

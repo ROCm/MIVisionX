@@ -61,8 +61,7 @@ public:
 
     CIFAR10DataReader();
 
-    unsigned get_file_index() { return _last_file_idx; }
-    unsigned long long get_shuffle_time() override { return 0; }
+    unsigned get_file_index() { return _last_file_idx;}
 
     //! return feed_data: not implemented
     void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos=false) override { return; }

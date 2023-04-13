@@ -161,10 +161,7 @@ public:
     virtual std::string id() = 0;
     //! Returns the number of items remained in this resource
     virtual unsigned count_items() = 0;
-
-    //! return shuffle_time if applicable
-    virtual unsigned long long get_shuffle_time() = 0;
-
+    
     //! return feed_file_names: needed if an external_source is feeding into the reader
     virtual void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos=false) = 0;
 

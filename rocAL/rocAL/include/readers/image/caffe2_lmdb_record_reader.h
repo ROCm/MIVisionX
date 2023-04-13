@@ -67,7 +67,6 @@ public:
     int close() override;
 
     Caffe2LMDBRecordReader();
-    unsigned long long get_shuffle_time() override {return 0;}
     //! return feed_data: not implemented
     void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos=false) override {return;}
 
@@ -114,7 +113,6 @@ private:
     void read_image(unsigned char* buff, std::string file_name);
     void read_image_names();
     std::map <std::string, uint> _image_record_starting;
-    TimingDBG _shuffle_time;
     int _open_env = 1;
     int rc;
     MDB_env* _read_mdb_env;

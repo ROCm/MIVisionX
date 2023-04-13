@@ -22,7 +22,7 @@ from setuptools import setup, find_packages, Extension
 from setuptools.dist import Distribution
 import sys
 
-if sys.version_info < (3, 0): 
+if sys.version_info < (3, 0):
     sys.exit('rocal Python Package requires Python > 3.0')
 
 class BinaryDistribution(Distribution):

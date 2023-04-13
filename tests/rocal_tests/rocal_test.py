@@ -3,7 +3,6 @@ from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
 import amd.rocal.types as types
 import os
-import cupy as cp
 
 def draw_patches(img, device):
     #image is expected as a tensor, bboxes as numpy
@@ -16,7 +15,6 @@ def main():
     # Create Pipeline instance
     pipe = Pipeline(batch_size=1, num_threads=1, device_id=0, seed=1, rocal_cpu=True, tensor_layout=types.NHWC, tensor_dtype=types.FLOAT16)
     # Set Params
-    output_set = 0
     rocal_device = 'cpu'
     #hardcoding decoder_device to cpu until VCN can decode all JPEGs
     decoder_device = 'cpu'
@@ -27,8 +25,8 @@ def main():
         jpegs, _ = fn.readers.file(file_root=data_path, shard_id=0, num_shards=1, random_shuffle=True)
         images = fn.decoders.image(jpegs, file_root=data_path, device=decoder_device, output_type=types.RGB, shard_id=0, num_shards=1, random_shuffle=True)
         images = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300)
-        
-        output = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300, 
+
+        output = fn.resize(images, device=rocal_device, resize_x=300, resize_y=300,
                                scaling_mode=types.SCALING_MODE_NOT_SMALLER, interpolation_type=types.TRIANGULAR_INTERPOLATION)
         pipe.set_outputs(output)
 

@@ -269,11 +269,15 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     ```
     mkdir build-hip
     cd build-hip
-    cmake ../
-    make -j8
-    cmake --build . --target PyPackageInstall (needed to build rocAL_pybind package)
+    sudo cmake ../
+    sudo make -j8
+    sudo cmake --build . --target PyPackageInstall
     sudo make install
     ```
+    **Note:**
+    + `PyPackageInstall` used for rocal_pybind installation
+    + rocal_pybind not supported on windows.
+    + `sudo` required for pybind installation
 
   + Instructions for building MIVisionX with **OPENCL** GPU backend:
 
@@ -286,9 +290,9 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     ```
     mkdir build-ocl
     cd build-ocl
-    cmake -DBACKEND=OPENCL ../
-    make -j8
-    cmake --build . --target PyPackageInstall (needed to build rocAL_pybind package)
+    sudo cmake -DBACKEND=OPENCL ../
+    sudo make -j8
+    sudo cmake --build . --target PyPackageInstall
     sudo make install
     ```
 
@@ -297,6 +301,9 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   if an app interested in installing MIVisionX with both GPU backends, then add **-DCMAKE_INSTALL_PREFIX** in the cmake
   commands to install MIVisionX with OPENCL and HIP backends into two separate custom folders.
   + vx_winml is not supported on Linux
+  + ```PyPackageInstall``` used for rocal_pybind installation
+  + rocal_pybind not supported on windows
+  + `sudo` required for pybind installation
 
 ## Verify the Installation
 

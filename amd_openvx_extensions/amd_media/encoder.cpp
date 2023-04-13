@@ -406,7 +406,7 @@ vx_status CLoomIoMediaEncoder::ProcessFrame(vx_image input_image, vx_array input
         return VX_ERROR_GRAPH_ABANDONED;
     }
 
-    if (m_enableUserBufferGPU) {
+if (m_enableUserBufferGPU) {
         UpdateBufferGPU(input_image, input_aux);
        // just submit GPU buffer for encoding
         PushCommand(cmd_encode);

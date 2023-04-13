@@ -60,7 +60,7 @@ struct ReaderConfig
                           const std::map<std::string, std::string> feature_key_map = std::map<std::string, std::string>(),
                           bool shuffle = false, bool loop = false, FileMode mode = FileMode::FILENAME) : _storage_type(type), _path(path), _json_path(json_path),
                           _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop), _file_mode(mode) {}
-    virtual StorageType storage_type() { return _storage_type; };
+    virtual StorageType storage_type() { return _storage_type; }
     void set_path(const std::string &path) { _path = path; }
     void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
     void set_shard_count(size_t shard_count) { _shard_count = shard_count; }

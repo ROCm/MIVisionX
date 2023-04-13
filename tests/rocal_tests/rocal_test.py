@@ -18,7 +18,7 @@ def main():
     rocal_device = 'cpu'
     #hardcoding decoder_device to cpu until VCN can decode all JPEGs
     decoder_device = 'cpu'
-    pwd = os.getcwd() 
+    pwd = os.getcwd()
     data_path = pwd + '/images/'
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:

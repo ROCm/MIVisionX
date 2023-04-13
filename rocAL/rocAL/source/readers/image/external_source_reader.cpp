@@ -43,7 +43,7 @@ ExternalSourceReader::ExternalSourceReader()
 // return batch_size() for count_items unless end_of_sequence has been signalled.
 unsigned ExternalSourceReader::count_items()
 {
-    if (_mode == FileMode::FILENAME) {
+    if (_file_mode == FileMode::FILENAME) {
         if (_end_of_sequence && _file_names_que.empty()) {
         return 0;
         }
@@ -65,7 +65,7 @@ Reader::Status ExternalSourceReader::initialize(ReaderConfig desc)
     _batch_count = desc.get_batch_size();
     _shuffle = desc.shuffle();
     _loop = desc.loop();
-    _mode = desc.mode();
+    _file_mode = desc.mode();
     _end_of_sequence = false;
     _file_data.reserve(_batch_count);
     return ret;
@@ -79,7 +79,7 @@ void ExternalSourceReader::incremenet_read_ptr()
 
 size_t ExternalSourceReader::open()
 {
-    if (_mode == FileMode::FILENAME) {
+    if (_file_mode == FileMode::FILENAME) {
         std::string next_file_name;
         bool ret = pop_file_name(next_file_name);   // Get next file name: blocking call, will wait till next file is received from external source
         if (_end_of_sequence && !ret)
@@ -123,7 +123,7 @@ size_t ExternalSourceReader::open()
 
 size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size)
 {
-    if (_mode == FileMode::FILENAME) {
+    if (_file_mode == FileMode::FILENAME) {
         if(!_current_fPtr)
             return 0;
 
@@ -164,7 +164,7 @@ ExternalSourceReader::~ExternalSourceReader()
 int
 ExternalSourceReader::release()
 {
-    if (_mode != FileMode::FILENAME) {
+    if (_file_mode != FileMode::FILENAME) {
         if(!_current_fPtr)
             return 0;
         fclose(_current_fPtr);

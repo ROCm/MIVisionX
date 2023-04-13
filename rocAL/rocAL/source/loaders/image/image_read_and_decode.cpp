@@ -100,7 +100,7 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
         }
     }
     _reader = create_reader(reader_config);
-    _storage_type = reader_config.type();
+    _storage_type = reader_config.storage_type();
 }
 
 void
@@ -135,8 +135,8 @@ ImageReadAndDecode::set_batch_random_bbox_crop_coords(std::vector<std::vector<fl
 }
 
 void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *> input_buffer,
-                             std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
-                             unsigned int max_width, unsigned int max_height, int channels,  FileMode mode, bool eos)
+                                            std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
+                                            unsigned int max_width, unsigned int max_height, int channels,  FileMode mode, bool eos)
 {
     std::vector<size_t> image_size;
     image_size.reserve(roi_height.size());
@@ -146,11 +146,13 @@ void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_imag
         else if (mode == 1)
             image_size[i] = roi_height[i];
     }
-    if(mode == 0) {
+    if(mode == 0)
+    {
         _reader->feed_file_names(input_images_names, input_images_names.size(), eos);
     }
-    else if(mode == 1 || mode == 2) {
-        _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, 3);
+    else if(mode == 1 || mode == 2)
+    {
+        _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, channels);
     }
 }
 
@@ -212,7 +214,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         skip_decode = true;
         //_file_load_time.end();// Debug timing
     } else if (is_external_source) {
-        auto ext_reader = std::dynamic_pointer_cast<ExternalSourceReader>(_reader);
+        auto ext_reader = std::static_pointer_cast<ExternalSourceReader>(_reader);
         if (ext_reader->mode() == FileMode::RAWDATA_UNCOMPRESSED) {
         while ((file_counter != _batch_size) && _reader->count_items() > 0) {
               int width, height, channels;

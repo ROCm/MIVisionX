@@ -68,7 +68,7 @@ public:
     vx_status Initialize();
     vx_status ProcessFrame(vx_image input_image, vx_array input_aux, vx_array output_aux);
     vx_status UpdateBufferGPU(vx_image input_image, vx_array input_aux);
-    void SetEnableUserBufferGPUMode(vx_bool bEnable) { m_enableUserBufferGPU = bEnable; }
+    void SetEnableUserBufferGPUMode(vx_bool bEnable) { m_enableUserBufferGPU = bEnable;};
     vx_bool m_enableUserBufferGPU;
 
 protected:

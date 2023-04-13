@@ -51,7 +51,7 @@ ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const 
     reader_cfg.set_sequence_length(sequence_length);
     reader_cfg.set_frame_step(step);
     reader_cfg.set_frame_stride(stride);
-    reader_cfg.set_mode(file_mode);
+    reader_cfg.set_file_mode(file_mode);
     _loader_module->initialize(reader_cfg, DecoderConfig(decoder_type),
                                mem_type,
                                _batch_size, decoder_keep_original);

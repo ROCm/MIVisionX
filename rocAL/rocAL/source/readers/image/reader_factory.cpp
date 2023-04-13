@@ -34,7 +34,7 @@ THE SOFTWARE.
 #include "external_source_reader.h"
 
 std::shared_ptr<Reader> create_reader(ReaderConfig config) {
-    switch(config.type()) {
+    switch(config.storage_type()) {
         case StorageType ::FILE_SYSTEM:
         {
             auto ret = std::make_shared<FileSourceReader>();

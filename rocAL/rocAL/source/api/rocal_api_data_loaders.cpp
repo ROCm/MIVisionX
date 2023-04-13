@@ -305,7 +305,6 @@ rocalJpegExternalFileSource(
         auto [color_format, num_of_planes] = convert_color_format(rocal_color_format);
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
-         // User defined batch size is the inetrnal batch size of extrenal source reader
 
         auto info = ImageInfo(width, height,
                               context->user_batch_size(),

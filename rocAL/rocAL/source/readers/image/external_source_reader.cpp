@@ -27,8 +27,7 @@ THE SOFTWARE.
 
 namespace filesys = boost::filesystem;
 
-ExternalSourceReader::ExternalSourceReader()
-{
+ExternalSourceReader::ExternalSourceReader() {
     _curr_file_idx = 0;
     _current_file_size = 0;
     _current_fPtr = nullptr;
@@ -41,8 +40,7 @@ ExternalSourceReader::ExternalSourceReader()
 }
 
 // return batch_size() for count_items unless end_of_sequence has been signalled.
-unsigned ExternalSourceReader::count_items()
-{
+unsigned ExternalSourceReader::count_items() {
     if (_file_mode == FileMode::FILENAME) {
         if (_end_of_sequence && _file_names_que.empty()) {
         return 0;
@@ -55,8 +53,7 @@ unsigned ExternalSourceReader::count_items()
     return _batch_count;
 }
 
-Reader::Status ExternalSourceReader::initialize(ReaderConfig desc)
-{
+Reader::Status ExternalSourceReader::initialize(ReaderConfig desc) {
     auto ret = Reader::Status::OK;
     _folder_path = desc.path();
     _file_id = 0;
@@ -71,14 +68,12 @@ Reader::Status ExternalSourceReader::initialize(ReaderConfig desc)
     return ret;
 }
 
-void ExternalSourceReader::incremenet_read_ptr()
-{
+void ExternalSourceReader::incremenet_read_ptr() {
     _read_counter++;
     _curr_file_idx = (_curr_file_idx + 1) % _batch_count;
 }
 
-size_t ExternalSourceReader::open()
-{
+size_t ExternalSourceReader::open() {
     if (_file_mode == FileMode::FILENAME) {
         std::string next_file_name;
         bool ret = pop_file_name(next_file_name);   // Get next file name: blocking call, will wait till next file is received from external source
@@ -119,8 +114,7 @@ size_t ExternalSourceReader::open()
     return _current_file_size;
 }
 
-size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size)
-{
+size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size) {
     if (_file_mode == FileMode::FILENAME) {
         if(!_current_fPtr)
             return 0;
@@ -140,8 +134,7 @@ size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size)
     }
 }
 
-void ExternalSourceReader::get_dims(int cur_idx, int& width, int& height, int& channels)
-{
+void ExternalSourceReader::get_dims(int cur_idx, int& width, int& height, int& channels) {
     if (cur_idx >= 0) {
       width = std::get<2>(_file_data[cur_idx]);
       height = std::get<3>(_file_data[cur_idx]);
@@ -149,18 +142,15 @@ void ExternalSourceReader::get_dims(int cur_idx, int& width, int& height, int& c
     }
 }
 
-int ExternalSourceReader::close()
-{
+int ExternalSourceReader::close() {
     return release();
 }
 
-ExternalSourceReader::~ExternalSourceReader()
-{
+ExternalSourceReader::~ExternalSourceReader() {
     release();
 }
 
-int ExternalSourceReader::release()
-{
+int ExternalSourceReader::release() {
     if (_file_mode != FileMode::FILENAME) {
         if(!_current_fPtr)
             return 0;
@@ -171,23 +161,20 @@ int ExternalSourceReader::release()
     return 0;
 }
 
-void ExternalSourceReader::reset()
-{
+void ExternalSourceReader::reset() {
     if (_shuffle) std::random_shuffle(_file_data.begin(), _file_data.end());
     _read_counter = 0;
     _curr_file_idx = 0;
     _end_of_sequence = false;   // reset for looping
 }
 
-size_t ExternalSourceReader::get_file_shard_id()
-{
+size_t ExternalSourceReader::get_file_shard_id() {
     if(_batch_count == 0 || _shard_count == 0)
         THROW("Shard (Batch) size cannot be set to 0")
     return _file_id  % _shard_count;
 }
 
-void ExternalSourceReader::push_file_name(const std::string& file_name)
-{
+void ExternalSourceReader::push_file_name(const std::string& file_name) {
     std::unique_lock<std::mutex> lock(_lock);
     _file_names_que.push(file_name);
     lock.unlock();
@@ -195,8 +182,7 @@ void ExternalSourceReader::push_file_name(const std::string& file_name)
     _wait_for_input.notify_all();
 }
 
-bool ExternalSourceReader::pop_file_name(std::string& file_name)
-{
+bool ExternalSourceReader::pop_file_name(std::string& file_name) {
     std::unique_lock<std::mutex> lock(_lock);
     if(_file_names_que.empty() && !_end_of_sequence)
         _wait_for_input.wait(lock);
@@ -208,8 +194,7 @@ bool ExternalSourceReader::pop_file_name(std::string& file_name)
       return false;
 }
 
-void ExternalSourceReader::push_file_data(std::tuple<unsigned char*, size_t, int, int, int>& image)
-{
+void ExternalSourceReader::push_file_data(std::tuple<unsigned char*, size_t, int, int, int>& image) {
     std::unique_lock<std::mutex> lock(_lock);
     _images_data_q.push(image);
     lock.unlock();
@@ -217,8 +202,7 @@ void ExternalSourceReader::push_file_data(std::tuple<unsigned char*, size_t, int
     _wait_for_input.notify_all();
 }
 
-bool ExternalSourceReader::pop_file_data(std::tuple<unsigned char*,  size_t, int, int, int>& image)
-{
+bool ExternalSourceReader::pop_file_data(std::tuple<unsigned char*,  size_t, int, int, int>& image) {
     std::unique_lock<std::mutex> lock(_lock);
     if(_images_data_q.empty() && !_end_of_sequence)
         _wait_for_input.wait(lock);
@@ -230,16 +214,14 @@ bool ExternalSourceReader::pop_file_data(std::tuple<unsigned char*,  size_t, int
       return false;
 }
 
-void ExternalSourceReader::feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos)
-{
+void ExternalSourceReader::feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos) {
     for (unsigned n = 0; n < num_images; n++) {
       push_file_name(file_names[n]);
     }
     _end_of_sequence = eos;
 }
 
-void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, FileMode mode, bool eos, int width, int height, int channels)
-{
+void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, FileMode mode, bool eos, int width, int height, int channels) {
     for (unsigned n = 0; n < images.size(); n++) {
         std::tuple<unsigned char*, size_t, int, int, int> image =  std::make_tuple(images[n], image_size[n], width, height, channels);
         push_file_data(image);

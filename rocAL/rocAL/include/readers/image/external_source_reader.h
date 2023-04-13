@@ -70,7 +70,7 @@ public:
     void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos = false) override;
 
     //! receive next set of file data from external source
-    void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos = false, int width = 0, int height = 0, int channels = 0) override;
+    void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, FileMode mode, bool eos = false, int width = 0, int height = 0, int channels = 0) override;
 
     // mode(): returs the mode for the reader
     FileMode mode() { return _file_mode; }

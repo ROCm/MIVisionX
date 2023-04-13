@@ -83,7 +83,7 @@ void show_usage() {
             "  Mode 2 - Run all JSON tests\n"
             "--profiler_level <range:0-N; default:1> [N = batch size][optional]\n"
             "--resnet50       <resnet50-model>  \n"
-            "--googlenet      <googlenet-model> \n"
+            "--googlenet      <googlenet-model> \n" 
             "--squeezenet     <resnet101-model> \n"
             "--alexnet        <resnet152-model> \n"
             "--vgg19          <vgg19-model>     \n"

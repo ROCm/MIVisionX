@@ -1,5 +1,5 @@
 # rocal_external_source application
-This application demonstrates a basic usage of rocAL's C API to load images from external source and add augmentations and and displays the output images.
+This application demonstrates a basic usage of rocAL's C API to load images from external source and add augmentations and displays the output images.
 
 ## Build Instructions
 

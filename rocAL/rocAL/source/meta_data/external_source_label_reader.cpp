@@ -34,22 +34,17 @@ using namespace std;
 
 namespace filesys = boost::filesystem;
 
-ExternalSourceLabelReader::ExternalSourceLabelReader()
-{
-}
+ExternalSourceLabelReader::ExternalSourceLabelReader() {}
 
-void ExternalSourceLabelReader::init(const MetaDataConfig& cfg)
-{
+void ExternalSourceLabelReader::init(const MetaDataConfig& cfg) {
     _output = new LabelBatch();
 }
 
-bool ExternalSourceLabelReader::exists(const std::string& image_name)
-{
+bool ExternalSourceLabelReader::exists(const std::string& image_name) {
     return _map_content.find(image_name) != _map_content.end();
 }
 
-void ExternalSourceLabelReader::add(std::string image_name, int label)
-{
+void ExternalSourceLabelReader::add(std::string image_name, int label) {
     pMetaData info = std::make_shared<Label>(label);
     if(exists(image_name))
     {
@@ -59,47 +54,39 @@ void ExternalSourceLabelReader::add(std::string image_name, int label)
     _map_content.insert(pair<std::string, std::shared_ptr<Label>>(image_name, info));
 }
 
-void  ExternalSourceLabelReader::add_labels(std::vector<std::string> image_name, std::vector<int> label)
-{
+void  ExternalSourceLabelReader::add_labels(std::vector<std::string> image_name, std::vector<int> label) {
     if(image_name.size() != label.size()) { THROW("ERROR: Image name and labels should have same size") }
     for(uint i = 0; i < image_name.size(); i++)
         add(image_name[i], label[i]);
 }
 
-void ExternalSourceLabelReader::print_map_contents()
-{
+void ExternalSourceLabelReader::print_map_contents() {
     std::cerr << "\nMap contents: \n";
     for (auto& elem : _map_content)
         std::cerr << "Name :\t " << elem.first << "\t ID:  " << elem.second->get_label() << std::endl;
 }
 
-void ExternalSourceLabelReader::release()
-{
+void ExternalSourceLabelReader::release() {
     _map_content.clear();
 }
 
-void ExternalSourceLabelReader::release(std::string image_name)
-{
-    if(!exists(image_name))
-    {
+void ExternalSourceLabelReader::release(std::string image_name) {
+    if(!exists(image_name)) {
         WRN("ERROR: Given not present in the map" + image_name);
         return;
     }
     _map_content.erase(image_name);
 }
 
-void ExternalSourceLabelReader::lookup(const std::vector<std::string>& image_names)
-{
-    if(image_names.empty())
-    {
+void ExternalSourceLabelReader::lookup(const std::vector<std::string>& image_names) {
+    if(image_names.empty()) {
         WRN("No image names passed")
         return;
     }
     if(image_names.size() != (unsigned)_output->size())
         _output->resize(image_names.size());
 
-    for(unsigned i = 0; i < image_names.size(); i++)
-    {
+    for(unsigned i = 0; i < image_names.size(); i++) {
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
         if(_map_content.end() == it)

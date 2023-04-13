@@ -61,7 +61,7 @@ def main():
     external_source_pipeline_mode0 = Pipeline(batch_size = batch_size, num_threads = 1, device_id = 0, seed = 1, rocal_cpu = True, tensor_layout = types.NCHW , tensor_dtype = types.FLOAT)
 
     with external_source_pipeline_mode0:
-        jpegs, labels = fn.external_source(source = external_input_source, mode = types.EXTSOURCE_FNAME)
+        jpegs, _ = fn.external_source(source = external_input_source, mode = types.EXTSOURCE_FNAME)
         output = fn.resize(jpegs, resize_x = 300, resize_y = 300)
         external_source_pipeline_mode0.set_outputs(output)
 

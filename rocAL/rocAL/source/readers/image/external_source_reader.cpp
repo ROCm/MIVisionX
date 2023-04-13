@@ -89,20 +89,19 @@ size_t ExternalSourceReader::open()
             next_file_name = next_file_name;
         _last_id= next_file_name;
         filesys::path pathObj(next_file_name);
-        if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
-        {
-          _current_fPtr = fopen(next_file_name.c_str(), "rb");// Open the file,
+        if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) {
+          _current_fPtr = fopen(next_file_name.c_str(), "rb"); // Open the file,
           if(!_current_fPtr) // Check if it is ready for reading
               return 0;
-          fseek(_current_fPtr, 0 , SEEK_END);// Take the file read pointer to the end
-          _current_file_size = ftell(_current_fPtr);// Check how many bytes are there between and the current read pointer position (end of the file)
+          fseek(_current_fPtr, 0 , SEEK_END); // Take the file read pointer to the end
+          _current_file_size = ftell(_current_fPtr); // Check how many bytes are there between and the current read pointer position (end of the file)
           if(_current_file_size == 0)
           { // If file is empty continue
               fclose(_current_fPtr);
               _current_fPtr = nullptr;
               return 0;
           }
-          fseek(_current_fPtr, 0 , SEEK_SET);// Take the file pointer back to the start
+          fseek(_current_fPtr, 0 , SEEK_SET); // Take the file pointer back to the start
           _file_data[_curr_file_idx] = std::make_tuple((unsigned char *)next_file_name.data(), (size_t)_current_file_size, 0, 0, 0);
           incremenet_read_ptr();
         }
@@ -117,7 +116,6 @@ size_t ExternalSourceReader::open()
         _file_data[_curr_file_idx] = image;
         _current_file_size = std::get<1>(image);
     }
-
     return _current_file_size;
 }
 
@@ -161,8 +159,7 @@ ExternalSourceReader::~ExternalSourceReader()
     release();
 }
 
-int
-ExternalSourceReader::release()
+int ExternalSourceReader::release()
 {
     if (_file_mode != FileMode::FILENAME) {
         if(!_current_fPtr)
@@ -173,7 +170,6 @@ ExternalSourceReader::release()
     }
     return 0;
 }
-
 
 void ExternalSourceReader::reset()
 {
@@ -189,7 +185,6 @@ size_t ExternalSourceReader::get_file_shard_id()
         THROW("Shard (Batch) size cannot be set to 0")
     return _file_id  % _shard_count;
 }
-
 
 void ExternalSourceReader::push_file_name(const std::string& file_name)
 {
@@ -209,9 +204,8 @@ bool ExternalSourceReader::pop_file_name(std::string& file_name)
       file_name = _file_names_que.front();
       _file_names_que.pop();
       return true;
-    }else
+    } else
       return false;
-
 }
 
 void ExternalSourceReader::push_file_data(std::tuple<unsigned char*, size_t, int, int, int>& image)
@@ -232,11 +226,9 @@ bool ExternalSourceReader::pop_file_data(std::tuple<unsigned char*,  size_t, int
       image = _images_data_q.front();
       _images_data_q.pop();
       return true;
-    }else
+    } else
       return false;
 }
-
-
 
 void ExternalSourceReader::feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos)
 {
@@ -246,7 +238,7 @@ void ExternalSourceReader::feed_file_names(const std::vector<std::string>& file_
     _end_of_sequence = eos;
 }
 
-void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, int mode, bool eos, int width, int height, int channels)
+void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, FileMode mode, bool eos, int width, int height, int channels)
 {
     for (unsigned n = 0; n < images.size(); n++) {
         std::tuple<unsigned char*, size_t, int, int, int> image =  std::make_tuple(images[n], image_size[n], width, height, channels);

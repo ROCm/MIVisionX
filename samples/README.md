@@ -214,7 +214,7 @@ loom_shell loomStitch-sample3.txt
 
 ## Model Compiler Samples - Run Efficient Inference
 
-<p align="center"><img width="80%" src="../docs/images/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/modelCompilerWorkflow.png" /></p>
 
 In this [sample](model_compiler_samples#mivisionx-model-compiler-samples), we will learn how to run inference efficiently using OpenVX and OpenVX Extensions. The sample will go over each step required to convert a pre-trained neural net model into an OpenVX Graph and run this graph efficiently on any target hardware. In this [sample](model_compiler_samples#mivisionx-model-compiler-samples), we will also learn about AMD MIVisionX which delivers open-source implementation of OpenVX and OpenVX Extensions along with MIVisionX Neural Net Model Compiler & Optimizer.
 

@@ -2,7 +2,7 @@
 
 | Inference Application Development Workflow | Sample Cloud Inference Application |
 | ------------------------------------------ | ---------------------------------- |
-| <p align="center"><img width="80%" src="../../docs/images/block_diagram_inference_workflow.png"/></p> | <p align="center"><img width="80%" src="../../docs/images/block_diagram_inference_sample.png"/></p> |
+| <p align="center"><img width="80%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/block_diagram_inference_sample.png"/></p> |
 
 ## Cloud Inference Engine
 
@@ -30,7 +30,7 @@ usage:
 
 The [client application](client_app#anninferenceapp---client-application) needs to be built by the user using QT Creator. The client application has a GUI interface to connect with the server.
 
-<p align="center"><img width="60%" src="../../docs/images/client_app.png" /></p>
+<p align="center"><img width="60%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/client_app.png" /></p>
 
 ## Running the Cloud Inference
 
@@ -55,17 +55,17 @@ INFO: listening on port 28282 for annInferenceApp connections ...
 
  + Open annInferenceApp.pro with the QTCreator and build the client application. Once the client is built, launch the application. Below is the image of the client application
 
-<p align="center"><img width="40%" src="../../docs/images/client_app.png" /></p>
+<p align="center"><img width="40%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/client_app.png" /></p>
 
 **Step 3** - Connect Server and Client - After launching the server and client applications on the system, you can connect them using the default port. The server and client could also be launched on two different machines.
 
-<p align="center"><img width="80%" src="../../docs/images/client_app_1.png" /></p>
+<p align="center"><img width="80%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/client_app_1.png" /></p>
 
 **Step 4** - Upload PreTrained Caffe Model - Once the connection is established, load the caffe model and prototxt to the server using the client application. 
 
 The client application section Inference Compiler needs to be completed as shown in the below example.
 
-<p align="center"><img width="80%" src="../../docs/images/client_app_2.png" /></p>
+<p align="center"><img width="80%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/client_app_2.png" /></p>
 
  + CNN Model: upload or select a published model from the drop-down menu. (User needs to save models on the server using Publishas feature)
  + CxHxW(input): channels x height x width of model input
@@ -79,7 +79,7 @@ The client application section Inference Compiler needs to be completed as shown
 
 The client application section Inference Run-time needs the labels.txt, the AMD-tinyDataSet folder location, & AMD-tinyDataSet-val.txt provided in the sampleDataSet folder.
 
-<p align="center"><img width="80%" src="../../docs/images/client_app-3.png" /></p>
+<p align="center"><img width="80%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/client_app-3.png" /></p>
 
  + Labels: location to MIVisionX/toolkit/analysis_and_visualization/classification/sample/labels.txt
  + Image Folder: location to MIVisionX/toolkit/analysis_and_visualization/classification/sample/AMD-tinyDataSet folder

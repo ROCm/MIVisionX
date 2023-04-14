@@ -4,7 +4,10 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
 from rocm_docs import ROCmDocs
+
+os.system('cp -v --parents `find . -name "*.md"` docs/')
 
 docs_core = ROCmDocs("MIVisionX Documentation")
 docs_core.setup()

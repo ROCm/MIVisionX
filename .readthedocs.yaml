@@ -11,10 +11,3 @@ formats: [htmlzip]
 python:
    install:
    - requirements: docs/.sphinx/requirements.txt
-
-build:
-  os: "ubuntu-20.04"
-  tools:
-    python: "3.8"
-  commands: 
-    - cp -v --parents `find . -name "*.md"` docs/

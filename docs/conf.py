@@ -15,7 +15,7 @@ for file_path in lines:
     print(f"mkdir -p {file_dir[1:]}")
     os.system(f"mkdir -p {file_dir[1:]}")
     print(f"cp {file_path[:-1]} {file_path[1:]}")
-    os.system(f"sudo cp {file_path[:-1]} {file_path[1:]}")
+    os.system(f"cp {file_path[:-1]} {file_path[1:]}")
 
 docs_core = ROCmDocs("MIVisionX Documentation")
 docs_core.setup()

@@ -17,4 +17,4 @@ build:
   tools:
     python: "3.8"
   commands: 
-    - cp -v --parents `find . -name "README.md"` docs/
+    - cp -v --parents `find . -name "*.md"` docs/

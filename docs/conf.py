@@ -7,7 +7,15 @@
 import os
 from rocm_docs import ROCmDocs
 
-os.system('find ../ -name "*.md" -exec cp "{}" . \;')
+os.system('find ../ -name "*.md" > "docfiles.txt"')
+doc_files = open('docfiles.txt', 'r')
+lines = doc_files.readlines()
+for file_path in lines:
+    file_dir, _ = os.path.split(file_path)
+    print(f"mkdir -p {file_dir[1:]}")
+    os.system(f"mkdir -p {file_dir[1:]}")
+    print(f"cp {file_path[:-1]} {file_path[1:]}")
+    os.system(f"sudo cp {file_path[:-1]} {file_path[1:]}")
 
 docs_core = ROCmDocs("MIVisionX Documentation")
 docs_core.setup()

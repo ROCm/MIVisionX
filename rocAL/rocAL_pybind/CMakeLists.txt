@@ -22,7 +22,6 @@ cmake_minimum_required(VERSION 3.0)
 project(rocAL_pybind)
 
 set(TARGET_NAME rocAL_pybind)
-option(ROCAL_PYTHON  "Build rocAL Python Package" ON)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")

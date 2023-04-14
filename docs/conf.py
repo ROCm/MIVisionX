@@ -7,7 +7,7 @@
 import os
 from rocm_docs import ROCmDocs
 
-os.system('cp -v --parents `find ../ -name "*.md"` ./')
+os.system('find ../ -name "*.md" -exec cp "{}" . \;')
 
 docs_core = ROCmDocs("MIVisionX Documentation")
 docs_core.setup()

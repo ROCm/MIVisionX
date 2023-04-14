@@ -9,5 +9,6 @@ sphinx:
 formats: [htmlzip]
 
 python:
+   version: "3.8"
    install:
    - requirements: docs/.sphinx/requirements.txt

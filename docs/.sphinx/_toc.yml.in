@@ -1,33 +1,7 @@
 # Anywhere {branch} is used, the branch name will be substituted.
 # These comments will also be removed.
-root: index
+root: README
 subtrees:
   - numbered: False
     entries:
-    - file: amd-openvx
-    - file: amd-openvx-extensions
-    - file: applications
-    - file: neural-net-model-compiler--optimizer
-    - file: rocal
-    - file: toolkit
-    - file: utilities
-    - file: prerequisites
-    - file: hardware
-    - file: operating-system
-    - file: build--install-mivisionx
-    - file: windows-1
-    - file: macos-1
-    - file: linux-1
-    - file: verify-the-installation
-    - file: linux--macos
-    - file: windows-2
-    - file: docker
-    - file: mivisionx-docker
-    - file: docker-workflow-sample-on-ubuntu-2004
-    - file: technical-support
-    - file: release-notes
-    - file: latest-release-1
-    - file: changelog
-    - file: tested-configurations
-    - file: known-issues
-    - file: mivisionx-dependency-map
+    - file: CHANGELOG

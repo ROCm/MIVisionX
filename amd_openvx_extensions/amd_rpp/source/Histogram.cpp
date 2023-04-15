@@ -104,11 +104,11 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
 //         refreshHistogram(node, parameters, num, data);
 //         if (df_image == VX_DF_IMAGE_U8)
 //         {
-//             // rpp_status = rppi_histogram_u8_pln1_gpu((void *)data->cl_pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+//             // rpp_status = rppi_histogram_u8_pln1_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
 //         }
 //         else if (df_image == VX_DF_IMAGE_RGB)
 //         {
-//             // rpp_status = rppi_histogram_u8_pkd3_gpu((void *)data->cl_pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+//             // rpp_status = rppi_histogram_u8_pkd3_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
 //         }
 //         size_t arr_size;
 //         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
@@ -118,11 +118,11 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
 //         refreshHistogram(node, parameters, num, data);
 //         if (df_image == VX_DF_IMAGE_U8)
 //         {
-//             // rpp_status = rppi_histogram_u8_pln1_gpu((void *)data->hip_pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+//             // rpp_status = rppi_histogram_u8_pln1_gpu(static_cast<void *>(data->hip_pSrc), data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
 //         }
 //         else if (df_image == VX_DF_IMAGE_RGB)
 //         {
-//             // rpp_status = rppi_histogram_u8_pkd3_gpu((void *)data->hip_pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+//             // rpp_status = rppi_histogram_u8_pkd3_gpu(static_cast<void *>(data->hip_pSrc), data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
 //         }
 //         size_t arr_size;
 //         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));

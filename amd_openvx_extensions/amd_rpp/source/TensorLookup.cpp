@@ -102,7 +102,7 @@ static vx_status VX_CALLBACK processTensorLookup(vx_node node, const vx_referenc
         // #if ENABLE_OPENCL
         // cl_command_queue handle = data->handle->cmdq;
         // refreshTensorLookup(node, parameters, num, data);
-        // rpp_status = rppi_tensor_look_up_table_u8_gpu((void *)data->cl_pSrc,(void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->luPtr,data->rppHandle);
+        // rpp_status = rppi_tensor_look_up_table_u8_gpu(static_cast<void *>(data->cl_pSrc),static_cast<void *>(data->cl_pDst), data->tensorDimensions, data->tensorDimensionsValue,data->luPtr,data->rppHandle);
         // cl_command_queue theQueue;
         // theQueue = data->handle->cmdq;
         // cl_int err;

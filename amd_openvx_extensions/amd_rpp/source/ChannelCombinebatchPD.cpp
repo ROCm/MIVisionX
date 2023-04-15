@@ -156,19 +156,19 @@ static vx_status VX_CALLBACK processChannelCombinebatchPD(vx_node node, const vx
         // #if ENABLE_OPENCL
         //         refreshChannelCombinebatchPD(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_channel_combine_u8_pln1_batchPD_gpu((void *)data->cl_pSrc1,(void *)data->cl_pSrc2,(void *)data->cl_pSrc3,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
+        //             rpp_status = rppi_channel_combine_u8_pln1_batchPD_gpu(static_cast<void *>(data->cl_pSrc1),static_cast<void *>(data->cl_pSrc2),static_cast<void *>(data->cl_pSrc3),data->srcDimensions,data->maxSrcDimensions,static_cast<void *>(data->cl_pDst),data->nbatchSize,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_channel_combine_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc1,(void *)data->cl_pSrc2,(void *)data->cl_pSrc3,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
+        //             rpp_status = rppi_channel_combine_u8_pkd3_batchPD_gpu(static_cast<void *>(data->cl_pSrc1),static_cast<void *>(data->cl_pSrc2),static_cast<void *>(data->cl_pSrc3),data->srcDimensions,data->maxSrcDimensions,static_cast<void *>(data->cl_pDst),data->nbatchSize,data->rppHandle);
         //         }
         //         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         // #elif ENABLE_HIP
         //         refreshChannelCombinebatchPD(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_channel_combine_u8_pln1_batchPD_gpu((void *)data->hip_pSrc1,(void *)data->hip_pSrc2,(void *)data->hip_pSrc3,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
+        //             rpp_status = rppi_channel_combine_u8_pln1_batchPD_gpu(static_cast<void *>(data->hip_pSrc1),static_cast<void *>(data->hip_pSrc2),static_cast<void *>(data->hip_pSrc3),data->srcDimensions,data->maxSrcDimensions,static_cast<void *>(data->hip_pDst),data->nbatchSize,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_channel_combine_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc1,(void *)data->hip_pSrc2,(void *)data->hip_pSrc3,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
+        //             rpp_status = rppi_channel_combine_u8_pkd3_batchPD_gpu(static_cast<void *>(data->hip_pSrc1),static_cast<void *>(data->hip_pSrc2),static_cast<void *>(data->hip_pSrc3),data->srcDimensions,data->maxSrcDimensions,static_cast<void *>(data->hip_pDst),data->nbatchSize,data->rppHandle);
         //         }
         //         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         // #endif

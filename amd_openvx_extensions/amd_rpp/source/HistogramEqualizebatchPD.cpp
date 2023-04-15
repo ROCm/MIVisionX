@@ -128,19 +128,19 @@ static vx_status VX_CALLBACK processHistogramEqualizebatchPD(vx_node node, const
         // #if ENABLE_OPENCL
         //         refreshHistogramEqualizebatchPD(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
+        //             rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,data->maxSrcDimensions,static_cast<void *>(data->cl_pDst),data->nbatchSize,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
+        //             rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,data->maxSrcDimensions,static_cast<void *>(data->cl_pDst),data->nbatchSize,data->rppHandle);
         //         }
         //         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         // #elif ENABLE_HIP
         //         refreshHistogramEqualizebatchPD(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
+        //             rpp_status = rppi_histogram_equalization_u8_pln1_batchPD_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,data->maxSrcDimensions,static_cast<void *>(data->hip_pDst),data->nbatchSize,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->nbatchSize,data->rppHandle);
+        //             rpp_status = rppi_histogram_equalization_u8_pkd3_batchPD_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,data->maxSrcDimensions,static_cast<void *>(data->hip_pDst),data->nbatchSize,data->rppHandle);
         //         }
         //         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         // #endif

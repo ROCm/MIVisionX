@@ -126,11 +126,11 @@ static vx_status VX_CALLBACK processSobelbatchPD(vx_node node, const vx_referenc
         refreshSobelbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_sobel_filter_u8_pln1_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->sobelType, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_sobel_filter_u8_pln1_batchPD_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->cl_pDst), data->sobelType, data->nbatchSize, data->handle->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_sobel_filter_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->sobelType, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_sobel_filter_u8_pkd3_batchPD_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->cl_pDst), data->sobelType, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 

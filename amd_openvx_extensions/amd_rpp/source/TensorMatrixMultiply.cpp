@@ -117,7 +117,7 @@ static vx_status VX_CALLBACK processTensorMatrixMultiply(vx_node node, const vx_
     {
 #if ENABLE_OPENCL
         refreshTensorMatrixMultiply(node, parameters, num, data);
-        rpp_status = rppi_tensor_matrix_multiply_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst, data->tensorDimensionsValue1, data->tensorDimensionsValue2, data->handle->rppHandle);
+        rpp_status = rppi_tensor_matrix_multiply_u8_gpu(static_cast<void *>(data->cl_pSrc1), static_cast<void *>(data->cl_pSrc2), static_cast<void *>(data->cl_pDst), data->tensorDimensionsValue1, data->tensorDimensionsValue2, data->handle->rppHandle);
         cl_command_queue theQueue;
         theQueue = data->handle->cmdq;
         cl_int err;
@@ -127,7 +127,7 @@ static vx_status VX_CALLBACK processTensorMatrixMultiply(vx_node node, const vx_
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
         refreshTensorMatrixMultiply(node, parameters, num, data);
-        rpp_status = rppi_tensor_matrix_multiply_u8_gpu((void *)data->hip_pSrc1, (void *)data->hip_pSrc2, (void *)data->hip_pDst, data->tensorDimensionsValue1, data->tensorDimensionsValue2, data->handle->rppHandle);
+        rpp_status = rppi_tensor_matrix_multiply_u8_gpu(static_cast<void *>(data->hip_pSrc1), static_cast<void *>(data->hip_pSrc2), static_cast<void *>(data->hip_pDst), data->tensorDimensionsValue1, data->tensorDimensionsValue2, data->handle->rppHandle);
         hipError_t err;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);

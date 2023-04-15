@@ -155,22 +155,22 @@ static vx_status VX_CALLBACK processCropMirrorNormalizebatchPD(vx_node node, con
         refreshCropMirrorNormalizebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->dstDimensions, data->maxDstDimensions, data->start_x, data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->cl_pDst), data->dstDimensions, data->maxDstDimensions, data->start_x, data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift, data->nbatchSize, data->handle->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_crop_mirror_normalize_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->dstDimensions, data->maxDstDimensions, data->start_x, data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_crop_mirror_normalize_u8_pkd3_batchPD_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->cl_pDst), data->dstDimensions, data->maxDstDimensions, data->start_x, data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
         refreshCropMirrorNormalizebatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu((void *)data->hip_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->dstDimensions, data->maxDstDimensions, data->start_x, data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu(static_cast<void *>(data->hip_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->hip_pDst), data->dstDimensions, data->maxDstDimensions, data->start_x, data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift, data->nbatchSize, data->handle->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_crop_mirror_normalize_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->dstDimensions, data->maxDstDimensions, data->start_x, data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_crop_mirror_normalize_u8_pkd3_batchPD_gpu(static_cast<void *>(data->hip_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->hip_pDst), data->dstDimensions, data->maxDstDimensions, data->start_x, data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif

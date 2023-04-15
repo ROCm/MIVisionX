@@ -112,10 +112,10 @@ static vx_status VX_CALLBACK processMinMaxLoc(vx_node node, const vx_reference *
         // #if ENABLE_OPENCL
         //         refreshMinMaxLoc(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_min_max_loc_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,&data->min,&data->max,&data->minLoc,&data->maxLoc,data->rppHandle);
+        //             rpp_status = rppi_min_max_loc_u8_pln1_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,&data->min,&data->max,&data->minLoc,&data->maxLoc,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_min_max_loc_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,&data->min,&data->max,&data->minLoc,&data->maxLoc,data->rppHandle);
+        //             rpp_status = rppi_min_max_loc_u8_pkd3_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,&data->min,&data->max,&data->minLoc,&data->maxLoc,data->rppHandle);
         //         }
         //         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[1], &data->min));
         //         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[2], &data->max));
@@ -125,10 +125,10 @@ static vx_status VX_CALLBACK processMinMaxLoc(vx_node node, const vx_reference *
         // #elif ENABLE_HIP
         //         refreshMinMaxLoc(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_min_max_loc_u8_pln1_gpu((void *)data->hip_pSrc,data->srcDimensions,&data->min,&data->max,&data->minLoc,&data->maxLoc,data->rppHandle);
+        //             rpp_status = rppi_min_max_loc_u8_pln1_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,&data->min,&data->max,&data->minLoc,&data->maxLoc,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_min_max_loc_u8_pkd3_gpu((void *)data->hip_pSrc,data->srcDimensions,&data->min,&data->max,&data->minLoc,&data->maxLoc,data->rppHandle);
+        //             rpp_status = rppi_min_max_loc_u8_pkd3_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,&data->min,&data->max,&data->minLoc,&data->maxLoc,data->rppHandle);
         //         }
         //         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[1], &data->min));
         //         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[2], &data->max));

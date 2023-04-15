@@ -134,19 +134,19 @@ static vx_status VX_CALLBACK processFastCornerDetector(vx_node node, const vx_re
         // #if ENABLE_OPENCL
         //         refreshFastCornerDetector(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_fast_corner_detector_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->noOfPixels,data->threshold,data->nonMaxKernelSize,data->rppHandle);
+        //             rpp_status = rppi_fast_corner_detector_u8_pln1_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,static_cast<void *>(data->cl_pDst),data->noOfPixels,data->threshold,data->nonMaxKernelSize,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_fast_corner_detector_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->noOfPixels,data->threshold,data->nonMaxKernelSize,data->rppHandle);
+        //             rpp_status = rppi_fast_corner_detector_u8_pkd3_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,static_cast<void *>(data->cl_pDst),data->noOfPixels,data->threshold,data->nonMaxKernelSize,data->rppHandle);
         //         }
         //         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         // #elif ENABLE_HIP
         //         refreshFastCornerDetector(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_fast_corner_detector_u8_pln1_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->noOfPixels,data->threshold,data->nonMaxKernelSize,data->rppHandle);
+        //             rpp_status = rppi_fast_corner_detector_u8_pln1_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,static_cast<void *>(data->hip_pDst),data->noOfPixels,data->threshold,data->nonMaxKernelSize,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_fast_corner_detector_u8_pkd3_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->noOfPixels,data->threshold,data->nonMaxKernelSize,data->rppHandle);
+        //             rpp_status = rppi_fast_corner_detector_u8_pkd3_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,static_cast<void *>(data->hip_pDst),data->noOfPixels,data->threshold,data->nonMaxKernelSize,data->rppHandle);
         //         }
         //         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         // #endif

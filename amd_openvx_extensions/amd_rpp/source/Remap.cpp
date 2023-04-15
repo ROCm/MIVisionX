@@ -132,19 +132,19 @@ static vx_status VX_CALLBACK processremap(vx_node node, const vx_reference *para
         // #if ENABLE_OPENCL
         //         refreshremap(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //              rpp_status = rppi_remap_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->rowRemap,data->colRemap,data->rppHandle);
+        //              rpp_status = rppi_remap_u8_pln1_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,static_cast<void *>(data->cl_pDst),data->rowRemap,data->colRemap,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_remap_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->rowRemap,data->colRemap,data->rppHandle);
+        //             rpp_status = rppi_remap_u8_pkd3_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,static_cast<void *>(data->cl_pDst),data->rowRemap,data->colRemap,data->rppHandle);
         //         }
         //         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         // #elif ENABLE_HIP
         //         refreshremap(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //              rpp_status = rppi_remap_u8_pln1_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->rowRemap,data->colRemap,data->rppHandle);
+        //              rpp_status = rppi_remap_u8_pln1_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,static_cast<void *>(data->hip_pDst),data->rowRemap,data->colRemap,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_remap_u8_pkd3_gpu((void *)data->hip_pSrc,data->srcDimensions,(void *)data->hip_pDst,data->rowRemap,data->colRemap,data->rppHandle);
+        //             rpp_status = rppi_remap_u8_pkd3_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,static_cast<void *>(data->hip_pDst),data->rowRemap,data->colRemap,data->rppHandle);
         //         }
         //         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         // #endif

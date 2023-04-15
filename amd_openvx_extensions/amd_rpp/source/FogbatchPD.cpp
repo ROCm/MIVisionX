@@ -132,22 +132,22 @@ static vx_status VX_CALLBACK processFogbatchPD(vx_node node, const vx_reference 
         refreshFogbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_fog_u8_pln1_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->fogValue, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_fog_u8_pln1_batchPD_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->cl_pDst), data->fogValue, data->nbatchSize, data->handle->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_fog_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->fogValue, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_fog_u8_pkd3_batchPD_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->cl_pDst), data->fogValue, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
         refreshFogbatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_fog_u8_pln1_batchPD_gpu((void *)data->hip_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->fogValue, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_fog_u8_pln1_batchPD_gpu(static_cast<void *>(data->hip_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->hip_pDst), data->fogValue, data->nbatchSize, data->handle->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_fog_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->fogValue, data->nbatchSize, data->handle->rppHandle);
+            rpp_status = rppi_fog_u8_pkd3_batchPD_gpu(static_cast<void *>(data->hip_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->hip_pDst), data->fogValue, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif

@@ -19,6 +19,7 @@ for file_path in lines:
 
 docs_core = ROCmDocs("MIVisionX Documentation")
 docs_core.setup()
+docs_core.myst_heading_anchors = 6
 
 for sphinx_var in ROCmDocs.SPHINX_VARS:
     globals()[sphinx_var] = getattr(docs_core, sphinx_var)

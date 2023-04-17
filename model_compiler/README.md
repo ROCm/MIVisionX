@@ -93,12 +93,12 @@ sudo python3 setup.py install
 
 ## Model Compiler Samples - Run Efficient Inference
 
-In this [sample](../samples/model_compiler_samples#mivisionx-model-compiler-samples), we will learn how to run inference efficiently using OpenVX and OpenVX Extensions. The sample will go over each step required to convert a pre-trained neural net model into an OpenVX Graph and run this graph efficiently on any target hardware. In this [sample](../samples/model_compiler_samples#mivisionx-model-compiler-samples), we will also learn about AMD MIVisionX which delivers open source implementation of OpenVX and OpenVX Extensions along with MIVisionX Neural Net Model Compiler & Optimizer.
+In this [sample](../samples/model_compiler_samples/README.md#mivisionx-model-compiler-samples), we will learn how to run inference efficiently using OpenVX and OpenVX Extensions. The sample will go over each step required to convert a pre-trained neural net model into an OpenVX Graph and run this graph efficiently on any target hardware. In this [sample](../samples/model_compiler_samples/README.md#mivisionx-model-compiler-samples), we will also learn about AMD MIVisionX which delivers open source implementation of OpenVX and OpenVX Extensions along with MIVisionX Neural Net Model Compiler & Optimizer.
 
-* [Sample-1: Classification Using Pre-Trained ONNX Model](../samples/model_compiler_samples#sample-1---classification-using-pre-trained-onnx-model)
-* [Sample-2: Detection Using Pre-Trained Caffe Model](../samples/model_compiler_samples#sample-2---detection-using-pre-trained-caffe-model) 
-* [Sample-3: Classification Using Pre-Trained NNEF Model](../samples/model_compiler_samples#sample-3---classification-using-pre-trained-nnef-model)
-* [Sample-4: Classification Using Pre-Trained Caffe Model](../samples/model_compiler_samples#sample-4---classification-using-pre-trained-caffe-model)
+* [Sample-1: Classification Using Pre-Trained ONNX Model](../samples/model_compiler_samples/README.md#sample-1---classification-using-pre-trained-onnx-model)
+* [Sample-2: Detection Using Pre-Trained Caffe Model](../samples/model_compiler_samples/README.md#sample-2---detection-using-pre-trained-caffe-model) 
+* [Sample-3: Classification Using Pre-Trained NNEF Model](../samples/model_compiler_samples/README.md#sample-3---classification-using-pre-trained-nnef-model)
+* [Sample-4: Classification Using Pre-Trained Caffe Model](../samples/model_compiler_samples/README.md#sample-4---classification-using-pre-trained-caffe-model)
 
 ## Model Compiler & Optimizer Usage
 

@@ -4,7 +4,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 
 * [amd_loomsl](amd_loomsl): AMD Radeon LOOM stitching library for live 360-degree video applications
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/masterblob/master/docs/data/loom-2.jpg" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/loom-2.jpg" /></p>
 
 * [amd_media](amd_media): `vx_amd_media` is an OpenVX AMD media extension module. This module has mainly two OpenVX extension nodes. `com.amd.amd_media.decode` node for video/jpeg decoding and `com.amd.amd_media.encode` node for video encoding
 
@@ -12,7 +12,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 
 * [amd_nn](amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module. Learn more about neural net workflow in [Neural Net Model Compiler & Optimizer](../model_compiler#neural-net-model-compiler--optimizer)
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/masterblob/master/docs/data/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/modelCompilerWorkflow.png" /></p>
 
 * [amd_opencv](amd_opencv#amd-opencv-extension): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
 
@@ -20,6 +20,6 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 
 * [amd_winml](amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/masterblob/master/docs/data/winmlFrameWorks.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/winmlFrameWorks.png" /></p>
 
 **NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

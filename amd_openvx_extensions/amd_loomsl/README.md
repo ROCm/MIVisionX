@@ -27,11 +27,11 @@ This software is provided under an MIT-style license, see the file COPYRIGHT.txt
 
 ## Samples
 
-[Samples](../../samples#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](../../utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360-degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
+[Samples](../../samples/README.md#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](../../utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360-degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
 
-* [Sample - 1](../../samples#sample---1)
-* [Sample - 2](../../samples#sample---2)
-* [Sample - 3](../../samples#sample---3)
+* [Sample - 1](../../samples/README.md#sample---1)
+* [Sample - 2](../../samples/README.md#sample---2)
+* [Sample - 3](../../samples/README.md#sample---3)
 
 **Note:** The output stitched image is saved as LoomOutputStitch.bmp
 

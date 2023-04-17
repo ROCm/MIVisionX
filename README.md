@@ -2,7 +2,7 @@
 [![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/)
 [![Build Status](https://travis-ci.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/images/MIVisionX.png"/></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/MIVisionX.png" /></p>
 
 MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade;</a> and OpenVX&trade; Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF&trade;</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
@@ -26,27 +26,27 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
     - [Windows](#windows)
     - [macOS](#macos)
     - [Linux](#linux)
-      - [Prerequisites setup script for Linux - `MIVisionX-setup.py`](#prerequisites-setup-script-for-linux---mivisionx-setuppy)
+      - [Prerequisites setup script for Linux - `MIVisionX-setup.py`](#prerequisites-setup-script-for-linux)
         - [Prerequisites for running the script](#prerequisites-for-running-the-script)
 - [Build \& Install MIVisionX](#build--install-mivisionx)
-  - [Windows](#windows-1)
+  - [Windows](#building-on-windows)
     - [Using .msi packages](#using-msi-packages)
     - [Using `Visual Studio`](#using-visual-studio)
-  - [macOS](#macos-1)
-  - [Linux](#linux-1)
-    - [Using `apt-get` / `yum`](#using-apt-get--yum)
-    - [Using `MIVisionX-setup.py`](#using-mivisionx-setuppy)
+  - [macOS](#building-on-macos)
+  - [Linux](#building-on-linux)
+    - [Using `apt-get` or `yum`](#using-apt-get-or-yum)
+    - [Using `MIVisionX-setup.py`](#using-mivisionx-setup-py)
 - [Verify the Installation](#verify-the-installation)
-  - [Linux / macOS](#linux--macos)
-  - [Windows](#windows-2)
+  - [Linux / macOS](#verifying-on-linux--macos)
+  - [Windows](#verifying-on-windows)
 - [Docker](#docker)
   - [MIVisionX Docker](#mivisionx-docker)
   - [Docker Workflow Sample on Ubuntu `20.04`](#docker-workflow-sample-on-ubuntu-2004)
-    - [Prerequisites](#prerequisites-1)
-    - [Workflow](#workflow)
+    - [Prerequisites](#sample-prerequisites)
+    - [Workflow](#sample-workflow)
 - [Technical Support](#technical-support)
 - [Release Notes](#release-notes)
-  - [Latest Release](#latest-release-1)
+  - [Latest Release](#latest-release-version)
   - [Changelog](#changelog)
   - [Tested configurations](#tested-configurations)
   - [Known issues](#known-issues)
@@ -66,7 +66,7 @@ python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
 
 ## AMD OpenVX&trade;
 
-<p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/OpenVX_logo.png" /></p>
+<p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/OpenVX_logo.png" /></p>
 
 [AMD OpenVX&trade;](amd_openvx#amd-openvx-amd_openvx) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
@@ -76,7 +76,7 @@ python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
 
 The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx), which contains the AMD OpenVX&trade; Core Engine.
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl): AMD Radeon Loom stitching library for live 360 degree video applications
 * [amd_media](amd_openvx_extensions/amd_media): `vx_amd_media` is an OpenVX AMD media extension module for encode and decode
@@ -90,7 +90,7 @@ The OpenVX framework provides a mechanism to add new vision functionality to Ope
 
 MIVisionX has several [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications that can be used to prototype or use as a model to develop products.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/MIVisionX-applications.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/MIVisionX-applications.png" /></p>
 
 * [Bubble Pop](apps/bubble_pop#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
 * [Cloud Inference Application](apps/cloud_inference#cloud-inference-application): This sample application does inference using a client-server system.
@@ -106,7 +106,7 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
 
 ## Neural Net Model Compiler & Optimizer
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/modelCompilerWorkflow.png" /></p>
 
 [Neural Net Model Compiler & Optimizer](model_compiler#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
@@ -177,9 +177,9 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + FFMPEG is required for amd_media & mv_deploy modules
 * [rocAL](rocAL#prerequisites) Prerequisites
 
-##### Prerequisites setup script for Linux - `MIVisionX-setup.py`
+##### Prerequisites setup script for Linux
 
-For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
+For the convenience of the developer, we provide the setup script `MIVisionX-setup.py` which will install all the dependencies required by this project.
 
   **NOTE:** This script only needs to be executed once.
 
@@ -214,7 +214,7 @@ For the convenience of the developer, we here provide the setup script which wil
 
 ## Build & Install MIVisionX
 
-### Windows
+### Building on Windows
 
 #### Using .msi packages
 
@@ -228,13 +228,13 @@ For the convenience of the developer, we here provide the setup script which wil
 
   **NOTE:** `vx_nn` is not supported on `Windows` in this release
 
-### macOS
+### Building on macOS
 
 macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
 
-### Linux
+### Building on Linux
 
-#### Using `apt-get` / `yum`
+#### Using `apt-get` or `yum`
 
 * [ROCm supported hardware](https://docs.amd.com)
 * Install [ROCm](https://docs.amd.com)
@@ -311,7 +311,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 ## Verify the Installation
 
-### Linux / macOS
+### Verifying on Linux / macOS
 
 * The installer will copy
   + Executables into `/opt/rocm/bin`
@@ -335,7 +335,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
   **Note:** For `macOS` use `export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/rocm/lib`
 
-### Windows
+### Verifying on Windows
 
 * MIVisionX.sln builds the libraries & executables in the folder `MIVisionX/x64`
 * Use RunVX to test the build
@@ -358,12 +358,12 @@ Docker files to build MIVisionX containers are [available](docker#mivisionx-dock
 
 ### Docker Workflow Sample on Ubuntu `20.04`
 
-#### Prerequisites
+#### Sample Prerequisites
 
 * Ubuntu `20.04`/`22.04`
 * [rocm supported hardware](https://docs.amd.com)
 
-#### Workflow
+#### Sample Workflow
 
 * Step 1 - *Install rocm-dkms*
 
@@ -437,7 +437,7 @@ Please submit your feature requests, and bug reports on the [GitHub issues](http
 
 ## Release Notes
 
-### Latest Release
+### Latest Release Version
 
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
 

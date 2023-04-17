@@ -231,7 +231,7 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     }
 
     // Initialize ROI tensors for src/dst
-    data->roiTensorPtrSrc  = (RpptROI *) calloc(data->nbatchSize, sizeof(RpptROI));
+    data->roiTensorPtrSrc  = static_cast<RpptROI *>(calloc(data->nbatchSize, sizeof(RpptROI)));
 
     // Set ROI tensors types for src/dst
     data->roiType = RpptRoiType::XYWH;

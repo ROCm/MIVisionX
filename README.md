@@ -35,7 +35,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   - [macOS](#building-on-macos)
   - [Linux](#building-on-linux)
     - [Using `apt-get` or `yum`](#using-apt-get-or-yum)
-    - [Using `MIVisionX-setup.py`](#using-mivisionx-setup-py)
+    - [#### Using `MIVisionX-setup.py` script for Linux](#using-mivisionx-setup-py-script-for-linux)
 - [Verify the Installation](#verify-the-installation)
   - [Linux / macOS](#verifying-on-linux--macos)
   - [Windows](#verifying-on-windows)
@@ -259,7 +259,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     + Docs folder into `/opt/rocm/share/doc/mivisionx`
   * Package (.deb & .rpm) install requires `OpenCV v3+` to execute `AMD OpenCV extensions`
 
-#### Using `MIVisionX-setup.py`
+#### Using `MIVisionX-setup.py` script for Linux
 
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * Use the below commands to set up and build MIVisionX

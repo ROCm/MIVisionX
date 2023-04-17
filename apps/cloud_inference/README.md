@@ -10,7 +10,7 @@ The cloud inference app is designed as a server and a client inference modules, 
 
 ## Inference Server Application - inference_server_app
 
-The [server application](server_app#mivisionx-inference-server) is built along with MIVisionX and placed in `/opt/rocm/bin` when MIVisionX is installed. The server application has a command-line interface.
+The [server application](server_app/README.md#mivisionx-inference-server) is built along with MIVisionX and placed in `/opt/rocm/bin` when MIVisionX is installed. The server application has a command-line interface.
 
 usage:
 
@@ -28,7 +28,7 @@ usage:
 
 ## Client Application - client_app
 
-The [client application](client_app#anninferenceapp---client-application) needs to be built by the user using QT Creator. The client application has a GUI interface to connect with the server.
+The [client application](client_app/README.md#anninferenceapp---client-application) needs to be built by the user using QT Creator. The client application has a GUI interface to connect with the server.
 
 <p align="center"><img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/client_app.png" /></p>
 

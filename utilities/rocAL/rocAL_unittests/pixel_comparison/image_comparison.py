@@ -128,10 +128,9 @@ def main():
                     logging.info("FAILED")
                     logging.info("Printing pixel mismatch %s",pixeldiff)
                     mismatch_percentage = round((total_pixel_diff/tot_count)*100,2)
-                    if(mismatch_percentage):
-                        logging.info("Mismatach percentage %s", round((total_pixel_diff/tot_count)*100,2))
-                        for pix_diff in range(1,6):
-                                logging.info("Percentage of %d pixel mismatch %s", pix_diff, round((pixeldiff[pix_diff]/total_pixel_diff)*100,2))
+                    logging.info("Mismatach percentage %s", round((total_pixel_diff/tot_count)*100,2))
+                    for pix_diff in range(1,6):
+                            logging.info("Percentage of %d pixel mismatch %s", pix_diff, round((pixeldiff[pix_diff]/total_pixel_diff)*100,2))
                 else:
                     passed_case_count=passed_case_count+1
                     logging.info("PASSED")

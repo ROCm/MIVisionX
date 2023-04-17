@@ -1,4 +1,3 @@
-import types
 from random import shuffle
 from amd.rocal.pipeline import Pipeline
 from amd.rocal.plugin.pytorch import ROCALClassificationIterator
@@ -34,7 +33,7 @@ def main():
             self.images_dir = data_dir
             self.batch_size = batch_size
             self.files = []
-            import os, glob
+            import glob
             for filename in glob.glob(os.path.join(self.images_dir, '*.jpg')):
                 self.files.append(filename)
             shuffle(self.files)
@@ -47,7 +46,7 @@ def main():
         def __next__(self):
             batch = []
             label = []
-            for i in range(self.batch_size):
+            for _ in range(self.batch_size):
                 jpeg_filename = self.files[self.i]
                 batch.append(jpeg_filename)
                 label.append(1) # Label is some random variable for testing - user can modify acording to use case
@@ -58,7 +57,7 @@ def main():
     external_input_source = ExternalInputIteratorMode0(batch_size)
 
     #Create the pipeline
-    external_source_pipeline_mode0 = Pipeline(batch_size = batch_size, num_threads = 1, device_id = 0, seed = 1, rocal_cpu = True, tensor_layout = types.NCHW , tensor_dtype = types.FLOAT)
+    external_source_pipeline_mode0 = Pipeline(batch_size = batch_size, num_threads = 1, device_id = 0, seed = 1, rocal_cpu = True if device else False, tensor_layout = types.NCHW , tensor_dtype = types.FLOAT)
 
     with external_source_pipeline_mode0:
         jpegs, _ = fn.external_source(source = external_input_source, mode = types.EXTSOURCE_FNAME)

@@ -174,7 +174,7 @@ int main(int argc, const char **argv) {
       }
       unsigned long long imageDimMax =
           (unsigned long long)maxheight * (unsigned long long)maxwidth * 3;
-      unsigned char *complete_image_buffer = (unsigned char *)malloc(
+      unsigned char *complete_image_buffer = static_cast<unsigned char *>malloc(
           sizeof(unsigned char) * file_names.size() * imageDimMax);
       uint32_t elementsInRowMax = maxwidth * 3;
       unsigned char *temp_buffer, *temp_image;
@@ -240,7 +240,6 @@ int main(int argc, const char **argv) {
   // uncomment the following to add augmentation if needed
   RocalImage image0;
   int resize_w = decode_width, resize_h = decode_height;
-  image0 = input1;
   // just do one augmentation to test
   image0 = rocalResize(handle, input1, resize_w, resize_h, true);
 #endif
@@ -291,7 +290,6 @@ int main(int argc, const char **argv) {
     std::vector<unsigned char *> input_batch_buffer;
     std::vector<unsigned> roi_width;
     std::vector<unsigned> roi_height;
-    std::vector<int> label;
     for (int i = 0; i < inputBatchSize; i++) {
       if (mode == 0) {
         input_images.push_back(file_names.back());
@@ -319,6 +317,7 @@ int main(int argc, const char **argv) {
       }
     }
     if (index <= (total_images / inputBatchSize)) {
+      std::vector<int> label;
       if (mode == 0)
         rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {},
                                      decode_width, decode_height, channels,

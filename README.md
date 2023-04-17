@@ -88,27 +88,27 @@ The OpenVX framework provides a mechanism to add new vision functionality to Ope
 
 ## Applications
 
-MIVisionX has several [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications that can be used to prototype or use as a model to develop products.
+MIVisionX has several [applications](apps/README.md#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications that can be used to prototype or use as a model to develop products.
 
 <p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/MIVisionX-applications.png" /></p>
 
-* [Bubble Pop](apps/bubble_pop#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
-* [Cloud Inference Application](apps/cloud_inference#cloud-inference-application): This sample application does inference using a client-server system.
-* [Digit Test](apps/dg_test#amd-dgtest): This sample application is used to recognize hand written digits.
-* [Image Augmentation](apps/image_augmentation#image-augmentation-application): This sample application demonstrates the basic usage of rocAL's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
-* [MIVisionX Inference Analyzer](apps/mivisionx_inference_analyzer#mivisionx-python-inference-analyzer): This sample application uses pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze and summarize images.
-* [MIVisionX OpenVX Classsification](apps#mivisionx-openvx-classsification): This sample application shows how to run supported pre-trained caffe models with MIVisionX RunTime.
-* [MIVisionX Validation Tool](apps/mivisionx_validation_tool#mivisionx-python-ml-model-validation-tool): This sample application uses pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze, summarize and validate models.
-* [MIVisionX WinML Classification](apps#mivisionx-winml-classification): This sample application shows how to run supported ONNX models with MIVisionX RunTime on Windows.
-* [MIVisionX WinML YoloV2](apps#mivisionx-winml-yolov2): This sample application shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
-* [Optical Flow](apps/optical_flow#openvx-samples): This sample application creates an OpenVX graph to run Optical Flow on a video/live.
-* [External Applications](apps#external-application)
+* [Bubble Pop](apps/bubble_pop/README.md#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
+* [Cloud Inference Application](apps/cloud_inference/README.md#cloud-inference-application): This sample application does inference using a client-server system.
+* [Digit Test](apps/dg_test/README.md#amd-dgtest): This sample application is used to recognize hand written digits.
+* [Image Augmentation](apps/image_augmentation/README.md#image-augmentation-application): This sample application demonstrates the basic usage of rocAL's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
+* [MIVisionX Inference Analyzer](apps/mivisionx_inference_analyzer/README.md#mivisionx-python-inference-analyzer): This sample application uses pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze and summarize images.
+* [MIVisionX OpenVX Classification](apps/README.md#mivisionx-openvx-classsification): This sample application shows how to run supported pre-trained caffe models with MIVisionX RunTime.
+* [MIVisionX Validation Tool](apps/mivisionx_validation_tool/README.md#mivisionx-python-ml-model-validation-tool): This sample application uses pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze, summarize and validate models.
+* [MIVisionX WinML Classification](apps/README.md#mivisionx-winml-classification): This sample application shows how to run supported ONNX models with MIVisionX RunTime on Windows.
+* [MIVisionX WinML YoloV2](apps/README.md#mivisionx-winml-yolov2): This sample application shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
+* [Optical Flow](apps/optical_flow/README.md#openvx-samples): This sample application creates an OpenVX graph to run Optical Flow on a video/live.
+* [External Applications](apps/README.md#external-application)
 
 ## Neural Net Model Compiler & Optimizer
 
 <p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/modelCompilerWorkflow.png" /></p>
 
-[Neural Net Model Compiler & Optimizer](model_compiler#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
+[Neural Net Model Compiler & Optimizer](model_compiler/README.md#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
 ## rocAL
 
@@ -116,13 +116,13 @@ The ROCm Augmentation Library - [rocAL](rocAL/README.md) is designed to efficien
 
 ## Toolkit
 
-[MIVisionX Toolkit](toolkit), is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides you with helpful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
+[MIVisionX Toolkit](toolkit/README.md), is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides you with helpful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
 
 MIVisionX provides you with tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
 
 ## Utilities
 
-* [inference_generator](utilities/inference_generator#inference-generator): generate inference library from pre-trained CAFFE models
+* [inference_generator](utilities/inference_generator/README.md#inference-generator): generate inference library from pre-trained CAFFE models
 * [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
 * [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
@@ -167,7 +167,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + **SLES** - `15-SP3`
 * Install [ROCm](https://docs.amd.com)
 * CMake 3.0 or later
-* ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
+* ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
@@ -175,7 +175,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * [FFMPEG n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
   + FFMPEG is required for amd_media & mv_deploy modules
-* [rocAL](rocAL#prerequisites) Prerequisites
+* [rocAL](rocAL/README.md#prerequisites) Prerequisites
 
 ##### Prerequisites setup script for Linux
 

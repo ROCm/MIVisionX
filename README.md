@@ -35,7 +35,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   - [macOS](#building-on-macos)
   - [Linux](#building-on-linux)
     - [Using `apt-get` or `yum`](#using-apt-get-or-yum)
-    - [#### Using `MIVisionX-setup.py` script for Linux](#using-mivisionx-setup-py-script-for-linux)
+    - [Using `MIVisionX-setup.py`](#using-mivisionx-setup-py)
 - [Verify the Installation](#verify-the-installation)
   - [Linux / macOS](#verifying-on-linux--macos)
   - [Windows](#verifying-on-windows)
@@ -68,13 +68,13 @@ python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
 
 <p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/OpenVX_logo.png" /></p>
 
-[AMD OpenVX&trade;](amd_openvx/README) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+[AMD OpenVX&trade;](amd_openvx/README.md) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 <a href="https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html" target="_blank">Khronos OpenVX&trade; 1.0.1</a> conformant implementation is available in [MIVisionX Lite](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/openvx-1.0.1)
 
 ## AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx), which contains the AMD OpenVX&trade; Core Engine.
+The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
 
 <p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 
@@ -259,7 +259,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     + Docs folder into `/opt/rocm/share/doc/mivisionx`
   * Package (.deb & .rpm) install requires `OpenCV v3+` to execute `AMD OpenCV extensions`
 
-#### Using `MIVisionX-setup.py` script for Linux
+#### Using MIVisionX-setup.py
 
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * Use the below commands to set up and build MIVisionX

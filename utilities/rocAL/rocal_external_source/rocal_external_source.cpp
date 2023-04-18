@@ -63,7 +63,6 @@ int main(int argc, const char **argv) {
   int decode_width = 224;
   int decode_height = 224;
   int inputBatchSize = 64;
-  int prefetch_queue_depth = 3;
   bool processing_device = 1;
   int mode = -1;
 
@@ -107,7 +106,6 @@ int main(int argc, const char **argv) {
   }
 
   /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
-  RocalImage input1;
   std::vector<uint32_t> srcsize_height, srcsize_width;
   uint32_t maxheight = 0, maxwidth = 0;
   DIR *_src_dir;
@@ -140,8 +138,7 @@ int main(int argc, const char **argv) {
         size_t _current_file_size = ftell(
             _current_fPtr);  // Check how many bytes are there between and the
                              // current read pointer position (end of the file)
-        unsigned char *input_data = static_cast<unsigned char *>(
-            malloc(sizeof(unsigned char) * _current_file_size));
+        unsigned char *input_data = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * _current_file_size));
         if (_current_file_size == 0) {  // If file is empty continue
           fclose(_current_fPtr);
           _current_fPtr = nullptr;
@@ -174,11 +171,11 @@ int main(int argc, const char **argv) {
       }
       unsigned long long imageDimMax =
           (unsigned long long)maxheight * (unsigned long long)maxwidth * 3;
-      unsigned char *complete_image_buffer = static_cast<unsigned char *>malloc(
-          sizeof(unsigned char) * file_names.size() * imageDimMax);
+      unsigned char *complete_image_buffer = static_cast<unsigned char *>(malloc(sizeof(unsigned char) * file_names.size() * imageDimMax));
       uint32_t elementsInRowMax = maxwidth * 3;
-      unsigned char *temp_buffer, *temp_image;
+      unsigned char *temp_buffer;
       for (uint32_t i = 0; i < file_names.size(); i++) {
+        unsigned char *temp_image;
         temp_image = temp_buffer = complete_image_buffer + (i * imageDimMax);
         Mat image = imread(file_names[i], 1);
         if (image.empty()) {
@@ -199,50 +196,19 @@ int main(int argc, const char **argv) {
     }
   }
   if (maxheight != 0 && maxwidth != 0)
-    input1 = rocalJpegExternalFileSource(
-        handle, folderPath1, color_format, false, false, false,
-        ROCAL_USE_USER_GIVEN_SIZE, maxwidth, maxheight,
-        RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
+    RocalImage input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false,
+                                ROCAL_USE_USER_GIVEN_SIZE, maxwidth, maxheight,
+                                RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
   else
-    input1 = rocalJpegExternalFileSource(
-        handle, folderPath1, color_format, false, false, false,
-        ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height,
-        RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
+    RocalImage input1 = rocalJpegExternalFileSource(handle, folderPath1, color_format, false, false, false,
+                                ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height,
+                                RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
   if (rocalGetStatus(handle) != ROCAL_OK) {
     std::cerr << "JPEG source could not initialize : "
               << rocalGetErrorMessage(handle) << std::endl;
     return -1;
   }
 
-#if 0
-    const size_t num_values = 3;
-    float values[num_values] = {0,10,135};
-    double frequencies[num_values] = {1, 5, 5};
-
-    RocalFloatParam rand_angle =   rocalCreateFloatRand( values , frequencies, num_values);
-    // Creating successive blur nodes to simulate a deep branch of augmentations
-    RocalImage image2 = rocalCropResize(handle, image0, resize_w, resize_h, false, rand_crop_area);;
-    for(int i = 0 ; i < aug_depth; i++)
-    {
-        image2 = rocalBlurFixed(handle, image2, 17.25, (i == (aug_depth -1)) ? true:false );
-    }
-    RocalImage image4 = rocalColorTemp(handle, image0, false, color_temp_adj);
-    RocalImage image5 = rocalWarpAffine(handle, image4, false);
-    RocalImage image6 = rocalJitter(handle, image5, false);
-    rocalVignette(handle, image6, true);
-
-    RocalImage image7 = rocalPixelate(handle, image0, false);
-    RocalImage image8 = rocalSnow(handle, image0, false);
-    RocalImage image9 = rocalBlend(handle, image7, image8, false);
-    RocalImage image10 = rocalLensCorrection(handle, image9, false);
-    rocalExposure(handle, image10, true);
-#else
-  // uncomment the following to add augmentation if needed
-  RocalImage image0;
-  int resize_w = decode_width, resize_h = decode_height;
-  // just do one augmentation to test
-  image0 = rocalResize(handle, input1, resize_w, resize_h, true);
-#endif
 
   if (rocalGetStatus(handle) != ROCAL_OK) {
     std::cerr << "Error while adding the augmentation nodes " << std::endl;
@@ -266,7 +232,6 @@ int main(int argc, const char **argv) {
   std::cerr << "output width " << w << " output height " << h
             << " color planes " << p << std::endl;
   const unsigned number_of_cols = 1;  // no augmented case
-  float out_tensor[h * w * p * inputBatchSize];
   auto cv_color_format = ((p == 3) ? CV_8UC3 : CV_8UC1);
   cv::Mat mat_output(h, w * number_of_cols, cv_color_format);
   cv::Mat mat_input(h, w, cv_color_format);
@@ -278,12 +243,9 @@ int main(int argc, const char **argv) {
   int counter = 0;
   std::vector<std::string> names;
   std::vector<int> labels;
-  int ImageNameLen[inputBatchSize];
   names.resize(inputBatchSize);
   labels.resize(inputBatchSize);
   int iter_cnt = 0;
-  float pmul = 2.0f / 255;
-  float padd = -1.0f;
   int index = 0;
   while (!rocalIsEmpty(handle)) {
     std::vector<std::string> input_images;

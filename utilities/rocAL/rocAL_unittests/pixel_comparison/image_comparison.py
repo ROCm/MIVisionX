@@ -41,7 +41,7 @@ def compare_pixels(img1, img2, aug_name, width, height, image_offset = 0):
                         pixel = 5
                     pixel_difference[pixel] += 1
                 else:
-                    pixel_difference[0] += 1 
+                    pixel_difference[0] += 1
     return pixel_difference, total_valid_pixel_count
 
 def main():
@@ -118,7 +118,7 @@ def main():
                     pixeldiff = [x + y for x, y in zip(pixeldiff, pixeldiff2)]
                     tot_count = tot_count + tot_count2
                 else:
-                    pixeldiff, tot_count = compare_pixels(img1, img2, aug_name, img1.size[0], img1.size[1]) 
+                    pixeldiff, tot_count = compare_pixels(img1, img2, aug_name, img1.size[0], img1.size[1])
                 total_pixel_diff = 0
                 for pix_diff in range(1,6):
                     total_pixel_diff += pixeldiff[pix_diff]
@@ -128,7 +128,7 @@ def main():
                     logging.info("FAILED")
                     logging.info("Printing pixel mismatch %s",pixeldiff)
                     mismatch_percentage = round((total_pixel_diff/tot_count)*100,2)
-                    logging.info("Mismatach percentage %s", round((total_pixel_diff/tot_count)*100,2))
+                    logging.info("Mismatach percentage %s", mismatch_percentage)
                     for pix_diff in range(1,6):
                             logging.info("Percentage of %d pixel mismatch %s", pix_diff, round((pixeldiff[pix_diff]/total_pixel_diff)*100,2))
                 else:

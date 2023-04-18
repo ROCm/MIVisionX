@@ -471,15 +471,12 @@ MasterGraph::allocate_output_tensor()
         _output_tensor = clImgFloat;
     }
 #elif ENABLE_HIP
-    if (processing_on_device_hip())
-    {
-        // creating a float buffer that can accommodates all output images
-        size_t output_buffer_size = output_byte_size() * _output_images.size();
-        size_t size = (_out_data_type==RocalTensorDataType::FP32)? output_buffer_size*sizeof(float): output_buffer_size*sizeof(half);
-        hipError_t status = hipMalloc( &_output_tensor, size);
-        if (status != hipSuccess || !_output_tensor )
-            THROW("ROCAL::hipMalloc of size " + TOSTR(size) + " failed " + TOSTR(status))
-    }
+    // creating a float buffer that can accommodates all output images
+    size_t output_buffer_size = output_byte_size() * _output_images.size();
+    size_t size = (_out_data_type == RocalTensorDataType::FP32) ? output_buffer_size * sizeof(float) : output_buffer_size * sizeof(half);
+    hipError_t status = hipMalloc(&_output_tensor, size);
+    if ((status != hipSuccess) || !_output_tensor )
+        THROW("ROCAL::hipMalloc of size " + TOSTR(size) + " failed " + TOSTR(status))
 #endif
     return Status::OK;
 }
@@ -491,7 +488,7 @@ MasterGraph::deallocate_output_tensor()
     if(processing_on_device_ocl() && _output_tensor != nullptr)
         clReleaseMemObject((cl_mem)_output_tensor );
 #elif ENABLE_HIP
-    if(processing_on_device_hip() && _output_tensor != nullptr) {
+    if(_output_tensor != nullptr) {
         hipError_t err = hipFree(_output_tensor );
         if (err != hipSuccess) {
             THROW("MasterGraph::deallocate_output_tensor  hipFree failed " + TOSTR(err))
@@ -687,30 +684,21 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
             for( auto&& out_image: output_buffers)
             {
                 auto img_buffer = out_image;
-                void *img_buffer_hip;
-                auto return_status = hipMalloc(&img_buffer_hip, sizeof(unsigned char) * n * c * h * w);
-                if (return_status != hipSuccess) {
-                    THROW("hipMalloc failed with status " + TOSTR(return_status))
-                }
-                return_status = hipMemcpy(img_buffer_hip, (const void *)img_buffer, sizeof(unsigned char) * n * c * h * w, hipMemcpyHostToDevice);
+                auto return_status = hipMemcpy(_output_tensor, (const void *)img_buffer, sizeof(unsigned char) * n * c * h * w, hipMemcpyHostToDevice);
                 if (return_status != hipSuccess) {
                     THROW("hipMemcpy failed with status " + TOSTR(return_status))
                 }
                 if (format == RocalTensorFormat::NHWC)
                 {
-                    HipExecCopyInt8ToNHWC(_device.resources()->hip_stream, (const void *)img_buffer_hip, out_ptr, dest_buf_offset, n, c, h, w,
+                    HipExecCopyInt8ToNHWC(_device.resources()->hip_stream, (const void *)_output_tensor, out_ptr, dest_buf_offset, n, c, h, w,
                                             multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
 
                 }else
                 {
-                    HipExecCopyInt8ToNCHW(_device.resources()->hip_stream, (const void *)img_buffer_hip, out_ptr, dest_buf_offset, n, c, h, w,
+                    HipExecCopyInt8ToNCHW(_device.resources()->hip_stream, (const void *)_output_tensor, out_ptr, dest_buf_offset, n, c, h, w,
                                             multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
                 }
                 dest_buf_offset += single_output_image_size;
-                return_status = hipFree(img_buffer_hip);
-                if (return_status != hipSuccess) {
-                    THROW("hipFree failed with status " + TOSTR(return_status))
-                }
             }
 
         }

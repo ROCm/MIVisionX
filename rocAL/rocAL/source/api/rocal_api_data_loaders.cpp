@@ -2021,7 +2021,6 @@ rocalVideoFileSource(
                               color_format );
 
         output = context->master_graph->create_loader_output_image(info);
-        auto cpu_num_threads = context->master_graph->calculate_cpu_num_threads(1);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                             source_path,
@@ -2112,7 +2111,6 @@ rocalVideoFileSourceSingleShard(
                               color_format );
 
         output = context->master_graph->create_loader_output_image(info);
-        auto cpu_num_threads = context->master_graph->calculate_cpu_num_threads(shard_count);
 
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path,
@@ -2204,7 +2202,6 @@ rocalVideoFileResize(
                               color_format );
 
         Image* output = context->master_graph->create_loader_output_image(info);
-        auto cpu_num_threads = context->master_graph->calculate_cpu_num_threads(1);
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                             source_path,
                                                                             VideoStorageType::VIDEO_FILE_SYSTEM,
@@ -2385,7 +2382,6 @@ rocalVideoFileResizeSingleShard(
                               color_format );
 
         Image* output = context->master_graph->create_loader_output_image(info);
-        auto cpu_num_threads = context->master_graph->calculate_cpu_num_threads(shard_count);
         context->master_graph->add_node<VideoLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
                                                                                         source_path,
                                                                                         VideoStorageType::VIDEO_FILE_SYSTEM,

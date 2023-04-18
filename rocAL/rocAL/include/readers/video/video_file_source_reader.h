@@ -45,7 +45,7 @@ public:
     void reset() override;
 
     //! Returns the name of the latest file opened
-    std::string id() override { return _last_id; }
+    std::string id() override { return _last_id;};
 
     unsigned count_items() override;
 

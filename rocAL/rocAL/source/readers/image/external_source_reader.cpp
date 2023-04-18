@@ -42,11 +42,11 @@ ExternalSourceReader::ExternalSourceReader() {
 // return batch_size() for count_items unless end_of_sequence has been signalled.
 unsigned ExternalSourceReader::count_items() {
     if (_file_mode == FileMode::FILENAME) {
-        if (_end_of_sequence && _file_names_que.empty()) {
+        if (_end_of_sequence && _file_names_queue.empty()) {
         return 0;
         }
     } else {
-        if (_end_of_sequence && _images_data_q.empty()) {
+        if (_end_of_sequence && _images_data_queue.empty()) {
         return 0;
         }
     }
@@ -162,7 +162,6 @@ int ExternalSourceReader::release() {
 }
 
 void ExternalSourceReader::reset() {
-    if (_shuffle) std::random_shuffle(_file_data.begin(), _file_data.end());
     _read_counter = 0;
     _curr_file_idx = 0;
     _end_of_sequence = false;   // reset for looping
@@ -176,7 +175,7 @@ size_t ExternalSourceReader::get_file_shard_id() {
 
 void ExternalSourceReader::push_file_name(const std::string& file_name) {
     std::unique_lock<std::mutex> lock(_lock);
-    _file_names_que.push(file_name);
+    _file_names_queue.push(file_name);
     lock.unlock();
     // notify waiting thread of new data
     _wait_for_input.notify_all();
@@ -184,11 +183,11 @@ void ExternalSourceReader::push_file_name(const std::string& file_name) {
 
 bool ExternalSourceReader::pop_file_name(std::string& file_name) {
     std::unique_lock<std::mutex> lock(_lock);
-    if(_file_names_que.empty() && !_end_of_sequence)
+    if(_file_names_queue.empty() && !_end_of_sequence)
         _wait_for_input.wait(lock);
-    if (!_file_names_que.empty()) {
-      file_name = _file_names_que.front();
-      _file_names_que.pop();
+    if (!_file_names_queue.empty()) {
+      file_name = _file_names_queue.front();
+      _file_names_queue.pop();
       return true;
     } else
       return false;
@@ -196,7 +195,7 @@ bool ExternalSourceReader::pop_file_name(std::string& file_name) {
 
 void ExternalSourceReader::push_file_data(std::tuple<unsigned char*, size_t, int, int, int>& image) {
     std::unique_lock<std::mutex> lock(_lock);
-    _images_data_q.push(image);
+    _images_data_queue.push(image);
     lock.unlock();
     // notify waiting thread of new data
     _wait_for_input.notify_all();
@@ -204,11 +203,11 @@ void ExternalSourceReader::push_file_data(std::tuple<unsigned char*, size_t, int
 
 bool ExternalSourceReader::pop_file_data(std::tuple<unsigned char*,  size_t, int, int, int>& image) {
     std::unique_lock<std::mutex> lock(_lock);
-    if(_images_data_q.empty() && !_end_of_sequence)
+    if(_images_data_queue.empty() && !_end_of_sequence)
         _wait_for_input.wait(lock);
-    if (!_images_data_q.empty()) {
-      image = _images_data_q.front();
-      _images_data_q.pop();
+    if (!_images_data_queue.empty()) {
+      image = _images_data_queue.front();
+      _images_data_queue.pop();
       return true;
     } else
       return false;

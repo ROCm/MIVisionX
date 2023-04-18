@@ -23,28 +23,18 @@ THE SOFTWARE.
 */
 
 #include <dirent.h>
-
 #include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <opencv2/opencv.hpp>
-
 #include "rocal_api.h"
 
 #if USE_OPENCV_4
-#define CV_LOAD_IMAGE_COLOR IMREAD_COLOR
-#define CV_BGR2GRAY COLOR_BGR2GRAY
-#define CV_GRAY2RGB COLOR_GRAY2RGB
 #define CV_RGB2BGR COLOR_RGB2BGR
-#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
-#define CV_FILLED FILLED
-#define CV_WINDOW_AUTOSIZE WINDOW_AUTOSIZE
 #endif
 
 using namespace cv;
-
-#define DISPLAY
 using namespace std::chrono;
 
 int main(int argc, const char **argv) {
@@ -53,18 +43,18 @@ int main(int argc, const char **argv) {
     printf(
         "Usage: rocal_external_source <image_dataset_folder> "
         "<processing_device=1/cpu=0>  decode_width decode_height batch_size "
-        "gray_scale/rgb/rgbplanar display_on_off external_source_mode \n");
+        "gray_scale/rgb/rgbplanar display_on_off external_source_mode<file_mode=0/raw_compressed_mode=1/raw_uncompresses_mode=2>\n");
     return -1;
   }
   int argIdx = 0;
   const char *folderPath1 = argv[++argIdx];
   bool display = 0;  // Display the images
-  int rgb = 2;       // process color images
+  int rgb = 1;       // process color images
   int decode_width = 224;
   int decode_height = 224;
-  int inputBatchSize = 64;
-  bool processing_device = 1;
-  int mode = -1;
+  int inputBatchSize = 2;
+  bool processing_device = 0;
+  int mode = 0;
 
   if (argc >= argIdx + MIN_ARG_COUNT) processing_device = atoi(argv[++argIdx]);
 
@@ -83,7 +73,7 @@ int main(int argc, const char **argv) {
   std::cerr << "\n Mode:: " << mode << std::endl;
   std::cerr << ">>> Running on " << (processing_device ? "GPU" : "CPU")
             << std::endl;
-  RocalImageColor color_format = RocalImageColor::ROCAL_COLOR_RGB_PLANAR;
+  RocalImageColor color_format = RocalImageColor::ROCAL_COLOR_RGB24;
   if (rgb == 0)
     color_format = RocalImageColor::ROCAL_COLOR_U8;
   else if (rgb == 1)
@@ -155,7 +145,7 @@ int main(int argc, const char **argv) {
         srcsize_height[i] = actual_read_size;
       }
     }
-    if (mode == 2) {  // Raw un-compressed
+    else if (mode == 2) {  // Raw un-compressed
       srcsize_height.resize(file_names.size());
       srcsize_width.resize(file_names.size());
       for (uint32_t i = 0; i < file_names.size(); i++) {
@@ -176,9 +166,8 @@ int main(int argc, const char **argv) {
       unsigned char *complete_image_buffer = static_cast<unsigned char *>(malloc(
           sizeof(unsigned char) * file_names.size() * imageDimMax));
       uint32_t elementsInRowMax = maxwidth * 3;
-  
+
     for (uint32_t i = 0; i < file_names.size(); i++) {
-      unsigned char *temp_buffer;
       Mat image = imread(file_names[i], 1);
       if (image.empty()) {
         std::cout << "Could not read the image: " << file_names[i] << std::endl;
@@ -188,7 +177,7 @@ int main(int argc, const char **argv) {
       unsigned char *ip_image = image.data;
       uint32_t elementsInRow = srcsize_width[i] * 3;
       for (uint32_t j = 0; j < srcsize_height[i]; j++) {
-        unsigned char *temp_image = temp_buffer = complete_image_buffer + (i * imageDimMax) + (j * elementsInRowMax);
+        unsigned char *temp_image = complete_image_buffer + (i * imageDimMax) + (j * elementsInRowMax);
         memcpy(temp_image, ip_image, elementsInRow * sizeof(unsigned char));
         ip_image += elementsInRow;
         input_buffer.push_back(temp_image);
@@ -212,34 +201,10 @@ int main(int argc, const char **argv) {
     return -1;
   }
 
-#if 0
-    const size_t num_values = 3;
-    float values[num_values] = {0,10,135};
-    double frequencies[num_values] = {1, 5, 5};
-
-    RocalFloatParam rand_angle =   rocalCreateFloatRand( values , frequencies, num_values);
-    // Creating successive blur nodes to simulate a deep branch of augmentations
-    RocalImage image2 = rocalCropResize(handle, image0, resize_w, resize_h, false, rand_crop_area);;
-    for(int i = 0 ; i < aug_depth; i++)
-    {
-        image2 = rocalBlurFixed(handle, image2, 17.25, (i == (aug_depth -1)) ? true:false );
-    }
-    RocalImage image4 = rocalColorTemp(handle, image0, false, color_temp_adj);
-    RocalImage image5 = rocalWarpAffine(handle, image4, false);
-    RocalImage image6 = rocalJitter(handle, image5, false);
-    rocalVignette(handle, image6, true);
-
-    RocalImage image7 = rocalPixelate(handle, image0, false);
-    RocalImage image8 = rocalSnow(handle, image0, false);
-    RocalImage image9 = rocalBlend(handle, image7, image8, false);
-    RocalImage image10 = rocalLensCorrection(handle, image9, false);
-    rocalExposure(handle, image10, true);
-#else
   // uncomment the following to add augmentation if needed
   int resize_w = decode_width, resize_h = decode_height;
   // just do one augmentation to test
   rocalResize(handle, input1, resize_w, resize_h, true);
-#endif
 
   if (rocalGetStatus(handle) != ROCAL_OK) {
     std::cerr << "Error while adding the augmentation nodes " << std::endl;

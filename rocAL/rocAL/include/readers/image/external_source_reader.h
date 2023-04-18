@@ -82,10 +82,10 @@ public:
 private:
     //! opens the folder containnig the images
     std::string _folder_path;
-    std::queue<std::string> _file_names_que;
+    std::queue<std::string> _file_names_queue;
     std::vector<size_t> _file_sizes;
     std::vector<std::tuple<unsigned char*, size_t, int, int, int>> _file_data;
-    std::queue<std::tuple<unsigned char*, size_t, int, int, int>> _images_data_q;
+    std::queue<std::tuple<unsigned char*, size_t, int, int, int>> _images_data_queue;
     std::mutex _lock;
     std::condition_variable _wait_for_input;
 

@@ -108,7 +108,7 @@ namespace rocal{
         auto ptr = ctypes_void_ptr(p);
         // call pure C++ function
 
-        int status = rocalCopyToOutputTensor(context, ptr, tensor_format, tensor_output_type, multiplier0,
+        int status = rocalToTensor(context, ptr, tensor_format, tensor_output_type, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels, output_mem_type);
         // std::cerr<<"\n Copy failed with status :: "<<status;
@@ -124,7 +124,7 @@ namespace rocal{
         auto buf = array.request();
         float* ptr = (float*) buf.ptr;
         // call pure C++ function
-        int status = rocalCopyToOutputTensor32(context, ptr, tensor_format, multiplier0,
+        int status = rocalToTensor32(context, ptr, tensor_format, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels, output_mem_type);
         // std::cerr<<"\n Copy failed with status :: "<<status;
@@ -140,7 +140,7 @@ namespace rocal{
         auto buf = array.request();
         float16* ptr = (float16*) buf.ptr;
         // call pure C++ function
-        int status = rocalCopyToOutputTensor16(context, ptr, tensor_format, multiplier0,
+        int status = rocalToTensor16(context, ptr, tensor_format, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels, output_mem_type);
         // std::cerr<<"\n Copy failed with status :: "<<status;
@@ -155,7 +155,7 @@ namespace rocal{
     {
         float * ptr = (float*)array_ptr;
         // call pure C++ function
-        int status = rocalCopyToOutputTensor32(context, ptr, tensor_format, multiplier0,
+        int status = rocalToTensor32(context, ptr, tensor_format, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels, output_mem_type);
         // std::cerr<<"\n Copy failed with status :: "<<status;
@@ -170,7 +170,7 @@ namespace rocal{
     {
         float16 * ptr = (float16*)array_ptr;
         // call pure C++ function
-        int status = rocalCopyToOutputTensor16(context, ptr, tensor_format, multiplier0,
+        int status = rocalToTensor16(context, ptr, tensor_format, multiplier0,
                                               multiplier1, multiplier2, offset0,
                                               offset1, offset2, reverse_channels, output_mem_type);
         // std::cerr<<"\n Copy failed with status :: "<<status;
@@ -429,11 +429,11 @@ namespace rocal{
         m.def("GetFloatValue",&rocalGetFloatValue);
         // rocal_api_data_transfer.h
         m.def("rocalCopyToOutput",&wrapper_copy_to_output);
-        m.def("rocalCopyToOutputTensor",&wrapper_tensor);
-        m.def("rocalCopyToOutputTensor32",&wrapper_tensor32);
-        m.def("rocalCopyToOutputTensor16",&wrapper_tensor16);
-        m.def("rocalCopyCupyToOutputTensor32",&wrapper_copy_cupy_tensor32);
-        m.def("rocalCopyCupyToOutputTensor16",&wrapper_copy_cupy_tensor16);
+        m.def("rocalToTensor",&wrapper_tensor);
+        m.def("rocalToTensor32",&wrapper_tensor32);
+        m.def("rocalToTensor16",&wrapper_tensor16);
+        m.def("rocalCupyToTensor32",&wrapper_copy_cupy_tensor32);
+        m.def("rocalCupyToTensor16",&wrapper_copy_cupy_tensor16);
         // rocal_api_data_loaders.h
         m.def("COCO_ImageDecoderSlice",&rocalJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference);

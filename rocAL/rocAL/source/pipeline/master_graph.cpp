@@ -571,7 +571,7 @@ MasterGraph::timing()
 #define CHECK_CL_CALL_RET(x) { cl_int ret; ret = x; if( ret != CL_SUCCESS) THROW("ocl call failed "+STR(#x)+" error "+TOSTR(ret)) }
 
 MasterGraph::Status
-MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1,
+MasterGraph::to_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1,
                              float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type, RocalOutputMemType output_mem_type)
 {
     if(no_more_processed_data())

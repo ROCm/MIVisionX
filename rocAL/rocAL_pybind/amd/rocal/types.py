@@ -32,6 +32,7 @@ from rocal_pybind.types import GPU
 from rocal_pybind.types import CPU
 
 #  RocalTensorOutputType
+from rocal_pybind.types import UINT8
 from rocal_pybind.types import FLOAT
 from rocal_pybind.types import FLOAT16
 
@@ -92,6 +93,7 @@ _known_types = {
 
     GPU: ("GPU", GPU),
     CPU: ("CPU", CPU),
+    UINT8: ("UINT8", UINT8),
     FLOAT: ("FLOAT", FLOAT),
     FLOAT16: ("FLOAT16", FLOAT16),
     CPU_MEMORY: ("CPU_MEMORY", CPU_MEMORY),

@@ -176,26 +176,24 @@ int main(int argc, const char **argv) {
       unsigned char *complete_image_buffer = static_cast<unsigned char *>(malloc(
           sizeof(unsigned char) * file_names.size() * imageDimMax));
       uint32_t elementsInRowMax = maxwidth * 3;
+  
+    for (uint32_t i = 0; i < file_names.size(); i++) {
       unsigned char *temp_buffer;
-      for (uint32_t i = 0; i < file_names.size(); i++) {
-        unsigned char *temp_image;
-        temp_image = temp_buffer = complete_image_buffer + (i * imageDimMax);
-        Mat image = imread(file_names[i], 1);
-        if (image.empty()) {
-          std::cout << "Could not read the image: " << file_names[i]
-                    << std::endl;
-          return 1;
-        }
-        cvtColor(image, image, cv::COLOR_BGR2RGB);
-        unsigned char *ip_image = image.data;
-        uint32_t elementsInRow = srcsize_width[i] * 3;
-        for (uint32_t j = 0; j < srcsize_height[i]; j++) {
-          memcpy(temp_buffer, ip_image, elementsInRow * sizeof(unsigned char));
-          ip_image += elementsInRow;
-          temp_buffer += elementsInRowMax;
-        }
+      Mat image = imread(file_names[i], 1);
+      if (image.empty()) {
+        std::cout << "Could not read the image: " << file_names[i] << std::endl;
+        return 1;
+      }
+      cvtColor(image, image, cv::COLOR_BGR2RGB);
+      unsigned char *ip_image = image.data;
+      uint32_t elementsInRow = srcsize_width[i] * 3;
+      for (uint32_t j = 0; j < srcsize_height[i]; j++) {
+        unsigned char *temp_image = temp_buffer = complete_image_buffer + (i * imageDimMax) + (j * elementsInRowMax);
+        memcpy(temp_image, ip_image, elementsInRow * sizeof(unsigned char));
+        ip_image += elementsInRow;
         input_buffer.push_back(temp_image);
       }
+    }
     }
   }
   if (maxheight != 0 && maxwidth != 0)

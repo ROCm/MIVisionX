@@ -176,8 +176,9 @@ int main(int argc, const char **argv) {
       unsigned char *complete_image_buffer = static_cast<unsigned char *>(malloc(
           sizeof(unsigned char) * file_names.size() * imageDimMax));
       uint32_t elementsInRowMax = maxwidth * 3;
-      unsigned char *temp_buffer, *temp_image;
+      unsigned char *temp_buffer;
       for (uint32_t i = 0; i < file_names.size(); i++) {
+        unsigned char *temp_image;
         temp_image = temp_buffer = complete_image_buffer + (i * imageDimMax);
         Mat image = imread(file_names[i], 1);
         if (image.empty()) {

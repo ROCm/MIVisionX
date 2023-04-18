@@ -572,7 +572,7 @@ MasterGraph::timing()
 
 MasterGraph::Status
 MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1,
-                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type, bool normalization_on_device)
+                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type, RocalOutputMemType output_mem_type)
 {
     if(no_more_processed_data())
         return MasterGraph::Status::NO_MORE_DATA;
@@ -673,7 +673,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
     }
     if((_output_image_info.mem_type() == RocalMemType::HOST))
     {
-        if(normalization_on_device)
+        if(output_mem_type == RocalOutputMemType::ROCAL_MEMCPY_GPU)
         {
             unsigned int fp16 = (output_data_type == RocalTensorDataType::FP16);
 
@@ -706,7 +706,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RocalTensorFormat format, float mult
 #endif
     if((_output_image_info.mem_type() == RocalMemType::HOST))
     {        
-        if(!normalization_on_device)
+        if(output_mem_type == RocalOutputMemType::ROCAL_MEMCPY_HOST)
         {
             float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
             float offset[3] = {offset0, offset1, offset2 };

@@ -35,6 +35,11 @@ from rocal_pybind.types import CPU
 from rocal_pybind.types import FLOAT
 from rocal_pybind.types import FLOAT16
 
+#  RocalOutputMemType
+from rocal_pybind.types import CPU_MEMORY
+from rocal_pybind.types import GPU_MEMORY
+from rocal_pybind.types import PINNED_MEMORY
+
 # RocalImageSizeEvaluationPolicy
 from rocal_pybind.types import MAX_SIZE
 from rocal_pybind.types import USER_GIVEN_SIZE
@@ -89,6 +94,9 @@ _known_types = {
     CPU: ("CPU", CPU),
     FLOAT: ("FLOAT", FLOAT),
     FLOAT16: ("FLOAT16", FLOAT16),
+    CPU_MEMORY: ("CPU_MEMORY", CPU_MEMORY),
+    GPU_MEMORY: ("GPU_MEMORY", GPU_MEMORY),
+    PINNED_MEMORY: ("PINNED_MEMORY", PINNED_MEMORY),
 
     MAX_SIZE: ("MAX_SIZE", MAX_SIZE),
     USER_GIVEN_SIZE: ("USER_GIVEN_SIZE", USER_GIVEN_SIZE),

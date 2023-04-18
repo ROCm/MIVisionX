@@ -43,6 +43,7 @@ THE SOFTWARE.
 #include "box_encoder_hip.h"
 #endif
 #include "randombboxcrop_meta_data_reader.h"
+#include "rocal_api_types.h"
 #define MAX_STRING_LENGTH 100
 class MasterGraph
 {
@@ -53,7 +54,7 @@ public:
     Status reset();
     size_t remaining_count();
     MasterGraph::Status copy_out_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
-                    float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type, bool normalization_on_device = false);
+                    float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type, RocalOutputMemType output_mem_type);
     Status copy_output(unsigned char* out_ptr, size_t out_size_in_bytes);
     Status copy_out_tensor_planar(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
                     float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type);

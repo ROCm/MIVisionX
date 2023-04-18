@@ -30,19 +30,19 @@ extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor32(RocalContext 
                                                               RocalTensorLayout tensor_format, float multiplier0,
                                                               float multiplier1, float multiplier2, float offset0,
                                                               float offset1, float offset2,
-                                                              bool reverse_channels);
+                                                              bool reverse_channels, RocalOutputMemType output_mem_type);
 
 extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor16(RocalContext rocal_context, half *out_ptr,
                                                               RocalTensorLayout tensor_format, float multiplier0,
                                                               float multiplier1, float multiplier2, float offset0,
                                                               float offset1, float offset2,
-                                                              bool reverse_channels);
+                                                              bool reverse_channels, RocalOutputMemType output_mem_type);
 
 extern "C"  RocalStatus   ROCAL_API_CALL rocalCopyToOutputTensor(RocalContext rocal_context, void *out_ptr,
                                                               RocalTensorLayout tensor_format, RocalTensorOutputType tensor_output_type,
                                                               float multiplier0, float multiplier1, float multiplier2, float offset0,
                                                               float offset1, float offset2,
-                                                              bool reverse_channels, bool normalization_on_device);
+                                                              bool reverse_channels, RocalOutputMemType output_mem_type);
 ///
 /// \param rocal_context
 /// \param output_images The buffer that will be filled with output images with set_output = True

@@ -79,8 +79,7 @@ class ROCALGenericIterator(object):
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
         self.display = display
-        self.normalization_on_device = self.loader._normalization_on_device
-        self.copy_labels_to_device = self.loader._copy_labels_to_device
+        self.output_memory_type = self.loader._output_memory_type
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
@@ -91,11 +90,12 @@ class ROCALGenericIterator(object):
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
         self.labels_size = ((self.bs*self.loader._numOfClasses) if (self.loader._oneHotEncoding == True) else self.bs)
         if self.tensor_format == types.NCHW:
-            if self.device == "cpu" and not self.normalization_on_device:
+            if self.output_memory_type == "cpu":
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32)
 
             else:
                 torch_gpu_device = torch.device('cuda', self.device_id)
@@ -103,13 +103,16 @@ class ROCALGenericIterator(object):
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32, device = torch_gpu_device)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device = torch_gpu_device)
+                torch_gpu_device = torch.device('cuda', self.device_id)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
 
         else: #NHWC
-            if self.device == "cpu" and not self.normalization_on_device:
+            if self.output_memory_type == "cpu":
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32)
 
             else:
                 torch_gpu_device = torch.device('cuda', self.device_id)
@@ -117,12 +120,8 @@ class ROCALGenericIterator(object):
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32, device=torch_gpu_device)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16, device=torch_gpu_device)
-
-        if self.device == "cpu" and not self.copy_labels_to_device:
-            self.labels = torch.empty(self.labels_size, dtype = torch.int32)
-        else:
-            torch_gpu_device = torch.device('cuda', self.device_id)
-            self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
+                torch_gpu_device = torch.device('cuda', self.device_id)
+                self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
 
         if self.bs != 0:
             self.len = b.getRemainingImages(self.loader._handle)//self.bs

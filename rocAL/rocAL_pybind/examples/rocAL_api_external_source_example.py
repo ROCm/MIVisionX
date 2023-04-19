@@ -18,8 +18,7 @@ def main():
     except OSError as error:
         print(error)
 
-    #image is expected as a tensor
-    def draw_patches(image, idx):
+    def image_dump(image, idx):
         import cv2
         image = image.detach().numpy()
         image = image.transpose([1, 2, 0]) # NCHW
@@ -78,7 +77,7 @@ def main():
             print("**************", i, "*******************")
             for img in it[0]:
                 cnt = cnt+1
-                draw_patches(img, cnt)
+                image_dump(img, cnt)
             print("Image Dumped")
 
 if __name__ == '__main__':

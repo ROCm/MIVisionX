@@ -166,7 +166,7 @@ void ImageLoaderSharded::increment_loader_idx()
     _loader_idx = (_loader_idx + 1)%_shard_count;
 }
 
-void ImageLoaderSharded::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *> input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, int channels, FileMode mode, bool eos)
+void ImageLoaderSharded::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *> input_buffer, std::vector<unsigned> roi_width, std::vector<unsigned> roi_height, unsigned int max_width, unsigned int max_height, int channels, ExternalFileMode mode, bool eos)
 {
     for(auto& loader: _loaders)
         loader->feed_external_input(input_images_names, labels, input_buffer, roi_width, roi_height, max_width, max_height, channels, mode, eos);

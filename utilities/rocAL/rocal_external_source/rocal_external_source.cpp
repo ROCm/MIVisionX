@@ -43,12 +43,12 @@ int main(int argc, const char **argv) {
     printf(
         "Usage: rocal_external_source <image_dataset_folder> "
         "<processing_device=1/cpu=0>  decode_width decode_height batch_size "
-        "gray_scale/rgb/rgbplanar display_on_off external_source_mode<file_mode=0/raw_compressed_mode=1/raw_uncompresses_mode=2>\n");
+        "gray_scale/rgb/rgbplanar display_on_off external_source_mode<external_file_mode=0/raw_compressed_mode=1/raw_uncompresses_mode=2>\n");
     return -1;
   }
   int argIdx = 0;
   const char *folderPath1 = argv[++argIdx];
-  bool display = 0;  // Display the images
+  bool display = 1;  // Display the images
   int rgb = 1;       // process color images
   int decode_width = 224;
   int decode_height = 224;

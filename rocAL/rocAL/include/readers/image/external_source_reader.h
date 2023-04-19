@@ -70,10 +70,10 @@ public:
     void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos = false) override;
 
     //! receive next set of file data from external source
-    void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, FileMode mode, bool eos = false, int width = 0, int height = 0, int channels = 0) override;
+    void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, ExternalFileMode mode, bool eos = false, int width = 0, int height = 0, int channels = 0) override;
 
     // mode(): returs the mode for the reader
-    FileMode mode() { return _file_mode; }
+    ExternalFileMode mode() { return _file_mode; }
 
     // get image_dims
     void get_dims(int cur_idx, int& width, int& height, int& channels);
@@ -118,6 +118,6 @@ private:
     void incremenet_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
     void replicate_last_batch_to_pad_partial_shard();
-    FileMode _file_mode;
+    ExternalFileMode _file_mode;
 };
 

@@ -136,21 +136,21 @@ ImageReadAndDecode::set_batch_random_bbox_crop_coords(std::vector<std::vector<fl
 
 void ImageReadAndDecode::feed_external_input(std::vector<std::string> input_images_names, std::vector<int> labels, std::vector<unsigned char *> input_buffer,
                                             std::vector<unsigned> roi_width, std::vector<unsigned> roi_height,
-                                            unsigned int max_width, unsigned int max_height, int channels,  FileMode mode, bool eos)
+                                            unsigned int max_width, unsigned int max_height, int channels,  ExternalFileMode mode, bool eos)
 {
     std::vector<size_t> image_size;
     image_size.reserve(roi_height.size());
     for(unsigned int i = 0; i < roi_height.size(); i++) {
-        if (mode == FileMode::RAWDATA_UNCOMPRESSED)
+        if (mode == ExternalFileMode::RAWDATA_UNCOMPRESSED)
             image_size[i] = (roi_width[i] * roi_height[i] * channels);
-        else if (mode == FileMode::RAWDATA_COMPRESSED)
+        else if (mode == ExternalFileMode::RAWDATA_COMPRESSED)
             image_size[i] = roi_height[i];
     }
-    if(mode == FileMode::FILENAME)
+    if(mode == ExternalFileMode::FILENAME)
     {
         _reader->feed_file_names(input_images_names, input_images_names.size(), eos);
     }
-    else if(mode == FileMode::RAWDATA_COMPRESSED || mode == FileMode::RAWDATA_UNCOMPRESSED)
+    else if(mode == ExternalFileMode::RAWDATA_COMPRESSED || mode == ExternalFileMode::RAWDATA_UNCOMPRESSED)
     {
         _reader->feed_data(input_buffer, image_size, mode, eos, max_width, max_height, channels);
     }
@@ -215,7 +215,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         //_file_load_time.end();// Debug timing
     } else if (is_external_source) {
         auto ext_reader = std::static_pointer_cast<ExternalSourceReader>(_reader);
-        if (ext_reader->mode() == FileMode::RAWDATA_UNCOMPRESSED) {
+        if (ext_reader->mode() == ExternalFileMode::RAWDATA_UNCOMPRESSED) {
             while ((file_counter != _batch_size) && _reader->count_items() > 0) {
                 int width, height, channels;
                 auto read_ptr = buff + image_size * file_counter;

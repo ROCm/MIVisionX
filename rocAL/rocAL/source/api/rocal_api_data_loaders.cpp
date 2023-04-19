@@ -324,7 +324,7 @@ rocalJpegExternalFileSource(
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
                                                                             decoder_keep_original,
-                                                                            FileMode(external_source_mode));
+                                                                            ExternalFileMode(external_source_mode));
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -405,7 +405,7 @@ rocalSequenceReader(
                                                                             context->master_graph->mem_type(),
                                                                             context->master_graph->meta_data_reader(),
                                                                             decoder_keep_original,
-                                                                            FileMode::FILENAME, "",
+                                                                            ExternalFileMode::FILENAME, "",
                                                                             sequence_length,
                                                                             step, stride);
         context->master_graph->set_loop(loop);
@@ -490,7 +490,7 @@ rocalSequenceReaderSingleShard(
                                                                                         context->master_graph->mem_type(),
                                                                                         context->master_graph->meta_data_reader(),
                                                                                         decoder_keep_original,
-                                                                                        FileMode::FILENAME,
+                                                                                        ExternalFileMode::FILENAME,
                                                                                         std::map<std::string, std::string>(),
                                                                                         sequence_length,
                                                                                         step, stride);
@@ -654,7 +654,7 @@ rocalJpegCaffe2LMDBRecordSourceSingleShard(
                                                                                         context->user_batch_size(),
                                                                                         context->master_graph->mem_type(),
                                                                                         context->master_graph->meta_data_reader(),
-                                                                                        decoder_keep_original,FileMode::FILENAME);
+                                                                                        decoder_keep_original,ExternalFileMode::FILENAME);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -816,7 +816,7 @@ rocalJpegCaffeLMDBRecordSourceSingleShard(
                                                                                         context->user_batch_size(),
                                                                                         context->master_graph->mem_type(),
                                                                                         context->master_graph->meta_data_reader(),
-                                                                                        decoder_keep_original,FileMode::FILENAME);
+                                                                                        decoder_keep_original,ExternalFileMode::FILENAME);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1391,7 +1391,7 @@ rocalJpegCOCOFileSourceSingleShard(
                                                                                         context->user_batch_size(),
                                                                                         context->master_graph->mem_type(),
                                                                                         context->master_graph->meta_data_reader(),
-                                                                                        decoder_keep_original, FileMode::FILENAME);
+                                                                                        decoder_keep_original, ExternalFileMode::FILENAME);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1788,7 +1788,7 @@ rocalJpegTFRecordSourceSingleShard(
                                                                                         context->user_batch_size(),
                                                                                         context->master_graph->mem_type(),
                                                                                         context->master_graph->meta_data_reader(),
-                                                                                        decoder_keep_original, FileMode::FILENAME);
+                                                                                        decoder_keep_original, ExternalFileMode::FILENAME);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1862,7 +1862,7 @@ rocalRawTFRecordSource(
                                                                              context->user_batch_size(),
                                                                              context->master_graph->mem_type(),
                                                                              context->master_graph->meta_data_reader(),
-                                                                             false, FileMode::FILENAME, record_name_prefix);
+                                                                             false, ExternalFileMode::FILENAME, record_name_prefix);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -1931,7 +1931,7 @@ rocalRawTFRecordSourceSingleShard(
                                                                                         context->user_batch_size(),
                                                                                         context->master_graph->mem_type(),
                                                                                         context->master_graph->meta_data_reader(),
-                                                                                        false, FileMode::FILENAME);
+                                                                                        false, ExternalFileMode::FILENAME);
         context->master_graph->set_loop(loop);
 
         if(is_output)

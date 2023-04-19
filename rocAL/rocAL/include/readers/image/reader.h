@@ -47,7 +47,7 @@ enum class StorageType
     EXTERNAL_FILE_SOURCE = 8,   // to support reading from external source
 };
 
-enum class FileMode
+enum class ExternalFileMode
 {
     FILENAME = 0,
     RAWDATA_COMPRESSED = 1,
@@ -58,7 +58,7 @@ struct ReaderConfig
 {
     explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "",
                           const std::map<std::string, std::string> feature_key_map = std::map<std::string, std::string>(),
-                          bool shuffle = false, bool loop = false, FileMode mode = FileMode::FILENAME) : _storage_type(type), _path(path), _json_path(json_path),
+                          bool shuffle = false, bool loop = false, ExternalFileMode mode = ExternalFileMode::FILENAME) : _storage_type(type), _path(path), _json_path(json_path),
                           _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop), _file_mode(mode) {}
     virtual StorageType storage_type() { return _storage_type; }
     void set_path(const std::string &path) { _path = path; }
@@ -77,7 +77,7 @@ struct ReaderConfig
     void set_sequence_length(unsigned sequence_length) { _sequence_length = sequence_length; }
     void set_frame_step(unsigned step) { _step = step; }
     void set_frame_stride(unsigned stride) { _stride = stride; }
-    void set_file_mode(FileMode mode) { _file_mode = mode; }
+    void set_external_filemode(ExternalFileMode mode) { _file_mode = mode; }
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
@@ -90,7 +90,7 @@ struct ReaderConfig
     void set_file_prefix(const std::string &prefix) { _file_prefix = prefix; }
     std::string file_prefix() { return _file_prefix; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
-    virtual FileMode mode() { return _file_mode; }
+    virtual ExternalFileMode mode() { return _file_mode; }
 private:
     StorageType _storage_type = StorageType::FILE_SYSTEM;
     std::string _path = "";
@@ -106,7 +106,7 @@ private:
     bool _loop = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader and tf_record_reader
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
-    FileMode _file_mode;
+    ExternalFileMode _file_mode;
 };
 
 // MXNet image recordio struct - used to read the contents from the MXNet recordIO files.
@@ -166,7 +166,7 @@ public:
     virtual void feed_file_names(const std::vector<std::string>& file_names, size_t num_images, bool eos = false) = 0;
 
     //! return feed_data: use this for feeding raw data into the reader (mode specified compressed jpegs or raw)
-    virtual void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, FileMode mode, bool eos = false, int width = 0, int height = 0, int channels = 0) = 0;
+    virtual void feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, ExternalFileMode mode, bool eos = false, int width = 0, int height = 0, int channels = 0) = 0;
 
     virtual ~Reader() = default;
 };

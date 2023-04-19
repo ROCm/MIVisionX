@@ -41,7 +41,7 @@ ExternalSourceReader::ExternalSourceReader() {
 
 // return batch_size() for count_items unless end_of_sequence has been signalled.
 unsigned ExternalSourceReader::count_items() {
-    if (_file_mode == FileMode::FILENAME) {
+    if (_file_mode == ExternalFileMode::FILENAME) {
         if (_end_of_sequence && _file_names_queue.empty()) {
         return 0;
         }
@@ -74,14 +74,11 @@ void ExternalSourceReader::incremenet_read_ptr() {
 }
 
 size_t ExternalSourceReader::open() {
-    if (_file_mode == FileMode::FILENAME) {
+    if (_file_mode == ExternalFileMode::FILENAME) {
         std::string next_file_name;
         bool ret = pop_file_name(next_file_name);   // Get next file name: blocking call, will wait till next file is received from external source
         if (_end_of_sequence && !ret)
           return 0;
-        // prefix with folder_path of exists
-        if (!_folder_path.empty())
-            next_file_name = next_file_name;
         _last_id= next_file_name;
         filesys::path pathObj(next_file_name);
         if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) {
@@ -115,7 +112,7 @@ size_t ExternalSourceReader::open() {
 }
 
 size_t ExternalSourceReader::read_data(unsigned char* buf, size_t read_size) {
-    if (_file_mode == FileMode::FILENAME) {
+    if (_file_mode == ExternalFileMode::FILENAME) {
         if(!_current_fPtr)
             return 0;
 
@@ -151,7 +148,7 @@ ExternalSourceReader::~ExternalSourceReader() {
 }
 
 int ExternalSourceReader::release() {
-    if (_file_mode != FileMode::FILENAME) {
+    if (_file_mode != ExternalFileMode::FILENAME) {
         if(!_current_fPtr)
             return 0;
         fclose(_current_fPtr);
@@ -220,7 +217,7 @@ void ExternalSourceReader::feed_file_names(const std::vector<std::string>& file_
     _end_of_sequence = eos;
 }
 
-void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, FileMode mode, bool eos, int width, int height, int channels) {
+void ExternalSourceReader::feed_data(const std::vector<unsigned char *>& images, const std::vector<size_t>& image_size, ExternalFileMode mode, bool eos, int width, int height, int channels) {
     for (unsigned n = 0; n < images.size(); n++) {
         std::tuple<unsigned char*, size_t, int, int, int> image =  std::make_tuple(images[n], image_size[n], width, height, channels);
         push_file_data(image);

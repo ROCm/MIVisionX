@@ -47,14 +47,14 @@ int main(int argc, const char **argv) {
     return -1;
   }
   int argIdx = 0;
-  const char *folderPath1 = argv[++argIdx];
-  bool display = 1;  // Display the images
-  int rgb = 1;       // process color images
-  int decode_width = 224;
-  int decode_height = 224;
-  int inputBatchSize = 2;
-  bool processing_device = 0;
-  int mode = 0;
+  const char *folderPath = argv[++argIdx];
+  bool display = 1;              // Display the images
+  int rgb = 1;                   // process color images
+  int decode_width = 224;        // Decoding width
+  int decode_height = 224;       // Decoding height
+  int inputBatchSize = 2;        // Batch size
+  bool processing_device = 0;    // CPU Processing
+  int mode = 0;                  // File mode
 
   if (argc >= argIdx + MIN_ARG_COUNT) processing_device = atoi(argv[++argIdx]);
 
@@ -103,20 +103,22 @@ int main(int argc, const char **argv) {
   struct dirent *_entity;
   std::vector<std::string> file_names;
   std::vector<unsigned char *> input_buffer;
-  if ((_src_dir = opendir(folderPath1)) == nullptr) {
-    std::cerr << "\n ERROR: Failed opening the directory at " << folderPath1;
+  if ((_src_dir = opendir(folderPath)) == nullptr) {
+    std::cerr << "\n ERROR: Failed opening the directory at " << folderPath;
     exit(0);
   }
 
   while ((_entity = readdir(_src_dir)) != nullptr) {
     if (_entity->d_type != DT_REG) continue;
 
-    std::string file_path = folderPath1;
+    std::string file_path = folderPath;
     file_path.append(_entity->d_name);
     file_names.push_back(file_path);
   }
   if (mode != 0) {
-    if (mode == 1) {  // Raw compressed
+    if (mode == 1) {
+      // Mode 1 is Raw uncompressed
+      // srcsize_height and srcsize_width resized based on total file count
       srcsize_height.resize(file_names.size());
       srcsize_width.resize(file_names.size());
       for (uint32_t i = 0; i < file_names.size(); i++) {
@@ -142,12 +144,15 @@ int main(int argc, const char **argv) {
         size_t actual_read_size = fread(input_data, sizeof(unsigned char),
                                         _current_file_size, _current_fPtr);
         input_buffer.push_back(input_data);
-        srcsize_height[i] = actual_read_size;
+        srcsize_height[i] = actual_read_size; // It stored the actual file size
       }
     }
-    else if (mode == 2) {  // Raw un-compressed
+    else if (mode == 2) {
+      // Mode 2 is raw un-compressed mode
+      // srcsize_height and srcsize_width resized based on total file count
       srcsize_height.resize(file_names.size());
       srcsize_width.resize(file_names.size());
+      // Calculate max size and max height
       for (uint32_t i = 0; i < file_names.size(); i++) {
         Mat image;
         image = imread(file_names[i], 1);
@@ -161,38 +166,41 @@ int main(int argc, const char **argv) {
         if (maxheight < srcsize_height[i]) maxheight = srcsize_height[i];
         if (maxwidth < srcsize_width[i]) maxwidth = srcsize_width[i];
       }
+      // Allocate buffer for max size calculated
       unsigned long long imageDimMax =
           (unsigned long long)maxheight * (unsigned long long)maxwidth * 3;
       unsigned char *complete_image_buffer = static_cast<unsigned char *>(malloc(
           sizeof(unsigned char) * file_names.size() * imageDimMax));
       uint32_t elementsInRowMax = maxwidth * 3;
 
-    for (uint32_t i = 0; i < file_names.size(); i++) {
-      Mat image = imread(file_names[i], 1);
-      if (image.empty()) {
-        std::cout << "Could not read the image: " << file_names[i] << std::endl;
-        return 1;
+      for (uint32_t i = 0; i < file_names.size(); i++) {
+        Mat image = imread(file_names[i], 1);
+        if (image.empty()) {
+          std::cout << "Could not read the image: " << file_names[i] << std::endl;
+          return 1;
+        }
+        // Decode image
+        cvtColor(image, image, cv::COLOR_BGR2RGB);
+        unsigned char *ip_image = image.data;
+        uint32_t elementsInRow = srcsize_width[i] * 3;
+        // Copy the decoded data in allocated buffer
+        for (uint32_t j = 0; j < srcsize_height[i]; j++) {
+          unsigned char *temp_image = complete_image_buffer + (i * imageDimMax) + (j * elementsInRowMax);
+          memcpy(temp_image, ip_image, elementsInRow * sizeof(unsigned char));
+          ip_image += elementsInRow;
+          input_buffer.push_back(temp_image);
+        }
       }
-      cvtColor(image, image, cv::COLOR_BGR2RGB);
-      unsigned char *ip_image = image.data;
-      uint32_t elementsInRow = srcsize_width[i] * 3;
-      for (uint32_t j = 0; j < srcsize_height[i]; j++) {
-        unsigned char *temp_image = complete_image_buffer + (i * imageDimMax) + (j * elementsInRowMax);
-        memcpy(temp_image, ip_image, elementsInRow * sizeof(unsigned char));
-        ip_image += elementsInRow;
-        input_buffer.push_back(temp_image);
-      }
-    }
     }
   }
   if (maxheight != 0 && maxwidth != 0)
     input1 = rocalJpegExternalFileSource(
-        handle, folderPath1, color_format, false, false, false,
+        handle, folderPath, color_format, false, false, false,
         ROCAL_USE_USER_GIVEN_SIZE, maxwidth, maxheight,
         RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
   else
     input1 = rocalJpegExternalFileSource(
-        handle, folderPath1, color_format, false, false, false,
+        handle, folderPath, color_format, false, false, false,
         ROCAL_USE_USER_GIVEN_SIZE, decode_width, decode_height,
         RocalDecoderType::ROCAL_DECODER_TJPEG, RocalExtSourceMode(mode));
   if (rocalGetStatus(handle) != ROCAL_OK) {
@@ -299,6 +307,7 @@ int main(int argc, const char **argv) {
     iter_cnt++;
 
     if (!display) continue;
+    // Dump the output image
     std::vector<int> compression_params;
     compression_params.push_back(IMWRITE_PNG_COMPRESSION);
     compression_params.push_back(9);

@@ -248,12 +248,17 @@ int main(int argc, const char **argv) {
   std::vector<std::string> names;
   std::vector<int> labels;
   names.resize(inputBatchSize);
-  labels.resize(inputBatchSize);
+  labels.resize(total_images);
   int iter_cnt = 0;
   int index = 0;
+  // Assign some labels for all images
+  for (int id = 0; id < total_images; id++) {
+    labels[id] = 1;
+  }
   while (!rocalIsEmpty(handle)) {
     std::vector<std::string> input_images;
     std::vector<unsigned char *> input_batch_buffer;
+    std::vector<int> label_buffer;
     std::vector<unsigned> roi_width;
     std::vector<unsigned> roi_height;
     for (int i = 0; i < inputBatchSize; i++) {
@@ -263,12 +268,16 @@ int main(int argc, const char **argv) {
         if ((file_names.size()) == 0) {
           eos = true;
         }
+        label_buffer.push_back(labels.back());
+        labels.pop_back();
       } else {
         if (mode == 1) {
           input_batch_buffer.push_back(input_buffer.back());
           input_buffer.pop_back();
           roi_height.push_back(srcsize_height.back());
           srcsize_height.pop_back();
+          label_buffer.push_back(labels.back());
+          labels.pop_back();
         } else {
           input_batch_buffer.push_back(input_buffer.back());
           input_buffer.pop_back();
@@ -276,6 +285,8 @@ int main(int argc, const char **argv) {
           srcsize_width.pop_back();
           roi_height.push_back(srcsize_height.back());
           srcsize_height.pop_back();
+          label_buffer.push_back(labels.back());
+          labels.pop_back();
         }
         if ((file_names.size()) == 0 || input_buffer.size() == 0) {
           eos = true;
@@ -283,19 +294,18 @@ int main(int argc, const char **argv) {
       }
     }
     if (index <= (total_images / inputBatchSize)) {
-      std::vector<int> label;
       if (mode == 0)
-        rocalExternalSourceFeedInput(handle, input_images, label, {}, {}, {},
+        rocalExternalSourceFeedInput(handle, input_images, label_buffer, {}, {}, {},
                                      decode_width, decode_height, channels,
                                      RocalExtSourceMode(0),
                                      RocalTensorLayout(0), eos);
       else if (mode == 1)
-        rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer, {},
+        rocalExternalSourceFeedInput(handle, {}, label_buffer, input_batch_buffer, {},
                                      roi_height, decode_width, decode_height,
                                      channels, RocalExtSourceMode(mode),
                                      RocalTensorLayout(0), eos);
       else if (mode == 2)
-        rocalExternalSourceFeedInput(handle, {}, label, input_batch_buffer,
+        rocalExternalSourceFeedInput(handle, {}, label_buffer, input_batch_buffer,
                                      roi_width, roi_height, maxwidth, maxheight,
                                      channels, RocalExtSourceMode(mode),
                                      RocalTensorLayout(0), eos);
@@ -303,6 +313,15 @@ int main(int argc, const char **argv) {
     if (rocalRun(handle) != 0) break;
 
     if (display) rocalCopyToOutput(handle, mat_input.data, h * w * p);
+
+    int label_ids[inputBatchSize];
+    // Get labels and print labels
+    rocalGetImageLabels(handle, label_ids);
+    std::cout << "\nCurrent batch : " << iter_cnt << std::endl;
+    for (auto label_id : label_ids) {
+      std::cout << "Given Label :" << label_id << std::endl;
+    }
+
     counter += inputBatchSize;
     iter_cnt++;
 

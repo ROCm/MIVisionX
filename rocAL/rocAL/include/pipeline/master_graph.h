@@ -95,7 +95,6 @@ public:
     }
     void set_output(Image* output_image);
     bool empty() { return (remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size)); }
-    size_t user_batch_size() { return _user_batch_size; }
     size_t sequence_batch_size() { return _sequence_batch_size; }
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }

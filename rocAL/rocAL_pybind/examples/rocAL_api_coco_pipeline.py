@@ -259,8 +259,12 @@ def main():
         return dboxes_ltrb
     default_boxes = coco_anchors().numpy().flatten().tolist()
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,
-                    device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu)
+    if args.display:
+        pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,
+                        device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu)
+    else:
+        pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,mean=[0.485*255, 0.456*255, 0.406*255],
+                        std=[0.229*255, 0.224 * 255, 0.225*255], device_id=args.local_rank, seed=random_seed, rocal_cpu=rocal_cpu)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(
@@ -287,8 +291,7 @@ def main():
             res_images, saturation=saturation, contrast=contrast, brightness=brightness, hue=hue)
         flip_coin = fn.random.coin_flip(probability=0.5)
         bboxes = fn.bb_flip(bboxes, ltrb=True, horizontal=flip_coin)
-        if args.display:
-            cmn_images = fn.crop_mirror_normalize(ct_images,
+        cmn_images = fn.crop_mirror_normalize(ct_images,
                                                   crop=(300, 300),
                                                   mean=[0, 0, 0],
                                                   std=[1, 1, 1],
@@ -296,20 +299,11 @@ def main():
                                                   output_dtype=types.FLOAT,
                                                   output_layout=types.NCHW,
                                                   pad_output=False)
+        if args.display:
             _, _ = fn.box_encoder(bboxes, labels,
                                   criteria=0.5,
                                   anchors=default_boxes)
-        else:
-            cmn_images = fn.crop_mirror_normalize(ct_images,
-                                                  crop=(300, 300),
-                                                  mean=[0.485*255,
-                                                        0.456*255, 0.406*255],
-                                                  std=[0.229*255, 0.224 *
-                                                       255, 0.225*255],
-                                                  mirror=flip_coin,
-                                                  output_dtype=types.FLOAT,
-                                                  output_layout=types.NCHW,
-                                                  pad_output=False)
+        else:            
             _, _ = fn.box_encoder(bboxes, labels,
                                   criteria=0.5,
                                   anchors=default_boxes,

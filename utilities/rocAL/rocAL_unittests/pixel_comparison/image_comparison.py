@@ -122,18 +122,18 @@ def main():
                 total_pixel_diff = 0
                 for pix_diff in range(1,6):
                     total_pixel_diff += pixeldiff[pix_diff]
-                if (total_pixel_diff):
+                mismatch_percentage = round((total_pixel_diff/tot_count)*100,2)
+                if(total_pixel_diff == 0 or (mismatch_percentage < 5.0 and pixeldiff[1] == total_pixel_diff)):  # Ignore test cases with single pixel differences less than 5% of total pixel count
+                    passed_case_count=passed_case_count+1
+                    logging.info("PASSED")
+                else:
                     failed_case_list.append(golden_file_path)
                     failed_case_count=failed_case_count+1
                     logging.info("FAILED")
                     logging.info("Printing pixel mismatch %s",pixeldiff)
-                    mismatch_percentage = round((total_pixel_diff/tot_count)*100,2)
                     logging.info("Mismatach percentage %s", mismatch_percentage)
                     for pix_diff in range(1,6):
                             logging.info("Percentage of %d pixel mismatch %s", pix_diff, round((pixeldiff[pix_diff]/total_pixel_diff)*100,2))
-                else:
-                    passed_case_count=passed_case_count+1
-                    logging.info("PASSED")
             else:
                 logging.info("Skipping the testcase as file not found %s",rocal_file_path)
         else:

@@ -303,7 +303,7 @@ def main():
             _, _ = fn.box_encoder(bboxes, labels,
                                   criteria=0.5,
                                   anchors=default_boxes)
-        else:            
+        else:
             _, _ = fn.box_encoder(bboxes, labels,
                                   criteria=0.5,
                                   anchors=default_boxes,

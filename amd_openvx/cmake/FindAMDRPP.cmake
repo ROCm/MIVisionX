@@ -35,7 +35,7 @@ find_path(AMDRPP_INCLUDE_DIRS
 mark_as_advanced(AMDRPP_INCLUDE_DIRS)
 
 find_library(AMDRPP_LIBRARIES
-    NAMES amd_rpp
+    NAMES rpp
     HINTS
     $ENV{AMDRPP_PATH}/lib
     $ENV{AMDRPP_PATH}/lib64
@@ -48,7 +48,7 @@ find_library(AMDRPP_LIBRARIES
 mark_as_advanced(AMDRPP_LIBRARIES)
 
 find_path(AMDRPP_LIBRARIES_DIRS
-    NAMES amd_rpp
+    NAMES rpp
     HINTS
     $ENV{AMDRPP_PATH}/lib
     $ENV{AMDRPP_PATH}/lib64
@@ -83,5 +83,5 @@ else()
     if(AMDRPP_FIND_REQUIRED)
         message(FATAL_ERROR "{Red}FindAMDRPP -- NOT FOUND${ColourReset}")
     endif()
-    message( "-- ${Yellow}NOTE: FindAMDRPP failed to find -- amd_rpp${ColourReset}" )
+    message( "-- ${Yellow}NOTE: FindAMDRPP failed to find -- rpp${ColourReset}" )
 endif()

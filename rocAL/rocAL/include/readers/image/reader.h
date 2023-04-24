@@ -152,8 +152,5 @@ public:
     //! Returns the number of items remained in this resource
     virtual unsigned count_items() = 0;
     
-    //! return shuffle_time if applicable
-    virtual unsigned long long get_shuffle_time() = 0;
-
     virtual ~Reader() = default;
 };

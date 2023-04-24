@@ -6,25 +6,39 @@
 
 [MIVisionX Documentation](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/)
 
-## MIVisionX 2.4.0 (unreleased)
+## MIVisionX 2.4.0
 
 ### Added
 
 * OpenVX FP16 Support
+* rocAL - CPU, HIP, & OCL backends
+* AMD RPP - CPU, HIP, & OCL backends
+* MIVisionX Setup Support for RHEL
+* Extended OS Support
 * Docker Support for Ubuntu `22.04`
+* Tests
 
 ### Optimizations
 
 * CMakeList Cleanup
+* MIGraphX Extension Updates
+* rocAL - Documentation
+* CMakeList Updates & Cleanup
 
 ### Changed
 
 * rocAL - Changing Python Lib Path
 * Docker Support - Ubuntu 18 Support Dropped
+* RPP - Link to Version 1.0.0
+* rocAL - support updates
+* Setup Updates
 
 ### Fixed
 
 * rocAL bug fix and updates
+* AMD RPP - bug fixes
+* CMakeLists - Issues
+* RPATH - Link Issues
 
 ### Tested Configurations
 
@@ -32,17 +46,18 @@
 * Linux distribution
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
-  + SLES - `15-SP2`
-* ROCm: rocm-core - `5.4.0.50400-72`
-* miopen-hip - `2.19.0.50400-72`
+  + RHEL - `8` / `9`
+  + SLES - `15-SP3`
+* ROCm: rocm-core - `5.4.3.50403-121`
+* miopen-hip - `2.19.0.50403-121`
 * miopen-opencl - `2.18.0.50300-63`
-* migraphx - `2.4.0.50400-72`
+* migraphx - `2.4.0.50403-121`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [0.99](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.99)
+* RPP - [1.0.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.0.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.3.10`
+* MIVisionX Setup Script - `V2.4.2`
 
 ### Known issues
 

@@ -29,7 +29,7 @@ namespace filesys = boost::filesystem;
 
 
 #ifdef ROCAL_VIDEO
-VideoFileSourceReader::VideoFileSourceReader() : _shuffle_time("shuffle_time", DBG_TIMING)
+VideoFileSourceReader::VideoFileSourceReader()
 {
     _curr_sequence_idx = 0;
     _loop = false;
@@ -79,10 +79,9 @@ VideoReader::Status VideoFileSourceReader::initialize(VideoReaderConfig desc)
         }
     }
     //shuffle dataset if set
-    _shuffle_time.start();
     if (ret == VideoReader::Status::OK && _shuffle)
         std::random_shuffle(_sequences.begin(), _sequences.end());
-    _shuffle_time.end();
+
     return ret;
 }
 

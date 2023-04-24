@@ -67,7 +67,7 @@ public:
     int close() override;
 
     Caffe2LMDBRecordReader();
-    unsigned long long get_shuffle_time() override {return 0;}
+
 private:
     //! opens the folder containnig the images
     Reader::Status Caffe2_LMDB_reader();
@@ -108,7 +108,6 @@ private:
     void read_image(unsigned char* buff, std::string file_name);
     void read_image_names();
     std::map <std::string, uint> _image_record_starting;
-    TimingDBG _shuffle_time;
     int _open_env = 1;
     int rc;
     MDB_env* _read_mdb_env;

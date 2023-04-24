@@ -51,7 +51,6 @@ ImageReadAndDecode::timing()
     Timing t;
     t.image_decode_time = _decode_time.get_timing();
     t.image_read_time = _file_load_time.get_timing();
-    t.shuffle_time = _reader->get_shuffle_time();
     return t;
 }
 

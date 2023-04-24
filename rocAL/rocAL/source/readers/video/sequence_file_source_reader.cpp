@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 namespace filesys = boost::filesystem;
 
-SequenceFileSourceReader::SequenceFileSourceReader() : _shuffle_time("shuffle_time", DBG_TIMING)
+SequenceFileSourceReader::SequenceFileSourceReader()
 {
     _src_dir = nullptr;
     _sub_dir = nullptr;
@@ -82,10 +82,9 @@ Reader::Status SequenceFileSourceReader::initialize(ReaderConfig desc)
     }
 
     //shuffle dataset if set
-    _shuffle_time.start();
     if (ret == Reader::Status::OK && _shuffle)
         std::random_shuffle(_sequence_frame_names.begin(), _sequence_frame_names.end());
-    _shuffle_time.end();
+
     for(auto && seq : _sequence_frame_names)
     {
         _frame_names.insert(_frame_names.end(), seq.begin(), seq.end());
@@ -157,10 +156,9 @@ int SequenceFileSourceReader::release()
 
 void SequenceFileSourceReader::reset()
 {
-    _shuffle_time.start();
     if (_shuffle)
         std::random_shuffle(_sequence_frame_names.begin(), _sequence_frame_names.end());
-    _shuffle_time.end();
+
     _read_counter = 0;
     _curr_file_idx = 0;
 }

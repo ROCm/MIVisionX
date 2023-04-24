@@ -138,7 +138,7 @@ class ROCALGenericIterator(object):
         if self.loader.run() != 0:
             raise StopIteration
 
-        self.loader.toTensor(
+        self.loader.copyToExternalTensor(
             self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
 
         if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):

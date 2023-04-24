@@ -179,12 +179,12 @@ class Pipeline(object):
         b.rocalCopyToOutput(
             self._handle, np.ascontiguousarray(out, dtype=array.dtype))
 
-    def toTensor(self, array,  multiplier, offset, reverse_channels, tensor_format, tensor_dtype):
+    def copyToExternalTensor(self, array,  multiplier, offset, reverse_channels, tensor_format, tensor_dtype):
 
         b.rocalToTensor(self._handle, ctypes.c_void_p(array.data_ptr()), tensor_format, tensor_dtype,
                                     multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
 
-    def toTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
+    def copyToExternalTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         if(self._rocal_cpu):
             out = np.frombuffer(array, dtype=array.dtype)
             if tensor_dtype == types.FLOAT:
@@ -200,7 +200,7 @@ class Pipeline(object):
             elif tensor_dtype == types.FLOAT16:
                 b.rocalCupyToTensor16(self._handle, ctypes.c_void_p(array.ctypes.data), types.NHWC,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
-    def toTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
+    def copyToExternalTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         if(self._rocal_cpu):
             out = np.frombuffer(array, dtype=array.dtype)
             if tensor_dtype == types.FLOAT:

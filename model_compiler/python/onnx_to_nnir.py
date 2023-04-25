@@ -29,6 +29,7 @@ from builtins import range
 from past.utils import old_div
 import os, sys
 import onnx
+import numpy as np
 from onnx import onnx_pb
 from onnx import numpy_helper
 import nnir as ir
@@ -186,18 +187,26 @@ def onnx_graph_to_ir_graph(onnx_graph):
                 
     for onnx_node in onnx_graph.node:
         for tensor in onnx_graph.initializer:
+            # print(tensor)
+            # print(type(tensor.float_data))
+            # print(type(list(tensor.float_data)))
+            # quit()
             if onnx_node.op_type == 'Reshape' and len(onnx_node.input) == 2 and tensor.name == onnx_node.input[1]:
                 tensorName = onnx_name_to_ir_name(tensor.name)
                 if tensorName not in shapeList:
                     shapeList.append(tensorName)
                     graph.addVariable(onnx_tensor_info_to_data(tensor,numpy_helper.to_array(tensor)))
-                    graph.addBinary(tensorName, tensor.raw_data)
+                    float_array = np.array(tensor.float_data, dtype=np.float32)
+                    raw_data = numpy_helper.from_array(float_array).raw_data
+                    graph.addBinary(tensorName, raw_data)
     for tensor in onnx_graph.initializer:
         if not onnx_name_to_ir_name(tensor.name) in shapeList:
             tensorName = onnx_name_to_ir_name(tensor.name)
             initializerList.append(tensorName)
             graph.addVariable(onnx_tensor_info_to_data(tensor, tensor.dims))
-            graph.addBinary(tensorName, tensor.raw_data)
+            float_array = np.array(tensor.float_data, dtype=np.float32)
+            raw_data = numpy_helper.from_array(float_array).raw_data
+            graph.addBinary(tensorName, raw_data)
     for tensor in onnx_graph.input:
         if not onnx_name_to_ir_name(tensor.name) in initializerList and not onnx_name_to_ir_name(tensor.name) in shapeList:
             input_dims = [int(x.dim_value) for x in tensor.type.tensor_type.shape.dim]

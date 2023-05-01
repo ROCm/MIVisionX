@@ -29,7 +29,6 @@ from builtins import range
 from past.utils import old_div
 import os, sys
 import onnx
-import numpy as np
 from onnx import onnx_pb
 from onnx import numpy_helper
 import nnir as ir

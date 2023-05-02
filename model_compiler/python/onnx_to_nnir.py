@@ -197,9 +197,9 @@ def onnx_graph_to_ir_graph(onnx_graph):
         if onnx_node.op_type == 'Dropout':
             tensorAliasList[onnx_node.output[0]] = onnx_node.input[0]
         else:
-            for i in range(len(onnx_node.input)):
-                if onnx_node.input[i] in tensorAliasList:
-                    onnx_node.input[i] = tensorAliasList[onnx_node.input[i]]
+            for input in enumerate (onnx_node.input):
+                if input in tensorAliasList:
+                    input = tensorAliasList[input]
             node = onnx_node_to_ir_node(onnx_node)
             graph.addNode(node)
     for tensor in onnx_graph.initializer:

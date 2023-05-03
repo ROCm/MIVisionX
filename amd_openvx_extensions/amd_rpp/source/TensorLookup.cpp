@@ -24,8 +24,7 @@ THE SOFTWARE.
 
 struct TensorLookupLocalData
 {
-    RPPCommonHandle handle;
-    rppHandle_t rppHandle;
+    vxRppHandle *handle;
     Rpp32u device_type;
     Rpp8u *pSrc;
     Rpp8u *luPtr;
@@ -63,7 +62,7 @@ static vx_status VX_CALLBACK refreshTensorLookup(vx_node node, const vx_referenc
 #if ENABLE_OPENCL
         cl_context theContext;
         cl_command_queue theQueue;
-        theQueue = data->handle.cmdq;
+        theQueue = data->handle->cmdq;
         clGetCommandQueueInfo(theQueue,
                               CL_QUEUE_CONTEXT,
                               sizeof(cl_context), &theContext, NULL);
@@ -101,11 +100,11 @@ static vx_status VX_CALLBACK processTensorLookup(vx_node node, const vx_referenc
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
         // #if ENABLE_OPENCL
-        // cl_command_queue handle = data->handle.cmdq;
+        // cl_command_queue handle = data->handle->cmdq;
         // refreshTensorLookup(node, parameters, num, data);
-        // rpp_status = rppi_tensor_look_up_table_u8_gpu((void *)data->cl_pSrc,(void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->luPtr,data->rppHandle);
+        // rpp_status = rppi_tensor_look_up_table_u8_gpu(static_cast<void *>(data->cl_pSrc),static_cast<void *>(data->cl_pDst), data->tensorDimensions, data->tensorDimensionsValue,data->luPtr,data->rppHandle);
         // cl_command_queue theQueue;
-        // theQueue = data->handle.cmdq;
+        // theQueue = data->handle->cmdq;
         // cl_int err;
         // STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         // size_t bytes = arr_size * sizeof(Rpp8u);
@@ -128,10 +127,10 @@ static vx_status VX_CALLBACK initializeTensorLookup(vx_node node, const vx_refer
     TensorLookupLocalData *data = new TensorLookupLocalData;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle->cmdq, sizeof(data->handle->cmdq)));
     cl_context theContext;     // theContext
     cl_command_queue theQueue; // command theQueue
-    theQueue = data->handle.cmdq;
+    theQueue = data->handle->cmdq;
     clGetCommandQueueInfo(theQueue,
                           CL_QUEUE_CONTEXT,
                           sizeof(cl_context), &theContext, NULL);
@@ -152,12 +151,7 @@ static vx_status VX_CALLBACK uninitializeTensorLookup(vx_node node, const vx_ref
 {
     TensorLookupLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppDestroyGPU(data->rppHandle);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppDestroyHost(data->rppHandle);
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     delete (data);
     return VX_SUCCESS;
 }

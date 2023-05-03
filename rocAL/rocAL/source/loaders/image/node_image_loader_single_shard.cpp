@@ -30,7 +30,7 @@ ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, void *devi
 }
 
 void
-ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, const std::string &json_path, StorageType storage_type, DecoderType decoder_type,
+ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, unsigned cpu_num_threads, const std::string &source_path, const std::string &json_path, StorageType storage_type, DecoderType decoder_type,
                                  bool shuffle, bool loop, size_t load_batch_count, RocalMemType mem_type, std::shared_ptr<MetaDataReader> meta_data_reader,
                                  bool decoder_keep_original, const std::map<std::string, std::string> feature_key_map, unsigned sequence_length, unsigned step, unsigned stride)
 {
@@ -45,6 +45,7 @@ ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const 
     auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, feature_key_map, shuffle, loop);
     reader_cfg.set_shard_count(shard_count);
     reader_cfg.set_shard_id(shard_id);
+    reader_cfg.set_cpu_num_threads(cpu_num_threads);
     reader_cfg.set_batch_count(load_batch_count);
     reader_cfg.set_meta_data_reader(meta_data_reader);
     //  sequence_length, step and stride parameters used only for SequenceReader

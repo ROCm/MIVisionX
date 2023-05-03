@@ -32,10 +32,6 @@ subtrees:
     - file: apps/mivisionx_winml_classifier/README
     - file: apps/mivisionx_winml_yolov2/README
     - file: apps/optical_flow/README
-    - file: docker/README
-    - file: docker/archive/README
-    - file: docker/pytorch/README
-    - file: docker/tensorflow/README
     - file: model_compiler/README
     - file: rocAL/README
     - file: rocAL/docs/README
@@ -82,4 +78,8 @@ subtrees:
     - file: utilities/rocAL/rocAL_video_unittests/README
     - file: utilities/runcl/README
     - file: utilities/runvx/README
+    - file: docker/README
+    - file: docker/archive/README
+    - file: docker/pytorch/README
+    - file: docker/tensorflow/README
     - file: CHANGELOG

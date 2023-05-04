@@ -1,4 +1,4 @@
-<p align="center"><img src="../../docs/images/LOOM_LOGO_250X125.png" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/LOOM_LOGO_250X125.png" /></p>
 
 # Radeon Loom Stitching Library
 
@@ -15,7 +15,7 @@ This software is provided under an MIT-style license, see the file COPYRIGHT.txt
 
 ## Features
 
-<p align="center"><img width="80%" src="../../docs/images/loom-2.jpg" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/loom-2.jpg" /></p>
 
 * Real-time live 360-degree video stitching optimized for Radeon Pro Graphics
 * Up to 31 cameras
@@ -27,11 +27,11 @@ This software is provided under an MIT-style license, see the file COPYRIGHT.txt
 
 ## Samples
 
-[Samples](../../samples#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](../../utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360-degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
+[Samples](../../samples/README.md#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](../../utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360-degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
 
-* [Sample - 1](../../samples#sample---1)
-* [Sample - 2](../../samples#sample---2)
-* [Sample - 3](../../samples#sample---3)
+* [Sample - 1](../../samples/README.md#sample---1)
+* [Sample - 2](../../samples/README.md#sample---2)
+* [Sample - 3](../../samples/README.md#sample---3)
 
 **Note:** The output stitched image is saved as LoomOutputStitch.bmp
 

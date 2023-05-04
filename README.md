@@ -66,7 +66,7 @@ python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
 
 ## AMD OpenVX&trade;
 
-<p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/OpenVX_logo.png" /></p>
+<p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
 
 [AMD OpenVX&trade;](amd_openvx/README.md) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
@@ -76,7 +76,7 @@ python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
 
 The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl/README.md): AMD Radeon Loom stitching library for live 360 degree video applications
 * [amd_media](amd_openvx_extensions/amd_media/README.md): `vx_amd_media` is an OpenVX AMD media extension module for encode and decode
@@ -90,7 +90,7 @@ The OpenVX framework provides a mechanism to add new vision functionality to Ope
 
 MIVisionX has several [applications](apps/README.md#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications that can be used to prototype or use as a model to develop products.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/MIVisionX-applications.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/MIVisionX-applications.png" /></p>
 
 * [Bubble Pop](apps/bubble_pop/README.md#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
 * [Cloud Inference Application](apps/cloud_inference/README.md#cloud-inference-application): This sample application does inference using a client-server system.
@@ -106,7 +106,7 @@ MIVisionX has several [applications](apps/README.md#applications) built on top o
 
 ## Neural Net Model Compiler & Optimizer
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/docs/data/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/modelCompilerWorkflow.png" /></p>
 
 [Neural Net Model Compiler & Optimizer](model_compiler/README.md#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 

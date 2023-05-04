@@ -1,6 +1,6 @@
 # Radeon LoomShell
 
-<p align="center"><img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/mivisionx/develop/docs/data/LOOM_LOGO_250X125.png" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/LOOM_LOGO_250X125.png" /></p>
 
 ## DESCRIPTION
 LoomShell is an interpreter that enables stitching 360 degree videos using a script. It provides direct access to 

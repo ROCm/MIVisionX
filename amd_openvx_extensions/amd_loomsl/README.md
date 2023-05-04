@@ -1,4 +1,4 @@
-<p align="center"><img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/mivisionx/develop/docs/data/LOOM_LOGO_250X125.png" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/LOOM_LOGO_250X125.png" /></p>
 
 # Radeon Loom Stitching Library
 
@@ -15,7 +15,7 @@ This software is provided under an MIT-style license, see the file COPYRIGHT.txt
 
 ## Features
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/mivisionx/develop/docs/data/loom-2.jpg" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/loom-2.jpg" /></p>
 
 * Real-time live 360-degree video stitching optimized for Radeon Pro Graphics
 * Up to 31 cameras

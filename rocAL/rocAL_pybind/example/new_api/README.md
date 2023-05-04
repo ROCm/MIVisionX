@@ -1,5 +1,5 @@
 ## INSTALL PYBIND TO RUN ANY TESTS
-* [rocAL Pybind Installation](../../README.md)
+* [rocAL Pybind Installation](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/README.md)
 
 ## EXPORT ROCAL_DATA_PATH
 export ROCAL_DATA_PATH=/Absolute/Path/Of/rocal_data/

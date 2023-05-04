@@ -73,7 +73,9 @@ rali.types are enums exported from C++ API to python. Some examples include CPU,
 
 ### Steps to run MLPerf Resnet50 classification training with rocAL on a system with MI50 and ROCm
 * Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into train and val folders
-* Step 2: Pull and install [ROCm PyTorch Docker].(https://hub.docker.com/r/rocm/pytorch)
+* Step 2: Build [MIVisionX Pytorch docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/docker/pytorch)
+* Step 3: Install rocAL python_pybind plugin as described above
+* Step 4: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-v1.1-rocal branch
 ```
 sudo docker pull rocm/pytorch:rocm3.3_ubuntu16.04_py3.6_pytorch
 ```
@@ -116,7 +118,3 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
   * Optional: Map localhost directory on the docker image
     * option to map the localhost directory with imagenet dataset folder to be accessed on the docker image.
     * usage: -v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH}
-````
-sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/pytorch-ubuntu-16.04
-````
-

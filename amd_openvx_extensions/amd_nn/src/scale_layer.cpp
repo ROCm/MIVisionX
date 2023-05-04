@@ -119,7 +119,7 @@ static vx_status VX_CALLBACK initializeScaleLayer(vx_node node, const vx_referen
 {
     ScaleLayerLocalData * data = new ScaleLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
 
     //initialize input and output tensor descriptors.
     vx_size input_dims[4], output_dims[4];
@@ -245,7 +245,7 @@ static vx_status VX_CALLBACK uninitializeScaleLayer(vx_node node, const vx_refer
 
             }
         }
-        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

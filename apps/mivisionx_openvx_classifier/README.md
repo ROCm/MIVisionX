@@ -4,11 +4,11 @@ This application runs know CNN image classifiers on live or pre-recorded video s
 
 ## MIVisionX Image Classification Control
 
-<p align="center"><img width="100%" src="../../docs/images/mivisionx_openvx_classifier_imageClassification.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/mivisionx_openvx_classifier_imageClassification.png" /></p>
 
 ## MIVisionX Image Classification
 
-<p align="center"><img width="100%" src="../../docs/images/mivisionx_openvx_classifier_classifier.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/mivisionx_openvx_classifier_classifier.png" /></p>
 
 ## Usage
 

@@ -5,21 +5,21 @@
 
 [MIVisionX](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/) ML Model Validation Tool using pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze, summarize, & validate.
 
-<p align="center"><img width="100%" src="../../docs/images/validation-2.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/validation-2.png" /></p>
 
 Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/nnef), & [Caffe](http://caffe.berkeleyvision.org/) formats are supported by MIVisionX. The app first converts the pre-trained models to AMD Neural Net Intermediate Representation (NNIR), once the model has been translated into AMD NNIR (AMD's internal open format), the Optimizer goes through the NNIR and applies various optimizations which would allow the model to be deployed on to target hardware most efficiently. Finally, AMD NNIR is converted into OpenVX C code, which is compiled and wrapped with a python API to run on any targeted hardware.
 
 * MIVisionX Validation Tool - Processing Images
 
-<p align="center"><img width="60%" src="../../docs/images/analyzer-1.png" /></p>
+<p align="center"><img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/analyzer-1.png" /></p>
 
 * MIVisionX Validation Tool - Processing Images Complete
 
-<p align="center"><img width="80%" src="../../docs/images/validation-2.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/validation-2.png" /></p>
 
 * MIVisionX Validation Tool - Results
 
-<p align="center"><img width="100%" src="../../docs/images/analyzer-3.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/analyzer-3.png" /></p>
 
 ## Analyzer Index
 
@@ -150,11 +150,11 @@ usage: python mivisionx_validation_tool.py 	[-h]
 usage: python mivisionx_validation_tool.py
 ```
 
-<p align="center"><img width="75%" src="../../docs/images/validation-1.png" /></p>
+<p align="center"><img width="75%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/validation-1.png" /></p>
 
 ## Supported Pre-Trained Model Formats
 
-<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/images/modelCompilerFrameWorks.png" /></p>
+<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/modelCompilerFrameWorks.png" /></p>
 
 * Caffe
 * NNEF
@@ -166,7 +166,7 @@ usage: python mivisionx_validation_tool.py
 
 #### Run SqueezeNet on sample images
 
-<p align="center"><img width="40%" src="../../docs/images/sample-1-1.png" /></p>
+<p align="center"><img width="40%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/sample-1-1.png" /></p>
 
 * **Step 1:** Clone MIVisionX Validation Tool Project
 
@@ -191,7 +191,7 @@ usage: python mivisionx_validation_tool.py
   **Note:** pre-trained model - `squeezenet/model.onnx`
 	
 
-<p align="center"><img width="100%" src="../../docs/images/sample-1-3.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/sample-1-3.png" /></p>
 
 * **Step 3:** Use the command below to run the inference validation tool
 
@@ -210,15 +210,15 @@ usage: python mivisionx_validation_tool.py
 	python mivisionx_validation_tool.py --model_format onnx --model_name SqueezeNet --model ~/sample-1/squeezenet/model.onnx --model_input_dims 3,224,224 --model_output_dims 1000,1,1 --model_batch_size 64 --rocal_mode 1 --label ./sample/labels.txt --output_dir ~/sample-1/ --image_dir ../../data/images/AMD-tinyDataSet/ --image_val ./sample/AMD-tinyDataSet-val.txt --hierarchy ./sample/hierarchy.csv --replace yes
     ```
 
-<p align="center"><img width="100%" src="../../docs/images/sample-1-4.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/sample-1-4.png" /></p>
 
-<p align="center"><img width="100%" src="../../docs/images/sample-1-5.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/sample-1-5.png" /></p>
 
 ### Sample 2 - Using Pre-Trained Caffe Model
 
 ### Run VGG 16 on sample images
 
-<p align="center"><img width="40%" src="../../docs/images/sample-2-1.png" /></p>
+<p align="center"><img width="40%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/sample-2-1.png" /></p>
 
 * **Step 1:** Clone MIVisionX Inference Validation Tool Project
 
@@ -255,13 +255,13 @@ usage: python mivisionx_validation_tool.py
 	python mivisionx_validation_tool.py --model_format caffe --model_name VggNet-16-Caffe --model ~/sample-2/VGG_ILSVRC_16_layers.caffemodel --model_input_dims 3,224,224 --model_output_dims 1000,1,1 --model_batch_size 64 --rocal_mode 1 --label ./sample/labels.txt --output_dir ~/sample-2/ --image_dir ../../data/images/AMD-tinyDataSet/ --image_val ./sample/AMD-tinyDataSet-val.txt --hierarchy ./sample/hierarchy.csv --replace yes
     ```
 
-<p align="center"><img width="100%" src="../../docs/images/sample-2-2.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/sample-2-2.png" /></p>
 
 ## Sample 3 - Using Pre-Trained NNEF Model
 
 ### Run VGG 16 on sample images
 
-<p align="center"><img width="40%" src="../../docs/images/sample-3-1.png" /></p>
+<p align="center"><img width="40%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/sample-3-1.png" /></p>
 
 * **Step 1:** Clone MIVisionX Inference Validation Tool Project
 

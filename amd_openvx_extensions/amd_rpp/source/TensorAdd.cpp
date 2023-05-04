@@ -24,8 +24,7 @@ THE SOFTWARE.
 
 struct TensorAddLocalData
 {
-    RPPCommonHandle handle;
-    rppHandle_t rppHandle;
+    vxRppHandle *handle;
     Rpp32u device_type;
     Rpp8u *pSrc1;
     Rpp8u *pSrc2;
@@ -64,7 +63,7 @@ static vx_status VX_CALLBACK refreshTensorAdd(vx_node node, const vx_reference *
 #if ENABLE_OPENCL
         cl_context theContext;
         cl_command_queue theQueue;
-        theQueue = data->handle.cmdq;
+        theQueue = data->handle->cmdq;
         clGetCommandQueueInfo(theQueue,
                               CL_QUEUE_CONTEXT,
                               sizeof(cl_context), &theContext, NULL);
@@ -119,9 +118,9 @@ static vx_status VX_CALLBACK processTensorAdd(vx_node node, const vx_reference *
     {
 #if ENABLE_OPENCL
         refreshTensorAdd(node, parameters, num, data);
-        rpp_status = rppi_tensor_add_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue, data->rppHandle);
+        rpp_status = rppi_tensor_add_u8_gpu(static_cast<void *>(data->cl_pSrc1), static_cast<void *>(data->cl_pSrc2), static_cast<void *>(data->cl_pDst), data->tensorDimensions, data->tensorDimensionsValue, data->handle->rppHandle);
         cl_command_queue theQueue;
-        theQueue = data->handle.cmdq;
+        theQueue = data->handle->cmdq;
         cl_int err;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);
@@ -129,7 +128,7 @@ static vx_status VX_CALLBACK processTensorAdd(vx_node node, const vx_reference *
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
         refreshTensorAdd(node, parameters, num, data);
-        rpp_status = rppi_tensor_add_u8_gpu((void *)data->hip_pSrc1, (void *)data->hip_pSrc2, (void *)data->hip_pDst, data->tensorDimensions, data->tensorDimensionsValue, data->rppHandle);
+        rpp_status = rppi_tensor_add_u8_gpu(static_cast<void *>(data->hip_pSrc1), static_cast<void *>(data->hip_pSrc2), static_cast<void *>(data->hip_pDst), data->tensorDimensions, data->tensorDimensionsValue, data->handle->rppHandle);
         hipError_t err;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);
@@ -142,7 +141,7 @@ static vx_status VX_CALLBACK processTensorAdd(vx_node node, const vx_reference *
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
     {
         refreshTensorAdd(node, parameters, num, data);
-        rpp_status = rppi_tensor_add_u8_host(data->pSrc1, data->pSrc2, data->pDst, data->tensorDimensions, data->tensorDimensionsValue, data->rppHandle);
+        rpp_status = rppi_tensor_add_u8_host(data->pSrc1, data->pSrc2, data->pDst, data->tensorDimensions, data->tensorDimensionsValue, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
@@ -155,10 +154,10 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
     TensorAddLocalData *data = new TensorAddLocalData;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle->cmdq, sizeof(data->handle->cmdq)));
     cl_context theContext;     // theContext
     cl_command_queue theQueue; // command theQueue
-    theQueue = data->handle.cmdq;
+    theQueue = data->handle->cmdq;
     clGetCommandQueueInfo(theQueue,
                           CL_QUEUE_CONTEXT,
                           sizeof(cl_context), &theContext, NULL);
@@ -169,7 +168,7 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
     data->cl_pSrc2 = clCreateBuffer(theContext, CL_MEM_READ_ONLY, bytes, NULL, NULL);
     data->cl_pDst = clCreateBuffer(theContext, CL_MEM_WRITE_ONLY, bytes, NULL, NULL);
 #elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle->hipstream, sizeof(data->handle->hipstream)));
     size_t arr_size;
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     size_t bytes = arr_size * sizeof(Rpp8u);
@@ -186,15 +185,7 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshTensorAdd(node, parameters, num, data);
-#if ENABLE_OPENCL
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStream(&data->rppHandle, data->handle.cmdq);
-#elif ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStream(&data->rppHandle, data->handle.hipstream);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppCreateWithBatchSize(&data->rppHandle, 1);
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, 1, data->device_type));
 
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
@@ -204,12 +195,7 @@ static vx_status VX_CALLBACK uninitializeTensorAdd(vx_node node, const vx_refere
 {
     TensorAddLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL || ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppDestroyGPU(data->rppHandle);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppDestroyHost(data->rppHandle);
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     delete (data);
     return VX_SUCCESS;
 }

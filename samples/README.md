@@ -10,7 +10,7 @@ MIVisionX samples using OpenVX and OpenVX extensions. In the samples below we wi
 
 ## GDF - Graph Description Format
 
-MIVisionX samples using [RunVX](../utilities/runvx#amd-runvx)
+MIVisionX samples using [RunVX](../utilities/runvx/README.md#amd-runvx)
 
 **Note:** 
 
@@ -106,7 +106,7 @@ make
 
 ## Loom 360 Stitch - Radeon Loom 360 Stitch Samples
 
-MIVisionX samples using [LoomShell](../utilities/loom_shell#radeon-loomshell)
+MIVisionX samples using [LoomShell](../utilities/loom_shell/README.md#radeon-loomshell)
 
 [![Loom Stitch](../docs/images/loom-4.png)](https://youtu.be/E8pPU04iZjw)
 
@@ -214,14 +214,14 @@ loom_shell loomStitch-sample3.txt
 
 ## Model Compiler Samples - Run Efficient Inference
 
-<p align="center"><img width="80%" src="../docs/images/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/modelCompilerWorkflow.png" /></p>
 
-In this [sample](model_compiler_samples#mivisionx-model-compiler-samples), we will learn how to run inference efficiently using OpenVX and OpenVX Extensions. The sample will go over each step required to convert a pre-trained neural net model into an OpenVX Graph and run this graph efficiently on any target hardware. In this [sample](model_compiler_samples#mivisionx-model-compiler-samples), we will also learn about AMD MIVisionX which delivers open-source implementation of OpenVX and OpenVX Extensions along with MIVisionX Neural Net Model Compiler & Optimizer.
+In this [sample](model_compiler_samples/README.md#mivisionx-model-compiler-samples), we will learn how to run inference efficiently using OpenVX and OpenVX Extensions. The sample will go over each step required to convert a pre-trained neural net model into an OpenVX Graph and run this graph efficiently on any target hardware. In this [sample](model_compiler_samples/README.md#mivisionx-model-compiler-samples), we will also learn about AMD MIVisionX which delivers open-source implementation of OpenVX and OpenVX Extensions along with MIVisionX Neural Net Model Compiler & Optimizer.
 
-### [Sample-1: Classification Using Pre-Trained ONNX Model](model_compiler_samples#sample-1---classification-using-pre-trained-onnx-model)
+### [Sample-1: Classification Using Pre-Trained ONNX Model](model_compiler_samples/README.md#sample-1---classification-using-pre-trained-onnx-model)
 
-### [Sample-2: Detection Using Pre-Trained Caffe Model](model_compiler_samples#sample-2---detection-using-pre-trained-caffe-model) 
+### [Sample-2: Detection Using Pre-Trained Caffe Model](model_compiler_samples/README.md#sample-2---detection-using-pre-trained-caffe-model) 
 
-### [Sample-3: Classification Using Pre-Trained NNEF Model](model_compiler_samples#sample-3---classification-using-pre-trained-nnef-model)
+### [Sample-3: Classification Using Pre-Trained NNEF Model](model_compiler_samples/README.md#sample-3---classification-using-pre-trained-nnef-model)
 
-### [Sample-4: Classification Using Pre-Trained Caffe Model](model_compiler_samples#sample-4---classification-using-pre-trained-caffe-model)
+### [Sample-4: Classification Using Pre-Trained Caffe Model](model_compiler_samples/README.md#sample-4---classification-using-pre-trained-caffe-model)

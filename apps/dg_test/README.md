@@ -3,7 +3,7 @@
 MIVisionX DGtest is a tutorial program for those who are new to MIOpen & OpenVX. It runs inference on the [MNIST](http://yann.lecun.com/exdb/mnist/) dataset using MIOpen & OpenVX.
 
 <p align="center">
- <img src="../../docs/images/DGtest.gif">
+ <img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/DGtest.gif">
 </p>
 
 ### Explanation
@@ -80,5 +80,5 @@ You can test your trained MNIST caffemodel using the [model compiler](https://gi
 ```
  
 <p align="center">
- <img src="../../docs/images/dg_test_sample.png">
+ <img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/dg_test_sample.png">
 </p>

@@ -14,7 +14,7 @@ In this sample, we provide OpenVX sample applications to use with any conformant
 
 In this sample we will create an OpenVX graph to run Optical Flow on a video/live. This sample application uses <a href="https://en.wikipedia.org/wiki/OpenCV" target="_blank">OpenCV</a> to decode input video and display the output.
 
-<p align="center"> <img width="60%" src="../../docs/images/optical_flow_video.gif"> </p>
+<p align="center"> <img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/optical_flow_video.gif"> </p>
 
 ### Prerequisites
 

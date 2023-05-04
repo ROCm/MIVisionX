@@ -108,7 +108,7 @@ static vx_status VX_CALLBACK initializeSoftmaxLayer(vx_node node, const vx_refer
 {
     SoftmaxLayerLocalData * data = new SoftmaxLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
 
     //Parameters input and output.
     vx_enum out_type;
@@ -166,7 +166,7 @@ static vx_status VX_CALLBACK uninitializeSoftmaxLayer(vx_node node, const vx_ref
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->input_desc));
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->output_desc));
     if (data) {
-        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

@@ -2,7 +2,7 @@
 
 This application demonstrates the basic usage of rocAL's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
 
-<p align="center"><img width="90%" src="../../docs/images/image_augmentation.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/image_augmentation.png" /></p>
 
 ## Build Instructions
 

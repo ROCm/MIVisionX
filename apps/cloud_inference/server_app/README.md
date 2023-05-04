@@ -1,7 +1,7 @@
 # MIVisionX Inference Server
 
 This Sample Inference Server supports:
-* convert and maintain a database of pre-trained CAFFE models using [Model Compiler](../../../model_compiler#neural-net-model-compiler--optimizer)
+* convert and maintain a database of pre-trained CAFFE models using [Model Compiler](../../../model_compiler/README.md#neural-net-model-compiler--optimizer)
 * allow multiple TCP/IP client connections for inference work submissions
 * multi-GPU high-throughput live streaming batch scheduler
 

@@ -32,6 +32,8 @@ THE SOFTWARE.
 #include "exception.h"
 #include "log.h"
 
+// Calculated from the largest resize shorter dimension in imagenet validation dataset
+#define MAX_ASPECT_RATIO 6.0f
 
 enum class RocalTensorFormat
 {

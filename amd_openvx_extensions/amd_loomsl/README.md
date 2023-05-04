@@ -7,7 +7,7 @@ Radeon Loom Stitching Library (beta preview) is a highly optimized library for 3
 * **Live Stitch API**: stitching framework built on top of OpenVX kernels. Look into [live_stitch_api.h](live_stitch_api.h) for information on the API.
 * **vx_loomsl**: additional OpenVX kernels needed for 360 degree video stitching
 
-The [loom_shell](../../utilities/loom_shell/README.md) command-line tool can be used to build your application quickly. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
+The [loom_shell](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/utilities/loom_shell/README.md) command-line tool can be used to build your application quickly. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
 
 This software is provided under an MIT-style license, see the file COPYRIGHT.txt for details.
 
@@ -27,11 +27,11 @@ This software is provided under an MIT-style license, see the file COPYRIGHT.txt
 
 ## Samples
 
-[Samples](../../samples/README.md#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](../../utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360-degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
+[Samples](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/samples/README.md#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360-degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
 
-* [Sample - 1](../../samples/README.md#sample---1)
-* [Sample - 2](../../samples/README.md#sample---2)
-* [Sample - 3](../../samples/README.md#sample---3)
+* [Sample - 1](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/samples/README.md#sample---1)
+* [Sample - 2](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/samples/README.md#sample---2)
+* [Sample - 3](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/samples/README.md#sample---3)
 
 **Note:** The output stitched image is saved as LoomOutputStitch.bmp
 

@@ -2,7 +2,7 @@
 
 caffe2openvx: Convert a pre-trained CAFFE model into a C library for use by applications.
 * Extract neural network model from `deploy.prototxt`
-  + generate C code that instantiates OpenVX kernels from [vx_nn](../../vx_nn/README.md) module
+  + generate C code that instantiates OpenVX kernels from [vx_nn](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/vx_nn/README.md) module
   + generate build scripts that package C code into a library
   + the generated C code or library can be easily integrated into an application for running inference
 * Extract weights and biases from `weights.caffemodel` into separates folders for use by the C library during initialization

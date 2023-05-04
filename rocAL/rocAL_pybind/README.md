@@ -7,7 +7,7 @@ rali_pybind.so is a wrapper library that bridge python and C/C++, so that a rocA
 written primarily in C/C++ language can be used effectively in Python.
 
 ## Prerequisites
-* [rocAL C/C++ Library](../rocAL#prerequisites)
+* [rocAL C/C++ Library](../rocAL/README.md#prerequisites)
 * CMake Version 3.10 or higher
 * Python 3.6 
 * PIP3 - `sudo apt install python3-pip`

@@ -11,5 +11,5 @@ cd build
 
 * Example
 ```
-./migraphx_node_test ../resnet50-v2-7.onnx ../../../../data/images/AMD-tinyDataSet/AMD-tinyDataSet_0000.JPEG
+./migraphx_node_test ../resnet50-v2-7.onnx https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/data/images/AMD-tinyDataSet/AMD-tinyDataSet_0000.JPEG
 ```

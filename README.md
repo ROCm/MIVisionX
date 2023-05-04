@@ -2,7 +2,7 @@
 [![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/)
 [![Build Status](https://travis-ci.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
 
-<p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/MIVisionX.png" /></p>
 
 MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade;</a> and OpenVX&trade; Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF&trade;</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
@@ -12,8 +12,9 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
-- [AMD OpenVX](#amd-openvx)
-- [AMD OpenVX Extensions](#amd-openvx-extensions)
+- [Documentation](#documentation)
+- [AMD OpenVX™](#amd-openvx)
+- [AMD OpenVX™ Extensions](#amd-openvx-extensions)
 - [Applications](#applications)
 - [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
 - [rocAL](#rocal)
@@ -25,76 +26,89 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
     - [Windows](#windows)
     - [macOS](#macos)
     - [Linux](#linux)
-      - [Prerequisites setup script for Linux - `MIVisionX-setup.py`](#prerequisites-setup-script-for-linux---mivisionx-setuppy)
+      - [Prerequisites setup script for Linux - `MIVisionX-setup.py`](#prerequisites-setup-script-for-linux)
         - [Prerequisites for running the script](#prerequisites-for-running-the-script)
-- [Build & Install MIVisionX](#build--install-mivisionx)
-  - [Windows](#windows-1)
+- [Build \& Install MIVisionX](#build--install-mivisionx)
+  - [Windows](#building-on-windows)
     - [Using .msi packages](#using-msi-packages)
     - [Using `Visual Studio`](#using-visual-studio)
-  - [macOS](#macos-1)
-  - [Linux](#linux-1)
-    - [Using `apt-get` / `yum`](#using-apt-get--yum)
-    - [Using `MIVisionX-setup.py`](#using-mivisionx-setuppy)
+  - [macOS](#building-on-macos)
+  - [Linux](#building-on-linux)
+    - [Using `apt-get` or `yum`](#using-apt-get-or-yum)
+    - [Using `MIVisionX-setup.py`](#using-mivisionx-setup-py)
 - [Verify the Installation](#verify-the-installation)
-  - [Linux / macOS](#linux--macos)
-  - [Windows](#windows-2)
+  - [Linux / macOS](#verifying-on-linux--macos)
+  - [Windows](#verifying-on-windows)
 - [Docker](#docker)
   - [MIVisionX Docker](#mivisionx-docker)
-  - [Docker Workflow Sample on Ubuntu `18.04` / `20.04`](#docker-workflow-sample-on-ubuntu-1804--2004)
-    - [Prerequisites](#prerequisites-1)
-    - [Workflow](#workflow)
+  - [Docker Workflow Sample on Ubuntu `20.04`](#docker-workflow-sample-on-ubuntu-2004)
+    - [Prerequisites](#sample-prerequisites)
+    - [Workflow](#sample-workflow)
 - [Technical Support](#technical-support)
 - [Release Notes](#release-notes)
-  - [Latest Release](#latest-release-1)
+  - [Latest Release](#latest-release-version)
   - [Changelog](#changelog)
   - [Tested configurations](#tested-configurations)
   - [Known issues](#known-issues)
 - [MIVisionX Dependency Map](#mivisionx-dependency-map)
 
-## AMD OpenVX
+## Documentation
 
-<p align="center"><img width="30%" src="docs/images/OpenVX_logo.png" /></p>
+Run the steps below to build documentation locally.
 
-[AMD OpenVX](amd_openvx#amd-openvx-amd_openvx) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+```
+cd docs
+
+pip3 install -r .sphinx/requirements.txt
+
+python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+```
+
+## AMD OpenVX&trade;
+
+<p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
+
+[AMD OpenVX&trade;](amd_openvx/README.md) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 <a href="https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html" target="_blank">Khronos OpenVX&trade; 1.0.1</a> conformant implementation is available in [MIVisionX Lite](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/openvx-1.0.1)
 
 ## AMD OpenVX Extensions
 
-The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx), which contains the AMD OpenVX Core Engine.
+The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
 
-<p align="center"><img width="70%" src="docs/images/MIVisionX-OpenVX-Extensions.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 
-* [amd_loomsl](amd_openvx_extensions/amd_loomsl): AMD Radeon Loom stitching library for live 360 degree video applications
-* [amd_media](amd_openvx_extensions/amd_media): `vx_amd_media` is an OpenVX AMD media extension module for encode and decode
-* [amd_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
-* [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
-* [amd_rpp](amd_openvx_extensions/amd_rpp): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (Radeon Performance Primitives) functions. This extension is used to enable [rocAL](rocAL/README.md) to perform image augmentation.
-* [amd_winml](amd_openvx_extensions/amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
+* [amd_loomsl](amd_openvx_extensions/amd_loomsl/README.md): AMD Radeon Loom stitching library for live 360 degree video applications
+* [amd_media](amd_openvx_extensions/amd_media/README.md): `vx_amd_media` is an OpenVX AMD media extension module for encode and decode
+* [amd_migraphx](amd_openvx_extensions/amd_migraphx/README.md): amd_migraphx extension integrates the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> into an OpenVX graph. This extension allows developers to combine the vision funcions in OpenVX with the MIGraphX and build an end-to-end application for inference.
+* [amd_nn](amd_openvx_extensions/amd_nn/README.md): OpenVX neural network module
+* [amd_opencv](amd_openvx_extensions/amd_opencv/README.md): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
+* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (ROCm Performance Primitives) functions. This extension is used to enable [rocAL](rocAL/README.md) to perform image augmentation.
+* [amd_winml](amd_openvx_extensions/amd_winml/README.md): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 ## Applications
 
-MIVisionX has several [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications that can be used to prototype or use as a model to develop products.
+MIVisionX has several [applications](apps/README.md#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications that can be used to prototype or use as a model to develop products.
 
-<p align="center"><img width="90%" src="docs/images/MIVisionX-applications.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/MIVisionX-applications.png" /></p>
 
-* [Bubble Pop](apps/bubble_pop#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
-* [Cloud Inference Application](apps/cloud_inference#cloud-inference-application): This sample application does inference using a client-server system.
-* [Digit Test](apps/dg_test#amd-dgtest): This sample application is used to recognize hand written digits.
-* [Image Augmentation](apps/image_augmentation#image-augmentation-application): This sample application demonstrates the basic usage of rocAL's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
-* [MIVisionX Inference Analyzer](apps/mivisionx_inference_analyzer#mivisionx-python-inference-analyzer): This sample application uses pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze and summarize images.
-* [MIVisionX OpenVX Classsification](apps#mivisionx-openvx-classsification): This sample application shows how to run supported pre-trained caffe models with MIVisionX RunTime.
-* [MIVisionX Validation Tool](apps/mivisionx_validation_tool#mivisionx-python-ml-model-validation-tool): This sample application uses pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze, summarize and validate models.
-* [MIVisionX WinML Classification](apps#mivisionx-winml-classification): This sample application shows how to run supported ONNX models with MIVisionX RunTime on Windows.
-* [MIVisionX WinML YoloV2](apps#mivisionx-winml-yolov2): This sample application shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
-* [Optical Flow](apps/optical_flow#openvx-samples): This sample application creates an OpenVX graph to run Optical Flow on a video/live.
-* [External Applications](apps#external-application)
+* [Bubble Pop](apps/bubble_pop/README.md#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
+* [Cloud Inference Application](apps/cloud_inference/README.md#cloud-inference-application): This sample application does inference using a client-server system.
+* [Digit Test](apps/dg_test/README.md#amd-dgtest): This sample application is used to recognize hand written digits.
+* [Image Augmentation](apps/image_augmentation/README.md#image-augmentation-application): This sample application demonstrates the basic usage of rocAL's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
+* [MIVisionX Inference Analyzer](apps/mivisionx_inference_analyzer/README.md#mivisionx-python-inference-analyzer): This sample application uses pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze and summarize images.
+* [MIVisionX OpenVX Classification](apps/README.md#mivisionx-openvx-classsification): This sample application shows how to run supported pre-trained caffe models with MIVisionX RunTime.
+* [MIVisionX Validation Tool](apps/mivisionx_validation_tool/README.md#mivisionx-python-ml-model-validation-tool): This sample application uses pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze, summarize and validate models.
+* [MIVisionX WinML Classification](apps/README.md#mivisionx-winml-classification): This sample application shows how to run supported ONNX models with MIVisionX RunTime on Windows.
+* [MIVisionX WinML YoloV2](apps/README.md#mivisionx-winml-yolov2): This sample application shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
+* [Optical Flow](apps/optical_flow/README.md#openvx-samples): This sample application creates an OpenVX graph to run Optical Flow on a video/live.
+* [External Applications](apps/README.md#external-application)
 
 ## Neural Net Model Compiler & Optimizer
 
-<p align="center"><img width="80%" src="docs/images/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/modelCompilerWorkflow.png" /></p>
 
-[Neural Net Model Compiler & Optimizer](model_compiler#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
+[Neural Net Model Compiler & Optimizer](model_compiler/README.md#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
 ## rocAL
 
@@ -102,13 +116,13 @@ The ROCm Augmentation Library - [rocAL](rocAL/README.md) is designed to efficien
 
 ## Toolkit
 
-[MIVisionX Toolkit](toolkit), is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides you with helpful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
+[MIVisionX Toolkit](toolkit/README.md), is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides you with helpful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
 
 MIVisionX provides you with tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
 
 ## Utilities
 
-* [inference_generator](utilities/inference_generator#inference-generator): generate inference library from pre-trained CAFFE models
+* [inference_generator](utilities/inference_generator/README.md#inference-generator): generate inference library from pre-trained CAFFE models
 * [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
 * [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
@@ -151,7 +165,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + **CentOS** - `7` / `8`
 * Install [ROCm](https://docs.amd.com)
 * CMake 3.0 or later
-* ROCm CMake, MIOpenGEMM & MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
+* ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
@@ -159,11 +173,11 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
   + FFMPEG is required for amd_media & mv_deploy modules
-* [rocAL](rocAL#prerequisites) Prerequisites
+* [rocAL](rocAL/README.md#prerequisites) Prerequisites
 
-##### Prerequisites setup script for Linux - `MIVisionX-setup.py`
+##### Prerequisites setup script for Linux
 
-For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
+For the convenience of the developer, we provide the setup script `MIVisionX-setup.py` which will install all the dependencies required by this project.
 
   **NOTE:** This script only needs to be executed once.
 
@@ -197,7 +211,7 @@ For the convenience of the developer, we here provide the setup script which wil
 
 ## Build & Install MIVisionX
 
-### Windows
+### Building on Windows
 
 #### Using .msi packages
 
@@ -211,13 +225,13 @@ For the convenience of the developer, we here provide the setup script which wil
 
   **NOTE:** `vx_nn` is not supported on `Windows` in this release
 
-### macOS
+### Building on macOS
 
 macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
 
-### Linux
+### Building on Linux
 
-#### Using `apt-get` / `yum`
+#### Using `apt-get` or `yum`
 
 * [ROCm supported hardware](https://docs.amd.com)
 * Install [ROCm](https://docs.amd.com)
@@ -240,7 +254,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     + model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
   * Package (.deb & .rpm) install requires `OpenCV v3+` to execute `AMD OpenCV extensions`
 
-#### Using `MIVisionX-setup.py`
+#### Using MIVisionX-setup.py
 
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * Use the below commands to set up and build MIVisionX
@@ -292,7 +306,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 ## Verify the Installation
 
-### Linux / macOS
+### Verifying on Linux / macOS
 
 * The installer will copy
   + executables into `/opt/rocm/mivisionx/bin`
@@ -303,7 +317,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
   **Canny Edge Detection**
 
-  <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
+  <p align="center"><img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
 
   ```
   export PATH=$PATH:/opt/rocm/mivisionx/bin
@@ -312,7 +326,9 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   ```
   **Note:** More samples are available [here](samples#samples)
 
-### Windows
+  **Note:** For `macOS` use `export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/rocm/lib`
+
+### Verifying on Windows
 
 * MIVisionX.sln builds the libraries & executables in the folder `MIVisionX/x64`
 * Use RunVX to test the build
@@ -336,12 +352,12 @@ Docker files to build MIVisionX containers are [available](docker#mivisionx-dock
 
 ### Docker Workflow Sample on Ubuntu `18.04` / `20.04`
 
-#### Prerequisites
+#### Sample Prerequisites
 
 * Ubuntu `18.04` / `20.04`
 * [rocm supported hardware](https://docs.amd.com)
 
-#### Workflow
+#### Sample Workflow
 
 * Step 1 - *Install rocm-dkms*
 
@@ -416,7 +432,7 @@ Please submit your questions, feature requests, and bug reports on the
 
 ## Release Notes
 
-### Latest Release
+### Latest Release Version
 
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
 
@@ -450,13 +466,15 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 **Docker Image:** `sudo docker build -f docker/ubuntu20/{DOCKER_LEVEL_FILE_NAME}.dockerfile -t {mivisionx-level-NUMBER} .`
 
-- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `new component added to the level`
-- ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `existing component from the previous level`
+- ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `new component added to the level`
+- ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `existing component from the previous level`
 
-| Build Level | MIVisionX Dependencies                             | Modules                                                                   | Libraries and Executables                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Docker Tag                                                                                                                                                                                                     |
-| ----------- | -------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Level_1`   | cmake <br> gcc <br> g++                            | amd_openvx  <br> utilities                                                | ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `libopenvx.so` - OpenVX&trade; Lib - CPU <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `libvxu.so` - OpenVX&trade; immediate node Lib - CPU <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `runvx` - OpenVX&trade; Graph Executor - CPU with Display OFF                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-1?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
-| `Level_2`   | ROCm OpenCL <br> +Level 1                          | amd_openvx <br> amd_openvx_extensions <br> utilities                      | ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `libopenvx.so`  - OpenVX&trade; Lib - CPU/GPU <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `libvxu.so` - OpenVX&trade; immediate node Lib - CPU/GPU <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `loom_shell` - 360 Stitch App <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `runcl` - OpenCL&trade; program debug App <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `runvx` - OpenVX&trade; Graph Executor - Display OFF                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-2?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
-| `Level_3`   | OpenCV <br> FFMPEG <br> +Level 2                   | amd_openvx <br> amd_openvx_extensions <br> utilities                      | ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `loom_shell` - 360 Stitch App <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `runcl` - OpenCL&trade; program debug App <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `mv_compile` - Neural Net Model Compile <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `runvx` - OpenVX&trade; Graph Executor - Display ON                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-3?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
-| `Level_4`   | MIOpenGEMM <br> MIOpen <br> ProtoBuf <br> +Level 3 | amd_openvx <br>  amd_openvx_extensions <br> apps <br> utilities           | ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `loom_shell` - 360 Stitch App <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `runcl` - OpenCL&trade; program debug App <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `runvx` - OpenVX&trade; Graph Executor - Display ON <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `inference_server_app` - Cloud Inference App                                                                                                                                                                                                                                                                                                                                              | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-4?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
-| `Level_5`   | AMD_RPP <br> rocAL deps <br> +Level 4              | amd_openvx <br> amd_openvx_extensions <br> apps <br> rocAL <br> utilities | ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `loom_shell` - 360 Stitch App <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `runcl` - OpenCL&trade; program debug App <br> ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `runvx` - OpenVX&trade; Graph Executor - Display ON <br>  ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br>  ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `inference_server_app` - Cloud Inference App <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `libvx_rpp.so` - OpenVX&trade; RPP Extension <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `librali.so` - Radeon Augmentation Library <br> ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `rali_pybind.so` - rocAL Pybind Lib | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-5?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| Build Level | MIVisionX Dependencies                             | Modules                                                                   | Libraries and Executables                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Docker Tag                                                                                                                                                                                                     |
+| ----------- | -------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Level_1`   | cmake <br> gcc <br> g++                            | amd_openvx  <br> utilities                                                | ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libopenvx.so` - OpenVX&trade; Lib - CPU <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib - CPU <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `runvx` - OpenVX&trade; Graph Executor - CPU with Display OFF                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-1?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_2`   | ROCm OpenCL <br> +Level 1                          | amd_openvx <br> amd_openvx_extensions <br> utilities                      | ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libopenvx.so`  - OpenVX&trade; Lib - CPU/GPU <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib - CPU/GPU <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `loom_shell` - 360 Stitch App <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `runcl` - OpenCL&trade; program debug App <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `runvx` - OpenVX&trade; Graph Executor - Display OFF                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-2?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_3`   | OpenCV <br> FFMPEG <br> +Level 2                   | amd_openvx <br> amd_openvx_extensions <br> utilities                      | ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `loom_shell` - 360 Stitch App <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `runcl` - OpenCL&trade; program debug App <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `mv_compile` - Neural Net Model Compile <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON                                                                                                                                                                                                                                                                                                                                                                                                                                                               | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-3?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_4`   | MIOpenGEMM <br> MIOpen <br> ProtoBuf <br> +Level 3 | amd_openvx <br>  amd_openvx_extensions <br> apps <br> utilities           | ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `loom_shell` - 360 Stitch App <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `runcl` - OpenCL&trade; program debug App <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `inference_server_app` - Cloud Inference App                                                                                                                                                                                                                                                                       | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-4?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_5`   | AMD_RPP <br> rocAL deps <br> +Level 4              | amd_openvx <br> amd_openvx_extensions <br> apps <br> rocAL <br> utilities | ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_loomsl.so` - Loom 360 Stitch Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `loom_shell` - 360 Stitch App <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `runcl` - OpenCL&trade; program debug App <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br>  ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br>  ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `inference_server_app` - Cloud Inference App <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libvx_rpp.so` - OpenVX&trade; RPP Extension <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `librocal.so` - Radeon Augmentation Library <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `rocal_pybind.so` - rocAL Pybind Lib | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-5?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+
+**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

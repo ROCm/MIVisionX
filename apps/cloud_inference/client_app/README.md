@@ -2,7 +2,7 @@
 
 This Sample Inference Application supports:
 
-* connect to [inference_server_app](../server_app#mivisionx-inference-server) 
+* connect to [inference_server_app](../server_app/README.md#mivisionx-inference-server) 
   * queries number of GPUs on the server
   * queries pre-loaded neural network models on the server
   * upload pre-trained CAFFE models (optional)

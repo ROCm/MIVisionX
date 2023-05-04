@@ -13,3 +13,12 @@ generatedGDFs*
 vision_report_Linux*
 amd_opencv_test_results*
 .DS_Store*
+
+# documentation artifacts
+_build/
+_images/
+_static/
+_templates/
+_toc.yml
+docBin/
+_doxygen/

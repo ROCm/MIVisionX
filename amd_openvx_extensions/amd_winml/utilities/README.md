@@ -33,4 +33,4 @@ This utility can be used to test and verify the ONNX model on the Windows platfo
 
         --h/--help      -- Show full help
 
-**NOTE:** [Samples](MIVisionX-WinML-Validate/sample#sample) are available
+**NOTE:** [Samples](MIVisionX-WinML-Validate/sample/README.md#sample) are available

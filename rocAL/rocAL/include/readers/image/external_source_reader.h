@@ -110,7 +110,7 @@ private:
     void push_file_data(std::tuple<unsigned char*, size_t, int, int, int>& image);
     bool pop_file_data(std::tuple<unsigned char*, size_t, int, int, int>& image);
     size_t  _file_count_all_shards;
-    void incremenet_read_ptr();
+    void increment_read_ptr();
     int release();
     size_t get_file_shard_id();
     void incremenet_file_id() { _file_id++; }

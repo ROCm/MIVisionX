@@ -68,7 +68,7 @@ Reader::Status ExternalSourceReader::initialize(ReaderConfig desc) {
     return ret;
 }
 
-void ExternalSourceReader::incremenet_read_ptr() {
+void ExternalSourceReader::increment_read_ptr() {
     _read_counter++;
     _curr_file_idx = (_curr_file_idx + 1) % _batch_count;
 }

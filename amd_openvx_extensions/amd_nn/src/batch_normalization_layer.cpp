@@ -135,7 +135,7 @@ static vx_status VX_CALLBACK initializeBatchNormalizationLayer(vx_node node, con
 {
     BatchNormLayerLocalData * data = new BatchNormLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
 
     // initialize input and output tensor descriptors.
     vx_size input_dims[4], output_dims[4];
@@ -243,7 +243,7 @@ static vx_status VX_CALLBACK uninitializeBatchNormalizationLayer(vx_node node, c
 #endif
             }
         }
-        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

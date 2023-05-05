@@ -43,17 +43,18 @@ THE SOFTWARE.
 #include "box_encoder_hip.h"
 #endif
 #include "randombboxcrop_meta_data_reader.h"
+#include "rocal_api_types.h"
 #define MAX_STRING_LENGTH 100
 class MasterGraph
 {
 public:
     enum class Status { OK = 0,  NOT_RUNNING = 1, NO_MORE_DATA = 2, NOT_IMPLEMENTED = 3, INVALID_ARGUMENTS };
-    MasterGraph(size_t batch_size, RocalAffinity affinity, int gpu_id, size_t prefetch_queue_depth, RocalTensorDataType output_tensor_data_type);
+    MasterGraph(size_t batch_size, RocalAffinity affinity, size_t cpu_thread_count, int gpu_id, size_t prefetch_queue_depth, RocalTensorDataType output_tensor_data_type);
     ~MasterGraph();
     Status reset();
     size_t remaining_count();
-    MasterGraph::Status copy_out_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
-                    float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type);
+    MasterGraph::Status to_tensor(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
+                    float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type, RocalOutputMemType output_mem_type);
     Status copy_output(unsigned char* out_ptr, size_t out_size_in_bytes);
     Status copy_out_tensor_planar(void *out_ptr, RocalTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
                     float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type);
@@ -94,8 +95,8 @@ public:
         _output_images = output_images;
     }
     void set_output(Image* output_image);
+    size_t calculate_cpu_num_threads(size_t shard_count);
     bool empty() { return (remaining_count() < (_is_sequence_reader_output ? _sequence_batch_size : _user_batch_size)); }
-    size_t user_batch_size() { return _user_batch_size; }
     size_t sequence_batch_size() { return _sequence_batch_size; }
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
@@ -104,7 +105,8 @@ public:
     bool is_video_loader() {return _is_video_loader; }
     bool is_sequence_reader_output() {return _is_sequence_reader_output; }
     void set_sequence_reader_output() { _is_sequence_reader_output = true; }
-    void set_sequence_batch_size(size_t sequence_length) {
+    void set_sequence_batch_size(size_t sequence_length) 
+    { 
         _sequence_length = sequence_length;
         _sequence_batch_size = _user_batch_size * sequence_length;
     }
@@ -152,6 +154,7 @@ private:
 #endif
     std::shared_ptr<Graph> _graph = nullptr;
     RocalAffinity _affinity;
+    size_t _cpu_num_threads;//!< Defines the number of CPU threads used for processing
     const int _gpu_id;//!< Defines the device id used for processing
     pLoaderModule _loader_module; //!< Keeps the loader module used to feed the input the images of the graph
 #ifdef ROCAL_VIDEO

@@ -10,11 +10,11 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 [AMD Data Analysis Toolkit](amd_data_analysis_toolkit) - **ADAT** is currently available for image classification and object detection. Features such as label summary, hierarchy, image summary, an advanced method of scoring, and many other insightful features can be viewed using this toolkit.
 
-<p align="center"><img width="90%" src="../docs/images/classification_summary.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/classification_summary.png" /></p>
 
-<p align="center"><img width="90%" src="../docs/images/bounding_box_summary.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/bounding_box_summary.png" /></p>
 
-<p align="center"><img width="90%" src="../docs/images/classification_graph.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/classification_graph.png" /></p>
 
 ## AMD Data Generation Toolkit
 

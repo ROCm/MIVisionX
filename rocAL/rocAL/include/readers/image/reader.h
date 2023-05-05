@@ -64,6 +64,7 @@ struct ReaderConfig
     void set_path(const std::string &path) { _path = path; }
     void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
     void set_shard_count(size_t shard_count) { _shard_count = shard_count; }
+    void set_cpu_num_threads(size_t cpu_num_threads) { _cpu_num_threads = cpu_num_threads; }
     void set_json_path(const std::string &json_path) { _json_path = json_path; }
     /// \param read_batch_count Tells the reader it needs to read the images in multiples of load_batch_count. If available images not divisible to load_batch_count,
     /// the reader will repeat images to make available images an even multiple of this load_batch_count
@@ -80,6 +81,7 @@ struct ReaderConfig
     void set_external_filemode(ExternalFileMode mode) { _file_mode = mode; }
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
+    size_t get_cpu_num_threads() { return _cpu_num_threads; }
     size_t get_batch_size() { return _batch_count; }
     size_t get_sequence_length() { return _sequence_length; }
     size_t get_frame_step() { return _step; }
@@ -98,6 +100,7 @@ private:
     std::map<std::string, std::string> _feature_key_map;
     size_t _shard_count = 1;
     size_t _shard_id = 0;
+    size_t _cpu_num_threads = 1;
     size_t _batch_count = 1;     //!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
     size_t _sequence_length = 1; // Video reader module sequence length
     size_t _step;

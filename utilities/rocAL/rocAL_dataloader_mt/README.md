@@ -1,6 +1,6 @@
 # rocAL_dataloader_mt application
 This application demonstrates a basic usage of rocAL's C API to use sharded data_loader  in a multithreaded application.
-<p align="center"><img width="90%" src="../../docs/images/image_augmentation.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/image_augmentation.png" /></p>
 
 ## Build Instructions
 

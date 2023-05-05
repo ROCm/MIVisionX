@@ -43,8 +43,8 @@ parser.add_argument('--opencv',    	type=str, default='4.6.0',
                     help='OpenCV Version - optional (default:4.6.0)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.4',
                     help='ProtoBuf Version - optional (default:3.12.4)')
-parser.add_argument('--rpp',   		type=str, default='1.0.0',
-                    help='RPP Version - optional (default:1.0.0)')
+parser.add_argument('--rpp',   		type=str, default='1.1.0',
+                    help='RPP Version - optional (default:1.1.0)')
 parser.add_argument('--ffmpeg',    	type=str, default='ON',
                     help='FFMPEG V4.4.2 Installation - optional (default:ON) [options:ON/OFF]')
 parser.add_argument('--neural_net',	type=str, default='ON',

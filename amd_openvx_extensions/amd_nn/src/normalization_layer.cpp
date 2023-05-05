@@ -114,7 +114,7 @@ static vx_status VX_CALLBACK initializeNormalizationLayer(vx_node node, const vx
 {
     NormalizationLayerLocalData * data = new NormalizationLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
     miopenDataType_t data_type;          // data_type for the kernel
 
     vx_size input_dims[4], output_dims[4];
@@ -186,7 +186,7 @@ static vx_status VX_CALLBACK uninitializeNormalizationLayer(vx_node node, const 
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->input_desc));
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->output_desc));
     if (data) {
-        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

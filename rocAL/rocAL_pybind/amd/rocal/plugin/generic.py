@@ -156,9 +156,9 @@ class ROCALGenericIterator(object):
 
         self.index = self.index + 1
         if(types.NCHW == self.tensor_format):
-            self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            self.loader.copyToExternalTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
-            self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            self.loader.copyToExternalTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
     
         if(self.loader._name == "labelReader"):
             if(self.loader._oneHotEncoding == True):

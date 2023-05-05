@@ -815,9 +815,9 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             case 1: //classification pipeline
             {
                 if (gpu == 1)
-                    rocalGetImageLabels(handle, label_id, ROCAL_MEMCPY_TO_HOST);
+                    rocalGetImageLabels(handle, label_id, ROCAL_MEMCPY_HOST);
                 else
-                    rocalGetImageLabels(handle, label_id);
+                    rocalGetImageLabels(handle, label_id, ROCAL_MEMCPY_HOST);
                 int img_size = rocalGetImageNameLen(handle, image_name_length);
                 char img_name[img_size];
                 numOfClasses = num_of_classes;

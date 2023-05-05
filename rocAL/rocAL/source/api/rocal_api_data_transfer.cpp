@@ -159,6 +159,3 @@ rocalExternalSourceFeedInput(
     }
     return ROCAL_OK;
 }
-
-
-

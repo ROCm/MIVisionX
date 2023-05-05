@@ -194,7 +194,7 @@ void ImageLoader::start_loading()
         THROW("start_loading() should be called after initialize() function is called")
 
     _remaining_image_count = _image_loader->count();
-    INFO("Remaining Image count in ImageLoader::start_loading "+TOSTR(_remaining_image_count));
+    INFO("Remaining Image count in ImageLoader::start_loading " + TOSTR(_remaining_image_count));
     _internal_thread_running = true;
     _load_thread = std::thread(&ImageLoader::load_routine, this);
 }

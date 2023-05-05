@@ -1925,36 +1925,50 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
     return node;
 }
 
-// looks like following code is not used
-#if 0//ENABLE_OPENCL
-
-vx_status createGraphHandle(vx_node node, RPPCommonHandle **pHandle)
-{
-    RPPCommonHandle *handle = NULL;
+vx_status createRPPHandle(vx_node node, vxRppHandle **pHandle, Rpp32u batchSize, Rpp32u deviceType) {
+    vxRppHandle *handle = NULL;
     STATUS_ERROR_CHECK(vxGetModuleHandle(node, OPENVX_KHR_RPP, (void **)&handle));
-    if (handle)
-    {
+    vx_uint32 cpu_num_threads;
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_CPU_NUM_THREADS, &cpu_num_threads, sizeof(cpu_num_threads)));
+
+    if (handle) {
         handle->count++;
-    }
-    else
-    {
-        handle = new RPPCommonHandle;
+    } else {
+        handle = new vxRppHandle;
         memset(handle, 0, sizeof(*handle));
         handle->count = 1;
-        STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &handle->cmdq, sizeof(handle->cmdq)));
+        
+        if (deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_OPENCL
+            STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &handle->cmdq, sizeof(handle->cmdq)));
+            rppCreateWithStreamAndBatchSize(&data->rppHandle, handle->cmdq, batchSize);
+#elif ENABLE_HIP
+            STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &handle->hipstream, sizeof(handle->hipstream)));
+            rppCreateWithStreamAndBatchSize(&handle->rppHandle, handle->hipstream, batchSize);
+#endif
+        } else if (deviceType == AGO_TARGET_AFFINITY_CPU) {
+            rppCreateWithBatchSize(&handle->rppHandle, batchSize, cpu_num_threads);
+        }
+        
+        STATUS_ERROR_CHECK(vxSetModuleHandle(node, OPENVX_KHR_RPP, handle));
     }
     *pHandle = handle;
     return VX_SUCCESS;
 }
 
-vx_status releaseGraphHandle(vx_node node, RPPCommonHandle *handle)
-{
+vx_status releaseRPPHandle(vx_node node, vxRppHandle *handle, Rpp32u deviceType) {
     handle->count--;
-    if (handle->count == 0)
-    {
+    if (handle->count == 0) {
+        if(deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_OPENCL || ENABLE_HIP
+            rppDestroyGPU(handle->rppHandle);
+#endif   
+        } else if (deviceType == AGO_TARGET_AFFINITY_CPU) {
+            rppDestroyHost(handle->rppHandle);
+        }
+
         delete handle;
         STATUS_ERROR_CHECK(vxSetModuleHandle(node, OPENVX_KHR_RPP, NULL));
     }
     return VX_SUCCESS;
 }
-#endif

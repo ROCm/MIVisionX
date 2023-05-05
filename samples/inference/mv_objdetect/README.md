@@ -18,7 +18,7 @@ The sample has two .cpp files, `mvobjdetect.cpp` and `visualize.cpp`. But it nee
 * Build & Install [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#linux-1)
   * MIVisionX installs model compiler at `/opt/rocm/libexec/mivisionx`
   * mv_compile installs at `/opt/rocm/bin` and mvdeploy_api.h installs at `/opt/rocm/include/mivisionx`
-* Install MIVisionX [Model Compiler Prerequisites](../../../model_compiler#pre-requisites)
+* Install MIVisionX [Model Compiler Prerequisites](../../../model_compiler/README.md#pre-requisites)
 * Add MIVisionX libraries & executables to PATH
 ```
 export PATH=$PATH:/opt/rocm/bin

@@ -146,6 +146,8 @@ enum vx_graph_attribute_amd_e {
     VX_GRAPH_ATTRIBUTE_AMD_PERFORMANCE_INTERNAL_PROFILE = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_GRAPH) + 0x07,
     /*! \brief OpenCL command queue. Use a <tt>\ref cl_command_queue</tt> parameter.*/
     VX_GRAPH_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE         = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_GRAPH) + 0x08,
+    /*! \brief CPU num_threads to be used in RPP. Use a <tt>\ref vx_uint32</tt> parameter.*/
+    VX_GRAPH_ATTRIBUTE_AMD_CPU_NUM_THREADS              = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_GRAPH) + 0x09
 };
 
 /*! \brief The AMD node attributes list.
@@ -155,7 +157,8 @@ enum vx_node_attribute_amd_e {
     VX_NODE_ATTRIBUTE_AMD_AFFINITY                      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x01,
     /*! \brief OpenCL command queue. Use a <tt>\ref cl_command_queue</tt> parameter.*/
     VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE          = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x02,
-    VX_NODE_ATTRIBUTE_AMD_HIP_STREAM           = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x03
+    VX_NODE_ATTRIBUTE_AMD_HIP_STREAM                    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x03,
+    VX_NODE_ATTRIBUTE_AMD_CPU_NUM_THREADS               = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x04
 };
 
 /*! \brief The AMD image attributes list.

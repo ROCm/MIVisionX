@@ -129,8 +129,8 @@ def main():
             output = fn.color_twist(images)
         elif augmentation_name == "crop_mirror_normalize":
             output = fn.crop_mirror_normalize(images, device="cpu",
-                                              output_dtype=types.FLOAT16 if args.fp16 else types.FLOAT,
-                                              output_layout=types.NHWC if args.NHWC else types.NCHW,
+                                              output_dtype=types.UINT8,
+                                              output_layout=types.NHWC,
                                               crop=(300, 300),
                                               image_type=types.RGB,
                                               mean=[0, 0, 0],

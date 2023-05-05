@@ -1,4 +1,4 @@
-<p align="center"><img width="60%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/raw/master/docs/images/MIVisionX.png" /></p>
+<p align="center"><img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/MIVisionX.png" /></p>
 
 # Changelog
 

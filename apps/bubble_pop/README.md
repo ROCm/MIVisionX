@@ -1,6 +1,6 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-<p align="center"><img width="50%" src="../../docs/images/OpenVX_logo.png" /></p>
+<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/OpenVX_logo.png" /></p>
 
 # OpenVX Samples
 
@@ -12,7 +12,7 @@ In this project, we provide OpenVX sample applications to use with any conforman
 
 In this sample we will create an OpenVX graph to run VX Bubble Pop on a live camera. This sample application uses <a href="https://en.wikipedia.org/wiki/OpenCV" target="_blank">OpenCV</a> to decode input image, draw bubbles/donuts and display the output.
 
- <p align="center"><img width="60%" src="../../docs/images/vx-pop-app.gif" /></p>
+ <p align="center"><img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/data/vx-pop-app.gif" /></p>
 
 ### Prerequisites
 

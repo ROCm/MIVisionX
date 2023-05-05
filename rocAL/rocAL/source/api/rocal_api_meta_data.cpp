@@ -216,7 +216,7 @@ ROCAL_API_CALL rocalGetImageId(RocalContext p_context,  int* buf)
 }
 
 void
-ROCAL_API_CALL rocalGetImageLabels(RocalContext p_context, void* buf, unsigned int flags)
+ROCAL_API_CALL rocalGetImageLabels(RocalContext p_context, void* buf, RocalOutputMemType output_mem_type)
 {
 
     if (!p_context)
@@ -231,25 +231,38 @@ ROCAL_API_CALL rocalGetImageLabels(RocalContext p_context, void* buf, unsigned i
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
 
-    if (context->affinity == RocalAffinity::CPU)
-        memcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size);
+    if (context->affinity == RocalAffinity::CPU) {
+        if(output_mem_type == RocalOutputMemType::ROCAL_MEMCPY_HOST) {
+            memcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size);
+        }
+        else {
+#if ENABLE_HIP
+            hipError_t err = hipMemcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size, hipMemcpyHostToDevice);
+            if (err != hipSuccess)
+                THROW("Invalid Data Pointer: Error copying to device memory")
+#elif ENABLE_OPENCL
+            if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size, meta_data.second->get_label_batch().data(), 0, NULL, NULL) != CL_SUCCESS)
+              THROW("Invalid Data Pointer: Error copying to device memory")
+#endif
+        }
+    }
     else
     {
 #if ENABLE_HIP
-        if (!flags) {
+        if(output_mem_type == RocalOutputMemType::ROCAL_MEMCPY_GPU) {
             hipError_t err = hipMemcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size, hipMemcpyHostToDevice);
             if (err != hipSuccess)
                 THROW("Invalid Data Pointer: Error copying to device memory")
         }
-        else if (flags & ROCAL_MEMCPY_TO_HOST) {
+        else if(output_mem_type == RocalOutputMemType::ROCAL_MEMCPY_HOST) {
             memcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size);
         }
 #elif ENABLE_OPENCL
-        if (!flags) {
+        if(output_mem_type == RocalOutputMemType::ROCAL_MEMCPY_GPU) {
           if(clEnqueueWriteBuffer(context->master_graph->get_ocl_cmd_q(), (cl_mem)buf, CL_TRUE, 0, sizeof(int) * meta_data_batch_size, meta_data.second->get_label_batch().data(), 0, NULL, NULL) != CL_SUCCESS)
               THROW("Invalid Data Pointer: Error copying to device memory")
         }
-        else if (flags & ROCAL_MEMCPY_TO_HOST) {
+        else if(output_mem_type == RocalOutputMemType::ROCAL_MEMCPY_HOST) {
             memcpy(buf, meta_data.second->get_label_batch().data(), sizeof(int) * meta_data_batch_size);
         }
 #endif

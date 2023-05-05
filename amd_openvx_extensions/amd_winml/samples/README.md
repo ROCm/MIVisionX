@@ -12,7 +12,7 @@ Get ONNX models from [ONNX Model Zoo](https://github.com/onnx/models)
 
 ### winML-image.gdf - Single Image Inference
 
-This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
+This sample is in [Graph Description Format](../../../utilities/runvx/README.md#amd-runvx) (gdf)
 
 <p align="center"><img width="100%" src="data/squeezenet_results.PNG" /></p>
 
@@ -41,7 +41,7 @@ data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 
 ### winML-live.gdf - Live Inference using a camera
 
-This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
+This sample is in [Graph Description Format](../../../utilities/runvx/README.md#amd-runvx) (gdf)
 
 #### usage
 ````
@@ -63,7 +63,7 @@ data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 
 ### winML-Live-MultipleModels.gdf - Live Inference using a camera
 
-This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
+This sample is in [Graph Description Format](../../../utilities/runvx/README.md#amd-runvx) (gdf)
 
 #### usage
 ````
@@ -96,7 +96,7 @@ data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 	* Look at output tensor dimensions (n,c,h,w  - [1,8] for Plus692_Output_0)
 * Use the label file - [data/emotions.txt](data/emotions.txt) to run sample
 
-This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
+This sample is in [Graph Description Format](../../../utilities/runvx/README.md#amd-runvx) (gdf)
 
 <p align="center"><img width="100%" src="data/emotions_results.PNG" /></p>
 
@@ -126,7 +126,7 @@ data labelLocation = scalar:STRING,FULL_PATH_TO\data\emotions.txt
 	* Look at output tensor dimensions (n,c,h,w  - [1,1000] for prob_1)
 * Use the label file - [data/Labels.txt](data/Labels.txt) to run sample
 
-This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
+This sample is in [Graph Description Format](../../../utilities/runvx/README.md#amd-runvx) (gdf)
 
 <p align="center"><img width="100%" src="data/vgg16_results.PNG" /></p>
 

@@ -113,7 +113,7 @@ private:
     void increment_read_ptr();
     int release();
     size_t get_file_shard_id();
-    void incremenet_file_id() { _file_id++; }
+    void increment_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
     void replicate_last_batch_to_pad_partial_shard();
     ExternalFileMode _file_mode;

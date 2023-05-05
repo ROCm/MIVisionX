@@ -148,9 +148,6 @@ else()
   message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
 endif()
 
-# install MIVisionX docs -- {ROCM_PATH}/${CMAKE_INSTALL_DATADIR}/doc/mivisionx/
-install(FILES docs/README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
-
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})
 set(CPACK_PACKAGE_NAME          "mivisionx")

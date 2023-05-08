@@ -9,7 +9,7 @@ rocAL_api_python_unittest=1
 rocAL_api_coco_pipeline=0
 
 ## INSTALL PYBIND TO RUN ANY TESTS
-* [rocAL Pybind Installation](../../README.md)
+* [rocAL Pybind Installation](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/README.md)
 
 ## EXPORT ROCAL_DATA_PATH
 export ROCAL_DATA_PATH=/Absolute/Path/Of/rocal_data/

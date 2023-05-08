@@ -34,6 +34,4 @@ set(NN_HIP_SOURCES
     add_library(${PROJECT_NAME} OBJECT ${NN_HIP_SOURCES})
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
-    foreach (target ${AMDGPU_TARGETS})
-        target_link_libraries(${PROJECT_NAME} hip::device)
-    endforeach()
+    target_link_libraries(${PROJECT_NAME} hip::device)

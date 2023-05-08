@@ -7,16 +7,14 @@ rocal_pybind.so is a wrapper library that bridge python and C/C++, so that a roc
 written primarily in C/C++ language can be used effectively in Python.
 
 ## Prerequisites
-* [rocAL C/C++ Library](../rocAL#prerequisites)
+* [rocAL C/C++ Library](../rocAL/README.md#prerequisites)
 * CMake Version 3.10 or higher
 * Python 3
 * PIP3 - `sudo apt install python3-pip`
+* [CuPy for rocm](https://github.com/ROCmSoftwarePlatform/cupy)
 
 ## Install
-Install rocAL_pybind using the run.sh script
-```
-./run.sh
-```
+rocAL_pybind installs during [MIVisionX build](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx)
 
 #### Prerequisites
 

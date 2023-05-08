@@ -3148,6 +3148,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryGraph(vx_graph graph, vx_enum attribut
                 }
                 break;
 #endif
+            case VX_GRAPH_ATTRIBUTE_AMD_CPU_NUM_THREADS:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = (vx_uint32)graph->cpu_num_threads;
+                    status = VX_SUCCESS;
+                }
+                break;
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
@@ -3213,6 +3219,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphAttribute(vx_graph graph, vx_enum a
                 if (size == sizeof(AgoTargetAffinityInfo_)) {
                     status = VX_SUCCESS;
                     graph->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_AMD_CPU_NUM_THREADS:
+                if (size == sizeof(vx_uint32)) {
+                    graph->cpu_num_threads = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
                 }
                 break;
             default:
@@ -3418,6 +3430,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
             case VX_NODE_ATTRIBUTE_AMD_AFFINITY:
                 if (size == sizeof(AgoTargetAffinityInfo_)) {
                     *(AgoTargetAffinityInfo_ *)ptr = node->attr_affinity;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_ATTRIBUTE_AMD_CPU_NUM_THREADS:
+                if (size == sizeof(vx_uint32)) {
+                    AgoGraph * graph = (AgoGraph *)node->ref.scope;
+                    *(vx_uint32 *)ptr = graph->cpu_num_threads;
                     status = VX_SUCCESS;
                 }
                 break;

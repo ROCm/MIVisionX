@@ -385,7 +385,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     vx_uint32 h[2] = { 0 };
     fread(h, 1, sizeof(h), fp);
     if(h[0] != 0xf00dd1e1 || (vx_size)h[1] != (count*itemsize)) {
-      vxAddLogEntry((vx_reference)tensor, VX_FAILURE, "ERROR: invalid data (magic,size)=(0x%x,%d) in %%s at byte position %d -- expected size is %ld\\n", h[0], h[1], binaryFilename, ftell(fp)-sizeof(h), count*itemsize);
+      vxAddLogEntry((vx_reference)tensor, VX_FAILURE, "ERROR: invalid data (magic,size)=(0x%x,%d) in %s at byte position %d -- expected size is %ld\\n", h[0], h[1], binaryFilename, ftell(fp)-sizeof(h), count*itemsize);
       return VX_FAILURE;
     }
 

@@ -48,7 +48,7 @@ get_ago_affinity_info(
     return affinity;
 }
 
-Graph::Graph(vx_context context, RocalAffinity affinity, int cpu_id, int gpu_id):
+Graph::Graph(vx_context context, RocalAffinity affinity, int cpu_id, size_t cpu_num_threads, int gpu_id):
 _mem_type(((affinity == RocalAffinity::GPU) ? RocalMemType::OCL : RocalMemType::HOST)),
 _context(context),
 _graph(nullptr),
@@ -60,6 +60,7 @@ _cpu_id(cpu_id)
     {
         vx_status status;
         auto vx_affinity = get_ago_affinity_info(_affinity , cpu_id, gpu_id);
+        vx_uint32 _cpu_num_threads = cpu_num_threads;
 
         _graph = vxCreateGraph(_context);
 
@@ -72,6 +73,13 @@ _cpu_id(cpu_id)
                                             VX_GRAPH_ATTRIBUTE_AMD_AFFINITY,
                                             &vx_affinity,
                                             sizeof(vx_affinity))) != VX_SUCCESS)
+            THROW("vxSetGraphAttribute failed " + TOSTR(status))
+
+        // Setting attribute to run on CPU or GPU
+        if((status = vxSetGraphAttribute(   _graph,
+                                            VX_GRAPH_ATTRIBUTE_AMD_CPU_NUM_THREADS,
+                                            &_cpu_num_threads,
+                                            sizeof(_cpu_num_threads))) != VX_SUCCESS)
             THROW("vxSetGraphAttribute failed " + TOSTR(status))
 
     }

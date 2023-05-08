@@ -24,8 +24,7 @@ THE SOFTWARE.
 
 struct MeanStddevLocalData
 {
-    RPPCommonHandle handle;
-    rppHandle_t rppHandle;
+    vxRppHandle *handle;
     RppiSize srcDimensions;
     Rpp32u device_type;
     RppPtr_t pSrc;
@@ -103,10 +102,10 @@ static vx_status VX_CALLBACK processMeanStddev(vx_node node, const vx_reference 
         // #if ENABLE_OPENCL
         //         refreshMeanStddev(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_mean_stddev_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
+        //             rpp_status = rppi_mean_stddev_u8_pln1_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_mean_stddev_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
+        //             rpp_status = rppi_mean_stddev_u8_pkd3_gpu(static_cast<void *>(data->cl_pSrc),data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
         //         }
         //         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[1], &data->mean));
         //         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[2], &data->stdDev));
@@ -114,10 +113,10 @@ static vx_status VX_CALLBACK processMeanStddev(vx_node node, const vx_reference 
         // #elif ENABLE_HIP
         //         refreshMeanStddev(node, parameters, num, data);
         //         if (df_image == VX_DF_IMAGE_U8 ){
-        //             rpp_status = rppi_mean_stddev_u8_pln1_gpu((void *)data->hip_pSrc,data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
+        //             rpp_status = rppi_mean_stddev_u8_pln1_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
         //         }
         //         else if(df_image == VX_DF_IMAGE_RGB) {
-        //             rpp_status = rppi_mean_stddev_u8_pkd3_gpu((void *)data->hip_pSrc,data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
+        //             rpp_status = rppi_mean_stddev_u8_pkd3_gpu(static_cast<void *>(data->hip_pSrc),data->srcDimensions,&data->mean,&data->stdDev,data->rppHandle);
         //         }
         //         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[1], &data->mean));
         //         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[2], &data->stdDev));
@@ -130,11 +129,11 @@ static vx_status VX_CALLBACK processMeanStddev(vx_node node, const vx_reference 
         refreshMeanStddev(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_mean_stddev_u8_pln1_host(data->pSrc, data->srcDimensions, &data->mean, &data->stdDev, data->rppHandle);
+            rpp_status = rppi_mean_stddev_u8_pln1_host(data->pSrc, data->srcDimensions, &data->mean, &data->stdDev, data->handle->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_mean_stddev_u8_pkd3_host(data->pSrc, data->srcDimensions, &data->mean, &data->stdDev, data->rppHandle);
+            rpp_status = rppi_mean_stddev_u8_pkd3_host(data->pSrc, data->srcDimensions, &data->mean, &data->stdDev, data->handle->rppHandle);
         }
         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[1], &data->mean));
         STATUS_ERROR_CHECK(vxWriteScalarValue((vx_scalar)parameters[2], &data->stdDev));
@@ -147,22 +146,9 @@ static vx_status VX_CALLBACK initializeMeanStddev(vx_node node, const vx_referen
 {
     MeanStddevLocalData *data = new MeanStddevLocalData;
     memset(data, 0, sizeof(*data));
-#if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
-#elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
-#endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshMeanStddev(node, parameters, num, data);
-#if ENABLE_OPENCL
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStream(&data->rppHandle, data->handle.cmdq);
-#elif ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStream(&data->rppHandle, data->handle.hipstream);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppCreateWithBatchSize(&data->rppHandle, 1);
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, 1, data->device_type));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -171,12 +157,7 @@ static vx_status VX_CALLBACK uninitializeMeanStddev(vx_node node, const vx_refer
 {
     MeanStddevLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL || ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppDestroyGPU(data->rppHandle);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppDestroyHost(data->rppHandle);
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     delete (data);
     return VX_SUCCESS;
 }

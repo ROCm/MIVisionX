@@ -25,7 +25,7 @@ THE SOFTWARE.
 struct CopyLocalData
 {
 
-    RPPCommonHandle handle;
+    vxRppHandle *handle;
     RppiSize dimensions;
     RppPtr_t pSrc;
     RppPtr_t pDst;
@@ -101,7 +101,7 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *param
     {
 #if ENABLE_OPENCL
         refreshcopy(node, parameters, num, data);
-        cl_command_queue handle = data->handle.cmdq;
+        cl_command_queue handle = data->handle->cmdq;
         if (df_image == VX_DF_IMAGE_U8)
         {
             clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size, 0, NULL, NULL);
@@ -145,9 +145,9 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
     memset(data, 0, sizeof(*data));
 
 #if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle->cmdq, sizeof(data->handle->cmdq)));
 #elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle->hipstream, sizeof(data->handle->hipstream)));
 #endif
     refreshcopy(node, parameters, num, data);
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));

@@ -24,8 +24,7 @@ THE SOFTWARE.
 
 struct HistogramLocalData
 {
-    RPPCommonHandle handle;
-    rppHandle_t rppHandle;
+    vxRppHandle *handle;
     RppiSize srcDimensions;
     Rpp32u device_type;
     RppPtr_t pSrc;
@@ -105,11 +104,11 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
 //         refreshHistogram(node, parameters, num, data);
 //         if (df_image == VX_DF_IMAGE_U8)
 //         {
-//             // rpp_status = rppi_histogram_u8_pln1_gpu((void *)data->cl_pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+//             // rpp_status = rppi_histogram_u8_pln1_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
 //         }
 //         else if (df_image == VX_DF_IMAGE_RGB)
 //         {
-//             // rpp_status = rppi_histogram_u8_pkd3_gpu((void *)data->cl_pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+//             // rpp_status = rppi_histogram_u8_pkd3_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
 //         }
 //         size_t arr_size;
 //         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
@@ -119,11 +118,11 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
 //         refreshHistogram(node, parameters, num, data);
 //         if (df_image == VX_DF_IMAGE_U8)
 //         {
-//             // rpp_status = rppi_histogram_u8_pln1_gpu((void *)data->hip_pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+//             // rpp_status = rppi_histogram_u8_pln1_gpu(static_cast<void *>(data->hip_pSrc), data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
 //         }
 //         else if (df_image == VX_DF_IMAGE_RGB)
 //         {
-//             // rpp_status = rppi_histogram_u8_pkd3_gpu((void *)data->hip_pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+//             // rpp_status = rppi_histogram_u8_pkd3_gpu(static_cast<void *>(data->hip_pSrc), data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
 //         }
 //         size_t arr_size;
 //         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
@@ -137,11 +136,11 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
         refreshHistogram(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            rpp_status = rppi_histogram_u8_pln1_host(data->pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+            rpp_status = rppi_histogram_u8_pln1_host(data->pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->handle->rppHandle);
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_histogram_u8_pkd3_host(data->pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->rppHandle);
+            rpp_status = rppi_histogram_u8_pkd3_host(data->pSrc, data->srcDimensions, data->outputHistogram, data->bins, data->handle->rppHandle);
         }
         size_t arr_size;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
@@ -155,22 +154,9 @@ static vx_status VX_CALLBACK initializeHistogram(vx_node node, const vx_referenc
 {
     HistogramLocalData *data = new HistogramLocalData;
     memset(data, 0, sizeof(*data));
-#if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
-#elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
-#endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshHistogram(node, parameters, num, data);
-#if ENABLE_OPENCL
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStream(&data->rppHandle, data->handle.cmdq);
-#elif ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStream(&data->rppHandle, data->handle.hipstream);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppCreateWithBatchSize(&data->rppHandle, 1);
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, 1, data->device_type));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -179,12 +165,7 @@ static vx_status VX_CALLBACK uninitializeHistogram(vx_node node, const vx_refere
 {
     HistogramLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL || ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppDestroyGPU(data->rppHandle);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppDestroyHost(data->rppHandle);
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     delete (data);
     return VX_SUCCESS;
 }

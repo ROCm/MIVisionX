@@ -23,8 +23,7 @@ THE SOFTWARE.
 #include "internal_publishKernels.h"
 
 struct ResizeMirrorNormalizeTensorLocalData {
-	RPPCommonHandle handle;
-	rppHandle_t rppHandle;
+	vxRppHandle *handle;
 	Rpp32u device_type;
 	Rpp32u nbatchSize;
 	RppiSize maxSrcDimensions;
@@ -138,14 +137,14 @@ static vx_status VX_CALLBACK processResizeMirrorNormalizeTensor(vx_node node, co
 #if ENABLE_HIP
 	if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
 		refreshResizeMirrorNormalizeTensor(node, parameters, num, data);
-		status = rppt_resize_mirror_normalize_gpu(static_cast<void *>(data->hip_pSrc), data->srcDescPtr, static_cast<void *>(data->hip_pDst), data->dstDescPtr, data->d_dstImgSize, RpptInterpolationType::BILINEAR, data->mean, data->std_dev, data->mirror, data->d_roiTensorPtrSrc, data->roiType, data->rppHandle);
+		status = rppt_resize_mirror_normalize_gpu(static_cast<void *>(data->hip_pSrc), data->srcDescPtr, static_cast<void *>(data->hip_pDst), data->dstDescPtr, data->d_dstImgSize, RpptInterpolationType::BILINEAR, data->mean, data->std_dev, data->mirror, data->d_roiTensorPtrSrc, data->roiType, data->handle->rppHandle);
 		return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 		return return_status;
 	}
 #endif
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshResizeMirrorNormalizeTensor(node, parameters, num, data);
-		status = rppt_resize_mirror_normalize_host(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->dstImgSize, RpptInterpolationType::BILINEAR, data->mean, data->std_dev, data->mirror, data->roiTensorPtrSrc, data->roiType, data->rppHandle);
+		status = rppt_resize_mirror_normalize_host(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->dstImgSize, RpptInterpolationType::BILINEAR, data->mean, data->std_dev, data->mirror, data->roiTensorPtrSrc, data->roiType, data->handle->rppHandle);
 		return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 		return return_status;
 	}
@@ -156,11 +155,6 @@ static vx_status VX_CALLBACK initializeResizeMirrorNormalizeTensor(vx_node node,
 {
 	ResizeMirrorNormalizeTensorLocalData * data = new ResizeMirrorNormalizeTensorLocalData;
 	memset(data, 0, sizeof(*data));
-#if ENABLE_OPENCL
-	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
-#elif ENABLE_HIP
-	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
-#endif
 	STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[11], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &data->nbatchSize));
 	data->mean = static_cast<vx_float32 *>(malloc(sizeof(vx_float32) * data->nbatchSize * 3));
@@ -229,16 +223,7 @@ static vx_status VX_CALLBACK initializeResizeMirrorNormalizeTensor(vx_node node,
 	hipMalloc(&data->d_roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI));
 #endif
 	refreshResizeMirrorNormalizeTensor(node, parameters, num, data);
-#if ENABLE_OPENCL
-	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
-		rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.cmdq, data->nbatchSize);
-#elif ENABLE_HIP
-	if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-		rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
-#endif
-	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
-		rppCreateWithBatchSize(&data->rppHandle, data->nbatchSize);
-
+	STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->nbatchSize, data->device_type));
 	STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	return VX_SUCCESS;
 }
@@ -252,12 +237,7 @@ static vx_status VX_CALLBACK uninitializeResizeMirrorNormalizeTensor(vx_node nod
 	hipFree(data->d_dstImgSize);
 	hipFree(data->d_roiTensorPtrSrc);
 #endif
-#if ENABLE_OPENCL || ENABLE_HIP
-	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
-		rppDestroyGPU(data->rppHandle);
-#endif
-	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
-		rppDestroyHost(data->rppHandle);
+	STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
 	free(data->mean);
 	free(data->std_dev);
 	free(data->mirror);

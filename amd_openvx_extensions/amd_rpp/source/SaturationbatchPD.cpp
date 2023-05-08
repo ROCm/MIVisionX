@@ -24,8 +24,7 @@ THE SOFTWARE.
 
 struct SaturationbatchPDLocalData
 {
-    RPPCommonHandle handle;
-    rppHandle_t rppHandle;
+    vxRppHandle *handle;
     Rpp32u device_type;
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
@@ -136,7 +135,7 @@ static vx_status VX_CALLBACK processSaturationbatchPD(vx_node node, const vx_ref
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_saturationRGB_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->cl_pDst, data->saturationFactor, data->nbatchSize, data->rppHandle);
+            rpp_status = rppi_saturationRGB_u8_pkd3_batchPD_gpu(static_cast<void *>(data->cl_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->cl_pDst), data->saturationFactor, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
@@ -147,7 +146,7 @@ static vx_status VX_CALLBACK processSaturationbatchPD(vx_node node, const vx_ref
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_saturationRGB_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->saturationFactor, data->nbatchSize, data->rppHandle);
+            rpp_status = rppi_saturationRGB_u8_pkd3_batchPD_gpu(static_cast<void *>(data->hip_pSrc), data->srcDimensions, data->maxSrcDimensions, static_cast<void *>(data->hip_pDst), data->saturationFactor, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
@@ -161,7 +160,7 @@ static vx_status VX_CALLBACK processSaturationbatchPD(vx_node node, const vx_ref
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            rpp_status = rppi_saturationRGB_u8_pkd3_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->saturationFactor, data->nbatchSize, data->rppHandle);
+            rpp_status = rppi_saturationRGB_u8_pkd3_batchPD_host(data->pSrc, data->srcDimensions, data->maxSrcDimensions, data->pDst, data->saturationFactor, data->nbatchSize, data->handle->rppHandle);
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
@@ -172,11 +171,6 @@ static vx_status VX_CALLBACK initializeSaturationbatchPD(vx_node node, const vx_
 {
     SaturationbatchPDLocalData *data = new SaturationbatchPDLocalData;
     memset(data, 0, sizeof(*data));
-#if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
-#elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
-#endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[5], &data->nbatchSize));
     data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
@@ -184,15 +178,7 @@ static vx_status VX_CALLBACK initializeSaturationbatchPD(vx_node node, const vx_
     data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
     data->saturationFactor = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize);
     refreshSaturationbatchPD(node, parameters, num, data);
-#if ENABLE_OPENCL
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.cmdq, data->nbatchSize);
-#elif ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppCreateWithBatchSize(&data->rppHandle, data->nbatchSize);
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->nbatchSize, data->device_type));
 
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
@@ -202,12 +188,7 @@ static vx_status VX_CALLBACK uninitializeSaturationbatchPD(vx_node node, const v
 {
     SaturationbatchPDLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL || ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppDestroyGPU(data->rppHandle);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppDestroyHost(data->rppHandle);
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     free(data->srcDimensions);
     free(data->srcBatch_width);
     free(data->srcBatch_height);

@@ -368,7 +368,7 @@ class ROCALCOCOIterator(object):
         self.lis = []  # Empty list for bboxes
         self.lis_lab = []  # Empty list of labels
 
-        self.loader.copyToTensor(
+        self.loader.copyToExternalTensor(
             self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
 
 
@@ -477,7 +477,7 @@ class ROCALCOCOIterator(object):
                     PIL_image = np.array(Image.fromarray((image+[102.9801, 115.9465, 122.7717]).astype('uint8'), 'RGB'))
                 PIL_image = cv2.cvtColor(PIL_image, cv2.COLOR_RGB2BGR)
                 for box in self.target_batch[i].bbox:
-                    x1, y1, x2, y2 = box.cpu().numpy().astype(np.int)
+                    x1, y1, x2, y2 = box.cpu().numpy().astype(np.int32)
                     cv2.rectangle(PIL_image, (x1,y1), (x2,y2), (255, 0, 0), 2)
                 cv2.imwrite(f'OUTPUT_IMAGES_PYTHON/NEW_API/COCO_READER_SEGM/{img_name}.jpg', PIL_image)
         return self.img_list_obj, self.target_batch
@@ -512,7 +512,7 @@ def main():
     except OSError as error:
         print(error)
 
-    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=local_rank, seed=random_seed, rocal_cpu=rocal_cpu)
+    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=local_rank, seed=random_seed, rocal_cpu=rocal_cpu, mean=[102.9801, 115.9465, 122.7717], std=[1. , 1., 1.])
 
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(
@@ -526,7 +526,7 @@ def main():
                                             resize_min = 1344,
                                             resize_max = 1344,
                                             mirror=coin_flip,
-                                            mean= [102.9801, 115.9465, 122.7717],
+                                            mean= [0., 0., 0.],
                                             std = [1. , 1., 1.])
         pipe.set_outputs(rmn_images)
 

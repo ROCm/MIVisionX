@@ -97,9 +97,9 @@ class ROCALGenericIteratorDetection(object):
             raise StopIteration
         
         if(types.NCHW == self.tensor_format):
-            self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            self.loader.copyToExternalTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
-            self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+            self.loader.copyToExternalTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
 
         if(self.loader._name == "TFRecordReaderDetection"):
             self.bbox_list =[]

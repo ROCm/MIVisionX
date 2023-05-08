@@ -29,9 +29,6 @@ THE SOFTWARE.
 #include "rocal_api.h"
 #include "image_source_evaluator.h"
 
-// Calculated from the largest resize shorter dimension in imagenet validation dataset
-#define MAX_ASPECT_RATIO 6.0f
-
 RocalImage  ROCAL_API_CALL
 rocalSequenceRearrange(
             RocalContext p_context,
@@ -53,13 +50,13 @@ rocalSequenceRearrange(
             THROW("sequence_length passed should be bigger than 0")
         auto input = static_cast<Image*>(p_input);
         auto info = ImageInfo(input->info().width(), input->info().height_single(),
-                              context->master_graph->internal_batch_size() * new_sequence_length,
+                              context->user_batch_size() * new_sequence_length,
                               input->info().color_plane_count(),
                               context->master_graph->mem_type(),
                               input->info().color_format() );
         output = context->master_graph->create_image(info, is_output);
         std::shared_ptr<SequenceRearrangeNode> sequence_rearrange_node =  context->master_graph->add_node<SequenceRearrangeNode>({input}, {output});
-        sequence_rearrange_node->init(new_order, new_sequence_length, sequence_length, context->master_graph->internal_batch_size());
+        sequence_rearrange_node->init(new_order, new_sequence_length, sequence_length, context->user_batch_size());
     }
     catch(const std::exception& e)
     {

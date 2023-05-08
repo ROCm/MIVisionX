@@ -123,7 +123,7 @@ extern "C" unsigned ROCAL_API_CALL rocalGetImageNameLen(RocalContext rocal_conte
 
 /// \param meta_data RocalMetaData object that contains info about the images and labels
 /// \param buf user's buffer that will be filled with labels. Its needs to be at least of size batch_size.
-extern "C" void ROCAL_API_CALL rocalGetImageLabels(RocalContext rocal_context, void* buf,  unsigned int flags=0);
+extern "C" void ROCAL_API_CALL rocalGetImageLabels(RocalContext rocal_context, void* buf,  RocalOutputMemType output_mem_type);
 
 ///
 /// \param rocal_context

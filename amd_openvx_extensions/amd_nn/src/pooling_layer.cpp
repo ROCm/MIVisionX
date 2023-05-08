@@ -143,7 +143,7 @@ static vx_status VX_CALLBACK initializePoolingLayer(vx_node node, const vx_refer
 {
     PoolingLayerLocalData * data = new PoolingLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
 
     //Deducing the pooling type.
     vx_nn_pooling_type_e modeType;
@@ -241,7 +241,7 @@ static vx_status VX_CALLBACK uninitializePoolingLayer(vx_node node, const vx_ref
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->input_desc));
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->output_desc));
     if (data) {
-        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

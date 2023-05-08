@@ -24,8 +24,7 @@ THE SOFTWARE.
 
 struct ResizetensorLocalData
 {
-    RPPCommonHandle handle;
-    rppHandle_t rppHandle;
+    vxRppHandle * handle;
     Rpp32u device_type;
     Rpp32u nbatchSize;
     RppiSize *srcDimensions;
@@ -139,14 +138,14 @@ static vx_status VX_CALLBACK processResizetensor(vx_node node, const vx_referenc
     if (data->device_type == AGO_TARGET_AFFINITY_GPU)
     {
         refreshResizetensor(node, parameters, num, data);
-        rpp_status = rppt_resize_gpu(data->pSrc_dev, data->srcDescPtr, data->pDst_dev, data->dstDescPtr, data->dstImgSize_dev, data->interpolation_type, data->roiTensorPtrSrc_dev, data->roiType, data->rppHandle);
+        rpp_status = rppt_resize_gpu(data->pSrc_dev, data->srcDescPtr, data->pDst_dev, data->dstDescPtr, data->dstImgSize_dev, data->interpolation_type, data->roiTensorPtrSrc_dev, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
 #endif
     if (data->device_type == AGO_TARGET_AFFINITY_CPU)
     {
         refreshResizetensor(node, parameters, num, data);
-        rpp_status = rppt_resize_host(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->dstImgSize, data->interpolation_type, data->roiTensorPtrSrc, data->roiType, data->rppHandle);
+        rpp_status = rppt_resize_host(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->dstImgSize, data->interpolation_type, data->roiTensorPtrSrc, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -156,11 +155,6 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
 {
     ResizetensorLocalData *data = new ResizetensorLocalData;
     memset(data, 0, sizeof(*data));
-#if ENABLE_OPENCL
-    vxAddLogEntry(NULL, VX_FAILURE, "ERROR: initialize : Resize Tensor OpenCL backend is not supported\n");
-#elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
-#endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[7], &data->nbatchSize));
     int interpolation_type;
@@ -237,7 +231,7 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     }
 
     // Initialize ROI tensors for src/dst
-    data->roiTensorPtrSrc  = (RpptROI *) calloc(data->nbatchSize, sizeof(RpptROI));
+    data->roiTensorPtrSrc  = static_cast<RpptROI *>(calloc(data->nbatchSize, sizeof(RpptROI)));
 
     // Set ROI tensors types for src/dst
     data->roiType = RpptRoiType::XYWH;
@@ -246,13 +240,7 @@ static vx_status VX_CALLBACK initializeResizetensor(vx_node node, const vx_refer
     hipMalloc(&data->roiTensorPtrSrc_dev, data->nbatchSize * sizeof(RpptROI));
 #endif
     refreshResizetensor(node, parameters, num, data);
-#if ENABLE_HIP
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
-#endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppCreateWithBatchSize(&data->rppHandle, data->nbatchSize);
-
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->srcDescPtr->n, data->device_type));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -264,11 +252,8 @@ static vx_status VX_CALLBACK uninitializeResizetensor(vx_node node, const vx_ref
 #if ENABLE_HIP
     hipFree(data->dstImgSize_dev);
     hipFree(data->roiTensorPtrSrc_dev);
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-        rppDestroyGPU(data->rppHandle);
 #endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-        rppDestroyHost(data->rppHandle);
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
     free(data->srcDimensions);
     free(data->dstDimensions);
     free(data->srcBatch_width);

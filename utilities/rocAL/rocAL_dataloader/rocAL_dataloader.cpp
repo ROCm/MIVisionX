@@ -220,12 +220,11 @@ int main(int argc, const char ** argv)
         if(display)
             rocalCopyToOutput(handle, mat_input.data, h*w*p);
         else
-            rocalCopyToOutputTensor32(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
+            rocalToTensor(handle, out_tensor, RocalTensorLayout::ROCAL_NCHW, RocalTensorOutputType::ROCAL_FP32, pmul, pmul, pmul, padd, padd, padd, 0, RocalOutputMemType::ROCAL_MEMCPY_HOST);
+
         counter += inputBatchSize;
-        if (processing_device == 1)
-            rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
-        else
-            rocalGetImageLabels(handle, labels.data());
+        rocalGetImageLabels(handle, labels.data());
+
         unsigned imagename_size = rocalGetImageNameLen(handle,ImageNameLen);
         char imageNames[imagename_size];
         rocalGetImageName(handle,imageNames);

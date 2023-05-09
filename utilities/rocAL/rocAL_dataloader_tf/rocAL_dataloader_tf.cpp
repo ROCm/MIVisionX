@@ -211,10 +211,7 @@ int main(int argc, const char ** argv)
             rocalCopyToOutput(handle, mat_input.data, h*w*p);
         counter += inputBatchSize;
 #if 0
-        if (processing_device == 1)
-            rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
-        else
-            rocalGetImageLabels(handle, labels.data());
+        rocalGetImageLabels(handle, labels.data());
         int img_name_size = rocalGetImageNameLen(handle, image_name_length);
         char img_name[img_name_size];
         rocalGetImageName(handle, img_name);

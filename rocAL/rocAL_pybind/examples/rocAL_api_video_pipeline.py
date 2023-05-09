@@ -114,8 +114,11 @@ def main():
     display = args.display
     num_threads = args.num_threads
     random_seed = args.seed
+    tensor_format = types.NHWC if args.NHWC else types.NCHW
+    tensor_dtype = types.FLOAT16 if args.fp16 else types.FLOAT
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=random_seed, rocal_cpu=_rocal_cpu)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=random_seed, rocal_cpu=_rocal_cpu,
+                    mean=[0.485 * 255, 0.456 * 255, 0.406 * 255], std=[0.229 * 255, 0.224 * 255, 0.225 * 255], tensor_layout=tensor_format, tensor_dtype=tensor_dtype)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         images = fn.readers.video(device="gpu", file_root=video_path, sequence_length=user_sequence_length,
@@ -124,11 +127,11 @@ def main():
         crop_size = (512,960)
         output_images = fn.crop_mirror_normalize(images,
                                             crop=crop_size,
-                                            mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
-                                            std=[0.229 * 255, 0.224 * 255, 0.225 * 255],
+                                            mean=[0, 0, 0],
+                                            std=[1, 1, 1],
                                             mirror=0,
-                                            output_dtype=types.FLOAT,
-                                            output_layout=types.NCHW,
+                                            output_dtype=types.UINT8,
+                                            output_layout=types.NHWC,
                                             pad_output=False)
         pipe.set_outputs(output_images)
     # Build the pipeline

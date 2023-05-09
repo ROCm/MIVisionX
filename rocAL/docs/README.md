@@ -73,7 +73,7 @@ amd.rocal.types are enums exported from C++ API to python. Some examples include
 
 ### Steps to run MLPerf Resnet50 classification training with rocAL on a system with MI50+ and ROCm
 * Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into train and val folders
-* Step 2: Build [MIVisionX Pytorch docker](../../docker/pytorch)
+* Step 2: Build [MIVisionX Pytorch docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/docker/pytorch)
 * Step 3: Install rocAL python_pybind plugin as described above
 * Step 4: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-v1.1-rocal branch
 ```

@@ -157,10 +157,7 @@ int thread_func(const char *path, int gpu_mode, RocalImageColor color_format, in
             break;
         // copy output to host as image
         rocalCopyToOutput(handle, mat_input.data, h*w*p);
-        if (gpu_mode<0)
-          rocalGetImageLabels(handle, labels.data());
-        else
-          rocalGetImageLabels(handle, labels.data(), ROCAL_MEMCPY_TO_HOST);
+        rocalGetImageLabels(handle, labels.data());
         int img_name_size = rocalGetImageNameLen(handle, image_name_length);
         char img_name[img_name_size];
         rocalGetImageName(handle, img_name);

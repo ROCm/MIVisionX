@@ -160,7 +160,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     unsigned int inputBatchSize = 2;
     int decode_max_width = width;
     int decode_max_height = height;
-    int pipeline_type;
+    int pipeline_type = -1;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , " << (rgb ? " Color " : " Grayscale ") << std::endl;
 

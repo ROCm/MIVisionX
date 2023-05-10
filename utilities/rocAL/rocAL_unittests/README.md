@@ -8,7 +8,7 @@ This application can be used to verify the functionality of the API offered by r
 * rocAL library (Part of the MIVisionX toolkit)
 * [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * ROCm Performance Primitives (RPP)
-* Python
+* Python3
 * Pillow
 
 Install Pillow library using `python3 -m pip install Pillow`

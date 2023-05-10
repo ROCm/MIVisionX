@@ -46,7 +46,7 @@ def compare_pixels(img1, img2, aug_name, width, height, image_offset = 0):
 
 def main():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S_")
-    handlers = [logging.FileHandler('../log_file_' + timestamp + '.log'), logging.StreamHandler()]
+    handlers = [logging.FileHandler('../rocal_unittest_log_file_' + timestamp + '.log'), logging.StreamHandler()]
     logging.basicConfig(level = logging.INFO, handlers = handlers)
     if( len(sys.argv) < 3 ):
         logging.error('Pass atleast 2 arguments (python image_comparison.py <ref_output_folder_path> <rocal_ouput_folder_path>')

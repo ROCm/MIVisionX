@@ -25,7 +25,7 @@ caffe_detection_path=${ROCAL_DATA_PATH}/rocal_data/caffe/detection/
 caffe2_classification_path=${ROCAL_DATA_PATH}/rocal_data/caffe2/classification/
 caffe2_detection_path=${ROCAL_DATA_PATH}/rocal_data/caffe2/detection/
 mxnet_path=${ROCAL_DATA_PATH}/rocal_data/mxnet/
-output_path=../OUTPUT_FOLDER_$(date +%Y-%m-%d_%H-%M-%S)/
+output_path=../rocal_unittest_output_folder_$(date +%Y-%m-%d_%H-%M-%S)/
 golden_output_path=${ROCAL_DATA_PATH}/rocal_data/GoldenOutputs/
 
 display=0

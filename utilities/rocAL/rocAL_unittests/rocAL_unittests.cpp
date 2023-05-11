@@ -333,6 +333,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         case 11: // mxnet reader
         {
             std::cout << ">>>>>>> Running MXNET READER" << std::endl;
+            pipeline_type = 1;
             rocalCreateMXNetReader(handle, path, true);
             input1 = rocalMXNetRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }

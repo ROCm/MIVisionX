@@ -1050,7 +1050,8 @@ class IrGraph(object):
                     fusedAnOp = True
                 elif (prevNode.type == 'mul' or prevNode.type == 'add' or prevNode.type == 'muladd') \
                         and node.type == 'conv' and prevOutput == node.inputs[0] \
-                        and tensorReadCount[prevOutput] == 1:
+                        and tensorReadCount[prevOutput] == 1 and prevNode.inputs[1] in self.binaries.keys() \
+                            and prevNode.inputs[2] in self.binaries.keys():
                     weight_shape = self.tensor_shapes[node.inputs[1]]
                     K = weight_shape[0]
                     N = weight_shape[3] if len(weight_shape) == 2 else np.prod(weight_shape[1:3])
@@ -1089,7 +1090,8 @@ class IrGraph(object):
                     fusedAnOp = True
                 elif prevNode.type == 'conv' and prevOutput == node.inputs[0] \
                         and (node.type == 'mul' or node.type == 'add' or node.type == 'muladd') \
-                        and tensorReadCount[prevOutput] == 1 and node.inputs[1] in self.binaries.keys():
+                        and tensorReadCount[prevOutput] == 1 and node.inputs[1] in self.binaries.keys() \
+                            and node.inputs[2] in self.binaries.keys():
                     weight_shape = self.tensor_shapes[prevNode.inputs[1]]
                     K = weight_shape[0]
                     N = weight_shape[3] if len(weight_shape) == 2 else np.prod(weight_shape[1:4])
@@ -1149,7 +1151,8 @@ class IrGraph(object):
                     nodesToRemove.append(node)
                     fusedAnOp = True
                 elif prevNode.type == 'add' and node.type == 'add' and \
-                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1:
+                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1 \
+                            and node.inputs[1] in self.binaries.keys() and prevNode.inputs[1] in self.binaries.keys():
                     ck = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     offset = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = offset + ck
@@ -1161,7 +1164,8 @@ class IrGraph(object):
                     prevOutput = node.outputs[0]
                     fusedAnOp = True
                 elif prevNode.type == 'add' and node.type == 'mul' and \
-                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1:
+                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1 \
+                            and node.inputs[1] in self.binaries.keys() and prevNode.inputs[1] in self.binaries.keys():
                     offset = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = scale * offset
@@ -1185,7 +1189,8 @@ class IrGraph(object):
                     nodesToRemove.append(node)
                     fusedAnOp = True
                 elif prevNode.type == 'mul' and node.type == 'mul' and \
-                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1:
+                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1 \
+                            and node.inputs[1] in self.binaries.keys() and prevNode.inputs[1] in self.binaries.keys():
                     mk = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     scale = scale * mk
@@ -1198,7 +1203,7 @@ class IrGraph(object):
                     fusedAnOp = True
                 elif prevNode.type == 'add' and node.type == 'muladd' and prevOutput == node.inputs[0] \
                         and tensorReadCount[prevOutput] == 1 and node.inputs[1] in self.binaries.keys() \
-                            and prevNode.inputs[1] in self.binaries.keys():
+                            and prevNode.inputs[1] in self.binaries.keys() and node.inputs[2] in self.binaries.keys():
                     ck = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)
@@ -1211,7 +1216,8 @@ class IrGraph(object):
                     prevOutput = node.outputs[0]
                     fusedAnOp = True
                 elif prevNode.type == 'mul' and node.type == 'muladd' and \
-                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1:
+                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1 \
+                            and node.inputs[1] in self.binaries.keys() and prevNode.inputs[1] in self.binaries.keys():
                     mk = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     scale = scale * mk
@@ -1223,7 +1229,8 @@ class IrGraph(object):
                     prevOutput = node.outputs[0]
                     fusedAnOp = True
                 elif prevNode.type == 'muladd' and node.type == 'add' and \
-                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1:
+                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1 \
+                            and node.inputs[1] in self.binaries.keys() and prevNode.inputs[2] in self.binaries.keys():
                     ck = np.frombuffer(self.binaries[prevNode.inputs[2]], dtype=npType)
                     offset = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = offset + ck
@@ -1233,7 +1240,9 @@ class IrGraph(object):
                     nodesToRemove.append(node)
                     fusedAnOp = True
                 elif prevNode.type == 'muladd' and node.type == 'mul' and \
-                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1:
+                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1 \
+                            and prevNode.inputs[1] in self.binaries.keys() and prevNode.inputs[2] in self.binaries.keys() \
+                                and node.inputs[1] in self.binaries.keys():
                     mk = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     ck = np.frombuffer(self.binaries[prevNode.inputs[2]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
@@ -1246,7 +1255,9 @@ class IrGraph(object):
                     nodesToRemove.append(node)
                     fusedAnOp = True
                 elif prevNode.type == 'muladd' and node.type == 'muladd' and \
-                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1:
+                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1 \
+                            and node.inputs[1] in self.binaries.keys() and node.inputs[2] in self.binaries.keys() \
+                                and prevNode.inputs[1] in self.binaries.keys() and prevNode.inputs[2] in self.binaries.keys():
                     mk = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     ck = np.frombuffer(self.binaries[prevNode.inputs[2]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)

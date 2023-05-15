@@ -154,7 +154,6 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
     TensorAddLocalData *data = new TensorAddLocalData;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle->cmdq, sizeof(data->handle->cmdq)));
     cl_context theContext;     // theContext
     cl_command_queue theQueue; // command theQueue
     theQueue = data->handle->cmdq;
@@ -168,7 +167,6 @@ static vx_status VX_CALLBACK initializeTensorAdd(vx_node node, const vx_referenc
     data->cl_pSrc2 = clCreateBuffer(theContext, CL_MEM_READ_ONLY, bytes, NULL, NULL);
     data->cl_pDst = clCreateBuffer(theContext, CL_MEM_WRITE_ONLY, bytes, NULL, NULL);
 #elif ENABLE_HIP
-    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle->hipstream, sizeof(data->handle->hipstream)));
     size_t arr_size;
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[0], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     size_t bytes = arr_size * sizeof(Rpp8u);

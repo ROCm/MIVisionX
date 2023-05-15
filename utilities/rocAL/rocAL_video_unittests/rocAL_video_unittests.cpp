@@ -313,10 +313,7 @@ int main(int argc, const char **argv)
         {
             int label_id[input_batch_size];
             int image_name_length[input_batch_size];
-            if (processing_device == 1)
-                rocalGetImageLabels(handle, label_id, ROCAL_MEMCPY_TO_HOST);
-            else
-                rocalGetImageLabels(handle, label_id);
+            rocalGetImageLabels(handle, label_id);
             int img_size = rocalGetImageNameLen(handle, image_name_length);
             char img_name[img_size];
             rocalGetImageName(handle, img_name);

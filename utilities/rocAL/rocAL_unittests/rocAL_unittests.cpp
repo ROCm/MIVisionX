@@ -674,6 +674,15 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                   << "rocalSSDRandomCrop" << std::endl;
         image1 = rocalSSDRandomCrop(handle, input1, true);
     }
+    case 55:
+    {
+        std::cout << ">>>>>>> Running "
+                  << "rocalResizeMirrorNormalize" << std::endl;
+        std::vector<float> mean = {0,0,0};
+        std::vector<float> std_dev = {1,1,1};
+        image1 = rocalResizeMirrorNormalize(handle, image0, resize_w, resize_h, mean, std_dev, true);
+
+    }
     break;
 
     default:

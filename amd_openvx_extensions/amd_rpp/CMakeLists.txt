@@ -132,6 +132,8 @@ list(APPEND SOURCES
         source/image/internal_publishKernels.cpp
 
         source/tensor/Brightness.cpp
+        source/tensor/Resize.cpp
+        source/tensor/CropMirrorNormalize.cpp
     )
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)

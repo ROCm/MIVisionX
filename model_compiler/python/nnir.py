@@ -1010,7 +1010,7 @@ class IrGraph(object):
             nodesToRemove = []
             for node in self.nodes:
                 # first change batch_norm into muladd
-                if node.type == 'batch_norm':
+                if node.type == 'batch_norm' and prevNode is not None:
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)
                     mean = np.frombuffer(self.binaries[node.inputs[3]], dtype=npType)
@@ -1077,7 +1077,7 @@ class IrGraph(object):
                         node.inputs.append(tensor.name)
                     else:
                         bias = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)
-                    bias = bias + offset * np.sum(np.split(weight, K),axis=1)
+                    bias = bias + offset * np.sum(np.split(weight, K), axis=1)
                     weight = weight * np.repeat(scale, N)
                     self.addBinary(node.inputs[1], weight.view())
                     self.addBinary(node.inputs[2], bias.view())
@@ -1089,7 +1089,7 @@ class IrGraph(object):
                     fusedAnOp = True
                 elif prevNode.type == 'conv' and prevOutput == node.inputs[0] \
                         and (node.type == 'mul' or node.type == 'add' or node.type == 'muladd') \
-                        and tensorReadCount[prevOutput] == 1:
+                        and tensorReadCount[prevOutput] == 1 and node.inputs[1] in self.binaries.keys():
                     weight_shape = self.tensor_shapes[prevNode.inputs[1]]
                     K = weight_shape[0]
                     N = weight_shape[3] if len(weight_shape) == 2 else np.prod(weight_shape[1:4])
@@ -1196,8 +1196,9 @@ class IrGraph(object):
                     prevSkipNode = None
                     prevOutput = node.outputs[0]
                     fusedAnOp = True
-                elif prevNode.type == 'add' and node.type == 'muladd' and \
-                        prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1:
+                elif prevNode.type == 'add' and node.type == 'muladd' and prevOutput == node.inputs[0] \
+                        and tensorReadCount[prevOutput] == 1 and node.inputs[1] in self.binaries.keys() \
+                            and prevNode.inputs[1] in self.binaries.keys():
                     ck = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)

@@ -13,7 +13,6 @@ if [[ $# -gt 0 ]]; then
 
     while getopts "n:d:b:p:" opt
     do
-        echo "In while loop"
         echo $opt
         case "$opt" in
             n ) number_of_gpus="$OPTARG" ;;

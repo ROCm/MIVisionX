@@ -527,7 +527,6 @@ vx_status CLoomIoMediaDecoder::Initialize()
         videoCodecContext[mediaIndex] = codecContext;
         videoStreamIndex[mediaIndex] = videostream;
         video = formatContext->streams[videostream];
-        decoderFormat = codecContext->pix_fmt;
         if (avcodec_parameters_to_context(codecContext, video->codecpar) < 0)
             return -1;
         if (useVaapi[mediaIndex]) {
@@ -537,8 +536,16 @@ vx_status CLoomIoMediaDecoder::Initialize()
                 vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Failed to create specified HW device.\n");
                 return VX_FAILURE;
             }
-            decoderFormat = AV_PIX_FMT_NV12; // nv12 for vaapi
         }
+
+        if (codecContext->pix_fmt == AV_PIX_FMT_YUVJ420P)
+          decoderFormat = AV_PIX_FMT_NV12;    // set non-depracated format, vaapi uses NV12 for YUVJ420P
+        else if (codecContext->pix_fmt == AV_PIX_FMT_YUVJ422P)
+          decoderFormat = AV_PIX_FMT_YUV422P;    // set non-depracated format
+        else if (codecContext->pix_fmt == AV_PIX_FMT_YUVJ444P)
+          decoderFormat = AV_PIX_FMT_YUV444P;    // set non-depracated format
+        else
+          decoderFormat = codecContext->pix_fmt;    // correct format will be set after vaapi initialization for hwdec
 
         ERROR_CHECK_STATUS(avcodec_open2(codecContext, decoder, nullptr));
         SwsContext * swsContext = NULL;
@@ -721,8 +728,6 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
     // decode loop
     AVPacket avpkt = { 0 };
     int status;
-
-
 
     for (command cmd; !eof[mediaIndex] && ((cmd = PopCommand(mediaIndex)) != cmd_abort);) {
         int gotPicture = 0;
@@ -966,7 +971,7 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
     while (*s && *s != ',') s++;
     if (mediaCount < 1 || *s != ',') {
         printf("Got Mediacount %d next char %c\n", mediaCount, *s);
-        vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_VALUE, "ERROR: invalid ioConfig: %s\nERROR: invalid ioConfig: valid syntax: <mediaCount>,(mediaList.txt|media%%d.mp4)|{file1.mp4,file2.mp4,...}\n", inputMediaConfig);
+        vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_VALUE, "ERROR: invalid ioConfig: %s: valid syntax: <mediaCount>,(mediaList.txt|media%%d.mp4)|{file1.mp4,file2.mp4,...}\n", inputMediaConfig);
         return VX_ERROR_INVALID_VALUE;
     }
     if (*s == ',') s++;

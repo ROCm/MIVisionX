@@ -382,11 +382,8 @@ class ROCALCOCOIterator(object):
         self.bboxes = np.zeros((self.count_batch*4), dtype="float64")
         self.loader.GetBBCords(self.bboxes)
 #Image ROI width and height
-        self.roi_width = np.zeros((self.bs),dtype = "uint32")
-        self.roi_height = np.zeros((self.bs),dtype = "uint32")
-        self.loader.getOutputROIWidth(self.roi_width)
-        self.loader.getOutputROIHeight(self.roi_height)
-        self.roi_sizes_wh = np.vstack((self.roi_width,self.roi_height)).T
+        self.roi_sizes_wh = np.zeros((self.bs * 2),dtype = "int32")
+        self.loader.GetROIImgSizes(self.roi_sizes_wh)
 #Mask info of a batch
         self.mask_count = np.zeros(self.count_batch, dtype="int32")
         self.mask_size = self.loader.GetMaskCount(self.mask_count)
@@ -405,7 +402,7 @@ class ROCALCOCOIterator(object):
             self.img_name = self.Img_name[i*16:(i*16)+12]
             self.img_name=self.img_name.decode('utf_8')
             self.img_name = np.char.lstrip(self.img_name, chars ='0')
-            self.img_roi_size2d_numpy_wh = (self.roi_sizes_wh[i])
+            self.img_roi_size2d_numpy_wh = (self.roi_sizes_wh[i*2:(i*2)+2])
 
             self.label_2d_numpy = (self.labels[sum_count : sum_count+count])
             self.bb_2d_numpy = (self.bboxes[sum_count*4 : (sum_count+count)*4])
@@ -443,7 +440,7 @@ class ROCALCOCOIterator(object):
             self.target_batch.append(self.target)
             sum_count = sum_count +count
 
-        self.img_list_obj = ImageList(self.out, (self.img_roi_size2d_numpy_wh[1], self.img_roi_size2d_numpy_wh[0]))
+        self.img_list_obj = ImageList(self.out ,[(self.img_roi_size2d_numpy_wh[1],self.img_roi_size2d_numpy_wh[0])])
         if self.display:
             for i in range(self.bs):
                 img_name = self.Img_name[i*16:(i*16)+12].decode('utf-8')
@@ -489,7 +486,7 @@ def main():
     except OSError as error:
         print(error)
 
-    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=local_rank, seed=random_seed, rocal_cpu=rocal_cpu, mean=[102.9801, 115.9465, 122.7717], std=[1. , 1., 1.], tensor_layout=tensor_format, tensor_dtype=tensor_dtype)
+    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=local_rank, seed=random_seed, rocal_cpu=rocal_cpu, mean=[102.9801, 115.9465, 122.7717], std=[1. , 1., 1.], tensor_dtype=tensor_dtype)
 
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(

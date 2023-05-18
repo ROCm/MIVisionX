@@ -584,6 +584,28 @@ ROCAL_API_CALL rocalGetImageSizes(RocalContext p_context, int* buf)
     }
 }
 
+void
+ROCAL_API_CALL rocalGetROIImageSizes(RocalContext p_context, int* buf)
+{
+    if (!p_context)
+        THROW("Invalid rocal context passed to rocalGetImageSizes")
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_roi_img_sizes_batch().size();
+
+
+    if(!meta_data.second)
+    {
+        WRN("No label has been loaded for this output image")
+        return;
+    }
+    for(unsigned i = 0; i < meta_data_batch_size; i++)
+    {
+        memcpy(buf, &(meta_data.second->get_roi_img_sizes_batch()[i]), sizeof(ImgSize));
+        buf += 2;
+    }
+}
+
 RocalMetaData
 ROCAL_API_CALL rocalCreateTextCifar10LabelReader(RocalContext p_context, const char* source_path, const char* file_prefix) {
 

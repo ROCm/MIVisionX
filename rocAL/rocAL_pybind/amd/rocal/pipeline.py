@@ -308,6 +308,9 @@ class Pipeline(object):
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
 
+    def GetROIImgSizes(self, array):
+        return b.getROIImgSizes(self._handle, array)
+
     def GetBoundingBox(self,array):
         return array
 
@@ -319,12 +322,6 @@ class Pipeline(object):
 
     def getOutputHeight(self):
         return b.getOutputHeight(self._handle)
-
-    def getOutputROIWidth(self, array):
-        return b.getOutputROIWidth(self._handle, array)
-
-    def getOutputROIHeight(self, array):
-        return b.getOutputROIHeight(self._handle, array)
 
     def getOutputImageCount(self):
         return b.getOutputImageCount(self._handle)

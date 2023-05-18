@@ -151,6 +151,8 @@ extern "C" void ROCAL_API_CALL rocalGetBoundingBoxCords(RocalContext rocal_conte
 
 extern "C" void ROCAL_API_CALL rocalGetImageSizes(RocalContext rocal_context, int* buf);
 
+extern "C" void ROCAL_API_CALL rocalGetROIImageSizes(RocalContext rocal_context, int* buf);
+
 ///
 /// \param rocal_context
 /// \param source_path path to the file that contains the metadata file

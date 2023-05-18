@@ -449,24 +449,6 @@ MasterGraph::sequence_frame_timestamps(std::vector<std::vector<float>> &sequence
     _sequence_frame_timestamps_vec.pop_back();
 }
 
-std::vector<uint32_t>
-MasterGraph::output_resize_width()
-{
-    std::vector<uint32_t> resize_width_vector;
-    resize_width_vector = _resize_width.back();
-    _resize_width.pop_back();
-    return resize_width_vector;
-}
-
-std::vector<uint32_t>
-MasterGraph::output_resize_height()
-{
-    std::vector<uint32_t> resize_height_vector;
-    resize_height_vector = _resize_height.back();
-    _resize_height.pop_back();
-    return resize_height_vector;
-}
-
 MasterGraph::Status
 MasterGraph::allocate_output_tensor()
 {
@@ -548,8 +530,6 @@ MasterGraph::reset()
     // restart processing of the images
     _first_run = true;
     _output_routine_finished_processing = false;
-    _resize_width.clear();
-    _resize_height.clear();
     start_processing();
     return Status::OK;
 }
@@ -1090,16 +1070,6 @@ void MasterGraph::output_routine()
                 else
                     full_batch_meta_data = _augmented_meta_data->clone();
             }
-            // get roi width and height of output image
-            std::vector<uint32_t> temp_width_arr;
-            std::vector<uint32_t> temp_height_arr;
-            for (unsigned int i = 0; i < _user_batch_size; i++)
-            {
-                temp_width_arr.push_back(_output_image_info.get_roi_width()[i]);
-                temp_height_arr.push_back(_output_image_info.get_roi_height()[i]);
-            }
-            _resize_width.insert(_resize_width.begin(), temp_width_arr);
-            _resize_height.insert(_resize_height.begin(), temp_height_arr);
             _graph->process();
             _bencode_time.start();
             if(_is_box_encoder )

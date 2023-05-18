@@ -100,6 +100,7 @@ struct MetaData
     std::vector<int>& get_polygon_count() { return _polygon_count; }
     std::vector<std::vector<int>>& get_vertices_count() { return _vertices_count; }
     ImgSize& get_img_size() { return _img_size; }
+    ImgSize& get_roi_img_size() { return _roi_img_size; }
     const JointsData& get_joints_data(){ return _joints_data; }
     MaskCords& get_mask_cords() { return _mask_cords;}
 protected:
@@ -107,6 +108,7 @@ protected:
     BoundingBoxCords_xcycwh _bb_cords_xcycwh = {}; // For bb use
     BoundingBoxLabels _bb_label_ids = {};// For bb use
     ImgSize _img_size = {};
+    ImgSize _roi_img_size = {};
     JointsData _joints_data = {};
     int _label_id = -1; // For label use only
     MaskCords _mask_cords = {};
@@ -158,6 +160,7 @@ struct BoundingBox : public MetaData
     void set_bb_cords_xcycwh(BoundingBoxCords_xcycwh bb_cords_xcycwh) { _bb_cords_xcycwh =std::move(bb_cords_xcycwh); }
     void set_bb_labels(BoundingBoxLabels bb_label_ids) { _bb_label_ids = std::move(bb_label_ids); }
     void set_img_size(ImgSize img_size) { _img_size = std::move(img_size); }
+    void set_roi_img_size(ImgSize roi_img_size) { _roi_img_size = std::move(roi_img_size); }
     void set_mask_cords(MaskCords mask_cords) { _mask_cords = std::move(mask_cords); }
     void set_polygon_counts(std::vector<int> polygon_count) { _polygon_count = std::move(polygon_count); }
     void set_vertices_counts(std::vector<std::vector<int>> vertices_count) { _vertices_count = std::move(vertices_count); }
@@ -194,6 +197,7 @@ struct MetaDataBatch
     std::vector<BoundingBoxCords_xcycwh>& get_bb_cords_batch_xcycxwh() { return _bb_cords_xcycwh; }
     std::vector<BoundingBoxLabels>& get_bb_labels_batch() { return _bb_label_ids; }
     ImgSizes & get_img_sizes_batch() { return _img_sizes; }
+    ImgSizes & get_roi_img_sizes_batch() { return _roi_img_sizes; }
     JointsDataBatch & get_joints_data_batch() { return _joints_data; }
     std::vector<MaskCords>& get_mask_cords_batch() { return _mask_cords; }
     std::vector<std::vector<int>>& get_mask_polygons_count_batch() { return _polygon_counts; }
@@ -204,6 +208,7 @@ protected:
     std::vector<BoundingBoxCords_xcycwh> _bb_cords_xcycwh = {};
     std::vector<BoundingBoxLabels> _bb_label_ids = {};
     std::vector<ImgSize> _img_sizes = {};
+    std::vector<ImgSize> _roi_img_sizes = {};
     JointsDataBatch _joints_data = {};
     std::vector<MaskCords> _mask_cords = {};
     std::vector<std::vector<int>> _polygon_counts = {};
@@ -248,6 +253,7 @@ struct BoundingBoxBatch: public MetaDataBatch
         _bb_cords.clear();
         _bb_label_ids.clear();
         _img_sizes.clear();
+        _roi_img_sizes.clear();
         _mask_cords.clear();
         _polygon_counts.clear();
         _vertices_counts.clear();
@@ -257,6 +263,7 @@ struct BoundingBoxBatch: public MetaDataBatch
         _bb_cords.insert(_bb_cords.end(), other.get_bb_cords_batch().begin(), other.get_bb_cords_batch().end());
         _bb_label_ids.insert(_bb_label_ids.end(), other.get_bb_labels_batch().begin(), other.get_bb_labels_batch().end());
         _img_sizes.insert(_img_sizes.end(), other.get_img_sizes_batch().begin(), other.get_img_sizes_batch().end());
+        _roi_img_sizes.insert(_roi_img_sizes.end(), other.get_roi_img_sizes_batch().begin(), other.get_roi_img_sizes_batch().end());
         _mask_cords.insert(_mask_cords.end(),other.get_mask_cords_batch().begin(), other.get_mask_cords_batch().end());
         _polygon_counts.insert(_polygon_counts.end(),other.get_mask_polygons_count_batch().begin(), other.get_mask_polygons_count_batch().end());
         _vertices_counts.insert(_vertices_counts.end(),other.get_mask_vertices_count_batch().begin(), other.get_mask_vertices_count_batch().end());
@@ -267,6 +274,7 @@ struct BoundingBoxBatch: public MetaDataBatch
         _bb_cords.resize(batch_size);
         _bb_label_ids.resize(batch_size);
         _img_sizes.resize(batch_size);
+        _roi_img_sizes.resize(batch_size);
         if (_type == MetaDataType::PolygonMask)
         {
             _mask_cords.resize(batch_size);

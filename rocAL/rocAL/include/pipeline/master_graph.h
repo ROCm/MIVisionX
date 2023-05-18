@@ -174,8 +174,6 @@ private:
     bool _output_routine_finished_processing = false;
     const RocalTensorDataType _out_data_type;
     bool _is_random_bbox_crop = false;
-    std::vector<std::vector<uint32_t>> _resize_width;
-    std::vector<std::vector<uint32_t>> _resize_height;
     bool _is_video_loader = false; //!< Set to true if Video Loader is invoked.
     std::vector<std::vector<size_t>> _sequence_start_framenum_vec; //!< Stores the starting frame number of the sequences.
     std::vector<std::vector<std::vector<float>>>_sequence_frame_timestamps_vec; //!< Stores the timestamps of the frames in a sequences.

@@ -1,6 +1,5 @@
 
 import sys
-from tkinter import W
 from amd.rocal.pipeline import pipeline_def
 from amd.rocal.plugin.generic import ROCALClassificationIterator
 import amd.rocal.fn as fn

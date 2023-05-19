@@ -270,7 +270,6 @@ Reader::Status COCOFileSourceReader::open_folder()
             std::string file_path = _folder_path;
             file_path.append("/");
             file_path.append(_entity->d_name);
-            _last_file_name = file_path;
             _file_names.push_back(file_path);
             _file_count_all_shards++;
             incremenet_file_id();
@@ -278,6 +277,8 @@ Reader::Status COCOFileSourceReader::open_folder()
     }
     if (_file_names.empty())
         WRN("FileReader ShardID [" + TOSTR(_shard_id) + "] Did not load any file from " + _folder_path)
+    std::sort(_file_names.begin(), _file_names.end());
+    _last_file_name = _file_names[_file_names.size()-1];
 
     closedir(_src_dir);
     return Reader::Status::OK;

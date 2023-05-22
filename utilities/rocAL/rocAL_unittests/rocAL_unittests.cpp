@@ -52,7 +52,57 @@ using namespace cv;
 
 using namespace std::chrono;
 
-int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes, int display_all);
+std::string get_interpolation_type(unsigned int val, RocalResizeInterpolationType &interpolation_type) {
+    switch(val) {
+        case 0: {
+            interpolation_type = ROCAL_NEAREST_NEIGHBOR_INTERPOLATION;
+            return "NearestNeighbor";
+        }
+        case 2: {
+            interpolation_type = ROCAL_CUBIC_INTERPOLATION;
+            return "Bicubic";
+        }
+        case 3: {
+            interpolation_type = ROCAL_LANCZOS_INTERPOLATION;
+            return "Lanczos";
+        }
+        case 4: {
+            interpolation_type = ROCAL_GAUSSIAN_INTERPOLATION;
+            return "Gaussian";
+        }
+        case 5: {
+            interpolation_type = ROCAL_TRIANGULAR_INTERPOLATION;
+            return "Triangular";
+        }
+        default: {
+            interpolation_type = ROCAL_LINEAR_INTERPOLATION;
+            return "Bilinear";
+        }
+    }
+}
+
+std::string get_scaling_mode(unsigned int val, RocalResizeScalingMode &scale_mode) {
+    switch(val) {
+        case 1: {
+            scale_mode = ROCAL_SCALING_MODE_STRETCH;
+            return "Stretch";
+        }
+        case 2: {
+            scale_mode = ROCAL_SCALING_MODE_NOT_SMALLER;
+            return "NotSmaller";
+        }
+        case 3: {
+            scale_mode = ROCAL_SCALING_MODE_NOT_LARGER;
+            return "Notlarger";
+        }
+        default: {
+            scale_mode = ROCAL_SCALING_MODE_DEFAULT;
+            return "Default";
+        }
+    }
+}
+
+int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes, int display_all, int resize_interpolation_type, int resize_scaling_mode);
 int main(int argc, const char **argv)
 {
     // check command-line usage
@@ -75,6 +125,8 @@ int main(int argc, const char **argv)
     bool gpu = 1;
     int test_case = 3; // For Rotate
     int num_of_classes = 0;
+    int resize_interpolation_type = 1; // For Bilinear interpolations
+    int resize_scaling_mode = 0; // For Default scaling mode
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         test_case = atoi(argv[++argIdx]);
@@ -90,19 +142,25 @@ int main(int argc, const char **argv)
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         display_all = atoi(argv[++argIdx]);
+    
+    if (argc >= argIdx + MIN_ARG_COUNT)
+        resize_interpolation_type = atoi(argv[++argIdx]);
+    
+    if (argc >= argIdx + MIN_ARG_COUNT)
+        resize_scaling_mode = atoi(argv[++argIdx]);
 
-    test(test_case, reader_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all);
+    test(test_case, reader_type, path, outName, rgb, gpu, width, height, num_of_classes, display_all, resize_interpolation_type, resize_scaling_mode);
 
     return 0;
 }
 
-int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all)
+int test(int test_case, int reader_type, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes, int display_all, int resize_interpolation_type, int resize_scaling_mode)
 {
     size_t num_threads = 1;
     unsigned int inputBatchSize = 2;
     int decode_max_width = width;
     int decode_max_height = height;
-    int pipeline_type;
+    int pipeline_type = -1;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , " << (rgb ? " Color " : " Grayscale ") << std::endl;
 
@@ -131,6 +189,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
     RocalIntParam color_temp_adj = rocalCreateIntParameter(-50);
+    RocalIntParam mirror = rocalCreateIntParameter(1);
 
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
@@ -170,7 +229,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             if (decode_max_height <= 0 || decode_max_width <= 0)
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false);
             else
-                input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
+                input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
         case 3: //coco detection partial
@@ -271,6 +330,14 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                 input1 = rocalJpegCOCOFileSource(handle, path, json_path.c_str(), color_format, num_threads, false, true, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
         }
         break;
+        case 11: // mxnet reader
+        {
+            std::cout << ">>>>>>> Running MXNET READER" << std::endl;
+            pipeline_type = 1;
+            rocalCreateMXNetReader(handle, path, true);
+            input1 = rocalMXNetRecordSource(handle, path, color_format, num_threads, false, false, false, ROCAL_USE_USER_GIVEN_SIZE_RESTRICTED, decode_max_width, decode_max_height);
+        }
+        break;
         default:
         {
             std::cout << ">>>>>>> Running IMAGE READER" << std::endl;
@@ -292,18 +359,37 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
 
     int resize_w = width, resize_h = height; // height and width
 
-    RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false);
-
+    RocalImage image0 = input1;
+    // RocalImage image0 = rocalResize(handle, input1, resize_w, resize_h, false); // uncomment when processing images of different size
     RocalImage image1;
-
+    
+    if((test_case == 48 || test_case == 49 || test_case == 50) && rgb == 0) {
+        std::cout << "Not a valid option! Exiting!\n";
+        return -1;
+    }
     switch (test_case)
     {
     case 0:
     {
         std::cout << ">>>>>>> Running "
                   << "rocalResize" << std::endl;
-        //auto image_int = rocalResize(handle, image0, resize_w , resize_h , false);
-        image1 = rocalResize(handle, image0, resize_w, resize_h, true);
+        resize_w = 400;
+        resize_h = 400;
+        std::string interpolation_type_name, scaling_node_name;
+        RocalResizeInterpolationType interpolation_type;
+        RocalResizeScalingMode scale_mode;
+        interpolation_type_name = get_interpolation_type(resize_interpolation_type, interpolation_type);
+        scaling_node_name = get_scaling_mode(resize_scaling_mode, scale_mode);
+        std::cerr<<" \n Interpolation_type_name " << interpolation_type_name;
+        std::cerr<<" \n Scaling_node_name " << scaling_node_name;
+        if (scale_mode != ROCAL_SCALING_MODE_DEFAULT && interpolation_type != ROCAL_LINEAR_INTERPOLATION) { // (Reference output available for bilinear interpolation for this  
+            std::cerr<<" \n Running "<< scaling_node_name << " scaling mode with Bilinear interpolation for comparison \n";
+            interpolation_type = ROCAL_LINEAR_INTERPOLATION;
+        }
+        if(scale_mode == ROCAL_SCALING_MODE_STRETCH) // For reference Output comparison 
+            image1 = rocalResize(handle, image0, resize_w, 0, true, scale_mode, {}, 0, 0, interpolation_type);
+        else
+            image1 = rocalResize(handle, image0, resize_w, resize_h, true, scale_mode, {}, 0, 0, interpolation_type);
     }
     break;
     case 1:
@@ -481,7 +567,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                   << "rocalCropMirrorNormalize" << std::endl;
         std::vector<float> mean;
         std::vector<float> std_dev;
-        image1 = rocalCropMirrorNormalize(handle, image0, 1, 200, 200, 50, 50, 1, mean, std_dev, true);
+        image1 = rocalCropMirrorNormalize(handle, image0, 1, 224, 224, 0.2, 0.2, 1, mean, std_dev, true, mirror);
     }
     break;
     case 26:
@@ -510,7 +596,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     {
         std::cout << ">>>>>>> Running "
                   << "rocalRotateFixed" << std::endl;
-        image1 = rocalRotateFixed(handle, image0, 45, true);
+        image1 = rocalRotateFixed(handle, image0, 50, true);
     }
     break;
     case 32:
@@ -545,7 +631,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     {
         std::cout << ">>>>>>> Running "
                   << "rocalBlendFixed" << std::endl;
-        RocalImage image0_b = rocalRotate(handle, image0, false);
+        RocalImage image0_b = rocalRotateFixed(handle, image0, 50, false);
         image1 = rocalBlendFixed(handle, image0, image0_b, 0.5, true);
     }
     break;
@@ -651,21 +737,21 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     {
         std::cout << ">>>>>>> Running "
                   << "rocalCropFixed" << std::endl;
-        image1 = rocalCropFixed(handle, input1, 50, 50, 1, true, 0, 0, 2);
+        image1 = rocalCropFixed(handle, input1, 224, 224, 1, true, 0, 0, 2);
     }
     break;
     case 52:
     {
         std::cout << ">>>>>>> Running "
                   << "rocalCropCenterFixed" << std::endl;
-        image1 = rocalCropCenterFixed(handle, image0, 100, 100, 2, true);
+        image1 = rocalCropCenterFixed(handle, image0, 224, 224, 2, true);
     }
     break;
     case 53:
     {
         std::cout << ">>>>>>> Running "
                   << "rocalResizeCropMirrorFixed" << std::endl;
-        image1 = rocalResizeCropMirrorFixed(handle, image0, 100, 100, true, 50, 50, 0);
+        image1 = rocalResizeCropMirrorFixed(handle, image0, 300, 300, true, 250, 250, mirror);
     }
     break;
     case 54:
@@ -673,6 +759,15 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         std::cout << ">>>>>>> Running "
                   << "rocalSSDRandomCrop" << std::endl;
         image1 = rocalSSDRandomCrop(handle, input1, true);
+    }
+    break;
+    case 55:
+    {
+        std::cout << ">>>>>>> Running "
+                  << "rocalCropMirrorNormalizeFixed_center crop" << std::endl;
+        std::vector<float> mean;
+        std::vector<float> std_dev;
+        image1 = rocalCropMirrorNormalize(handle, image0, 1, 224, 224, 0.5, 0.5, 0.5, mean, std_dev, true);
     }
     break;
 
@@ -720,10 +815,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
         {
             case 1: //classification pipeline
             {
-                if (gpu == 1)
-                    rocalGetImageLabels(handle, label_id, ROCAL_MEMCPY_TO_HOST);
-                else
-                    rocalGetImageLabels(handle, label_id);
+                rocalGetImageLabels(handle, label_id);
                 int img_size = rocalGetImageNameLen(handle, image_name_length);
                 char img_name[img_size];
                 numOfClasses = num_of_classes;
@@ -826,7 +918,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
             if(DISPLAY)
                 cv::imshow("output",mat_output);
             else
-                cv::imwrite(out_filename, mat_output, compression_params);
+                cv::imwrite(out_filename, mat_color, compression_params);
         }
         else
         {

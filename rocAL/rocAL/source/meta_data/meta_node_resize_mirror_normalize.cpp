@@ -51,9 +51,9 @@ void ResizeMirrorNormalizeMetaNode::update_parameters(MetaDataBatch *input_meta_
 
     for (int i = 0; i < _batch_size; i++)
     {
-        ImgSize roi_img_size;
-        roi_img_size.w = _dst_width_val[i];
-        roi_img_size.h = _dst_height_val[i];
+        ImgSize img_roi_size;
+        img_roi_size.w = _dst_width_val[i];
+        img_roi_size.h = _dst_height_val[i];
         _dst_to_src_width_ratio = _dst_width_val[i] / float(_src_width_val[i]);
         _dst_to_src_height_ratio = _dst_height_val[i] / float(_src_height_val[i]);
         auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
@@ -99,6 +99,6 @@ void ResizeMirrorNormalizeMetaNode::update_parameters(MetaDataBatch *input_meta_
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;
-        input_meta_data->get_roi_img_sizes_batch()[i] = roi_img_size;
+        input_meta_data->get_img_roi_sizes_batch()[i] = img_roi_size;
     }
 }

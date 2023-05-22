@@ -60,8 +60,6 @@ public:
                     float offset0, float offset1, float offset2, bool reverse_channels, RocalTensorDataType output_data_type);
     size_t output_width();
     size_t output_height();
-    std::vector<uint32_t> output_resize_width();
-    std::vector<uint32_t> output_resize_height();
     size_t output_byte_size();
     size_t output_depth();
     void sequence_start_frame_number(std::vector<size_t> &sequence_start_framenum); // Returns the starting frame number of the sequences

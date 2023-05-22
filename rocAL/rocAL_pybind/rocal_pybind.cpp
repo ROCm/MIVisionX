@@ -292,12 +292,12 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_roi_img_sizes_copy(RocalContext context, py::array_t<int> array)
+    py::object wrapper_img_roi_sizes_copy(RocalContext context, py::array_t<int> array)
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        rocalGetROIImageSizes(context,ptr);
+        rocalGetROIImageSizes(context, ptr);
         return py::cast<py::none>(Py_None);
     }
 
@@ -434,7 +434,7 @@ namespace rocal{
         m.def("rocalCopyEncodedBoxesAndLables",&wrapper_encoded_bbox_label);
         m.def("rocalGetEncodedBoxesAndLables",&wrapper_get_encoded_bbox_label);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
-        m.def("getROIImgSizes",&wrapper_roi_img_sizes_copy);
+        m.def("getROIImgSizes",&wrapper_img_roi_sizes_copy);
         m.def("getMaskCount", &wrapper_mask_count_copy);
         m.def("getMaskCoordinates", &wrapper_mask_coordinates_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);

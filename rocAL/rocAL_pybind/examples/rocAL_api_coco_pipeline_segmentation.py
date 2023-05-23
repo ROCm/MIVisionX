@@ -440,7 +440,7 @@ class ROCALCOCOIterator(object):
             self.target_batch.append(self.target)
             sum_count = sum_count +count
 
-        self.img_list_obj = ImageList(self.out ,[(self.img_roi_size2d_numpy_wh[1],self.img_roi_size2d_numpy_wh[0])])
+        self.img_list_obj = ImageList(self.out, (self.img_roi_size2d_numpy_wh[1], self.img_roi_size2d_numpy_wh[0]))
         if self.display:
             for i in range(self.bs):
                 img_name = self.Img_name[i*16:(i*16)+12].decode('utf-8')
@@ -486,7 +486,7 @@ def main():
     except OSError as error:
         print(error)
 
-    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=local_rank, seed=random_seed, rocal_cpu=rocal_cpu, mean=[102.9801, 115.9465, 122.7717], std=[1. , 1., 1.], tensor_dtype=tensor_dtype)
+    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=local_rank, seed=random_seed, rocal_cpu=rocal_cpu, mean=[102.9801, 115.9465, 122.7717], std=[1. , 1., 1.], tensor_layout=tensor_format, tensor_dtype=tensor_dtype)
 
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(

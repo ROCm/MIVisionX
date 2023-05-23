@@ -587,11 +587,14 @@ ROCAL_API_CALL rocalGetImageSizes(RocalContext p_context, int* buf)
 void
 ROCAL_API_CALL rocalGetROIImageSizes(RocalContext p_context, int* buf)
 {
+    if (!p_context)
+    {
+        ERR("Invalid rocal context passed to rocalGetROIImageSizes")
+        return;
+    }
+    auto context = static_cast<Context*>(p_context);
     try
     {
-        if (!p_context)
-            THROW("Invalid rocal context passed to rocalGetImageSizes")
-        auto context = static_cast<Context*>(p_context);
         auto meta_data = context->master_graph->meta_data();
         size_t meta_data_batch_size = meta_data.second->get_img_roi_sizes_batch().size();
 
@@ -607,7 +610,6 @@ ROCAL_API_CALL rocalGetROIImageSizes(RocalContext p_context, int* buf)
     }
     catch(const std::exception& e)
     {
-        auto context = static_cast<Context*>(p_context);
         context->capture_error(e.what());
         std::cerr << e.what() << '\n';
     }

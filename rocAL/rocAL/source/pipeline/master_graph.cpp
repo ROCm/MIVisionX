@@ -1070,6 +1070,17 @@ void MasterGraph::output_routine()
                 else
                     full_batch_meta_data = _augmented_meta_data->clone();
             }
+            if(full_batch_meta_data)
+            {
+                // get roi width and height of output image
+                for (unsigned int i = 0; i < _user_batch_size; i++)
+                {
+                    ImgSize img_roi_size;
+                    img_roi_size.w = _output_image_info.get_roi_width()[i];
+                    img_roi_size.h = _output_image_info.get_roi_height()[i];
+                    full_batch_meta_data->get_img_roi_sizes_batch()[i] = img_roi_size;                
+                }
+            }
             _graph->process();
             _bencode_time.start();
             if(_is_box_encoder )

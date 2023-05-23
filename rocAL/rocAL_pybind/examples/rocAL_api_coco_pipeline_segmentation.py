@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 import torch
-import random
 
 from amd.rocal.pipeline import Pipeline
 import amd.rocal.fn as fn
@@ -354,7 +353,6 @@ class ROCALCOCOIterator(object):
         return self.__next__()
 
     def __next__(self):
-        print("In the next routine of COCO Iterator")
         if(self.loader.isEmpty()):
             timing_info = self.loader.Timing_Info()
             print("Load     time ::", timing_info.load_time)
@@ -365,8 +363,6 @@ class ROCALCOCOIterator(object):
 
         if self.loader.run() != 0:
             raise StopIteration
-        self.lis = []  # Empty list for bboxes
-        self.lis_lab = []  # Empty list of labels
 
         self.loader.copyToExternalTensor(
             self.out, self.multiplier, self.offset, self.reverse_channels, self.tensor_format, self.tensor_dtype)
@@ -374,33 +370,23 @@ class ROCALCOCOIterator(object):
 
         self.img_names_length = np.empty(self.bs, dtype="int32")
         self.img_names_size = self.loader.GetImageNameLen(self.img_names_length)
-        # print("Image name length:", self.img_names_size)
 # Images names of a batch
         self.Img_name = self.loader.GetImageName(self.img_names_size)
-        # print("Image names in a batch ", self.Img_name)
 #Count of labels/ bboxes in a batch
         self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
         self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
-        # print("Count Batch:", self.count_batch)
 # 1D labels array in a batch
         self.labels = np.zeros(self.count_batch, dtype="int32")
         self.loader.GetBBLabels(self.labels)
-        # print(self.labels)
 # 1D bboxes array in a batch
         self.bboxes = np.zeros((self.count_batch*4), dtype="float64")
         self.loader.GetBBCords(self.bboxes)
-        # print("BBoxes (rocAL): ",self.bboxes)
-#Image sizes of a batch
-        self.img_size = np.zeros((self.bs * 2),dtype = "int32")
-        self.loader.GetImgSizes(self.img_size)
-        # print("Image sizes:", self.img_size)
 #Image ROI width and height
         self.roi_width = np.zeros((self.bs),dtype = "uint32")
         self.roi_height = np.zeros((self.bs),dtype = "uint32")
         self.loader.getOutputROIWidth(self.roi_width)
         self.loader.getOutputROIHeight(self.roi_height)
-        self.roi_sizes = np.vstack((self.roi_height,self.roi_width)).T # Old
-        self.roi_sizes_wh = np.vstack((self.roi_width,self.roi_height)).T # New
+        self.roi_sizes_wh = np.vstack((self.roi_width,self.roi_height)).T
 #Mask info of a batch
         self.mask_count = np.zeros(self.count_batch, dtype="int32")
         self.mask_size = self.loader.GetMaskCount(self.mask_count)
@@ -411,25 +397,16 @@ class ROCALCOCOIterator(object):
         count =0
         sum_count=0
         j = 0
-        list_poly = []
         iteration1 = 0
         iteration = 0
         self.target_batch = []
-        self.roi_image_size = []
-        self.roi_image_size_wh = []
         for i in range(self.bs):
             count = self.bboxes_label_count[i]
             self.img_name = self.Img_name[i*16:(i*16)+12]
             self.img_name=self.img_name.decode('utf_8')
             self.img_name = np.char.lstrip(self.img_name, chars ='0')
-            self.img_size_2d_numpy = (self.img_size[i*2:(i*2)+2])
-            self.img_roi_size2d_numpy = (self.roi_sizes[i])
             self.img_roi_size2d_numpy_wh = (self.roi_sizes_wh[i])
-            # Image Size ROI
-            roi_tmp_list = self.img_roi_size2d_numpy.tolist()
-            self.roi_image_size.append(torch.Size(roi_tmp_list))
-            roi_tmp_list = self.img_roi_size2d_numpy_wh.tolist()
-            self.roi_image_size_wh.append(torch.Size(roi_tmp_list))
+
             self.label_2d_numpy = (self.labels[sum_count : sum_count+count])
             self.bb_2d_numpy = (self.bboxes[sum_count*4 : (sum_count+count)*4])
 
@@ -449,11 +426,11 @@ class ROCALCOCOIterator(object):
             poly_batch_list = []
             for i in range(self.count_mask):
                 poly_list = []
-                for k in range(self.mask_count[iteration1]):
+                for _ in range(self.mask_count[iteration1]):
                     polygons = []
                     polygon_size_check = self.polygon_size[iteration]
                     iteration = iteration + 1
-                    for loop_idx in range(polygon_size_check):
+                    for _ in range(polygon_size_check):
                         polygons.append(self.mask_data[j])
                         j = j + 1
                     poly_list.append(polygons)
@@ -466,7 +443,7 @@ class ROCALCOCOIterator(object):
             self.target_batch.append(self.target)
             sum_count = sum_count +count
 
-        self.img_list_obj = ImageList(self.out ,self.roi_image_size)
+        self.img_list_obj = ImageList(self.out, (self.img_roi_size2d_numpy_wh[1], self.img_roi_size2d_numpy_wh[0]))
         if self.display:
             for i in range(self.bs):
                 img_name = self.Img_name[i*16:(i*16)+12].decode('utf-8')

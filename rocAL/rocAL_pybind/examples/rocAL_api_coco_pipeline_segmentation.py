@@ -489,7 +489,7 @@ def main():
     except OSError as error:
         print(error)
 
-    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=local_rank, seed=random_seed, rocal_cpu=rocal_cpu, mean=[102.9801, 115.9465, 122.7717], std=[1. , 1., 1.])
+    pipe = Pipeline(batch_size=bs, num_threads=num_threads, device_id=local_rank, seed=random_seed, rocal_cpu=rocal_cpu, mean=[102.9801, 115.9465, 122.7717], std=[1. , 1., 1.], tensor_layout=tensor_format, tensor_dtype=tensor_dtype)
 
     with pipe:
         jpegs, bboxes, labels = fn.readers.coco(
@@ -498,8 +498,8 @@ def main():
         coin_flip = fn.random.coin_flip(probability=0.5)
         rmn_images = fn.resize_mirror_normalize(images_decoded,
                                             device="gpu",
-                                            output_dtype=types.FLOAT16,
-                                            output_layout=types.NCHW,
+                                            output_dtype=types.UINT8,
+                                            output_layout=types.NHWC,
                                             resize_min = 1344,
                                             resize_max = 1344,
                                             mirror=coin_flip,

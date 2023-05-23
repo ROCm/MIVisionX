@@ -82,10 +82,8 @@ static vx_status VX_CALLBACK refreshResize(vx_node node, const vx_reference *par
             {
                 data->resize_w[index + f] = data->resize_w[n];
                 data->resize_h[index + f] = data->resize_h[n];
-                data->roi_ptr[index + f].xywhROI.xy.x = data->roi_ptr[n].xywhROI.xy.x;
-                data->roi_ptr[index + f].xywhROI.xy.y = data->roi_ptr[n].xywhROI.xy.y;
-                data->roi_ptr[index + f].xywhROI.roiWidth = data->roi_ptr[n].xywhROI.roiWidth;
-                data->roi_ptr[index + f].xywhROI.roiHeight = data->roi_ptr[n].xywhROI.roiHeight;
+                data->roi_ptr[index + f].xywhROI = data->roi_ptr[n].xywhROI;
+
             }
         }
     }

@@ -1834,7 +1834,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Copy(vx_graph graph, vx_image pSrc
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Copytensor(vx_graph graph, vx_tensor pSrc, vx_tensor pDst) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_CopyTensor(vx_graph graph, vx_tensor pSrc, vx_tensor pDst) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -1849,7 +1849,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Copytensor(vx_graph graph, vx_tens
     return node;
 }
 
-VX_API_CALL vx_node VX_API_CALL vxExtrppNode_Noptensor(vx_graph graph, vx_tensor pSrc, vx_tensor pDst) {
+VX_API_CALL vx_node VX_API_CALL vxExtrppNode_NopTensor(vx_graph graph, vx_tensor pSrc, vx_tensor pDst) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {

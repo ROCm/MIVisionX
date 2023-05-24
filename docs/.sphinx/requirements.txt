@@ -8,10 +8,6 @@ accessible-pygments==0.0.4
     # via pydata-sphinx-theme
 alabaster==0.7.13
     # via sphinx
-babel==2.12.1
-    # via
-    #   pydata-sphinx-theme
-    #   sphinx
 beautifulsoup4==4.12.0
     # via pydata-sphinx-theme
 breathe==4.34.0

@@ -137,7 +137,7 @@ def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='',
                       random_shuffle=False, affine=True, bytes_per_sample_hint=0, device_memory_padding=16777216, host_memory_padding=8388608,
                       hybrid_huffman_threshold=1000000, num_attempts=10, output_type=types.RGB, preserve=False, random_area=[0.08, 1.0],
                       random_aspect_ratio=[0.8, 1.25], seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct=False, device=None, 
-                      decode_size_policy=types.USER_GIVEN_SIZE_ORIG, max_decoded_width=1000, max_decoded_height=1000):
+                      decode_size_policy=types.USER_GIVEN_SIZE_ORIG, max_decoded_width=1000, max_decoded_height=1000, decoder_type=types.DECODER_TJPEG):
 
     reader = Pipeline._current_pipeline._reader
     # Internally calls the C++ Partial decoder's
@@ -170,7 +170,8 @@ def image_random_crop(*inputs, user_feature_key_map=None, path='', file_root='',
             "loop": False,
             "decode_size_policy": decode_size_policy,
             "max_width": max_decoded_width,
-            "max_height": max_decoded_height}
+            "max_height": max_decoded_height,
+            "dec_type": decoder_type}
         crop_output_image = b.TF_ImageDecoder(Pipeline._current_pipeline._handle ,*(kwargs_pybind.values()))
     elif (reader == "CaffeReader" or reader == "CaffeReaderDetection"):
         kwargs_pybind = {

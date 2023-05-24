@@ -83,6 +83,8 @@ class ROCALGenericIterator(object):
                     self.out = np.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=np.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = np.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=np.float16)
+                elif self.tensor_dtype == types.UINT8:
+                    self.out = np.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=np.uint8)
                 self.labels = np.empty(self.labels_size, dtype = np.int32)
 
             else:
@@ -91,6 +93,8 @@ class ROCALGenericIterator(object):
                         self.out = cp.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=cp.float32)
                     elif self.tensor_dtype == types.FLOAT16:
                         self.out = cp.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=cp.float16)
+                    elif self.tensor_dtype == types.UINT8:
+                        self.out = cp.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=cp.uint8)
                     self.labels = cp.empty(self.labels_size, dtype = cp.int32)
 
         else: #NHWC
@@ -99,6 +103,8 @@ class ROCALGenericIterator(object):
                     self.out = np.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=np.float32)
                 elif self.tensor_dtype == types.FLOAT16:
                     self.out = np.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=np.float16)
+                elif self.tensor_dtype == types.UINT8:
+                    self.out = np.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=np.uint8)
                 self.labels = np.empty(self.labels_size, dtype = np.int32)
 
             else:
@@ -107,6 +113,8 @@ class ROCALGenericIterator(object):
                         self.out = cp.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=cp.float32)
                     elif self.tensor_dtype == types.FLOAT16:
                         self.out = cp.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=cp.float16)
+                    elif self.tensor_dtype == types.UINT8:
+                        self.out = cp.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=cp.uint8)
                     self.labels = cp.empty(self.labels_size, dtype = cp.int32)
 
 

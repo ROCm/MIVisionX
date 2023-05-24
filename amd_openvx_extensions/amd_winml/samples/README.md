@@ -14,7 +14,7 @@ Get ONNX models from [ONNX Model Zoo](https://github.com/onnx/models)
 
 This sample is in [Graph Description Format](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/utilities/runvx/README.md#amd-runvx) (gdf)
 
-<p align="center"><img width="100%" src="data/squeezenet_results.PNG" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/amd_openvx_extensions/amd_winml/samples/data/squeezenet_results.PNG" /></p>
 
 #### usage
 ````
@@ -98,7 +98,7 @@ data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 
 This sample is in [Graph Description Format](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/utilities/runvx/README.md#amd-runvx) (gdf)
 
-<p align="center"><img width="100%" src="data/emotions_results.PNG" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/amd_openvx_extensions/amd_winml/samples/data/emotions_results.PNG" /></p>
 
 #### usage
 ````
@@ -128,7 +128,7 @@ data labelLocation = scalar:STRING,FULL_PATH_TO\data\emotions.txt
 
 This sample is in [Graph Description Format](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/utilities/runvx/README.md#amd-runvx) (gdf)
 
-<p align="center"><img width="100%" src="data/vgg16_results.PNG" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/amd_openvx_extensions/amd_winml/samples/data/vgg16_results.PNG" /></p>
 
 #### usage
 ````

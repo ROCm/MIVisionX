@@ -29,7 +29,7 @@ runvx -h
 
 ### skintonedetect.gdf
 
-<p align="center"><img width="90%" src="images/skinToneDetect_image.PNG" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/images/skinToneDetect_image.PNG" /></p>
 
 usage:
 
@@ -39,7 +39,7 @@ runvx gdf/skintonedetect.gdf
 
 ### canny.gdf
 
-<p align="center"><img width="90%" src="images/canny_image.PNG" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
 
 usage:
 

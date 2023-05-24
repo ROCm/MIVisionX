@@ -61,7 +61,7 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 
 1. Download or train your own `Caffe Model`/`ONNX Model`/`NNEF Model`.
 
-<p align="center"><img width="30%" src="images/flow-1-model.png" /></p>
+<p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/flow-1-model.png" /></p>
 
 2. Use [MIVisionX Model Compiler](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/model_compiler#neural-net-model-compiler--optimizer) to generate OpenVX C Code from the pre-trained models.
 
@@ -69,7 +69,7 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 
 * Convert the pre-trained models into AMD NNIR model:
 
-<p align="center"><img width="80%" src="images/flow-2-nnir.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/flow-2-nnir.png" /></p>
 
 
 	* Caffe Models
@@ -92,7 +92,7 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 	
 * Convert an AMD NNIR model into OpenVX C code:
 
-<p align="center"><img width="80%" src="images/flow-3-openvx-b.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/flow-3-openvx-b.png" /></p>
 
 	````
 	% python3 /opt/rocm/libexec/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
@@ -101,7 +101,7 @@ Use MIVisionX [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen
 ### Build - Inference Application
 |                  Classification                  |                       Detection                       |                       Segmentation                       |
 | :----------------------------------------------: | :---------------------------------------------------: | :------------------------------------------------------: |
-| <img width="80%" src="images/app-control.png" /> | <img width="45%" src="images/detection_legend.png" /> | <img width="50%" src="images/segmentation_legend.png" /> |
+| <img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/app-control.png" /> | <img width="45%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/detection_legend.png" /> | <img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/segmentation_legend.png" /> |
 
 Once the OpenVX code is generated(annmodule.cpp & annmodule.h), follow the instructions below to build the project.
 
@@ -123,7 +123,7 @@ Once the OpenVX code is generated(annmodule.cpp & annmodule.h), follow the instr
 
 |                  Classification                  |                       Detection                        |
 | :----------------------------------------------: | :----------------------------------------------------: |
-| <img width="75%" src="images/app_display.png" /> | <img width="75%" src="images/detection_display.png" /> |
+| <img width="75%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/app_display.png" /> | <img width="75%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/detection_display.png" /> |
 
 ```
 ./classifier	--mode				<1/2/3 - 1:classification 2:detection 3:segmentation>	[required]
@@ -170,7 +170,7 @@ Run inference on the live camera feed with this option.
 
 ### Run SqueezeNet on Video/Image
 
-<p align="center"><img width="50%" src="images/squeezenet_legend.png" /></p>
+<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/squeezenet_legend.png" /></p>
 
 * **Step 1:** Clone MIVisionX Inference Tutorial Project
 
@@ -224,7 +224,7 @@ Run inference on the live camera feed with this option.
 	% make
 	````
 	
-	<p align="center"><img width="50%" src="images/squeezenet_display.png" /></p>
+	<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/squeezenet_display.png" /></p>
 	
 * **Step 5:** Use the command below to run the classifier
 
@@ -242,7 +242,7 @@ Run inference on the live camera feed with this option.
 
 ### Run Tiny YoloV2 on an Image/Video
 
-<p align="center"><img width="20%" src="images/detection_legend.png" /></p>
+<p align="center"><img width="20%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/detection_legend.png" /></p>
 
 * **Step 1:** Clone MIVisionX Inference Tutorial Project
 
@@ -292,7 +292,7 @@ Run inference on the live camera feed with this option.
 	% make
 	````
 	
-	<p align="center"><img width="50%" src="images/detection_display.png" /></p>
+	<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/detection_display.png" /></p>
 	
 * **Step 5:** Use the command below to run the classifier
 
@@ -314,7 +314,7 @@ Run inference on the live camera feed with this option.
 
 ### Run VGG 16 on a Video
 
-<p align="center"><img width="50%" src="images/app-control.png" /></p>
+<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/app-control.png" /></p>
 
 * **Step 1:** Clone MIVisionX Inference Tutorial Project
 
@@ -369,7 +369,7 @@ Run inference on the live camera feed with this option.
 	% make
 	````
 	
-	<p align="center"><img width="50%" src="images/app_display.png" /></p>
+	<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/app_display.png" /></p>
 	
 * **Step 5:** Use the command below to run the classifier
 
@@ -387,7 +387,7 @@ Run inference on the live camera feed with this option.
 
 ### Run VGG 16 on Live Video
 
-<p align="center"><img width="50%" src="images/app-control.png" /></p>
+<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/app-control.png" /></p>
 
 * **Step 1:** Clone MIVisionX Inference Tutorial Project
 
@@ -438,7 +438,7 @@ Run inference on the live camera feed with this option.
 	% make
 	````
 	
-	<p align="center"><img width="50%" src="images/app_display.png" /></p>
+	<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/model_compiler_samples/images/app_display.png" /></p>
 	
 * **Step 5:** Use the command below to run the classifier
 

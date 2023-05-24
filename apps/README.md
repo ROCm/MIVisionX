@@ -51,13 +51,13 @@ This sample [application](./mivisionx_openvx_classifier/README.md) shows how to 
 
 This sample [application](./mivisionx_winml_classifier/README.md) shows how to run supported ONNX models with MIVisionX RunTime on Windows.
 
-<p align="center"> <img width="60%" src="./mivisionx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png"> </p>
+<p align="center"> <img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/apps/mivisionx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png"> </p>
 
 ## MIVisionX WinML YoloV2
 
 This sample [application](./mivisionx_winml_yolov2/README.md#yolov2-using-amd-winml-extension) shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
 
-<p align="center"> <img width="60%" src="./mivisionx_winml_yolov2/image/cat-yolo.jpg"> </p>
+<p align="center"> <img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/apps/mivisionx_winml_yolov2/image/cat-yolo.jpg"> </p>
 
 ## Optical Flow
 

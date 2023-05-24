@@ -149,7 +149,7 @@ cd ..
 
 ### Step 10. Sample output for multiple video object detection
 
-<p align="center"><img width="80%" src="data/images/Video_4_screenshot.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/inference/mv_objdetect/data/images/Video_4_screenshot.png" /></p>
 
 # License
 This project is licensed under the MIT License - see the LICENSE.md file for details

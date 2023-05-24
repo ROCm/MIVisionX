@@ -127,14 +127,12 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(SequenceRearrange_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Resizetensor_Register));
 
-//tensor 
+    //tensor 
     STATUS_ERROR_CHECK(ADD_KERNEL(Brightness_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(CropMirrorNormalize_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Resize_Register));
-    STATUS_ERROR_CHECK(ADD_KERNEL(Noptensor_Register));
-    STATUS_ERROR_CHECK(ADD_KERNEL(Copytensor_Register));
-
-
+    STATUS_ERROR_CHECK(ADD_KERNEL(NopTensor_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(CopyTensor_Register));
     return status;
 }
 

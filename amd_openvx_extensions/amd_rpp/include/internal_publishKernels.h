@@ -122,9 +122,8 @@ vx_status Resizetensor_Register(vx_context);
 vx_status Brightness_Register(vx_context);
 vx_status Resize_Register(vx_context);
 vx_status CropMirrorNormalize_Register(vx_context);
-vx_status Noptensor_Register(vx_context);
-vx_status Copytensor_Register(vx_context);
-
+vx_status NopTensor_Register(vx_context);
+vx_status CopyTensor_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOP_NAME                          "org.rpp.Nop"
@@ -210,13 +209,10 @@ vx_status Copytensor_Register(vx_context);
 #define VX_KERNEL_RPP_SEQUENCEREARRANGE_NAME                    "org.rpp.SequenceRearrange"
 #define VX_KERNEL_RPP_RESIZETENSOR_NAME      					"org.rpp.Resizetensor"
 
-
 //tensor
-#define VX_KERNEL_RPP_BRIGHTNESS_NAME                                        "org.rpp.Brightness"
-#define VX_KERNEL_RPP_COPYTENSOR_NAME                                              "org.rpp.Copytensor"
-#define VX_KERNEL_RPP_CROPMIRRORNORMALIZE_NAME                               "org.rpp.CropMirrorNormalize"
-#define VX_KERNEL_RPP_NOPTENSOR_NAME                                               "org.rpp.Noptensor"
-#define VX_KERNEL_RPP_RESIZE_NAME                                            "org.rpp.Resize"
-
-
+#define VX_KERNEL_RPP_BRIGHTNESS_NAME                            "org.rpp.Brightness"
+#define VX_KERNEL_RPP_COPYTENSOR_NAME                            "org.rpp.Copytensor"
+#define VX_KERNEL_RPP_CROPMIRRORNORMALIZE_NAME                   "org.rpp.CropMirrorNormalize"
+#define VX_KERNEL_RPP_NOPTENSOR_NAME                             "org.rpp.Noptensor"
+#define VX_KERNEL_RPP_RESIZE_NAME                                "org.rpp.Resize"
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

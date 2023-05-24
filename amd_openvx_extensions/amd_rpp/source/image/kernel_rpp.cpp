@@ -2038,7 +2038,6 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, Rpp32s layout, size_t *ten
             break;
         }
     }
-    
 }
 
 // utility functions

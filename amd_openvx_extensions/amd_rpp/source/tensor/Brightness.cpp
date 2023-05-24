@@ -135,6 +135,10 @@ static vx_status VX_CALLBACK processBrightness(vx_node node, const vx_reference 
 static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     BrightnessLocalData *data = new BrightnessLocalData;
     memset(data, 0, sizeof(*data));
+#if ENABLE_OPENCL
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        THROW("initialize : Brightness, OpenCL backend is not supported")
+#endif
     int roi_type;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->inputLayout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->outputLayout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));

@@ -22,8 +22,7 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-struct ResizeLocalData
-{
+struct ResizeLocalData {
     vxRppHandle * handle;
     Rpp32u device_type;
     RppPtr_t pSrc;
@@ -47,51 +46,41 @@ struct ResizeLocalData
     Rpp32s interpolation_type; 
 };
 
-static vx_status VX_CALLBACK refreshResize(vx_node node, const vx_reference *parameters, vx_uint32 num, ResizeLocalData *data)
-{
+static vx_status VX_CALLBACK refreshResize(vx_node node, const vx_reference *parameters, vx_uint32 num, ResizeLocalData *data) {
     vx_status status = VX_SUCCESS;
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->src_desc_ptr->n, sizeof(vx_uint32), data->resize_w, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->src_desc_ptr->n, sizeof(vx_uint32), data->resize_h, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    for (int i = 0; i < data->src_desc_ptr->n; i++)
-    {
+    for (int i = 0; i < data->src_desc_ptr->n; i++) {
         data->dstImgSize[i].width = data->resize_w[i];
         data->dstImgSize[i].height = data->resize_h[i];
     }
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-    {
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->roi_tensor_ptr, sizeof(data->roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
 #endif
-    }
-    else if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-    {
+    } else if (data->device_type == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->roi_tensor_ptr, sizeof(data->roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
     data->roi_ptr = (RpptROI *)data->roi_tensor_ptr;
-    if(data->input_layout == 2 || data->input_layout == 3)
-    {
+    if(data->input_layout == 2 || data->input_layout == 3) {
         unsigned num_of_frames = data->in_tensor_dims[1]; // Num of frames 'F'
-        for(int n = data->src_desc_ptr->n - 1; n >= 0; n--)
-        {
+        for(int n = data->src_desc_ptr->n - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
-            for(int f = 0; f < num_of_frames; f++)
-            {
+            for(int f = 0; f < num_of_frames; f++) {
                 data->resize_w[index + f] = data->resize_w[n];
                 data->resize_h[index + f] = data->resize_h[n];
                 data->roi_ptr[index + f].xywhROI = data->roi_ptr[n].xywhROI;
-
             }
         }
     }
     return status;
 }
 
-static vx_status VX_CALLBACK validateResize(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
-{
+static vx_status VX_CALLBACK validateResize(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[5], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
@@ -128,26 +117,22 @@ static vx_status VX_CALLBACK validateResize(vx_node node, const vx_reference par
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DATA_TYPE, &tensor_type, sizeof(tensor_type)));
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_FIXED_POINT_POSITION, &tensor_fixed_point_position, sizeof(tensor_fixed_point_position)));
-
     return status;
 }
 
-static vx_status VX_CALLBACK processResize(vx_node node, const vx_reference *parameters, vx_uint32 num)
-{
+static vx_status VX_CALLBACK processResize(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
     ResizeLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU)
-    {
+    if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         refreshResize(node, parameters, num, data);
         rpp_status = rppt_resize_gpu((void *)data->pSrc, data->src_desc_ptr, (void *)data->pDst, data->dst_desc_ptr, data->dstImgSize, (RpptInterpolationType)data->interpolation_type, data->roi_ptr, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU)
-    {
+    if (data->device_type == AGO_TARGET_AFFINITY_CPU) {
         refreshResize(node, parameters, num, data);
         rpp_status = rppt_resize_host(data->pSrc, data->src_desc_ptr, data->pDst, data->dst_desc_ptr, data->dstImgSize, (RpptInterpolationType)data->interpolation_type, data->roi_ptr, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
@@ -155,11 +140,13 @@ static vx_status VX_CALLBACK processResize(vx_node node, const vx_reference *par
     return return_status;
 }
 
-static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *parameters, vx_uint32 num)
-{
+static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ResizeLocalData *data = new ResizeLocalData;
     memset(data, 0, sizeof(*data));
-    
+#if ENABLE_OPENCL
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        THROW("initialize : Resize, OpenCL backend is not supported")
+#endif
     int roiType;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->interpolation_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
@@ -199,8 +186,7 @@ static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *
     return VX_SUCCESS;
 }
 
-static vx_status VX_CALLBACK uninitializeResize(vx_node node, const vx_reference *parameters, vx_uint32 num)
-{
+static vx_status VX_CALLBACK uninitializeResize(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ResizeLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
@@ -220,8 +206,7 @@ static vx_status VX_CALLBACK uninitializeResize(vx_node node, const vx_reference
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
                                                   vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
                                                   vx_uint32 &supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
-)
-{
+) {
     vx_context context = vxGetContext((vx_reference)graph);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
@@ -233,8 +218,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
-vx_status Resize_Register(vx_context context)
-{
+vx_status Resize_Register(vx_context context) {
     vx_status status = VX_SUCCESS;
     // Add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Resize",
@@ -257,8 +241,7 @@ vx_status Resize_Register(vx_context context)
 #endif
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
 
-    if (kernel)
-    {
+    if (kernel) {
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
@@ -272,8 +255,7 @@ vx_status Resize_Register(vx_context context)
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
-    if (status != VX_SUCCESS)
-    {
+    if (status != VX_SUCCESS) {
     exit:
         vxRemoveKernel(kernel);
         return VX_FAILURE;

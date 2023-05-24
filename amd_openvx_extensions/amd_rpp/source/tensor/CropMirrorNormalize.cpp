@@ -146,7 +146,10 @@ static vx_status VX_CALLBACK processCropMirrorNormalize(vx_node node, const vx_r
 static vx_status VX_CALLBACK initializeCropMirrorNormalize(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     CropMirrorNormalizeLocalData *data = new CropMirrorNormalizeLocalData;
     memset(data, 0, sizeof(*data));
-    
+#if ENABLE_OPENCL
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        THROW("initialize : CMN, OpenCL backend is not supported")
+#endif
     int roi_type;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->inputLayout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->outputLayout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));

@@ -1,12 +1,12 @@
 
 import sys
-from tkinter import W
 from amd.rocal.pipeline import pipeline_def
-from amd.rocal.plugin.pytorch import ROCALClassificationIterator
+from amd.rocal.plugin.generic import ROCALClassificationIterator
 import amd.rocal.fn as fn
 import amd.rocal.types as types
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+import cupy as cp
 
 seed = 1549361629
 image_dir = "../../../../data/images/AMD-tinyDataSet/"
@@ -26,7 +26,7 @@ def show_images(image_batch, device):
         if device == "cpu":
             plt.imshow(img)
         else:
-            plt.imshow(img.cpu())
+            plt.imshow(cp.asnumpy(img))
     plt.show()
 
 
@@ -54,7 +54,7 @@ def main():
       img_folder = sys.argv[2]
 
     pipe = image_decoder_pipeline(batch_size=bs, num_threads=1, device_id=gpu_id, rocal_cpu=True, tensor_layout=types.NHWC,
-                                  reverse_channels=True, multiplier = [0.00392,0.00392,0.00392], device=rocal_device, path=img_folder)
+                                  reverse_channels=True, mean = [0, 0, 0], std=[255, 255, 255], device=rocal_device, path=img_folder)
     show_pipeline_output(pipe, device=rocal_device)
 
 if __name__ == '__main__':

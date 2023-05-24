@@ -192,8 +192,16 @@ Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t i
             break;
         }
     }
-    _dec_pix_fmt = AV_PIX_FMT_NV12; // nv12 for vaapi
 
+    if (_video_dec_ctx->pix_fmt == AV_PIX_FMT_YUVJ420P)
+      _dec_pix_fmt = AV_PIX_FMT_NV12;    // set non-depracated format, vaapi uses NV12 for YUVJ420P
+    else if (_video_dec_ctx->pix_fmt == AV_PIX_FMT_YUVJ422P)
+      _dec_pix_fmt = AV_PIX_FMT_YUV422P;    // set non-depracated format
+    else if (_video_dec_ctx->pix_fmt == AV_PIX_FMT_YUVJ444P)
+      _dec_pix_fmt = AV_PIX_FMT_YUV444P;    // set non-depracated format
+    else
+      _dec_pix_fmt = _video_dec_ctx->pix_fmt;    // correct format will be set after vaapi initialization for hwdec
+       
     // Init the decoders 
     if ((ret = avcodec_open2(_video_dec_ctx, _decoder, NULL)) < 0)
     {

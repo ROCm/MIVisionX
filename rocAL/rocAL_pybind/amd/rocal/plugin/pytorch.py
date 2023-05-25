@@ -107,7 +107,6 @@ class ROCALGenericIterator(object):
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float16, device = torch_gpu_device)
                 elif self.tensor_dtype ==types.UINT8:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.uint8, device = torch_gpu_device)
-                torch_gpu_device = torch.device('cuda', self.device_id)
                 self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
 
         else: #NHWC
@@ -128,7 +127,6 @@ class ROCALGenericIterator(object):
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float16, device=torch_gpu_device)
                 elif self.tensor_dtype == types.UINT8:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.uint8, device=torch_gpu_device)
-                torch_gpu_device = torch.device('cuda', self.device_id)
                 self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
 
         if self.bs != 0:

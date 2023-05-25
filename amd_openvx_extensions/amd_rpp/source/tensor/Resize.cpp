@@ -38,8 +38,8 @@ struct ResizeLocalData {
     RpptRoiType roiType;
     Rpp32s input_layout;
     Rpp32s output_layout;
-    size_t in_tensor_dims[VX_TENSOR_DIMS];
-    size_t out_tensor_dims[VX_TENSOR_DIMS];
+    size_t inputTensorDims[VX_TENSOR_DIMS];
+    size_t outputTensorDims[VX_TENSOR_DIMS];
     vx_enum in_tensor_type;
     vx_enum out_tensor_type;
     RpptImagePatch *dstImgSize;
@@ -48,8 +48,8 @@ struct ResizeLocalData {
 
 static vx_status VX_CALLBACK refreshResize(vx_node node, const vx_reference *parameters, vx_uint32 num, ResizeLocalData *data) {
     vx_status status = VX_SUCCESS;
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->src_desc_ptr->n, sizeof(vx_uint32), data->resize_w, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->src_desc_ptr->n, sizeof(vx_uint32), data->resize_h, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0], sizeof(vx_uint32), data->resize_w, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0], sizeof(vx_uint32), data->resize_h, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     for (int i = 0; i < data->src_desc_ptr->n; i++) {
         data->dstImgSize[i].width = data->resize_w[i];
         data->dstImgSize[i].height = data->resize_h[i];
@@ -67,7 +67,7 @@ static vx_status VX_CALLBACK refreshResize(vx_node node, const vx_reference *par
     }
     data->roi_ptr = (RpptROI *)data->roi_tensor_ptr;
     if(data->input_layout == 2 || data->input_layout == 3) {
-        unsigned num_of_frames = data->in_tensor_dims[1]; // Num of frames 'F'
+        unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for(int n = data->src_desc_ptr->n - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for(int f = 0; f < num_of_frames; f++) {
@@ -158,20 +158,20 @@ static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *
     // Querying for input tensor
     data->src_desc_ptr = &data->srcDesc;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->src_desc_ptr->numDims, sizeof(data->src_desc_ptr->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->in_tensor_dims, sizeof(vx_size) * data->src_desc_ptr->numDims));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->src_desc_ptr->numDims));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &data->in_tensor_type, sizeof(data->in_tensor_type)));
     data->src_desc_ptr->dataType = getRpptDataType(data->in_tensor_type);
     data->src_desc_ptr->offsetInBytes = 0;
-    fillDescriptionPtrfromDims(data->src_desc_ptr, data->input_layout, data->in_tensor_dims);
+    fillDescriptionPtrfromDims(data->src_desc_ptr, data->input_layout, data->inputTensorDims);
 
     // Querying for output tensor
     data->dst_desc_ptr = &data->dstDesc;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->dst_desc_ptr->numDims, sizeof(data->dst_desc_ptr->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->out_tensor_dims, sizeof(vx_size) * data->dst_desc_ptr->numDims));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->dst_desc_ptr->numDims));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2],VX_TENSOR_DATA_TYPE, &data->out_tensor_type, sizeof(data->out_tensor_type)));
     data->dst_desc_ptr->dataType = getRpptDataType(data->out_tensor_type);
     data->dst_desc_ptr->offsetInBytes = 0;
-    fillDescriptionPtrfromDims(data->dst_desc_ptr, data->output_layout, data->out_tensor_dims);
+    fillDescriptionPtrfromDims(data->dst_desc_ptr, data->output_layout, data->outputTensorDims);
 
 #if ENABLE_HIP
     hipHostMalloc(&data->dstImgSize, data->src_desc_ptr->n * sizeof(RpptImagePatch));
@@ -190,12 +190,12 @@ static vx_status VX_CALLBACK uninitializeResize(vx_node node, const vx_reference
     ResizeLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
-    free(data->resize_w);
-    free(data->resize_h);
+    if (data->resize_w != nullptr)  free(data->resize_w);
+    if (data->resize_h != nullptr)  free(data->resize_h);
 #if ENABLE_HIP
-    hipHostFree(data->dstImgSize);
+    if (data->dstImgSize != nullptr)  hipHostFree(data->dstImgSize);
 #else
-    free(data->dstImgSize);
+    if (data->dstImgSize != nullptr)  free(data->dstImgSize);
 #endif
     delete (data);
     return VX_SUCCESS;

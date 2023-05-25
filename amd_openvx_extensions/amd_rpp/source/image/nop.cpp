@@ -147,12 +147,12 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
-vx_status Nop_Register(vx_context context)
+vx_status NopbatchPD_Register(vx_context context)
 {
     vx_status status = VX_SUCCESS;
     // add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Nop",
-                                       VX_KERNEL_RPP_NOP,
+    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.NopbatchPD",
+                                       VX_KERNEL_RPP_NOPBATCHPD,
                                        processNop,
                                        3,
                                        validateNop,

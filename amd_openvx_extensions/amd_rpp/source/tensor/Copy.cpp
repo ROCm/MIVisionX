@@ -108,6 +108,11 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
 
     if (data->in_tensor_type == vx_type_e::VX_TYPE_FLOAT32 && data->out_tensor_type == vx_type_e::VX_TYPE_FLOAT32)
         data->tensor_size *= sizeof(float);
+    else if (data->in_tensor_type == vx_type_e::VX_TYPE_FLOAT16 && data->out_tensor_type == vx_type_e::VX_TYPE_FLOAT16) {
+#if defined(AMD_FP16_SUPPORT)
+        data->tensor_size *= sizeof(vx_float16);
+#endif
+    }
     refreshCopy(node, parameters, num, data);
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
@@ -137,11 +142,11 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
-vx_status CopyTensor_Register(vx_context context) {
+vx_status Copy_Register(vx_context context) {
     vx_status status = VX_SUCCESS;
     // Add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Copytensor",
-                                       VX_KERNEL_RPP_COPYTENSOR,
+    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Copy",
+                                       VX_KERNEL_RPP_COPY,
                                        processCopy,
                                        3,
                                        validateCopy,

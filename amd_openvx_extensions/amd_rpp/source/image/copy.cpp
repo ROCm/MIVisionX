@@ -179,12 +179,12 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
-vx_status Copy_Register(vx_context context)
+vx_status CopybatchPD_Register(vx_context context)
 {
     vx_status status = VX_SUCCESS;
     // add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Copy",
-                                       VX_KERNEL_RPP_COPY,
+    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.CopybatchPD",
+                                       VX_KERNEL_RPP_COPYBATCHPD,
                                        processCopy,
                                        3,
                                        validateCopy,

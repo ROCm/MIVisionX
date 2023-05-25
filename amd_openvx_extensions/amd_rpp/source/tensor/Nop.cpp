@@ -89,9 +89,7 @@ static vx_status VX_CALLBACK processNop(vx_node node, const vx_reference *parame
 static vx_status VX_CALLBACK initializeNop(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     NopLocalData *data = new NopLocalData;
     memset(data, 0, sizeof(*data));
-#if ENABLE_OPENCL
-    THROW("initialize : Nop, OpenCL backend is not supported")
-#elif ENABLE_HIP
+#if ENABLE_HIP
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
@@ -126,11 +124,11 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
-vx_status NopTensor_Register(vx_context context) {
+vx_status Nop_Register(vx_context context) {
     vx_status status = VX_SUCCESS;
     // add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Noptensor",
-                                       VX_KERNEL_RPP_NOPTENSOR,
+    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Nop",
+                                       VX_KERNEL_RPP_NOP,
                                        processNop,
                                        3,
                                        validateNop,

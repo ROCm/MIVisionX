@@ -176,8 +176,8 @@ static vx_status VX_CALLBACK uninitializeBrightness(vx_node node, const vx_refer
     BrightnessLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
-    free(data->alpha);
-    free(data->beta);
+    if (data->alpha != nullptr) free(data->alpha);
+    if (data->beta != nullptr) free(data->beta);
     delete (data);
     return VX_SUCCESS;
 }

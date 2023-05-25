@@ -188,9 +188,9 @@ static vx_status VX_CALLBACK uninitializeCropMirrorNormalize(vx_node node, const
     CropMirrorNormalizeLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
-    free(data->multiplier);
-    free(data->offset);
-    free(data->mirror);
+    if (data->multiplier != nullptr) free(data->multiplier);
+    if (data->offset != nullptr) free(data->offset);
+    if (data->mirror != nullptr) free(data->mirror);
     delete (data);
     return VX_SUCCESS;
 }

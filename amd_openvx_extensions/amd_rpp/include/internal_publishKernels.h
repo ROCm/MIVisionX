@@ -52,7 +52,7 @@ vx_status ChannelExtractbatchPD_Register(vx_context);
 vx_status ColorTemperaturebatchPD_Register(vx_context);
 vx_status ColorTwistbatchPD_Register(vx_context);
 vx_status ContrastbatchPD_Register(vx_context);
-vx_status Copy_Register(vx_context);
+vx_status CopybatchPD_Register(vx_context);
 vx_status CropMirrorNormalizePD_Register(vx_context);
 vx_status CropPD_Register(vx_context);
 vx_status CustomConvolutionbatchPD_Register(vx_context);
@@ -89,7 +89,7 @@ vx_status MultiplybatchPD_Register(vx_context);
 vx_status NoisebatchPD_Register(vx_context);
 vx_status NonLinearFilterbatchPD_Register(vx_context);
 vx_status NonMaxSupressionbatchPD_Register(vx_context);
-vx_status Nop_Register(vx_context);
+vx_status NopbatchPD_Register(vx_context);
 vx_status PhasebatchPD_Register(vx_context);
 vx_status PixelatebatchPD_Register(vx_context);
 vx_status RainbatchPD_Register(vx_context);
@@ -122,12 +122,12 @@ vx_status Resizetensor_Register(vx_context);
 vx_status Brightness_Register(vx_context);
 vx_status Resize_Register(vx_context);
 vx_status CropMirrorNormalize_Register(vx_context);
-vx_status NopTensor_Register(vx_context);
-vx_status CopyTensor_Register(vx_context);
+vx_status Nop_Register(vx_context);
+vx_status Copy_Register(vx_context);
 
 // kernel names
-#define VX_KERNEL_RPP_NOP_NAME                          "org.rpp.Nop"
-#define VX_KERNEL_RPP_COPY_NAME                         "org.rpp.Copy"
+#define VX_KERNEL_RPP_NOPBATCHPD_NAME                   "org.rpp.NopbatchPD"
+#define VX_KERNEL_RPP_COPYBATCHPD_NAME                  "org.rpp.CopybatchPD"
 #define VX_KERNEL_RPP_BRIGHTNESSBATCHPD_NAME      		"org.rpp.BrightnessbatchPD"
 #define VX_KERNEL_RPP_GAMMACORRECTIONBATCHPD_NAME      	"org.rpp.GammaCorrectionbatchPD"
 #define VX_KERNEL_RPP_BLENDBATCHPD_NAME      			"org.rpp.BlendbatchPD"
@@ -211,8 +211,8 @@ vx_status CopyTensor_Register(vx_context);
 
 //tensor
 #define VX_KERNEL_RPP_BRIGHTNESS_NAME                            "org.rpp.Brightness"
-#define VX_KERNEL_RPP_COPYTENSOR_NAME                            "org.rpp.Copytensor"
+#define VX_KERNEL_RPP_COPY_NAME                                  "org.rpp.Copy"
 #define VX_KERNEL_RPP_CROPMIRRORNORMALIZE_NAME                   "org.rpp.CropMirrorNormalize"
-#define VX_KERNEL_RPP_NOPTENSOR_NAME                             "org.rpp.Noptensor"
+#define VX_KERNEL_RPP_NOP_NAME                                   "org.rpp.Nop"
 #define VX_KERNEL_RPP_RESIZE_NAME                                "org.rpp.Resize"
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

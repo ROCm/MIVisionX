@@ -763,22 +763,12 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
     case 55:
     {
         std::cout << ">>>>>>> Running "
-                  << "rocalResizeMirrorNormalize" << std::endl;
-        std::vector<float> mean = {0,0,0};
-        std::vector<float> std_dev = {1,1,1};
-        image1 = rocalResizeMirrorNormalize(handle, image0, resize_w, resize_h, mean, std_dev, true);
-
+                  << "rocalCropMirrorNormalizeFixed_center crop" << std::endl;
+        std::vector<float> mean;
+        std::vector<float> std_dev;
+        image1 = rocalCropMirrorNormalize(handle, image0, 1, 224, 224, 0.5, 0.5, 0.5, mean, std_dev, true);
     }
     break;
-    // case 55:
-    // {
-    //     std::cout << ">>>>>>> Running "
-    //               << "rocalCropMirrorNormalizeFixed_center crop" << std::endl;
-    //     std::vector<float> mean;
-    //     std::vector<float> std_dev;
-    //     image1 = rocalCropMirrorNormalize(handle, image0, 1, 224, 224, 0.5, 0.5, 0.5, mean, std_dev, true);
-    // }
-    // break;
 
     default:
         std::cout << "Not a valid option! Exiting!\n";

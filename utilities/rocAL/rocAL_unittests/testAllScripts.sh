@@ -117,7 +117,7 @@ do
         # caffe2 detection
         ./rocAL_unittests 9 "$caffe2_detection_path" "${output_path}FishEye_${rgb_name[$rgb]}_${device_name}" $width $height 10 $device $rgb 0 $display
         ./rocAL_unittests 9 "$caffe2_detection_path" "${output_path}Pixelate_${rgb_name[$rgb]}_${device_name}" $width $height 19 $device $rgb 0 $display
-        # ./rocAL_unittests 9 "$caffe2_detection_path" "${output_path}CropCenter_${rgb_name[$rgb]}_${device_name}_cmn" $width $height 55 $device $rgb 0 $display
+        ./rocAL_unittests 9 "$caffe2_detection_path" "${output_path}CropCenter_${rgb_name[$rgb]}_${device_name}_cmn" $width $height 55 $device $rgb 0 $display
 
         # mxnet 
         ./rocAL_unittests 11 "$mxnet_path" "${output_path}Jitter_${rgb_name[$rgb]}_${device_name}" $width $height 39 $device $rgb 0 $display

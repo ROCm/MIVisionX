@@ -79,7 +79,6 @@ class ROCALGenericIterator(object):
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
         self.display = display
-        self.output_memory_type = self.loader._output_memory_type
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
@@ -90,7 +89,7 @@ class ROCALGenericIterator(object):
         self.p = (1 if (color_format == int(types.GRAY)) else 3)
         self.labels_size = ((self.bs*self.loader._numOfClasses) if (self.loader._oneHotEncoding == True) else self.bs)
         if self.tensor_format == types.NCHW:
-            if self.output_memory_type == "cpu":
+            if self.device == "cpu":
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:
@@ -110,7 +109,7 @@ class ROCALGenericIterator(object):
                 self.labels = torch.empty(self.labels_size, dtype = torch.int32, device = torch_gpu_device)
 
         else: #NHWC
-            if self.output_memory_type == "cpu":
+            if self.device == "cpu":
                 if self.tensor_dtype == types.FLOAT:
                     self.out = torch.empty((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype=torch.float32)
                 elif self.tensor_dtype == types.FLOAT16:

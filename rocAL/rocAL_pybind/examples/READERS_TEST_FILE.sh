@@ -103,8 +103,11 @@ rocAL_api_tf_detection_pipeline=1
 rocAL_api_video_pipeline=1
 ####################################################################################################################################
 
-
-
+if [[ $backend == "gpu" || $backend == "GPU" ]]; then
+    echo "TF tests does not support gpu backend"
+    rocAL_api_tf_classification_reader=0
+    rocAL_api_tf_detection_pipeline=0
+fi
 
 ####################################################################################################################################
 if [[ rocAL_api_python_unittest -eq 1 ]]; then

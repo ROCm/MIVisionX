@@ -61,6 +61,7 @@ class ROCALGenericIteratorDetection(object):
         self.offset = offset
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
+        self.loader._output_memory_type = types.CPU_MEMORY 
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)

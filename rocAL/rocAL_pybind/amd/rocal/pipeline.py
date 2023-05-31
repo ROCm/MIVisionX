@@ -210,21 +210,12 @@ class Pipeline(object):
                 b.rocalToTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
                                         multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
         else:
-            if self._output_memory_type == types.CPU:
-                out = np.frombuffer(array, dtype=array.dtype)
-                if tensor_dtype == types.FLOAT:
-                    b.rocalToTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
-                                            multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
-                elif tensor_dtype == types.FLOAT16:
-                    b.rocalToTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
-                                            multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
-            else:
-                if tensor_dtype == types.FLOAT:
-                    b.rocalCupyToTensor32(self._handle, array.data.ptr, types.NCHW,
-                                            multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
-                elif tensor_dtype == types.FLOAT16:
-                    b.rocalCupyToTensor16(self._handle, ctypes.c_void_p(array.ctypes.data), types.NCHW,
+            if tensor_dtype == types.FLOAT:
+                b.rocalCupyToTensor32(self._handle, array.data.ptr, types.NCHW,
                                         multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
+            elif tensor_dtype == types.FLOAT16:
+                b.rocalCupyToTensor16(self._handle, ctypes.c_void_p(array.ctypes.data), types.NCHW,
+                                    multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
     def GetOneHotEncodedLabels(self, array, device):
         if device=="cpu":
             if (isinstance(array,np.ndarray)):

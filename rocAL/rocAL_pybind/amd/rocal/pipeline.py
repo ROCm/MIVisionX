@@ -215,7 +215,7 @@ class Pipeline(object):
                                         multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
             elif tensor_dtype == types.FLOAT16:
                 b.rocalCupyToTensor16(self._handle, ctypes.c_void_p(array.ctypes.data), types.NCHW,
-                                    multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
+                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
     def GetOneHotEncodedLabels(self, array, device):
         if device=="cpu":
             if (isinstance(array,np.ndarray)):

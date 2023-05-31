@@ -210,7 +210,7 @@ class Pipeline(object):
                 b.rocalToTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
                                         multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), self._output_memory_type)
         else:
-            if self.self._output_memory_type == types.CPU:
+            if self._output_memory_type == types.CPU:
                 out = np.frombuffer(array, dtype=array.dtype)
                 if tensor_dtype == types.FLOAT:
                     b.rocalToTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,

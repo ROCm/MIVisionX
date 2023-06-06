@@ -100,6 +100,12 @@ void HWJpegDecoder::initialize(int dev_id){
 
     if ((ret = av_hwdevice_ctx_create(&_hw_device_ctx, AV_HWDEVICE_TYPE_VAAPI, device_name, NULL, 0)) < 0)
         THROW("Couldn't find vaapi device for device_id: " + device_name)
+    _hw_type = av_hwdevice_find_type_by_name("vaapi");
+    if (_hw_type == AV_HWDEVICE_TYPE_NONE) {
+        THROW("HardwareJpegDecoder::Initialize ERROR: vaapi is not supported for this device\n");
+    }
+    else
+        INFO("HardwareJpegDecoder::Initialize : Found vaapi device for the device\n");
 };
 
 
@@ -107,13 +113,6 @@ Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t i
 {
     struct buffer_data bd = { 0 };
     int ret = 0;
-    AVHWDeviceType hw_type = av_hwdevice_find_type_by_name("vaapi");
-    if (hw_type == AV_HWDEVICE_TYPE_NONE) {
-        WRN("HardwareJpegDecoder::Initialize ERROR: vaapi is not supported for this device\n");
-        return Status::HEADER_DECODE_FAILED;
-    }
-    else
-        INFO("HardwareJpegDecoder::Initialize : Found vaapi device for the device\n");
     bd.ptr  = input_buffer;
     bd.size = input_size;
 
@@ -188,7 +187,7 @@ Decoder::Status HWJpegDecoder::decode_info(unsigned char* input_buffer, size_t i
             WRN("HardwareJpegDecoder::Initialize ERROR: decoder " + STR(_decoder->name) + " doesn't support device_type " + STR(av_hwdevice_get_type_name(hw_type)));
             return Status::HEADER_DECODE_FAILED;
         }
-        if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX && config->device_type == hw_type) {
+        if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX && config->device_type == _hw_type) {
             break;
         }
     }
@@ -299,6 +298,10 @@ Decoder::Status HWJpegDecoder::decode(unsigned char *input_buffer, size_t input_
         {
             ret = avcodec_receive_frame(_video_dec_ctx, dec_frame);
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) break;
+            if (ret < 0) {
+                ERR("HardWareJpegDecoder::avcodec_receive_frame failed\n");
+                break;
+            }
             //retrieve data from GPU to CPU
             if ((av_hwframe_transfer_data(sw_frame, dec_frame, 0)) < 0) {
                 ERR("HardWareVideoDecoder::Decode avcodec_receive_frame() failed");
@@ -314,19 +317,20 @@ Decoder::Status HWJpegDecoder::decode(unsigned char *input_buffer, size_t input_
                 // copy from frame to out_buffer
                 memcpy(output_buffer, sw_frame->data[0], sw_frame->linesize[0] * max_decoded_height);
             }
-            av_frame_unref(sw_frame);
-            av_frame_unref(dec_frame);
             av_packet_unref(&pkt);
             output_buffer += image_size;
             frame_count++;
-            av_frame_unref(sw_frame);
-            av_frame_unref(dec_frame);
         }
-        av_packet_unref(&pkt);
     } while (!end_of_stream);
+
+    av_packet_unref(&pkt);
     av_frame_free(&dec_frame);
     av_frame_free(&sw_frame);
     sws_freeContext(swsctx);
+    avio_context_free(&_io_ctx);
+    // release video_dec_context and fmt_context after each file decoding
+    avcodec_free_context(&_video_dec_ctx);
+    avformat_close_input(&_fmt_ctx);
     actual_decoded_width = max_decoded_width;
     actual_decoded_height = max_decoded_height;
     return status;

@@ -76,6 +76,7 @@ public:
 private:
     void release();
     const char *_src_filename = NULL;
+    AVHWDeviceType _hw_type = AV_HWDEVICE_TYPE_NONE;
     AVBufferRef *_hw_device_ctx = NULL;
     AVIOContext *_io_ctx = NULL;
     AVFormatContext *_fmt_ctx = NULL;

@@ -280,9 +280,9 @@ namespace rocal{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_cupy_one_hot_label_copy(RocalContext context, size_t array_ptr , unsigned numOfClasses, int dest)
+    py::object wrapper_cupy_one_hot_label_copy(RocalContext context, size_t array_ptr, unsigned numOfClasses, int dest)
     {
-        void * ptr = (void*)array_ptr;
+        void * ptr = (void*) array_ptr;
         // call pure C++ function
         rocalGetOneHotImageLabels(context, ptr, numOfClasses, dest);
         return py::cast<py::none>(Py_None);

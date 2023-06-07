@@ -37,7 +37,8 @@ tensor_type_nnir2openvx = {
     'F016' : 'VX_TYPE_FLOAT16',
     'U016' : 'VX_TYPE_UINT16',
     'I016' : 'VX_TYPE_INT16',
-    'U008' : 'VX_TYPE_UINT8'
+    'U008' : 'VX_TYPE_UINT8',
+    'I064' : 'VX_TYPE_INT64'
 }
 
 tensor_type2size = {
@@ -45,7 +46,8 @@ tensor_type2size = {
     'F016' : 2,
     'U016' : 2,
     'I016' : 2,
-    'U008' : 1    
+    'U008' : 1,
+    'I064' : 8
 }
 
 def generateLicenseForCPP(f):
@@ -836,13 +838,59 @@ MIVID_API_ENTRY vx_status MIVID_API_CALL mvAddToGraph(vx_graph graph, %s, %s, co
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'copy'or node.type == 'transpose':
+            elif node.type == 'copy':
                 f.write( \
 """
+    { vx_node node = vxCopyNode(graph, (vx_reference)%s, (vx_reference)%s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
+            elif node.type == 'transpose' or node.type == 'permute': 
+                if node.type == 'transpose':
+                    order_list = node.attr.get('axes')
+                elif node.type == 'permute':
+                    order_list = node.attr.get('order')
+                f.write( \
+"""
+    { 
+      int order_value[4] = {%d,%d,%d,%d}; 
+      vx_array order =  vxCreateArray(context, VX_TYPE_INT32, 4);
+      ERROR_CHECK_STATUS(vxTruncateArray(order,0));
+      int *order_ptr = &order_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(order, 4, order_ptr, sizeof(int)));
+      vx_node node = vxPermuteLayer(graph, %s, order, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (order_list[0],order_list[1],order_list[2],order_list[3],node.inputs[0], node.outputs[0]))
+            elif node.type == 'matmul':
+                alpha = node.attr.get('alpha')
+                beta = node.attr.get('beta')
+                transA = node.attr.get('transA')
+                transB = node.attr.get('transB')
+                f.write( \
+"""
+    { _vx_tensor_matrix_multiply_params_t matrix_mul_params = { 0 };
+      matrix_mul_params.transpose_input1 = %d;
+      matrix_mul_params.transpose_input2 = %d;
+      matrix_mul_params.transpose_input3 = %d;
+      vx_node node = vxTensorMatrixMultiplyNode(graph, %s, %s, %s, &matrix_mul_params, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % ( \
+        1 if transA else 0, 1 if transB else 0, 0, node.inputs[0], node.inputs[1], node.inputs[2] if beta else 'NULL', node.outputs[0]))
+            elif node.type == 'argmax':
+                f.write( \
+"""
+    { 
+      vx_node node = vxArgmaxLayer(graph, %s, (vx_reference)%s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+"""  
+    % (node.inputs[0], node.outputs[0]))
             elif node.type == 'upsample':
                 f.write( \
 """
@@ -952,43 +1000,44 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
         tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
         for tensor in graph.outputs:
             f.write( \
-"""            vx_size out_dim_%d[%d] = { %s };
-            output_tensor = vxCreateTensor(handle->context, %d, out_dim_%d, %s, 0);
+"""            vx_size out_dim_%s[%d] = { %s };
+            output_tensor = vxCreateTensor(handle->context, %d, out_dim_%s, %s, 0);
             if ((status = vxGetStatus((vx_reference)output_tensor)) != VX_SUCCESS) {
                 printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
             }
             else {
                 handle->outputs.push_back(output_tensor);
-""" % (i, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
-       len(tensor.shape), i, tensor_type_nnir2openvx[tensor.type], 'x'.join([str(v) for v in tensor.shape])))
-            f.write( \
+            }
+""" % (tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
+       len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], 'x'.join([str(v) for v in tensor.shape])))
+        
+        f.write( \
 """
-                if((status = mvAddToGraph(handle->graph, %s, %s, binaryFilename)) != VX_SUCCESS) {
-                    printf("ERROR: mvAddToGraph: failed (%%d)\\n", status);
-                }
-                else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
-                    printf("ERROR: vxVerifyGraph: failed (%%d)\\n", status);
-                }
-                else {
-                    successful = true;
-                }
+            if((status = mvAddToGraph(handle->graph, %s, %s, binaryFilename)) != VX_SUCCESS) {
+                printf("ERROR: mvAddToGraph: failed (%%d)\\n", status);
+            }
+            else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
+                printf("ERROR: vxVerifyGraph: failed (%%d)\\n", status);
+            }
+            else {
+                successful = true;
             }
         }
     }
 fallback:
     if(!successful && handle) {
 """ % (', '.join(input_str), ', '.join(output_str)))
-            for i in range(len(graph.inputs)):
+        for i in range(len(graph.inputs)):
                 f.write( \
 """        if(handle->inputs[%d])
             vxReleaseTensor(&handle->inputs[%d]);
 """ % ( i, i))          
-            for i in range(len(graph.outputs)):
+        for i in range(len(graph.outputs)):
                 f.write( \
 """        if(handle->outputs[%d])
             vxReleaseTensor(&handle->outputs[%d]);
 """ % ( i, i))          
-            f.write( \
+        f.write( \
 """        if(handle->graph)
             vxReleaseGraph(&handle->graph);
         if(handle->context)
@@ -1101,7 +1150,7 @@ MIVID_API_ENTRY mv_status MIVID_API_CALL mvCopyToTensorFromMem(mivid_handle hand
     return (mv_status)status;
 }
 """ % (input_elm_size))          
-            f.write( \
+        f.write( \
 """
 
 MIVID_API_ENTRY mv_status MIVID_API_CALL mvCopyToTensorFromFile(mivid_handle handle, int input_num, const char *input_name, bool reverseOrder, float preprocess_mulfac, float preprocess_addfac)
@@ -1150,7 +1199,7 @@ MIVID_API_ENTRY mv_status MIVID_API_CALL mvCopyToTensorFromFile(mivid_handle han
     return (mv_status)status;
 }
 """ % (input_elm_size, input_elm_size, input_elm_size, input_elm_size))          
-            f.write( \
+        f.write( \
 """
 
 MIVID_API_ENTRY mv_status MIVID_API_CALL mvGetOutput(mivid_handle handle, int output_num, void *out_tensor_mem, vx_size size)

@@ -352,6 +352,8 @@ def main ():
     if (len(sys.argv) > 3):
         if (sys.argv[3] == "--node_type_append"):
             node_type_append = int(sys.argv[4])
+
+    # check if the input is valid
     if (os.path.exists(inputFolder) == False):
         print('ERROR: unable to open: ' + inputFolder)
         sys.exit(1)

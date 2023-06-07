@@ -1073,12 +1073,13 @@ void MasterGraph::output_routine()
             if(full_batch_meta_data)
             {
                 // get roi width and height of output image
-                for (unsigned int i = 0; i < _user_batch_size; i++)
+                auto roi_sizes_batch = full_batch_meta_data->get_img_roi_sizes_batch();
+                for (unsigned int i = 0; i < roi_sizes_batch.size(); i++)
                 {
                     ImgSize img_roi_size;
                     img_roi_size.w = _output_image_info.get_roi_width()[i];
                     img_roi_size.h = _output_image_info.get_roi_height()[i];
-                    full_batch_meta_data->get_img_roi_sizes_batch()[i] = img_roi_size;                
+                    roi_sizes_batch[i] = img_roi_size;                
                 }
             }
             _graph->process();

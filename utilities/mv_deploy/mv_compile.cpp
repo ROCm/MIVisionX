@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <string>
 #include <sstream>
 #include <sys/stat.h>
+#include <filesystem>
 #include <unistd.h>
 
 // helper functions
@@ -84,6 +85,10 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
         } else {
             printf("Env MIVISIONX_MODEL_COMPILER_PATH is not specified, using default %s\n", compiler_path.c_str());
         }
+        if (!std::filesystem::exists(model_name)) {
+            error("model %s does not exist", model_name);
+            return MV_FAILURE;
+        }
         // run model compiler and generate NNIR graph
         // step-1: run python3 caffe_to_nnir.py <.caffemodel> nnir_output --input-dims <args->getBatchSize(),dimOutput[2], dimOutput[1], dimOutput[0]>
         std::string model_extension = std::string(strchr(model_name, '.'));
@@ -100,7 +105,6 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
             status = system(command.c_str());
         }
         else if (!model_extension.compare(".onnx")) {
-            // todo:: add and execute commands for onnx_to_nnir.py, if failed return MV_ERROR_NOT_SUPPORTED error
             command = "python3 ";
             command += compiler_path + "/python" + "/onnx_to_nnir.py";
             command += " " + std::string(model_name);
@@ -113,7 +117,12 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
             status = system(command.c_str());
 
         } else if (!model_extension.compare(".nnef")) {
-            // do nothing; convert to openvx in later steps
+            command = "python3 ";
+            command += compiler_path + "/python" + "/nnef_to_nnir.py";
+            command += " " + std::string(model_name);
+            command += " nnir-output";
+            info("executing: %% %s", command.c_str());
+            status = system(command.c_str());
         }
         else{
             return MV_ERROR_NOT_SUPPORTED;  

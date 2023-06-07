@@ -22,7 +22,7 @@
 
 cmake_minimum_required(VERSION 3.0)
 project(mv_compile)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 include_directories(${CMAKE_INSTALL_PREFIX}/include
                     ${PROJECT_SOURCE_DIR}
@@ -32,7 +32,7 @@ add_executable(mv_compile mv_compile.cpp)
 # install MIVisionX executables -- {ROCM_PATH}/bin
 install (TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++17")
 target_link_libraries(mv_compile ${CMAKE_DL_LIBS})
 
 if(BUILD_DEV)

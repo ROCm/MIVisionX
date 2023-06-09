@@ -70,13 +70,13 @@ opencvVersion = args.opencv
 ProtoBufVersion = args.protobuf
 rppVersion = args.rpp
 pybind11Version = args.pybind11
-ffmpegInstall = args.ffmpeg
-neuralNetInstall = args.neural_net
-inferenceInstall = args.inference
-rocalInstall = args.rocal
-developerInstall = args.developer
-reinstall = args.reinstall
-backend = args.backend
+ffmpegInstall = args.ffmpeg.upper()
+neuralNetInstall = args.neural_net.upper()
+inferenceInstall = args.inference.upper()
+rocalInstall = args.rocal.upper()
+developerInstall = args.developer.upper()
+reinstall = args.reinstall.upper()
+backend = args.backend.upper()
 ROCM_PATH = args.rocm_path
 
 if "ROCM_PATH" in os.environ:

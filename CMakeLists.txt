@@ -148,6 +148,39 @@ else()
   message("-- ${Cyan}ROCAL Module turned OFF by user option -D ROCAL=OFF ${ColourReset}")
 endif()
 
+enable_testing()
+include(CTest)
+add_test(
+  NAME
+    openvx_canny
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_SOURCE_DIR}/tests/openvx/canny"
+                              "${CMAKE_CURRENT_BINARY_DIR}/canny"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+add_test(
+  NAME
+    openvx_channel_extract
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_SOURCE_DIR}/tests/openvx/channel_extract"
+                              "${CMAKE_CURRENT_BINARY_DIR}/channel_extract"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+add_test(
+  NAME
+    openvx_color_convert
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_SOURCE_DIR}/tests/openvx/color_convert"
+                              "${CMAKE_CURRENT_BINARY_DIR}/color_convert"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})
 set(CPACK_PACKAGE_NAME          "mivisionx")

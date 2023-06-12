@@ -1077,8 +1077,7 @@ static mv_status copyTensor(std::string fileName, vx_size *dims, vx_size *stride
                         *dstG++ = src[1]*preprocess_mulfac + preprocess_addfac;
                         *dstB++ = src[0]*preprocess_mulfac + preprocess_addfac;
                     }
-                } else
-                {
+                } else {
                     unsigned short * dstR = (unsigned short *)write_ptr + ((n * stride[3] + y * stride[1]) >> 2);
                     unsigned short * dstG = dstR + (stride[2] >> 2);
                     unsigned short * dstB = dstG + (stride[2] >> 2);                    

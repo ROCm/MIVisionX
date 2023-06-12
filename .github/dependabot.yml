@@ -10,3 +10,10 @@ updates:
     open-pull-requests-limit: 10
     schedule:
       interval: "daily"
+    target-branch: "develop"
+    labels:
+      - "docs"
+      - "dependencies"
+      - "noCI"
+    reviewers:
+      - "samjwu"

@@ -948,6 +948,7 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
         handle->context = vxCreateContext();
         if((status = vxGetStatus((vx_reference)handle->context)) != VX_SUCCESS) {
             printf("ERROR: vxCreateContext: failed (%d)\\n", status);
+            return nullptr;
         }
         else {
             vxRegisterLogCallback(handle->context, log_callback, vx_false_e);
@@ -967,7 +968,8 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
 """)
         for tensor in graph.inputs:
             f.write( \
-"""            vx_size inp_dim_%s[%d] = { %s };
+"""            
+            vx_size inp_dim_%s[%d] = { %s };
             inp_stride[0] = %d, inp_stride[1] = %d, inp_stride[2] = %d, inp_stride[3] = %d;
             void *inp_mem = nullptr;
             if (g_mv_preprocess_callback != nullptr) {
@@ -987,7 +989,8 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
                 }
                 if ((status = vxGetStatus((vx_reference)input_tensor)) != VX_SUCCESS) {
                     printf("ERROR: vxCreateTensor(input:[%s]): failed (%%d)\\n", status);
-                }else
+                    return nullptr;
+                } else
                 {
                     handle->inputs.push_back(input_tensor);
                 }
@@ -998,11 +1001,12 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
         tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
         for tensor in graph.outputs:
             f.write( \
-"""            vx_size out_dim_%s[%d] = { %s };
+"""            
+            vx_size out_dim_%s[%d] = { %s };
             output_tensor = vxCreateTensor(handle->context, %d, out_dim_%s, %s, 0);
             if ((status = vxGetStatus((vx_reference)output_tensor)) != VX_SUCCESS) {
                 printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
-                return MV_ERROR_INVALID_VALUE;
+                return nullptr;
             }
             else {
                 handle->outputs.push_back(output_tensor);
@@ -1014,11 +1018,11 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
 """
             if((status = mvAddToGraph(handle->graph, %s, %s, binaryFilename)) != VX_SUCCESS) {
                 printf("ERROR: mvAddToGraph: failed (%%d)\\n", status);
-                return MV_ERROR_INVALID_PARAMETERS;
+                return nullptr;
             }
             else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
                 printf("ERROR: vxVerifyGraph: failed (%%d)\\n", status);
-                return MV_ERROR_INVALID_GRAPH;
+                return nullptr;
             }
             else {
                 successful = true;

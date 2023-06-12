@@ -27,6 +27,72 @@ cmake_minimum_required (VERSION 3.0)
 
 add_test(
   NAME
+    openvx_canny_CPU
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/canny"
+                              "${CMAKE_CURRENT_BINARY_DIR}/canny"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+set_property(TEST openvx_canny_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+add_test(
+  NAME
+    openvx_channel_extract_CPU
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/channel_extract"
+                              "${CMAKE_CURRENT_BINARY_DIR}/channel_extract"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+set_property(TEST openvx_channel_extract_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+add_test(
+  NAME
+    openvx_color_convert_CPU
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/color_convert"
+                              "${CMAKE_CURRENT_BINARY_DIR}/color_convert"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+set_property(TEST openvx_color_convert_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+add_test(
+  NAME
+    openvx_canny_GPU
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/canny"
+                              "${CMAKE_CURRENT_BINARY_DIR}/canny"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+set_property(TEST openvx_canny_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+add_test(
+  NAME
+    openvx_channel_extract_GPU
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/channel_extract"
+                              "${CMAKE_CURRENT_BINARY_DIR}/channel_extract"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+set_property(TEST openvx_channel_extract_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+add_test(
+  NAME
+    openvx_color_convert_GPU
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/color_convert"
+                              "${CMAKE_CURRENT_BINARY_DIR}/color_convert"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+set_property(TEST openvx_color_convert_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+add_test(
+  NAME
     openvx_canny
   COMMAND
     "${CMAKE_CTEST_COMMAND}"
@@ -52,6 +118,16 @@ add_test(
     "${CMAKE_CTEST_COMMAND}"
              --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/color_convert"
                               "${CMAKE_CURRENT_BINARY_DIR}/color_convert"
+             --build-generator "${CMAKE_GENERATOR}"
+             --test-command "${CMAKE_CTEST_COMMAND}"
+)
+add_test(
+  NAME
+    openvx_graph
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+             --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/canny"
+                              "${CMAKE_CURRENT_BINARY_DIR}/canny"
              --build-generator "${CMAKE_GENERATOR}"
              --test-command "${CMAKE_CTEST_COMMAND}"
 )

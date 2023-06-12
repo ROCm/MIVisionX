@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include <cstring>
 #include <iostream>
+#include <chrono>
 
 #include <VX/vx.h>
 #include <VX/vx_compatibility.h>
@@ -103,7 +104,19 @@ int main(int argc, char **argv)
 
     ERROR_CHECK_STATUS(vxVerifyGraph(graph));
 
+    auto start = std::chrono::steady_clock::now();
     ERROR_CHECK_STATUS(vxProcessGraph(graph));
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cout << "STATUS: vxProcessGraph() took " << (elapsed_seconds.count()*1000.0f) << "msec (1st iteration)\n";
+
+    start = std::chrono::steady_clock::now();
+    for(int i = 0; i < 100; i++){
+        ERROR_CHECK_STATUS(vxProcessGraph(graph));
+    }
+    end = std::chrono::steady_clock::now();
+    elapsed_seconds = (end-start)/100;
+    std::cout << "STATUS: vxProcessGraph() took " << (elapsed_seconds.count()*1000.0f) << "msec (AVG)\n";
 
     ERROR_CHECK_STATUS(vxReleaseGraph(&graph));
     ERROR_CHECK_STATUS(vxReleaseImage(&yuv_image));

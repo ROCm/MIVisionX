@@ -447,9 +447,8 @@ static mv_status MIVID_CALLBACK preprocess_callback(mivid_session session, vx_te
 {
     if (g_mv_preprocess_callback) {
         return (mv_status)g_mv_preprocess_callback(session, inp_tensor, g_mv_preproc_args);
-    }else
-    {
-        printf("ERROR: preprocess callback function is not set by user \\n");
+    } else {
+        std::cerr << "ERROR: preprocess callback function is not set by user" << std::endl;
         return MV_FAILURE;
     }
 }
@@ -458,9 +457,8 @@ static mv_status MIVID_CALLBACK postprocess_callback(mivid_session session, vx_t
 {
     if (g_mv_preprocess_callback) {
         return (mv_status)g_mv_postprocess_callback(session, outp_tensor);
-    }else
-    {
-        printf("ERROR: postprocess callback function is not set by user \\n");
+    } else {
+        std::cerr << "ERROR: postprocess callback function is not set by user" << std::endl;
         return MV_FAILURE;
     }
 }
@@ -1004,6 +1002,7 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
             output_tensor = vxCreateTensor(handle->context, %d, out_dim_%s, %s, 0);
             if ((status = vxGetStatus((vx_reference)output_tensor)) != VX_SUCCESS) {
                 printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
+                return MV_ERROR_INVALID_VALUE;
             }
             else {
                 handle->outputs.push_back(output_tensor);
@@ -1015,9 +1014,11 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
 """
             if((status = mvAddToGraph(handle->graph, %s, %s, binaryFilename)) != VX_SUCCESS) {
                 printf("ERROR: mvAddToGraph: failed (%%d)\\n", status);
+                return MV_ERROR_INVALID_PARAMETERS;
             }
             else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
                 printf("ERROR: vxVerifyGraph: failed (%%d)\\n", status);
+                return MV_ERROR_INVALID_GRAPH;
             }
             else {
                 successful = true;
@@ -1145,6 +1146,7 @@ MIVID_API_ENTRY mv_status MIVID_API_CALL mvCopyToTensorFromMem(mivid_handle hand
 
         if ((status = vxSwapTensorHandle(handle->inputs[input_num], input_data_ptr, nullptr)) != VX_SUCCESS) {
             printf("ERROR: mvCopyToTensorFromMem: vxSwapTensorHandle: failed (%%d)\\n", status);
+            return MV_FAILURE;
         }
     }
     return (mv_status)status;
@@ -1228,6 +1230,7 @@ MIVID_API_ENTRY mv_status MIVID_API_CALL mvGetOutput(mivid_handle handle, int ou
 
         if ((status = vxCopyTensorPatch(handle->outputs[output_num], num_of_dims, nullptr, nullptr, stride, out_tensor_mem, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
             printf("ERROR: ideGetOutput: vxCopyTensorPatch: failed (%%d)\\n", status);
+            return MV_FAILURE;
         }
     }
     return (mv_status)status;

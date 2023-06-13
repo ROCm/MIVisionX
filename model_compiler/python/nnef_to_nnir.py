@@ -31,7 +31,7 @@ import nnef
 import math
 import nnir as ir
 import numpy as np
-import sys
+import sys, os
 
 nnef2ir_attr = {
     'axis' : 'axis',
@@ -352,6 +352,15 @@ def main ():
     if (len(sys.argv) > 3):
         if (sys.argv[3] == "--node_type_append"):
             node_type_append = int(sys.argv[4])
+
+    # check if the input is valid
+    if (os.path.exists(inputFolder) == False):
+        print('ERROR: unable to open: ' + inputFolder)
+        sys.exit(1)
+
+    # if .nnef file is given, use the nnef folder instead
+    if (os.path.isfile(inputFolder)):
+        inputFolder = inputFolder.rsplit('/', 1)[0]
 
     print('reading NNEF model from ' + inputFolder + '...')
     nnef2ir(inputFolder, outputFolder, node_type_append)

@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <string>
 #include <sstream>
 #include <sys/stat.h>
+#include <filesystem>
 #include <unistd.h>
 
 // helper functions
@@ -77,13 +78,16 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
         printf("compiling model for backend OpenVX_Rocm_GPU\n");
         std::string compiler_path = "/opt/rocm/libexec/mivisionx/model_compiler";       // default
         char *model_compiler_path = getenv("MIVISIONX_MODEL_COMPILER_PATH");
-        std::string install_dir = std::string(install_folder).empty()? "mvdeploy_lib" : std::string(install_folder); 
+        std::string install_dir = std::string(install_folder).empty() ? "mvdeploy_lib" : std::string(install_folder); 
         if (model_compiler_path != nullptr) {
             compiler_path = std::string(model_compiler_path);
             //return MV_FAILURE;  
-        } else
-        {
+        } else {
             printf("Env MIVISIONX_MODEL_COMPILER_PATH is not specified, using default %s\n", compiler_path.c_str());
+        }
+        if (!std::filesystem::exists(model_name)) {
+            error("model %s does not exist", model_name);
+            return MV_FAILURE;
         }
         // run model compiler and generate NNIR graph
         // step-1: run python3 caffe_to_nnir.py <.caffemodel> nnir_output --input-dims <args->getBatchSize(),dimOutput[2], dimOutput[1], dimOutput[0]>
@@ -101,13 +105,34 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
             status = system(command.c_str());
         }
         else if (!model_extension.compare(".onnx")) {
-            // todo:: add and execute commands for onnx_to_nnir.py, if failed return MV_ERROR_NOT_SUPPORTED error
+            command = "python3 ";
+            command += compiler_path + "/python" + "/onnx_to_nnir.py";
+            command += " " + std::string(model_name);
+            command += " nnir-output --input_dims";
+            command += " " + std::to_string(batchSize)
+                    +  "," + std::to_string(input_dims[2])
+                    +  "," + std::to_string(input_dims[1])
+                    +  "," + std::to_string(input_dims[0]);
+            info("executing: %% %s", command.c_str());
+            status = system(command.c_str());
 
         } else if (!model_extension.compare(".nnef")) {
-            // do nothing; convert to openvx in later steps
+            command = "python3 ";
+            command += compiler_path + "/python" + "/nnef_to_nnir.py";
+            command += " " + std::string(model_name);
+            command += " nnir-output";
+            info("executing: %% %s", command.c_str());
+            status = system(command.c_str());
         }
         else{
             return MV_ERROR_NOT_SUPPORTED;  
+        }
+        if (status) {
+            error("model conversion to nnir failed with status %d", status);
+            return MV_FAILURE;
+        }
+        else {
+            info("model conversion successful");
         }
         // step-2: run nnir_update.py for fusing kernels and quantizing
         if (update_params != nullptr) {
@@ -151,23 +176,24 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
             command = "python3 "+ compiler_path + "/python/" + "nnir_to_clib.py nnir-output ";
         }
 
-        command += install_dir + ">>nnir_to_clib.log"; 
+        command += install_dir + " >> nnir_to_clib.log"; 
         info("executing: %% %s", command.c_str());
         status = system(command.c_str());
-        info("nnir_to_clib generated completed (%d)", status);
         if (status) {
+            error("command-failed(%d): %s", status, command.c_str());
             return MV_FAILURE;
         }
+        info("nnir_to_clib completed");
         // step-4: do cmake and make to generate clib
         std::string buildFolder = install_dir + "/build";
         if((mkdir(buildFolder.c_str(), 0770) < 0)) {
             error("unable to create folder: %s", buildFolder.c_str());
         }
         status = chdir(buildFolder.c_str());
-        command = "cmake ../ >>../cmake.log";
+        command = "cmake ../ >> ../cmake.log";
         info("executing: %% %s", command.c_str());
         status = system(command.c_str());
-        command = "make >>../make.log";
+        command = "make >> ../make.log";
         info("executing: %% %s", command.c_str());
         status = system(command.c_str());
         if (status) {

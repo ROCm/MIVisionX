@@ -84,7 +84,7 @@ if(ROCAL_PYTHON)
     endif()
 
     set(Python3_FIND_VIRTUALENV FIRST)
-    find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+    find_package(Python3 QUIET COMPONENTS Interpreter Development)
     include_directories(${Python3_INCLUDE_DIRS})
     message("-- ${Green}NOTE: rocAL pybind requires Python3, Found --  ${Python3_EXECUTABLE} ${ColourReset}")
     if(NOT Python3_FOUND)

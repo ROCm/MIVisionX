@@ -30,7 +30,6 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
         - [Prerequisites for running the script](#prerequisites-for-running-the-script)
 - [Build \& Install MIVisionX](#build--install-mivisionx)
   - [Building on Windows](#building-on-windows)
-    - [Using .msi packages](#using-msi-packages)
     - [Using `Visual Studio`](#using-visual-studio)
   - [Building on macOS](#building-on-macos)
   - [Building on Linux](#building-on-linux)
@@ -51,8 +50,8 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   - [Tested configurations](#tested-configurations)
   - [Known issues](#known-issues)
 - [MIVisionX Dependency Map](#mivisionx-dependency-map)
-- [HIP Backend](#hip-backend)
-- [OpenCL Backend](#opencl-backend)
+  - [HIP Backend](#hip-backend)
+  - [OpenCL Backend](#opencl-backend)
 
 ## Documentation
 
@@ -154,6 +153,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 #### macOS
 
+* macOS - Ventura `13.4`
 * Install [Homebrew](https://brew.sh)
 * Install [CMake](https://cmake.org)
 * Install OpenCV `3`/`4`
@@ -217,11 +217,6 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
 ## Build & Install MIVisionX
 
 ### Building on Windows
-
-#### Using .msi packages
-
-* [MIVisionX-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX
-* [MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX for WinML
 
 #### Using `Visual Studio`
 
@@ -481,7 +476,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ## MIVisionX Dependency Map
 
-## HIP Backend
+### HIP Backend
 
 **Docker Image:** `sudo docker build -f docker/ubuntu20/{DOCKER_LEVEL_FILE_NAME}.dockerfile -t {mivisionx-level-NUMBER} .`
 
@@ -497,7 +492,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 | `Level_5`   | AMD_RPP <br> rocAL deps <br> +Level 4              | amd_openvx <br> amd_openvx_extensions <br> apps <br> rocAL <br> utilities | ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br>  ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `libvx_rpp.so` - OpenVX&trade; RPP Extension <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `librocal.so` - Radeon Augmentation Library <br> ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `rocal_pybind.so` - rocAL Pybind Lib | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-5?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
 
 
-## OpenCL Backend
+### OpenCL Backend
 
 **Docker Image:** `sudo docker build -f docker/ubuntu20/{DOCKER_LEVEL_FILE_NAME}.dockerfile -t {mivisionx-level-NUMBER} .`
 

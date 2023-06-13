@@ -401,8 +401,7 @@ MIVID_API_ENTRY mv_status MIVID_API_CALL mvReleaseInference(mivid_handle handle)
             input_shape = graph.inputs[0].shape
             input_elm_size = tensor_type2size[graph.inputs[0].type]
             output_elm_size = tensor_type2size[graph.outputs[0].type]
-            input_buf_size = eval(
-                '*'.join([str(v) for v in input_shape])) * input_elm_size
+            #input_buf_size = eval('*'.join([str(v) for v in input_shape])) * input_elm_size
             output_shape = []
             output_buf_size = []
             output_str = []

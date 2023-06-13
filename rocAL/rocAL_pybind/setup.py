@@ -41,6 +41,6 @@ setup(
       packages=find_packages(where='@TARGET_NAME@'),
       package_dir={'amd':'@TARGET_NAME@/amd'},
       include_package_data=True,
-      ext_modules=[Extension('rocal_pybind',sources=['rocal_pybind.cpp'], include_dirs=['@PROJECT_SOURCE_DIR@/third_party_lib/pybind11/include/', '@PROJECT_SOURCE_DIR@/../rocAL/include/api'])],
+      ext_modules=[Extension('rocal_pybind',sources=['rocal_pybind.cpp'], include_dirs=['@pybind11_INCLUDE_DIRS@', '@PROJECT_SOURCE_DIR@/../rocAL/include/api'])],
       distclass=BinaryDistribution
       )

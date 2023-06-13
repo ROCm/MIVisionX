@@ -6,6 +6,48 @@
 
 [MIVisionX Documentation](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/)
 
+## MIVisionX 2.5.0 (Unreleased)
+
+### Added
+
+* CTest - OpenVX Tests
+
+### Optimizations
+
+* CMakeList Cleanup
+
+### Changed
+
+* rocAL - PyBind Link to prebuilt library
+* Setup Updates
+
+### Fixed
+
+* rocAL bug fix and updates
+
+### Tested Configurations
+
+* Windows `10` / `11`
+* Linux distribution
+  + Ubuntu - `20.04` / `22.04`
+  + CentOS - `7` / `8`
+  + RHEL - `8` / `9`
+  + SLES - `15-SP3`
+* ROCm: rocm-core - `5.4.3.50403-121`
+* miopen-hip - `2.19.0.50403-121`
+* miopen-opencl - `2.18.0.50300-63`
+* migraphx - `2.4.0.50403-121`
+* Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
+* OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
+* RPP - [1.0.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.0.0)
+* FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
+* Dependencies for all the above packages
+* MIVisionX Setup Script - `V2.5.0`
+
+### Known issues
+
+* OpenCV 4.X support for some apps missing
+
 ## MIVisionX 2.4.0
 
 ### Added

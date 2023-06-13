@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.4)
 project(rocAL_pybind)
 
 set(TARGET_NAME rocAL_pybind)
@@ -84,14 +84,13 @@ if(ROCAL_PYTHON)
     endif()
 
     set(Python3_FIND_VIRTUALENV FIRST)
-    find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+    find_package(Python3 QUIET COMPONENTS Interpreter Development)
     include_directories(${Python3_INCLUDE_DIRS})
     message("-- ${Green}NOTE: rocAL pybind requires Python3, Found --  ${Python3_EXECUTABLE} ${ColourReset}")
     if(NOT Python3_FOUND)
         set(BUILD_ROCAL_PYBIND false)
         message("-- ${Yellow}NOTE: rocAL pybind requires Python3, Not Found${ColourReset}")
     endif()
-
 
     if(${BUILD_ROCAL_PYBIND})
 
@@ -101,10 +100,12 @@ if(ROCAL_PYTHON)
             set(CMAKE_INSTALL_PREFIX_PYTHON ${Python3_STDARCH} CACHE PATH "rocAL default installation path" FORCE)
         endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-        add_subdirectory(third_party_lib/pybind11)
-        include_directories(third_party_lib/pybind11/include/)
-
-
+        find_package(pybind11 REQUIRED CONFIG)
+        if(NOT pybind11_FOUND)
+            set(BUILD_ROCAL_PYBIND false)
+            message("-- ${Yellow}NOTE: rocAL requires pybind11, Not Found${ColourReset}")
+        endif()
+        include_directories(${pybind11_INCLUDE_DIRS})
         # AMD RPP
         include_directories(${AMDRPP_INCLUDE_DIRS})
         set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})

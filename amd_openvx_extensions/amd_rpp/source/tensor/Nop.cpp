@@ -24,23 +24,19 @@ THE SOFTWARE.
 
 struct NopLocalData {
     vxRppHandle handle;
-    Rpp32u device_type;
+    Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
 };
 
 static vx_status VX_CALLBACK refreshNop(vx_node node, const vx_reference *parameters, vx_uint32 num, NopLocalData *data) {
     vx_status status = VX_SUCCESS;
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
 #endif
-    } else if (data->device_type == AGO_TARGET_AFFINITY_CPU) {
-        vx_enum in_tensor_type = vx_type_e::VX_TYPE_UINT8;
-        vx_enum out_tensor_type = vx_type_e::VX_TYPE_UINT8;
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &in_tensor_type, sizeof(in_tensor_type)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &out_tensor_type, sizeof(out_tensor_type)));
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
@@ -76,11 +72,11 @@ static vx_status VX_CALLBACK processNop(vx_node node, const vx_reference *parame
 
     vx_status status = VX_SUCCESS;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         refreshNop(node, parameters, num, data);
 #endif
-    } else if (data->device_type == AGO_TARGET_AFFINITY_CPU) {
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshNop(node, parameters, num, data);
     }
     return status;
@@ -92,7 +88,7 @@ static vx_status VX_CALLBACK initializeNop(vx_node node, const vx_reference *par
 #if ENABLE_HIP
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshNop(node, parameters, num, data);
 
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

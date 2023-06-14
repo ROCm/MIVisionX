@@ -24,24 +24,24 @@ THE SOFTWARE.
 
 struct CopyLocalData {
     vxRppHandle handle;
-    Rpp32u device_type;
+    Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
     size_t tensor_size;
-    vx_enum in_tensor_type;
-    vx_enum out_tensor_type;
+    vx_enum inputTensorType;
+    vx_enum outputTensorType;
 };
 
 static vx_status VX_CALLBACK refreshCopy(vx_node node, const vx_reference *parameters, vx_uint32 num, CopyLocalData *data) {
     vx_status status = VX_SUCCESS;
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
 #endif
-    } else if (data->device_type == AGO_TARGET_AFFINITY_CPU) {
-            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
-            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
     return status;
 }
@@ -74,12 +74,12 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *param
     CopyLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         refreshCopy(node, parameters, num, data);
         hipMemcpy(data->pDst, data->pSrc, data->tensor_size, hipMemcpyDeviceToDevice);
 #endif
-    } else if (data->device_type == AGO_TARGET_AFFINITY_CPU) {
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshCopy(node, parameters, num, data);
         memcpy(data->pDst, data->pSrc, data->tensor_size);
     }
@@ -94,21 +94,21 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
 #elif ENABLE_HIP
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     vx_size num_of_dims;
     size_t tensor_dims[VX_TENSOR_DIMS];
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(vx_size)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, tensor_dims, sizeof(vx_size) * num_of_dims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &data->in_tensor_type, sizeof(data->in_tensor_type)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &data->out_tensor_type, sizeof(data->out_tensor_type)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &data->inputTensorType, sizeof(data->inputTensorType)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &data->outputTensorType, sizeof(data->outputTensorType)));
     
     data->tensor_size = 1;
     for(int i = 0; i < num_of_dims; i++)
         data->tensor_size *= tensor_dims[i];
 
-    if (data->in_tensor_type == vx_type_e::VX_TYPE_FLOAT32 && data->out_tensor_type == vx_type_e::VX_TYPE_FLOAT32)
+    if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT32)
         data->tensor_size *= sizeof(float);
-    else if (data->in_tensor_type == vx_type_e::VX_TYPE_FLOAT16 && data->out_tensor_type == vx_type_e::VX_TYPE_FLOAT16) {
+    else if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT16 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT16) {
 #if defined(AMD_FP16_SUPPORT)
         data->tensor_size *= sizeof(vx_float16);
 #endif

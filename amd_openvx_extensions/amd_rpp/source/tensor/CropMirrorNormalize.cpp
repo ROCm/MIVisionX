@@ -130,7 +130,7 @@ static vx_status VX_CALLBACK processCropMirrorNormalize(vx_node node, const vx_r
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         refreshCropMirrorNormalize(node, parameters, num, data);
-        rpp_status = rppt_crop_mirror_normalize_gpu((void *)data->pSrc, data->srcDescPtr, (void *)data->pDst, data->dstDescPtr, data->multiplier, data->offset,
+        rpp_status = rppt_crop_mirror_normalize_gpu(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->multiplier, data->offset,
                                                     data->mirror, data->roiPtr, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif

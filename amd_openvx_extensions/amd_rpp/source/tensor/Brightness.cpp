@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "internal_publishKernels.h"
 
 struct BrightnessLocalData {
-    vxRppHandle * handle;
+    vxRppHandle *handle;
     Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
@@ -121,7 +121,7 @@ static vx_status VX_CALLBACK processBrightness(vx_node node, const vx_reference 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         refreshBrightness(node, parameters, num, data);
-        rpp_status = rppt_brightness_gpu((void *)data->pSrc, data->srcDescPtr, (void *)data->pDst, data->dstDescPtr,  data->alpha, data->beta, data->roiPtr, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_brightness_gpu(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr,  data->alpha, data->beta, data->roiPtr, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {

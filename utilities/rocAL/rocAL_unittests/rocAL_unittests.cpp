@@ -760,6 +760,7 @@ int test(int test_case, int reader_type, const char *path, const char *outName, 
                   << "rocalSSDRandomCrop" << std::endl;
         image1 = rocalSSDRandomCrop(handle, input1, true);
     }
+    break;
     case 55:
     {
         std::cout << ">>>>>>> Running "

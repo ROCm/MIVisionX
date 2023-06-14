@@ -114,7 +114,7 @@ static vx_status VX_CALLBACK initializeNormalizationLayer(vx_node node, const vx
 {
     NormalizationLayerLocalData * data = new NormalizationLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
     miopenDataType_t data_type;          // data_type for the kernel
 
     vx_size input_dims[4], output_dims[4];

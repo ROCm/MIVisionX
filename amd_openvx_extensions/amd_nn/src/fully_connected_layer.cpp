@@ -131,7 +131,7 @@ static vx_status VX_CALLBACK initializeFullyConnectedLayer(vx_node node, const v
 {
     FullyConnectedLayerLocalData * data = new FullyConnectedLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
 
     //input,weight,bias,output descriptors.
     miopenConvolutionMode_t mode = miopenConvolution;

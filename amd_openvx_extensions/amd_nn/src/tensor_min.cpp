@@ -107,7 +107,7 @@ static vx_status VX_CALLBACK initializeTensorMin(vx_node node, const vx_referenc
 {
     TensorMinLocalData * data = new TensorMinLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
 
     //initialize input and output tensor descriptors.
     vx_enum type;

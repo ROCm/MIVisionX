@@ -123,7 +123,7 @@ static vx_status VX_CALLBACK initializeTensorSub(vx_node node, const vx_referenc
 {
     TensorSubLocalData * data = new TensorSubLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
 
     //initialize input and output tensor descriptors.
     vx_size input1_dims[4], num_dims, input2_dims[4] = { 1, 1, 0, 0 }, output_dims[4];

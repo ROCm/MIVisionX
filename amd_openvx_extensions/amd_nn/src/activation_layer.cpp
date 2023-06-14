@@ -106,7 +106,7 @@ static vx_status VX_CALLBACK initializeActivationLayer(vx_node node, const vx_re
 {
     ActivationLayerLocalData * data = new ActivationLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
 
     //initializing input and output Descriptors.
     vx_size input_dims[4], output_dims[4];

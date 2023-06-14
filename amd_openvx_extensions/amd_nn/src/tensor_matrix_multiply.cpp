@@ -194,7 +194,7 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
     // create and initialize local data
     LocalData * data = new LocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
 
     // set flags to control matrix transpose and m, n, and k
     data->tA = params.transpose_input1 ? true : false;

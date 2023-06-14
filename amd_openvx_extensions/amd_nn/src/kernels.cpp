@@ -99,7 +99,7 @@ int getEnvironmentVariable(const char * name, char * value, size_t valueSize)
     return -1;
 }
 
-vx_status createRPPHandle(vx_node node, NeuralNetworkCommonHandle ** pHandle)
+vx_status createGraphHandle(vx_node node, NeuralNetworkCommonHandle ** pHandle)
 {
     NeuralNetworkCommonHandle * handle = NULL;
     ERROR_CHECK_STATUS(vxGetModuleHandle(node, OPENVX_KHR_NN, (void **)&handle));

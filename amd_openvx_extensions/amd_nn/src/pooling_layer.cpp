@@ -143,7 +143,7 @@ static vx_status VX_CALLBACK initializePoolingLayer(vx_node node, const vx_refer
 {
     PoolingLayerLocalData * data = new PoolingLayerLocalData;
     memset(data, 0, sizeof(*data));
-    ERROR_CHECK_STATUS(createRPPHandle(node, &data->handle));
+    ERROR_CHECK_STATUS(createGraphHandle(node, &data->handle));
 
     //Deducing the pooling type.
     vx_nn_pooling_type_e modeType;

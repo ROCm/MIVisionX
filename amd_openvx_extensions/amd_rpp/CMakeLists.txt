@@ -100,7 +100,7 @@ list(APPEND SOURCES
         source/image/NoisebatchPD.cpp
         source/image/NonLinearFilterbatchPD.cpp
         source/image/NonMaxSupressionbatchPD.cpp
-        source/image/NopbatchPD
+        source/image/NopbatchPD.cpp
         source/image/PhasebatchPD.cpp
         source/image/PixelatebatchPD.cpp
         source/image/RainbatchPD.cpp

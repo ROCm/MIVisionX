@@ -53,8 +53,8 @@ def strip_libtree_addresses(lib_tree):
 
 # Import arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--runvx_directory',    type=str, default='',
-                    help='RunVX Executable Directory - required')
+parser.add_argument('--runvx_directory',    type=str, default='/opt/rocm/bin',
+                    help='RunVX Executable Directory - optional (default:/opt/rocm/bin)')
 parser.add_argument('--hardware_mode',      type=str, default='CPU',
                     help='OpenVX Vision Function Target - optional (default:CPU [options:CPU/GPU])')
 parser.add_argument('--list_tests',         type=str, default='no',

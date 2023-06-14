@@ -333,7 +333,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
   **Canny Edge Detection**
 
-  <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
+  <p align="center"><img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
 
   ```
   export PATH=$PATH:/opt/rocm/bin

@@ -62,7 +62,7 @@ Lower the confidence level if the detection is not good enough.
 ```
 
 <p align="center">
- <img src="./image/cat-yolo.jpg">
+ <img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/apps/mivisionx_winml_yolov2/image/cat-yolo.jpg">
 </p>
 
 ### Update parameters

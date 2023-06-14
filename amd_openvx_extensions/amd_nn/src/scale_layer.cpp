@@ -245,7 +245,7 @@ static vx_status VX_CALLBACK uninitializeScaleLayer(vx_node node, const vx_refer
 
             }
         }
-        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

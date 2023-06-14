@@ -176,7 +176,7 @@ static vx_status VX_CALLBACK uninitializeTensorAddition(vx_node node, const vx_r
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->input2));
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->output));
     if (data) {
-        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

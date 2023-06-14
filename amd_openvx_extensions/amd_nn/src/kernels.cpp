@@ -132,7 +132,7 @@ vx_status createGraphHandle(vx_node node, NeuralNetworkCommonHandle ** pHandle)
     return VX_SUCCESS;
 }
 
-vx_status releaseRPPHandle(vx_node node, NeuralNetworkCommonHandle * handle)
+vx_status releaseGraphHandle(vx_node node, NeuralNetworkCommonHandle * handle)
 {
     handle->count--;
     if(handle->count == 0) {

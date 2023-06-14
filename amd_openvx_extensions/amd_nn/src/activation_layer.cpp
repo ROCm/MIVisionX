@@ -171,7 +171,7 @@ static vx_status VX_CALLBACK uninitializeActivationLayer(vx_node node, const vx_
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->inputDescriptor));
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->outputDescriptor));
     if (data) {
-        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

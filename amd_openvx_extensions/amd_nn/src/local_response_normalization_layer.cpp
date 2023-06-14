@@ -185,7 +185,7 @@ static vx_status VX_CALLBACK uninitializeLocalResponseNormalizationLayer(vx_node
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->input_desc));
     ERROR_CHECK_MIOPEN_STATUS(miopenDestroyTensorDescriptor(data->output_desc));
     if (data) {
-        ERROR_CHECK_STATUS(releaseRPPHandle(node, data->handle));
+        ERROR_CHECK_STATUS(releaseGraphHandle(node, data->handle));
         delete data;
     }
     return VX_SUCCESS;

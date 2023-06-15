@@ -128,13 +128,13 @@ list(APPEND SOURCES
         source/image/VignettebatchPD.cpp
         source/image/WarpAffinebatchPD.cpp
         source/image/WarpPerspectivebatchPD.cpp
-        source/image/kernel_rpp.cpp
-        source/image/internal_publishKernels.cpp
         source/tensor/Brightness.cpp
-        source/tensor/Resize.cpp
-        source/tensor/CropMirrorNormalize.cpp
         source/tensor/Copy.cpp
+        source/tensor/CropMirrorNormalize.cpp
         source/tensor/Nop.cpp
+        source/tensor/Resize.cpp
+        source/kernel_rpp.cpp
+        source/internal_publishKernels.cpp
     )
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)

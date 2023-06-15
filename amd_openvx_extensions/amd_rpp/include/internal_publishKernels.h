@@ -120,10 +120,10 @@ vx_status Resizetensor_Register(vx_context);
 
 //tensor
 vx_status Brightness_Register(vx_context);
-vx_status Resize_Register(vx_context);
+vx_status Copy_Register(vx_context);
 vx_status CropMirrorNormalize_Register(vx_context);
 vx_status Nop_Register(vx_context);
-vx_status Copy_Register(vx_context);
+vx_status Resize_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                   "org.rpp.NopbatchPD"

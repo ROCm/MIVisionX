@@ -1039,7 +1039,7 @@ MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binar
             }
 """ % (tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]),
                     len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], 'x'.join([str(v) for v in tensor.shape])))
-            f.write(
+        f.write(
                 """
             if((status = mvAddToGraph(handle->graph, %s, %s, binaryFilename)) != VX_SUCCESS) {
                 printf("ERROR: mvAddToGraph: failed (%%d)\\n", status);

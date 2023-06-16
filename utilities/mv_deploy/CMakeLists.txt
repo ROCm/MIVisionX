@@ -32,8 +32,8 @@ add_executable(mv_compile mv_compile.cpp)
 # install MIVisionX executables -- {ROCM_PATH}/bin
 install (TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++17")
-target_link_libraries(mv_compile ${CMAKE_DL_LIBS})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++17 ")
+target_link_libraries(mv_compile ${CMAKE_DL_LIBS} stdc++fs)
 
 if(BUILD_DEV)
     # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/

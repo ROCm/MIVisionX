@@ -38,6 +38,7 @@ set(BOOST_COMPONENTS filesystem system)
 find_package(Boost COMPONENTS ${BOOST_COMPONENTS} QUIET)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads QUIET)
+find_package(LMDB QUIET)
 find_package(RapidJSON QUIET)
 
 if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
@@ -121,6 +122,10 @@ if(NOT Threads_FOUND)
     set(BUILD_ROCAL false)
     message("-- ${Yellow}NOTE: rocAL library requires Threads, Not Found ${ColourReset}")
 endif()
+if(NOT LMDB_FOUND)
+    set(BUILD_ROCAL false)
+    message("-- ${Yellow}NOTE: rocAL library requires LMDB, Not Found ${ColourReset}")
+endif()
 if(NOT RapidJSON_FOUND)
     set(BUILD_ROCAL false)
     message("-- ${Yellow}NOTE: rocAL library requires RapidJSON, Not Found ${ColourReset}")
@@ -147,8 +152,9 @@ if(${BUILD_ROCAL})
     # Protobuf
     include_directories(${PROTOBUF_INCLUDE_DIRS})
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${PROTOBUF_LIBRARIES})
-    # LMDB -- TBD: FIND PACKAGE Required
-    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} lmdb)
+    # LMDB
+    include_directories(${LMDB_INCLUDE_DIRS})
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${LMDB_LIBRARIES})
     # RapidJSON
     include_directories(${RapidJSON_INCLUDE_DIRS})
 

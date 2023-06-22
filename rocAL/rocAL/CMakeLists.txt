@@ -38,6 +38,7 @@ set(BOOST_COMPONENTS filesystem system)
 find_package(Boost COMPONENTS ${BOOST_COMPONENTS} QUIET)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads QUIET)
+find_package(RapidJSON QUIET)
 
 if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     if(NOT DEFINED HIP_PATH)
@@ -120,6 +121,10 @@ if(NOT Threads_FOUND)
     set(BUILD_ROCAL false)
     message("-- ${Yellow}NOTE: rocAL library requires Threads, Not Found ${ColourReset}")
 endif()
+if(NOT RapidJSON_FOUND)
+    set(BUILD_ROCAL false)
+    message("-- ${Yellow}NOTE: rocAL library requires RapidJSON, Not Found ${ColourReset}")
+endif()
 
 if(${BUILD_ROCAL})
     # AMD OpenVX & VX_RPP
@@ -144,6 +149,8 @@ if(${BUILD_ROCAL})
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${PROTOBUF_LIBRARIES})
     # LMDB -- TBD: FIND PACKAGE Required
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} lmdb)
+    # RapidJSON
+    include_directories(${RapidJSON_INCLUDE_DIRS})
 
     # rocAL uses C++ 17 features
     set(CMAKE_CXX_STANDARD 17)
@@ -159,7 +166,6 @@ if(${BUILD_ROCAL})
                 ../../amd_openvx/openvx/include/
                 ../../amd_openvx_extensions/amd_rpp/include/
                 ../../amd_openvx_extensions/amd_media/include/
-                ../third_party/rapidjson/include/
                 ./include/api/
                 ./include/augmentations/color_augmentations/
                 ./include/augmentations/effects_augmentations/

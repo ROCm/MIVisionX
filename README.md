@@ -466,7 +466,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * RPP - [1.1.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.1.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.5.0`
+* MIVisionX Setup Script - `V2.5.1`
 
 ### Known issues
 

@@ -31,7 +31,7 @@ RUN yum -y install sqlite-devel libtool && yum -y groupinstall 'Development Tool
     sudo ./b2 install threading=multi link=static --with-system --with-filesystem
 RUN git clone -b v3.21.9 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
-RUN git clone -b 1.0.0 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
+RUN git clone -b 1.1.0 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd
 
 ENV MIVISIONX_WORKSPACE=/workspace

@@ -61,50 +61,58 @@ rocAL can be currently used to perform the following operations either with rand
 *  [Turbo JPEG](https://libjpeg-turbo.org/) - Version `2.0` or higher
 *  [Half-precision floating-point](https://half.sourceforge.net) library - Version `1.12.0` or higher
 *  [Google Protobuf](https://developers.google.com/protocol-buffers) - Version `3.11.1` or higher
+*  [LMBD Library](http://www.lmdb.tech/doc/)
+*  [RapidJSON](https://github.com/Tencent/rapidjson)
+*  [PyBind11](https://github.com/pybind/pybind11)
 
 ## Build instructions
 
-rocAL builds and installs as part of the MIVisonX toolkit. rocAL depends on the AMD's ROCm Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for rocAL to build. rocAL also needs the Turbo JPEG library to decode input JPEG images.
-
-1. Make sure to have the AMD's RPP library installed. Please refer to the [RPP's page](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp) for instructions on how to install RPP.
-2. Make sure you've installed the Turbo JPEG library version 2.0 or later, refer to the section below.
-3. Refer to the [MIVisonX](../README.md) page and follow build an installation steps ([Build & Install MIVisionX](../README.md#build--install-mivisionx)).
+`rocAL` builds and installs as part of the MIVisonX toolkit. The rocAL dependencies are installed with MIVisionX-setup.py. To manually install rocAL dependencies, follow below instructions.
 
 ### Turbo JPEG installation
 
 Turbo JPEG library is a SIMD optimized library which currently rocAL uses to decode input JPEG images. It needs to be built from the source and installed in the default path for libraries and include headers. You can follow the instruction below to download the source, build and install it.
-Note: Make sure you have installed nasm Debian package before installation, it's the dependency required by libturbo-jpeg.
+**Note:** install nasm package
 
 ```
- sudo apt-get install nasm
+sudo apt-get install nasm
 ```
 
-Note: You need wget package to download the tar file.
-
+**Note:** You need wget package to download the tar file.
 ```
  sudo apt-get install wget
 ```
 
 ```
 git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git
-cd libjpeg-turbo
-mkdir build
-cd build
+cd libjpeg-turbo && mkdir build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr \
       -DCMAKE_BUILD_TYPE=RELEASE  \
       -DENABLE_STATIC=FALSE       \
       -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
       -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib  \
       ..
-make -j$nproc
-sudo make install
+make -j$nproc && sudo make install
 ```
 
 ### LMDB installation
-
 ```
 sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
+```
 
+### RapidJSON installation
+```
+git clone https://github.com/Tencent/rapidjson.git
+cd rapidjson && mkdir build && cd build
+cmake ../ && make -j$nproc && sudo make install
+```
+
+### PyBind11 installation
+```
+pip install pytest==3.1 
+git clone -b  https://github.com/pybind/pybind11 
+cd pybind11 && mkdir build && cd build
+cmake -DDOWNLOAD_CATCH=ON -DDOWNLOAD_EIGEN=ON ../ && make -j4 && sudo make install
 ```
 
 ## Sample and test applications

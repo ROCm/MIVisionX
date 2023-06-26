@@ -61,6 +61,9 @@ rocAL can be currently used to perform the following operations either with rand
 *  [Turbo JPEG](https://libjpeg-turbo.org/) - Version `2.0` or higher
 *  [Half-precision floating-point](https://half.sourceforge.net) library - Version `1.12.0` or higher
 *  [Google Protobuf](https://developers.google.com/protocol-buffers) - Version `3.11.1` or higher
+*  [LMBD Library](http://www.lmdb.tech/doc/)
+*  [RapidJSON](https://github.com/Tencent/rapidjson)
+
 
 ## Build instructions
 
@@ -101,10 +104,19 @@ sudo make install
 ```
 
 ### LMDB installation
-
 ```
 sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
+```
 
+### RapidJSON installation
+```
+git clone https://github.com/Tencent/rapidjson.git
+cd rapidjson
+mkdir build
+cd build
+cmake ../
+make -j$nproc
+sudo make install
 ```
 
 ## Sample and test applications

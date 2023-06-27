@@ -32,19 +32,19 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
         make -j8 && sudo make install && cd
 
 # install MIVisionX neural net dependency - Level 4
-RUN apt-get -y install rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx
 
 # install MIVisionX rocAL dependency - Level 5
 ENV CUPY_INSTALL_USE_HIP=1
 ENV ROCM_HOME=/opt/rocm
-RUN apt-get -y install curl make g++ unzip libomp-dev libpthread-stubs0-dev wget clang
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install curl make g++ unzip libomp-dev libpthread-stubs0-dev wget clang
 RUN mkdir rocAL_deps && cd rocAL_deps && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && sudo mkdir -p /usr/local/include/half && sudo cp half-files/include/half.hpp /usr/local/include/half && cd
-RUN apt-get update -y && apt-get -y install autoconf automake libbz2-dev libssl-dev python3-dev libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm libjsoncpp-dev && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake libbz2-dev libssl-dev python3-dev libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm libjsoncpp-dev && \
         git clone -b 2.0.6.2 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd
-RUN apt-get -y install sqlite3 libsqlite3-dev libtool build-essential && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install sqlite3 libsqlite3-dev libtool build-essential && \
     wget https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.bz2 && tar xjvf boost_1_80_0.tar.bz2 && \
     cd boost_1_80_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
     ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11" && \
@@ -55,11 +55,11 @@ RUN git clone -b v3.21.9 https://github.com/protocolbuffers/protobuf.git && cd p
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 RUN git clone -b 1.1.0  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd
-RUN git clone https://github.com/Tencent/rapidjson.git && cd rapidjson && mkdir build && cd build && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python3 python3-pip git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3-dev && \
+        git clone https://github.com/Tencent/rapidjson.git && cd rapidjson && mkdir build && cd build && \
         cmake ../ && make -j4 && sudo make install && cd ../../ && \
-        pip install pytest==3.1 && git clone -b  https://github.com/pybind/pybind11 && cd pybind11 && mkdir build && cd build && \
+        pip install pytest==3.1 && git clone -b v2.10.4 https://github.com/pybind/pybind11 && cd pybind11 && mkdir build && cd build && \
         cmake -DDOWNLOAD_CATCH=ON -DDOWNLOAD_EIGEN=ON ../ && make -j4 && sudo make install && cd ../../ && \
-        DEBIAN_FRONTEND=noninteractive apt-get -y install git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3-dev && \
         git clone https://github.com/ROCmSoftwarePlatform/cupy.git && cd cupy && git submodule update --init && \
         pip install -e . --no-cache-dir -vvvv && pip install numpy==1.21
 

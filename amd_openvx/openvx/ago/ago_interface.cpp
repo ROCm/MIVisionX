@@ -255,7 +255,7 @@ int agoWriteGraph(AgoGraph * agraph, AgoReference * * ref, int num_ref, FILE * f
         else {
             if (!aus->name.length()) {
                 vx_char name[64];
-                sprintf(name, "AUTO-USER-STRUCT!%03d!", aus->id - VX_TYPE_USER_STRUCT_START + 1);
+                snprintf(name, sizeof(name), "AUTO-USER-STRUCT!%03d!", aus->id - VX_TYPE_USER_STRUCT_START + 1);
                 aus->name = name;
             }
             fprintf(fp, "type %s userstruct:" VX_FMT_SIZE "\n", aus->name.c_str(), aus->size);
@@ -444,7 +444,7 @@ static void agoUpdateN(char * output, char * input, int N, int Nchar)
             index += (op == '+') ? v : -v;
             if (s[k] == '}') {
                 // replace $[expr] with index
-                sprintf(&output[ki], "%d", index);
+                snprintf(&output[ki], sizeof(&output[ki]), "%d", index);
                 ki = (int)strlen(output) - 1;
                 i += k + 1;
             }
@@ -735,7 +735,7 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                         }
                     }
                     else if (!strcmp(arg[0], "file") && strncmp(arg[2 + p], "/def-var:", 9) == 0) {
-                        char command[256]; sprintf(command, "def-var %s\n", &arg[2 + p][9]);
+                        char command[256]; snprintf(command, sizeof(command), "def-var %s\n", &arg[2 + p][9]);
                         char * equal = strstr(command, "=");
                         if (!equal) {
                             agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReadGraph: line %d: invalid def-var syntax: expected /def-var:<NAME>=<VALUE>\n>>>> %s\n", lineno, lineCopy);
@@ -788,7 +788,7 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                                     for (vx_uint32 i = 0; i < data->numChildren; i++) {
                                         if (data->children[i]) {
                                             char childname[256];
-                                            sprintf(childname, "%s[%d]", data->name.c_str(), i);
+                                            snprintf(childname, sizeof(childname), "%s[%d]", data->name.c_str(), i);
                                             data->children[i]->name = childname;
                                             agoAddData(&agraph->dataList, data->children[i]);
                                         }
@@ -805,8 +805,8 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                                     char type_expected_buf[64], type_specified_buf[64];
                                     const char * type_expected = agoEnum2Name(akernel->argType[p]);
                                     const char * type_specified = agoEnum2Name(data->ref.type);
-                                    if (!type_expected) { sprintf(type_expected_buf, "0x%08x", akernel->argType[p]); type_expected = type_expected_buf; }
-                                    if (!type_specified) { sprintf(type_specified_buf, "0x%08x", data->ref.type); type_specified = type_specified_buf; }
+                                    if (!type_expected) { snprintf(type_expected_buf, sizeof(type_expected_buf), "0x%08x", akernel->argType[p]); type_expected = type_expected_buf; }
+                                    if (!type_specified) { snprintf(type_specified_buf, sizeof(type_expected_buf), "0x%08x", data->ref.type); type_specified = type_specified_buf; }
                                     agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReadGraph: line %d: data type %s expected -- arg#%d has %s\n>>>> %s\n", lineno, type_expected, p, type_specified, lineCopy);
                                     agraph->status = -1;
                                     break;
@@ -942,19 +942,19 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                             int v = 0;
                             if (pdata->ref.type == VX_TYPE_IMAGE) v = pdata->u.img.width;
                             else if (pdata->ref.type == VX_TYPE_PYRAMID) v = pdata->u.pyr.width;
-                            sprintf(value, "%d", v);
+                            snprintf(value, sizeof(value), "%d", v);
                         }
                         else if (!strncmp(value, "HEIGHT(", 7)) {
                             int v = 0;
                             if (pdata->ref.type == VX_TYPE_IMAGE) v = pdata->u.img.height;
                             else if (pdata->ref.type == VX_TYPE_PYRAMID) v = pdata->u.pyr.height;
-                            sprintf(value, "%d", v);
+                            snprintf(value, sizeof(value), "%d", v);
                         }
                         else if (!strncmp(value, "FORMAT(", 7)) {
                             vx_df_image v = VX_DF_IMAGE_U8;
                             if (pdata->ref.type == VX_TYPE_IMAGE) v = pdata->u.img.format;
                             else if (pdata->ref.type == VX_TYPE_PYRAMID) v = pdata->u.pyr.format;
-                            sprintf(value, "%4.4s", FORMAT_STR(v));
+                            snprintf(value, sizeof(value), "%4.4s", FORMAT_STR(v));
                         }
                     }
                     vars.push_back(std::pair< std::string, std::string >(arg[1], value));
@@ -1131,7 +1131,7 @@ int agoLoadModule(AgoContext * context, const char * module)
     if (agoIsValidContext(context)) {
         CAgoLock lock(context->cs);
         status = VX_ERROR_INVALID_PARAMETERS;
-        char filePath[1024]; sprintf(filePath, SHARED_LIBRARY_PREFIX "%s" SHARED_LIBRARY_EXTENSION, module);
+        char filePath[1024]; snprintf(filePath, sizeof(filePath), SHARED_LIBRARY_PREFIX "%s" SHARED_LIBRARY_EXTENSION, module);
         for (vx_uint32 index = 0; index < context->num_active_modules; index++) {
             if (strcmp(filePath, context->modules[index].module_path) == 0) {
                 agoAddLogEntry(&context->ref, VX_SUCCESS, "WARNING: kernels already loaded from %s\n", filePath);
@@ -1182,7 +1182,7 @@ int agoUnloadModule(AgoContext * context, const char * module)
     if (agoIsValidContext(context)) {
         CAgoLock lock(context->cs);
         status = VX_ERROR_INVALID_MODULE;
-        char filePath[1024]; sprintf(filePath, SHARED_LIBRARY_PREFIX "%s" SHARED_LIBRARY_EXTENSION, module);
+        char filePath[1024]; snprintf(filePath, sizeof(filePath), SHARED_LIBRARY_PREFIX "%s" SHARED_LIBRARY_EXTENSION, module);
         for (vx_uint32 index = 0; index < context->num_active_modules; index++) {
             if (strcmp(filePath, context->modules[index].module_path) == 0) {
                 vx_unpublish_kernels_f unpublish_kernels_f = (vx_unpublish_kernels_f)agoGetFunctionAddress(context->modules[index].hmodule, "vxUnpublishKernels");
@@ -1352,7 +1352,7 @@ vx_status agoVerifyNode(AgoNode * node)
                     }
                     // re-initialize, if updated
                     if (updated) {
-                        char desc[64]; sprintf(desc, "image-virtual:%4.4s,%d,%d", FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
+                        char desc[64]; snprintf(desc, sizeof(desc), "image-virtual:%4.4s,%d,%d", FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
                         data->isNotFullyConfigured = vx_true_e;
                         if (agoGetDataFromDescription(graph->ref.context, graph, data, desc)) {
                             agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoVerifyGraph: agoVerifyGraph update failed for virtual-image: %4.4s %dx%d\n", FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
@@ -1414,10 +1414,10 @@ vx_status agoVerifyNode(AgoNode * node)
                     // re-initialize, if updated
                     if (updated) {
                         char scale[256], desc[512];
-                        if (data->u.pyr.scale == VX_SCALE_PYRAMID_HALF) sprintf(scale, "HALF");
-                        else if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) sprintf(scale, "ORB");
-                        else sprintf(scale, "%g", data->u.pyr.scale);
-                        sprintf(desc, "pyramid-virtual:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(data->u.pyr.format), data->u.pyr.width, data->u.pyr.height, data->u.pyr.levels, scale);
+                        if (data->u.pyr.scale == VX_SCALE_PYRAMID_HALF) snprintf(scale, sizeof(scale), "HALF");
+                        else if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) snprintf(scale, sizeof(scale), "ORB");
+                        else snprintf(scale, sizeof(scale), "%g", data->u.pyr.scale);
+                        snprintf(desc, sizeof(desc), "pyramid-virtual:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(data->u.pyr.format), data->u.pyr.width, data->u.pyr.height, data->u.pyr.levels, scale);
                         data->isNotFullyConfigured = vx_true_e;
                         if (agoGetDataFromDescription(graph->ref.context, graph, data, desc)) {
                             agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoVerifyGraph: agoVerifyGraph update failed for %s\n", desc);
@@ -1480,7 +1480,7 @@ vx_status agoVerifyNode(AgoNode * node)
                     }
                     if (updated) {
                         data->isNotFullyConfigured = vx_true_e;
-                        char desc[64]; sprintf(desc, "array-virtual:%u,%u", data->u.arr.itemtype, (vx_uint32)data->u.arr.capacity);
+                        char desc[64]; snprintf(desc, sizeof(desc), "array-virtual:%u,%u", data->u.arr.itemtype, (vx_uint32)data->u.arr.capacity);
                         if (agoGetDataFromDescription(graph->ref.context, graph, data, desc)) {
                             agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoVerifyGraph: agoVerifyGraph update failed for %s\n", desc);
                             return -1;
@@ -1512,7 +1512,7 @@ vx_status agoVerifyNode(AgoNode * node)
                     }
                     if (updated) {
                         data->isNotFullyConfigured = vx_true_e;
-                        char desc[64]; sprintf(desc, "objectarray-virtual:%u", data->u.objarr.itemtype);
+                        char desc[64]; snprintf(desc, sizeof(desc), "objectarray-virtual:%u", data->u.objarr.itemtype);
                         if (agoGetDataFromDescription(graph->ref.context, graph, data, desc)) {
                             agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoVerifyGraph: agoVerifyGraph update failed for %s\n", desc);
                             return -1;

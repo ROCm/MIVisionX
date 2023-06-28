@@ -342,7 +342,7 @@ int CVxParamArray::ReadFrame(int frameNumber)
 	}
 
 	// reading data from input file
-	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameRead.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameRead.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, m_readFileIsBinary ? "rb" : "r");
 	if(!fp) {
 		if (frameNumber >= (int)m_captureFrameStart) {
@@ -374,7 +374,7 @@ int CVxParamArray::WriteFrame(int frameNumber)
 	if (m_fileNameWrite.length() < 1) return 0;
 
 	// create the output file
-	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameWrite.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameWrite.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, m_writeFileIsBinary ? "wb" : "w");
 	if(!fp) ReportError("ERROR: Unable to create: %s\n", fileName);
 
@@ -468,7 +468,7 @@ int CVxParamArray::CompareFrame(int frameNumber)
 	m_arrayListForView.clear();
 
 	// reading data from reference file
-	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameCompare.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameCompare.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, m_compareFileIsBinary ? "rb" : "r");
 	if (!fp) {
 		ReportError("ERROR: Unable to open: %s\n", fileName);
@@ -540,7 +540,7 @@ bool CVxParamArray::CompareFrameKeypoints(size_t numItems, size_t numItemsRef, v
 {
 	FILE * fpLog = NULL;
 	if (m_fileNameCompareLog.length() > 0) {
-		char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameCompareLog.c_str(), frameNumber);
+		char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameCompareLog.c_str(), frameNumber);
 		fpLog = fopen(fileName, "w");
 		if (!fpLog) ReportError("ERROR: Unable to create: %s\n", fileName);
 		printf("OK: creating array compare output log for %s in %s\n", GetVxObjectName(), fileName);
@@ -653,7 +653,7 @@ bool CVxParamArray::CompareFrameKeypoints(size_t numItems, size_t numItemsRef, v
 	if (percentMismatches > m_errMismatchPercent) {
 		mismatched = true;
 		char line[512];
-		sprintf(line, "ERROR: array COMPARE MISMATCHED [matched %d; mismatched/missing %d (%.3f%%)] [untracked %d/%d(ref) vs %d/%d] for %s with frame#%d of %s\n",
+		snprintf(line, sizeof(line), "ERROR: array COMPARE MISMATCHED [matched %d; mismatched/missing %d (%.3f%%)] [untracked %d/%d(ref) vs %d/%d] for %s with frame#%d of %s\n",
 			(int)totalMatched, (int)totalMismatchesOrMissing, percentMismatches,
 			(int)count_non_trackable_in_ref, (int)numItemsRef, (int)count_non_trackable_in_cur, (int)numItems,
 			GetVxObjectName(), frameNumber, fileName);
@@ -662,7 +662,7 @@ bool CVxParamArray::CompareFrameKeypoints(size_t numItems, size_t numItemsRef, v
 	}
 	else {
 		char line[512];
-		sprintf(line, "OK: array COMPARE MATCHED %.3f%% [untracked %d/%d(ref) vs %d/%d] for %s with frame#%d of %s\n", 100.0f - percentMismatches, (int)count_non_trackable_in_ref, (int)numItemsRef, (int)count_non_trackable_in_cur, (int)numItems, GetVxObjectName(), frameNumber, fileName);
+		snprintf(line, sizeof(line), "OK: array COMPARE MATCHED %.3f%% [untracked %d/%d(ref) vs %d/%d] for %s with frame#%d of %s\n", 100.0f - percentMismatches, (int)count_non_trackable_in_ref, (int)numItemsRef, (int)count_non_trackable_in_cur, (int)numItems, GetVxObjectName(), frameNumber, fileName);
 		if (m_verbose) printf("%s", line);
 		if (fpLog) fprintf(fpLog, "%s", line);
 	}
@@ -675,7 +675,7 @@ bool CVxParamArray::CompareFrameCoord2d(size_t numItems, size_t numItemsRef, vx_
 {
 	FILE * fpLog = NULL;
 	if (m_fileNameCompareLog.length() > 0) {
-		char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameCompareLog.c_str(), frameNumber);
+		char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameCompareLog.c_str(), frameNumber);
 		fpLog = fopen(fileName, "w");
 		if (!fpLog) ReportError("ERROR: Unable to create: %s\n", fileName);
 		printf("OK: creating array compare output log for %s in %s\n", GetVxObjectName(), fileName);

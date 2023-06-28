@@ -93,12 +93,12 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 		}
 		// function declaration
 		if (filterCoefAreConstants) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				, node->opencl_name, dstRegType);
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"typedef struct { float f[%d]; } COEF_%dx1;\n"
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride, COEF_%dx1 coef) {\n"
@@ -131,7 +131,7 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 		}
 
 		// generate computation
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  F32x8 sum; uint2 pix; float fval;\n"
 			"  __local uint2 * lbufptr = (__local uint2 *) (lbuf + ly * %d + (lx << 3));\n" // LMemStride
@@ -150,34 +150,34 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 						if (ixpos == -(int)Mdiv2) {
 							if (filterCoefAreConstants) {
 								if (filterCoef[0] == 0.0f) {
-									sprintf(item, "  sum.s%d = 0.0f;\n", ix);
+									snprintf(item, sizeof(item), "  sum.s%d = 0.0f;\n", ix);
 								}
 								else {
-									if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-									if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-									sprintf(item, "  sum.s%d =     fval* %.12ef;\n", ix, filterCoef[0]);
+									if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+									if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+									snprintf(item, sizeof(item), "  sum.s%d =     fval* %.12ef;\n", ix, filterCoef[0]);
 								}
 							}
 							else {
-								if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-								if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-								sprintf(item, "  sum.s%d =     fval* coef.f[ 0];\n", ix);
+								if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+								if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+								snprintf(item, sizeof(item), "  sum.s%d =     fval* coef.f[ 0];\n", ix);
 							}
 							code += item;
 						}
 						else if ((ixpos > -(int)Mdiv2) && (ixpos <= (int)Mdiv2)) {
 							if (filterCoefAreConstants) {
 								if (filterCoef[ixpos + Mdiv2] != 0.0f) {
-									if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-									if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-									sprintf(item, "  sum.s%d = mad(fval, %.12ef, sum.s%d);\n", ix, filterCoef[ixpos + Mdiv2], ix);
+									if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+									if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+									snprintf(item, sizeof(item), "  sum.s%d = mad(fval, %.12ef, sum.s%d);\n", ix, filterCoef[ixpos + Mdiv2], ix);
 									code += item;
 								}
 							}
 							else {
-								if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-								if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-								sprintf(item, "  sum.s%d = mad(fval, coef.f[%2d], sum.s%d);\n", ix, ixpos + Mdiv2, ix);
+								if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+								if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+								snprintf(item, sizeof(item), "  sum.s%d = mad(fval, coef.f[%2d], sum.s%d);\n", ix, ixpos + Mdiv2, ix);
 								code += item;
 							}
 						}
@@ -191,12 +191,12 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 		vx_uint32 Ndiv2 = filterHeight >> 1;
 		// function declaration
 		if (filterCoefAreConstants) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				, node->opencl_name, dstRegType);
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"typedef struct { float f[%d]; } COEF_1x%d;\n"
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride, COEF_1x%d coef) {\n"
@@ -226,7 +226,7 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 		}
 
 		// generate computation
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  F32x8 sum; uint2 pix; float fval;\n"
 			"  __local uint2 * lbufptr = (__local uint2 *) (lbuf + ly * %d + (lx << 3));\n" // LMemStride
@@ -236,22 +236,22 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 		bool first_item = true;
 		for (int y = 0; y < (int)filterHeight; y++) {
 			if (!filterCoefAreConstants || filterCoef[y] != 0.0f) {
-				sprintf(item, "  pix = lbufptr[%d];\n", y * LMemWidth / 8); code += item;
+				snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", y * LMemWidth / 8); code += item;
 				if (filterCoefAreConstants) {
-					sprintf(item, "  fval = %.12ef;\n", filterCoef[y]); code += item;
+					snprintf(item, sizeof(item), "  fval = %.12ef;\n", filterCoef[y]); code += item;
 				}
 				else {
-					sprintf(item, "  fval = coef.f[%d];\n", y); code += item;
+					snprintf(item, sizeof(item), "  fval = coef.f[%d];\n", y); code += item;
 				}
 				if (first_item) {
 					first_item = false;
 					for (int x = 0; x < 8; x++) {
-						sprintf(item, "  sum.s%d = amd_unpack%d(pix.s%d) * fval;\n", x, x & 3, x >> 2); code += item;
+						snprintf(item, sizeof(item), "  sum.s%d = amd_unpack%d(pix.s%d) * fval;\n", x, x & 3, x >> 2); code += item;
 					}
 				}
 				else {
 					for (int x = 0; x < 8; x++) {
-						sprintf(item, "  sum.s%d = mad(amd_unpack%d(pix.s%d), fval, sum.s%d);\n", x, x & 3, x >> 2, x); code += item;
+						snprintf(item, sizeof(item), "  sum.s%d = mad(amd_unpack%d(pix.s%d), fval, sum.s%d);\n", x, x & 3, x >> 2, x); code += item;
 					}
 				}
 			}
@@ -264,12 +264,12 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 
 		// function declaration
 		if (filterCoefAreConstants) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				, node->opencl_name, dstRegType);
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"typedef struct { float f[%d]; } COEF_%dx%d;\n"
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride, COEF_%dx%d coef) {\n"
@@ -302,7 +302,7 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 		}
 
 		// generate computation
-		sprintf(item, 
+		snprintf(item, sizeof(item), 
 			OPENCL_FORMAT(
 			"  F32x8 sum = (F32x8)0.0f; uint2 pix; float fval;\n"
 			"  __local uint2 * lbufptr = (__local uint2 *) (lbuf + ly * %d + (lx << 3));\n" // LMemStride
@@ -310,7 +310,7 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 		code += item;
 		int numQW = (LMemSideLR / 4) + 1;
 		for (int y = 0; y < (int)filterHeight; y++) {
-			sprintf(item, "  // filterRow = %d\n", y); code += item;
+			snprintf(item, sizeof(item), "  // filterRow = %d\n", y); code += item;
 			for (int qw = 0; qw < numQW; qw++) {
 				bool loaded_pix = false;
 				for (int x = 0; x < 8; x++) {
@@ -324,18 +324,18 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 								int coefPos = y * filterWidth + ixpos + Mdiv2;
 								if (filterCoefAreConstants) {
 									if (filterCoef[coefPos] != 0.0f) {
-										if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
-										if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-										if (filterCoef[coefPos] == 1.0f)       sprintf(item, "  sum.s%d += fval;\n", ix);
-										else if (filterCoef[coefPos] == -1.0f) sprintf(item, "  sum.s%d -= fval;\n", ix);
-										else                                   sprintf(item, "  sum.s%d  = mad(fval, %.12ef, sum.s%d);\n", ix, filterCoef[coefPos], ix);
+										if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
+										if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+										if (filterCoef[coefPos] == 1.0f)       snprintf(item, sizeof(item), "  sum.s%d += fval;\n", ix);
+										else if (filterCoef[coefPos] == -1.0f) snprintf(item, sizeof(item), "  sum.s%d -= fval;\n", ix);
+										else                                   snprintf(item, sizeof(item), "  sum.s%d  = mad(fval, %.12ef, sum.s%d);\n", ix, filterCoef[coefPos], ix);
 										code += item;
 									}
 								}
 								else {
-									if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
-									if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-									sprintf(item, "  sum.s%d = mad(fval, coef.f[%2d], sum.s%d);\n", ix, coefPos, ix);
+									if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
+									if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+									snprintf(item, sizeof(item), "  sum.s%d = mad(fval, coef.f[%2d], sum.s%d);\n", ix, coefPos, ix);
 									code += item;
 								}
 							}
@@ -346,7 +346,7 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 		}
 	}
 	if (!filterCoefAreIntegers && roundingBias != 0.0f) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  sum.s0 = sum.s0 + %.12ef;\n"
 			"  sum.s1 = sum.s1 + %.12ef;\n"
@@ -479,12 +479,12 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 		vx_uint32 LMemStride = LMemWidth + 2 * LMemSide;
 		char item[1024];
 		if (filterCoefAreConstants) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				, node->opencl_name, dstRegType);
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"typedef struct { float f[%d]; } COEF_%dx1;\n"
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride, COEF_%dx1 coef) {\n"
@@ -510,7 +510,7 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 		}
 
 		// generate computation
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  F32x8 sum; short4 pix; float fval;\n"
 			"  __local short4 * lbufptr = (__local short4 *) (lbuf + ly * %d + (lx << 4));\n" // LMemStride
@@ -528,37 +528,37 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 					if (ixpos == -(int)Mdiv2) {
 						if (filterCoefAreConstants) {
 							if (filterCoef[0] == 0.0f) {
-								if (dstIsS16) sprintf(item, "  sum.s%d = 0.5f;\n", ix);
-								else          sprintf(item, "  sum.s%d = 0.0f;\n", ix);
+								if (dstIsS16) snprintf(item, sizeof(item), "  sum.s%d = 0.5f;\n", ix);
+								else          snprintf(item, sizeof(item), "  sum.s%d = 0.0f;\n", ix);
 							}
 							else {
-								if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qf);  code += item; }
-								if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = (float)pix.s%d;\n", x);  code += item; }
-								if (dstIsS16) sprintf(item, "  sum.s%d = mad(fval, %.12ef, 0.5f);\n", ix, filterCoef[0]);
-								else          sprintf(item, "  sum.s%d =     fval* %.12ef;\n", ix, filterCoef[0]);
+								if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qf);  code += item; }
+								if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = (float)pix.s%d;\n", x);  code += item; }
+								if (dstIsS16) snprintf(item, sizeof(item), "  sum.s%d = mad(fval, %.12ef, 0.5f);\n", ix, filterCoef[0]);
+								else          snprintf(item, sizeof(item), "  sum.s%d =     fval* %.12ef;\n", ix, filterCoef[0]);
 							}
 						}
 						else {
-							if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qf);  code += item; }
-							if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = (float)pix.s%d;\n", x);  code += item; }
-							if (dstIsS16) sprintf(item, "  sum.s%d = mad(fval, coef.f[ 0], 0.5f);\n", ix);
-							else          sprintf(item, "  sum.s%d =     fval* coef.f[ 0];\n", ix);
+							if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qf);  code += item; }
+							if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = (float)pix.s%d;\n", x);  code += item; }
+							if (dstIsS16) snprintf(item, sizeof(item), "  sum.s%d = mad(fval, coef.f[ 0], 0.5f);\n", ix);
+							else          snprintf(item, sizeof(item), "  sum.s%d =     fval* coef.f[ 0];\n", ix);
 						}
 						code += item;
 					}
 					else if ((ixpos > -(int)Mdiv2) && (ixpos <= (int)Mdiv2)) {
 						if (filterCoefAreConstants) {
 							if (filterCoef[ixpos + Mdiv2] != 0.0f) {
-								if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qf);  code += item; }
-								if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = (float)pix.s%d;\n", x);  code += item; }
-								sprintf(item, "  sum.s%d = mad(fval, %.12ef, sum.s%d);\n", ix, filterCoef[ixpos + Mdiv2], ix);
+								if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qf);  code += item; }
+								if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = (float)pix.s%d;\n", x);  code += item; }
+								snprintf(item, sizeof(item), "  sum.s%d = mad(fval, %.12ef, sum.s%d);\n", ix, filterCoef[ixpos + Mdiv2], ix);
 								code += item;
 							}
 						}
 						else {
-							if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qf);  code += item; }
-							if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = (float)pix.s%d;\n", x);  code += item; }
-							sprintf(item, "  sum.s%d = mad(fval, coef.f[%2d], sum.s%d);\n", ix, ixpos + Mdiv2, ix);
+							if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qf);  code += item; }
+							if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = (float)pix.s%d;\n", x);  code += item; }
+							snprintf(item, sizeof(item), "  sum.s%d = mad(fval, coef.f[%2d], sum.s%d);\n", ix, ixpos + Mdiv2, ix);
 							code += item;
 						}
 					}
@@ -566,7 +566,7 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 			}
 		}
 		if (!filterCoefAreIntegers && roundingBias != 0.0f) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"  sum.s0 = sum.s0 + %.12ef;\n"
 				"  sum.s1 = sum.s1 + %.12ef;\n"
@@ -617,12 +617,12 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 		// function declaration
 		char item[1024];
 		if (filterCoefAreConstants) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				, node->opencl_name, dstRegType);
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"typedef struct { float f[%d]; } COEF_1x%d;\n"
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride, COEF_1x%d coef) {\n"
@@ -652,7 +652,7 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 		}
 
 		// generate computation
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  F32x8 sum; short8 pix; float fval;\n"
 			"  __local short8 * lbufptr = (__local short8 *) (lbuf + ly * %d + (lx << 4));\n" // LMemStride
@@ -661,33 +661,33 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 		bool first_item = true;
 		for (int y = 0; y < (int)filterHeight; y++) {
 			if (!filterCoefAreConstants || filterCoef[y] != 0.0f) {
-				sprintf(item, "  pix = lbufptr[%d];\n", y * LMemWidth / 16); code += item;
+				snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", y * LMemWidth / 16); code += item;
 				if (filterCoefAreConstants) {
-					sprintf(item, "  fval = %.12ef;\n", filterCoef[y]); code += item;
+					snprintf(item, sizeof(item), "  fval = %.12ef;\n", filterCoef[y]); code += item;
 				}
 				else {
-					sprintf(item, "  fval = coef.f[%d];\n", y); code += item;
+					snprintf(item, sizeof(item), "  fval = coef.f[%d];\n", y); code += item;
 				}
 				if (first_item) {
 					first_item = false;
 					for (int x = 0; x < 8; x++) {
 						if (dstIsS16) {
-							sprintf(item, "  sum.s%d = mad((float)pix.s%d, fval, 0.5f);\n", x, x); code += item;
+							snprintf(item, sizeof(item), "  sum.s%d = mad((float)pix.s%d, fval, 0.5f);\n", x, x); code += item;
 						}
 						else {
-							sprintf(item, "  sum.s%d = (float)pix.s%d * fval;\n", x, x); code += item;
+							snprintf(item, sizeof(item), "  sum.s%d = (float)pix.s%d * fval;\n", x, x); code += item;
 						}
 					}
 				}
 				else {
 					for (int x = 0; x < 8; x++) {
-						sprintf(item, "  sum.s%d = mad((float)pix.s%d, fval, sum.s%d);\n", x, x, x); code += item;
+						snprintf(item, sizeof(item), "  sum.s%d = mad((float)pix.s%d, fval, sum.s%d);\n", x, x, x); code += item;
 					}
 				}
 			}
 		}
 		if (!filterCoefAreIntegers && roundingBias != 0.0f) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"  sum.s0 = sum.s0 + %.12ef;\n"
 				"  sum.s1 = sum.s1 + %.12ef;\n"
@@ -798,12 +798,12 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 		vx_uint32 LMemStride = LMemWidth + 2 * LMemSide;
 		char item[1024];
 		if (filterCoefAreConstants) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				, node->opencl_name, dstRegType);
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"typedef struct { float f[%d]; } COEF_%dx1;\n"
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride, COEF_%dx1 coef) {\n"
@@ -829,7 +829,7 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 		}
 
 		// generate computation
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  F32x8 sum; float4 pix;\n"
 			"  __local float4 * lbufptr = (__local float4 *) (lbuf + ly * %d + (lx << 5));\n" // LMemStride
@@ -846,33 +846,33 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 					if (ixpos == -(int)Mdiv2) {
 						if (filterCoefAreConstants) {
 							if (filterCoef[0] == 0.0f) {
-								if (dstIsS16) sprintf(item, "  sum.s%d = 0.5f;\n", ix);
-								else          sprintf(item, "  sum.s%d = 0.0f;\n", ix);
+								if (dstIsS16) snprintf(item, sizeof(item), "  sum.s%d = 0.5f;\n", ix);
+								else          snprintf(item, sizeof(item), "  sum.s%d = 0.0f;\n", ix);
 							}
 							else {
-								if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qf); code += item; }
-								if (dstIsS16) sprintf(item, "  sum.s%d = mad(pix.s%d, %.12ef, 0.5f);\n", ix, x, filterCoef[0]);
-								else          sprintf(item, "  sum.s%d =     pix.s%d* %.12ef;\n", ix, x, filterCoef[0]);
+								if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qf); code += item; }
+								if (dstIsS16) snprintf(item, sizeof(item), "  sum.s%d = mad(pix.s%d, %.12ef, 0.5f);\n", ix, x, filterCoef[0]);
+								else          snprintf(item, sizeof(item), "  sum.s%d =     pix.s%d* %.12ef;\n", ix, x, filterCoef[0]);
 							}
 						}
 						else {
-							if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qf); code += item; }
-							if (dstIsS16) sprintf(item, "  sum.s%d = mad(pix.s%d, coef.f[ 0], 0.5f);\n", ix, x);
-							else          sprintf(item, "  sum.s%d =     pix.s%d* coef.f[ 0];\n", ix, x);
+							if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qf); code += item; }
+							if (dstIsS16) snprintf(item, sizeof(item), "  sum.s%d = mad(pix.s%d, coef.f[ 0], 0.5f);\n", ix, x);
+							else          snprintf(item, sizeof(item), "  sum.s%d =     pix.s%d* coef.f[ 0];\n", ix, x);
 						}
 						code += item;
 					}
 					else if ((ixpos > -(int)Mdiv2) && (ixpos <= (int)Mdiv2)) {
 						if (filterCoefAreConstants) {
 							if (filterCoef[ixpos + Mdiv2] != 0.0f) {
-								if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qf); code += item; }
-								sprintf(item, "  sum.s%d = mad(pix.s%d, %.12ef, sum.s%d);\n", ix, x, filterCoef[ixpos + Mdiv2], ix);
+								if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qf); code += item; }
+								snprintf(item, sizeof(item), "  sum.s%d = mad(pix.s%d, %.12ef, sum.s%d);\n", ix, x, filterCoef[ixpos + Mdiv2], ix);
 								code += item;
 							}
 						}
 						else {
-							if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qf); code += item; }
-							sprintf(item, "  sum.s%d = mad(pix.s%d, coef.f[%2d], sum.s%d);\n", ix, x, ixpos + Mdiv2, ix);
+							if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qf); code += item; }
+							snprintf(item, sizeof(item), "  sum.s%d = mad(pix.s%d, coef.f[%2d], sum.s%d);\n", ix, x, ixpos + Mdiv2, ix);
 							code += item;
 						}
 					}
@@ -880,7 +880,7 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 			}
 		}
 		if (roundingBias != 0.0f) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"  sum.s0 = sum.s0 + %.12ef;\n"
 				"  sum.s1 = sum.s1 + %.12ef;\n"
@@ -931,12 +931,12 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 		// function declaration
 		char item[1024];
 		if (filterCoefAreConstants) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				, node->opencl_name, dstRegType);
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"typedef struct { float f[%d]; } COEF_1x%d;\n"
 				"void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride, COEF_1x%d coef) {\n"
@@ -966,7 +966,7 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 		}
 
 		// generate computation
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  F32x8 sum; float8 pix; float fval;\n"
 			"  __local float8 * lbufptr = (__local float8 *) (lbuf + ly * %d + (lx << 5));\n" // LMemStride
@@ -975,33 +975,33 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 		bool first_item = true;
 		for (int y = 0; y < (int)filterHeight; y++) {
 			if (!filterCoefAreConstants || filterCoef[y] != 0.0f) {
-				sprintf(item, "  pix = lbufptr[%d];\n", y * LMemWidth / 32); code += item;
+				snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", y * LMemWidth / 32); code += item;
 				if (filterCoefAreConstants) {
-					sprintf(item, "  fval = %.12ef;\n", filterCoef[y]); code += item;
+					snprintf(item, sizeof(item), "  fval = %.12ef;\n", filterCoef[y]); code += item;
 				}
 				else {
-					sprintf(item, "  fval = coef.f[%d];\n", y); code += item;
+					snprintf(item, sizeof(item), "  fval = coef.f[%d];\n", y); code += item;
 				}
 				if (first_item) {
 					first_item = false;
 					for (int x = 0; x < 8; x++) {
 						if (dstIsS16) {
-							sprintf(item, "  sum.s%d = mad(pix.s%d, fval, 0.5f);\n", x, x); code += item;
+							snprintf(item, sizeof(item), "  sum.s%d = mad(pix.s%d, fval, 0.5f);\n", x, x); code += item;
 						}
 						else {
-							sprintf(item, "  sum.s%d = pix.s%d * fval;\n", x, x); code += item;
+							snprintf(item, sizeof(item), "  sum.s%d = pix.s%d * fval;\n", x, x); code += item;
 						}
 					}
 				}
 				else {
 					for (int x = 0; x < 8; x++) {
-						sprintf(item, "  sum.s%d = mad(pix.s%d, fval, sum.s%d);\n", x, x, x); code += item;
+						snprintf(item, sizeof(item), "  sum.s%d = mad(pix.s%d, fval, sum.s%d);\n", x, x, x); code += item;
 					}
 				}
 			}
 		}
 		if (roundingBias != 0.0f) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"  sum.s0 = sum.s0 + %.12ef;\n"
 				"  sum.s1 = sum.s1 + %.12ef;\n"
@@ -1133,12 +1133,12 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 		}
 		// function declaration
 		if (filterCoefAreConstants) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"void %s(%sx8 * r1, %sx8 * r2, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				, node->opencl_name, dstRegType, dstRegType);
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"typedef struct { float f[%d]; } COEF_%dx1;\n"
 				"void %s(%sx8 * r1, %sx8 * r2, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride, COEF_%dx1 coef1, COEF_%dx1 coef2) {\n"
@@ -1171,7 +1171,7 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 		}
 
 		// generate computation
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  F32x8 sum1, sum2; uint2 pix; float fval;\n"
 			"  __local uint2 * lbufptr = (__local uint2 *) (lbuf + ly * %d + (lx << 3));\n" // LMemStride
@@ -1190,38 +1190,38 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 						if (ixpos == -(int)Mdiv2) {
 							if (filterCoefAreConstants) {
 								if (filterCoef[0] == 0.0f) {
-									sprintf(item, "  sum1.s%d = 0.0f;\n", ix);
+									snprintf(item, sizeof(item), "  sum1.s%d = 0.0f;\n", ix);
 								}
 								else {
-									if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-									if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+									if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+									if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
 									if (filterCoef[0] == 1.0f) {
-										sprintf(item, "  sum1.s%d =     fval;\n", ix);
+										snprintf(item, sizeof(item), "  sum1.s%d =     fval;\n", ix);
 									}
 									else {
-										sprintf(item, "  sum1.s%d =     fval* %.12ef;\n", ix, filterCoef[0]);
+										snprintf(item, sizeof(item), "  sum1.s%d =     fval* %.12ef;\n", ix, filterCoef[0]);
 									}
 								}
 								code += item;
 								if (filter2Coef[0] == 0.0f) {
-									sprintf(item, "  sum2.s%d = 0.0f;\n", ix);
+									snprintf(item, sizeof(item), "  sum2.s%d = 0.0f;\n", ix);
 								}
 								else {
-									if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-									if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+									if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+									if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
 									if (filter2Coef[0] == 1.0f) {
-										sprintf(item, "  sum2.s%d =     fval;\n", ix);
+										snprintf(item, sizeof(item), "  sum2.s%d =     fval;\n", ix);
 									}
 									else {
-										sprintf(item, "  sum2.s%d =     fval* %.12ef;\n", ix, filter2Coef[0]);
+										snprintf(item, sizeof(item), "  sum2.s%d =     fval* %.12ef;\n", ix, filter2Coef[0]);
 									}
 								}
 								code += item;
 							}
 							else {
-								if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-								if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-								sprintf(item, 
+								if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+								if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+								snprintf(item, sizeof(item), 
 									"  sum1.s%d =     fval* coef1.f[ 0];\n"
 									"  sum2.s%d =     fval* coef2.f[ 0];\n"
 									, ix, ix);
@@ -1231,24 +1231,24 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 						else if ((ixpos > -(int)Mdiv2) && (ixpos <= (int)Mdiv2)) {
 							if (filterCoefAreConstants) {
 								if (filterCoef[ixpos + Mdiv2] != 0.0f) {
-									if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-									if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-									sprintf(item, "  sum1.s%d = mad(fval, %.12ef, sum1.s%d);\n", ix, filterCoef[ixpos + Mdiv2], ix);
+									if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+									if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+									snprintf(item, sizeof(item), "  sum1.s%d = mad(fval, %.12ef, sum1.s%d);\n", ix, filterCoef[ixpos + Mdiv2], ix);
 									code += item;
 								}
 								if (filter2Coef[ixpos + Mdiv2] != 0.0f) {
-									if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-									if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-									sprintf(item, "  sum2.s%d = mad(fval, %.12ef, sum2.s%d);\n", ix, filter2Coef[ixpos + Mdiv2], ix);
+									if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+									if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+									snprintf(item, sizeof(item), "  sum2.s%d = mad(fval, %.12ef, sum2.s%d);\n", ix, filter2Coef[ixpos + Mdiv2], ix);
 									code += item;
 								}
 							}
 							else {
-								if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw); code += item; }
-								if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-								sprintf(item, "  sum1.s%d = mad(fval, coef1.f[%2d], sum1.s%d);\n", ix, ixpos + Mdiv2, ix);
+								if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw); code += item; }
+								if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+								snprintf(item, sizeof(item), "  sum1.s%d = mad(fval, coef1.f[%2d], sum1.s%d);\n", ix, ixpos + Mdiv2, ix);
 								code += item;
-								sprintf(item, "  sum2.s%d = mad(fval, coef2.f[%2d], sum2.s%d);\n", ix, ixpos + Mdiv2, ix);
+								snprintf(item, sizeof(item), "  sum2.s%d = mad(fval, coef2.f[%2d], sum2.s%d);\n", ix, ixpos + Mdiv2, ix);
 								code += item;
 							}
 						}
@@ -1268,12 +1268,12 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 
 		// function declaration
 		if (filterCoefAreConstants) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"void %s(%sx8 * r1, %sx8 * r2, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				, node->opencl_name, dstRegType, dstRegType);
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"typedef struct { float f[%d]; } COEF_%dx%d;\n"
 				"void %s(%sx8 * r1, %sx8 * r2, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride, COEF_%dx%d coef1, COEF_%dx%d coef2) {\n"
@@ -1306,7 +1306,7 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 		}
 
 		// generate computation
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  F32x8 sum1 = (F32x8)0.0f, sum2 = (F32x8)0.0f; uint2 pix; float fval;\n"
 			"  __local uint2 * lbufptr = (__local uint2 *) (lbuf + ly * %d + (lx << 3));\n" // LMemStride
@@ -1314,7 +1314,7 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 		code += item;
 		int numQW = (LMemSideLR / 4) + 1;
 		for (int y = 0; y < (int)filterHeight; y++) {
-			sprintf(item, "  // filterRow = %d\n", y); code += item;
+			snprintf(item, sizeof(item), "  // filterRow = %d\n", y); code += item;
 			for (int qw = 0; qw < numQW; qw++) {
 				bool loaded_pix = false;
 				for (int x = 0; x < 8; x++) {
@@ -1328,28 +1328,28 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 								int coefPos = y * filterWidth + ixpos + Mdiv2;
 								if (filterCoefAreConstants) {
 									if (filterCoef[coefPos] != 0.0f) {
-										if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
-										if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-										if (filterCoef[coefPos] == 1.0f)       sprintf(item, "  sum1.s%d += fval;\n", ix);
-										else if (filterCoef[coefPos] == -1.0f) sprintf(item, "  sum1.s%d -= fval;\n", ix);
-										else                                   sprintf(item, "  sum1.s%d  = mad(fval, %.12ef, sum1.s%d);\n", ix, filterCoef[coefPos], ix);
+										if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
+										if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+										if (filterCoef[coefPos] == 1.0f)       snprintf(item, sizeof(item), "  sum1.s%d += fval;\n", ix);
+										else if (filterCoef[coefPos] == -1.0f) snprintf(item, sizeof(item), "  sum1.s%d -= fval;\n", ix);
+										else                                   snprintf(item, sizeof(item), "  sum1.s%d  = mad(fval, %.12ef, sum1.s%d);\n", ix, filterCoef[coefPos], ix);
 										code += item;
 									}
 									if (filter2Coef[coefPos] != 0.0f) {
-										if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
-										if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-										if (filter2Coef[coefPos] == 1.0f)       sprintf(item, "  sum2.s%d += fval;\n", ix);
-										else if (filter2Coef[coefPos] == -1.0f) sprintf(item, "  sum2.s%d -= fval;\n", ix);
-										else                                    sprintf(item, "  sum2.s%d  = mad(fval, %.12ef, sum2.s%d);\n", ix, filter2Coef[coefPos], ix);
+										if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
+										if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+										if (filter2Coef[coefPos] == 1.0f)       snprintf(item, sizeof(item), "  sum2.s%d += fval;\n", ix);
+										else if (filter2Coef[coefPos] == -1.0f) snprintf(item, sizeof(item), "  sum2.s%d -= fval;\n", ix);
+										else                                    snprintf(item, sizeof(item), "  sum2.s%d  = mad(fval, %.12ef, sum2.s%d);\n", ix, filter2Coef[coefPos], ix);
 										code += item;
 									}
 								}
 								else {
-									if (!loaded_pix) { loaded_pix = true; sprintf(item, "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
-									if (!loaded_fval) { loaded_fval = true; sprintf(item, "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
-									sprintf(item, "  sum1.s%d = mad(fval, coef1.f[%2d], sum1.s%d);\n", ix, coefPos, ix);
+									if (!loaded_pix) { loaded_pix = true; snprintf(item, sizeof(item), "  pix = lbufptr[%d];\n", qw + y*LMemStride / 8); code += item; }
+									if (!loaded_fval) { loaded_fval = true; snprintf(item, sizeof(item), "  fval = amd_unpack%d(pix.s%d);\n", x & 3, x >> 2); code += item; }
+									snprintf(item, sizeof(item), "  sum1.s%d = mad(fval, coef1.f[%2d], sum1.s%d);\n", ix, coefPos, ix);
 									code += item;
-									sprintf(item, "  sum2.s%d = mad(fval, coef2.f[%2d], sum2.s%d);\n", ix, coefPos, ix);
+									snprintf(item, sizeof(item), "  sum2.s%d = mad(fval, coef2.f[%2d], sum2.s%d);\n", ix, coefPos, ix);
 									code += item;
 								}
 							}
@@ -1360,7 +1360,7 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 		}
 	}
 	if (!filterCoefAreIntegers && roundingBias != 0.0f) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  sum1.s0 = sum1.s0 + %.12ef;\n"
 			"  sum1.s1 = sum1.s1 + %.12ef;\n"

@@ -131,7 +131,9 @@ void LabelReaderFolders::read_all(const std::string& _path)
             auto file_extension_idx = subfolder_path.find_last_of(".");
             if (file_extension_idx  != std::string::npos) {
                 std::string file_extension = subfolder_path.substr(file_extension_idx+1);
-                if ((file_extension == "tar") || (file_extension == "zip") || (file_extension == "7z") || (file_extension == "rar"))
+                std::transform(file_extension.begin(), file_extension.end(), file_extension.begin(),
+                    [](unsigned char c){ return std::tolower(c); });
+                if ((file_extension != "jpg") || (file_extension != "jpeg") || (file_extension != "png") || (file_extension != "ppm") || (file_extension != "bmp") || (file_extension != "pgm") || (file_extension != "tif") || (file_extension != "tiff") || (file_extension != "webp"))
                     continue;
             }
             read_files(_folder_path);

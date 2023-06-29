@@ -127,7 +127,7 @@ void LabelReaderFolders::read_all(const std::string& _path)
         filesys::path pathObj(subfolder_path);
         if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
         {
-            // ignore files with extensions .tar, .zip, .7z
+            // ignore files with non-image extensions
             auto file_extension_idx = subfolder_path.find_last_of(".");
             if (file_extension_idx  != std::string::npos) {
                 std::string file_extension = subfolder_path.substr(file_extension_idx+1);

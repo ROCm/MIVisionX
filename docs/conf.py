@@ -29,6 +29,8 @@
 import os
 from rocm_docs import ROCmDocs
 
+external_projects_current_project = "mivisionx"
+
 os.system('find ../ -name "*.md" > "docfiles.txt"')
 doc_files = open('docfiles.txt', 'r')
 lines = doc_files.readlines()

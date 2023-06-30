@@ -43,8 +43,8 @@ parser.add_argument('--opencv',    	type=str, default='4.6.0',
                     help='OpenCV Version - optional (default:4.6.0)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.4',
                     help='ProtoBuf Version - optional (default:3.12.4)')
-parser.add_argument('--rpp',   		type=str, default='1.1.0',
-                    help='RPP Version - optional (default:1.1.0)')
+parser.add_argument('--rpp',   		type=str, default='1.2.0',
+                    help='RPP Version - optional (default:1.2.0)')
 parser.add_argument('--pybind11',   type=str, default='v2.10.4',
                     help='PyBind11 Version - optional (default:v2.10.4)')
 parser.add_argument('--ffmpeg',    	type=str, default='ON',

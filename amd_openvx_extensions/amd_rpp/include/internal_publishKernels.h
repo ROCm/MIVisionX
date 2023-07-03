@@ -100,6 +100,7 @@ vx_status ResizebatchPD_Register(vx_context);
 vx_status ResizeCropbatchPD_Register(vx_context);
 vx_status ResizeCropMirrorPD_Register(vx_context);
 vx_status ResizeMirrorNormalizeTensor_Register(vx_context);
+vx_status Resizetensor_Register(vx_context);
 vx_status RotatebatchPD_Register(vx_context);
 vx_status SaturationbatchPD_Register(vx_context);
 vx_status ScalebatchPD_Register(vx_context);
@@ -116,7 +117,6 @@ vx_status ThresholdingbatchPD_Register(vx_context);
 vx_status VignettebatchPD_Register(vx_context);
 vx_status WarpAffinebatchPD_Register(vx_context);
 vx_status WarpPerspectivebatchPD_Register(vx_context);
-vx_status Resizetensor_Register(vx_context);
 
 //tensor
 vx_status Brightness_Register(vx_context);

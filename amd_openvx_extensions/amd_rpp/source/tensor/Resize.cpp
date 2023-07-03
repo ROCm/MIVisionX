@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "internal_publishKernels.h"
 
 struct ResizeLocalData {
-    vxRppHandle * handle;
+    vxRppHandle *handle;
     Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
@@ -31,7 +31,7 @@ struct ResizeLocalData {
     vx_uint32 *resizeWidth;
     RpptDescPtr srcDescPtr;
     RpptDescPtr dstDescPtr;
-    RpptROI * roiPtr;
+    RpptROI *roiPtr;
     RpptRoiType roiType;
     Rpp32s inputLayout;
     Rpp32s outputLayout;
@@ -146,13 +146,13 @@ static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
         THROW("initialize : Resize, OpenCL backend is not supported")
 #endif
-    int roiType;
+    int roi_type;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->interpolationType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->inputLayout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->outputLayout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &roiType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    data->roiType = (roiType == 0) ? RpptRoiType::XYWH : RpptRoiType::LTRB;
+    data->roiType = (roi_type == 0) ? RpptRoiType::XYWH : RpptRoiType::LTRB;
 
     // Querying for input tensor
     data->srcDescPtr = &srcDesc;

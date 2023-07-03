@@ -31,7 +31,6 @@ struct BrightnessLocalData {
     vx_float32 *beta;
     RpptDescPtr srcDescPtr;
     RpptDescPtr dstDescPtr;
-
     RpptROI *roiPtr;
     RpptRoiType roiType;
     Rpp32s inputLayout;

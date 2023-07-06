@@ -105,7 +105,7 @@ def main():
         elif augmentation_name == "fish_eye":
             output = fn.fish_eye(images)
         elif augmentation_name == "vignette":
-            output = fn.vignette(images)
+            output = fn.vignette(images, vignette=50.0)
         elif augmentation_name == "jitter":
             output = fn.jitter(images)
         elif augmentation_name == "snp_noise":

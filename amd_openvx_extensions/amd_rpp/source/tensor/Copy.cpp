@@ -28,8 +28,6 @@ struct CopyLocalData {
     RppPtr_t pSrc;
     RppPtr_t pDst;
     size_t tensorSize;
-    vx_enum inputTensorType;
-    vx_enum outputTensorType;
 };
 
 static vx_status VX_CALLBACK refreshCopy(vx_node node, const vx_reference *parameters, vx_uint32 num, CopyLocalData *data) {
@@ -77,7 +75,8 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *param
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         refreshCopy(node, parameters, num, data);
-        hipMemcpy(data->pDst, data->pSrc, data->tensorSize, hipMemcpyDeviceToDevice);
+        hipMemcpyAsync(data->pDst, data->pSrc, data->tensorSize, hipMemcpyDeviceToDevice, data->handle.hipstream);
+        hipStreamSynchronize(data->handle.hipstream);
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshCopy(node, parameters, num, data);
@@ -88,6 +87,8 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *param
 
 static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     CopyLocalData *data = new CopyLocalData;
+    vx_enum inputTensorType;
+    vx_enum outputTensorType;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     THROW("initialize : Copy, OpenCL backend is not supported")
@@ -99,16 +100,16 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
     size_t tensor_dims[VX_TENSOR_DIMS];
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(vx_size)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, tensor_dims, sizeof(vx_size) * num_of_dims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &data->inputTensorType, sizeof(data->inputTensorType)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &data->outputTensorType, sizeof(data->outputTensorType)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &inputTensorType, sizeof(inputTensorType)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &outputTensorType, sizeof(outputTensorType)));
     
     data->tensorSize = 1;
     for(int i = 0; i < num_of_dims; i++)
         data->tensorSize *= tensor_dims[i];
 
-    if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT32)
+    if (inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && outputTensorType == vx_type_e::VX_TYPE_FLOAT32) {
         data->tensorSize *= sizeof(float);
-    else if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT16 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT16) {
+    } else if (inputTensorType == vx_type_e::VX_TYPE_FLOAT16 && outputTensorType == vx_type_e::VX_TYPE_FLOAT16) {
 #if defined(AMD_FP16_SUPPORT)
         data->tensorSize *= sizeof(vx_float16);
 #endif
@@ -156,7 +157,6 @@ vx_status Copy_Register(vx_context context) {
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
 #if ENABLE_HIP
-    // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
     if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));

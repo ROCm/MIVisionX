@@ -44,7 +44,6 @@ static vx_status VX_CALLBACK refreshNop(vx_node node, const vx_reference *parame
 }
 
 static vx_status VX_CALLBACK validateNop(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
-    // check scalar alpha and beta type
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[2], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
@@ -69,16 +68,9 @@ static vx_status VX_CALLBACK validateNop(vx_node node, const vx_reference parame
 
 static vx_status VX_CALLBACK processNop(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     NopLocalData *data = NULL;
-
     vx_status status = VX_SUCCESS;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        refreshNop(node, parameters, num, data);
-#endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        refreshNop(node, parameters, num, data);
-    }
+    refreshNop(node, parameters, num, data);
     return status;
 }
 
@@ -90,9 +82,7 @@ static vx_status VX_CALLBACK initializeNop(vx_node node, const vx_reference *par
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshNop(node, parameters, num, data);
-
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-
     return VX_SUCCESS;
 }
 
@@ -134,7 +124,6 @@ vx_status Nop_Register(vx_context context) {
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
 #if ENABLE_HIP
-    // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
     vx_bool enableBufferAccess = vx_true_e;
     if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));

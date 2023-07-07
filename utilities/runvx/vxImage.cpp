@@ -1060,7 +1060,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 						char value[MAX_SCALAR_TO_STRING_SIZE];
 						vx_scalar scalar = (vx_scalar)(*it)->GetVxObject();
 						ReadScalarToString(scalar, value);
-						char message[128]; snprintf(message, sizeof(message), "%s = %s", (*it)->GetVxObjectName(), value);
+						char message[2*MAX_SCALAR_TO_STRING_SIZE]; snprintf(message, sizeof(message), "%s = %s", (*it)->GetVxObjectName(), value);
 						int H = 20;
 						cv::putText(*pOutputImage, message, Point(overlayOffsetX+0, overlayOffsetY+H-6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,   0, 255, 0), 2, 8, false);
 						cv::putText(*pOutputImage, message, Point(overlayOffsetX+2, overlayOffsetY+H-8), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255, 0), 1, 8, false);

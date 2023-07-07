@@ -2788,7 +2788,7 @@ vx_status agoGraphDumpPerformanceProfile(AgoGraph * graph, const char * fileName
         fprintf(fp, " frame,type,timestamp(ms),object-name\n");
         int64_t stime = graph->performance_profile[0].time;
         for (auto entry : graph->performance_profile) {
-            char name[256];
+            char name[1024];
             if (entry.ref->type == VX_TYPE_GRAPH) strcpy(name, "GRAPH");
             else if (entry.ref->type == VX_TYPE_NODE) strncpy(name, ((AgoNode *)entry.ref)->akernel->name, sizeof(name) - 1);
             else agoGetDataName(name, (AgoData *)entry.ref);

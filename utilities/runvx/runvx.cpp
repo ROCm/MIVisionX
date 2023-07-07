@@ -279,7 +279,7 @@ int main(int argc, char * argv[])
 
 			size_t size = strlen("include") + 1 + strlen(fileName) + 1;
 			fullText = new char[size];
-			snprintf(fullText, sizeof(fullText), "include %s", fileName);
+			snprintf(fullText, size, "include %s", fileName);
 		}
 
 		if (fullText) {

@@ -467,13 +467,13 @@ int agoRemoveDataTree(AgoDataList * list, AgoData * item, AgoData ** trash)
 void agoRemoveDataInGraph(AgoGraph * agraph, AgoData * adata)
 {
 #if ENABLE_DEBUG_MESSAGES
-    char name[256];
+    char name[1024];
     agoGetDataName(name, adata);
     debug_printf("INFO: agoRemoveDataInGraph: removing data %s\n", name[0] ? name : "<?>");
 #endif
     // clear parent link in it's children and give them a name, when missing
     if (adata->children) {
-        char dataName[256];
+        char dataName[1024];
         agoGetDataName(dataName, adata);
         for (vx_uint32 i = 0; dataName[i]; i++) {
             if (dataName[i] == '[' || dataName[i] == ']')
@@ -484,7 +484,7 @@ void agoRemoveDataInGraph(AgoGraph * agraph, AgoData * adata)
                 // make sure that adata is the owner parent, before clearing the parent link
                 if (adata->children[i]->parent == adata) {
                     if (dataName[0] && !adata->children[i]->name.length()) {
-                        char nameChild[512];
+                        char nameChild[2048];
                         snprintf(nameChild, sizeof(nameChild), "%s!%d!", dataName, i);
                         adata->children[i]->name = nameChild;
                     }
@@ -503,7 +503,7 @@ void agoRemoveDataInGraph(AgoGraph * agraph, AgoData * adata)
     }
     // move the virtual data to trash
     if (agoRemoveData(&agraph->dataList, adata, &agraph->dataList.trash)) {
-        char name[256];
+        char name[1024];
         agoGetDataName(name, adata);
         agoAddLogEntry(&adata->ref, VX_FAILURE, "ERROR: agoRemoveDataInGraph: agoRemoveData(*,%s) failed\n", name[0] ? name : "<?>");
     }
@@ -538,7 +538,7 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
 
     // replace parent link in it's children and give them a name, when missing
     if (dataFind->children) {
-        char dataName[256];
+        char dataName[1024];
         agoGetDataName(dataName, dataFind);
         for (vx_uint32 i = 0; dataName[i]; i++) {
             if (dataName[i] == '[' || dataName[i] == ']')
@@ -547,7 +547,7 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
         for (vx_uint32 i = 0; i < dataFind->numChildren; i++) {
             if (dataFind->children[i]) {
                 if (dataName[0] && !dataFind->children[i]->name.length()) {
-                    char nameChild[512];
+                    char nameChild[2048];
                     snprintf(nameChild, sizeof(nameChild), "%s!%d!", dataName, i);
                     dataFind->children[i]->name = nameChild;
                 }
@@ -574,7 +574,7 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
     if (!removed) {
         // move the virtual data into trash
         if (agoRemoveDataTree(&agraph->dataList, dataFind, &agraph->dataList.trash)) {
-            char name[256];
+            char name[1024];
             agoGetDataName(name, dataFind);
             agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReplaceDataInGraph: agoRemoveDataTree(*,%s) failed\n", name[0] ? name : "<?>");
         }
@@ -2105,10 +2105,10 @@ void agoGetDataName(vx_char * name, AgoData * data)
     for (AgoData * pdata = data; pdata; pdata = pdata->parent) {
         char tmp[1024]; strcpy(tmp, name);
         if (pdata->parent) {
-            snprintf(name, sizeof(name), "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY || pdata->parent->ref.type == VX_TYPE_OBJECT_ARRAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
+            snprintf(name, MAX_MODULE_NAME_SIZE, "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY || pdata->parent->ref.type == VX_TYPE_OBJECT_ARRAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
         }
         else if (pdata->name.length()) {
-            snprintf(name, sizeof(name), "%s%s", pdata->name.c_str(), tmp);
+            snprintf(name, MAX_MODULE_NAME_SIZE, "%s%s", pdata->name.c_str(), tmp);
         }
         else {
             name[0] = 0;

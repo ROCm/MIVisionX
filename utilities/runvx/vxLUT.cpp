@@ -238,7 +238,7 @@ int CVxParamLUT::WriteFrame(int frameNumber)
 	else {
 		vx_size itemsize = size / m_count;
 		for (vx_uint32 x = 0; x < m_count; x++) {
-			char value[64]; 
+			char value[MAX_SCALAR_TO_STRING_SIZE]; 
 			PutScalarValueToString(m_data_type, &data[x * itemsize], value);
 			fprintf(fp, "%s\n", value);
 		}

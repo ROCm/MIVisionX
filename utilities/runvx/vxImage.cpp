@@ -1057,7 +1057,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 					}
 					else if ((*it)->GetVxObjectType() == VX_TYPE_SCALAR)
 					{ // view the scalar data ////////////////////////////
-						char value[64]; 
+						char value[MAX_SCALAR_TO_STRING_SIZE];
 						vx_scalar scalar = (vx_scalar)(*it)->GetVxObject();
 						ReadScalarToString(scalar, value);
 						char message[128]; snprintf(message, sizeof(message), "%s = %s", (*it)->GetVxObjectName(), value);

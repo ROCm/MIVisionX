@@ -623,53 +623,53 @@ int ReadScalarToString(vx_scalar scalar, char str[])
 	vx_enum type; ERROR_CHECK(vxQueryScalar(scalar, VX_SCALAR_ATTRIBUTE_TYPE, &type, sizeof(type)));
 	if (type == VX_TYPE_FLOAT32) {
 		float v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%g", v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%g", v);
 	}
 	else if (type == VX_TYPE_FLOAT64) {
 		double v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%lg", v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%lg", v);
 	}
 	else if (type == VX_TYPE_SIZE) {
 		vx_size v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), VX_FMT_SIZE, v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, VX_FMT_SIZE, v);
 	}
 	else if (type == VX_TYPE_INT8 || type == VX_TYPE_CHAR) {
 		vx_int8 v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%d", v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%d", v);
 	}
 	else if (type == VX_TYPE_INT16) {
 		vx_int16 v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%d", v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%d", v);
 	}
 	else if (type == VX_TYPE_INT32 || type == VX_TYPE_BOOL) {
 		vx_int32 v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%d", v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%d", v);
 	}
 	else if (type == VX_TYPE_INT64) {
 		vx_int64 v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%" PRId64, v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%" PRId64, v);
 	}
 	else if (type == VX_TYPE_UINT8) {
 		vx_uint8 v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%d", v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%d", v);
 	}
 	else if (type == VX_TYPE_UINT16) {
 		vx_uint16 v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%d", v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%d", v);
 	}
 	else if (type == VX_TYPE_UINT32) {
 		vx_uint32 v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%d", v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%d", v);
 	}
 	else if (type == VX_TYPE_UINT64) {
 		vx_uint64 v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "%" PRIu64, v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "%" PRIu64, v);
 	}
 	else if (type == VX_TYPE_ENUM) {
 		vx_enum v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
 		const char * name = ovxEnum2Name(v);
 		if (name) strcpy(str, name);
-		else snprintf(str, strlen(str), "0x%x", v);
+		else snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "0x%x", v);
 	}
 	else if (type == VX_TYPE_DF_IMAGE || type == VX_TYPE_STRING_AMD) {
 		str[4] = 0; // needed for VX_TYPE_DF_IMAGE
@@ -678,7 +678,7 @@ int ReadScalarToString(vx_scalar scalar, char str[])
 	else {
 		// unknown types will be printed in hex
 		vx_uint64 v = 0; ERROR_CHECK(vxReadScalarValue(scalar, &v));
-		snprintf(str, strlen(str), "0x%" PRIx64, v);
+		snprintf(str, MAX_SCALAR_TO_STRING_SIZE, "0x%" PRIx64, v);
 	}
 	return 0;
 }

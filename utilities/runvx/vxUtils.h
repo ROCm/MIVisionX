@@ -93,6 +93,9 @@ using namespace cv;
 #endif
 #endif
 
+// Scalar to String SIZE
+#define MAX_SCALAR_TO_STRING_SIZE 256
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////

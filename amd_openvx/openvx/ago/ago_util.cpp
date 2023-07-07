@@ -2103,7 +2103,7 @@ void agoGetDataName(vx_char * name, AgoData * data)
 {
     name[0] = 0;
     for (AgoData * pdata = data; pdata; pdata = pdata->parent) {
-        char tmp[1024]; strcpy(tmp, name);
+        char tmp[512]; strcpy(tmp, name);
         if (pdata->parent) {
             snprintf(name, MAX_MODULE_NAME_SIZE, "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY || pdata->parent->ref.type == VX_TYPE_OBJECT_ARRAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
         }

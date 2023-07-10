@@ -136,7 +136,7 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
-        THROW("initialize : Brightness, OpenCL backend is not supported")
+        throw std::runtime_error("initialize : Brightness, OpenCL backend is not supported");
 #endif
     int roi_type;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->inputLayout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));

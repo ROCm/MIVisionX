@@ -91,7 +91,7 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
     vx_enum outputTensorType;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
-    THROW("initialize : Copy, OpenCL backend is not supported")
+    throw std::runtime_error("initialize : Copy, OpenCL backend is not supported");
 #elif ENABLE_HIP
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif

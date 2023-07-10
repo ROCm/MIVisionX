@@ -6,7 +6,9 @@ subtrees:
     entries:
     - file: amd_openvx/README
     - file: amd_openvx/openvx/README
-    - file: amd_openvx/openvx/api
+      subtrees:
+        - entries: 
+          - file: amd_openvx/openvx/api
     - file: amd_openvx_extensions/README
     - file: amd_openvx_extensions/amd_custom/README
     - file: amd_openvx_extensions/amd_loomsl/README

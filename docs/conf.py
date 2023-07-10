@@ -32,6 +32,10 @@ from rocm_docs import ROCmDocs
 
 external_projects_current_project = "mivisionx"
 
+breathe_projects_source = {
+    "AMDOpenVX" : ( "../amd_openvx/openvx/include", ["vx_ext_amd.h"] )
+}
+
 os.system('find ../ -name "*.md" > "docfiles.txt"')
 doc_files = open('docfiles.txt', 'r')
 lines = doc_files.readlines()

@@ -777,7 +777,22 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = ../../amd_openvx/openvx/include
+INPUT                  = ../../amd_openvx/openvx/include \
+    ../../samples/model_compiler_samples/include \
+    ../../amd_openvx_extensions/amd_rpp/include \
+    ../../amd_openvx_extensions/amd_custom/include \
+    ../../amd_openvx_extensions/amd_migraphx/include \
+    ../../amd_openvx_extensions/amd_opencv/include \
+    ../../amd_openvx_extensions/amd_winml/include \
+    ../../amd_openvx_extensions/amd_winml/utilities/MIVisionX-WinML-Validate/include \
+    ../../amd_openvx_extensions/amd_media/include \
+    ../../amd_openvx_extensions/amd_nn/include \
+    ../../amd_openvx/openvx/include \
+    ../../rocAL/rocAL/include \
+    ../../apps/mivisionx_openvx_classifier/include \
+    ../../apps/bubble_pop/include \
+    ../../apps/dg_test/include \
+    ../../apps/cloud_inference/server_app/include 
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

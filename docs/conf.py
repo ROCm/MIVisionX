@@ -33,11 +33,96 @@ from rocm_docs import ROCmDocs
 external_projects_current_project = "mivisionx"
 
 breathe_projects_source = {
-    "AMDOpenVX" : ( "../amd_openvx/openvx/include", ["vx_ext_amd.h"] )
+    "amd_openvx": ("../amd_openvx/openvx/include", ["vx_ext_amd.h"]),
+    "amd_custom": ("../amd_openvx_extensions/amd_custom/include", ["vx_amd_custom.h"]),
+    "amd_media": ("../amd_openvx_extensions/amd_media/include", ["vx_amd_media.h"]),
+    "amd_migraphx": (
+        "../amd_openvx_extensions/amd_migraphx/include",
+        ["vx_amd_migraphx.h"],
+    ),
+    "amd_nn": ("../amd_openvx_extensions/amd_nn/include", ["vx_amd_nn.h"]),
+    "amd_opencv": (
+        "../amd_openvx_extensions/amd_opencv/include",
+        [
+            "internal_opencvTunnel.h",
+            "internal_publishKernels.h",
+            "vx_opencv.h",
+            "vx_ext_opencv.h",
+        ],
+    ),
+    "amd_rpp": (
+        "../amd_openvx_extensions/amd_rpp/include",
+        [
+            "internal_publishKernels.h",
+            "internal_rpp.h",
+            "kernels_rpp.h",
+            "vx_ext_rpp.h",
+        ],
+    ),
+    "amd_winml": (
+        "../amd_openvx_extensions/amd_winml/include",
+        [
+            "internal_publishKernels.h",
+            "internal_winmlTunnel.h",
+            "vx_ext_winml.h",
+            "vx_winml.h",
+        ],
+    ),
+    "bubble_pop": (
+        "../apps/bubble_pop/include",
+        [
+            "internal_opencvTunnel.h",
+            "internal_publishKernels.h",
+            "vx_ext_pop.h",
+            "vx_pop.h",
+        ],
+    ),
+    "cloud_inference": (
+        "../apps/cloud_inference/server_app/include",
+        [
+            "arguments.h",
+            "common.h",
+            "compiler.h",
+            "configure.h",
+            "infcom.h",
+            "inference.h",
+            "netutil.h",
+            "profiler.h",
+            "region.h",
+            "server.h",
+            "shadow.h",
+        ],
+    ),
+    "dg_test": (
+        "../apps/dg_test/include",
+        [
+            "annmodule.h",
+            "cvui.h",
+            "DGtest.h",
+            "UserInterface.h",
+        ],
+    ),
+    "mivisionx_openvx_classifier": (
+        "../apps/mivisionx_openvx_classifier/include",
+        [
+            "caffeModels.h",
+            "cvui.h",
+        ],
+    ),
+    "model_compiler_samples": (
+        "../apps/model_compiler_samples/include",
+        [
+            "classification.h",
+            "common.h",
+            "cvui.h",
+            "detection.h",
+            "segmentation.h",
+        ],
+    ),
 }
 
 os.system('find ../ -name "*.md" > "docfiles.txt"')
-doc_files = open('docfiles.txt', 'r')
+doc_files = open("docfiles.txt", "r")
 lines = doc_files.readlines()
 for file_path in lines:
     file_dir, _ = os.path.split(file_path)

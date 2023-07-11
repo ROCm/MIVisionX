@@ -164,7 +164,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + **Ubuntu** - `20.04` / `22.04`
   + **CentOS** - `7` / `8`
   + **RedHat** - `8` / `9`
-  + **SLES** - `15-SP3`
+  + **SLES** - `15-SP4`
 * Install [ROCm](https://docs.amd.com)
 * CMake 3.0 or later
 * ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn))
@@ -189,7 +189,7 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
   + RedHat - `8` / `9`
-  + SLES - `15-SP3`
+  + SLES - `15-SP4`
 * [ROCm supported hardware](https://docs.amd.com)
 * [ROCm](https://docs.amd.com)
 
@@ -455,17 +455,17 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
   + RHEL - `8` / `9`
-  + SLES - `15-SP3`
+  + SLES - `15-SP4`
 * ROCm: rocm-core - `5.4.3.50403-121`
 * miopen-hip - `2.19.0.50403-121`
 * miopen-opencl - `2.18.0.50300-63`
 * migraphx - `2.4.0.50403-121`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [1.1.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.1.0)
+* RPP - [1.2.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.2.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.5.1`
+* MIVisionX Setup Script - `V2.5.3`
 
 ### Known issues
 

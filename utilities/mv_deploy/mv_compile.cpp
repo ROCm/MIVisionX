@@ -30,9 +30,17 @@ THE SOFTWARE.
 #include <string>
 #include <sstream>
 #include <sys/stat.h>
-#include <filesystem>
 #include <unistd.h>
-
+#if __cplusplus >= 201703L && __has_include(<filesystem>)
+    #include <filesystem>
+    namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+    #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
+#elif __has_include(<boost/filesystem.hpp>)
+    #include <boost/filesystem.hpp>
+    namespace fs = boost::filesystem;
+#endif
 // helper functions
 void info(const char * format, ...)
 {
@@ -85,7 +93,7 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
         } else {
             printf("Env MIVISIONX_MODEL_COMPILER_PATH is not specified, using default %s\n", compiler_path.c_str());
         }
-        if (!std::filesystem::exists(model_name)) {
+        if (!fs::exists(model_name)) {
             error("model %s does not exist", model_name);
             return MV_FAILURE;
         }

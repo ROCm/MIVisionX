@@ -110,7 +110,7 @@ breathe_projects_source = {
         ],
     ),
     "model_compiler_samples": (
-        "../apps/model_compiler_samples/include",
+        "../samples/model_compiler_samples/include",
         [
             "classification.h",
             "common.h",

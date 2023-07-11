@@ -1941,7 +1941,7 @@ vx_status createRPPHandle(vx_node node, vxRppHandle **pHandle, Rpp32u batchSize,
         if (deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
             STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &handle->cmdq, sizeof(handle->cmdq)));
-            rppCreateWithStreamAndBatchSize(&data->rppHandle, handle->cmdq, batchSize);
+            rppCreateWithStreamAndBatchSize(&handle->rppHandle, handle->cmdq, batchSize);
 #elif ENABLE_HIP
             STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &handle->hipstream, sizeof(handle->hipstream)));
             rppCreateWithStreamAndBatchSize(&handle->rppHandle, handle->hipstream, batchSize);

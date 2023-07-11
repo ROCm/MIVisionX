@@ -1,4 +1,4 @@
-# Image Clasiification using AMD WinML Extension
+# Image Classification using AMD WinML Extension
 
 This application implements a method to run WinML supported ONNX models using MIVisionX RunTime. This c/c++ implementation does image classification on live camera capture or pre-recorded video stream.
 

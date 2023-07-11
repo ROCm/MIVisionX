@@ -13,32 +13,32 @@ subtrees:
     - file: amd_openvx_extensions/amd_custom/README
       subtrees:
         - entries:
-          - file: 
+          - file: amd_openvx_extensions/amd_custom/api
     - file: amd_openvx_extensions/amd_loomsl/README
     - file: amd_openvx_extensions/amd_media/README
       subtrees:
         - entries:
-          - file: 
+          - file: amd_openvx_extensions/amd_media/api
     - file: amd_openvx_extensions/amd_migraphx/README
       subtrees:
         - entries:
-          - file: 
+          - file: amd_openvx_extensions/amd_migraphx/api
     - file: amd_openvx_extensions/amd_nn/README
       subtrees:
         - entries:
-          - file: 
+          - file: amd_openvx_extensions/amd_nn/api
     - file: amd_openvx_extensions/amd_opencv/README
       subtrees:
         - entries:
-          - file: 
+          - file: amd_openvx_extensions/amd_opencv/api
     - file: amd_openvx_extensions/amd_rpp/README
       subtrees:
         - entries:
-          - file: 
+          - file: amd_openvx_extensions/amd_rpp/api
     - file: amd_openvx_extensions/amd_winml/README
       subtrees:
         - entries:
-          - file: 
+          - file: amd_openvx_extensions/amd_winml/api
     - file: amd_openvx_extensions/amd_winml/samples/README
     - file: amd_openvx_extensions/amd_winml/utilities/MIVisionX-WinML-Validate/README
     - file: amd_openvx_extensions/amd_winml/utilities/MIVisionX-WinML-Validate/sample/README
@@ -47,23 +47,23 @@ subtrees:
     - file: apps/bubble_pop/README
       subtrees:
         - entries:
-          - file: 
+          - file: apps/bubble_pop/api
     - file: apps/cloud_inference/README
       subtrees:
         - entries:
-          - file: 
+          - file: apps/cloud_inference/api
     - file: apps/cloud_inference/client_app/README
     - file: apps/cloud_inference/server_app/README
     - file: apps/dg_test/README
       subtrees:
         - entries:
-          - file: 
+          - file: apps/dg_test/api
     - file: apps/image_augmentation/README
     - file: apps/mivisionx_inference_analyzer/README
     - file: apps/mivisionx_openvx_classifier/README
       subtrees:
         - entries:
-          - file: 
+          - file: apps/mivisionx_openvx_classifier/api
     - file: apps/mivisionx_validation_tool/README
     - file: apps/mivisionx_winml_classifier/README
     - file: apps/mivisionx_winml_yolov2/README
@@ -85,7 +85,7 @@ subtrees:
     - file: samples/model_compiler_samples/README
       subtrees:
         - entries:
-          - file: 
+          - file: samples/model_compiler_samples/api
     - file: samples/model_compiler_samples/module_files/README
     - file: tests/README
     - file: tests/amd_media_tests/README

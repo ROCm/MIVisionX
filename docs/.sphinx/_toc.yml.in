@@ -8,9 +8,7 @@ subtrees:
       subtrees:
         - entries:
           - file: amd_openvx/openvx/README
-            subtrees:
-              - entries:
-                - file: amd_openvx/openvx/api
+          - file: amd_openvx/openvx/api
     - file: amd_openvx_extensions/README
       subtrees:
         - entries:

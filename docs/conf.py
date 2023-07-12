@@ -33,14 +33,52 @@ from rocm_docs import ROCmDocs
 external_projects_current_project = "mivisionx"
 
 breathe_projects_source = {
-    "amd_openvx": ("../amd_openvx/openvx/include", ["vx_ext_amd.h"]),
-    "amd_custom": ("../amd_openvx_extensions/amd_custom/include", ["vx_amd_custom.h"]),
-    "amd_media": ("../amd_openvx_extensions/amd_media/include", ["vx_amd_media.h"]),
+    "amd_openvx": (
+        "../amd_openvx/openvx/include",
+        [
+            "vx_ext_amd.h",
+        ],
+    ),
+    "khronos_openvx": (
+        "../amd_openvx/openvx/include/VX",
+        [
+            "vx_api.h",
+            "vx_compatibility.h",
+            "vx.h",
+            "vx_import.h",
+            "vx_kernels.h",
+            "vx_khr_buffer_aliasing.h",
+            "vx_khr_class.h",
+            "vx_khr_icd.h",
+            "vx_khr_import_kernel.h",
+            "vx_khr_ix.h",
+            "vx_khr_nn.h",
+            "vx_khr_opencl_interop.h",
+            "vx_khr_pipelining.h",
+            "vx_khr_user_data_object.h",
+            "vx_khr_xml.h",
+            "vx_nodes.h",
+            "vx_types.h",
+            "vxu.h",
+            "vx_vendors.h",
+        ],
+    ),
+    "amd_custom": (
+        "../amd_openvx_extensions/amd_custom/include",
+        ["vx_amd_custom.h"],
+    ),
+    "amd_media": (
+        "../amd_openvx_extensions/amd_media/include",
+        ["vx_amd_media.h"],
+    ),
     "amd_migraphx": (
         "../amd_openvx_extensions/amd_migraphx/include",
         ["vx_amd_migraphx.h"],
     ),
-    "amd_nn": ("../amd_openvx_extensions/amd_nn/include", ["vx_amd_nn.h"]),
+    "amd_nn": (
+        "../amd_openvx_extensions/amd_nn/include",
+        ["vx_amd_nn.h"],
+    ),
     "amd_opencv": (
         "../amd_openvx_extensions/amd_opencv/include",
         [

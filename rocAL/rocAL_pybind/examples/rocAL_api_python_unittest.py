@@ -165,7 +165,7 @@ def main():
             pipe.set_outputs(output1, output2, output3)
             output_set = 1
         elif augmentation_name == "vignetter_blur":
-            output1 = fn.vignette(images)
+            output1 = fn.vignette(images, vignette=50.0)
             output2 = fn.blur(output1)
             pipe.set_outputs(output1, output2)
             output_set = 1

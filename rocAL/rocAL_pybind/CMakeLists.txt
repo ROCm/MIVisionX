@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.4)
 project(rocAL_pybind)
 
 set(TARGET_NAME rocAL_pybind)
@@ -28,6 +28,7 @@ set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 
 set(CMAKE_CXX_STANDARD 14)
 set(BUILD_ROCAL_PYBIND true)
+set(ROCAL_PYTHON ON)
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     set(BUILD_ROCAL_PYBIND false)
@@ -84,14 +85,17 @@ if(ROCAL_PYTHON)
     endif()
 
     set(Python3_FIND_VIRTUALENV FIRST)
-    find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-    include_directories(${Python3_INCLUDE_DIRS})
-    message("-- ${Green}NOTE: rocAL pybind requires Python3, Found --  ${Python3_EXECUTABLE} ${ColourReset}")
+    find_package(Python3 QUIET COMPONENTS Interpreter Development)
     if(NOT Python3_FOUND)
         set(BUILD_ROCAL_PYBIND false)
         message("-- ${Yellow}NOTE: rocAL pybind requires Python3, Not Found${ColourReset}")
     endif()
 
+    find_package(pybind11 QUIET CONFIG)
+    if(NOT pybind11_FOUND)
+        set(BUILD_ROCAL_PYBIND false)
+        message("-- ${Yellow}NOTE: rocAL requires pybind11, Not Found${ColourReset}")
+    endif()
 
     if(${BUILD_ROCAL_PYBIND})
 
@@ -101,9 +105,6 @@ if(ROCAL_PYTHON)
             set(CMAKE_INSTALL_PREFIX_PYTHON ${Python3_STDARCH} CACHE PATH "rocAL default installation path" FORCE)
         endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-        add_subdirectory(third_party_lib/pybind11)
-        include_directories(third_party_lib/pybind11/include/)
-
 
         # AMD RPP
         include_directories(${AMDRPP_INCLUDE_DIRS})
@@ -117,6 +118,11 @@ if(ROCAL_PYTHON)
         # rocAL
         set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rocal)
         include_directories(../rocAL/include/api/)
+        # Python3
+        include_directories(${Python3_INCLUDE_DIRS})
+        message("-- ${Green}NOTE: rocAL pybind requires Python3, Found --  ${Python3_EXECUTABLE} ${ColourReset}")
+        # PyBind11
+        include_directories(${pybind11_INCLUDE_DIRS})
 
         file(GLOB_RECURSE pyfiles amd/*.py)
         file(GLOB_RECURSE sources *.cpp)

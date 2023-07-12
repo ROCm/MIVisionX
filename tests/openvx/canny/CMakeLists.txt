@@ -1,6 +1,8 @@
+################################################################################
+#
 # MIT License
 #
-# Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc.
+# Copyright (c) 2018 - 2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,25 +21,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+#
+################################################################################
 
-cmake_minimum_required(VERSION 3.0)
-project(mv_compile)
-set(CMAKE_CXX_STANDARD 17)
+cmake_minimum_required (VERSION 3.0)
+project (openvx_canny)
 
-include_directories(${CMAKE_INSTALL_PREFIX}/include
-                    ${PROJECT_SOURCE_DIR}
-                   )
+set (CMAKE_CXX_STANDARD 14)
+set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 
-add_executable(mv_compile mv_compile.cpp)
-# install MIVisionX executables -- {ROCM_PATH}/bin
-install (TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR})
+include_directories (${ROCM_PATH}/include/mivisionx)
+link_directories    (${ROCM_PATH}/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++17 ")
-target_link_libraries(mv_compile ${CMAKE_DL_LIBS} stdc++fs)
-
-if(BUILD_DEV)
-    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-    install (FILES mvdeploy_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-    install (FILES mv_extras_postproc.h DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
-    install (FILES mv_extras_postproc.cpp DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
-endif(BUILD_DEV)
+add_executable(openvx_canny canny.cpp)
+target_link_libraries(${PROJECT_NAME} openvx)

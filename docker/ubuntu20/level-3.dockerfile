@@ -17,6 +17,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         sudo apt-get update -y && \
         sudo amdgpu-install -y --usecase=graphics,rocm
 # install OpenCV & FFMPEG - Level 3
+ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \
         libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip && \
         mkdir OpenCV && cd OpenCV && wget https://github.com/opencv/opencv/archive/4.6.0.zip && unzip 4.6.0.zip && \
@@ -25,7 +26,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
         libvdpau-dev libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget zlib1g-dev \
         nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev && \
         wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.4.2.zip && unzip n4.4.2.zip && cd FFmpeg-n4.4.2/ && sudo ldconfig && \
-        export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/" && \
         ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree && \
         make -j8 && sudo make install && cd
 

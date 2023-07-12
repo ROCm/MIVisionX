@@ -26,14 +26,11 @@ import amd.rocal.fn as fn
 import tensorflow as tf
 import numpy as np
 from parse_config import parse_args
-import cupy as cp
 
-def draw_patches(image,idx,device_type):
+def draw_patches(img,idx):
     #image is expected as a tensor, bboxes as numpy
     import cv2
-    if device_type == "gpu":
-        image= cp.asnumpy(image)
-    # image = img.transpose([0,1,2])
+    image = img.transpose([0,1,2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/CLASSIFICATION/" + str(idx)+"_"+"train"+".png", image)
 
@@ -42,7 +39,6 @@ def main():
     # Args
     imagePath = args.image_dataset_path
     rocalCPU = False if args.rocal_gpu else True
-    device = "cpu" if rocalCPU else "gpu"
     batch_size = args.batch_size
     oneHotLabel = 1
     num_threads = args.num_threads
@@ -60,7 +56,6 @@ def main():
     except OSError as error:
         print(error)
     # Create Pipeline instance
-    print("check in tf_classification.py ")
     pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rocal_cpu=rocalCPU)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
@@ -81,7 +76,7 @@ def main():
     # Build the pipeline
     pipe.build()
     # Dataloader
-    imageIterator = ROCALIterator(pipe,device=device)
+    imageIterator = ROCALIterator(pipe)
     cnt = 0
     # Enumerate over the Dataloader
     for i, (images_array, labels_array) in enumerate(imageIterator, 0):
@@ -92,7 +87,7 @@ def main():
             print("\n\nPrinted first batch with", (batch_size), "images!")
         for element in list(range(batch_size)):
             cnt = cnt + 1
-            draw_patches(images_array[element],cnt,device)
+            draw_patches(images_array[element],cnt)
         break
     imageIterator.reset()
 

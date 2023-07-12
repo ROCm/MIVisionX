@@ -25,7 +25,6 @@ import tensorflow as tf
 import amd.rocal.fn as fn
 import numpy as np
 import os
-import cupy as cp
 from parse_config import parse_args
 
 def get_onehot(image_labels_array, numClasses):
@@ -47,16 +46,14 @@ def get_weights(num_bboxes):
 
     return weights_array
 
-def draw_patches(image, idx, bboxes,device_type):
+def draw_patches(img, idx, bboxes):
     #image is expected as a tensor, bboxes as numpy
     import cv2
     # image = img.detach().numpy()
-    print("check in draw_patch")
-    if device_type == "gpu":
-        image= cp.asnumpy(image)
+    image = img.transpose([0, 1, 2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     image = cv2.normalize(image, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
-    htot, wtot ,_ = image.shape
+    htot, wtot ,_ = img.shape
     for (l, t, r, b) in bboxes:
         loc_ = [l, t, r, b]
         color = (255, 0, 0)
@@ -72,7 +69,6 @@ def main():
     imagePath = args.image_dataset_path
     numClasses = 91
     rocalCPU = False if args.rocal_gpu else True
-    device = "cpu" if rocalCPU else "gpu"
     batch_size = args.batch_size
     num_threads = args.num_threads
     TFRecordReaderType = 1
@@ -118,7 +114,7 @@ def main():
         resized = fn.resize(decoded_images, resize_x=300, resize_y=300)
         pipe.set_outputs(resized)
     pipe.build()
-    imageIterator = ROCALIterator(pipe,device=device)
+    imageIterator = ROCALIterator(pipe)
 
     cnt = 0
     for i, (images_array, bboxes_array, labels_array, num_bboxes_array) in enumerate(imageIterator, 0):
@@ -142,7 +138,7 @@ def main():
             processed_tensors = (features_dict, labels_dict)
             if args.print_tensor:
                 print("\nPROCESSED_TENSORS:\n", processed_tensors)
-            draw_patches(images_array[element],cnt,bboxes_array[element],device)
+            draw_patches(images_array[element],cnt,bboxes_array[element])
         print("\n\nPrinted first batch with", (batch_size), "images!")
         break
     imageIterator.reset()

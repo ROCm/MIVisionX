@@ -26,10 +26,12 @@ import amd.rocal.fn as fn
 import tensorflow as tf
 import numpy as np
 from parse_config import parse_args
+import cupy as cp
 
-def draw_patches(img,idx):
-    #image is expected as a tensor, bboxes as numpy
+def draw_patches(img,idx,device_type):
     import cv2
+    if device_type == "gpu":
+        img= cp.asnumpy(img)
     image = img.transpose([0,1,2])
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     cv2.imwrite("OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/CLASSIFICATION/" + str(idx)+"_"+"train"+".png", image)
@@ -39,6 +41,7 @@ def main():
     # Args
     imagePath = args.image_dataset_path
     rocalCPU = False if args.rocal_gpu else True
+    device = "cpu" if rocalCPU else "gpu"
     batch_size = args.batch_size
     oneHotLabel = 1
     num_threads = args.num_threads
@@ -76,7 +79,7 @@ def main():
     # Build the pipeline
     pipe.build()
     # Dataloader
-    imageIterator = ROCALIterator(pipe)
+    imageIterator = ROCALIterator(pipe,device=device)
     cnt = 0
     # Enumerate over the Dataloader
     for i, (images_array, labels_array) in enumerate(imageIterator, 0):
@@ -87,7 +90,7 @@ def main():
             print("\n\nPrinted first batch with", (batch_size), "images!")
         for element in list(range(batch_size)):
             cnt = cnt + 1
-            draw_patches(images_array[element],cnt)
+            draw_patches(images_array[element],cnt,device)
         break
     imageIterator.reset()
 

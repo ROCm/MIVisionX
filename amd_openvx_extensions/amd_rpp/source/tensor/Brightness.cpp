@@ -162,8 +162,8 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pAlpha = malloc(sizeof(vx_float32) * data->pSrcDesc->n);
-    data->pBeta = malloc(sizeof(vx_float32) * data->pSrcDesc->n);
+    data->pAlpha = static_cast<vx_float32 *>(malloc(sizeof(vx_float32) * data->pSrcDesc->n));
+    data->pBeta = static_cast<vx_float32 *>(malloc(sizeof(vx_float32) * data->pSrcDesc->n));
     refreshBrightness(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

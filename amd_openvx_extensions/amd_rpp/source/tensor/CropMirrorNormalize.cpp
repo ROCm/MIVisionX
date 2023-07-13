@@ -173,9 +173,9 @@ static vx_status VX_CALLBACK initializeCropMirrorNormalize(vx_node node, const v
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pMultiplier = malloc(sizeof(vx_float32) * data->pSrcDesc->n * data->pSrcDesc->c);
-    data->pOffset = malloc(sizeof(vx_float32) * data->pSrcDesc->n * data->pSrcDesc->c);
-    data->pMirror = malloc(sizeof(vx_uint32) * data->pSrcDesc->n);
+    data->pMultiplier = static_cast<vx_float32 *>(malloc(sizeof(vx_float32) * data->pSrcDesc->n * data->pSrcDesc->c));
+    data->pOffset = static_cast<vx_float32 *>(malloc(sizeof(vx_float32) * data->pSrcDesc->n * data->pSrcDesc->c));
+    data->pMirror = static_cast<vx_uint32 *>(malloc(sizeof(vx_uint32) * data->pSrcDesc->n));
     refreshCropMirrorNormalize(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

@@ -61,7 +61,7 @@ static vx_status VX_CALLBACK refreshCropMirrorNormalize(vx_node node, const vx_r
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
-    data->pSrcRoi = (RpptROI *)roi_tensor_ptr;
+    data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
     if(data->inputLayout == 2 || data->inputLayout == 3) { // For NFCHW and NFHWC formats
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for(int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
@@ -173,9 +173,9 @@ static vx_status VX_CALLBACK initializeCropMirrorNormalize(vx_node node, const v
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pMultiplier = (vx_float32 *)malloc(sizeof(vx_float32) * data->pSrcDesc->n * data->pSrcDesc->c);
-    data->pOffset = (vx_float32 *)malloc(sizeof(vx_float32) * data->pSrcDesc->n * data->pSrcDesc->c);
-    data->pMirror = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->pSrcDesc->n);
+    data->pMultiplier = malloc(sizeof(vx_float32) * data->pSrcDesc->n * data->pSrcDesc->c);
+    data->pOffset = malloc(sizeof(vx_float32) * data->pSrcDesc->n * data->pSrcDesc->c);
+    data->pMirror = malloc(sizeof(vx_uint32) * data->pSrcDesc->n);
     refreshCropMirrorNormalize(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

@@ -58,7 +58,7 @@ static vx_status VX_CALLBACK refreshBrightness(vx_node node, const vx_reference 
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
-    data->pSrcRoi = (RpptROI *)roi_tensor_ptr;
+    data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
     if((data->inputLayout == 2 || data->inputLayout == 3)) { // For NFCHW and NFHWC formats
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for(int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
@@ -162,8 +162,8 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pAlpha = (vx_float32 *)malloc(sizeof(vx_float32) * data->pSrcDesc->n);
-    data->pBeta = (vx_float32 *)malloc(sizeof(vx_float32) * data->pSrcDesc->n);
+    data->pAlpha = malloc(sizeof(vx_float32) * data->pSrcDesc->n);
+    data->pBeta = malloc(sizeof(vx_float32) * data->pSrcDesc->n);
     refreshBrightness(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

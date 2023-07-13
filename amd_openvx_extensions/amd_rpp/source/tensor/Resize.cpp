@@ -63,7 +63,7 @@ static vx_status VX_CALLBACK refreshResize(vx_node node, const vx_reference *par
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
-    data->pSrcRoi = (RpptROI *)roi_tensor_ptr;
+    data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
     if(data->inputLayout == 2 || data->inputLayout == 3) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for(int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
@@ -174,8 +174,8 @@ static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *
 #else
     data->pDstImgSize = (RpptImagePatch *)calloc(data->pSrcDesc->n, sizeof(RpptImagePatch));
 #endif    
-    data->pResizeWidth = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->pSrcDesc->n);
-    data->pResizeHeight = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->pSrcDesc->n);
+    data->pResizeWidth = malloc(sizeof(vx_uint32) * data->pSrcDesc->n);
+    data->pResizeHeight = malloc(sizeof(vx_uint32) * data->pSrcDesc->n);
     refreshResize(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

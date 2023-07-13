@@ -8727,7 +8727,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
     if (agoIsValidContext(context) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(context->cs);
         char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
-        char desc[1024]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
+        char desc[2048]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "objectarray", data->name);
@@ -8940,7 +8940,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
     if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(graph->cs);
         char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
-        char desc[1024]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
+        char desc[2048]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
         data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "objectarray", data->name);

@@ -37,8 +37,8 @@ struct BrightnessLocalData {
     Rpp32s outputLayout;
     RpptDesc srcDesc;
     RpptDesc dstDesc;
-    size_t inputTensorDims[VX_TENSOR_DIMS];
-    size_t ouputTensorDims[VX_TENSOR_DIMS];
+    size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
+    size_t ouputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
 static vx_status VX_CALLBACK refreshBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num, BrightnessLocalData *data) {
@@ -97,7 +97,7 @@ static vx_status VX_CALLBACK validateBrightness(vx_node node, const vx_reference
 
     // Check for output parameters
     vx_uint8 tensor_fixed_point_position;
-    size_t tensor_dims[VX_TENSOR_DIMS];
+    size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_type;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
     if(num_tensor_dims < 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Brightness: tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);

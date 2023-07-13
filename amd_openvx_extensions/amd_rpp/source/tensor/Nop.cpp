@@ -52,7 +52,7 @@ static vx_status VX_CALLBACK validateNop(vx_node node, const vx_reference parame
 
     // Check for output parameters
     vx_uint8 tensor_fixed_point_position;
-    size_t tensor_dims[VX_TENSOR_DIMS];
+    size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     size_t num_tensor_dims;
     vx_enum tensor_type;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));

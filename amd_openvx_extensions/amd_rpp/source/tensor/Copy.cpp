@@ -53,7 +53,7 @@ static vx_status VX_CALLBACK validateCopy(vx_node node, const vx_reference param
 
     // Check for output parameters
     vx_uint8 tensor_fixed_point_position;
-    size_t tensor_dims[VX_TENSOR_DIMS];
+    size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     size_t num_tensor_dims;
     vx_enum tensor_type;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
@@ -97,7 +97,7 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
 #endif
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     vx_size num_of_dims;
-    size_t tensor_dims[VX_TENSOR_DIMS];
+    size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(vx_size)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, tensor_dims, sizeof(vx_size) * num_of_dims));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &inputTensorType, sizeof(inputTensorType)));

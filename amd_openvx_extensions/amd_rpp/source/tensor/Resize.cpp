@@ -37,8 +37,8 @@ struct ResizeLocalData {
     Rpp32s outputLayout;
     RpptDesc srcDesc;
     RpptDesc dstDesc;
-    size_t inputTensorDims[VX_TENSOR_DIMS];
-    size_t outputTensorDims[VX_TENSOR_DIMS];
+    size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
+    size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
     RpptImagePatch *dstImgSize;
     Rpp32s interpolationType; 
 };
@@ -104,7 +104,7 @@ static vx_status VX_CALLBACK validateResize(vx_node node, const vx_reference par
 
     // Check for output parameters
     vx_uint8 tensor_fixed_point_position;
-    size_t tensor_dims[VX_TENSOR_DIMS];
+    size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_type;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
     if(num_tensor_dims < 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Resize: tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);

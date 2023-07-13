@@ -140,7 +140,7 @@ def main():
             processed_tensors = (features_dict, labels_dict)
             if args.print_tensor:
                 print("\nPROCESSED_TENSORS:\n", processed_tensors)
-            draw_patches(images_array[element], cnt, bboxes_array[element], device)
+            draw_patches(images_array[element],cnt,bboxes_array[element],device)
         print("\n\nPrinted first batch with", (batch_size), "images!")
         break
     imageIterator.reset()

@@ -90,7 +90,7 @@ def main():
             print("\n\nPrinted first batch with", (batch_size), "images!")
         for element in list(range(batch_size)):
             cnt = cnt + 1
-            draw_patches(images_array[element], cnt, device)
+            draw_patches(images_array[element],cnt,device)
         break
     imageIterator.reset()
 

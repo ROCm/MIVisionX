@@ -48,7 +48,9 @@ static vx_status VX_CALLBACK refreshCropMirrorNormalize(vx_node node, const vx_r
 
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
+#if ENABLE_OPENCL
+        return VX_ERROR_NOT_IMPLEMENTED;
+#elif ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
@@ -125,7 +127,9 @@ static vx_status VX_CALLBACK processCropMirrorNormalize(vx_node node, const vx_r
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshCropMirrorNormalize(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
+#if ENABLE_OPENCL
+        return_status = VX_ERROR_NOT_IMPLEMENTED;
+#elif ENABLE_HIP
         rpp_status = rppt_crop_mirror_normalize_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pMultiplier, data->pOffset,
                                                     data->pMirror, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
@@ -142,10 +146,7 @@ static vx_status VX_CALLBACK initializeCropMirrorNormalize(vx_node node, const v
     CropMirrorNormalizeLocalData *data = new CropMirrorNormalizeLocalData;
     vx_enum input_tensor_type, output_tensor_type;
     memset(data, 0, sizeof(*data));
-#if ENABLE_OPENCL
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
-        return VX_ERROR_NOT_IMPLEMENTED;
-#endif
+
     int roi_type, input_layout, output_layout;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));

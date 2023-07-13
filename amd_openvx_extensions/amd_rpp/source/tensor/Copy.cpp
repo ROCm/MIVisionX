@@ -73,7 +73,9 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *param
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
+#if ENABLE_OPENCL
+        status = VX_ERROR_NOT_IMPLEMENTED;
+#elif ENABLE_HIP
         refreshCopy(node, parameters, num, data);
         hipMemcpyAsync(data->pDst, data->pSrc, data->tensorSize, hipMemcpyDeviceToDevice, data->handle.hipstream);
         hipStreamSynchronize(data->handle.hipstream);
@@ -89,13 +91,9 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
     CopyLocalData *data = new CopyLocalData;
     vx_enum input_tensor_type, output_tensor_type;
     memset(data, 0, sizeof(*data));
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
+#if ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif   
-    }
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     vx_size num_of_dims;
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];

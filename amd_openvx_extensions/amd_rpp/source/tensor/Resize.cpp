@@ -51,7 +51,9 @@ static vx_status VX_CALLBACK refreshResize(vx_node node, const vx_reference *par
     }
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
+#if ENABLE_OPENCL
+        return VX_ERROR_NOT_IMPLEMENTED;
+#elif ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
@@ -122,7 +124,9 @@ static vx_status VX_CALLBACK processResize(vx_node node, const vx_reference *par
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshResize(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
+#if ENABLE_OPENCL
+        return_status = VX_ERROR_NOT_IMPLEMENTED;
+#elif ENABLE_HIP
         rpp_status = rppt_resize_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pDstImgSize, (RpptInterpolationType)data->interpolationType, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
@@ -137,10 +141,7 @@ static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *
     ResizeLocalData *data = new ResizeLocalData;
     vx_enum input_tensor_type, output_tensor_type;
     memset(data, 0, sizeof(*data));
-#if ENABLE_OPENCL
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
-        return VX_ERROR_NOT_IMPLEMENTED;
-#endif
+
     int roi_type, input_layout, output_layout;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->interpolationType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
@@ -172,7 +173,7 @@ static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *
 #if ENABLE_HIP
     hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch));
 #else
-    data->pDstImgSize = (RpptImagePatch *)calloc(data->pSrcDesc->n, sizeof(RpptImagePatch));
+    data->pDstImgSize = static_cast<RpptImagePatch *>(calloc(data->pSrcDesc->n, sizeof(RpptImagePatch)));
 #endif    
     data->pResizeWidth = static_cast<vx_uint32 *>(malloc(sizeof(vx_uint32) * data->pSrcDesc->n));
     data->pResizeHeight = static_cast<vx_uint32 *>(malloc(sizeof(vx_uint32) * data->pSrcDesc->n));

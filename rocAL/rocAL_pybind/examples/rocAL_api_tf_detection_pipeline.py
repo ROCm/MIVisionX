@@ -71,8 +71,8 @@ def main():
     numClasses = 91
     rocalCPU = False if args.rocal_gpu else True
     device = "cpu" if rocalCPU else "gpu"
-    batch_size = args.batch_size
-    num_threads = args.num_threads
+    batchSize = args.batch_size
+    numThreads = args.num_threads
     TFRecordReaderType = 1
     featureKeyMap = {
         'image/encoded': 'image/encoded',
@@ -93,7 +93,7 @@ def main():
         print(error)
 
 
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rocal_cpu=rocalCPU)
+    pipe = Pipeline(batch_size=batchSize, num_threads=numThreads,device_id=args.local_rank, seed=2, rocal_cpu=rocalCPU)
     with pipe:
         inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
             features={
@@ -123,7 +123,7 @@ def main():
         images_array = np.transpose(images_array, [0, 2, 3, 1])
         print("ROCAL augmentation pipeline - Processing batch %d....." % i)
 
-        for element in list(range(batch_size)):
+        for element in list(range(batchSize)):
             cnt = cnt + 1
             if args.print_tensor:
                 print("Processing image %d....." % element)
@@ -141,7 +141,7 @@ def main():
             if args.print_tensor:
                 print("\nPROCESSED_TENSORS:\n", processed_tensors)
             draw_patches(images_array[element],cnt,bboxes_array[element],device)
-        print("\n\nPrinted first batch with", (batch_size), "images!")
+        print("\n\nPrinted first batch with", (batchSize), "images!")
         break
     imageIterator.reset()
 

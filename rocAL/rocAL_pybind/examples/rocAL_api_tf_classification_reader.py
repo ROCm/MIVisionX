@@ -42,9 +42,9 @@ def main():
     imagePath = args.image_dataset_path
     rocalCPU = False if args.rocal_gpu else True
     device = "cpu" if rocalCPU else "gpu"
-    batch_size = args.batch_size
+    batchSize = args.batch_size
     oneHotLabel = 1
-    num_threads = args.num_threads
+    numThreads = args.num_threads
     TFRecordReaderType = 0
     featureKeyMap = {
         'image/encoded':'image/encoded',
@@ -59,7 +59,7 @@ def main():
     except OSError as error:
         print(error)
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rocal_cpu=rocalCPU)
+    pipe = Pipeline(batch_size=batchSize, num_threads=numThreads,device_id=args.local_rank, seed=2, rocal_cpu=rocalCPU)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
         inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
@@ -87,8 +87,8 @@ def main():
         if args.print_tensor:
             print("\n",i)
             print("lables_array",labels_array)
-            print("\n\nPrinted first batch with", (batch_size), "images!")
-        for element in list(range(batch_size)):
+            print("\n\nPrinted first batch with", (batchSize), "images!")
+        for element in list(range(batchSize)):
             cnt = cnt + 1
             draw_patches(images_array[element],cnt,device)
         break

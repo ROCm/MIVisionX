@@ -141,7 +141,7 @@ static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
-        throw std::runtime_error("initialize : Resize, OpenCL backend is not supported");
+        return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     int roi_type;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->interpolationType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));

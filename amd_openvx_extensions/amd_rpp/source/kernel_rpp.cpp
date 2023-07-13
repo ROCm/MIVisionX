@@ -1985,9 +1985,9 @@ RpptDataType getRpptDataType(vx_enum vxDataType) {
     }
 }
 
-void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, Rpp32s layout, size_t *tensorDims) {
+void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims) {
     switch(layout) {
-        case 0: { // For NHWC
+        case vxTensorLayout::VX_NHWC: {
             descPtr->n = tensorDims[0];
             descPtr->h = tensorDims[1];
             descPtr->w = tensorDims[2];
@@ -1999,7 +1999,7 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, Rpp32s layout, size_t *ten
             descPtr->layout = RpptLayout::NHWC;
             break; 
         }
-        case 1: { // For NCHW
+        case vxTensorLayout::VX_NCHW: {
             descPtr->n = tensorDims[0];
             descPtr->h = tensorDims[2];
             descPtr->w = tensorDims[3];
@@ -2011,7 +2011,7 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, Rpp32s layout, size_t *ten
             descPtr->layout = RpptLayout::NCHW;
             break;
         }
-        case 2: { // For NFHWC
+        case vxTensorLayout::VX_NFHWC: {
             descPtr->n = tensorDims[0] * tensorDims[1];
             descPtr->h = tensorDims[2];
             descPtr->w = tensorDims[3];
@@ -2023,7 +2023,7 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, Rpp32s layout, size_t *ten
             descPtr->layout = RpptLayout::NHWC;
             break;
         }
-        case 3: { // For NFCHW
+        case vxTensorLayout::VX_NFCHW: {
             descPtr->n = tensorDims[0] * tensorDims[1];
             descPtr->h = tensorDims[3];
             descPtr->w = tensorDims[4];

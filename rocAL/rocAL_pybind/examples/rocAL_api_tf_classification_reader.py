@@ -79,7 +79,7 @@ def main():
     # Build the pipeline
     pipe.build()
     # Dataloader
-    imageIterator = ROCALIterator(pipe,device=device)
+    imageIterator = ROCALIterator(pipe, device=device)
     cnt = 0
     # Enumerate over the Dataloader
     for i, (images_array, labels_array) in enumerate(imageIterator, 0):
@@ -90,7 +90,7 @@ def main():
             print("\n\nPrinted first batch with", (batch_size), "images!")
         for element in list(range(batch_size)):
             cnt = cnt + 1
-            draw_patches(images_array[element],cnt,device)
+            draw_patches(images_array[element], cnt, device)
         break
     imageIterator.reset()
 

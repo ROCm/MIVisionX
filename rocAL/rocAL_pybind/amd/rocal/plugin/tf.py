@@ -55,12 +55,12 @@ class ROCALGenericImageIterator(object):
         return self
 
 class ROCALGenericIteratorDetection(object):
-    def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT,device="cpu", device_id =0):
+    def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT, device = "cpu", device_id = 0):
         self.loader = pipeline
         self.tensor_format =tensor_layout
         self.multiplier = multiplier
         self.offset = offset
-        self.device= device
+        self.device = device
         self.device_id = device_id
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
@@ -82,13 +82,13 @@ class ROCALGenericIteratorDetection(object):
                 self.out = np.zeros(( self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype = data_type)
             else:
                 with cp.cuda.Device(device=self.device_id):
-                    self.out = cp.zeros((self.bs * self.n, int(self.h / self.bs), self.w, self.p), dtype=data_type)
+                    self.out = cp.zeros(( self.bs * self.n, int(self.h/self.bs), self.w, self.p), dtype = data_type)
         else:
             if self.device == "cpu":
                 self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w), dtype = data_type)
             else:
                 with cp.cuda.Device(device=self.device_id):
-                    self.out = cp.zeros((self.bs * self.n, self.p, int(self.h / self.bs), self.w), dtype=data_type)
+                    self.out = cp.zeros(( self.bs * self.n, self.p, int(self.h/self.bs), self.w), dtype = data_type)
                 
     def next(self):
         return self.__next__()
@@ -205,10 +205,10 @@ class ROCALIterator(ROCALGenericIteratorDetection):
                  dynamic_shape=False,
                  last_batch_padded=False,
                  device="cpu",
-                 device_id =0):
+                 device_id=0):
         pipe = pipelines
         super(ROCALIterator, self).__init__(pipe, tensor_layout = pipe._tensor_layout, tensor_dtype = pipe._tensor_dtype,
-                                                            multiplier=pipe._multiplier, offset=pipe._offset,device=device, device_id=device_id)
+                                                            multiplier=pipe._multiplier, offset=pipe._offset, device=device, device_id=device_id)
 
 
 

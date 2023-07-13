@@ -282,7 +282,7 @@ int agoWriteGraph(AgoGraph * agraph, AgoReference * * ref, int num_ref, FILE * f
         }
         // output data statements for non ref[] and non internal generated data objects
         if (index < 0 && adata->name.length() > 0 && adata->name[0] != '!' && !adata->parent) {
-            char desc[1024] = "*ERROR*";
+            char desc[MAX_DESCRIPTION_DATA_SIZE] = "*ERROR*";
             agoGetDescriptionFromData(agraph->ref.context, desc, adata);
             fprintf(fp, "data %s = %s", adata->name.length() ? adata->name.c_str() : "*UNKNOWN*", desc);
 #if ENABLE_DEBUG_MESSAGES
@@ -303,7 +303,7 @@ int agoWriteGraph(AgoGraph * agraph, AgoReference * * ref, int num_ref, FILE * f
         }
         // output data statements for non ref[] and non internal generated data objects
         if (index < 0 && adata->name.length() > 0 && adata->name[0] != '!' && !adata->parent) {
-            char desc[1024] = "*ERROR*";
+            char desc[MAX_DESCRIPTION_DATA_SIZE] = "*ERROR*";
             agoGetDescriptionFromData(agraph->ref.context, desc, adata);
             fprintf(fp, "data %s = %s", adata->name.length() ? adata->name.c_str() : "*UNKNOWN*", desc);
 #if ENABLE_DEBUG_MESSAGES
@@ -343,7 +343,7 @@ int agoWriteGraph(AgoGraph * agraph, AgoReference * * ref, int num_ref, FILE * f
                         fprintf(fp, " %s", name);
                     }
                     else {
-                        char desc[1024];
+                        char desc[MAX_DESCRIPTION_DATA_SIZE];
                         agoGetDescriptionFromData(agraph->ref.context, desc, data);
                         fprintf(fp, " %s", desc);
                     }

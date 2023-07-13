@@ -860,119 +860,119 @@ void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * dat
     const char * virt = data->isVirtual ? "-virtual" : "";
     desc[0] = 0;
     if (data->ref.type == VX_TYPE_DELAY) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "delay%s:%d,[", virt, data->u.delay.count);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "delay%s:%d,[", virt, data->u.delay.count);
         agoGetDescriptionFromData(acontext, desc + strlen(desc), data->children[0]);
-        snprintf(desc, sizeof(desc) + strlen(desc), "]");
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "]");
     }
     else if (data->ref.type == VX_TYPE_IMAGE) {
         if (data->u.img.isROI) {
-            snprintf(desc, sizeof(desc) + strlen(desc), "image-roi:%s,%d,%d,%d,%d", data->u.img.roiMasterImage->name.c_str(), data->u.img.rect_roi.start_x, data->u.img.rect_roi.start_y, data->u.img.rect_roi.end_x, data->u.img.rect_roi.end_y);
+            snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "image-roi:%s,%d,%d,%d,%d", data->u.img.roiMasterImage->name.c_str(), data->u.img.rect_roi.start_x, data->u.img.rect_roi.start_y, data->u.img.rect_roi.end_x, data->u.img.rect_roi.end_y);
         }
         else if (data->u.img.isUniform) {
-            snprintf(desc, sizeof(desc) + strlen(desc), "image-uniform%s:%4.4s,%d,%d", virt, FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
-            for (vx_size i = 0; i < data->u.img.components; i++) snprintf(desc, sizeof(desc) + strlen(desc), ",%d", (unsigned int)data->u.img.uniform[i]);
+            snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "image-uniform%s:%4.4s,%d,%d", virt, FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
+            for (vx_size i = 0; i < data->u.img.components; i++) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, ",%d", (unsigned int)data->u.img.uniform[i]);
         }
-        else snprintf(desc, sizeof(desc) + strlen(desc), "image%s:%4.4s,%d,%d", virt, FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
+        else snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "image%s:%4.4s,%d,%d", virt, FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
     }
     else if (data->ref.type == VX_TYPE_PYRAMID) {
         char scale[64];
         if (data->u.pyr.scale == VX_SCALE_PYRAMID_HALF) snprintf(scale, sizeof(scale), "HALF");
         else if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) snprintf(scale, sizeof(scale), "ORB");
         else snprintf(scale, sizeof(scale), "%g", data->u.pyr.scale);
-        snprintf(desc, sizeof(desc) + strlen(desc), "pyramid%s:%4.4s,%d,%d," VX_FMT_SIZE ",%s", virt, FORMAT_STR(data->u.pyr.format), data->u.pyr.width, data->u.pyr.height, data->u.pyr.levels, scale);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "pyramid%s:%4.4s,%d,%d," VX_FMT_SIZE ",%s", virt, FORMAT_STR(data->u.pyr.format), data->u.pyr.width, data->u.pyr.height, data->u.pyr.levels, scale);
     }
     else if (data->ref.type == VX_TYPE_ARRAY) {
         if (data->u.arr.itemtype >= VX_TYPE_USER_STRUCT_START && data->u.arr.itemtype <= VX_TYPE_USER_STRUCT_END) {
             const char * name = agoGetUserStructName(acontext, data->u.arr.itemtype);
             if (name)
-                snprintf(desc, sizeof(desc) + strlen(desc), "array%s:%s," VX_FMT_SIZE "", virt, name, data->u.arr.capacity);
+                snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "array%s:%s," VX_FMT_SIZE "", virt, name, data->u.arr.capacity);
             else
-                snprintf(desc, sizeof(desc) + strlen(desc), "array%s:USER-STRUCT-" VX_FMT_SIZE "," VX_FMT_SIZE "", virt, data->u.arr.itemsize, data->u.arr.capacity);
+                snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "array%s:USER-STRUCT-" VX_FMT_SIZE "," VX_FMT_SIZE "", virt, data->u.arr.itemsize, data->u.arr.capacity);
         }
         else
-            snprintf(desc, sizeof(desc) + strlen(desc), "array%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.arr.itemtype), data->u.arr.capacity);
+            snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "array%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.arr.itemtype), data->u.arr.capacity);
     }
     else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
         /*if(data->u.objarr.itemtype >= VX_TYPE_KHRONOS_OBJECT_START && data->u.objarr.itemtype <= VX_TYPE_KHRONOS_OBJECT_END) {
             if(data->u.objarr.itemtype != VX_TYPE_DELAY && data->u.objarr.itemtype != VX_TYPE_OBJECT_ARRAY)
-                snprintf(desc, sizeof(desc) + strlen(desc), "objectarray%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.objarr.itemtype), data->u.objarr.numitems);
+                snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "objectarray%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.objarr.itemtype), data->u.objarr.numitems);
         }
         else
-            snprintf(desc, sizeof(desc) + strlen(desc), "objectarray%s:UNSUPPORTED,NULL", virt);*/
-        snprintf(desc, sizeof(desc) + strlen(desc), "objectarray%s:%zu,[", virt, data->u.objarr.numitems);
+            snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "objectarray%s:UNSUPPORTED,NULL", virt);*/
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "objectarray%s:%zu,[", virt, data->u.objarr.numitems);
         agoGetDescriptionFromData(acontext, desc + strlen(desc), data->children[0]);
-        snprintf(desc, sizeof(desc) + strlen(desc), "]");
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "]");
     }
     else if (data->ref.type == VX_TYPE_SCALAR) {
         if (data->u.scalar.type == VX_TYPE_ENUM) {
             const char * name = agoEnum2Name(data->u.scalar.u.e);
             if (name)
-                snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:ENUM,%s", virt, name);
+                snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:ENUM,%s", virt, name);
             else
-                snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:ENUM,0x%08x", virt, data->u.scalar.u.e);
+                snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:ENUM,0x%08x", virt, data->u.scalar.u.e);
         }
-        else if (data->u.scalar.type == VX_TYPE_UINT32) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:UINT32,%u", virt, data->u.scalar.u.u);
-        else if (data->u.scalar.type == VX_TYPE_INT32) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:INT32,%d", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_UINT16) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:UINT16,%u", virt, data->u.scalar.u.u);
-        else if (data->u.scalar.type == VX_TYPE_INT16) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:INT16,%d", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_UINT8) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:UINT8,%u", virt, data->u.scalar.u.u);
-        else if (data->u.scalar.type == VX_TYPE_INT8) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:INT8,%u", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_CHAR) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:CHAR,%u", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_FLOAT32) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:FLOAT32,%g", virt, data->u.scalar.u.f);
-        else if (data->u.scalar.type == VX_TYPE_SIZE) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:SIZE," VX_FMT_SIZE "", virt, data->u.scalar.u.s);
-        else if (data->u.scalar.type == VX_TYPE_BOOL) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:BOOL,%d", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_DF_IMAGE) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:DF_IMAGE,%4.4s", virt, (const char *)&data->u.scalar.u.df);
-        else if (data->u.scalar.type == VX_TYPE_FLOAT64) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:FLOAT64,%lg", virt, data->u.scalar.u.f64);
-        else if (data->u.scalar.type == VX_TYPE_INT64) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:INT64,%" PRId64, virt, data->u.scalar.u.i64);
-        else if (data->u.scalar.type == VX_TYPE_UINT64) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:UINT64,%" PRIu64, virt, data->u.scalar.u.u64);
-        else if (data->u.scalar.type == VX_TYPE_STRING_AMD) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:STRING,%s", virt, data->buffer ? (const char *)data->buffer : "");
-        else if (data->u.scalar.type == VX_TYPE_FLOAT16) snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:FLOAT16,%u", virt, data->u.scalar.u.u & 0xffff);
-        else snprintf(desc, sizeof(desc) + strlen(desc), "scalar%s:UNSUPPORTED,NULL", virt);
+        else if (data->u.scalar.type == VX_TYPE_UINT32) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UINT32,%u", virt, data->u.scalar.u.u);
+        else if (data->u.scalar.type == VX_TYPE_INT32) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:INT32,%d", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_UINT16) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UINT16,%u", virt, data->u.scalar.u.u);
+        else if (data->u.scalar.type == VX_TYPE_INT16) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:INT16,%d", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_UINT8) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UINT8,%u", virt, data->u.scalar.u.u);
+        else if (data->u.scalar.type == VX_TYPE_INT8) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:INT8,%u", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_CHAR) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:CHAR,%u", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_FLOAT32) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:FLOAT32,%g", virt, data->u.scalar.u.f);
+        else if (data->u.scalar.type == VX_TYPE_SIZE) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:SIZE," VX_FMT_SIZE "", virt, data->u.scalar.u.s);
+        else if (data->u.scalar.type == VX_TYPE_BOOL) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:BOOL,%d", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_DF_IMAGE) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:DF_IMAGE,%4.4s", virt, (const char *)&data->u.scalar.u.df);
+        else if (data->u.scalar.type == VX_TYPE_FLOAT64) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:FLOAT64,%lg", virt, data->u.scalar.u.f64);
+        else if (data->u.scalar.type == VX_TYPE_INT64) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:INT64,%" PRId64, virt, data->u.scalar.u.i64);
+        else if (data->u.scalar.type == VX_TYPE_UINT64) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UINT64,%" PRIu64, virt, data->u.scalar.u.u64);
+        else if (data->u.scalar.type == VX_TYPE_STRING_AMD) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:STRING,%s", virt, data->buffer ? (const char *)data->buffer : "");
+        else if (data->u.scalar.type == VX_TYPE_FLOAT16) snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:FLOAT16,%u", virt, data->u.scalar.u.u & 0xffff);
+        else snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UNSUPPORTED,NULL", virt);
     }
     else if (data->ref.type == VX_TYPE_DISTRIBUTION) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "distribution%s:" VX_FMT_SIZE ",%d,%u", virt, data->u.dist.numbins, data->u.dist.offset, data->u.dist.range);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "distribution%s:" VX_FMT_SIZE ",%d,%u", virt, data->u.dist.numbins, data->u.dist.offset, data->u.dist.range);
     }
     else if (data->ref.type == VX_TYPE_LUT) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "lut%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.lut.type), data->u.lut.count);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "lut%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.lut.type), data->u.lut.count);
     }
     else if (data->ref.type == VX_TYPE_THRESHOLD) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "threshold%s:%s,%u,%u", virt, agoEnum2Name(data->u.thr.thresh_type), data->u.thr.input_format, data->u.thr.output_format);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "threshold%s:%s,%u,%u", virt, agoEnum2Name(data->u.thr.thresh_type), data->u.thr.input_format, data->u.thr.output_format);
         /*if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY)
-            snprintf(desc, sizeof(desc) + strlen(desc), ":I,%d", data->u.thr.threshold_lower);
+            snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, ":I,%d", data->u.thr.threshold_lower);
         else if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE)
-            snprintf(desc, sizeof(desc) + strlen(desc), ":I,%d,%d", data->u.thr.threshold_lower, data->u.thr.threshold_upper);
+            snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, ":I,%d,%d", data->u.thr.threshold_lower, data->u.thr.threshold_upper);
         */
     }
     else if (data->ref.type == VX_TYPE_CONVOLUTION) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "convolution%s:" VX_FMT_SIZE "," VX_FMT_SIZE "", virt, data->u.conv.columns, data->u.conv.rows);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "convolution%s:" VX_FMT_SIZE "," VX_FMT_SIZE "", virt, data->u.conv.columns, data->u.conv.rows);
         if (data->u.conv.shift)
-            snprintf(desc, sizeof(desc) + strlen(desc), ",%u", data->u.conv.shift);
+            snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, ",%u", data->u.conv.shift);
     }
     else if (data->ref.type == VX_TYPE_MATRIX) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "matrix%s:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.mat.type), data->u.mat.columns, data->u.mat.rows);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "matrix%s:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.mat.type), data->u.mat.columns, data->u.mat.rows);
     }
     else if (data->ref.type == VX_TYPE_REMAP) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "remap%s:%u,%u,%u,%u", virt, data->u.remap.src_width, data->u.remap.src_height, data->u.remap.dst_width, data->u.remap.dst_height);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "remap%s:%u,%u,%u,%u", virt, data->u.remap.src_width, data->u.remap.src_height, data->u.remap.dst_width, data->u.remap.dst_height);
     }
     else if (data->ref.type == VX_TYPE_TENSOR) {
         char dims[64] = "";
         for (vx_size i = 0; i < data->u.tensor.num_dims; i++)
             snprintf(dims + strlen(dims), sizeof(dims), "%s%u", i ? "," : "", (vx_uint32)data->u.tensor.dims[i]);
-        snprintf(desc, sizeof(desc) + strlen(desc), "tensor%s:%u,{%s},%s,%u", virt, (vx_uint32)data->u.tensor.num_dims, dims, agoEnum2Name(data->u.tensor.data_type), (vx_uint32)data->u.tensor.fixed_point_pos);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "tensor%s:%u,{%s},%s,%u", virt, (vx_uint32)data->u.tensor.num_dims, dims, agoEnum2Name(data->u.tensor.data_type), (vx_uint32)data->u.tensor.fixed_point_pos);
     }
     else if (data->ref.type == AGO_TYPE_MEANSTDDEV_DATA) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "ago-meanstddev-data%s:", virt);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "ago-meanstddev-data%s:", virt);
     }
     else if (data->ref.type == AGO_TYPE_MINMAXLOC_DATA) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "ago-minmaxloc-data%s:", virt);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "ago-minmaxloc-data%s:", virt);
     }
     else if (data->ref.type == AGO_TYPE_CANNY_STACK) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "ago-canny-stack%s:%u", virt, data->u.cannystack.count);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "ago-canny-stack%s:%u", virt, data->u.cannystack.count);
     }
     else if (data->ref.type == AGO_TYPE_SCALE_MATRIX) {
-        snprintf(desc, sizeof(desc) + strlen(desc), "ago-scale-matrix%s:%.12e,%.12e,%.12e,%.12e", virt, data->u.scalemat.xscale, data->u.scalemat.yscale, data->u.scalemat.xoffset, data->u.scalemat.yoffset);
+        snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "ago-scale-matrix%s:%.12e,%.12e,%.12e,%.12e", virt, data->u.scalemat.xscale, data->u.scalemat.yscale, data->u.scalemat.xoffset, data->u.scalemat.yoffset);
     }
-    else snprintf(desc, sizeof(desc) + strlen(desc), "UNSUPPORTED%s:0x%08x", virt, data->ref.type);
+    else snprintf(desc, MAX_DESCRIPTION_DATA_SIZE, "UNSUPPORTED%s:0x%08x", virt, data->ref.type);
 }
 
 int agoParseWordFromDescription(const char *& desc, vx_size size, char * word)

@@ -178,6 +178,7 @@ THE SOFTWARE.
 // module specific
 #define MAX_MODULE_NAME_SIZE 1024
 #define MAX_MODULE_PATH_SIZE 2048
+#define MAX_DESCRIPTION_DATA_SIZE 1024
 
 // threshold default values
 #define AGO_DEFAULT_THRESHOLD_FALSE_VALUE 0

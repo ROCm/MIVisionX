@@ -4685,7 +4685,7 @@ VX_API_ENTRY vx_delay VX_API_CALL vxCreateDelay(vx_context context,
     AgoData * data = NULL;
     if (agoIsValidContext(context) && agoIsValidReference(exemplar) && slots > 0) {
         CAgoLock lock(context->cs);
-        char desc_exemplar[1024]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
         char desc[2048]; snprintf(desc, sizeof(desc), "delay:" VX_FMT_SIZE ",[%s]", slots, desc_exemplar);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
@@ -8726,7 +8726,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
     AgoData * data = NULL;
     if (agoIsValidContext(context) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(context->cs);
-        char desc_exemplar[512]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
         char desc[1024]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
@@ -8939,7 +8939,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
     AgoData * data = NULL;
     if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(graph->cs);
-        char desc_exemplar[512]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
+        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
         char desc[1024]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
         data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
         if (data) {

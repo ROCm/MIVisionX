@@ -27,11 +27,11 @@ struct BrightnessLocalData {
     Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    vx_float32 *alpha;
-    vx_float32 *beta;
-    RpptDescPtr srcDescPtr;
-    RpptDescPtr dstDescPtr;
-    RpptROI *roiPtr;
+    vx_float32 *pAlpha;
+    vx_float32 *pBeta;
+    RpptDescPtr pSrcDesc;
+    RpptDescPtr pDstDesc;
+    RpptROI *pSrcRoi;
     RpptRoiType roiType;
     Rpp32s inputLayout;
     Rpp32s outputLayout;
@@ -43,30 +43,30 @@ struct BrightnessLocalData {
 
 static vx_status VX_CALLBACK refreshBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num, BrightnessLocalData *data) {
     vx_status status = VX_SUCCESS;
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0], sizeof(vx_float32), data->alpha, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0], sizeof(vx_float32), data->beta, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pAlpha, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pBeta, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
-    void *roiTensorPtr;
+    void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roiTensorPtr, sizeof(roiTensorPtr)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roiTensorPtr, sizeof(roiTensorPtr)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
-    data->roiPtr = (RpptROI *)roiTensorPtr;
+    data->pSrcRoi = (RpptROI *)roi_tensor_ptr;
     if((data->inputLayout == 2 || data->inputLayout == 3)) { // For NFCHW and NFHWC formats
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for(int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for(int f = 0; f < num_of_frames; f++) {
-                data->alpha[index + f] = data->alpha[n];
-                data->beta[index + f] = data->beta[n];
-                data->roiPtr[index + f].xywhROI = data->roiPtr[n].xywhROI;
+                data->pAlpha[index + f] = data->pAlpha[n];
+                data->pBeta[index + f] = data->pBeta[n];
+                data->pSrcRoi[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
             }
         }
     }
@@ -119,11 +119,11 @@ static vx_status VX_CALLBACK processBrightness(vx_node node, const vx_reference 
     refreshBrightness(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_brightness_gpu(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr,  data->alpha, data->beta, data->roiPtr, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_brightness_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,  data->pAlpha, data->pBeta, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_brightness_host(data->pSrc, data->srcDescPtr, data->pDst, data->dstDescPtr, data->alpha, data->beta, data->roiPtr, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_brightness_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pAlpha, data->pBeta, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -131,8 +131,7 @@ static vx_status VX_CALLBACK processBrightness(vx_node node, const vx_reference 
 
 static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     BrightnessLocalData *data = new BrightnessLocalData;
-    vx_enum inputTensorType;
-    vx_enum outputTensorType;
+    vx_enum input_tensor_type, output_tensor_type;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
@@ -146,27 +145,27 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
     data->roiType = (roi_type == 0) ? RpptRoiType::XYWH : RpptRoiType::LTRB;
 
     // Querying for input tensor
-    data->srcDescPtr = &data->srcDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->srcDescPtr->numDims, sizeof(data->srcDescPtr->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->srcDescPtr->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &inputTensorType, sizeof(inputTensorType)));
-    data->srcDescPtr->dataType = getRpptDataType(inputTensorType);
-    data->srcDescPtr->offsetInBytes = 0;
-    fillDescriptionPtrfromDims(data->srcDescPtr, data->inputLayout, data->inputTensorDims);
+    data->pSrcDesc = &data->srcDesc;
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_type, sizeof(input_tensor_type)));
+    data->pSrcDesc->dataType = getRpptDataType(input_tensor_type);
+    data->pSrcDesc->offsetInBytes = 0;
+    fillDescriptionPtrfromDims(data->pSrcDesc, data->inputLayout, data->inputTensorDims);
 
     // Querying for output tensor
-    data->dstDescPtr = &data->dstDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->dstDescPtr->numDims, sizeof(data->dstDescPtr->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->ouputTensorDims, sizeof(vx_size) * data->dstDescPtr->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &outputTensorType, sizeof(outputTensorType)));
-    data->dstDescPtr->dataType = getRpptDataType(outputTensorType);
-    data->dstDescPtr->offsetInBytes = 0;
-    fillDescriptionPtrfromDims(data->dstDescPtr, data->outputLayout, data->ouputTensorDims);
+    data->pDstDesc = &data->dstDesc;
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->ouputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_type, sizeof(output_tensor_type)));
+    data->pDstDesc->dataType = getRpptDataType(output_tensor_type);
+    data->pDstDesc->offsetInBytes = 0;
+    fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->alpha = (vx_float32 *)malloc(sizeof(vx_float32) * data->srcDescPtr->n);
-    data->beta = (vx_float32 *)malloc(sizeof(vx_float32) * data->srcDescPtr->n);
+    data->pAlpha = (vx_float32 *)malloc(sizeof(vx_float32) * data->pSrcDesc->n);
+    data->pBeta = (vx_float32 *)malloc(sizeof(vx_float32) * data->pSrcDesc->n);
     refreshBrightness(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->srcDescPtr->n, data->deviceType));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -175,8 +174,8 @@ static vx_status VX_CALLBACK uninitializeBrightness(vx_node node, const vx_refer
     BrightnessLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
-    if (data->alpha != nullptr) free(data->alpha);
-    if (data->beta != nullptr) free(data->beta);
+    if (data->pAlpha != nullptr) free(data->pAlpha);
+    if (data->pBeta != nullptr) free(data->pBeta);
     delete (data);
     return VX_SUCCESS;
 }

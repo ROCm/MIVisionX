@@ -87,8 +87,7 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *param
 
 static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     CopyLocalData *data = new CopyLocalData;
-    vx_enum inputTensorType;
-    vx_enum outputTensorType;
+    vx_enum input_tensor_type, output_tensor_type;
     memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
     throw std::runtime_error("initialize : Copy, OpenCL backend is not supported");
@@ -100,16 +99,16 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(vx_size)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, tensor_dims, sizeof(vx_size) * num_of_dims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &inputTensorType, sizeof(inputTensorType)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &outputTensorType, sizeof(outputTensorType)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_type, sizeof(input_tensor_type)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &output_tensor_type, sizeof(output_tensor_type)));
     
     data->tensorSize = 1;
     for(int i = 0; i < num_of_dims; i++)
         data->tensorSize *= tensor_dims[i];
 
-    if (inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && outputTensorType == vx_type_e::VX_TYPE_FLOAT32) {
+    if (input_tensor_type == vx_type_e::VX_TYPE_FLOAT32 && output_tensor_type == vx_type_e::VX_TYPE_FLOAT32) {
         data->tensorSize *= sizeof(float);
-    } else if (inputTensorType == vx_type_e::VX_TYPE_FLOAT16 && outputTensorType == vx_type_e::VX_TYPE_FLOAT16) {
+    } else if (input_tensor_type == vx_type_e::VX_TYPE_FLOAT16 && output_tensor_type == vx_type_e::VX_TYPE_FLOAT16) {
 #if defined(AMD_FP16_SUPPORT)
         data->tensorSize *= sizeof(vx_float16);
 #endif

@@ -83,10 +83,7 @@ def main():
     cnt = 0
     # Enumerate over the Dataloader
     for i, (images_array, labels_array) in enumerate(image_iterator, 0):
-        if(device == "gpu"):
-            images_array = cp.transpose(images_array, (0, 2, 3, 1))
-        else: 
-            images_array = np.transpose(images_array, [0, 2, 3, 1])
+        images_array = cp.transpose(images_array, (0, 2, 3, 1)) if device == "gpu" else np.transpose(images_array, [0, 2, 3, 1])
         if args.print_tensor:
             print("\n",i)
             print("lables_array", labels_array)

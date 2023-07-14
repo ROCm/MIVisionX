@@ -43,9 +43,9 @@ def main():
     rocal_cpu = False if args.rocal_gpu else True
     device = "cpu" if rocal_cpu else "gpu"
     batch_size = args.batch_size
-    one_hot_labels = 0
+    one_hot_labels = 1
     num_threads = args.num_threads
-    TF_record_reader_type  = 0
+    tf_record_reader_type  = 0
     feature_key_map = {
         'image/encoded':'image/encoded',
         'image/class/label':'image/class/label',
@@ -62,7 +62,7 @@ def main():
     pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rocal_cpu=rocal_cpu)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
-        inputs = fn.readers.tfrecord(path=image_path, index_path = "", reader_type=TF_record_reader_type , user_feature_key_map=feature_key_map,
+        inputs = fn.readers.tfrecord(path=image_path, index_path = "", reader_type=tf_record_reader_type , user_feature_key_map=feature_key_map,
             features={
                 'image/encoded':tf.io.FixedLenFeature((), tf.string, ""),
                 'image/class/label':tf.io.FixedLenFeature([1], tf.int64,  -1),

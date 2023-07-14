@@ -152,7 +152,7 @@ static vx_status VX_CALLBACK color_convert_opencl_codegen(
 
 	// kernel header and reading
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n" // opencl_local_work[0], opencl_local_work[1]

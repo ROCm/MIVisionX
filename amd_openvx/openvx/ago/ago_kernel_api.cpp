@@ -2945,7 +2945,7 @@ int agoKernel_Set00_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * p0)\n"
             "{\n"
             "  *p0 = (U8x8)(0);\n"
@@ -2993,7 +2993,7 @@ int agoKernel_SetFF_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0)\n"
             "{\n"
             "  *p0 = (U8x8)(0xffffffff);\n"
@@ -3043,7 +3043,7 @@ int agoKernel_Not_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1)\n"
             "{\n"
             "  *p0 = ~p1;\n"
@@ -3108,7 +3108,7 @@ int agoKernel_Not_U8_U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -3175,7 +3175,7 @@ int agoKernel_Not_U1_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -3242,7 +3242,7 @@ int agoKernel_Not_U1_U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1)\n"
             "{\n"
             "  *p0 = ~p1;\n"
@@ -3308,7 +3308,7 @@ int agoKernel_Lut_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, __read_only image1d_t lut)\n"
             "{\n"
             "    U8x8 r;\n"
@@ -3389,7 +3389,7 @@ int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, __global short * p2_buf, uint p2_count, uint p2_offset)\n"
             "{\n"
             "   S16x8 r;\n"
@@ -3459,7 +3459,7 @@ int agoKernel_Threshold_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_U8_U8_Binary(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s Threshold_U8_U8_Binary\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -3528,7 +3528,7 @@ int agoKernel_Threshold_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_U8_U8_Range(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s Threshold_U8_U8_Range\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -3597,7 +3597,7 @@ int agoKernel_Threshold_U1_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_U8_U8_Binary(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, uint p2)\n"
             "{\n"
             "  U8x8 r1;\n"
@@ -3671,7 +3671,7 @@ int agoKernel_Threshold_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_U8_U8_Range(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, uint2 p2)\n"
             "{\n"
             "  U8x8 r1;\n"
@@ -3746,7 +3746,7 @@ int agoKernel_Threshold_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_S16_S16_Binary(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, S16x8 p1, uint p2)\n"
             "{\n"
             "  S16x8 r1;\n"
@@ -3820,7 +3820,7 @@ int agoKernel_Threshold_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_S16_S16_Range(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, S16x8 p1, uint2 p2)\n"
             "{\n"
             "  S16x8 r1;\n"
@@ -3896,7 +3896,7 @@ int agoKernel_ThresholdNot_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_U8_U8_Binary(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, uint p2)\n"
             "{\n"
             "  U8x8 r1;\n"
@@ -3954,7 +3954,7 @@ int agoKernel_ThresholdNot_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_U8_U8_Range(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, uint2 p2)\n"
             "{\n"
             "  U8x8 r1;\n"
@@ -4012,7 +4012,7 @@ int agoKernel_ThresholdNot_U1_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_U8_U8_Binary(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, uint p2)\n"
             "{\n"
             "  U8x8 r1;\n"
@@ -4070,7 +4070,7 @@ int agoKernel_ThresholdNot_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_U8_U8_Range(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, uint2 p2)\n"
             "{\n"
             "  U8x8 r1;\n"
@@ -4129,7 +4129,7 @@ int agoKernel_ThresholdNot_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_S16_S16_Binary(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, S16x8 p1, uint p2)\n"
             "{\n"
             "  S16x8 r1;\n"
@@ -4187,7 +4187,7 @@ int agoKernel_ThresholdNot_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Threshold_S16_S16_Range(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, S16x8 p1, uint2 p2)\n"
             "{\n"
             "  S16x8 r1;\n"
@@ -4243,7 +4243,7 @@ int agoKernel_ColorDepth_U8_S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, S16x8 p1, uint p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -4322,7 +4322,7 @@ int agoKernel_ColorDepth_U8_S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, S16x8 p1, uint p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -4404,7 +4404,7 @@ int agoKernel_ColorDepth_S16_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1, uint p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -4482,7 +4482,7 @@ int agoKernel_Add_U8_U8U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -4560,7 +4560,7 @@ int agoKernel_Add_U8_U8U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -4632,7 +4632,7 @@ int agoKernel_Sub_U8_U8U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -4710,7 +4710,7 @@ int agoKernel_Sub_U8_U8U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -4783,7 +4783,7 @@ int agoKernel_Mul_U8_U8U8_Wrap_Trunc(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -4863,7 +4863,7 @@ int agoKernel_Mul_U8_U8U8_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -4943,7 +4943,7 @@ int agoKernel_Mul_U8_U8U8_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -5026,7 +5026,7 @@ int agoKernel_Mul_U8_U8U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -5108,7 +5108,7 @@ int agoKernel_And_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  *p0 = p1 & p2;\n"
@@ -5177,7 +5177,7 @@ int agoKernel_And_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -5248,7 +5248,7 @@ int agoKernel_And_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -5319,7 +5319,7 @@ int agoKernel_And_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r1, r2;\n"
@@ -5391,7 +5391,7 @@ int agoKernel_And_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r = p1 & p2;\n"
@@ -5461,7 +5461,7 @@ int agoKernel_And_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -5532,7 +5532,7 @@ int agoKernel_And_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -5603,7 +5603,7 @@ int agoKernel_And_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  *p0 = p1 & p2;\n"
@@ -5672,7 +5672,7 @@ int agoKernel_Or_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  *p0 = p1 | p2;\n"
@@ -5741,7 +5741,7 @@ int agoKernel_Or_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -5812,7 +5812,7 @@ int agoKernel_Or_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -5883,7 +5883,7 @@ int agoKernel_Or_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r1, r2;\n"
@@ -5955,7 +5955,7 @@ int agoKernel_Or_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r = p1 | p2;\n"
@@ -6025,7 +6025,7 @@ int agoKernel_Or_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -6096,7 +6096,7 @@ int agoKernel_Or_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -6167,7 +6167,7 @@ int agoKernel_Or_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  *p0 = p1 | p2;\n"
@@ -6236,7 +6236,7 @@ int agoKernel_Xor_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  *p0 = p1 ^ p2;\n"
@@ -6305,7 +6305,7 @@ int agoKernel_Xor_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -6376,7 +6376,7 @@ int agoKernel_Xor_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -6447,7 +6447,7 @@ int agoKernel_Xor_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r1, r2;\n"
@@ -6519,7 +6519,7 @@ int agoKernel_Xor_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r = p1 ^ p2;\n"
@@ -6589,7 +6589,7 @@ int agoKernel_Xor_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -6660,7 +6660,7 @@ int agoKernel_Xor_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -6731,7 +6731,7 @@ int agoKernel_Xor_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  *p0 = p1 ^ p2;\n"
@@ -6800,7 +6800,7 @@ int agoKernel_Nand_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -6855,7 +6855,7 @@ int agoKernel_Nand_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -6911,7 +6911,7 @@ int agoKernel_Nand_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -6967,7 +6967,7 @@ int agoKernel_Nand_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r1, r2;\n"
@@ -7024,7 +7024,7 @@ int agoKernel_Nand_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -7080,7 +7080,7 @@ int agoKernel_Nand_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -7135,7 +7135,7 @@ int agoKernel_Nand_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -7190,7 +7190,7 @@ int agoKernel_Nand_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  *p0 = ~(p1 & p2);\n"
@@ -7243,7 +7243,7 @@ int agoKernel_Nor_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -7297,7 +7297,7 @@ int agoKernel_Nor_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -7352,7 +7352,7 @@ int agoKernel_Nor_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -7407,7 +7407,7 @@ int agoKernel_Nor_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r1, r2;\n"
@@ -7463,7 +7463,7 @@ int agoKernel_Nor_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -7518,7 +7518,7 @@ int agoKernel_Nor_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -7573,7 +7573,7 @@ int agoKernel_Nor_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -7628,7 +7628,7 @@ int agoKernel_Nor_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  *p0 = ~(p1 | p2);\n"
@@ -7681,7 +7681,7 @@ int agoKernel_Xnor_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  *p0 = ~(p1 ^ p2);\n"
@@ -7734,7 +7734,7 @@ int agoKernel_Xnor_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -7789,7 +7789,7 @@ int agoKernel_Xnor_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -7844,7 +7844,7 @@ int agoKernel_Xnor_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  U8x8 r1, r2;\n"
@@ -7900,7 +7900,7 @@ int agoKernel_Xnor_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  Convert_U1_U8(p0, ~(p1 ^ p2));\n"
@@ -7953,7 +7953,7 @@ int agoKernel_Xnor_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1, U1x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -8008,7 +8008,7 @@ int agoKernel_Xnor_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U8x8 p2)\n"
             "{\n"
             "  U1x8 r;\n"
@@ -8063,7 +8063,7 @@ int agoKernel_Xnor_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1, U1x8 p2)\n"
             "{\n"
             "  *p0 = ~(p1 ^ p2);\n"
@@ -8116,7 +8116,7 @@ int agoKernel_AbsDiff_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -8195,7 +8195,7 @@ int agoKernel_AccumulateWeighted_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, float p2)\n"
             "{\n"
             "  U8x8 r = *p0;\n"
@@ -8261,7 +8261,7 @@ int agoKernel_Add_S16_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -8337,7 +8337,7 @@ int agoKernel_Sub_S16_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -8414,7 +8414,7 @@ int agoKernel_Mul_S16_U8U8_Wrap_Trunc(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -8492,7 +8492,7 @@ int agoKernel_Mul_S16_U8U8_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -8570,7 +8570,7 @@ int agoKernel_Mul_S16_U8U8_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -8648,7 +8648,7 @@ int agoKernel_Mul_S16_U8U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "    S16x8 r;\n"
@@ -8725,7 +8725,7 @@ int agoKernel_Add_S16_S16U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, U8x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -8803,7 +8803,7 @@ int agoKernel_Add_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Add_S16_S16U8_Sat(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s Add_S16_S16U8_Sat\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -8874,7 +8874,7 @@ int agoKernel_Accumulate_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_Add_S16_S16U8_Sat(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1)\n"
             "{\n"
             "  Add_S16_S16U8_Sat (p0, *p0, p1);\n"
@@ -8927,7 +8927,7 @@ int agoKernel_Sub_S16_S16U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, U8x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9004,7 +9004,7 @@ int agoKernel_Sub_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, U8x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9082,7 +9082,7 @@ int agoKernel_Mul_S16_S16U8_Wrap_Trunc(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9160,7 +9160,7 @@ int agoKernel_Mul_S16_S16U8_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9238,7 +9238,7 @@ int agoKernel_Mul_S16_S16U8_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9317,7 +9317,7 @@ int agoKernel_Mul_S16_S16U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9403,7 +9403,7 @@ int agoKernel_AccumulateSquared_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand c
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p2, uint p3)\n"
             "{\n"
             "  S16x8 p1 = *p0;\n"
@@ -9466,7 +9466,7 @@ int agoKernel_Sub_S16_U8S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1, S16x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9543,7 +9543,7 @@ int agoKernel_Sub_S16_U8S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         //NOTE: Check line 6489 from line 1014 in ago_haf_gpu_elemwise.cpp
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, U8x8 p1, S16x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9625,17 +9625,17 @@ int agoKernel_AbsDiff_S16_S16S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         if (iImg1->u.img.isUniform && !iImg0->u.img.isUniform) {
             // avoid having to read constant uniform image for AbsDiff (users might do this for Abs operation)
             node->opencl_param_discard_mask = (1 << 2);
-            sprintf(item, "#define %s(p0,p1) AbsDiff_S16_S16S16_Sat(p0,p1,(S16x8)(%d))\n", node->opencl_name, (int)iImg1->u.img.uniform[0]);
+            snprintf(item, sizeof(item), "#define %s(p0,p1) AbsDiff_S16_S16S16_Sat(p0,p1,(S16x8)(%d))\n", node->opencl_name, (int)iImg1->u.img.uniform[0]);
             node->opencl_code += item;
         }
         else if(iImg0->u.img.isUniform && !iImg1->u.img.isUniform) {
             // avoid having to read constant uniform image for AbsDiff (users might do this for Abs operation)
             node->opencl_param_discard_mask = (1 << 1);
-            sprintf(item, "#define %s(p0,p2) AbsDiff_S16_S16S16_Sat(p0,p2,(S16x8)(%d))\n", node->opencl_name, (int)iImg0->u.img.uniform[0]);
+            snprintf(item, sizeof(item), "#define %s(p0,p2) AbsDiff_S16_S16S16_Sat(p0,p2,(S16x8)(%d))\n", node->opencl_name, (int)iImg0->u.img.uniform[0]);
             node->opencl_code += item;
         }
         else {
-            sprintf(item, "#define %s(p0,p1,p2) AbsDiff_S16_S16S16_Sat(p0,p1,p2)\n", node->opencl_name);
+            snprintf(item, sizeof(item), "#define %s(p0,p1,p2) AbsDiff_S16_S16S16_Sat(p0,p1,p2)\n", node->opencl_name);
             node->opencl_code += item;
         }
     }
@@ -9698,7 +9698,7 @@ int agoKernel_Add_S16_S16S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9774,7 +9774,7 @@ int agoKernel_Add_S16_S16S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9850,7 +9850,7 @@ int agoKernel_Sub_S16_S16S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -9926,7 +9926,7 @@ int agoKernel_Sub_S16_S16S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -10003,7 +10003,7 @@ int agoKernel_Mul_S16_S16S16_Wrap_Trunc(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -10081,7 +10081,7 @@ int agoKernel_Mul_S16_S16S16_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -10159,7 +10159,7 @@ int agoKernel_Mul_S16_S16S16_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -10237,7 +10237,7 @@ int agoKernel_Mul_S16_S16S16_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -10314,7 +10314,7 @@ int agoKernel_Magnitude_S16_S16S16(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2)\n"
             "{\n"
             "  S16x8 r;\n"
@@ -10391,7 +10391,7 @@ int agoKernel_Phase_U8_S16S16(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, S16x8 p1, S16x8 p2)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -10471,7 +10471,7 @@ int agoKernel_ChannelCopy_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1)\n"
             "{\n"
             "  *p0 = p1;\n"
@@ -10535,7 +10535,7 @@ int agoKernel_ChannelCopy_U8_U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U1x8 p1)\n"
             "{\n"
             "  Convert_U8_U1(p0, p1);\n"
@@ -10599,7 +10599,7 @@ int agoKernel_ChannelCopy_U1_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U8x8 p1)\n"
             "{\n"
             "  Convert_U1_U8(p0, p1);\n"
@@ -10663,7 +10663,7 @@ int agoKernel_ChannelCopy_U1_U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U1x8 * p0, U1x8 p1)\n"
             "{\n"
             "  *p0 = p1;\n"
@@ -10740,7 +10740,7 @@ int agoKernel_ChannelExtract_U8_U16_Pos0(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U16x8 p1)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -10820,7 +10820,7 @@ int agoKernel_ChannelExtract_U8_U16_Pos1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U16x8 p1)\n"
             "{\n"
             "  U8x8 r;\n"
@@ -10888,7 +10888,7 @@ int agoKernel_ChannelExtract_U8_U24_Pos0(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_ChannelExtract_U8_U24_Pos0(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s ChannelExtract_U8_U24_Pos0\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -10950,7 +10950,7 @@ int agoKernel_ChannelExtract_U8_U24_Pos1(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_ChannelExtract_U8_U24_Pos1(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s ChannelExtract_U8_U24_Pos1\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -11012,7 +11012,7 @@ int agoKernel_ChannelExtract_U8_U24_Pos2(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_ChannelExtract_U8_U24_Pos2(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s ChannelExtract_U8_U24_Pos2\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -11090,7 +11090,7 @@ int agoKernel_ChannelExtract_U8_U32_Pos0(AgoNode * node, AgoKernelCommand cmd)
             node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
             agoCodeGenOpenCL_ChannelExtract_U8_U32_Pos0(node->opencl_code);
             char textBuffer[2048];
-            sprintf(textBuffer, OPENCL_FORMAT(
+            snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
                 "#define %s ChannelExtract_U8_U32_Pos0\n"
                 ), node->opencl_name);
             node->opencl_code += textBuffer;
@@ -11187,7 +11187,7 @@ int agoKernel_ChannelExtract_U8_U32_Pos1(AgoNode * node, AgoKernelCommand cmd)
             node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
             agoCodeGenOpenCL_ChannelExtract_U8_U32_Pos1(node->opencl_code);
             char textBuffer[2048];
-            sprintf(textBuffer, OPENCL_FORMAT(
+            snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
                 "#define %s ChannelExtract_U8_U32_Pos1\n"
                 ), node->opencl_name);
             node->opencl_code += textBuffer;
@@ -11282,7 +11282,7 @@ int agoKernel_ChannelExtract_U8_U32_Pos2(AgoNode * node, AgoKernelCommand cmd)
             node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
             agoCodeGenOpenCL_ChannelExtract_U8_U32_Pos2(node->opencl_code);
             char textBuffer[2048];
-            sprintf(textBuffer, OPENCL_FORMAT(
+            snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
                 "#define %s ChannelExtract_U8_U32_Pos2\n"
                 ), node->opencl_name);
             node->opencl_code += textBuffer;
@@ -11376,7 +11376,7 @@ int agoKernel_ChannelExtract_U8_U32_Pos3(AgoNode * node, AgoKernelCommand cmd)
             node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
             agoCodeGenOpenCL_ChannelExtract_U8_U32_Pos3(node->opencl_code);
             char textBuffer[2048];
-            sprintf(textBuffer, OPENCL_FORMAT(
+            snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
                 "#define %s ChannelExtract_U8_U32_Pos3\n"
                 ), node->opencl_name);
             node->opencl_code += textBuffer;
@@ -11459,7 +11459,7 @@ int agoKernel_ChannelExtract_U8U8U8_U24(AgoNode * node, AgoKernelCommand cmd)
         agoCodeGenOpenCL_ChannelExtract_U8_U24_Pos1(node->opencl_code);
         agoCodeGenOpenCL_ChannelExtract_U8_U24_Pos2(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 * p1, U8x8 * p2, U24x8 p3)\n"
             "{\n"
             "  ChannelExtract_U8_U24_Pos0(p0, p3);\n"
@@ -11542,7 +11542,7 @@ int agoKernel_ChannelExtract_U8U8U8_U32(AgoNode * node, AgoKernelCommand cmd)
         agoCodeGenOpenCL_ChannelExtract_U8_U32_Pos1(node->opencl_code);
         agoCodeGenOpenCL_ChannelExtract_U8_U32_Pos2(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 * p1, U8x8 * p2, U32x8 p3)\n"
             "{\n"
             "  ChannelExtract_U8_U32_Pos0(p0, p3);\n"
@@ -11627,7 +11627,7 @@ int agoKernel_ChannelExtract_U8U8U8U8_U32(AgoNode * node, AgoKernelCommand cmd)
         agoCodeGenOpenCL_ChannelExtract_U8_U32_Pos2(node->opencl_code);
         agoCodeGenOpenCL_ChannelExtract_U8_U32_Pos3(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 * p1, U8x8 * p2, U8x8 * p3, U32x8 p4)\n"
             "{\n"
             "  ChannelExtract_U8_U32_Pos0(p0, p4);\n"
@@ -11715,7 +11715,7 @@ int agoKernel_ChannelCombine_U16_U8U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U16x8 * p0, U8x8 p1, U8x8 p2)\n"
             "{\n"
             "  U16x8 r;\n"
@@ -11791,7 +11791,7 @@ int agoKernel_ChannelCombine_U24_U8U8U8_RGB(AgoNode * node, AgoKernelCommand cmd
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U24x8 * p0, U8x8 p1, U8x8 p2, U8x8 p3)\n"
             "{\n"
             "  U24x8 r;\n"
@@ -12024,7 +12024,7 @@ int agoKernel_ChannelCombine_U32_U8U8U8U8_RGBX(AgoNode * node, AgoKernelCommand 
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U32x8 * p0, U8x8 p1, U8x8 p2, U8x8 p3, U8x8 p4)\n"
             "{\n"
             "  U32x8 r;\n"
@@ -12099,7 +12099,7 @@ int agoKernel_Mul_U24_U24U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U24x8 * p0, U24x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  U24x8 r;\n"
@@ -12185,7 +12185,7 @@ int agoKernel_Mul_U32_U32U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U32x8 * p0, U32x8 p1, U8x8 p2, float p3)\n"
             "{\n"
             "  U32x8 r;\n"
@@ -12288,7 +12288,7 @@ int agoKernel_ColorConvert_RGB_RGBX(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U24x8 * p0, U32x8 p1)\n"
             "{\n"
             "  (*p0).s0 = amd_pack((float4)(amd_unpack0(p1.s0), amd_unpack1(p1.s0), amd_unpack2(p1.s0), amd_unpack0(p1.s1)));\n"
@@ -12693,7 +12693,7 @@ int agoKernel_ColorConvert_RGBX_RGB(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U32x8 * p0, U24x8 p1)\n"
             "{\n"
             "  U32x8 r;\n"
@@ -13129,7 +13129,7 @@ int agoKernel_ColorConvert_YUV4_RGB(AgoNode * node, AgoKernelCommand cmd)
         agoCodeGenOpenCL_ColorConvert_U_RGB(node->opencl_code);
         agoCodeGenOpenCL_ColorConvert_V_RGB(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 * p1, U8x8 * p2, U24x8 p3)\n"
             "{\n"
             "  ColorConvert_Y_RGB(p0, p3);\n"
@@ -13236,7 +13236,7 @@ int agoKernel_ColorConvert_YUV4_RGBX(AgoNode * node, AgoKernelCommand cmd)
         agoCodeGenOpenCL_ColorConvert_U_RGBX(node->opencl_code);
         agoCodeGenOpenCL_ColorConvert_V_RGBX(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 * p1, U8x8 * p2, U32x8 p3)\n"
             "{\n"
             "  ColorConvert_Y_RGBX(p0, p3);\n"
@@ -14303,7 +14303,7 @@ int agoKernel_ColorConvert_Y_RGB(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_ColorConvert_Y_RGB(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s ColorConvert_Y_RGB\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -14352,7 +14352,7 @@ int agoKernel_ColorConvert_Y_RGBX(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_ColorConvert_Y_RGBX(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s ColorConvert_Y_RGBX\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -14401,7 +14401,7 @@ int agoKernel_ColorConvert_U_RGB(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_ColorConvert_U_RGB(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s ColorConvert_U_RGB\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -14450,7 +14450,7 @@ int agoKernel_ColorConvert_U_RGBX(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_ColorConvert_U_RGBX(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s ColorConvert_U_RGBX\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -14499,7 +14499,7 @@ int agoKernel_ColorConvert_V_RGB(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_ColorConvert_V_RGB(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s ColorConvert_V_RGB\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -14548,7 +14548,7 @@ int agoKernel_ColorConvert_V_RGBX(AgoNode * node, AgoKernelCommand cmd)
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         agoCodeGenOpenCL_ColorConvert_V_RGBX(node->opencl_code);
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "#define %s ColorConvert_V_RGBX\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -18196,7 +18196,7 @@ int agoKernel_Remap_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, __global uchar * remap_, uint remap_stride_in_bytes)\n"
             "{\n"
             "  __global int * remap = (__global int *) (remap_ + y * remap_stride_in_bytes + (x << 2));\n"
@@ -18288,7 +18288,7 @@ int agoKernel_Remap_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, __global uchar * remap_, uint remap_stride_in_bytes, uint borderValue)\n"
             "{\n"
             "  __global int * remap = (__global int *) (remap_ + y * remap_stride_in_bytes + (x << 2));\n"
@@ -18382,7 +18382,7 @@ int agoKernel_Remap_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
         agoCodeGenOpenCL_BilinearSample(node->opencl_code);
         agoCodeGenOpenCL_BilinearSampleFXY(node->opencl_code);
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, __global uchar * remap_, uint remap_stride_in_bytes)\n"
             "{\n"
             "  __global int * remap = (__global int *) (remap_ + y * remap_stride_in_bytes + (x << 2));\n"
@@ -18476,7 +18476,7 @@ int agoKernel_Remap_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelCommand cmd
         agoCodeGenOpenCL_BilinearSample(node->opencl_code);
         agoCodeGenOpenCL_BilinearSampleFXYConstantForRemap(node->opencl_code);
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, __global uchar * remap_, uint remap_stride_in_bytes, uint borderValue)\n"
             "{\n"
             "  __global int * remap = (__global int *) (remap_ + y * remap_stride_in_bytes + (x << 2));\n"
@@ -18558,7 +18558,7 @@ int agoKernel_Remap_U24_U24_Bilinear(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
         char textBuffer[1024];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U24x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, __global uchar * remap_, uint remap_stride_in_bytes)\n"
             "{\n"
             "  uint QF = %d;\n"
@@ -18689,7 +18689,7 @@ int agoKernel_Remap_U24_U32_Bilinear(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
         char textBuffer[1024];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U24x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, __global uchar * remap_, uint remap_stride_in_bytes)\n"
             "{\n"
             "  uint QF = %d;\n"
@@ -18820,7 +18820,7 @@ int agoKernel_Remap_U32_U32_Bilinear(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
         char textBuffer[1024];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U32x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, __global uchar * remap_, uint remap_stride_in_bytes)\n"
             "{\n"
             "  uint QF = %d;\n"
@@ -18962,7 +18962,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_affine_matrix_t matrix)\n"
             "{\n"
             "  U8x8 rv;\n"
@@ -19059,7 +19059,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
         status = VX_SUCCESS;
         AgoData * iImg = node->paramList[1];
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_affine_matrix_t matrix, uint border)\n"
             "{\n"
             "  U8x8 rv;\n"
@@ -19174,7 +19174,7 @@ int agoKernel_WarpAffine_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
         agoCodeGenOpenCL_BilinearSample(node->opencl_code);
         agoCodeGenOpenCL_BilinearSampleFXY(node->opencl_code);
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_affine_matrix_t matrix)\n"
             "{\n"
             "  U8x8 rv; float4 f;\n"
@@ -19276,7 +19276,7 @@ int agoKernel_WarpAffine_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelComman
         agoCodeGenOpenCL_BilinearSampleWithConstBorder(node->opencl_code);
         agoCodeGenOpenCL_BilinearSampleFXYConstant(node->opencl_code);
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_affine_matrix_t matrix, uint borderValue)\n"
             "{\n"
             "  U8x8 rv; float4 f;\n"
@@ -19373,7 +19373,7 @@ int agoKernel_WarpPerspective_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_perspective_matrix_t matrix)\n"
             "{\n"
             "  U8x8 rv;\n"
@@ -19470,7 +19470,7 @@ int agoKernel_WarpPerspective_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCo
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_perspective_matrix_t matrix, uint border)\n"
             "{\n"
             "  width -= 2; height -= 2;\n"
@@ -19585,7 +19585,7 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cm
         agoCodeGenOpenCL_BilinearSample(node->opencl_code);
         agoCodeGenOpenCL_BilinearSampleFXY(node->opencl_code);
         char textBuffer[4096];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_perspective_matrix_t matrix)\n"
             "{\n"
             "  U8x8 rv; float4 f;\n"
@@ -19688,7 +19688,7 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelC
         agoCodeGenOpenCL_BilinearSampleWithConstBorder(node->opencl_code);
         agoCodeGenOpenCL_BilinearSampleFXYConstant(node->opencl_code);
         char textBuffer[8192];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_perspective_matrix_t matrix, uint borderValue)\n"
             "{\n"
             "  U8x8 rv; float4 f;\n"
@@ -19802,7 +19802,7 @@ int agoKernel_ScaleImage_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
         scalemat.xoffset = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width * 0.5);
         scalemat.yoffset = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height * 0.5);
         char textBuffer[1024];
-        sprintf(textBuffer,
+        snprintf(textBuffer, sizeof(textBuffer),
             OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
             "{\n"
@@ -19922,7 +19922,7 @@ int agoKernel_ScaleImage_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
         agoCodeGenOpenCL_BilinearSample(node->opencl_code);
         agoCodeGenOpenCL_ScaleImage_U8_U8_Bilinear(node->opencl_code);
         char textBuffer[8192];
-        sprintf(textBuffer,
+        snprintf(textBuffer, sizeof(textBuffer),
             OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
             "{\n"
@@ -20032,7 +20032,7 @@ int agoKernel_ScaleImage_U8_U8_Bilinear_Replicate(AgoNode * node, AgoKernelComma
         agoCodeGenOpenCL_BilinearSample(node->opencl_code);
         agoCodeGenOpenCL_ScaleImage_U8_U8_Bilinear(node->opencl_code);
         char textBuffer[8192];
-        sprintf(textBuffer,
+        snprintf(textBuffer, sizeof(textBuffer),
             OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height)\n"
             "{\n"
@@ -20164,7 +20164,7 @@ int agoKernel_ScaleImage_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelComman
         agoCodeGenOpenCL_BilinearSample(node->opencl_code);
         agoCodeGenOpenCL_ScaleImage_U8_U8_Bilinear(node->opencl_code);
         char textBuffer[8192];
-        sprintf(textBuffer,
+        snprintf(textBuffer, sizeof(textBuffer),
             OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, uint borderValue)\n"
             "{\n"
@@ -20304,13 +20304,13 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
         bool need_align = ((Sx * 2.0f) != floorf(Sx * 2.0f)) ? true : false;
         std::string code;
         char item[1024];
-        sprintf(item,
+        snprintf(item, sizeof(item),
             OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride) // ScaleArea %gx%g using %dx%d window\n"
             "{\n"
             ), node->opencl_name, Sx, Sy, Nx, Ny); code += item;
         if (fSx != 0.0f && fSy != 0.0f) {
-            sprintf(item,
+            snprintf(item, sizeof(item),
                 OPENCL_FORMAT(
                 "  float X = (float)x * %.12ff;\n"
                 "  float Y = (float)y * %.12ff;\n"
@@ -20320,7 +20320,7 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                 ), Sx, Sy); code += item;
         }
         else if (fSx != 0.0f) {
-            sprintf(item,
+            snprintf(item, sizeof(item),
                 OPENCL_FORMAT(
                 "  float X = (float)x * %.12ff;\n"
                 "  float fX = fract(X, &X);\n"
@@ -20328,7 +20328,7 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                 ), Sx, Ny); code += item;
         }
         else if (fSy != 0.0f) {
-            sprintf(item,
+            snprintf(item, sizeof(item),
                 OPENCL_FORMAT(
                 "  float Y = (float)y * %.12ff;\n"
                 "  float fY = fract(Y, &Y);\n"
@@ -20336,7 +20336,7 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                 ), Sy, Nx); code += item;
         }
         else {
-            sprintf(item,
+            snprintf(item, sizeof(item),
                 "  uint offset = stride * (y * %d) + (x * %d);\n"
                 , Ny, Nx); code += item;
         }
@@ -20345,7 +20345,7 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
         }
         code += "  p += offset;\n";
         if (fSy != 0.0f) {
-            sprintf(item,
+            snprintf(item, sizeof(item),
                 OPENCL_FORMAT(
                 "  F32x8 ftotal = (F32x8)0.0f;\n"
                 "  float Sy = %.12ff, Syf = 1.0f - fY;\n"
@@ -20357,7 +20357,7 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
         else {
             code += "  F32x8 f = (F32x8)0.0f;\n";
         }
-        sprintf(item,
+        snprintf(item, sizeof(item),
             OPENCL_FORMAT(
             "  for (uint iy = 0; iy < %d; iy++) {\n"
             "    uint4 dw;\n"
@@ -20374,11 +20374,11 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                     int ndw = (nbytes + 3) >> 2;
                     char slist[] = "0123"; slist[ndw] = '\0';
                     char vload[] = "vloadn"; vload[5] = ndw > 1 ? ('0' + ndw) : 0;
-                    sprintf(item, "    dw.s%s = %s(0, (__global uint *)&p[%d]);\n", slist, vload, bpos); code += item;
+                    snprintf(item, sizeof(item), "    dw.s%s = %s(0, (__global uint *)&p[%d]);\n", slist, vload, bpos); code += item;
                     for (int idw = 0, ldw = lastdw, jdw = lastdw ? 0 : 1; idw < ndw - (lastdw ? 0 : 1); idw++, jdw++) {
-                        sprintf(item, "    dw.s%d = amd_bytealign(dw.s%d, dw.s%d, align);\n", ldw, jdw, ldw); code += item;
+                        snprintf(item, sizeof(item), "    dw.s%d = amd_bytealign(dw.s%d, dw.s%d, align);\n", ldw, jdw, ldw); code += item;
                         for (int jj = 0; jj < 4 && (nbytesprocessed + jj < 8 * Nx); jj++) {
-                            sprintf(item, "    f.s%d += amd_unpack%d(dw.s%d);\n", ix, jj, ldw); code += item;
+                            snprintf(item, sizeof(item), "    f.s%d += amd_unpack%d(dw.s%d);\n", ix, jj, ldw); code += item;
                             if (((nbytesprocessed + jj) % Nx) == (Nx - 1)) ix++;
                         }
                         // update for next iteration
@@ -20392,16 +20392,16 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
             }
             else {
                 for (int ix = 0, bpos = 0; ix < 8;) {
-                    sprintf(item, "    dw = *((__global uint4 *)&p[%d]);\n", bpos); code += item;
+                    snprintf(item, sizeof(item), "    dw = *((__global uint4 *)&p[%d]);\n", bpos); code += item;
                     for (int jj = 0; jj < 4; jj++) {
                         if (use_sad) {
-                            sprintf(item, "    sum.s%d = amd_sad(dw.s%d, 0u, sum.s%d);\n", ix, jj, ix); code += item;
+                            snprintf(item, sizeof(item), "    sum.s%d = amd_sad(dw.s%d, 0u, sum.s%d);\n", ix, jj, ix); code += item;
                             bpos += 4;
                             if ((bpos % Nx) == 0) ix++;
                         }
                         else {
                             for (int k = 0; k < 4 && ix < 8; k++) {
-                                sprintf(item, "    f.s%d += amd_unpack%d(dw.s%d);\n", ix, k, jj); code += item;
+                                snprintf(item, sizeof(item), "    f.s%d += amd_unpack%d(dw.s%d);\n", ix, k, jj); code += item;
                                 bpos += 1;
                                 if ((bpos % Nx) == 0) ix++;
                             }
@@ -20421,12 +20421,12 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                 int ndw = (N + 3) >> 2;
                 char slist[] = "0123"; slist[ndw] = '\0';
                 char vload[] = "vloadn"; vload[5] = ndw > 1 ? ('0' + ndw) : 0;
-                sprintf(item, "    dw.s%s = %s(0, (__global uint *)&p[%d]);\n", slist, vload, bpos); code += item;
+                snprintf(item, sizeof(item), "    dw.s%s = %s(0, (__global uint *)&p[%d]);\n", slist, vload, bpos); code += item;
                 if (need_align) {
                     if (bpos == 0) bpos += 4;
                     ndw -= (lastdw ? 0 : 1);
                     for (int idw = 0, ldw = lastdw, jdw = lastdw ? 0 : 1; idw < ndw; idw++, jdw++) {
-                        sprintf(item, "    dw.s%d = amd_bytealign(dw.s%d, dw.s%d, align);\n", ldw, jdw, ldw); code += item;
+                        snprintf(item, sizeof(item), "    dw.s%d = amd_bytealign(dw.s%d, dw.s%d, align);\n", ldw, jdw, ldw); code += item;
                         slist[idw] = '0' + ldw;
                         // update for next iteration
                         ldw = lastdw ? idw : idw + 1;
@@ -20438,13 +20438,13 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                     for (int k = 0; k < 4 && ix < 8;) {
                         if (factorOffset == floorf(factorOffset)) {
                             if (factorRemaining >= 1.0f) {
-                                sprintf(item, "    f.s%d += amd_unpack%d(dw.s%d);\n", ix, k, jjdw);
+                                snprintf(item, sizeof(item), "    f.s%d += amd_unpack%d(dw.s%d);\n", ix, k, jjdw);
                                 factorOffset += 1.0f;
                                 factorRemaining -= 1.0f;
                                 k++;
                             }
                             else {
-                                sprintf(item, "    f.s%d += amd_unpack%d(dw.s%d) * %.12ff;\n", ix, k, jjdw, factorRemaining);
+                                snprintf(item, sizeof(item), "    f.s%d += amd_unpack%d(dw.s%d) * %.12ff;\n", ix, k, jjdw, factorRemaining);
                                 factorOffset += factorRemaining;
                                 factorRemaining = 0.0f;
                             }
@@ -20453,13 +20453,13 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                             float factorOffsetRemain = factorOffset - floorf(factorOffset);
                             if ((factorOffsetRemain + factorRemaining) >= 1.0f) {
                                 float factor = 1.0f - factorOffsetRemain;
-                                sprintf(item, "    f.s%d += amd_unpack%d(dw.s%d) * %.12ff;\n", ix, k, jjdw, factor);
+                                snprintf(item, sizeof(item), "    f.s%d += amd_unpack%d(dw.s%d) * %.12ff;\n", ix, k, jjdw, factor);
                                 factorOffset += factor;
                                 factorRemaining -= factor;
                                 k++;
                             }
                             else {
-                                sprintf(item, "    f.s%d += amd_unpack%d(dw.s%d) * %.12ff;\n", ix, k, jjdw, factorRemaining);
+                                snprintf(item, sizeof(item), "    f.s%d += amd_unpack%d(dw.s%d) * %.12ff;\n", ix, k, jjdw, factorRemaining);
                                 factorOffset += factorRemaining;
                                 factorRemaining = 0.0f;
                             }
@@ -20479,7 +20479,7 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
             for (int ix = 0; ix < 8; ix++) {
                 code += "    Xf = fract(Xs, &Xi); offset = (uint)Xi; align = offset & 3; offset -= align;";
                 if (ix < 7) {
-                    sprintf(item, " Xs += %.12ff;", Sx); code += item;
+                    snprintf(item, sizeof(item), " Xs += %.12ff;", Sx); code += item;
                 }
                 code += "\n";
                 int N = Nx + Nxf;
@@ -20491,18 +20491,18 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                 int ndw = (N + 4 + 3) >> 2;
                 char slist[] = "0123"; slist[ndw] = '\0';
                 char vload[] = "vloadn"; vload[5] = ndw > 1 ? ('0' + ndw) : 0;
-                sprintf(item, "    dw.s%s = %s(0, (__global uint *)&p[offset]);\n", slist, vload); code += item;
+                snprintf(item, sizeof(item), "    dw.s%s = %s(0, (__global uint *)&p[offset]);\n", slist, vload); code += item;
                 for (int idw = 0; idw < ndw - 1; idw++) {
-                    sprintf(item, "    dw.s%d = amd_bytealign(dw.s%d, dw.s%d, align);\n", idw, idw + 1, idw); code += item;
+                    snprintf(item, sizeof(item), "    dw.s%d = amd_bytealign(dw.s%d, dw.s%d, align);\n", idw, idw + 1, idw); code += item;
                 }
                 int i = 0;
-                sprintf(item, "    f.s%d += amd_unpack%d(dw.s%d) * (1.0f - Xf);\n", ix, i & 3, i >> 2); code += item;
+                snprintf(item, sizeof(item), "    f.s%d += amd_unpack%d(dw.s%d) * (1.0f - Xf);\n", ix, i & 3, i >> 2); code += item;
                 for (i = 1; i < Nx - 1; i++) {
-                    sprintf(item, "    f.s%d += amd_unpack%d(dw.s%d);\n", ix, i & 3, i >> 2); code += item;
+                    snprintf(item, sizeof(item), "    f.s%d += amd_unpack%d(dw.s%d);\n", ix, i & 3, i >> 2); code += item;
                 }
-                sprintf(item, "    factor = %.12ff + Xf;", Sx - (Nx - 1)); code += item;
-                sprintf(item, " f.s%d += amd_unpack%d(dw.s%d) * clamp(factor, 0.0f, 1.0f) +", ix, i & 3, i >> 2); i++; code += item;
-                sprintf(item, " amd_unpack%d(dw.s%d) * clamp(factor-1.0f, 0.0f, 1.0f);\n", i & 3, i >> 2); code += item;
+                snprintf(item, sizeof(item), "    factor = %.12ff + Xf;", Sx - (Nx - 1)); code += item;
+                snprintf(item, sizeof(item), " f.s%d += amd_unpack%d(dw.s%d) * clamp(factor, 0.0f, 1.0f) +", ix, i & 3, i >> 2); i++; code += item;
+                snprintf(item, sizeof(item), " amd_unpack%d(dw.s%d) * clamp(factor-1.0f, 0.0f, 1.0f);\n", i & 3, i >> 2); code += item;
             }
         }
         if (fSy != 0.0f) {
@@ -20522,7 +20522,7 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                 "  F32x8 f = convert_float8(sum);\n";
         }
         const char * fvar = (fSy != 0.0f) ? "ftotal" : "f";
-        sprintf(item,
+        snprintf(item, sizeof(item),
             OPENCL_FORMAT(
             "  %s *= %.12lff;\n"
             "  U8x8 rv;\n"
@@ -22275,7 +22275,7 @@ int agoKernel_Copy_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
         size_t work_group_size = 256;
         size_t num_work_items = node->paramList[0]->size / 4;
         char code[1024];
-        sprintf(code,
+        snprintf(code, sizeof(code),
             "__kernel __attribute__((reqd_work_group_size(%zd, 1, 1)))\n"
             "void %s(__global char * dst_buf, uint dst_offset, uint4 dst_stride, __global char * src_buf, uint src_offset, uint4 src_stride)\n"
             "{\n"
@@ -22393,7 +22393,7 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
-        sprintf(textBuffer, OPENCL_FORMAT(
+        snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s (U8x8 * p0, U8x8 p1, float alpha, U8x8 p2)\n"
             "{\n"
             "   U8x8 r;\n"

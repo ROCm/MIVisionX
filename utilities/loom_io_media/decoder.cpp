@@ -250,7 +250,7 @@ vx_status CLoomIoMediaDecoder::Initialize()
     else {
         // generate media filenames
         for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
-            char line[4096]; sprintf(line, inputMediaFiles.c_str(), mediaIndex);
+            char line[4096]; snprintf(line, sizeof(line), inputMediaFiles.c_str(), mediaIndex);
             inputMediaFileName[mediaIndex] = line;
         }
     }

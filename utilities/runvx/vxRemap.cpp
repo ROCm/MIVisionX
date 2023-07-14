@@ -261,7 +261,7 @@ int CVxParamRemap::ReadFrame(int frameNumber)
 	}
 
 	// read from user specified file
-	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameRead.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameRead.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, m_readFileIsBinary ? "rb" : "r");
 	if (!fp) ReportError("ERROR: unable to open: %s\n", fileName);
 	for (vx_uint32 y = 0; y < m_dstHeight; y++){
@@ -292,7 +292,7 @@ int CVxParamRemap::WriteFrame(int frameNumber)
 	if (m_fileNameWrite.length() < 1) return 0;
 
 	// write output into user specified file
-	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameWrite.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameWrite.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, "wb");
 	if (!fp) ReportError("ERROR: unable to create: %s\n", fileName);
 	for (vx_uint32 y = 0; y < m_dstHeight; y++){
@@ -313,7 +313,7 @@ int CVxParamRemap::CompareFrame(int frameNumber)
 	if (m_fileNameCompare.length() < 1) return 0;
 
 	// reading data from reference file
-	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameCompare.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameCompare.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, "rb");
 	if (!fp) {
 		ReportError("ERROR: Unable to open: %s\n", fileName);

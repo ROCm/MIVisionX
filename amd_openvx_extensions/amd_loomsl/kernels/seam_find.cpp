@@ -812,7 +812,7 @@ static vx_status VX_CALLBACK seamfind_scene_detect_opencl_codegen(
 
 	// kernel header and reading
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"\n"
@@ -1436,7 +1436,7 @@ static vx_status VX_CALLBACK seamfind_cost_generate_opencl_codegen(
 
 	// kernel header and reading
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n\n"
 		"#define T1 ((float8)(0.4142135623730950488016887242097f))\n"
@@ -1791,7 +1791,7 @@ static vx_status VX_CALLBACK seamfind_cost_accumulate_opencl_codegen(
 
 	// kernel header and reading
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"\n"
@@ -2474,7 +2474,7 @@ static vx_status VX_CALLBACK seamfind_path_trace_opencl_codegen(
 
 	// kernel header and reading
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"\n"
@@ -3069,7 +3069,7 @@ static vx_status VX_CALLBACK seamfind_set_weights_opencl_codegen(
 
 	// kernel header and reading
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"\n"

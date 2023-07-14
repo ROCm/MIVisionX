@@ -144,9 +144,9 @@ static vx_status VX_CALLBACK processCropMirrorNormalize(vx_node node, const vx_r
 
 static vx_status VX_CALLBACK initializeCropMirrorNormalize(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     CropMirrorNormalizeLocalData *data = new CropMirrorNormalizeLocalData;
-    vx_enum input_tensor_type, output_tensor_type;
-    memset(data, 0, sizeof(*data));
+    memset(data, 0, sizeof(CropMirrorNormalizeLocalData));
 
+    vx_enum input_tensor_type, output_tensor_type;
     int roi_type, input_layout, output_layout;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
@@ -186,12 +186,12 @@ static vx_status VX_CALLBACK initializeCropMirrorNormalize(vx_node node, const v
 static vx_status VX_CALLBACK uninitializeCropMirrorNormalize(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     CropMirrorNormalizeLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     if (data->pMultiplier != nullptr) free(data->pMultiplier);
     if (data->pOffset != nullptr) free(data->pOffset);
     if (data->pMirror != nullptr) free(data->pMirror);
     delete(data->pSrcDesc);
     delete(data->pDstDesc);
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete (data);
     return VX_SUCCESS;
 }

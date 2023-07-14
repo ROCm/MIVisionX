@@ -79,7 +79,7 @@ static vx_status VX_CALLBACK processNop(vx_node node, const vx_reference *parame
 
 static vx_status VX_CALLBACK initializeNop(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     NopLocalData *data = new NopLocalData;
-    memset(data, 0, sizeof(*data));
+    memset(data, 0, sizeof(NopLocalData));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     refreshNop(node, parameters, num, data);
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

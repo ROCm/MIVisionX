@@ -89,12 +89,12 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *param
 
 static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     CopyLocalData *data = new CopyLocalData;
-    vx_enum input_tensor_type, output_tensor_type;
-    memset(data, 0, sizeof(*data));
+    memset(data, 0, sizeof(CopyLocalData));
 #if ENABLE_HIP
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif   
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    vx_enum input_tensor_type, output_tensor_type;
     vx_size num_of_dims;
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(vx_size)));

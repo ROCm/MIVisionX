@@ -133,9 +133,9 @@ static vx_status VX_CALLBACK processBrightness(vx_node node, const vx_reference 
 
 static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     BrightnessLocalData *data = new BrightnessLocalData;
-    vx_enum input_tensor_type, output_tensor_type;
-    memset(data, 0, sizeof(*data));
+    memset(data, 0, sizeof(BrightnessLocalData));
 
+    vx_enum input_tensor_type, output_tensor_type;
     int roi_type, input_layout, output_layout;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
@@ -174,11 +174,11 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
 static vx_status VX_CALLBACK uninitializeBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     BrightnessLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     if (data->pAlpha != nullptr) free(data->pAlpha);
     if (data->pBeta != nullptr) free(data->pBeta);
     delete(data->pSrcDesc);
     delete(data->pDstDesc);
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete (data);
     return VX_SUCCESS;
 }

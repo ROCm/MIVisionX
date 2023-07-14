@@ -382,7 +382,7 @@ int CVxParamTensor::ReadFrame(int frameNumber)
 	}
 
 	// reading data from input file
-	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameRead.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameRead.c_str(), frameNumber);
 	if(!_stricmp(fileName + strlen(fileName) - 4, ".dat")) {
 		ReportError("ERROR: read from .dat files not supported: %s\n", fileName);
 	}
@@ -419,7 +419,7 @@ int CVxParamTensor::WriteFrame(int frameNumber)
 	if (status != VX_SUCCESS)
 		ReportError("ERROR: vxCopyTensorPatch: read failed (%d)\n", status);
 	// write data to output file
-	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameWrite.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameWrite.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, m_writeFileIsBinary ? "wb" : "w");
 	if (!fp) ReportError("ERROR: Unable to create: %s\n", fileName);
 	if(!_stricmp(fileName + strlen(fileName) - 4, ".dat")) {
@@ -484,7 +484,7 @@ int CVxParamTensor::CompareFrame(int frameNumber)
 	if (m_fileNameCompare.length() < 1) return 0;
 
 	// reading data from reference file
-	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameCompare.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameCompare.c_str(), frameNumber);
 	if(!_stricmp(fileName + strlen(fileName) - 4, ".dat")) {
 		ReportError("ERROR: read from .dat files not supported: %s\n", fileName);
 	}

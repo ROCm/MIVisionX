@@ -912,14 +912,14 @@ int agoOptimizeDramaAlloc(AgoGraph * agraph)
     // make sure all buffers are allocated and initialized
     for (AgoData * adata = agraph->dataList.head; adata; adata = adata->next) {
         if (agoAllocData(adata)) {
-            vx_char name[256]; agoGetDataName(name, adata);
+            vx_char name[1024]; agoGetDataName(name, adata);
             agoAddLogEntry(&adata->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAlloc: data allocation failed for %s\n", name);
             return -1;
         }
     }
     for (AgoData * adata = agraph->ref.context->dataList.head; adata; adata = adata->next) {
         if (agoAllocData(adata)) {
-            vx_char name[256]; agoGetDataName(name, adata);
+            vx_char name[1024]; agoGetDataName(name, adata);
             agoAddLogEntry(&adata->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAlloc: data allocation failed for %s\n", name);
             return -1;
         }

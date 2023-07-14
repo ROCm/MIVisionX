@@ -105,7 +105,7 @@ int HafGpu_NonLinearFilter_3x3_ANY_U8(AgoNode * node)
 	}
 	// function declaration
 	char item[8192];
-	sprintf(item, "void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n", node->opencl_name, dstRegType);
+	snprintf(item, sizeof(item), "void %s(%sx8 * r, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n", node->opencl_name, dstRegType);
 	std::string code = item;
 
 	// configuration
@@ -133,7 +133,7 @@ int HafGpu_NonLinearFilter_3x3_ANY_U8(AgoNode * node)
 
 	// generate computation
 	if (node->akernel->id == VX_KERNEL_AMD_DILATE_U8_U8_3x3 || node->akernel->id == VX_KERNEL_AMD_DILATE_U1_U8_3x3) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  __local uint2 * lbufptr = (__local uint2 *) (lbuf + ly * %d + (lx << 3));\n" // LMemStride
 			"  F32x8 sum; uint4 pix; float4 val;\n"
@@ -202,7 +202,7 @@ int HafGpu_NonLinearFilter_3x3_ANY_U8(AgoNode * node)
 		code += item;
 	}
 	else if (node->akernel->id == VX_KERNEL_AMD_ERODE_U8_U8_3x3 || node->akernel->id == VX_KERNEL_AMD_ERODE_U1_U8_3x3) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  __local uint2 * lbufptr = (__local uint2 *) (lbuf + ly * %d + (lx << 3));\n" // LMemStride
 			"  F32x8 sum; uint4 pix; float4 val;\n"
@@ -272,7 +272,7 @@ int HafGpu_NonLinearFilter_3x3_ANY_U8(AgoNode * node)
 	}
 	else if (node->akernel->id == VX_KERNEL_AMD_MEDIAN_U8_U8_3x3) {
 #if ENABLE_FAST_MEDIAN_3x3
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  __local uint2 * lbufptr = (__local uint2 *) (lbuf + ly * %d + (lx << 3));\n" // LMemStride
 			"  F32x8 sum, tum; uint4 pix; float4 val;\n"
@@ -340,7 +340,7 @@ int HafGpu_NonLinearFilter_3x3_ANY_U8(AgoNode * node)
 			, LMemStride, LMemStride / 8, LMemStride / 8 + 1, LMemStride * 2 / 8, LMemStride * 2 / 8 + 1);
 		code += item;
 #else
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  __local uint2 * lbufptr = (__local uint2 *) (lbuf + ly * %d + (lx << 3));\n" // LMemStride
 			"  F32x8 sum;\n"
@@ -593,7 +593,7 @@ int HafGpu_NonLinearFilter_3x3_ANY_U1(AgoNode * node)
 	}
 	// function declaration
 	char item[8192];
-	sprintf(item, "void %s(%sx8 * r, uint x, uint y, __global uchar * p, uint stride) {\n", node->opencl_name, dstRegType);
+	snprintf(item, sizeof(item), "void %s(%sx8 * r, uint x, uint y, __global uchar * p, uint stride) {\n", node->opencl_name, dstRegType);
 	std::string code = item;
 
 	// configuration
@@ -608,7 +608,7 @@ int HafGpu_NonLinearFilter_3x3_ANY_U1(AgoNode * node)
 		node->akernel->id == VX_KERNEL_AMD_ERODE_U8_U1_3x3 ||
 		node->akernel->id == VX_KERNEL_AMD_ERODE_U1_U1_3x3) {
 		int op = (node->akernel->id == VX_KERNEL_AMD_DILATE_U8_U1_3x3 || node->akernel->id == VX_KERNEL_AMD_DILATE_U1_U1_3x3) ? '|' : '&';
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			// TBD: this code segment uses risky 32-bit loads without 32-bit alignment
 			//      it works great on our hardware though it doesn't follow OpenCL rules
 			OPENCL_FORMAT(
@@ -683,7 +683,7 @@ int HafGpu_SobelSpecialCases(AgoNode * node)
 		// re-use LinearFilter_ANYx2_U8 for computing GX & GY
 		char opencl_name[VX_MAX_KERNEL_NAME];
 		strcpy(opencl_name, node->opencl_name);
-		sprintf(node->opencl_name, "%s_GXY", opencl_name);
+		snprintf(node->opencl_name, sizeof(node->opencl_name), "%s_GXY", opencl_name);
 		AgoData filterGX, filterGY;
 		filterGX.ref.type = VX_TYPE_MATRIX; filterGX.u.mat.type = VX_TYPE_FLOAT32; filterGX.u.mat.columns = filterGX.u.mat.rows = 3; filterGX.buffer = (vx_uint8 *)&sobelFilter_3x3_x[0][0]; filterGX.ref.read_only = true;
 		filterGY.ref.type = VX_TYPE_MATRIX; filterGY.u.mat.type = VX_TYPE_FLOAT32; filterGY.u.mat.columns = filterGY.u.mat.rows = 3; filterGY.buffer = (vx_uint8 *)&sobelFilter_3x3_y[0][0]; filterGY.ref.read_only = true;
@@ -695,7 +695,7 @@ int HafGpu_SobelSpecialCases(AgoNode * node)
 
 		// actual function using pre-defined functions
 		char item[8192];
-		sprintf(item, OPENCL_FORMAT(
+		snprintf(item, sizeof(item), OPENCL_FORMAT(
 			"#define Magnitude_S16_S16S16 Magnitude_S16_S16S16_%s\n"
 			"#define Phase_U8_S16S16 Phase_U8_S16S16_%s\n"
 			"void Magnitude_S16_S16S16 (S16x8 * p0, S16x8 p1, S16x8 p2)\n"
@@ -734,7 +734,7 @@ int HafGpu_SobelSpecialCases(AgoNode * node)
 			), node->opencl_name, node->opencl_name);
 		node->opencl_code += item;
 		if (node->akernel->id == VX_KERNEL_AMD_SOBEL_MAGNITUDE_PHASE_S16U8_U8_3x3) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"void %s(S16x8 * mag, U8x8 * phase, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				"  S16x8 gx, gy;\n"
@@ -747,7 +747,7 @@ int HafGpu_SobelSpecialCases(AgoNode * node)
 			node->opencl_local_buffer_usage_mask = (2 << 1);
 		}
 		else if (node->akernel->id == VX_KERNEL_AMD_SOBEL_MAGNITUDE_S16_U8_3x3) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"void %s(S16x8 * mag, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				"  S16x8 gx, gy;\n"
@@ -759,7 +759,7 @@ int HafGpu_SobelSpecialCases(AgoNode * node)
 			node->opencl_local_buffer_usage_mask = (1 << 1);
 		}
 		else if (node->akernel->id == VX_KERNEL_AMD_SOBEL_PHASE_U8_U8_3x3) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"void %s(U8x8 * phase, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 				"  S16x8 gx, gy;\n"
@@ -800,7 +800,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 	// re-use LinearFilter_ANYx2_U8 for computing GX & GY
 	char opencl_name[VX_MAX_KERNEL_NAME];
 	strcpy(opencl_name, node->opencl_name);
-	sprintf(node->opencl_name, "%s_GXY", opencl_name);
+	snprintf(node->opencl_name, sizeof(node->opencl_name), "%s_GXY", opencl_name);
 	AgoData filterGX, filterGY;
 	filterGX.ref.type = VX_TYPE_MATRIX; filterGX.u.mat.type = VX_TYPE_FLOAT32; filterGX.ref.read_only = true;
 	filterGY.ref.type = VX_TYPE_MATRIX; filterGY.u.mat.type = VX_TYPE_FLOAT32; filterGY.ref.read_only = true;
@@ -838,7 +838,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 		node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_5x5_L1NORM ||
 		node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM)
 	{ // L1NORM
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"uint CannyMagPhase(float gx, float gy) {\n"
 			"  float dx = fabs(gx), dy = fabs(gy);\n"
@@ -856,7 +856,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 	}
 	else
 	{ // L2NORM
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"uint CannyMagPhase(float gx, float gy) {\n"
 			"  float dx = fabs(gx), dy = fabs(gy);\n"
@@ -874,7 +874,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 	}
 	int width = node->paramList[0]->u.img.width;
 	int height = node->paramList[0]->u.img.height;
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"void %s(U16x8 * magphase, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
 		"  F32x8 gx, gy;\n"
@@ -929,7 +929,7 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 		agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: HafGpu_CannySuppThreshold doesn't support kernel %s\n", node->akernel->name);
 		return -1;
 	}
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -955,7 +955,7 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 	}
 	// load U16 pixels from local and perform non-max supression
 	vx_uint32 gradient_size = node->paramList[ioffset+2] ? node->paramList[ioffset+2]->u.scalar.u.u : 3;
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"  __local uchar * lbuf_ptr = lbuf + ly * %d + (lx << 3);\n" // LMemStride
 		"  uint4 L0 = vload4(0, (__local uint *) lbuf_ptr);\n"
@@ -1075,7 +1075,7 @@ int HafGpu_HarrisSobelFilters(AgoNode * node)
 		);
 
 	// re-use LinearFilter_ANYx2_U8 for computing GX & GY
-	sprintf(node->opencl_name, "LinearFilter_ANYx2_U8");
+	snprintf(node->opencl_name, sizeof(node->opencl_name), "LinearFilter_ANYx2_U8");
 	AgoData filterGX, filterGY;
 	filterGX.ref.type = VX_TYPE_MATRIX; filterGX.u.mat.type = VX_TYPE_FLOAT32; filterGX.ref.read_only = true;
 	filterGY.ref.type = VX_TYPE_MATRIX; filterGY.u.mat.type = VX_TYPE_FLOAT32; filterGY.ref.read_only = true;
@@ -1097,7 +1097,7 @@ int HafGpu_HarrisSobelFilters(AgoNode * node)
 	}
 
 	// kernel body
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
 		"void %s(uint p0_width, uint p0_height, __global uchar * p0_buf, uint p0_stride, uint p0_offset, uint p1_width, uint p1_height, __global uchar * p1_buf, uint p1_stride, uint p1_offset)\n"
@@ -1160,7 +1160,7 @@ int HafGpu_HarrisScoreFilters(AgoNode * node)
 
 	// kernel declaration
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -1182,10 +1182,10 @@ int HafGpu_HarrisScoreFilters(AgoNode * node)
 	for (int component = 0; component < 3; component++) {
 		// load component into LDS
 		if (component == 0) {
-			sprintf(item, "  __global uchar * gbuf = p1_buf; __local uchar * lbuf_ptr; float2 v2;\n");
+			snprintf(item, sizeof(item), "  __global uchar * gbuf = p1_buf; __local uchar * lbuf_ptr; float2 v2;\n");
 		}
 		else {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"  barrier(CLK_LOCAL_MEM_FENCE);\n"
 				"  gbuf = p1_buf + %d;\n" // width * 4 * component
 				, width * 4 * component);
@@ -1195,62 +1195,62 @@ int HafGpu_HarrisScoreFilters(AgoNode * node)
 			return -1;
 		}
 		// horizontal sum
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			"  float4 sum%d;\n" // component
 			"  lbuf_ptr = &lbuf[ly * %d + (lx << 4)];\n" // LMemStride
 			, component, LMemStride);
 		node->opencl_code += item;
 		for (int i = 0; i < 2 + (N >> 1); i++) {
 			if (kO) {
-				sprintf(item, "  v2 = vload2(0, (__local float *)&lbuf_ptr[%d]);\n", (i * 2 + kO) * 4);
+				snprintf(item, sizeof(item), "  v2 = vload2(0, (__local float *)&lbuf_ptr[%d]);\n", (i * 2 + kO) * 4);
 			}
 			else {
-				sprintf(item, "  v2 = *(__local float2 *)&lbuf_ptr[%d];\n", (i * 2) * 4);
+				snprintf(item, sizeof(item), "  v2 = *(__local float2 *)&lbuf_ptr[%d];\n", (i * 2) * 4);
 			}
 			node->opencl_code += item;
 			for (int k = i*2; k < i*2+2; k++) {
 				for (int j = max(k-N+1,0); j <= min(k,3); j++) {
-					sprintf(item, "  sum%d.s%d %c= v2.s%d;\n", component, j, (k == j) ? ' ' : '+', k & 1);
+					snprintf(item, sizeof(item), "  sum%d.s%d %c= v2.s%d;\n", component, j, (k == j) ? ' ' : '+', k & 1);
 					node->opencl_code += item;
 				}
 			}
 		}
-		sprintf(item, "  *(__local float4 *)lbuf_ptr = sum%d;\n", component);
+		snprintf(item, sizeof(item), "  *(__local float4 *)lbuf_ptr = sum%d;\n", component);
 		node->opencl_code += item;
-		sprintf(item, "  if (ly < %d) {\n", N - 1);
+		snprintf(item, sizeof(item), "  if (ly < %d) {\n", N - 1);
 		node->opencl_code += item;
 		for (int i = 0; i < 2 + (N >> 1); i++) {
 			if (kO) {
-				sprintf(item, "    v2 = vload2(0, (__local float *)&lbuf_ptr[%d]);\n", LMemStride * work_group_height + (i * 2 + kO) * 4);
+				snprintf(item, sizeof(item), "    v2 = vload2(0, (__local float *)&lbuf_ptr[%d]);\n", LMemStride * work_group_height + (i * 2 + kO) * 4);
 			}
 			else {
-				sprintf(item, "    v2 = *(__local float2 *)&lbuf_ptr[%d];\n", LMemStride * work_group_height + (i * 2) * 4);
+				snprintf(item, sizeof(item), "    v2 = *(__local float2 *)&lbuf_ptr[%d];\n", LMemStride * work_group_height + (i * 2) * 4);
 			}
 			node->opencl_code += item;
 			for (int k = i * 2; k < i * 2 + 2; k++) {
 				for (int j = max(k-N+1, 0); j <= min(k, 3); j++) {
-					sprintf(item, "    sum%d.s%d %c= v2.s%d;\n", component, j, (k == j) ? ' ' : '+', k & 1);
+					snprintf(item, sizeof(item), "    sum%d.s%d %c= v2.s%d;\n", component, j, (k == j) ? ' ' : '+', k & 1);
 					node->opencl_code += item;
 				}
 			}
 		}
-		sprintf(item, 
+		snprintf(item, sizeof(item), 
 			"    *(__local float4 *)&lbuf_ptr[%d] = sum%d;\n"
 			"  }\n"
 			"  barrier(CLK_LOCAL_MEM_FENCE);\n"
 			, LMemStride * work_group_height, component);
 		node->opencl_code += item;
 		// vertical sum
-		sprintf(item, "  sum%d = *(__local float4 *)lbuf_ptr;\n", component);
+		snprintf(item, sizeof(item), "  sum%d = *(__local float4 *)lbuf_ptr;\n", component);
 		node->opencl_code += item;
 		for (int i = 1; i < N; i++) {
-			sprintf(item, "  sum%d += *(__local float4 *)&lbuf_ptr[%d];\n", component, i * LMemStride);
+			snprintf(item, sizeof(item), "  sum%d += *(__local float4 *)&lbuf_ptr[%d];\n", component, i * LMemStride);
 			node->opencl_code += item;
 		}
 	}
 
 	int border = (gradient_size >> 1) + (N >> 1);
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"  gx = gx << 2;\n"
 		"  if ((gx < %d) && (gy < %d)) {\n" // width, height
@@ -1314,7 +1314,7 @@ int HafGpu_NonMaxSupp_XY_ANY_3x3(AgoNode * node)
 
 	// kernel declaration
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -1336,7 +1336,7 @@ int HafGpu_NonMaxSupp_XY_ANY_3x3(AgoNode * node)
 		return -1;
 	}
 	// load pixels from local and perform non-max supression
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"  __local uchar * lbuf_ptr = lbuf + ly * %d + (lx << 3);\n" // LMemStride
 		"  float4 L0 = vload4(0, (__local float *) lbuf_ptr);\n"
@@ -1424,7 +1424,7 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 
 	// kernel declaration
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -1451,7 +1451,7 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 	}
 	// perform filtering
 	if (N == 3) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  __local uchar * lbuf_ptr = lbuf + ly * %d + (lx << 3);\n" // LMemStride * 2
 			"  uint3 L0 = vload3(0, (__local uint *)&lbuf_ptr[4]);\n"
@@ -1477,7 +1477,7 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 		node->opencl_code += item;
 	}
 	else if (N == 5) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  __local uchar * lbuf_ptr = lbuf + ly * %d + (lx << 3);\n" // LMemStride
 			"  float4 sum; float v;\n"
@@ -1594,7 +1594,7 @@ int HafGpu_ScaleGaussianOrb(AgoNode * node, vx_interpolation_type_e interpolatio
 
 	// kernel declaration
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -1627,7 +1627,7 @@ int HafGpu_ScaleGaussianOrb(AgoNode * node, vx_interpolation_type_e interpolatio
 	}
 	// perform filtering
 	if (N == 5) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"  __local uchar * lbuf_ptr = lbuf + ly * %d;\n" // LMemStride
 			"  float flx = mad((float)(lx << 2), %.12ef, fx + (float)lxalign);\n" // xscale

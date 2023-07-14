@@ -329,7 +329,7 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 	// TBD: remove the ifdefs once we reach a conclusion on which is a better approach for all hardwares
 #if 0		// DBG for Vega: This approach does not read when sx and sy are invalid
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n" // opencl_local_work[0]
@@ -356,7 +356,7 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 			",\n"
 			"        uint alpha";
 	}
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		")\n"
 		"{\n"
 		"  int gid = get_global_id(0);\n"
@@ -369,7 +369,7 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 	opencl_kernel_code += item;
 	if (bWriteU8Image)
 	{
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			"  uint op_u8_image_height_offset = %d;\n" // op_image_height_offs
 			, op_image_height_offs);
 		opencl_kernel_code += item;
@@ -393,9 +393,9 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 			}
 		}
 		if (shiftAmount > 0)
-			sprintf(item, "    ip_buf += ip_offset + ((camera_id >> %d) * ip_image_height_offset * ip_stride);\n", shiftAmount);
+			snprintf(item, sizeof(item), "    ip_buf += ip_offset + ((camera_id >> %d) * ip_image_height_offset * ip_stride);\n", shiftAmount);
 		else
-			sprintf(item, "    ip_buf += ip_offset + ((camera_id / %d) * ip_image_height_offset * ip_stride);\n", num_camera_columns);
+			snprintf(item, sizeof(item), "    ip_buf += ip_offset + ((camera_id / %d) * ip_image_height_offset * ip_stride);\n", num_camera_columns);
 		opencl_kernel_code += item;
 	}
 	if (bWriteU8Image)
@@ -815,7 +815,7 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 	char item[8192];
 	if (useBilinearInterpolation)
 	{
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n" // opencl_local_work[0]
@@ -847,7 +847,7 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 				",\n"
 				"        uint flags";
 		}
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			")\n"
 			"{\n"
 			"  int gid = get_global_id(0);\n"
@@ -860,7 +860,7 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 		opencl_kernel_code += item;
 		if (bWriteU8Image)
 		{
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"  uint op_u8_image_height_offset = %d;\n" // op_image_height_offs
 				, op_image_height_offs);
 			opencl_kernel_code += item;
@@ -884,9 +884,9 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 				}
 			}
 			if (shiftAmount > 0)
-				sprintf(item, "    ip_buf += ip_offset + ((camera_id >> %d) * ip_image_height_offset * ip_stride);\n", shiftAmount);
+				snprintf(item, sizeof(item), "    ip_buf += ip_offset + ((camera_id >> %d) * ip_image_height_offset * ip_stride);\n", shiftAmount);
 			else
-				sprintf(item, "    ip_buf += ip_offset + ((camera_id / %d) * ip_image_height_offset * ip_stride);\n", num_camera_columns);
+				snprintf(item, sizeof(item), "    ip_buf += ip_offset + ((camera_id / %d) * ip_image_height_offset * ip_stride);\n", num_camera_columns);
 			opencl_kernel_code += item;
 		}
 		if (bWriteU8Image)
@@ -1309,7 +1309,7 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 	}
 	else // Bicubic
 	{
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n\n"
 			"float4 amd_unpack(uint src)\n"
@@ -1368,7 +1368,7 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 				",\n"
 				"        uint flags";
 		}
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			")\n"
 			"{\n"
 			"  int gid = get_global_id(0);\n"
@@ -1381,7 +1381,7 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 		opencl_kernel_code += item;
 		if (bWriteU8Image)
 		{
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"  uint op_u8_image_height_offset = %d;\n" // op_image_height_offs
 				, op_image_height_offs);
 			opencl_kernel_code += item;
@@ -1405,9 +1405,9 @@ static vx_status VX_CALLBACK warp_opencl_codegen(
 				}
 			}
 			if (shiftAmount > 0)
-				sprintf(item, "    ip_buf += ip_offset + ((camera_id >> %d) * ip_image_height_offset * ip_stride);\n", shiftAmount);
+				snprintf(item, sizeof(item), "    ip_buf += ip_offset + ((camera_id >> %d) * ip_image_height_offset * ip_stride);\n", shiftAmount);
 			else
-				sprintf(item, "    ip_buf += ip_offset + ((camera_id / %d) * ip_image_height_offset * ip_stride);\n", num_camera_columns);
+				snprintf(item, sizeof(item), "    ip_buf += ip_offset + ((camera_id / %d) * ip_image_height_offset * ip_stride);\n", num_camera_columns);
 			opencl_kernel_code += item;
 		}
 		if (bWriteU8Image)

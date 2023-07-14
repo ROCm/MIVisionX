@@ -130,9 +130,9 @@ extern "C" void dump_profile_log()
 #endif
 	char profiler[1024] = "AMD_OpenVX_NN-Visual-Profile/VX_NN_PROFILE";
 	char textBuffer[1024];
-	if (getEnvironmentVariable("VISUAL_PROFILER_LOCATION", textBuffer, sizeof(textBuffer))) { sprintf(profiler, "%s/VX_NN_PROFILE", textBuffer); }
-    char plogfile[1024]; sprintf(plogfile, "%s-data.log", profiler);
-    char phtmfile[1024]; sprintf(phtmfile, "%s-visual.html", profiler);
+	if (getEnvironmentVariable("VISUAL_PROFILER_LOCATION", textBuffer, sizeof(textBuffer))) { snprintf(profiler, sizeof(profiler), "%s/VX_NN_PROFILE", textBuffer); }
+    char plogfile[1024]; snprintf(plogfile, sizeof(plogfile), "%s-data.log", profiler);
+    char phtmfile[1024]; snprintf(phtmfile, sizeof(phtmfile), "%s-visual.html", profiler);
 	FILE * fp = fopen(plogfile, "w"); if (!fp) { printf("ERROR: unable to create '%s'\n", plogfile); return; }
 	FILE * fh = fopen(phtmfile, "w"); if (!fh) { printf("ERROR: unable to create '%s'\n", phtmfile); return; }
 
@@ -200,7 +200,7 @@ extern "C" void dump_profile_log()
 			for (int j = k + 1; j < profiler_count; j++) {
 				if ((profiler_data[k] ^ profiler_data[j]) == 2) {
 					union { __int64 a; int b[2]; } u; u.a = profiler_clock[j];
-					sprintf(data, " DATA[%d,%d]", u.b[0], u.b[1]);
+					snprintf(data, sizeof(data), " DATA[%d,%d]", u.b[0], u.b[1]);
 				}
 				if ((profiler_data[k] ^ profiler_data[j]) == 1) {
                     float fclockj = (float)(profiler_clock[j] - profiler_clock[0])*1000000.0f / freq;

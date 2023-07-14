@@ -34,7 +34,7 @@ void concat_codegen_batchsz1(std::string& opencl_code, vx_size work_items, vx_si
     }
 
     char item[8192];
-    sprintf(item,
+    snprintf(item, sizeof(item),
         "{\n"
         "  size_t id = get_global_id(0);\n"
         "  if(id < %ld)\n"
@@ -43,7 +43,7 @@ void concat_codegen_batchsz1(std::string& opencl_code, vx_size work_items, vx_si
         , work_items);
     opencl_code += item;
 
-    sprintf(item,
+    snprintf(item, sizeof(item),
         "    if(id < %ld)\n"   // ip_size_per_batch[0]
         "    {\n"
         "      in0 = in0 + (in0_offset >> 2);\n"
@@ -53,7 +53,7 @@ void concat_codegen_batchsz1(std::string& opencl_code, vx_size work_items, vx_si
     opencl_code += item;
 
     for(int i = 1; i < num_inputs; i++) {
-        sprintf(item,
+        snprintf(item, sizeof(item),
             "    else if((id >= %ld) && (id < %ld))\n"  // ip_buffer_offset[i], ip_buffer_offset[i] + ip_size_per_batch[i]
             "    {\n"
             "      in%d = in%d + (in%d_offset >> 2);\n"    // i, i, i
@@ -79,7 +79,7 @@ void concat_codegen_batchszN(std::string& opencl_code, vx_size work_items, vx_si
     }
 
     char item[8192];
-    sprintf(item,
+    snprintf(item, sizeof(item),
         "{\n"
         "  size_t id = get_global_id(0);\n"
         "  if(id < %ld)\n"
@@ -90,7 +90,7 @@ void concat_codegen_batchszN(std::string& opencl_code, vx_size work_items, vx_si
         , work_items, output_dims[2] * output_dims[1] * output_dims[0], output_dims[2] * output_dims[1] * output_dims[0]);
     opencl_code += item;
 
-    sprintf(item,
+    snprintf(item, sizeof(item),
         "    if(id_within_batch < %ld)\n"   // ip_size_per_batch[0]
         "    {\n"
         "      in0 = in0 + (in0_offset >> 2) + (batch_id * %ld);\n"   // ip_size_per_batch[0]
@@ -100,7 +100,7 @@ void concat_codegen_batchszN(std::string& opencl_code, vx_size work_items, vx_si
     opencl_code += item;
 
     for(int i = 1; i < num_inputs; i++) {
-        sprintf(item,
+        snprintf(item, sizeof(item),
             "    else if((id_within_batch >= %ld) && (id_within_batch < %ld))\n"  // ip_buffer_offset[i], ip_buffer_offset[i] + ip_size_per_batch[i]
             "    {\n"
             "      in%d = in%d + (in%d_offset >> 2) + (batch_id * %ld);\n"    // i, i, i, ip_size_per_batch[i]
@@ -294,24 +294,24 @@ static vx_status VX_CALLBACK opencl_codegen(
 
     char item[8192];
     if (type == VX_TYPE_FLOAT32) {
-        sprintf(item,
+        snprintf(item, sizeof(item),
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global float * out, uint out_offset, uint4 out_stride" // opencl_kernel_function_name
             , (int)opencl_local_work[0], opencl_kernel_function_name);
         opencl_kernel_code = item;
 
         for(int i = 0; i < num_inputs; i++) {
-            sprintf(item,
+            snprintf(item, sizeof(item),
                 ",\n"
                 "                  __global float * in%d, uint in%d_offset, uint4 in%d_stride"  // i, i, i
                 , i, i, i);
             opencl_kernel_code += item;
         }
-        sprintf(item, ", const int axis");
+        snprintf(item, sizeof(item), ", const int axis");
         opencl_kernel_code += item;
     } else
     {
-        sprintf(item,
+        snprintf(item, sizeof(item),
             "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global half * out, uint out_offset, uint4 out_stride" // opencl_kernel_function_name
@@ -319,13 +319,13 @@ static vx_status VX_CALLBACK opencl_codegen(
         opencl_kernel_code = item;
 
         for(int i = 0; i < num_inputs; i++) {
-            sprintf(item,
+            snprintf(item, sizeof(item),
                 ",\n"
                 "                  __global half * in%d, uint in%d_offset, uint4 in%d_stride"  // i, i, i
                 , i, i, i);
             opencl_kernel_code += item;
         }
-        sprintf(item, ", const int axis");
+        snprintf(item, sizeof(item), ", const int axis");
         opencl_kernel_code += item;
     }
     opencl_kernel_code += ")\n";

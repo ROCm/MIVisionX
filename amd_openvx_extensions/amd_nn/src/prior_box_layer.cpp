@@ -195,7 +195,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     if (num_of_dims == 4)
     {
         char item[8192];
-        sprintf(item,
+        snprintf(item, sizeof(item),
             "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
             "__kernel void %s(__global uchar * in_1, uint in_1_offset, uint4 in_1_stride, __global uchar * in_2, uint in_2_offset, uint4 in_2_stride, const float s_minSize,"\
             "                 __global uchar * aspect_ratio_buf, uint aspect_ratio_offset, uint aspect_ratio_num, const uint s_flip, const uint s_clip, const float s_offset,"\

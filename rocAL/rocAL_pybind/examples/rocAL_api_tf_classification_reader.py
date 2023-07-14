@@ -28,7 +28,7 @@ import numpy as np
 from parse_config import parse_args
 import cupy as cp
 
-def draw_patches(img,idx,device_type):
+def draw_patches(img, idx, device_type):
     import cv2
     if device_type == "gpu":
         img= cp.asnumpy(img)
@@ -39,30 +39,30 @@ def draw_patches(img,idx,device_type):
 def main():
     args = parse_args()
     # Args
-    imagePath = args.image_dataset_path
-    rocalCPU = False if args.rocal_gpu else True
-    device = "cpu" if rocalCPU else "gpu"
-    batchSize = args.batch_size
-    oneHotLabel = 1
-    numThreads = args.num_threads
-    TFRecordReaderType = 0
-    featureKeyMap = {
+    image_path = args.image_dataset_path
+    rocal_cpu = False if args.rocal_gpu else True
+    device = "cpu" if rocal_cpu else "gpu"
+    batch_size = args.batch_size
+    one_hot_labels = 0
+    num_threads = args.num_threads
+    TF_record_reader_type  = 0
+    feature_key_map = {
         'image/encoded':'image/encoded',
         'image/class/label':'image/class/label',
         'image/filename':'image/filename'
     }
     try:
         path= "OUTPUT_IMAGES_PYTHON/NEW_API/TF_READER/CLASSIFICATION/"
-        isExist = os.path.exists(path)
-        if not isExist:
+        is_exist = os.path.exists(path)
+        if not is_exist:
             os.makedirs(path)
     except OSError as error:
         print(error)
     # Create Pipeline instance
-    pipe = Pipeline(batch_size=batchSize, num_threads=numThreads,device_id=args.local_rank, seed=2, rocal_cpu=rocalCPU)
+    pipe = Pipeline(batch_size=batch_size, num_threads=num_threads,device_id=args.local_rank, seed=2, rocal_cpu=rocal_cpu)
     # Use pipeline instance to make calls to reader, decoder & augmentation's
     with pipe:
-        inputs = fn.readers.tfrecord(path=imagePath, index_path = "", reader_type=TFRecordReaderType, user_feature_key_map=featureKeyMap,
+        inputs = fn.readers.tfrecord(path=image_path, index_path = "", reader_type=TF_record_reader_type , user_feature_key_map=feature_key_map,
             features={
                 'image/encoded':tf.io.FixedLenFeature((), tf.string, ""),
                 'image/class/label':tf.io.FixedLenFeature([1], tf.int64,  -1),
@@ -70,29 +70,29 @@ def main():
             }
         )
         jpegs = inputs["image/encoded"]
-        images = fn.decoders.image(jpegs, user_feature_key_map=featureKeyMap, output_type=types.RGB, path=imagePath)
+        images = fn.decoders.image(jpegs, user_feature_key_map=feature_key_map, output_type=types.RGB, path=image_path)
         resized = fn.resize(images, resize_x=300, resize_y=300)
-        if(oneHotLabel == 1):
+        if(one_hot_labels == 1):
             labels = inputs["image/class/label"]
             _ = fn.one_hot(labels, num_classes=1000)
         pipe.set_outputs(resized)
     # Build the pipeline
     pipe.build()
     # Dataloader
-    imageIterator = ROCALIterator(pipe, device=device)
+    image_iterator = ROCALIterator(pipe, device = device)
     cnt = 0
     # Enumerate over the Dataloader
-    for i, (images_array, labels_array) in enumerate(imageIterator, 0):
+    for i, (images_array, labels_array) in enumerate(image_iterator, 0):
         images_array = np.transpose(images_array, [0, 2, 3, 1])
         if args.print_tensor:
             print("\n",i)
-            print("lables_array",labels_array)
-            print("\n\nPrinted first batch with", (batchSize), "images!")
-        for element in list(range(batchSize)):
+            print("lables_array", labels_array)
+            print("\n\nPrinted first batch with", (batch_size), "images!")
+        for element in list(range(batch_size)):
             cnt = cnt + 1
-            draw_patches(images_array[element],cnt,device)
+            draw_patches(images_array[element], cnt, device)
         break
-    imageIterator.reset()
+    image_iterator.reset()
 
     print("###############################################    TF CLASSIFICATION    ###############################################")
     print("###############################################    SUCCESS              ###############################################")

@@ -79,16 +79,16 @@ class ROCALGenericIteratorDetection(object):
         
         if(types.NHWC == self.tensor_format):
             if self.device == "cpu":
-                self.out = np.zeros(( self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype = data_type)
+                self.out = np.zeros((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype = data_type)
             else:
                 with cp.cuda.Device(device=self.device_id):
-                    self.out = cp.zeros(( self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype = data_type)
+                    self.out = cp.zeros((self.bs*self.n, int(self.h/self.bs), self.w, self.p), dtype = data_type)
         else:
             if self.device == "cpu":
-                self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w), dtype = data_type)
+                self.out = np.zeros((self.bs*self.n, self.p, int(self.h/self.bs), self.w), dtype = data_type)
             else:
                 with cp.cuda.Device(device=self.device_id):
-                    self.out = cp.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w), dtype = data_type)
+                    self.out = cp.zeros((self.bs*self.n, self.p, int(self.h/self.bs), self.w), dtype = data_type)
                 
     def next(self):
         return self.__next__()

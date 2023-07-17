@@ -26,7 +26,7 @@ THE SOFTWARE.
  * \brief The AMD OpenVX OpenCV Extension Library.
  *
  * \defgroup group_opencv Extension: AMD OpenCV Interop API
- * \brief OpenCV Interop for OpenCV Functionality within OpenVX Graph.
+ * \brief AMD OpenCV Interop for OpenCV Functionality within OpenVX Graph.
  */
 
 #include "VX/vx.h"

@@ -663,7 +663,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetContextImageFormatDescription(vx_context
 * \retval VX_ERROR_INVALID_REFERENCE if reference is not valid.
 * \retval VX_ERROR_INVALID_FORMAT if format is already in use.
 */
-VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, vx_size number_of_dims, const vx_size * dims, vx_enum data_type, vx_int8 fixed_point_position, const vx_size * stride, void * ptr, vx_enum memory_type);
+/* VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, vx_size number_of_dims, const vx_size * dims, vx_enum data_type, vx_int8 fixed_point_position, const vx_size * stride, void * ptr, vx_enum memory_type); */
 
 /*!
 * \brief Swap Tensor Handles.
@@ -675,7 +675,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
 * \retval VX_ERROR_INVALID_REFERENCE if reference is not valid.
 * \retval VX_ERROR_INVALID_FORMAT if format is already in use.
 */
-VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void * new_ptr, void** prev_ptr);
+/* VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void * new_ptr, void** prev_ptr); */
 
 /*!
 * \brief vxAliasTensor.

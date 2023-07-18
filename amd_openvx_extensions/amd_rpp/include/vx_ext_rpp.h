@@ -26,6 +26,14 @@ THE SOFTWARE.
 #include "VX/vx.h"
 #include "VX/vx_compatibility.h"
 
+/*!
+ * \file
+ * \brief The AMD RPP Extension Library.
+ *
+ * \defgroup group_amd_rpp Extension: AMD RPP Extension API
+ * \brief AMD Radeon Performance Primitives Interop Node Extension
+ */
+
 #ifndef dimof
 #define dimof(x) (sizeof(x)/sizeof(x[0]))
 #endif

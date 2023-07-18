@@ -219,6 +219,8 @@ enum vx_tensor_attribute_amd_e {
     /*! \brief Queries memory type if created using vxCreateTensorFromHandle. If vx_tensor was not created using
         vxCreateTensorFromHandle, VX_MEMORY_TYPE_NONE is returned. Use a <tt>\ref vx_memory_type_e</tt> parameter. */
     VX_TENSOR_MEMORY_TYPE     = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x9,
+    /*! \brief sync with user specified host buffer.*/
+    VX_TENSOR_BUFFER_HOST     = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x10,
 };
 
 /*! \brief array Data attributes.

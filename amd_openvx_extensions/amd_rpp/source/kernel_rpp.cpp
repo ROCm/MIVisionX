@@ -1817,7 +1817,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_ResizeMirrorNormalizeTensor(vx_gra
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Copy(vx_graph graph, vx_image pSrc, vx_image pDst)
+VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_CopybatchPD(vx_graph graph, vx_image pSrc, vx_image pDst)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -1829,13 +1829,12 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Copy(vx_graph graph, vx_image pSrc
             (vx_reference)pSrc,
             (vx_reference)pDst,
             (vx_reference)DEV_TYPE};
-        node = createNode(graph, VX_KERNEL_RPP_COPY, params, 3);
+        node = createNode(graph, VX_KERNEL_RPP_COPYBATCHPD, params, 3);
     }
     return node;
 }
-
 //Creating node for Pixelate effect
-VX_API_CALL vx_node VX_API_CALL vxExtrppNode_Nop(vx_graph graph, vx_image pSrc, vx_image pDst)
+VX_API_CALL vx_node VX_API_CALL vxExtrppNode_NopbatchPD(vx_graph graph, vx_image pSrc, vx_image pDst)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -1847,7 +1846,7 @@ VX_API_CALL vx_node VX_API_CALL vxExtrppNode_Nop(vx_graph graph, vx_image pSrc, 
             (vx_reference)pSrc,
             (vx_reference)pDst,
             (vx_reference)DEV_TYPE};
-        node = createNode(graph, VX_KERNEL_RPP_NOP, params, 3);
+        node = createNode(graph, VX_KERNEL_RPP_NOPBATCHPD, params, 3);
     }
     return node;
 }
@@ -1874,6 +1873,172 @@ VX_API_CALL vx_node VX_API_CALL  vxExtrppNode_SequenceRearrange(vx_graph graph,v
 		 node = createNode(graph, VX_KERNEL_RPP_SEQUENCEREARRANGE, params, 7);
 	}
 	return node;
+}
+
+//tensor
+
+VX_API_ENTRY vx_node VX_API_CALL vxRppBrightness(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pAlpha, vx_array pBeta, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pSrcRoi,
+            (vx_reference)pDst,
+            (vx_reference)pAlpha,
+            (vx_reference)pBeta,
+            (vx_reference)inputLayout,
+            (vx_reference)outputLayout,
+            (vx_reference)roiType,
+            (vx_reference)deviceType};
+        node = createNode(graph, VX_KERNEL_RPP_BRIGHTNESS, params, 9);
+    }
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxRppCopy(vx_graph graph, vx_tensor pSrc, vx_tensor pDst) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pDst,
+            (vx_reference)deviceType};
+        node = createNode(graph, VX_KERNEL_RPP_COPY, params, 3);
+    }
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxRppCropMirrorNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pMultiplier, vx_array pOffset, vx_array pFlip, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pSrcRoi,
+            (vx_reference)pDst,
+            (vx_reference)pMultiplier,
+            (vx_reference)pOffset,
+            (vx_reference)pFlip,
+            (vx_reference)inputLayout,
+            (vx_reference)outputLayout,
+            (vx_reference)roiType,
+            (vx_reference)deviceType};
+        node = createNode(graph, VX_KERNEL_RPP_CROPMIRRORNORMALIZE, params, 10);
+    }
+    return node;
+}
+
+VX_API_CALL vx_node VX_API_CALL vxRppNop(vx_graph graph, vx_tensor pSrc, vx_tensor pDst) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pDst,
+            (vx_reference)deviceType};
+        node = createNode(graph, VX_KERNEL_RPP_NOP, params, 3);
+    }
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxRppResize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pDstWidth, vx_array pDstHeight, vx_scalar interpolationType, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pSrcRoi,
+            (vx_reference)pDst,
+            (vx_reference)pDstWidth,
+            (vx_reference)pDstHeight,
+            (vx_reference)interpolationType,
+            (vx_reference)inputLayout,
+            (vx_reference)outputLayout,
+            (vx_reference)roiType,
+            (vx_reference)deviceType};
+        node = createNode(graph, VX_KERNEL_RPP_RESIZE, params, 10);
+    }
+    return node;
+}
+
+RpptDataType getRpptDataType(vx_enum vxDataType) {
+    switch(vxDataType) {
+        case vx_type_e::VX_TYPE_FLOAT32:
+            return RpptDataType::F32;
+        case vx_type_e::VX_TYPE_FLOAT16:
+            return RpptDataType::F16;
+        case vx_type_e::VX_TYPE_INT8:
+            return RpptDataType::I8;
+        default:
+            return RpptDataType::U8;
+    }
+}
+
+void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims) {
+    switch(layout) {
+        case vxTensorLayout::VX_NHWC: {
+            descPtr->n = tensorDims[0];
+            descPtr->h = tensorDims[1];
+            descPtr->w = tensorDims[2];
+            descPtr->c = tensorDims[3];
+            descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
+            descPtr->strides.hStride = descPtr->c * descPtr->w;
+            descPtr->strides.wStride = descPtr->c;
+            descPtr->strides.cStride = 1;
+            descPtr->layout = RpptLayout::NHWC;
+            break; 
+        }
+        case vxTensorLayout::VX_NCHW: {
+            descPtr->n = tensorDims[0];
+            descPtr->h = tensorDims[2];
+            descPtr->w = tensorDims[3];
+            descPtr->c = tensorDims[1];
+            descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
+            descPtr->strides.cStride = descPtr->w * descPtr->h;
+            descPtr->strides.hStride = descPtr->w;
+            descPtr->strides.wStride = 1;
+            descPtr->layout = RpptLayout::NCHW;
+            break;
+        }
+        case vxTensorLayout::VX_NFHWC: {
+            descPtr->n = tensorDims[0] * tensorDims[1];
+            descPtr->h = tensorDims[2];
+            descPtr->w = tensorDims[3];
+            descPtr->c = tensorDims[4];
+            descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
+            descPtr->strides.hStride = descPtr->c * descPtr->w;
+            descPtr->strides.wStride = descPtr->c;
+            descPtr->strides.cStride = 1;
+            descPtr->layout = RpptLayout::NHWC;
+            break;
+        }
+        case vxTensorLayout::VX_NFCHW: {
+            descPtr->n = tensorDims[0] * tensorDims[1];
+            descPtr->h = tensorDims[3];
+            descPtr->w = tensorDims[4];
+            descPtr->c = tensorDims[2];
+            descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
+            descPtr->strides.cStride = descPtr->w * descPtr->h;
+            descPtr->strides.hStride = descPtr->w;
+            descPtr->strides.wStride = 1;
+            descPtr->layout = RpptLayout::NCHW;
+            break;
+        }
+        default: {
+            throw std::runtime_error("Invalid layout value in fillDescriptionPtrfromDims.");
+        }
+    }
 }
 
 // utility functions

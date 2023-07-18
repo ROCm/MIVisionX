@@ -71,7 +71,7 @@ extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_ChannelExtractbatchPD
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_ColorTemperaturebatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array adjustmentValue,vx_uint32 nbatchSize);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_ColorTwistbatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array alpha,vx_array beta,vx_array hue, vx_array sat,vx_uint32 nbatchSize);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_ContrastbatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array min,vx_array max,vx_uint32 nbatchSize);
-extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_Copy(vx_graph graph, vx_image pSrc, vx_image pDst);
+extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_CopybatchPD(vx_graph graph, vx_image pSrc, vx_image pDst);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_CropMirrorNormalizebatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array dstImgWidth,vx_array dstImgHeight,vx_array x1,vx_array y1,vx_array mean, vx_array std_dev, vx_array flip, vx_scalar chnShift,vx_uint32 nbatchSize);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_CropPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array dstImgWidth,vx_array dstImgHeight,vx_array x1,vx_array y1, vx_uint32 nbatchSize);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_CustomConvolutionbatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array kernel,vx_array kernelWidth,vx_array kernelHeight,vx_uint32 nbatchSize);
@@ -108,7 +108,7 @@ extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_MultiplybatchPD(vx_gr
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_NoisebatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array noiseProbability,vx_uint32 nbatchSize);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_NonLinearFilterbatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array kernelSize,vx_uint32 nbatchSize);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_NonMaxSupressionbatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array kernelSize,vx_uint32 nbatchSize);
-extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_Nop(vx_graph graph, vx_image pSrc, vx_image pDst);
+extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_NopbatchPD(vx_graph graph, vx_image pSrc, vx_image pDst);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_PhasebatchPD(vx_graph graph,vx_image pSrc1,vx_image pSrc2,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_uint32 nbatchSize);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_PixelatebatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_uint32 nbatchSize);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_RainbatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array rainValue,vx_array rainWidth,vx_array rainHeight,vx_array rainTransperancy,vx_uint32 nbatchSize);
@@ -136,6 +136,13 @@ extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_WarpAffinebatchPD(vx_
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_WarpPerspectivebatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array dstImgWidth,vx_array dstImgHeight,vx_array perspective,vx_uint32 nbatchSize);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_SequenceRearrange(vx_graph graph,vx_image pSrc,vx_image pDst, vx_array newOrder,vx_uint32 newSequenceLength, vx_uint32 sequenceLength, vx_uint32 sequenceCount);
 extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_Resizetensor(vx_graph graph, vx_image pSrc, vx_array srcImgWidth, vx_array srcImgHeight, vx_image pDst, vx_array dstImgWidth, vx_array dstImgHeight, vx_int32 interpolation_type, vx_uint32 nbatchSize);
+
+//tensor 
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxRppBrightness(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pAlpha, vx_array pBeta, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxRppCopy(vx_graph graph, vx_tensor pSrc, vx_tensor pDst);
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxRppCropMirrorNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pMultiplier, vx_array pOffset, vx_array pFlip, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxRppNop(vx_graph graph, vx_tensor pSrc, vx_tensor pDst);
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxRppResize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pDstWidth, vx_array pDstHeight, vx_scalar interpolationType, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 #ifdef __cplusplus
 }
 #endif

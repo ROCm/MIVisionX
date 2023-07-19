@@ -23,13 +23,16 @@ THE SOFTWARE.
 #ifndef _PUBLISH_KERNELS_H_
 #define _PUBLISH_KERNELS_H_
 
+#include "internal_rpp.h"
+
+#ifndef SHARED_PUBLIC
 #if _WIN32
 #define SHARED_PUBLIC __declspec(dllexport)
 #else
 #define SHARED_PUBLIC __attribute__ ((visibility ("default")))
 #endif
+#endif
 
-#include "internal_rpp.h"
 #define RPP_MAX_TENSOR_DIMS 5
 
 extern "C" SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context);

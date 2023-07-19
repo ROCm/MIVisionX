@@ -33,8 +33,8 @@ THE SOFTWARE.
  * \file
  * \brief The AMD OpenVX Extension Library.
  *
- * \defgroup group_amd Extension: AMD OpenVX Extension API.
- * \brief AMD OpenVX Node Extension to enhance base, vision, and neural network feature sets.
+ * \defgroup group_amd Extension: AMD OpenVX Extension API
+ * \brief AMD OpenVX Extension to enhance base, vision, and neural network feature sets.
  */
 
 /*! \brief AMD target affinity enumerations for AgoTargetAffinityInfo.device_type

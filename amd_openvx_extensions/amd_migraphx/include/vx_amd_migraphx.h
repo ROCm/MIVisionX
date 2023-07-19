@@ -28,10 +28,10 @@ THE SOFTWARE.
 
 /*!
  * \file
- * \brief The AMD OpenVX MIGraphX Extension Library.
+ * \brief The AMD OpenVX MIGraphX Node Extension Library.
  *
  * \defgroup group_amd_migraph Extension: AMD MIGraphX Extension API
- * \brief AMD MIGraphX Interop Node Extension
+ * \brief AMD OpenVX MIGraphX Interop Node Extension
  */
 
 #ifdef __cplusplus

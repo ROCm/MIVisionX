@@ -27,10 +27,10 @@ THE SOFTWARE.
 
 /*!
  * \file
- * \brief The AMD OpenVX Media Node Extension Library.
+ * \brief The AMD OpenVX Media Nodes Extension Library.
  *
  * \defgroup group_amd_media Extension: AMD Media Extension API
- * \brief AMD Media Node Extension
+ * \brief AMD OpenVX Media Nodes Extension
  */
 
 #ifdef __cplusplus

@@ -22,10 +22,10 @@ THE SOFTWARE.
 
 /*!
  * \file
- * \brief The AMD OpenVX Neural Network Node Extension Library.
+ * \brief The AMD OpenVX Neural Network Nodes Extension Library.
  *
  * \defgroup group_amd_nn Extension: AMD Neural Network Extension API
- * \brief AMD Neural Network Node Extension to enhance Khronos Neural Network Extension
+ * \brief AMD OpenVX Neural Network Nodes Extension to enhance Khronos Convolutional Network Nodes Extension
  */
 
 #ifndef _VX_AMD_NN_H_

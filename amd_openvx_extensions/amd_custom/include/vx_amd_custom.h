@@ -27,10 +27,10 @@ THE SOFTWARE.
 
 /*!
  * \file
- * \brief The AMD Custom Extension Library.
+ * \brief The AMD OpenVX Custom Node Extension Library.
  *
- * \defgroup group_amd_custom Extension: AMD Custom Extension API.
- * \brief AMD OpenVX Custom Extension.
+ * \defgroup group_amd_custom Extension: AMD Custom Extension API
+ * \brief AMD OpenVX Custom Node Extension.
  */
 
 /*! \brief The type enumeration lists all NN extension types.

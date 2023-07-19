@@ -29,13 +29,13 @@ THE SOFTWARE.
 
 /*!
  * \file
- * \brief The AMD OpenVX WinML Extension Library.
+ * \brief The AMD OpenVX WinML Nodes Extension Library.
  *
  * \defgroup group_amd_winml Extension: AMD WinML Extension API
- * \brief AMD WinML Interop Node Extension. Supported in Windows.
+ * \brief AMD OpenVX WinML Interop Nodes Extension [only supported on Windows].
  */
 
-/*! \note [Graph] AMD WinML Interop Node Extension is only supported on Windows.
+/*! \note [Graph] AMD OpenVX WinML Interop Nodes Extension is only supported on Windows.
  */
 
 #ifndef dimof

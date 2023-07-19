@@ -959,6 +959,7 @@ INPUT                  = README.md \
                         amd_openvx/openvx/include/VX/vx_khr_nn.h \
                         amd_openvx_extensions/amd_nn/include/vx_amd_nn.h \
                         amd_openvx_extensions/amd_opencv/include/vx_ext_opencv.h \
+                        amd_openvx_extensions/amd_rpp/include/vx_ext_rpp.h \
                         amd_openvx_extensions/amd_winml/include/vx_ext_winml.h
 
 # This tag can be used to specify the character encoding of the source files

@@ -44,6 +44,7 @@ for file_path in lines:
 
 docs_core = ROCmDocs("MIVisionX Documentation")
 docs_core.run_doxygen(doxygen_root="doxygen", doxygen_path="doxygen/xml")
+docs_core.enable_api_reference()
 docs_core.setup()
 docs_core.myst_heading_anchors = 6
 

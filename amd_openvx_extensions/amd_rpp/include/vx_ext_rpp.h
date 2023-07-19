@@ -943,6 +943,83 @@ SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_SequenceRearrange(vx_graph graph,
 * @note - TBD
 */
 SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_Resizetensor(vx_graph graph, vx_image pSrc, vx_array srcImgWidth, vx_array srcImgHeight, vx_image pDst, vx_array dstImgWidth, vx_array dstImgHeight, vx_int32 interpolation_type, vx_uint32 nbatchSize);
+
+// Tensor Augmentations
+/*! \brief [Graph] Creates a RPP Brightness function node.
+ * \ingroup group_amd_rpp
+ * \param [in] graph The handle to the graph.
+ * \param [in] pSrc The input tensor data.
+ * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
+ * \param [out] pDst The output tensor data.
+ * \param [in] pAlpha The input array in <tt>\ref VX_TYPE_FLOAT32<tt> format containing the alpha data.
+ * \param [in] pBeta The input array in <tt>\ref VX_TYPE_FLOAT32<tt> format containing the beta data.
+ * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32<tt> denotes the layout of input tensor.
+ * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32<tt> denotes the layout of output tensor.
+ * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32<tt> denotes whether source roi is of XYWH/LTRB type. 
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+SHARED_PUBLIC vx_node VX_API_CALL vxRppBrightness(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pAlpha, vx_array pBeta, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+/*! \brief [Graph] Creates a RPP Copy function node.
+ * \ingroup group_amd_rpp
+ * \param [in] graph The handle to the graph.
+ * \param [in] pSrc The input tensor data.
+ * \param [out] pDst The output tensor data.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+SHARED_PUBLIC vx_node VX_API_CALL vxRppCopy(vx_graph graph, vx_tensor pSrc, vx_tensor pDst);
+
+/*! \brief [Graph] Creates a RPP CropMirrorNormalize function node.
+ * \ingroup group_amd_rpp
+ * \param [in] graph The handle to the graph.
+ * \param [in] pSrc The input tensor data.
+ * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
+ * \param [out] pDst The output tensor data.
+ * \param [in] pMultiplier The input array in <tt>\ref VX_TYPE_FLOAT32<tt> format containing the multiplier data.
+ * \param [in] pOffset The input array in <tt>\ref VX_TYPE_FLOAT32<tt> format containing the offset data.
+ * \param [in] pOffset The input array in <tt>\ref VX_TYPE_INT32<tt> format containing the flip data.
+ * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32<tt> denotes the layout of input tensor.
+ * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32<tt> denotes the layout of output tensor.
+ * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32<tt> denotes whether source roi is of XYWH/LTRB type. 
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+SHARED_PUBLIC vx_node VX_API_CALL vxRppCropMirrorNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pMultiplier, vx_array pOffset, vx_array pFlip, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+/*! \brief [Graph] Creates a RPP Nop function node.
+ * \ingroup group_amd_rpp
+ * \param [in] graph The handle to the graph.
+ * \param [in] pSrc The input tensor data.
+ * \param [out] pDst The output tensor data.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+SHARED_PUBLIC vx_node VX_API_CALL vxRppNop(vx_graph graph, vx_tensor pSrc, vx_tensor pDst);
+
+/*! \brief [Graph] Creates a RPP CropMirrorNormalize function node.
+ * \ingroup group_amd_rpp
+ * \param [in] graph The handle to the graph.
+ * \param [in] pSrc The input tensor data.
+ * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
+ * \param [out] pDst The output tensor data.
+ * \param [in] pDstWidth The input array in <tt>\ref VX_TYPE_UINT32<tt> format containing the output width data.
+ * \param [in] pDstHeight The input array in <tt>\ref VX_TYPE_UINT32<tt> format containing the output height data.
+ * \param [in] interpolationType The resize interpolation type in <tt>\ref VX_TYPE_INT32<tt> format containing the type of interpolation.
+ * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32<tt> denotes the layout of input tensor.
+ * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32<tt> denotes the layout of output tensor.
+ * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32<tt> denotes whether source roi is of XYWH/LTRB type. 
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+SHARED_PUBLIC vx_node VX_API_CALL vxRppResize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pDstWidth, vx_array pDstHeight, vx_scalar interpolationType, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
 #ifdef __cplusplus
 }
 #endif

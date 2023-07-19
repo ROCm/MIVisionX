@@ -127,11 +127,13 @@ void LabelReaderFolders::read_all(const std::string& _path)
         filesys::path pathObj(subfolder_path);
         if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
         {
-            // ignore files with extensions .tar, .zip, .7z
+            // ignore files with non-image extensions
             auto file_extension_idx = subfolder_path.find_last_of(".");
             if (file_extension_idx  != std::string::npos) {
                 std::string file_extension = subfolder_path.substr(file_extension_idx+1);
-                if ((file_extension == "tar") || (file_extension == "zip") || (file_extension == "7z") || (file_extension == "rar"))
+                std::transform(file_extension.begin(), file_extension.end(), file_extension.begin(),
+                    [](unsigned char c){ return std::tolower(c); });
+                if ((file_extension != "jpg") && (file_extension != "jpeg") && (file_extension != "png") && (file_extension != "ppm") && (file_extension != "bmp") && (file_extension != "pgm") && (file_extension != "tif") && (file_extension != "tiff") && (file_extension != "webp"))
                     continue;
             }
             read_files(_folder_path);
@@ -165,6 +167,15 @@ void LabelReaderFolders::read_files(const std::string& _path)
 
         std::string file_path = _path;
         file_path.append("/");
+        std::string filename(_entity->d_name);
+        auto file_extension_idx = filename.find_last_of(".");
+        if (file_extension_idx  != std::string::npos) {
+            std::string file_extension = filename.substr(file_extension_idx+1);
+            std::transform(file_extension.begin(), file_extension.end(), file_extension.begin(),
+                [](unsigned char c){ return std::tolower(c); });
+            if ((file_extension != "jpg") && (file_extension != "jpeg") && (file_extension != "png") && (file_extension != "ppm") && (file_extension != "bmp") && (file_extension != "pgm") && (file_extension != "tif") && (file_extension != "tiff") && (file_extension != "webp"))
+                continue;
+        }
         file_path.append(_entity->d_name);
         _file_names.push_back(file_path);
         _subfolder_file_names.push_back(_entity->d_name);

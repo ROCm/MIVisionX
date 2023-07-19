@@ -30,12 +30,22 @@ THE SOFTWARE.
 #include <string>
 #endif
 
+/*!
+ * \file
+ * \brief The AMD OpenVX Extension Library.
+ * 
+ * \defgroup group_amd Extension: AMD OpenVX Extension API.
+ * \brief AMD OpenVX Node Extension to enhance base and vision feature sets.
+ */
+
 /*! \brief AMD target affinity enumerations for AgoTargetAffinityInfo.device_type
+* \ingroup group_amd_nn
 */
 #define AGO_TARGET_AFFINITY_CPU       0x0010 // CPU
 #define AGO_TARGET_AFFINITY_GPU       0x0020 // GPU
 
 /*! \brief AMD internal parameters. [TODO: This needs to be moved to ago_internal.h]
+* \ingroup group_amd_nn
 */
 #define AGO_MAX_PARAMS                                   32
 #define AGO_MERGE_RULE_MAX_FIND                           4
@@ -51,28 +61,36 @@ THE SOFTWARE.
 * should be of size VX_MAX_STRING_BUFFER_SIZE_AMD and the maximum allowed string length is
 * VX_MAX_STRING_BUFFER_SIZE_AMD-1.
 * \ingroup group_scalar
+* \ingroup group_amd
 */
 #define VX_MAX_STRING_BUFFER_SIZE_AMD                   256
 
 /*! \brief The Neural Network activation functions vx_nn_activation_function_e extension.
+* \ingroup group_amd
+* \ingroup group_amd_nn
  */
 #define VX_NN_ACTIVATION_LEAKY_RELU  (VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_NN_ACTIVATION_FUNCTION_TYPE) + 0x9)
 
 /*! \brief The attributes for vx_context
+* \ingroup group_amd
  */
 #define VX_CONTEXT_ATTRIBUTE_NONLINEAR_MAX_DIMENSION            VX_CONTEXT_NONLINEAR_MAX_DIMENSION
 #define VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_POLICY            VX_CONTEXT_IMMEDIATE_BORDER_POLICY
 
 /*! \brief The attributes for vx_graph
+* \ingroup group_amd
+* \ingroup group_graph
  */
 #define VX_GRAPH_ATTRIBUTE_STATE            VX_GRAPH_STATE
 
 /*! \brief The attributes for vx_object_array
+* \ingroup group_amd
  */
 #define VX_OBJECT_ARRAY_ATTRIBUTE_ITEMTYPE         VX_OBJECT_ARRAY_ITEMTYPE
 #define VX_OBJECT_ARRAY_ATTRIBUTE_NUMITEMS         VX_OBJECT_ARRAY_NUMITEMS
 
 /*! \brief The type enumeration lists all the AMD specific types in OpenVX.
+* \ingroup group_amd
 */
 enum ago_type_public_e {
     /*! \brief AMD data types
@@ -92,6 +110,7 @@ enum ago_type_public_e {
 };
 
 /*! \brief The AMD context attributes list.
+* \ingroup group_amd
 */
 enum vx_context_attribute_amd_e {
     /*! \brief OpenCL context. Use a <tt>\ref cl_context</tt> parameter.*/
@@ -111,6 +130,7 @@ enum vx_context_attribute_amd_e {
 };
 
 /*! \brief The AMD kernel attributes list.
+* \ingroup group_amd
 */
 enum vx_kernel_attribute_amd_e {
     /*! \brief kernel callback for query target support. Use a <tt>\ref amd_kernel_query_target_support_f</tt> parameter.*/
@@ -128,6 +148,7 @@ enum vx_kernel_attribute_amd_e {
 };
 
 /*! \brief The AMD graph attributes list.
+* \ingroup group_amd
 */
 enum vx_graph_attribute_amd_e {
     /*! \brief graph affinity. Use a <tt>\ref AgoNodeAffinityInfo</tt> parameter.*/
@@ -151,6 +172,7 @@ enum vx_graph_attribute_amd_e {
 };
 
 /*! \brief The AMD node attributes list.
+* \ingroup group_amd
 */
 enum vx_node_attribute_amd_e {
     /*! \brief node affinity. Use a <tt>\ref AgoTargetAffinityInfo</tt> parameter.*/
@@ -162,6 +184,7 @@ enum vx_node_attribute_amd_e {
 };
 
 /*! \brief The AMD image attributes list.
+* \ingroup group_amd
 */
 enum vx_image_attribute_amd_e {
     /*! \brief sync with user specified OpenCL buffer. Use a <tt>\ref cl_mem</tt> parameter.*/
@@ -181,6 +204,7 @@ enum vx_image_attribute_amd_e {
 };
 
 /*! \brief tensor Data attributes.
+* \ingroup group_amd
 * \ingroup group_tensor
 */
 enum vx_tensor_attribute_amd_e {
@@ -195,10 +219,13 @@ enum vx_tensor_attribute_amd_e {
     /*! \brief Queries memory type if created using vxCreateTensorFromHandle. If vx_tensor was not created using
         vxCreateTensorFromHandle, VX_MEMORY_TYPE_NONE is returned. Use a <tt>\ref vx_memory_type_e</tt> parameter. */
     VX_TENSOR_MEMORY_TYPE     = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x9,
+    /*! \brief sync with user specified host buffer.*/
+    VX_TENSOR_BUFFER_HOST     = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x10,
 };
 
-//! \brief array Data attributes.
-
+/*! \brief array Data attributes.
+* \ingroup group_amd
+*/
 enum vx_array_attribute_amd_e {
     /*! \brief OpenCL buffer. <tt>cl_mem</tt>. */
     VX_ARRAY_BUFFER_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x9,
@@ -213,6 +240,7 @@ enum vx_array_attribute_amd_e {
 * starting their enumeration from there.
 * \see <tt>vxDirective</tt>
 * \ingroup group_directive
+* \ingroup group_amd
 */
 enum vx_directive_amd_e {
     /*! \brief data object is readonly after this directive is given. */
@@ -230,6 +258,7 @@ enum vx_directive_amd_e {
 
 /*! \brief An enumeration of additional memory type imports.
 * \ingroup group_context
+* \ingroup group_amd
 */
 enum vx_memory_type_amd_e {
     /*! \brief The memory type to import from the OpenCL. Use */
@@ -239,6 +268,7 @@ enum vx_memory_type_amd_e {
 
 /*! \brief The image color space list used by the <tt>\ref VX_IMAGE_SPACE</tt> attribute of a <tt>\ref vx_image</tt>.
 * \ingroup group_image
+* \ingroup group_amd
 */
 enum vx_color_space_amd_e {
     /*! \brief Use to indicate that the BT.2020 coefficients are used for conversions. */
@@ -246,6 +276,7 @@ enum vx_color_space_amd_e {
 };
 
 /*! \brief Based on the VX_DF_IMAGE definition.
+* \ingroup group_amd
 * \note Use <tt>\ref vx_df_image</tt> to contain these values.
 */
 enum vx_df_image_amd_e {
@@ -259,6 +290,7 @@ enum vx_df_image_amd_e {
 
 /*! \brief scalar data attributes.
 * \ingroup group_scalar
+* \ingroup group_amd
 */
 enum vx_scalar_attribute_amd_e {
     /*! \brief scalar's buffer */
@@ -266,13 +298,15 @@ enum vx_scalar_attribute_amd_e {
 };
 
 /*! \brief The multidimensional data object (Tensor).
+* \ingroup group_amd
 * \see vxCreateTensor
 * \ingroup group_tensor
 * \extends vx_reference
 */
 typedef struct _vx_tensor_t * vx_tensor;
 
-/*! \brief Image format information.
+/*! \brief AMD data structure for image format information.
+* \ingroup group_amd
 */
 typedef struct {
     vx_size            components;
@@ -284,6 +318,7 @@ typedef struct {
 } AgoImageFormatDescription;
 
 /*! \brief AMD data structure to specify target affinity.
+* \ingroup group_amd
 */
 typedef struct {
     vx_uint32 device_type; // shall be AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU
@@ -292,6 +327,7 @@ typedef struct {
 } AgoTargetAffinityInfo;
 
 /*! \brief AMD data structure to set a text macro.
+* \ingroup group_amd
 */
 typedef struct {
     vx_char macroName[256];
@@ -299,6 +335,7 @@ typedef struct {
 } AgoContextTextMacroInfo;
 
 /*! \brief AMD data structure to import a graph from a text.
+* \ingroup group_amd
 **    text:
 **      "macro <macro-name>" to use a pre-defined macro
 **      "file <file-name>" to load from a file
@@ -314,6 +351,7 @@ typedef struct {
 } AgoGraphImportInfo;
 
 /*! \brief AMD data structure to export a graph to a text.
+* \ingroup group_amd
 */
 typedef struct {
     vx_char fileName[256];
@@ -323,6 +361,7 @@ typedef struct {
 } AgoGraphExportInfo;
 
 /*! \brief AMD data structure to get internal performance data.
+* \ingroup group_amd
 */
 typedef struct {
     vx_uint64 kernel_enqueue;
@@ -332,6 +371,7 @@ typedef struct {
 } AgoGraphPerfInternalInfo;
 
 /*! \brief AMD data structure to specify node merge rule.
+* \ingroup group_amd
 */
 typedef struct AgoNodeMergeRule_t {
     struct {
@@ -346,7 +386,8 @@ typedef struct AgoNodeMergeRule_t {
 
 #ifdef __cplusplus
 /*! \brief AMD usernode callback for target support check - supported_target_affinity shall contain bitfields AGO_TARGET_AFFINITY_CPU and AGO_TARGET_AFFINITY_GPU.
-*   When this callback is not available, the framework assumes that supported_target_affinity = AGO_TARGET_AFFINITY_CPU.
+*   @note When this callback is not available, the framework assumes that supported_target_affinity = AGO_TARGET_AFFINITY_CPU.
+* \ingroup group_amd
 */
 typedef vx_status(VX_CALLBACK * amd_kernel_query_target_support_f) (vx_graph graph, vx_node node,
     vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
@@ -354,6 +395,7 @@ typedef vx_status(VX_CALLBACK * amd_kernel_query_target_support_f) (vx_graph gra
     );
 
 /*! \brief AMD usernode callback for OpenCL source code generation. The framework will pass
+* \ingroup group_amd
 *   OpenVX objects as parameters to OpenCL kernels in othe order they appear to OpenVX node.
 *   The mapping of OpenVX object to OpenCL kernel argument as shown below:
 *     vx_image:       uint width, uint height, __global <type> * buf, uint stride_in_bytes, uint offset
@@ -381,6 +423,7 @@ typedef vx_status(VX_CALLBACK * amd_kernel_opencl_codegen_callback_f) (
     );
 
 /*! \brief AMD usernode callback for regenerating a node.
+* \ingroup group_amd
 */
 typedef vx_status(VX_CALLBACK * amd_drama_add_node_f)(vx_node node, vx_enum kernel_id, vx_reference * paramList, vx_uint32 paramCount);
 typedef vx_status(VX_CALLBACK * amd_kernel_node_regen_callback_f)(vx_node node, amd_drama_add_node_f add_node_f, vx_bool& replace_original);
@@ -388,6 +431,7 @@ typedef vx_status(VX_CALLBACK * amd_kernel_node_regen_callback_f)(vx_node node, 
 /*! \brief AMD usernode callback for updating the OpenCL global_work[]. The framework will pass
 *   OpenVX objects as parameters to OpenCL kernels in othe order they appear to OpenVX node and
 *   previous values of local/global work. This function will get called before launching the kernel.
+* \ingroup group_amd
 */
 typedef vx_status(VX_CALLBACK * amd_kernel_opencl_global_work_update_callback_f) (
     vx_node node,                                  // [input] node
@@ -401,6 +445,7 @@ typedef vx_status(VX_CALLBACK * amd_kernel_opencl_global_work_update_callback_f)
 /*! \brief AMD usernode callback for setting the GPU buffers. The framework will pass
 *   OpenVX objects as parameters to GPU kernels in othe order they appear to OpenVX node.
 *   This function will get called before executing the node.
+* \ingroup group_amd
 */
 typedef vx_status(VX_CALLBACK * amd_kernel_gpu_buffer_update_callback_f) (
     vx_node node,                                  // [input] node
@@ -409,6 +454,7 @@ typedef vx_status(VX_CALLBACK * amd_kernel_gpu_buffer_update_callback_f) (
     );
 
 /*! \brief AMD data structure for use by VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_UPDATE_CALLBACK.
+* \ingroup group_amd
 */
 typedef struct {
     amd_kernel_gpu_buffer_update_callback_f gpu_buffer_update_callback_f;
@@ -432,6 +478,7 @@ extern "C" {
     TENSOR DATA FUNCTIONS
 =============================================================================*/
 /*! \brief Allows the application to get direct access to a patch of tensor object.
+* \ingroup group_amd
  * \param [in] tensor The reference to the tensor object that is the source or the
  * destination of the copy.
  * \param [in] num_of_dims The number of dimensions. Must be same as tensor num_of_dims.
@@ -478,6 +525,7 @@ extern "C" {
  * Unmapping a tensor patch invalidates the memory location from which the patch could
  * be accessed by the application. Accessing this memory location after the unmap function
  * completes has an undefined behavior.
+ * \ingroup group_amd
  * \param [in] tensor The reference to the tensor object to unmap.
  * \param [out] map_id The unique map identifier that was returned when calling
  * <tt>\ref vxMapTensorPatch</tt> .
@@ -493,9 +541,10 @@ extern "C" {
 MISCELLANEOUS
 =============================================================================*/
 
-/**
+/*!
 * \brief Retrieve the name of a reference
 * \ingroup vx_framework_reference
+* \ingroup group_amd
 *
 * This function is used to retrieve the name of a reference.
 *
@@ -508,9 +557,10 @@ MISCELLANEOUS
 */
 VX_API_ENTRY vx_status VX_API_CALL vxGetReferenceName(vx_reference ref, vx_char name[], vx_size size);
 
-/**
+/*!
 * \brief Set module internal data.
 * \ingroup vx_framework_reference
+* \ingroup group_amd
 *
 * This function is used to set module specific internal data. This is for use by vxPublishKernels().
 *
@@ -524,9 +574,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetReferenceName(vx_reference ref, vx_char 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetModuleInternalData(vx_context context, const vx_char * module, void * ptr, vx_size size);
 
-/**
+/*!
 * \brief Retrieve module internal data.
 * \ingroup vx_framework_reference
+* \ingroup group_amd
 *
 * This function is used to retrieve module specific internal data. This is for use by vxUnpublishKernels().
 *
@@ -540,9 +591,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetModuleInternalData(vx_context context, c
 */
 VX_API_ENTRY vx_status VX_API_CALL vxGetModuleInternalData(vx_context context, const vx_char * module, void ** ptr, vx_size * size);
 
-/**
+/*!
 * \brief Set module handle.
 * \ingroup vx_framework_reference
+* \ingroup group_amd
 *
 * This function is used to set module specific of a graph from within a node.
 *
@@ -555,9 +607,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetModuleInternalData(vx_context context, c
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetModuleHandle(vx_node node, const vx_char * module, void * ptr);
 
-/**
+/*!
 * \brief Retrieve module handle.
 * \ingroup vx_framework_reference
+* \ingroup group_amd
 *
 * This function is used to retrieve module specific handle of a graph from within a node.
 *
@@ -570,9 +623,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetModuleHandle(vx_node node, const vx_char
 */
 VX_API_ENTRY vx_status VX_API_CALL vxGetModuleHandle(vx_node node, const vx_char * module, void ** ptr);
 
-/**
+/*!
 * \brief Set custom image format description.
 * \ingroup vx_framework_reference
+* \ingroup group_amd
 *
 * This function is used to support custom image formats with single-plane by ISVs. Should be called from vxPublishKernels().
 *
@@ -586,8 +640,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetModuleHandle(vx_node node, const vx_char
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetContextImageFormatDescription(vx_context context, vx_df_image format, const AgoImageFormatDescription * desc);
 
-/**
+/*!
 * \brief Get custom image format description.
+* \ingroup group_amd
 * \ingroup vx_framework_reference
 * \param [in] context The context.
 * \param [in] format The image format.
@@ -600,9 +655,48 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextImageFormatDescription(vx_context
 VX_API_ENTRY vx_status VX_API_CALL vxGetContextImageFormatDescription(vx_context context, vx_df_image format, AgoImageFormatDescription * desc);
 
 /* Tensor */
-VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, vx_size number_of_dims, const vx_size * dims, vx_enum data_type, vx_int8 fixed_point_position, const vx_size * stride, void * ptr, vx_enum memory_type);
-VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void * new_ptr, void** prev_ptr);
+/*!
+* \brief Get custom image format description.
+* \ingroup group_amd
+* \ingroup vx_framework_reference
+* @note - TBD
+* \return A \ref vx_status_e enumeration.
+* \retval VX_SUCCESS No errors.
+* \retval VX_ERROR_INVALID_REFERENCE if reference is not valid.
+* \retval VX_ERROR_INVALID_FORMAT if format is already in use.
+*/
+/* VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, vx_size number_of_dims, const vx_size * dims, vx_enum data_type, vx_int8 fixed_point_position, const vx_size * stride, void * ptr, vx_enum memory_type); */
+
+/*!
+* \brief Swap Tensor Handles.
+* \ingroup group_amd
+* \ingroup vx_framework_reference
+* @note - TBD
+* \return A \ref vx_status_e enumeration.
+* \retval VX_SUCCESS No errors.
+* \retval VX_ERROR_INVALID_REFERENCE if reference is not valid.
+* \retval VX_ERROR_INVALID_FORMAT if format is already in use.
+*/
+/* VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void * new_ptr, void** prev_ptr); */
+
+/*!
+* \brief vxAliasTensor.
+* \ingroup group_amd
+* \ingroup vx_framework_reference
+* @note - TBD
+* \return A \ref vx_status_e enumeration.
+* \retval VX_SUCCESS No errors.
+* \retval VX_ERROR_INVALID_REFERENCE if reference is not valid.
+* \retval VX_ERROR_INVALID_FORMAT if format is already in use.
+*/
 VX_API_ENTRY vx_status VX_API_CALL vxAliasTensor(vx_tensor tensorMaster, vx_size offset, vx_tensor tensor);
+
+/*!
+* \brief vxIsTensorAliased.
+* \ingroup group_amd
+* \ingroup vx_framework_reference
+* @note - TBD
+*/
 VX_API_ENTRY vx_bool VX_API_CALL vxIsTensorAliased(vx_tensor tensorMaster, vx_size offset, vx_tensor tensor);
 
 #ifdef  __cplusplus

@@ -5,6 +5,7 @@ subtrees:
   - numbered: False
     entries:
     - file: doxygen/html/index
+      title: API
     - file: amd_openvx/README
       subtrees:
         - entries:

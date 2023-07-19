@@ -1,11 +1,9 @@
 # Anywhere {branch} is used, the branch name will be substituted.
 # These comments will also be removed.
-root: README
+root: doxygen/html/index
 subtrees:
   - numbered: False
     entries:
-    - file: doxygen/html/index
-      title: API
     - file: amd_openvx/README
       subtrees:
         - entries:

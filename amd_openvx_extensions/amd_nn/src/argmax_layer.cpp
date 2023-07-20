@@ -132,7 +132,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     // generate OpenCL C code
     strcpy(opencl_kernel_function_name, "argmax");
     char item[8192];
-    snprintf(item, sizeof(item),
+    sprintf(item,
         "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
         "__kernel __attribute__((reqd_work_group_size(%ld, %ld, 1)))\n" // opencl_local_work[0] opencl_local_work[1]
         "void %s(__global uchar * i0_buf, uint i0_offset, uint4 i0_stride, %s)\n"
@@ -151,7 +151,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     opencl_kernel_code = item;
     if(top_k == 2) {
         if(input_width_multiple_of_4) {
-            snprintf(item, sizeof(item),
+            sprintf(item,
                 "        uint4 cmax1;\n"
                 "        float4 f, fmax, fmax1;\n"
                 "        fmax = *(__global float4 *)i0_buf;\n"
@@ -195,7 +195,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             opencl_kernel_code += item;
         }
         else { // width not multiple of 4
-            snprintf(item, sizeof(item),
+            sprintf(item,
                 "        uint cmax1;\n"
                 "        float f, fmax, fmax1;\n"
                 "        fmax = *(__global float *)i0_buf;\n"
@@ -217,7 +217,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     }
     else if (top_k == 1) {
         if(input_width_multiple_of_4) {
-            snprintf(item, sizeof(item),
+            sprintf(item,
                 "        cmax = (uint4)0;\n"
                 "        float4 fmax = *(__global float4 *)i0_buf;\n"
                 "        for(uint c = 1; c < %ld; c++) {\n"
@@ -236,7 +236,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             opencl_kernel_code += item;
         }
         else { // width not multiple of 4
-            snprintf(item, sizeof(item),
+            sprintf(item,
                 "        cmax = (uint)0;\n"
                 "        float fmax = *(__global float *)i0_buf;\n"
                 "        for(uint c = 1; c < %ld; c++) {\n"
@@ -251,7 +251,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     }
     if(output_data_type == VX_TYPE_UINT8) {
         if(output_obj_type == VX_TYPE_IMAGE) {
-            snprintf(item, sizeof(item), "        o0_buf += o0_offset + (z * %ld + y) * o0_stride + x;\n" , input_dims[1]);
+            sprintf(item, "        o0_buf += o0_offset + (z * %ld + y) * o0_stride + x;\n" , input_dims[1]);
             opencl_kernel_code += item;
         }
         else {
@@ -281,7 +281,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     }
     else if(output_data_type == VX_TYPE_UINT16) {
         if(output_obj_type == VX_TYPE_IMAGE) {
-            snprintf(item, sizeof(item), "        o0_buf += o0_offset + (z * %ld + y) * o0_stride + x * 2;\n" , input_dims[1]);
+            sprintf(item, "        o0_buf += o0_offset + (z * %ld + y) * o0_stride + x * 2;\n" , input_dims[1]);
             opencl_kernel_code += item;
         }
         else {
@@ -313,7 +313,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     }
     else if(output_data_type == VX_TYPE_INT64) {
         if(output_obj_type == VX_TYPE_IMAGE) {
-            snprintf(item, sizeof(item), "        o0_buf += o0_offset + (z * %ld + y) * o0_stride + x * 2;\n" , input_dims[1]);
+            sprintf(item, "        o0_buf += o0_offset + (z * %ld + y) * o0_stride + x * 2;\n" , input_dims[1]);
             opencl_kernel_code += item;
         }
         else {

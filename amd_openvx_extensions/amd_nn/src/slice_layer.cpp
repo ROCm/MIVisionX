@@ -33,7 +33,7 @@ void slice_codegen_batchsz1(std::string& opencl_code, vx_size work_items, vx_siz
     }
 
     char item[8192];
-    snprintf(item, sizeof(item),
+    sprintf(item,
         "{\n"
         "  size_t id = get_global_id(0);\n"
         "  if(id < %ld)\n"  // work_items
@@ -42,7 +42,7 @@ void slice_codegen_batchsz1(std::string& opencl_code, vx_size work_items, vx_siz
         , work_items);
     opencl_code += item;
 
-    snprintf(item, sizeof(item),
+    sprintf(item,
         "    if(id < %ld)\n"   // op_size_per_batch[0]
         "    {\n"
         "      out0 = out0 + (out0_offset >> 2);\n"
@@ -52,7 +52,7 @@ void slice_codegen_batchsz1(std::string& opencl_code, vx_size work_items, vx_siz
     opencl_code += item;
 
     for(int i = 1; i < num_outputs; i++) {
-        snprintf(item, sizeof(item),
+        sprintf(item,
             "    else if((id >= %ld) && (id < %ld))\n"  // op_buffer_offset[i], op_buffer_offset[i] + op_size_per_batch[i]
             "    {\n"
             "      out%d = out%d + (out%d_offset >> 2);\n"    // i, i, i
@@ -77,7 +77,7 @@ void slice_codegen_batchszN(std::string& opencl_code, vx_size work_items, vx_siz
     }
 
     char item[8192];
-    snprintf(item, sizeof(item),
+    sprintf(item,
         "{\n"
         "  size_t id = get_global_id(0);\n"
         "  if(id < %ld)\n"  // work_items
@@ -88,7 +88,7 @@ void slice_codegen_batchszN(std::string& opencl_code, vx_size work_items, vx_siz
         , work_items, input_dims[2] * input_dims[1] * input_dims[0], input_dims[2] * input_dims[1] * input_dims[0]);
     opencl_code += item;
 
-    snprintf(item, sizeof(item),
+    sprintf(item,
         "    if(id_within_batch < %ld)\n"   // op_size_per_batch[0]
         "    {\n"
         "      out0 = out0 + (out0_offset >> 2) + (batch_id * %ld);\n"   // op_size_per_batch[0]
@@ -98,7 +98,7 @@ void slice_codegen_batchszN(std::string& opencl_code, vx_size work_items, vx_siz
     opencl_code += item;
 
     for(int i = 1; i < num_outputs; i++) {
-        snprintf(item, sizeof(item),
+        sprintf(item,
             "    else if((id_within_batch >= %ld) && (id_within_batch < %ld))\n"  // op_buffer_offset[i], op_buffer_offset[i] + op_size_per_batch[i]
             "    {\n"
             "      out%d = out%d + (out%d_offset >> 2) + (batch_id * %ld);\n"    // i, i, i, op_size_per_batch[i]
@@ -247,13 +247,13 @@ static vx_status VX_CALLBACK opencl_codegen(
 
     char item[8192];
     if (type == VX_TYPE_FLOAT32){
-        snprintf(item, sizeof(item),
+        sprintf(item,
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global float * in, uint in_offset, uint4 in_stride" // opencl_kernel_function_name
             , (int)opencl_local_work[0], opencl_kernel_function_name);
     }else
     {
-        snprintf(item, sizeof(item),
+        sprintf(item,
             "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global half * in, uint in_offset, uint4 in_stride" // opencl_kernel_function_name
@@ -263,13 +263,13 @@ static vx_status VX_CALLBACK opencl_codegen(
 
     for(int i = 0; i < num_outputs; i++) {
         if (type == VX_TYPE_FLOAT32){
-        snprintf(item, sizeof(item),
+        sprintf(item,
             ",\n"
             "                  __global float * out%d, uint out%d_offset, uint4 out%d_stride"  // i, i, i
             , i, i, i);
         }else
         {
-            snprintf(item, sizeof(item),
+            sprintf(item,
                 ",\n"
                 "                  __global half * out%d, uint out%d_offset, uint4 out%d_stride"  // i, i, i
                 , i, i, i);

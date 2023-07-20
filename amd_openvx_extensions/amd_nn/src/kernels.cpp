@@ -151,7 +151,7 @@ void nn_layer_test_dumpBuffer(const char * fileNameFormat, vx_tensor tensor)
     char textBuffer[512];
     if (getEnvironmentVariable("NN_LAYER_DUMP_LOCATION", textBuffer, sizeof(textBuffer)) > 0 ) 
     {
-        snprintf(dump_location, sizeof(dump_location), "%s", textBuffer);
+        sprintf(dump_location, "%s", textBuffer);
     }
     #if _WIN32
         CreateDirectory(dump_location, NULL);
@@ -162,7 +162,7 @@ void nn_layer_test_dumpBuffer(const char * fileNameFormat, vx_tensor tensor)
     char fileName[1024];
     static int dumpBufferCount = 0; 
     dumpBufferCount++;
-    snprintf(fileName, sizeof(fileName), strcat(dump_location, fileNameFormat), dumpBufferCount);
+    sprintf(fileName, strcat(dump_location, fileNameFormat), dumpBufferCount);
     FILE * fp = fopen(fileName, "wb");
 
     //map tensor to pointer

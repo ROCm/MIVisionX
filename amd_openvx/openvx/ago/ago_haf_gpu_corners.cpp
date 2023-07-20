@@ -73,7 +73,7 @@ int HafGpu_FastCorners_XY_U8(AgoNode * node)
 		node->opencl_global_work[1] = (size_t) ceil((inputImg->u.img.height - 4)/14)*16;
 
 		// Pragma, data structure declarations and helper functions
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			OPENCL_FORMAT(
 				"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 				"#define MASK_EARLY_EXIT 4369\n\n"								//((1<<0) | (1<<4) | (1<<8) | (1<<12))
@@ -117,7 +117,7 @@ int HafGpu_FastCorners_XY_U8(AgoNode * node)
 		code = item;
 
 		// function declaration
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			OPENCL_FORMAT(
 				"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
 				"void %s(__global char * corner_buf, uint corner_buf_offset, uint corner_capacity, uint img_width, uint img_height, __global uchar * img_buf, uint img_stride, uint img_offset, float strength_thresh)\n"
@@ -126,7 +126,7 @@ int HafGpu_FastCorners_XY_U8(AgoNode * node)
 			, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME);
 		code += item;
 
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			OPENCL_FORMAT(
 				"\t int lidx = (int) get_local_id(0);\n"
 				"\t int lidy = (int)get_local_id(1);\n"
@@ -255,7 +255,7 @@ int HafGpu_FastCorners_XY_U8(AgoNode * node)
 		node->opencl_global_work[1] = (inputImg->u.img.height - 6 + work_group_height - 1) & ~(work_group_height - 1);
 
 		// Pragma and data structure declarations
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			OPENCL_FORMAT(
 				"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 				"#define MASK_EARLY_EXIT 4369\n\n"								//((1<<0) | (1<<4) | (1<<8) | (1<<12))
@@ -273,7 +273,7 @@ int HafGpu_FastCorners_XY_U8(AgoNode * node)
 		code = item;
 
 		// function declaration
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			OPENCL_FORMAT(
 				"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
 				"void %s(__global char * corner_buf, uint corner_buf_offset, uint corner_capacity, uint img_width, uint img_height, __global uchar * img_buf, uint img_stride, uint img_offset, float strength_thresh)\n"
@@ -282,7 +282,7 @@ int HafGpu_FastCorners_XY_U8(AgoNode * node)
 			, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME);
 		code += item;
 
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			OPENCL_FORMAT(
 				"\t int idx = (int) get_global_id(0) + 3;\n"
 				"\t int idy = (int) get_global_id(1) + 3;\n"

@@ -193,7 +193,7 @@ static vx_status VX_CALLBACK warp_eqr_to_aze_opencl_codegen(
 
 	if(useBilinearInterpolation)
 	{
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n" // opencl_local_work[0], opencl_local_work[1]
@@ -220,7 +220,7 @@ static vx_status VX_CALLBACK warp_eqr_to_aze_opencl_codegen(
 				"        uint flags";
 		}
 
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			")\n"
 			"{\n"
 			"  int gx = (int) get_global_id(0);\n"
@@ -250,7 +250,7 @@ static vx_status VX_CALLBACK warp_eqr_to_aze_opencl_codegen(
 				"    float b = 1.0f;\n";
 		}
 		if (dst_format == VX_DF_IMAGE_RGB) {
-			snprintf(item, sizeof(item),
+			sprintf(item,
 				"    theta *= b;\n"
 				"    // Remap\n"
 				"    src_buf += src_offset;"
@@ -289,7 +289,7 @@ static vx_status VX_CALLBACK warp_eqr_to_aze_opencl_codegen(
 				, src_height_f / 180.0f, src_width_f, (float)M_PI, (float)M_PI * 2.0f, src_height_f / 180.0f, src_width_f, (float)M_PI, (float)M_PI * 2.0f, src_height_f / 180.0f, src_width_f, (float)M_PI, (float)M_PI * 2.0f, src_height_f / 180.0f, src_width_f, (float)M_PI, (float)M_PI * 2.0f);
 		}
 		else if (dst_format == VX_DF_IMAGE_RGBX) {
-			snprintf(item, sizeof(item),
+			sprintf(item,
 				"    theta *= b;\n"
 				"    // Remap\n"
 				"    src_buf += src_offset;"
@@ -333,7 +333,7 @@ static vx_status VX_CALLBACK warp_eqr_to_aze_opencl_codegen(
 	}
 	else // Bicubic
 	{
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n\n"
 			"float4 amd_unpack(uint src)\n"
@@ -383,7 +383,7 @@ static vx_status VX_CALLBACK warp_eqr_to_aze_opencl_codegen(
 				"        uint flags";
 		}
 
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			")\n"
 			"{\n"
 			"  int gx = (int) get_global_id(0);\n"
@@ -413,7 +413,7 @@ static vx_status VX_CALLBACK warp_eqr_to_aze_opencl_codegen(
 				"    float b = 1.0f;\n";
 		}
 		if (dst_format == VX_DF_IMAGE_RGB) {
-			snprintf(item, sizeof(item),
+			sprintf(item,
 				"    theta *= b;\n"
 				"    // Remap\n"
 				"    src_buf += src_offset;"
@@ -482,7 +482,7 @@ static vx_status VX_CALLBACK warp_eqr_to_aze_opencl_codegen(
 				, src_height_f / 180.0f, src_width_f, (float)M_PI, (float)M_PI * 2.0f, src_height_f / 180.0f, src_width_f, (float)M_PI, (float)M_PI * 2.0f, src_height_f / 180.0f, src_width_f, (float)M_PI, (float)M_PI * 2.0f, src_height_f / 180.0f, src_width_f, (float)M_PI, (float)M_PI * 2.0f);
 		}
 		else if (dst_format == VX_DF_IMAGE_RGBX) {
-			snprintf(item, sizeof(item),
+			sprintf(item,
 				"    theta *= b;\n"
 				"    // Remap\n"
 				"    src_buf += src_offset;"

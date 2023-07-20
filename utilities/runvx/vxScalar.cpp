@@ -228,7 +228,7 @@ int CVxParamScalar::WriteFrame(int frameNumber)
 	}
 
 	// write scalar value
-	char str[MAX_SCALAR_TO_STRING_SIZE];
+	char str[256];
 	if (ReadScalarToString(m_scalar, str) < 0)
 		return -1;
 	fprintf(m_fpWrite, "%s\n", str);
@@ -292,7 +292,7 @@ int CVxParamScalar::CompareFrame(int frameNumber)
 		mismatchDetected = false;
 	}
 
-	char str[MAX_SCALAR_TO_STRING_SIZE];
+	char str[256];
 	ReadScalarToString(m_scalar, str);
 	if (mismatchDetected) {
 		m_compareCountMismatches++;

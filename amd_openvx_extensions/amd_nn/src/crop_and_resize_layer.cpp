@@ -140,7 +140,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             opencl_global_work[2] = input_dims[2];
 
             if (type == VX_TYPE_FLOAT32) {
-            snprintf(item, sizeof(item),
+            sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
                 "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint x_coord, uint y_coord, uint width, uint height, uint scaleFactor, uint mode) \n"
                 "{ \n"
@@ -157,7 +157,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "}\n", opencl_kernel_function_name, (int)x_coord, (int)y_coord);
             }
             else {
-            snprintf(item, sizeof(item),
+            sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
                 "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint x_coord, uint y_coord, uint width, uint height, uint scaleFactor, uint mode) \n"
                 "{ \n"
@@ -180,7 +180,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             opencl_global_work[2] = input_dims[2];
 
             if (type == VX_TYPE_FLOAT32) {
-            snprintf(item, sizeof(item),
+            sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
                 "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint x_coord, uint y_coord, uint width, uint height, uint scaleFactor, uint mode) \n"
                 "{ \n"
@@ -214,7 +214,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "}\n", opencl_kernel_function_name, (int)x_coord, (int)y_coord);
             }
             else {
-            snprintf(item, sizeof(item),
+            sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
                 "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint x_coord, uint y_coord, uint width, uint height, uint scaleFactor, uint mode) \n"
                 "{ \n"

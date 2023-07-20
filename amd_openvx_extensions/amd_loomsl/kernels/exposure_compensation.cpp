@@ -216,7 +216,7 @@ static vx_status VX_CALLBACK exposure_comp_calcErrorFn_opencl_codegen(
 	// kernel header and reading
 	char item[8192];
 	if (mask_image){
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"__attribute__((reqd_work_group_size(%d, %d, 1)))\n"
@@ -294,7 +294,7 @@ static vx_status VX_CALLBACK exposure_comp_calcErrorFn_opencl_codegen(
 	}
 	else
 	{
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"__attribute__((reqd_work_group_size(%d, %d, 1)))\n"
@@ -688,7 +688,7 @@ static vx_status VX_CALLBACK exposure_comp_applygains_opencl_codegen(
 			yoffset = (vx_float32)(yscale*0.5 - 0.5);
 		}
 		if (!bRGBGain){
-			snprintf(item, sizeof(item),
+			sprintf(item,
 				"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 				"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 				"\n"
@@ -764,7 +764,7 @@ static vx_status VX_CALLBACK exposure_comp_applygains_opencl_codegen(
 		}
 		else
 		{
-			snprintf(item, sizeof(item),
+			sprintf(item,
 				"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 				"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 				"\n"
@@ -843,7 +843,7 @@ static vx_status VX_CALLBACK exposure_comp_applygains_opencl_codegen(
 	}
 	else if (num_gains == num_cam * 12) // if gain array gives color transform for R, G and B with bias offset
 	{
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"\n"
@@ -902,7 +902,7 @@ static vx_status VX_CALLBACK exposure_comp_applygains_opencl_codegen(
 	}
 	else
 	{
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"\n"
@@ -1361,7 +1361,7 @@ static vx_status VX_CALLBACK exposure_comp_calcRGBErrorFn_opencl_codegen(
 		"	138, 139, 141, 142, 144, 146, 147, 149, 151, 152, 154, 156, 157, 159, 161, 162, 164, 166, 168, 169, 171, 173, 175, 176, 178, 180, 182, 184, 186, 187, 189, 191,\n"
 		"	193, 195, 197, 199, 201, 203, 205, 207, 209, 211, 213, 215, 217, 219, 221, 223, 225, 227, 229, 231, 233, 235, 237, 239, 241, 244, 246, 248, 250, 252, 255};\n";
 	if (mask_image){
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"__attribute__((reqd_work_group_size(%d, %d, 1)))\n"
@@ -1486,7 +1486,7 @@ static vx_status VX_CALLBACK exposure_comp_calcRGBErrorFn_opencl_codegen(
 	}
 	else
 	{
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"__attribute__((reqd_work_group_size(%d, %d, 1)))\n"

@@ -336,7 +336,7 @@ int main(int argc, const char ** argv)
             {
                 for(size_t n = 0; n < inp_dims[3]; n++) {
                     char imgFileName[1024];
-                    snprintf(imgFileName, sizeof(imgFileName), inpFileName.c_str(), (int)n);
+                    sprintf(imgFileName, inpFileName.c_str(), (int)n);
                     unsigned char *img_data;
                     img = imread(imgFileName, CV_LOAD_IMAGE_COLOR);
                     img_data = img.data;

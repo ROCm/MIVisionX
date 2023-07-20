@@ -208,7 +208,7 @@ static vx_status VX_CALLBACK multiband_blend_opencl_codegen(
 		height1 = (vx_uint32)(height / numCam);
 
 	char item[8192];
-	snprintf(item, sizeof(item),
+	sprintf(item,
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"\n"

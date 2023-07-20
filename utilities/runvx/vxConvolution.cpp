@@ -219,7 +219,7 @@ int CVxParamConvolution::ReadFrame(int frameNumber)
 	}
 
 	// reading data from input file
-	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameRead.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameRead.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, m_readFileIsBinary ? "rb" : "r");
 	if (!fp) {
 		if (frameNumber == m_captureFrameStart) {
@@ -275,7 +275,7 @@ int CVxParamConvolution::WriteFrame(int frameNumber)
 	ERROR_CHECK(vxReadConvolutionCoefficients(m_convolution, m_bufForAccess));
 
 	// write data to output file
-	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameWrite.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameWrite.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, m_writeFileIsBinary ? "wb" : "w");
 	if (!fp) ReportError("ERROR: Unable to create: %s\n", fileName);
 	if (m_writeFileIsBinary) {
@@ -312,7 +312,7 @@ int CVxParamConvolution::CompareFrame(int frameNumber)
 	ERROR_CHECK(vxReadConvolutionCoefficients(m_convolution, m_bufForAccess));
 
 	// reading data from reference file
-	char fileName[MAX_FILE_NAME_LENGTH]; snprintf(fileName, sizeof(fileName), m_fileNameCompare.c_str(), frameNumber);
+	char fileName[MAX_FILE_NAME_LENGTH]; sprintf(fileName, m_fileNameCompare.c_str(), frameNumber);
 	FILE * fp = fopen(fileName, m_compareFileIsBinary ? "rb" : "r");
 	if (!fp) {
 		ReportError("ERROR: Unable to open: %s\n", fileName);

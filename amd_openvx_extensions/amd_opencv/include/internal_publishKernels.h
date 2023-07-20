@@ -23,10 +23,12 @@ THE SOFTWARE.
 #ifndef _PUBLISH_KERNELS_H_
 #define _PUBLISH_KERNELS_H_
 
+#ifndef SHARED_PUBLIC
 #if _WIN32
 #define SHARED_PUBLIC __declspec(dllexport)
 #else
 #define SHARED_PUBLIC __attribute__ ((visibility ("default")))
+#endif
 #endif
 
 #include "internal_opencvTunnel.h"

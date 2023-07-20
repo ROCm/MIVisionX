@@ -162,7 +162,11 @@ set(CPACK_PACKAGE_ICON          "${CMAKE_SOURCE_DIR}/docs/data/MIVisionX.bmp")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
 
-set(CPACK_DEBIAN_PACKAGE_DESCRIPTION   "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit
+if(ENABLE_ASAN_PACKAGING)
+  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION      "AMD MIVisionX address sanitizer libraries")
+  set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX address sanitizer libraries")
+else()
+  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION   "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit
   MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, \
 utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly \
 optimized open-source implementation of the Khronos OpenVX and OpenVX Extensions along with \
@@ -170,13 +174,20 @@ Convolution Neural Net Model Compiler & Optimizer supporting ONNX, and Khronos N
 The toolkit allows for rapid prototyping and deployment of optimized computer vision and \
 machine learning inference workloads on a wide range of computer hardware, including \
 small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.")
-set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+  set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+endif()
 
 # set license information
 set(CPACK_RPM_PACKAGE_LICENSE    "MIT")
 set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
-install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
 
+# NOTE: ASAN package requires address sanitized libraries and license file
+# BUILD_DEV will be set to OFF for ASAN biulds.
+if(ENABLE_ASAN_PACKAGING)
+  install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx-asan)
+else()
+  install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
+endif()
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")
 endif()
@@ -196,8 +207,13 @@ endif()
 # set dependency to ROCm if set to TRUE, default to OFF
 set(ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
 if(ROCM_DEP_ROCMCORE)
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-core")
-  set(CPACK_RPM_PACKAGE_REQUIRES   "rocm-core")
+  if(ENABLE_ASAN_PACKAGING)
+    set(_rocm_core_pkg "rocm-core-asan")
+  else()
+    set(_rocm_core_pkg "rocm-core")
+  endif()
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${_rocm_core_pkg}")
+  set(CPACK_RPM_PACKAGE_REQUIRES   "${_rocm_core_pkg}")
 endif()
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides

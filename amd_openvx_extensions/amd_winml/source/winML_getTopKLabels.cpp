@@ -230,7 +230,7 @@ static vx_status VX_CALLBACK WINML_getTopKLabels_Kernel(vx_node node, const vx_r
 
 		// print final values
 		char outputBuffer[2048];
-		int n = snprintf(outputBuffer, sizeof(outputBuffer),"%s - %.3f", labels[topProbabilityLabelIndexes[0]].c_str(), topProbabilities[0]);
+		int n = sprintf(outputBuffer,"%s - %.3f", labels[topProbabilityLabelIndexes[0]].c_str(), topProbabilities[0]);
 
 		vx_scalar outputLabelScalar = (vx_scalar)parameters[2];
 		STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar, outputBuffer));
@@ -243,28 +243,28 @@ static vx_status VX_CALLBACK WINML_getTopKLabels_Kernel(vx_node node, const vx_r
 		if (outputLabelScalar_1) 
 		{
 			char outputBuffer_optional[2048];
-			int n = snprintf(outputBuffer_optional, sizeof(outputBuffer_optional), "%s - %.3f", labels[topProbabilityLabelIndexes[1]].c_str(), topProbabilities[1]);
+			int n = sprintf(outputBuffer_optional, "%s - %.3f", labels[topProbabilityLabelIndexes[1]].c_str(), topProbabilities[1]);
 			STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar_1, outputBuffer_optional));
 			STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar_1));
 		}
 		if (outputLabelScalar_2)
 		{
 			char outputBuffer_optional[2048];
-			int n = snprintf(outputBuffer_optional, sizeof(outputBuffer_optional), "%s - %.3f", labels[topProbabilityLabelIndexes[2]].c_str(), topProbabilities[2]);
+			int n = sprintf(outputBuffer_optional, "%s - %.3f", labels[topProbabilityLabelIndexes[2]].c_str(), topProbabilities[2]);
 			STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar_2, outputBuffer_optional));
 			STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar_2));
 		}
 		if (outputLabelScalar_3)
 		{
 			char outputBuffer_optional[2048];
-			int n = snprintf(outputBuffer_optional, sizeof(outputBuffer_optional), "%s - %.3f", labels[topProbabilityLabelIndexes[3]].c_str(), topProbabilities[3]);
+			int n = sprintf(outputBuffer_optional, "%s - %.3f", labels[topProbabilityLabelIndexes[3]].c_str(), topProbabilities[3]);
 			STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar_3, outputBuffer_optional));
 			STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar_3));
 		}
 		if (outputLabelScalar_4)
 		{
 			char outputBuffer_optional[2048];
-			int n = snprintf(outputBuffer_optional, sizeof(outputBuffer_optional), "%s - %.3f", labels[topProbabilityLabelIndexes[4]].c_str(), topProbabilities[4]);
+			int n = sprintf(outputBuffer_optional, "%s - %.3f", labels[topProbabilityLabelIndexes[4]].c_str(), topProbabilities[4]);
 			STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar_4, outputBuffer_optional));
 			STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar_4));
 		}

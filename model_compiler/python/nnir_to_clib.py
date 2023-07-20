@@ -1085,7 +1085,7 @@ static mv_status copyTensor(std::string fileName, vx_size *dims, vx_size *stride
     {
         for(size_t n = 0; n < dims[3]; n++) {
             char imgFileName[1024];
-            snprintf(imgFileName, sizeof(imgFileName), fileName.c_str(), (int)n);
+            sprintf(imgFileName, fileName.c_str(), (int)n);
             Mat img = imread(imgFileName, CV_LOAD_IMAGE_COLOR);
             if(!img.data || img.rows != dims[1] || img.cols != dims[0]) {
                 printf("ERROR: invalid image or dimensions: %%s\\n", imgFileName);
@@ -1955,7 +1955,7 @@ int main(int argc, const char ** argv)
             {
                 for(size_t n = 0; n < inp_dims[3]; n++) {
                     char imgFileName[1024];
-                    snprintf(imgFileName, sizeof(imgFileName), inpFileName.c_str(), (int)n);
+                    sprintf(imgFileName, inpFileName.c_str(), (int)n);
                     unsigned char *img_data;
                     Mat img = imread(imgFileName, CV_LOAD_IMAGE_COLOR);
                     img_data = img.data;

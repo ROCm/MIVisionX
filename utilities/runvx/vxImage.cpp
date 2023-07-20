@@ -792,7 +792,7 @@ int CVxParamImage::ReadFrame(int frameNumber)
 	if (!m_fpRead) {
 		if (m_fileNameRead.length() > 0) {
 			char fileName[MAX_FILE_NAME_LENGTH];
-			snprintf(fileName, sizeof(fileName), m_fileNameRead.c_str(), frameNumber, m_width, m_height);
+			sprintf(fileName, m_fileNameRead.c_str(), frameNumber, m_width, m_height);
 			m_fpRead = fopen(fileName, "rb"); if (!m_fpRead) ReportError("ERROR: unable to open: %s\n", fileName);
 			if (!m_fileNameForReadHasIndex && m_captureFrameStart > 0) {
 				// skip to specified frame when starting frame is specified
@@ -970,7 +970,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 										arrayNumTracked++;
 									}
 								}
-								char message[128]; snprintf(message, sizeof(message), "%s [tracked %d/%d]", (*it)->GetVxObjectName(), (int)arrayNumTracked, (int)arrayNumItems);
+								char message[128]; sprintf(message, "%s [tracked %d/%d]", (*it)->GetVxObjectName(), (int)arrayNumTracked, (int)arrayNumItems);
 								int H = 20;
 								cv::putText(*pOutputImage, message, Point(overlayOffsetX + 0, overlayOffsetY + H - 6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255, 0), 2, 8, false);
 								cv::putText(*pOutputImage, message, Point(overlayOffsetX + 2, overlayOffsetY + H - 8), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255, 0), 1, 8, false);
@@ -1021,7 +1021,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 						}
 						ERROR_CHECK(vxCommitDistribution(dist, hist));
 						// show the name of the object to the right
-						char message[128]; snprintf(message, sizeof(message), "%s (distribution)", (*it)->GetVxObjectName());
+						char message[128]; sprintf(message, "%s (distribution)", (*it)->GetVxObjectName());
 						int H = 20;
 						cv::putText(*pOutputImage, message, Point(box.x + box.width + 10, box.y + H - 6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255, 0), 2, 8, false);
 						cv::putText(*pOutputImage, message, Point(box.x + box.width + 12, box.y + H - 8), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255, 0), 1, 8, false);
@@ -1049,7 +1049,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 							}
 							ERROR_CHECK(vxCommitLUT(lut, data));
 							// show the name of the object to the right
-							char message[128]; snprintf(message, sizeof(message), "%s (lut)", (*it)->GetVxObjectName());
+							char message[128]; sprintf(message, "%s (lut)", (*it)->GetVxObjectName());
 							int H = 20;
 							cv::putText(*pOutputImage, message, Point(box.x + box.width + 10, box.y + H - 6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 0, 0), 2, 8, false);
 							cv::putText(*pOutputImage, message, Point(box.x + box.width + 12, box.y + H - 8), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255, 0), 1, 8, false);
@@ -1057,10 +1057,10 @@ int CVxParamImage::ViewFrame(int frameNumber)
 					}
 					else if ((*it)->GetVxObjectType() == VX_TYPE_SCALAR)
 					{ // view the scalar data ////////////////////////////
-						char value[MAX_SCALAR_TO_STRING_SIZE];
+						char value[64]; 
 						vx_scalar scalar = (vx_scalar)(*it)->GetVxObject();
 						ReadScalarToString(scalar, value);
-						char message[2*MAX_SCALAR_TO_STRING_SIZE]; snprintf(message, sizeof(message), "%s = %s", (*it)->GetVxObjectName(), value);
+						char message[128]; sprintf(message, "%s = %s", (*it)->GetVxObjectName(), value);
 						int H = 20;
 						cv::putText(*pOutputImage, message, Point(overlayOffsetX+0, overlayOffsetY+H-6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,   0, 255, 0), 2, 8, false);
 						cv::putText(*pOutputImage, message, Point(overlayOffsetX+2, overlayOffsetY+H-8), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255, 0), 1, 8, false);
@@ -1077,7 +1077,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 					colorIndex++;
 				// get list of keypoints from the user specified file
 				char fileName[512];
-				snprintf(fileName, sizeof(fileName), it->c_str(), frameNumber);
+				sprintf(fileName, it->c_str(), frameNumber);
 				FILE * fp = fopen(fileName, "r");
 				if (!fp) ReportError("ERROR: unable to open '%s'\n", fileName);
 				char line[256];
@@ -1149,7 +1149,7 @@ int CVxParamImage::WriteFrame(int frameNumber)
 	if (!m_fpWrite) {
 		if (m_fileNameWrite.length() > 0 && !m_usingWriter) {
 			char fileName[MAX_FILE_NAME_LENGTH];
-			snprintf(fileName, sizeof(fileName), m_fileNameWrite.c_str(), frameNumber, m_width, m_height);
+			sprintf(fileName, m_fileNameWrite.c_str(), frameNumber, m_width, m_height);
 #if ENABLE_OPENCV
             // check if openCV imwrite need to be used
             int extpos = (int)strlen(fileName) - 1;
@@ -1190,7 +1190,7 @@ int CVxParamImage::CompareFrame(int frameNumber)
 	// make sure that compare reference data is opened
 	if (!m_fpCompare) {
 		if (m_fileNameCompare.length() > 0) {
-			snprintf(m_fileNameCompareCurrent, sizeof(m_fileNameCompareCurrent), m_fileNameCompare.c_str(), frameNumber, m_width, m_height);
+			sprintf(m_fileNameCompareCurrent, m_fileNameCompare.c_str(), frameNumber, m_width, m_height);
 			if (m_generateCheckSumForCompare) {
 				m_fpCompare = fopen(m_fileNameCompareCurrent, "w");
 				if (!m_fpCompare) ReportError("ERROR: unable to create: %s\n", m_fileNameCompareCurrent);

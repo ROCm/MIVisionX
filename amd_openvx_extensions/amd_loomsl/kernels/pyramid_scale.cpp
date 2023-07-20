@@ -236,7 +236,7 @@ static vx_status VX_CALLBACK half_scale_gaussian_opencl_codegen(
 
 	// kernel header and reading
 	char item[8192];
-	snprintf(item, sizeof(item),
+	sprintf(item,
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"float4 amd_unpack(uint src)\n"
@@ -284,13 +284,13 @@ static vx_status VX_CALLBACK half_scale_gaussian_opencl_codegen(
 		"    int border = (wgInfo.s1 >> 30)&0x3;\n";
 		if (input_format == VX_DF_IMAGE_U8) {
 		if (output_format == VX_DF_IMAGE_U8){
-			snprintf(item, sizeof(item),
+			sprintf(item,
 				"    op_buf += op_offset + ((gy + ly + (camId * %d)) * op_stride) + (lx << 2) + gx;\n"	// op_image_height_offs
 				"    __global uchar * gbuf = ip_buf + ip_offset + (((gy << 1) + 1 + (camId * %d)) * ip_stride) + (gx << 1);\n"  // ip_image_height_offs
 				, op_image_height_offs, ip_image_height_offs);
 		}
 		else if (output_format == VX_DF_IMAGE_S16){
-			snprintf(item, sizeof(item),
+			sprintf(item,
 				"    op_buf += op_offset + ((gy + ly + (camId * %d)) * op_stride) + (lx << 3) + (gx<<1);\n"	// op_image_height_offs
 				"    __global uchar * gbuf = ip_buf + ip_offset + (((gy << 1) + 1 + (camId * %d)) * ip_stride) + (gx << 1);\n"  // ip_image_height_offs
 				, op_image_height_offs, ip_image_height_offs);
@@ -417,7 +417,7 @@ static vx_status VX_CALLBACK half_scale_gaussian_opencl_codegen(
 			}
 	}
 	else if (input_format == VX_DF_IMAGE_S16) {
-			snprintf(item, sizeof(item),
+			sprintf(item,
 				"    op_buf += op_offset + ((gy + ly + (camId * %d)) * op_stride) + (lx << 3) + (gx<<1);\n"	// op_image_height_offs
 				"    __global uchar * gbuf = ip_buf + ip_offset + (((gy << 1) + 1 + (camId * %d)) * ip_stride) + (gx << 2);\n"  // ip_image_height_offs
 				"    int lstride = 136 << 1;\n"
@@ -514,7 +514,7 @@ static vx_status VX_CALLBACK half_scale_gaussian_opencl_codegen(
 			"}\n";
 	}
 	else if (input_format == VX_DF_IMAGE_RGBX) {
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"    op_buf += op_offset + ((gy + ly + (camId * %d)) * op_stride) + (lx << 4) + (gx << 2);\n"	// op_image_height_offs
 			"    __global uchar * gbuf = ip_buf + ip_offset + (((gy << 1) + 1 + (camId * %d)) * ip_stride) + (gx << 3);\n"  // ip_image_height_offs
 			"    int lstride = 136 << 2;\n"
@@ -930,7 +930,7 @@ static vx_status VX_CALLBACK upscale_gaussian_subtract_opencl_codegen(
 
 	char item[8192];
 	if (weight_image){
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"\n"
@@ -978,7 +978,7 @@ static vx_status VX_CALLBACK upscale_gaussian_subtract_opencl_codegen(
 	}
 	else
 	{
-		snprintf(item, sizeof(item),
+		sprintf(item,
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"\n"
@@ -1446,7 +1446,7 @@ static vx_status VX_CALLBACK upscale_gaussian_add_opencl_codegen(
 		Inheight1 = (vx_uint32)(Inheight1 / numCam);
 	}
 	char item[8192];
-	snprintf(item, sizeof(item),
+	sprintf(item,
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"\n"
@@ -1854,7 +1854,7 @@ static vx_status VX_CALLBACK laplacian_reconstruct_opencl_codegen(
 		Inheight1 = (vx_uint32)(Inheight1 / numCam);
 	}
 	char item[8192];
-	snprintf(item, sizeof(item),
+	sprintf(item,
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"

@@ -187,7 +187,7 @@ int CVxEngine::SetParameter(int index, const char * param)
 	
 		vx_reference ref;
 		char name[16];
-		snprintf(name, sizeof(name), "$%d", index+1);
+		sprintf(name, "$%d", index+1);
 		m_paramMap.insert(pair<string, CVxParameter *>(name, parameter));
 		ref = m_paramMap[name]->GetVxObject();
 		vxSetReferenceName(ref, name);
@@ -238,7 +238,7 @@ int CVxEngine::DumpInternalGDF()
 	vx_reference ref[64] = { 0 };
 	int num_ref = 0;
 	for (int i = 0; i < 64; i++) {
-		char name[16]; snprintf(name, sizeof(name), "$%d", i + 1);
+		char name[16]; sprintf(name, "$%d", i + 1);
 		if (m_paramMap.find(name) == m_paramMap.end())
 			break;
 		ref[num_ref++] = m_paramMap[name]->GetVxObject();
@@ -882,7 +882,7 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 			if(m_dumpDataObjectList.find(objTypeKey) != std::string::npos) {
 				// issue an InitializeIO command with write to dump into a file
 				char io_params[256];
-				snprintf(io_params, sizeof(io_params), "write,%sdump_%04d_%s_%s.raw", m_dumpDataFilePrefix.c_str(), m_dumpDataCount, objType.c_str(), wordList[1]);
+				sprintf(io_params, "write,%sdump_%04d_%s_%s.raw", m_dumpDataFilePrefix.c_str(), m_dumpDataCount, objType.c_str(), wordList[1]);
 				int status = obj->InitializeIO(m_context, m_graph, obj->GetVxObject(), io_params);
 				if (status < 0)
 					ReportError("ERROR: dump-data-config for %s failed: %s\n", wordList[1], io_params);
@@ -938,7 +938,7 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 				const char * p = ScanParameters(&paramDesc[17], "<border-mode>", "s", mode);
 				if (!_stricmp(mode, "UNDEFINED") || !_stricmp(mode, "REPLICATE") || !_stricmp(mode, "CONSTANT")) {
 					char item[256];
-					snprintf(item, sizeof(item), "VX_BORDER_MODE_%s", mode);
+					sprintf(item, "VX_BORDER_MODE_%s", mode);
 					strcpy(mode, item);
 				}
 				vx_border_mode_t border_mode = { 0 };
@@ -970,7 +970,7 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 					// add prefix "VX_BORDER_MODE_"
 					// TBD: this needs to be removed
 					char item[256];
-					snprintf(item, sizeof(item), "VX_BORDER_MODE_%s", mode);
+					sprintf(item, "VX_BORDER_MODE_%s", mode);
 					strcpy(mode, item);
 				}
 				vx_border_mode_t border_mode = { 0 };

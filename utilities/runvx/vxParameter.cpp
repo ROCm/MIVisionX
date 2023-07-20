@@ -296,7 +296,7 @@ CVxParameter * CreateDataObject(vx_context context, vx_graph graph, std::map<std
 			}
 			enum_name[j] = '\0';
 			strcpy(description, "scalar:enum,%s");
-			snprintf(desc2, sizeof(desc2), description, enum_name);
+			sprintf(desc2, description, enum_name);
 			CVxParamScalar *this_scalar = new CVxParamScalar();
 			this_scalar->SetCaptureFrameStart(captureFrameStart);
 			int status = this_scalar->Initialize(context, graph, desc2);

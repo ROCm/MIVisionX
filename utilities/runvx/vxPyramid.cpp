@@ -270,7 +270,7 @@ int CVxParamPyramid::Finalize()
 			ERROR_CHECK(vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
 			ERROR_CHECK(vxReleaseImage(&image));
 			// generate fileName with level, width, height in formatting and open the file
-			char fileName[256]; snprintf(fileName, sizeof(fileName), m_fileNameRead.c_str(), level, width, height);
+			char fileName[256]; sprintf(fileName, m_fileNameRead.c_str(), level, width, height);
 			m_fpReadImage[level] = fopen(fileName, "rb");
 			if (!m_fpReadImage[level]) ReportError("ERROR: Unable to open: %s\n", fileName);
 		}
@@ -285,7 +285,7 @@ int CVxParamPyramid::Finalize()
 			ERROR_CHECK(vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
 			ERROR_CHECK(vxReleaseImage(&image));
 			// generate fileName with level, width, height in formatting and open the file
-			char fileName[256]; snprintf(fileName, sizeof(fileName), m_fileNameWrite.c_str(), level, width, height);
+			char fileName[256]; sprintf(fileName, m_fileNameWrite.c_str(), level, width, height);
 			m_fpWriteImage[level] = fopen(fileName, "wb");
 			if (!m_fpWriteImage[level]) ReportError("ERROR: Unable to create: %s\n", fileName);
 		}
@@ -300,7 +300,7 @@ int CVxParamPyramid::Finalize()
 			ERROR_CHECK(vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
 			ERROR_CHECK(vxReleaseImage(&image));
 			// generate fileName with level, width, height in formatting and open the file
-			char fileName[256]; snprintf(fileName, sizeof(fileName), m_fileNameCompare.c_str(), level, width, height);
+			char fileName[256]; sprintf(fileName, m_fileNameCompare.c_str(), level, width, height);
 			m_fpCompareImage[level] = fopen(fileName, m_generateCheckSumForCompare ? "w" : (m_useCheckSumForCompare ? "r" : "rb"));
 			if (!m_fpCompareImage[level]) ReportError("ERROR: Unable to %s: %s\n", m_generateCheckSumForCompare ? "create" : "open", fileName);
 		}

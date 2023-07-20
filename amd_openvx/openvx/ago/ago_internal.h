@@ -176,9 +176,8 @@ THE SOFTWARE.
 #define CONFIG_THREAD_DEFAULT                 1  // 0:disable 1:enable separate threads for graph scheduling
 
 // module specific
-#define MAX_MODULE_NAME_SIZE 1024
-#define MAX_MODULE_PATH_SIZE 2048
-#define MAX_DESCRIPTION_DATA_SIZE 1024
+#define MAX_MODULE_NAME_SIZE 256
+#define MAX_MODULE_PATH_SIZE 1024
 
 // threshold default values
 #define AGO_DEFAULT_THRESHOLD_FALSE_VALUE 0

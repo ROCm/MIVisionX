@@ -25,7 +25,7 @@ THE SOFTWARE.
 void lut_U8U8_codegen(std::string& opencl_code, char * kern_name, vx_size local_wg_size, vx_uint32 work_size)
 {
     char item[8192];
-    snprintf(item, sizeof(item),
+    sprintf(item,
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global uchar * in, uint in_offset, uint4 in_stride, __read_only image1d_t lut, __global uchar * out, uint out_offset, uint4 out_stride)\n" // opencl_kernel_function_name
             "{\n"
@@ -43,7 +43,7 @@ void lut_U8U8_codegen(std::string& opencl_code, char * kern_name, vx_size local_
 void lut_U8U8_codegen_packed(std::string& opencl_code, char * kern_name, vx_size local_wg_size, vx_uint32 work_size)
 {
     char item[8192];
-    snprintf(item, sizeof(item),
+    sprintf(item,
             "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global uint * in, uint in_offset, uint4 in_stride, __read_only image1d_t lut, __global uint * out, uint out_offset, uint4 out_stride)\n" // opencl_kernel_function_name
@@ -67,7 +67,7 @@ void lut_U8U8_codegen_packed(std::string& opencl_code, char * kern_name, vx_size
 void lut_S16U8_codegen(std::string& opencl_code, char * kern_name, vx_size local_wg_size, vx_uint32 work_size, int max_idx)
 {
     char item[8192];
-    snprintf(item, sizeof(item),
+    sprintf(item,
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global short * lut, uint lut_count, uint lut_offset, __global short * out, uint out_offset, uint4 out_stride)\n" // opencl_kernel_function_name
             "{\n"
@@ -86,7 +86,7 @@ void lut_S16U8_codegen(std::string& opencl_code, char * kern_name, vx_size local
 void lut_S16U8_codegen_packed(std::string& opencl_code, char * kern_name, vx_size local_wg_size, vx_uint32 work_size, int max_idx)
 {
     char item[8192];
-    snprintf(item, sizeof(item),
+    sprintf(item,
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global uint * in, uint in_offset, uint4 in_stride, __global short * lut, uint lut_count, uint lut_offset, __global uint2 * out, uint out_offset, uint4 out_stride)\n" // opencl_kernel_function_name
             "{\n"
@@ -111,7 +111,7 @@ void lut_S16U8_codegen_packed(std::string& opencl_code, char * kern_name, vx_siz
 void lut_S16S16_codegen(std::string& opencl_code, char * kern_name, vx_size local_wg_size, vx_uint32 work_size, int min_idx, int max_idx)
 {
     char item[8192];
-    snprintf(item, sizeof(item),
+    sprintf(item,
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global short * in, uint in_offset, uint4 in_stride, __global short * lut, uint lut_count, uint lut_offset, __global short * out, uint out_offset, uint4 out_stride)\n" // opencl_kernel_function_name
             "{\n"
@@ -131,7 +131,7 @@ void lut_S16S16_codegen(std::string& opencl_code, char * kern_name, vx_size loca
 void lut_S16S16_codegen_packed(std::string& opencl_code, char * kern_name, vx_size local_wg_size, vx_uint32 work_size, int min_idx, int max_idx)
 {
     char item[8192];
-    snprintf(item, sizeof(item),
+    sprintf(item,
             "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
             "void %s(__global uint * in, uint in_offset, uint4 in_stride, __global short * lut, uint lut_count, uint lut_offset, __global uint * out, uint out_offset, uint4 out_stride)\n" // opencl_kernel_function_name
             "{\n"

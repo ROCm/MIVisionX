@@ -130,9 +130,9 @@ static void dump_profile_log()
 #endif
 	char profiler[1024] = "LoomSL-Visual-Profile/LoomSL-profile";
 	char textBuffer[1024];
-	if (ls_getEnvironmentVariable("VISUAL_PROFILER_LOCATION", textBuffer, sizeof(textBuffer))){snprintf(profiler, sizeof(profiler), "%s/LoomSL-profile", textBuffer);}
-	char plogfile[1024]; snprintf(plogfile, sizeof(plogfile), "%s-data.log", profiler);
-	char phtmfile[1024]; snprintf(phtmfile, sizeof(phtmfile), "%s-visual.html", profiler);
+	if (ls_getEnvironmentVariable("VISUAL_PROFILER_LOCATION", textBuffer, sizeof(textBuffer))){sprintf(profiler, "%s/LoomSL-profile", textBuffer);}
+	char plogfile[1024]; sprintf(plogfile, "%s-data.log", profiler);
+	char phtmfile[1024]; sprintf(phtmfile, "%s-visual.html", profiler);
 	FILE * fp = fopen(plogfile, "w"); if (!fp) { ls_printf("ERROR: unable to create '%s'\n", plogfile); return; }
 	FILE * fh = fopen(phtmfile, "w"); if (!fh) { ls_printf("ERROR: unable to create '%s'\n", phtmfile); return; }
 
@@ -200,7 +200,7 @@ static void dump_profile_log()
 			for (int j = k + 1; j < profiler_count; j++) {
 				if ((profiler_data[k] ^ profiler_data[j]) == 2) {
 					union { __int64 a; int b[2]; } u; u.a = profiler_clock[j];
-					snprintf(data, sizeof(data), " DATA[%d,%d]", u.b[0], u.b[1]);
+					sprintf(data, " DATA[%d,%d]", u.b[0], u.b[1]);
 				}
 				if ((profiler_data[k] ^ profiler_data[j]) == 1) {
 					float fclockj = (float)(profiler_clock[j] - profiler_clock[0])*1000.0f / freq;

@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.5.3"
+__version__ = "2.5.4"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -485,7 +485,7 @@ else:
                   linuxCMake+' ../; make -j4; sudo make install)')
         # PyBind11
         os.system('sudo -v')
-        os.system('pip install pytest==3.1')
+        os.system('pip install pytest==7.3.1')
         os.system('(cd '+deps_dir+'; git clone -b '+pybind11Version+' https://github.com/pybind/pybind11; cd pybind11; mkdir build; cd build; ' +
                   linuxCMake+' -DDOWNLOAD_CATCH=ON -DDOWNLOAD_EIGEN=ON ../; make -j4; sudo make install)')
         # CuPy Install

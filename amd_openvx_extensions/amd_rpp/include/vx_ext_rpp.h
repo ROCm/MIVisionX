@@ -30,6 +30,7 @@ THE SOFTWARE.
  * \file
  * \brief The AMD OpenVX RPP Nodes Extension Library.
  *
+
  * \defgroup group_amd_rpp Extension: AMD RPP Extension API
  * \brief AMD OpenVX RPP Nodes Extension to use as the low-level library for rocAL.
  */

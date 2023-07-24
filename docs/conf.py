@@ -33,7 +33,7 @@ from rocm_docs import ROCmDocs
 external_projects_current_project = "mivisionx"
 
 os.system('find ../ -name "*.md" > "docfiles.txt"')
-doc_files = open('docfiles.txt', 'r')
+doc_files = open("docfiles.txt", "r")
 lines = doc_files.readlines()
 for file_path in lines:
     file_dir, _ = os.path.split(file_path)
@@ -43,6 +43,8 @@ for file_path in lines:
     os.system(f"cp {file_path[:-1]} {file_path[1:]}")
 
 docs_core = ROCmDocs("MIVisionX Documentation")
+docs_core.run_doxygen(doxygen_root="doxygen", doxygen_path="doxygen/xml")
+docs_core.enable_api_reference()
 docs_core.setup()
 docs_core.myst_heading_anchors = 6
 

@@ -57,7 +57,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 Run the steps below to build documentation locally.
 
-```
+```Bash
 cd docs
 pip3 install -r .sphinx/requirements.txt
 python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
@@ -467,7 +467,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * RPP - [1.2.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.2.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.5.3`
+* MIVisionX Setup Script - `V2.5.4`
 
 ### Known issues
 

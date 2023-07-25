@@ -16,7 +16,7 @@ beautifulsoup4==4.12.0
     # via pydata-sphinx-theme
 breathe==4.34.0
     # via rocm-docs-core
-certifi==2022.12.7
+certifi==2023.7.22
     # via requests
 cffi==1.15.1
     # via
@@ -53,10 +53,6 @@ idna==3.4
     # via requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==6.8.0
-    # via sphinx
-importlib-resources==6.0.0
-    # via rocm-docs-core
 jinja2==3.1.2
     # via
     #   myst-parser
@@ -105,8 +101,6 @@ pynacl==1.5.0
     # via pygithub
 pyparsing==3.1.0
     # via doxysphinx
-pytz==2023.3
-    # via babel
 pyyaml==6.0
     # via
     #   myst-parser
@@ -165,7 +159,3 @@ urllib3==1.26.15
     # via requests
 wrapt==1.15.0
     # via deprecated
-zipp==3.16.0
-    # via
-    #   importlib-metadata
-    #   importlib-resources

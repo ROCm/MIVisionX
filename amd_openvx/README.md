@@ -1,6 +1,8 @@
 <p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
 
-# Khronos OpenVX API - Current Version `1.3`
+# Khronos OpenVX&trade `1.3`
+
+OpenVX is an open, royalty-free standard for cross platform acceleration of computer vision applications. OpenVX enables performance and power-optimized computer vision processing, especially important in embedded and real-time use cases such as face, body and gesture tracking, smart video surveillance, advanced driver assistance systems (ADAS), object and scene reconstruction, augmented reality, visual inspection, robotics and more.
 
 * Khronos [OpenVX](https://www.khronos.org/openvx/) API offers a set of optimized primitives for low-level image processing, computer vision, and neural net operators. The API provides a simple method to write optimized code that is portable across multiple hardware vendors and platforms.
 
@@ -29,18 +31,18 @@ The Vision Conformance Feature Set includes all the functions and objects in the
 The purpose is to define a minimal subset of OpenVX features that enable the construction and execution of OpenVX graphs, but it does not contain any specific vision-processing operations.
 
 **Basic Framework Objects**
-<table>
+<table border="1">
   <tr>
-    <th>vx_reference</th>
-    <th>vx_context</th> 
-    <th>vx_graph</th>
-    <th>vx_kernel</th>
+    <th style="text-align: center">vx_reference</th>
+    <th style="text-align: center">vx_context</th> 
+    <th style="text-align: center">vx_graph</th>
+    <th style="text-align: center">vx_kernel</th>
   </tr>
   <tr>
-    <th>vx_node</th>
-    <th>vx_parameter</th> 
-    <th>vx_meta_format</th>
-    <th>vx_delay</th>
+    <th style="text-align: center">vx_node</th>
+    <th style="text-align: center">vx_parameter</th> 
+    <th style="text-align: center">vx_meta_format</th>
+    <th style="text-align: center">vx_delay</th>
   </tr>
 </table>
 
@@ -51,86 +53,86 @@ The purpose is to define a minimal subset of OpenVX features that enable the con
 To provide a basic set of vision processing functions. This set of functions is roughly equivalent to the set of functions available in version 1.1 of the OpenVX specification. In addition to the framework objects included in the Base Feature Set, the Vision Conformance Feature Set includes a set of data objects that the Vision functions operate upon and produce.
 
 **Vision Conformance Data Objects**
-<table>
+<table border="1">
   <tr>
-    <th>vx_array</th>
-    <th>vx_convolution</th> 
-    <th>vx_distribution</th>
-    <th>vx_image</th>
+    <th style="text-align: center">vx_array</th>
+    <th style="text-align: center">vx_convolution</th> 
+    <th style="text-align: center">vx_distribution</th>
+    <th style="text-align: center">vx_image</th>
   </tr>
   <tr>
-    <th>vx_lut</th>
-    <th>vx_matrix</th> 
-    <th>vx_pyramid</th>
-    <th>vx_remap</th>
+    <th style="text-align: center">vx_lut</th>
+    <th style="text-align: center">vx_matrix</th> 
+    <th style="text-align: center">vx_pyramid</th>
+    <th style="text-align: center">vx_remap</th>
   </tr>
   <tr>
-    <th>vx_scalar</th>
-    <th>vx_threshold</th> 
-    <th>vx_object_array</th>
-    <th>&nbsp; </th>
+    <th style="text-align: center">vx_scalar</th>
+    <th style="text-align: center">vx_threshold</th> 
+    <th style="text-align: center">vx_object_array</th>
+    <th style="text-align: center">&nbsp; </th>
   </tr>
 </table>
 
 **NOTE:** Details about [Data Objects](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#sec_data_objects)
 
 **Vision Conformance Functions**
-<table>
+<table border="1">
   <tr>
-    <th>AbsDiff</th>
-    <th>Add</th> 
-    <th>And</th>
-    <th>Box3x3</th>
-    <th>CannyEdgeDetector</th>
-    <th>ChannelCombine</th>
+    <th style="text-align: center">AbsDiff</th>
+    <th style="text-align: center">Add</th> 
+    <th style="text-align: center">And</th>
+    <th style="text-align: center">Box3x3</th>
+    <th style="text-align: center">CannyEdgeDetector</th>
+    <th style="text-align: center">ChannelCombine</th>
   </tr>
   <tr>
-    <th>ChannelExtract</th>
-    <th>ColorConvert</th> 
-    <th>ConvertDepth</th>
-    <th>Convolve</th>
-    <th>Dilate3x3</th>
-    <th>EqualizeHist</th>
+    <th style="text-align: center">ChannelExtract</th>
+    <th style="text-align: center">ColorConvert</th> 
+    <th style="text-align: center">ConvertDepth</th>
+    <th style="text-align: center">Convolve</th>
+    <th style="text-align: center">Dilate3x3</th>
+    <th style="text-align: center">EqualizeHist</th>
   </tr>
   <tr>
-    <th>Erode3x3</th>
-    <th>FastCorners</th> 
-    <th>Gaussian3x3</th>
-    <th>GaussianPyramid</th>
-    <th>HarrisCorners</th>
-    <th>HalfScaleGaussian</th>
+    <th style="text-align: center">Erode3x3</th>
+    <th style="text-align: center">FastCorners</th> 
+    <th style="text-align: center">Gaussian3x3</th>
+    <th style="text-align: center">GaussianPyramid</th>
+    <th style="text-align: center">HarrisCorners</th>
+    <th style="text-align: center">HalfScaleGaussian</th>
   </tr>
   <tr>
-    <th>Histogram</th>
-    <th>IntegralImage</th> 
-    <th>LaplacianPyramid</th>
-    <th>LaplacianReconstruct</th>
-    <th>Magnitude</th>
-    <th>MeanStdDev</th>
+    <th style="text-align: center">Histogram</th>
+    <th style="text-align: center">IntegralImage</th> 
+    <th style="text-align: center">LaplacianPyramid</th>
+    <th style="text-align: center">LaplacianReconstruct</th>
+    <th style="text-align: center">Magnitude</th>
+    <th style="text-align: center">MeanStdDev</th>
   </tr>
   <tr>
-    <th>Median3x3</th>
-    <th>MinMaxLoc</th> 
-    <th>Multiply</th>
-    <th>NonLinearFilter</th>
-    <th>Not</th>
-    <th>OpticalFlowPyrLK</th>
+    <th style="text-align: center">Median3x3</th>
+    <th style="text-align: center">MinMaxLoc</th> 
+    <th style="text-align: center">Multiply</th>
+    <th style="text-align: center">NonLinearFilter</th>
+    <th style="text-align: center">Not</th>
+    <th style="text-align: center">OpticalFlowPyrLK</th>
   </tr>
   <tr>
-    <th>Or</th>
-    <th>Phase</th> 
-    <th>Remap</th>
-    <th>ScaleImage</th>
-    <th>Sobel3x3</th>
-    <th>Subtract</th>
+    <th style="text-align: center">Or</th>
+    <th style="text-align: center">Phase</th> 
+    <th style="text-align: center">Remap</th>
+    <th style="text-align: center">ScaleImage</th>
+    <th style="text-align: center">Sobel3x3</th>
+    <th style="text-align: center">Subtract</th>
   </tr>
   <tr>
-    <th>TableLookup</th>
-    <th>Threshold</th> 
-    <th>WarpAffine</th>
-    <th>WarpPerspective</th>
-    <th>WeightedAverage</th>
-    <th>Xor</th>
+    <th style="text-align: center">TableLookup</th>
+    <th style="text-align: center">Threshold</th> 
+    <th style="text-align: center">WarpAffine</th>
+    <th style="text-align: center">WarpPerspective</th>
+    <th style="text-align: center">WeightedAverage</th>
+    <th style="text-align: center">Xor</th>
   </tr>
 </table>
 

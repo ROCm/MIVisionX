@@ -1,8 +1,8 @@
 <p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
 
-# Khronos OpenVX&trade `1.3`
+# Khronos OpenVX&trade;
 
-OpenVX is an open, royalty-free standard for cross platform acceleration of computer vision applications. OpenVX enables performance and power-optimized computer vision processing, especially important in embedded and real-time use cases such as face, body and gesture tracking, smart video surveillance, advanced driver assistance systems (ADAS), object and scene reconstruction, augmented reality, visual inspection, robotics and more.
+OpenVX&trade; is an open, royalty-free standard for cross platform acceleration of computer vision applications. OpenVX enables performance and power-optimized computer vision processing, especially important in embedded and real-time use cases such as face, body and gesture tracking, smart video surveillance, advanced driver assistance systems (ADAS), object and scene reconstruction, augmented reality, visual inspection, robotics and more.
 
 * Khronos [OpenVX](https://www.khronos.org/openvx/) API offers a set of optimized primitives for low-level image processing, computer vision, and neural net operators. The API provides a simple method to write optimized code that is portable across multiple hardware vendors and platforms.
 
@@ -20,7 +20,7 @@ OpenVX is an open, royalty-free standard for cross platform acceleration of comp
 
 ## AMD OpenVX&trade;
 
-* AMD OpenVX&trade; is a highly optimized conformant open-source implementation of the [Khronos OpenVX 1.3](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded `AMD64` CPUs and large workstation discrete GPUs.
+* AMD OpenVX&trade; is a highly optimized conformant open-source implementation of the [Khronos OpenVX Version 1.3](https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded `AMD64` CPUs and large workstation discrete GPUs.
 
 ### AMD OpenVX&trade; - Vision Feature Set Conformant Implementation
 

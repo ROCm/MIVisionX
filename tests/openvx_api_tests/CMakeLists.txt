@@ -118,7 +118,7 @@ if(GPU_SUPPORT)
   if(Python3_FOUND)
     add_test(NAME openvx_tests_runVisionPython_GPU 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/vision_tests/runVisionTests.py
-          --runvx_directory ${CMAKE_BINARY_DIR}/bin --num_frames 10 --hardware_mode GPU
+          --runvx_directory ${CMAKE_BINARY_DIR}/bin --num_frames 10 --hardware_mode GPU --backend_type ${BACKEND}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif(Python3_FOUND)
 endif(GPU_SUPPORT)

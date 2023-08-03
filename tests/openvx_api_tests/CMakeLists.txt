@@ -84,11 +84,10 @@ find_package(OpenCV QUIET)
 
 # OpenVX Tests
 if(Python3_FOUND)
-  add_test(NAME openvx_tests_runVisionPython 
+  add_test(NAME openvx_tests_runVisionPython_CPU 
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/vision_tests/runVisionTests.py
             --runvx_directory ${CMAKE_BINARY_DIR}/bin --num_frames 10
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set_property(TEST openvx_tests_runVisionPython PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
 endif(Python3_FOUND)
 
 # OpenCV Tests
@@ -117,7 +116,7 @@ if(GPU_SUPPORT)
 
   # OpenVX Tests
   if(Python3_FOUND)
-    add_test(NAME openvx_tests_runVisionPython 
+    add_test(NAME openvx_tests_runVisionPython_GPU 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/vision_tests/runVisionTests.py
           --runvx_directory ${CMAKE_BINARY_DIR}/bin --num_frames 10 --hardware_mode GPU
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

@@ -158,3 +158,4 @@ typing-extensions==4.5.0
 urllib3==1.26.15
     # via requests
 wrapt==1.15.0
+    # via deprecated

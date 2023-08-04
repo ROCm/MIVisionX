@@ -57,7 +57,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 Run the steps below to build documentation locally.
 
-```
+```Bash
 cd docs
 pip3 install -r .sphinx/requirements.txt
 python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
@@ -164,7 +164,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + **Ubuntu** - `20.04` / `22.04`
   + **CentOS** - `7` / `8`
   + **RedHat** - `8` / `9`
-  + **SLES** - `15-SP3`
+  + **SLES** - `15-SP4`
 * Install [ROCm](https://docs.amd.com)
 * CMake 3.0 or later
 * ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn))
@@ -189,7 +189,7 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
   + RedHat - `8` / `9`
-  + SLES - `15-SP3`
+  + SLES - `15-SP4`
 * [ROCm supported hardware](https://docs.amd.com)
 * [ROCm](https://docs.amd.com)
 
@@ -200,10 +200,12 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
                             --opencv    [OpenCV Version - optional (default:4.6.0)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.4)]
                             --rpp       [RPP Version - optional (default:1.0.0)]
+                            --pybind11  [PyBind11 Version - optional (default:v2.10.4)]
                             --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:ON) [options:ON/OFF]]
                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --inference [MIVisionX Neural Net Inference Dependency Install - optional (default:ON) [options:ON/OFF]]
+                            --developer [Setup Developer Options - optional (default:ON) [options:ON/OFF]]
                             --reinstall [Remove previous setup and reinstall (default:OFF)[options:ON/OFF]]
                             --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]]
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
@@ -277,8 +279,8 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     ```
     mkdir build-hip
     cd build-hip
-    sudo cmake ../
-    sudo make -j8
+    cmake ../
+    make -j8
     sudo cmake --build . --target PyPackageInstall
     sudo make install
     ```
@@ -298,9 +300,8 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     ```
     mkdir build-ocl
     cd build-ocl
-    sudo cmake -DBACKEND=OPENCL ../
-    sudo make -j8
-    sudo cmake --build . --target PyPackageInstall
+    cmake -DBACKEND=OPENCL ../
+    make -j8
     sudo make install
     ```
 
@@ -309,7 +310,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   if an app interested in installing MIVisionX with both GPU backends, then add **-DCMAKE_INSTALL_PREFIX** in the cmake
   commands to install MIVisionX with OPENCL and HIP backends into two separate custom folders.
   + vx_winml is not supported on Linux
-  + ```PyPackageInstall``` used for rocal_pybind installation
+  + ```PyPackageInstall``` used for rocal_pybind installation - supported only with HIP Backend
   + rocal_pybind not supported on windows
   + `sudo` required for pybind installation
 
@@ -456,17 +457,17 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7` / `8`
   + RHEL - `8` / `9`
-  + SLES - `15-SP3`
+  + SLES - `15-SP4`
 * ROCm: rocm-core - `5.4.3.50403-121`
 * miopen-hip - `2.19.0.50403-121`
 * miopen-opencl - `2.18.0.50300-63`
 * migraphx - `2.4.0.50403-121`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [1.1.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.1.0)
+* RPP - [1.2.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.2.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.5.0`
+* MIVisionX Setup Script - `V2.5.4`
 
 ### Known issues
 

@@ -39,7 +39,6 @@ standard_library.install_aliases()
 tensor_type_nnir2openvx = {
     'F032': 'VX_TYPE_FLOAT32',
     'F016': 'VX_TYPE_FLOAT16',
-    'U032': 'VX_TYPE_UINT32',
     'U016': 'VX_TYPE_UINT16',
     'I016': 'VX_TYPE_INT16',
     'U008': 'VX_TYPE_UINT8',
@@ -49,7 +48,6 @@ tensor_type_nnir2openvx = {
 tensor_type2size = {
     'F032': 4,
     'F016': 2,
-    'U032': 4,
     'U016': 2,
     'I016': 2,
     'U008': 1,

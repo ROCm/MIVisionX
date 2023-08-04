@@ -25,35 +25,38 @@ THE SOFTWARE.
 
 #include <VX/vx.h>
 
-#ifdef  __cplusplus
-extern "C" {
+/*!
+ * \file
+ * \brief The AMD OpenVX Media Nodes Extension Library.
+ *
+ * \defgroup group_amd_media Extension: AMD Media Extension API
+ * \brief AMD OpenVX Media Nodes Extension
+ */
+
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
+    /*! \brief [Graph] Creates a decoder Node.
+     * \ingroup group_amd_media
+     * @note - TBD
+     * \return <tt> vx_node</tt>.
+     * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+     * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+     */
+    VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode = 0, vx_bool enable_opencl_output = false, vx_int32 device_id = -1);
 
-/*! \brief [Graph] Creates a Scale Layer Node.
- * \param [in] graph The handle to the graph.
- * \param [in] input_str The input string specifying the filename URL and decoding mode.
- * \param [out] output output image from the decoder.
- * \param [out] aux_data from the decoder: used when encoding
- * \return <tt> vx_node</tt>.
- * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
- * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
- */
-VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode=0, vx_bool enable_opencl_output=false, vx_int32 device_id = -1);
+    /*! \brief [Graph] Creates a encoder Layer Node.
+     * \ingroup group_amd_media
+     * * @note - TBD
+     * \return <tt> vx_node</tt>.
+     * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+     * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+     */
+    VX_API_ENTRY vx_node VX_API_CALL amdMediaEncoderNode(vx_graph graph, const char *output_str, vx_image input, vx_array aux_data_in, vx_array aux_data_out, vx_bool enable_gpu_input = false);
 
-/*! \brief [Graph] Creates a Scale Layer Node.
- * \param [in] graph The handle to the graph.
- * \param [in] output_str The output string specifying the filename URL.
- * \param [in] input input image for the encoder.
- * \param [in] aux_data_in input aux data
- * \param [out] aux_data_out output aux data
- * \return <tt> vx_node</tt>.
- * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
- * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
- */
-VX_API_ENTRY vx_node VX_API_CALL amdMediaEncoderNode(vx_graph graph, const char *output_str, vx_image input, vx_array aux_data_in, vx_array aux_data_out, vx_bool enable_gpu_input=false);
-
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

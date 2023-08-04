@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.5.0"
+__version__ = "2.5.4"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -43,8 +43,8 @@ parser.add_argument('--opencv',    	type=str, default='4.6.0',
                     help='OpenCV Version - optional (default:4.6.0)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.4',
                     help='ProtoBuf Version - optional (default:3.12.4)')
-parser.add_argument('--rpp',   		type=str, default='1.1.0',
-                    help='RPP Version - optional (default:1.1.0)')
+parser.add_argument('--rpp',   		type=str, default='1.2.0',
+                    help='RPP Version - optional (default:1.2.0)')
 parser.add_argument('--pybind11',   type=str, default='v2.10.4',
                     help='PyBind11 Version - optional (default:v2.10.4)')
 parser.add_argument('--ffmpeg',    	type=str, default='ON',
@@ -435,6 +435,15 @@ else:
 
     if rocalInstall == 'ON':
         # Install RPP
+        # clang
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
+                      linuxSystemInstall_check+' install clang')
+        if "SLES" in platfromInfo:
+            os.system('sudo -v')
+            os.system('sudo update-alternatives --install /usr/bin/clang clang /opt/rocm-*/llvm/bin/clang 100')
+            os.system('sudo update-alternatives --install /usr/bin/clang++ clang++ /opt/rocm-*/llvm/bin/clang++ 100')
+        # OS Deps
         if "Ubuntu" in platfromInfo:
             # Install Packages for rocAL
             os.system('sudo -v')
@@ -444,10 +453,6 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install nasm yasm')
-            # clang
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install clang')
         elif "redhat" in platfromInfo or "SLES" in platfromInfo:
             # Nasm & Yasm
             os.system('sudo -v')
@@ -474,9 +479,13 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
                   linuxCMake+' -DBACKEND='+backend+' -DCMAKE_INSTALL_PREFIX='+ROCM_PATH+' ../; make -j4; sudo make install)')
+        # RapidJSON
+        os.system('sudo -v')
+        os.system('(cd '+deps_dir+'; git clone https://github.com/Tencent/rapidjson.git; cd rapidjson; mkdir build; cd build; ' +
+                  linuxCMake+' ../; make -j4; sudo make install)')
         # PyBind11
         os.system('sudo -v')
-        os.system('pip install pytest==3.1')
+        os.system('pip install pytest==7.3.1')
         os.system('(cd '+deps_dir+'; git clone -b '+pybind11Version+' https://github.com/pybind/pybind11; cd pybind11; mkdir build; cd build; ' +
                   linuxCMake+' -DDOWNLOAD_CATCH=ON -DDOWNLOAD_EIGEN=ON ../; make -j4; sudo make install)')
         # CuPy Install

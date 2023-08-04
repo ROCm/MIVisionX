@@ -177,11 +177,13 @@ Reader::Status FileSourceReader::subfolder_reading()
         filesys::path pathObj(subfolder_path);
         if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
         {
-            // ignore files with extensions .tar, .zip, .7z
+            // ignore files with non-image extensions
             auto file_extension_idx = subfolder_path.find_last_of(".");
             if (file_extension_idx  != std::string::npos) {
                 std::string file_extension = subfolder_path.substr(file_extension_idx+1);
-                if ((file_extension == "tar") || (file_extension == "zip") || (file_extension == "7z") || (file_extension == "rar"))
+                std::transform(file_extension.begin(), file_extension.end(), file_extension.begin(),
+                    [](unsigned char c){ return std::tolower(c); });
+                if ((file_extension != "jpg") && (file_extension != "jpeg") && (file_extension != "png") && (file_extension != "ppm") && (file_extension != "bmp") && (file_extension != "pgm") && (file_extension != "tif") && (file_extension != "tiff") && (file_extension != "webp"))
                     continue;
             }
             ret = open_folder();
@@ -229,6 +231,15 @@ Reader::Status FileSourceReader::open_folder()
         if(_entity->d_type != DT_REG)
             continue;
 
+        std::string filename(_entity->d_name);
+        auto file_extension_idx = filename.find_last_of(".");
+        if (file_extension_idx  != std::string::npos) {
+            std::string file_extension = filename.substr(file_extension_idx+1);
+            std::transform(file_extension.begin(), file_extension.end(), file_extension.begin(),
+                [](unsigned char c){ return std::tolower(c); });
+            if ((file_extension != "jpg") && (file_extension != "jpeg") && (file_extension != "png") && (file_extension != "ppm") && (file_extension != "bmp") && (file_extension != "pgm") && (file_extension != "tif") && (file_extension != "tiff") && (file_extension != "webp"))
+                continue;
+        }        
         if(get_file_shard_id() != _shard_id )
         {
             _file_count_all_shards++;

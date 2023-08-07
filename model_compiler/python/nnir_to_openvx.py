@@ -109,7 +109,7 @@ def generateCMakeFiles(graph,outputFolder):
         generateLicenseForScript(f)
         f.write( \
 """
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 project (annmodule)
 

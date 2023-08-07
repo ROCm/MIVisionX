@@ -1737,7 +1737,7 @@ protected:
             printf("ERROR: unable to create: %s\n", openvxFilenameC.c_str());
             exit(1);
         }
-        ovxC << "cmake_minimum_required (VERSION 2.8)" << std::endl
+        ovxC << "cmake_minimum_required(VERSION 3.5)" << std::endl
              << "project (annmodule)" << std::endl
              << "set (CMAKE_CXX_STANDARD 14) " << std::endl
              << "list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)" << std::endl

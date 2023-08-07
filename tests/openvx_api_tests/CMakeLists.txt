@@ -25,8 +25,6 @@
 ################################################################################
 cmake_minimum_required (VERSION 3.0)
 
-set(CMAKE_CTEST_ARGUMENTS "--extra-verbose")
-
 # default run
 # canny
 add_test(
@@ -121,5 +119,55 @@ if(GPU_SUPPORT)
           --runvx_directory ${CMAKE_BINARY_DIR}/bin --num_frames 10 --hardware_mode GPU --backend_type ${BACKEND}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif(Python3_FOUND)
+
+  # Neural Network tests
+  if(NEURAL_NET AND Python3_FOUND)
+    # caffe2nnir2openvx No Fuse flow
+    add_test(NAME caffe2nnir2openvx_no_fuse
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          --profiler_mode 1
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    # caffe2nnir2openvx Fuse flow
+    add_test(NAME caffe2nnir2openvx_fuse 
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          --profiler_mode 2
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    # caffe2nnir2openvx FP16 flow
+    add_test(NAME caffe2nnir2openvx_fp16
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          --profiler_mode 3
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    # onnx2nnir2openvx No Fuse flow
+    add_test(NAME onnx2nnir2openvxx_no_fuse 
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          --profiler_mode 4
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})    
+    # onnx2nnir2openvx Fuse flow
+    add_test(NAME onnx2nnir2openvxx_fuse 
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          --profiler_mode 5
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    # onnx2nnir2openvx FP16 flow
+    add_test(NAME onnx2nnir2openvxx_fp16 
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          --profiler_mode 6
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    # nnef2nnir2openvx No Fuse flow
+    add_test(NAME nnef2nnir2openvxx_no_fuse 
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          --profiler_mode 7
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})    
+    # nnef2nnir2openvx Fuse flow
+    add_test(NAME nnef2nnir2openvxx_fuse 
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          --profiler_mode 8
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    # nnef2nnir2openvx FP16 flow
+    add_test(NAME nnef2nnir2openvxx_fp16 
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          --profiler_mode 9
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  endif(NEURAL_NET AND Python3_FOUND)
+
 endif(GPU_SUPPORT)
 

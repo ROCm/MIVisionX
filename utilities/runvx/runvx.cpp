@@ -242,9 +242,9 @@ int main(int argc, char * argv[])
 			arg++;
 			size_t size = strlen("node") + 1 + strlen(argv[arg]) + paramCount*6 + 1;
 			fullText = new char[size];
-			snprintf(fullText, sizeof(fullText), "node %s", argv[arg]);
+			snprintf(fullText, size, "node %s", argv[arg]);
 			for (int i = 0, j = 0; i < paramCount; i++)
-				snprintf(fullText + strlen(fullText), (sizeof(fullText) - strlen(fullText)), " $%d", j++ + 1);
+				snprintf(fullText + strlen(fullText), (size - strlen(fullText)), " $%d", j++ + 1);
 		}
 		else if (!_stricmp(argv[arg], "shell")) {
 			// nothing to do

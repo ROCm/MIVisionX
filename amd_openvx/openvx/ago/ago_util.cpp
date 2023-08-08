@@ -691,12 +691,12 @@ AgoKernel * agoFindKernelByName(AgoContext * acontext, const vx_char * name)
     if (!strstr(name, ".")) {
         char fullName[VX_MAX_KERNEL_NAME];
         // search for org.khronos.openvx.<name>
-        snprintf(fullName, sizeof(fullName), "org.khronos.openvx.%s", name);
+        snprintf(fullName, VX_MAX_KERNEL_NAME, "org.khronos.openvx.%s", name);
         for (AgoKernel * kernel = acontext->kernelList.head; kernel; kernel = kernel->next) {
             if (!strcmp(kernel->name, fullName)) return kernel;
         }
         // search for org.amd.openvx.<name>
-        snprintf(fullName, sizeof(fullName), "com.amd.openvx.%s", name);
+        snprintf(fullName, VX_MAX_KERNEL_NAME, "com.amd.openvx.%s", name);
         for (AgoKernel * kernel = acontext->kernelList.head; kernel; kernel = kernel->next) {
             if (!strcmp(kernel->name, fullName)) return kernel;
         }

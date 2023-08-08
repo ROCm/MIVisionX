@@ -9600,7 +9600,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensor(vx_context context, vx_size nu
         CAgoLock lock(context->cs);
         char dimStr[256] = "";
         for (vx_size i = 0; i < num_of_dims; i++)
-            snprintf(dimStr, sizeof(dimStr) + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+            snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
         char desc[512];
         snprintf(desc, sizeof(desc), "tensor:%u,{%s},%s,%d", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
@@ -9639,7 +9639,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateVirtualTensor(vx_graph graph, vx_size
         CAgoLock lock(context->cs);
         char dimStr[256] = "";
         for (vx_size i = 0; i < num_of_dims; i++)
-            snprintf(dimStr, sizeof(dimStr) + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+            snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
         char desc[512];
         snprintf(desc, sizeof(desc), "tensor-virtual:%u,{%s},%s,%i", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
         data = agoCreateDataFromDescription(context, graph, desc, true);
@@ -10157,7 +10157,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
         if (memory_type == VX_MEMORY_TYPE_HOST) {
             char dimStr[256] = "";
             for (vx_size i = 0; i < number_of_dims; i++)
-                snprintf(dimStr, sizeof(dimStr) + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+                snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
             char desc[512];
             snprintf(desc, sizeof(desc), "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
@@ -10180,7 +10180,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
         else if (memory_type == VX_MEMORY_TYPE_OPENCL) {
             char dimStr[256] = "";
             for (vx_size i = 0; i < number_of_dims; i++)
-                snprintf(dimStr, sizeof(dimStr) + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+                snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
             char desc[512];
             snprintf(desc, sizeof(desc), "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
@@ -10203,7 +10203,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
         else if (memory_type == VX_MEMORY_TYPE_HIP) {
             char dimStr[256] = "";
             for (vx_size i = 0; i < number_of_dims; i++)
-                snprintf(dimStr, sizeof(dimStr) + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+                snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
             char desc[512];
             snprintf(desc, sizeof(desc), "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
             data = agoCreateDataFromDescription(context, NULL, desc, true);

@@ -143,6 +143,8 @@ installDir = args.install_directory
 
 platfromInfo = platform.platform()
 
+returnStatus = 0
+
 # check arguments
 if not 0 <= profileMode <= 9:
     print(
@@ -305,6 +307,10 @@ if profileMode == 0 or profileMode == 1:
                       currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log)')
+            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin')
+            annTestResults = str(annTestResults, 'UTF-8')
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         currentWorkingDirectory+'''/vx_nn_test/caffe_no_fuse_output.log > ''' + \
@@ -355,6 +361,10 @@ if profileMode == 0 or profileMode == 2:
                       currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log)')
+            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin')
+            annTestResults = str(annTestResults, 'UTF-8')
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         currentWorkingDirectory+'''/vx_nn_test/caffe_fuse_output.log > ''' + \
@@ -405,6 +415,10 @@ if profileMode == 0 or profileMode == 3:
                       currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log)')
+            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin')
+            annTestResults = str(annTestResults, 'UTF-8')
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         currentWorkingDirectory+'''/vx_nn_test/caffe_fp16_output.log > ''' + \
@@ -455,6 +469,10 @@ if profileMode == 0 or profileMode == 4:
                       currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log)')
+            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin')
+            annTestResults = str(annTestResults, 'UTF-8')
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         currentWorkingDirectory+'''/vx_nn_test/onnx_no_fuse_output.log > ''' + \
@@ -505,6 +523,10 @@ if profileMode == 0 or profileMode == 5:
                       currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log)')
+            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin')
+            annTestResults = str(annTestResults, 'UTF-8')
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         currentWorkingDirectory+'''/vx_nn_test/onnx_fuse_output.log > ''' + \
@@ -555,6 +577,10 @@ if profileMode == 0 or profileMode == 6:
                       currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log)')
+            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin')
+            annTestResults = str(annTestResults, 'UTF-8')
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         currentWorkingDirectory+'''/vx_nn_test/onnx_fp16_output.log > ''' + \
@@ -605,6 +631,10 @@ if profileMode == 0 or profileMode == 7:
                       currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log)')
+            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin')
+            annTestResults = str(annTestResults, 'UTF-8')
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         currentWorkingDirectory+'''/vx_nn_test/nnef_no_fuse_output.log > ''' + \
@@ -655,6 +685,10 @@ if profileMode == 0 or profileMode == 8:
                       currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log)')
+            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin')
+            annTestResults = str(annTestResults, 'UTF-8')
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         currentWorkingDirectory+'''/vx_nn_test/nnef_fuse_output.log > ''' + \
@@ -705,6 +739,10 @@ if profileMode == 0 or profileMode == 9:
                       currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log)')
+            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin')
+            annTestResults = str(annTestResults, 'UTF-8')
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         currentWorkingDirectory+'''/vx_nn_test/nnef_fp16_output.log > ''' + \
@@ -843,3 +881,5 @@ reportFileDir = os.path.abspath(reportFilename)
 print("\nSTATUS: Output Report File - "+reportFileDir)
 
 print("\nrunNeuralNetworkTests.py completed - V:"+__version__+"\n")
+
+exit(returnStatus)

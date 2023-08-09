@@ -1246,8 +1246,8 @@ MIVID_API_ENTRY mv_status MIVID_API_CALL mvGetOutput(mivid_handle handle, int ou
         vxQueryTensor(handle->outputs[output_num], VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
         vxQueryTensor(handle->outputs[output_num], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
         vxQueryTensor(handle->outputs[output_num], VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
-        if((data_type != VX_TYPE_FLOAT32) && (data_type != VX_TYPE_FLOAT16)) {
-            std::cerr << "ERROR: mvGetOutput() supports only VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 " << std::endl;
+        if((data_type != VX_TYPE_FLOAT32) && (data_type != VX_TYPE_FLOAT16) && (data_type != VX_TYPE_INT64)) {
+            std::cerr << "ERROR: mvGetOutput() supports only VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT64" << std::endl;
             return MV_ERROR_INVALID_TYPE;
         }
         vx_size count = dims[0] * dims[1] * dims[2] * dims[3];

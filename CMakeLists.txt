@@ -50,6 +50,7 @@ option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
 option(BUILD_DEV        "Build MIVisionX Development Package"      ON)
 option(AMD_FP16_SUPPORT "Build MIVisionX with float16 Support"    OFF)
+option(BUILD_WITH_AMD_ADVANCE "Build MIVisionX for advanced AMD GPU Architecture"    OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")

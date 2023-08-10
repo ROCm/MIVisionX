@@ -204,6 +204,8 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
   set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
+# Set the dependent packages
+set(MIVISIONX_PACKAGE_REQS "half, rpp, rocblas, miopen-hip, migraphx")
 # set dependency to ROCm if set to TRUE, default to OFF
 set(ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
 if(ROCM_DEP_ROCMCORE)
@@ -212,9 +214,11 @@ if(ROCM_DEP_ROCMCORE)
   else()
     set(_rocm_core_pkg "rocm-core")
   endif()
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${_rocm_core_pkg}")
-  set(CPACK_RPM_PACKAGE_REQUIRES   "${_rocm_core_pkg}")
+  set(MIVISIONX_PACKAGE_REQS  "${MIVISIONX_PACKAGE_REQS}, ${_rocm_core_pkg}")
 endif()
+
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "${MIVISIONX_PACKAGE_REQS}, rocblas-dev, miopen-hip-dev, migraphx-dev")
+set(CPACK_RPM_PACKAGE_REQUIRES   "${MIVISIONX_PACKAGE_REQS}, rocblas-devel, miopen-hip-devel, migraphx-devel")
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(COMMAND rpm --eval %{?dist}

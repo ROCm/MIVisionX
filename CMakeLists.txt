@@ -154,7 +154,6 @@ add_subdirectory(tests/openvx)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})
-set(CPACK_PACKAGE_NAME          "mivisionx")
 set(CPACK_PACKAGE_LICENSE       "MIT")
 set(CPACK_PACKAGE_CONTACT       "MIVisionX Support <mivisionx.support@amd.com>")
 set(CPACK_PACKAGE_VENDOR        "AMD ROCm")
@@ -163,9 +162,11 @@ set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
 
 if(ENABLE_ASAN_PACKAGING)
+  set(CPACK_PACKAGE_NAME          "mivisionx-asan")
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION      "AMD MIVisionX address sanitizer libraries")
   set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX address sanitizer libraries")
 else()
+  set(CPACK_PACKAGE_NAME          "mivisionx")
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION   "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit
   MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, \
 utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly \

@@ -728,7 +728,7 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImage(vx_context context, vx_uint32 wi
     AgoData * data = NULL;
     if (agoIsValidContext(context)) {
         CAgoLock lock(context->cs);
-        char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), width, height);
+        char desc[128]; snprintf(desc, sizeof(desc), "image:%4.4s,%d,%d", FORMAT_STR(color), width, height);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "image", data->name);
@@ -761,7 +761,7 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromROI(vx_image img, const vx_re
     if (agoIsValidData(master_img, VX_TYPE_IMAGE)) {
         vx_context context = master_img->ref.context;
         CAgoLock lock(context->cs);
-        char desc[128]; sprintf(desc, "image-roi:%s,%d,%d,%d,%d", master_img->name.c_str(), rect->start_x, rect->start_y, rect->end_x, rect->end_y);
+        char desc[128]; snprintf(desc, sizeof(desc), "image-roi:%s,%d,%d,%d,%d", master_img->name.c_str(), rect->start_x, rect->start_y, rect->end_x, rect->end_y);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "image-roi", data->name);
@@ -810,22 +810,22 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateUniformImage(vx_context context, vx_ui
         CAgoLock lock(context->cs);
         char desc[128];
         if (color == VX_DF_IMAGE_U8) {
-            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->U8);
+            snprintf(desc, sizeof(desc), "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->U8);
         }
         else if (color == VX_DF_IMAGE_S16) {
-            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S16);
+            snprintf(desc, sizeof(desc), "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S16);
         }
         else if (color == VX_DF_IMAGE_U16) {
-            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->U16);
+            snprintf(desc, sizeof(desc), "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->U16);
         }
         else if (color == VX_DF_IMAGE_S32) {
-            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S32);
+            snprintf(desc, sizeof(desc), "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S32);
         }
         else if (color == VX_DF_IMAGE_U32) {
-            sprintf(desc, "image-uniform:%4.4s,%d,%d,%u", FORMAT_STR(color), width, height, value->U32);
+            snprintf(desc, sizeof(desc), "image-uniform:%4.4s,%d,%d,%u", FORMAT_STR(color), width, height, value->U32);
         }
         else {
-            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d,%d,%d,%d", FORMAT_STR(color), width, height, value->reserved[0], value->reserved[1], value->reserved[2], value->reserved[3]);
+            snprintf(desc, sizeof(desc), "image-uniform:%4.4s,%d,%d,%d,%d,%d,%d", FORMAT_STR(color), width, height, value->reserved[0], value->reserved[1], value->reserved[2], value->reserved[3]);
         }
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
@@ -876,7 +876,7 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateVirtualImage(vx_graph graph, vx_uint32
     if (agoIsValidGraph(graph)) {
         vx_context context = graph->ref.context;
         CAgoLock lock(graph->cs);
-        char desc[128]; sprintf(desc, "image-virtual:%4.4s,%d,%d", FORMAT_STR(color), width, height);
+        char desc[128]; snprintf(desc, sizeof(desc), "image-virtual:%4.4s,%d,%d", FORMAT_STR(color), width, height);
         data = agoCreateDataFromDescription(context, graph, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "image", data->name);
@@ -927,7 +927,7 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
     AgoData * data = NULL;
     if (agoIsValidContext(context)) {
         if (memory_type == VX_MEMORY_TYPE_HOST) {
-            char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
+            char desc[128]; snprintf(desc, sizeof(desc), "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
             if (data) {
                 agoGenerateDataName(context, "image-host", data->name);
@@ -967,7 +967,7 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
         }
 #if ENABLE_OPENCL
         else if (memory_type == VX_MEMORY_TYPE_OPENCL) {
-            char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
+            char desc[128]; snprintf(desc, sizeof(desc), "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
             if (data) {
                 agoGenerateDataName(context, "image-opencl", data->name);
@@ -1000,7 +1000,7 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
         }
 #elif ENABLE_HIP
         else if (memory_type == VX_MEMORY_TYPE_HIP) {
-            char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
+            char desc[128]; snprintf(desc, sizeof(desc), "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
             if (data) {
                 agoGenerateDataName(context, "image-hip", data->name);
@@ -3968,8 +3968,8 @@ VX_API_ENTRY vx_scalar VX_API_CALL vxCreateVirtualScalar(vx_graph graph, vx_enum
         }
         if(!data_type || desc_type) {
             char desc[512];
-            if (desc_type) sprintf(desc, "scalar-virtual:%s,0", desc_type);
-            else sprintf(desc, "scalar-virtual:0,0");
+            if (desc_type) snprintf(desc, sizeof(desc), "scalar-virtual:%s,0", desc_type);
+            else snprintf(desc, sizeof(desc), "scalar-virtual:0,0");
             data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
             if (data) {
                 agoGenerateVirtualDataName(graph, "scalar", data->name);
@@ -4685,8 +4685,8 @@ VX_API_ENTRY vx_delay VX_API_CALL vxCreateDelay(vx_context context,
     AgoData * data = NULL;
     if (agoIsValidContext(context) && agoIsValidReference(exemplar) && slots > 0) {
         CAgoLock lock(context->cs);
-        char desc_exemplar[1024]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
-        char desc[2048]; sprintf(desc, "delay:" VX_FMT_SIZE ",[%s]", slots, desc_exemplar);
+        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+        char desc[2048]; snprintf(desc, sizeof(desc), "delay:" VX_FMT_SIZE ",[%s]", slots, desc_exemplar);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "delay", data->name);
@@ -4861,7 +4861,7 @@ VX_API_ENTRY vx_lut VX_API_CALL vxCreateLUT(vx_context context, vx_enum data_typ
     AgoData * data = NULL;
     if (agoIsValidContext(context)) {
         CAgoLock lock(context->cs);
-        char desc[512]; sprintf(desc, "lut:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
+        char desc[512]; snprintf(desc, sizeof(desc), "lut:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "lut", data->name);
@@ -4883,7 +4883,7 @@ VX_API_ENTRY vx_lut VX_API_CALL vxCreateVirtualLUT(vx_graph graph, vx_enum data_
     AgoData * data = NULL;
     if (agoIsValidGraph(graph)) {
         CAgoLock lock(graph->cs);
-        char desc[512]; sprintf(desc, "lut-virtual:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
+        char desc[512]; snprintf(desc, sizeof(desc), "lut-virtual:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
         data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "lut", data->name);
@@ -5317,7 +5317,7 @@ VX_API_ENTRY vx_distribution VX_API_CALL vxCreateDistribution(vx_context context
     AgoData * data = NULL;
     if (agoIsValidContext(context) && numBins > 0 && range > 0) {
         CAgoLock lock(context->cs);
-        char desc[512]; sprintf(desc, "distribution:" VX_FMT_SIZE ",%d,%u", numBins, offset, range);
+        char desc[512]; snprintf(desc, sizeof(desc), "distribution:" VX_FMT_SIZE ",%d,%u", numBins, offset, range);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "dist", data->name);
@@ -5340,7 +5340,7 @@ VX_API_ENTRY vx_distribution VX_API_CALL vxCreateVirtualDistribution(vx_graph gr
     AgoData * data = NULL;
     if (agoIsValidGraph(graph) && numBins > 0 && range > 0) {
         CAgoLock lock(graph->cs);
-        char desc[512]; sprintf(desc, "distribution-virtual:" VX_FMT_SIZE ",%d,%u", numBins, offset, range);
+        char desc[512]; snprintf(desc, sizeof(desc), "distribution-virtual:" VX_FMT_SIZE ",%d,%u", numBins, offset, range);
         data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "dist", data->name);
@@ -5706,7 +5706,7 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThreshold(vx_context context, vx_e
         (((data_type >= VX_TYPE_INT8) && (data_type <= VX_TYPE_INT32)) || data_type == VX_TYPE_BOOL))
     {
         CAgoLock lock(context->cs);
-        char desc[512]; sprintf(desc, "threshold:%s,%s", agoEnum2Name(thresh_type), agoEnum2Name(data_type));
+        char desc[512]; snprintf(desc, sizeof(desc), "threshold:%s,%s", agoEnum2Name(thresh_type), agoEnum2Name(data_type));
         data = agoCreateDataFromDescription(context, NULL, desc, true);
 
         if (data) {
@@ -5788,7 +5788,7 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context conte
             */
             const char * desc_type = agoEnum2Name(thresh_type);
             if(desc_type){
-                char desc[512]; sprintf(desc, "threshold:%s,%u,%u", desc_type, input_format, output_format);
+                char desc[512]; snprintf(desc, sizeof(desc), "threshold:%s,%u,%u", desc_type, input_format, output_format);
                 data = agoCreateDataFromDescription(context, NULL, desc, true);
                 if (data) {
                     agoGenerateDataName(context, "thr", data->name);
@@ -5917,7 +5917,7 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateVirtualThresholdForImage(vx_graph 
         */
         if (desc_type) {
             char desc[512];
-            sprintf(desc, "threshold-virtual:%s,%u,%u", desc_type, input_format, output_format);
+            snprintf(desc, sizeof(desc), "threshold-virtual:%s,%u,%u", desc_type, input_format, output_format);
             data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
             if (data) {
                 agoGenerateVirtualDataName(graph, "thr", data->name);
@@ -6442,7 +6442,7 @@ VX_API_ENTRY vx_matrix VX_API_CALL vxCreateMatrix(vx_context context, vx_enum da
     AgoData * data = NULL;
     if (agoIsValidContext(context) && (data_type == VX_TYPE_INT32 || data_type == VX_TYPE_FLOAT32 || data_type == VX_TYPE_UINT8) && columns > 0 && rows > 0) {
         CAgoLock lock(context->cs);
-        char desc[512]; sprintf(desc, "matrix:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
+        char desc[512]; snprintf(desc, sizeof(desc), "matrix:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "matrix", data->name);
@@ -6466,7 +6466,7 @@ VX_API_ENTRY vx_matrix VX_API_CALL vxCreateVirtualMatrix(vx_graph graph, vx_enum
     AgoData * data = NULL;
     if (agoIsValidGraph(graph) && (data_type == VX_TYPE_INT32 || data_type == VX_TYPE_FLOAT32 || data_type == VX_TYPE_UINT8) && columns > 0 && rows > 0) {
         CAgoLock lock(graph->cs);
-        char desc[512]; sprintf(desc, "matrix-virtual:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
+        char desc[512]; snprintf(desc, sizeof(desc), "matrix-virtual:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
         data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "matrix", data->name);
@@ -6897,7 +6897,7 @@ VX_API_ENTRY vx_convolution VX_API_CALL vxCreateConvolution(vx_context context, 
     AgoData * data = NULL;
     if (agoIsValidContext(context) && columns > 0 && rows > 0) {
         CAgoLock lock(context->cs);
-        char desc[512]; sprintf(desc, "convolution:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
+        char desc[512]; snprintf(desc, sizeof(desc), "convolution:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "conv", data->name);
@@ -6920,7 +6920,7 @@ VX_API_ENTRY vx_convolution VX_API_CALL vxCreateVirtualConvolution(vx_graph grap
     if (agoIsValidGraph(graph)) {
         CAgoLock lock(graph->cs);
         if(columns >= 3 && rows >= 3 && (columns % 2 == 1) && (rows % 2 == 1)) {
-            char desc[512]; sprintf(desc, "convolution-virtual:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
+            char desc[512]; snprintf(desc, sizeof(desc), "convolution-virtual:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
             data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
             if (data) {
                 agoGenerateVirtualDataName(graph, "conv", data->name);
@@ -7201,10 +7201,10 @@ VX_API_ENTRY vx_pyramid VX_API_CALL vxCreatePyramid(vx_context context, vx_size 
     if (agoIsValidContext(context)) {
         CAgoLock lock(context->cs);
         char desc_scale[64];
-        if (scale == VX_SCALE_PYRAMID_HALF) sprintf(desc_scale, "HALF");
-        else if (scale == VX_SCALE_PYRAMID_ORB) sprintf(desc_scale, "ORB");
-        else sprintf(desc_scale, "%.12g", scale);
-        char desc[512]; sprintf(desc, "pyramid:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(format), width, height, levels, desc_scale);
+        if (scale == VX_SCALE_PYRAMID_HALF) snprintf(desc_scale, sizeof(desc_scale), "HALF");
+        else if (scale == VX_SCALE_PYRAMID_ORB) snprintf(desc_scale, sizeof(desc_scale), "ORB");
+        else snprintf(desc_scale, sizeof(desc_scale), "%.12g", scale);
+        char desc[512]; snprintf(desc, sizeof(desc), "pyramid:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(format), width, height, levels, desc_scale);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "pyramid", data->name);
@@ -7258,10 +7258,10 @@ VX_API_ENTRY vx_pyramid VX_API_CALL vxCreateVirtualPyramid(vx_graph graph, vx_si
     if (agoIsValidGraph(graph)) {
         CAgoLock lock(graph->cs);
         char desc_scale[64];
-        if (scale == VX_SCALE_PYRAMID_HALF) sprintf(desc_scale, "HALF");
-        else if (scale == VX_SCALE_PYRAMID_ORB) sprintf(desc_scale, "ORB");
-        else sprintf(desc_scale, "%.12g", scale);
-        char desc[512]; sprintf(desc, "pyramid-virtual:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(format), width, height, levels, desc_scale);
+        if (scale == VX_SCALE_PYRAMID_HALF) snprintf(desc_scale, sizeof(desc_scale), "HALF");
+        else if (scale == VX_SCALE_PYRAMID_ORB) snprintf(desc_scale, sizeof(desc_scale), "ORB");
+        else snprintf(desc_scale, sizeof(desc_scale), "%.12g", scale);
+        char desc[512]; snprintf(desc, sizeof(desc), "pyramid-virtual:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(format), width, height, levels, desc_scale);
         data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "pyramid", data->name);
@@ -7402,7 +7402,7 @@ VX_API_ENTRY vx_remap VX_API_CALL vxCreateRemap(vx_context context,
     AgoData * data = NULL;
     if (agoIsValidContext(context) && src_width > 0 && src_height > 0 && dst_width > 0 && dst_height > 0) {
         CAgoLock lock(context->cs);
-        char desc[512]; sprintf(desc, "remap:%u,%u,%u,%u", src_width, src_height, dst_width, dst_height);
+        char desc[512]; snprintf(desc, sizeof(desc), "remap:%u,%u,%u,%u", src_width, src_height, dst_width, dst_height);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "remap", data->name);
@@ -7433,7 +7433,7 @@ VX_API_ENTRY vx_remap VX_API_CALL vxCreateVirtualRemap(vx_graph graph,
     if (agoIsValidGraph(graph) && src_width > 0 && src_height > 0 && dst_width > 0 && dst_height > 0) {
         CAgoLock lock(graph->cs);
         char desc[512];
-        sprintf(desc, "remap-virtual:%u,%u,%u,%u", src_width, src_height, dst_width, dst_height);
+        snprintf(desc, sizeof(desc), "remap-virtual:%u,%u,%u,%u", src_width, src_height, dst_width, dst_height);
         data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "remap", data->name);
@@ -8008,7 +8008,7 @@ VX_API_ENTRY vx_array VX_API_CALL vxCreateArray(vx_context context, vx_enum item
             desc_type = agoGetUserStructName(context, item_type);
         }
         if (desc_type) {
-            char desc[512]; sprintf(desc, "array:%s," VX_FMT_SIZE "", desc_type, capacity);
+            char desc[512]; snprintf(desc, sizeof(desc), "array:%s," VX_FMT_SIZE "", desc_type, capacity);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
             if (data) {
                 agoGenerateDataName(context, "array", data->name);
@@ -8059,8 +8059,8 @@ VX_API_ENTRY vx_array VX_API_CALL vxCreateVirtualArray(vx_graph graph, vx_enum i
         }
         if (!item_type || desc_type) {
             char desc[512];
-            if (desc_type) sprintf(desc, "array-virtual:%s," VX_FMT_SIZE "", desc_type, capacity);
-            else sprintf(desc, "array-virtual:0," VX_FMT_SIZE "", capacity);
+            if (desc_type) snprintf(desc, sizeof(desc), "array-virtual:%s," VX_FMT_SIZE "", desc_type, capacity);
+            else snprintf(desc, sizeof(desc), "array-virtual:0," VX_FMT_SIZE "", capacity);
             data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
             if (data) {
                 agoGenerateVirtualDataName(graph, "array", data->name);
@@ -8726,8 +8726,8 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
     AgoData * data = NULL;
     if (agoIsValidContext(context) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(context->cs);
-        char desc_exemplar[512]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
-        char desc[1024]; sprintf(desc, "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
+        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+        char desc[2048]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "objectarray", data->name);
@@ -8755,7 +8755,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
             desc_type = agoGetUserStructName(context, item_type);
         }
         if(desc_type){
-            char desc[512]; sprintf(desc, "objectarray:%s," VX_FMT_SIZE "", desc_type, count);
+            char desc[512]; snprintf(desc, sizeof(desc), "objectarray:%s," VX_FMT_SIZE "", desc_type, count);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
             if(data) {
                 agoGenerateDataName(context, "objectarray", data->name);
@@ -8939,8 +8939,8 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
     AgoData * data = NULL;
     if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(graph->cs);
-        char desc_exemplar[512]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
-        char desc[1024]; sprintf(desc, "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
+        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
+        char desc[2048]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
         data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "objectarray", data->name);
@@ -8969,8 +8969,8 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
             desc_type = agoGetUserStructName(graph->ref.context, item_type);
         }
         char desc[512];
-        if (desc_type) sprintf(desc, "objectarray-virtual:%s," VX_FMT_SIZE "", desc_type, count);
-        else sprintf(desc, "objectarray-virtual:," VX_FMT_SIZE "", count);
+        if (desc_type) snprintf(desc, sizeof(desc), "objectarray-virtual:%s," VX_FMT_SIZE "", desc_type, count);
+        else snprintf(desc, sizeof(desc), "objectarray-virtual:," VX_FMT_SIZE "", count);
         data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
         if(data) {
             agoGenerateVirtualDataName(graph, "objectarray", data->name);
@@ -9600,9 +9600,9 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensor(vx_context context, vx_size nu
         CAgoLock lock(context->cs);
         char dimStr[256] = "";
         for (vx_size i = 0; i < num_of_dims; i++)
-            sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+            snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
         char desc[512];
-        sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
+        snprintf(desc, sizeof(desc), "tensor:%u,{%s},%s,%d", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
             agoGenerateDataName(context, "tensor", data->name);
@@ -9639,9 +9639,9 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateVirtualTensor(vx_graph graph, vx_size
         CAgoLock lock(context->cs);
         char dimStr[256] = "";
         for (vx_size i = 0; i < num_of_dims; i++)
-            sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+            snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
         char desc[512];
-        sprintf(desc, "tensor-virtual:%u,{%s},%s,%i", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
+        snprintf(desc, sizeof(desc), "tensor-virtual:%u,{%s},%s,%i", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
         data = agoCreateDataFromDescription(context, graph, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "tensor", data->name);
@@ -9676,11 +9676,11 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromView(vx_tensor tensor, vx_s
         CAgoLock lock(context->cs);
         char startStr[256] = "", endStr[256] = "";
         for (vx_size i = 0; i < num_of_dims; i++) {
-            sprintf(startStr + strlen(startStr), "%s%u", i ? "," : "", (vx_uint32)roi_start[i]);
-            sprintf(endStr + strlen(endStr), "%s%u", i ? "," : "", (vx_uint32)roi_end[i]);
+            snprintf(startStr + strlen(startStr), sizeof(startStr), "%s%u", i ? "," : "", (vx_uint32)roi_start[i]);
+            snprintf(endStr + strlen(endStr), sizeof(startStr), "%s%u", i ? "," : "", (vx_uint32)roi_end[i]);
         }
         char desc[1024];
-        sprintf(desc, "tensor-from-roi:%s,%u,{%s},{%s}", master_tensor->name.c_str(), (vx_uint32)num_of_dims, startStr, endStr);
+        snprintf(desc, sizeof(desc), "tensor-from-roi:%s,%u,{%s},{%s}", master_tensor->name.c_str(), (vx_uint32)num_of_dims, startStr, endStr);
         if (master_tensor->isVirtual) {
             vx_graph graph = (vx_graph)master_tensor->ref.scope;
             data = agoCreateDataFromDescription(context, graph, desc, true);
@@ -10157,9 +10157,9 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
         if (memory_type == VX_MEMORY_TYPE_HOST) {
             char dimStr[256] = "";
             for (vx_size i = 0; i < number_of_dims; i++)
-                sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+                snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
             char desc[512];
-            sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
+            snprintf(desc, sizeof(desc), "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
             if (data) {
                 agoGenerateDataName(context, "tensor", data->name);
@@ -10180,9 +10180,9 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
         else if (memory_type == VX_MEMORY_TYPE_OPENCL) {
             char dimStr[256] = "";
             for (vx_size i = 0; i < number_of_dims; i++)
-                sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+                snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
             char desc[512];
-            sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
+            snprintf(desc, sizeof(desc), "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
             if (data) {
                 agoGenerateDataName(context, "tensor", data->name);
@@ -10203,9 +10203,9 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
         else if (memory_type == VX_MEMORY_TYPE_HIP) {
             char dimStr[256] = "";
             for (vx_size i = 0; i < number_of_dims; i++)
-                sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+                snprintf(dimStr + strlen(dimStr), sizeof(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
             char desc[512];
-            sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
+            snprintf(desc, sizeof(desc), "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
             data = agoCreateDataFromDescription(context, NULL, desc, true);
             if (data) {
                 agoGenerateDataName(context, "tensor", data->name);

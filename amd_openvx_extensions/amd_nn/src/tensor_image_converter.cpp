@@ -107,7 +107,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     if(format == VX_DF_IMAGE_RGB) {
         char item[8192];
         if (type == VX_TYPE_FLOAT32){
-        sprintf(item,
+        snprintf(item, sizeof(item),
             "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
             "__kernel __attribute__((reqd_work_group_size(%ld, %ld, 1)))\n" // opencl_local_work[0] opencl_local_work[1]
             "void %s(__global uchar * i0_buf, uint i0_offset, uint4 i0_stride, uint o0_width, uint o0_height, __global uchar * o0_buf, uint o0_stride, uint o0_offset, float ka, float kb, uint reverse_channel_order)\n"
@@ -133,7 +133,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             , opencl_local_work[0], opencl_local_work[1], opencl_kernel_function_name, width, height, height);
         }else
         {
-            sprintf(item,
+            snprintf(item, sizeof(item),
             "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
             "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
             "__kernel __attribute__((reqd_work_group_size(%ld, %ld, 1)))\n" // opencl_local_work[0] opencl_local_work[1]
@@ -164,7 +164,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     else {
         char item[8192];
         if (type == VX_TYPE_FLOAT32){
-        sprintf(item,
+        snprintf(item, sizeof(item),
             "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
             "__kernel __attribute__((reqd_work_group_size(%ld, %ld, 1)))\n" // opencl_local_work[0] opencl_local_work[1]
             "void %s(__global uchar * i0_buf, uint i0_offset, uint4 i0_stride, uint o0_width, uint o0_height, __global uchar * o0_buf, uint o0_stride, uint o0_offset, float ka, float kb, uint reverse_channel_order)\n"
@@ -182,7 +182,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             , opencl_local_work[0], opencl_local_work[1], opencl_kernel_function_name, width, height, height);
         }else
         {
-            sprintf(item,
+            snprintf(item, sizeof(item),
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
                 "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
                 "__kernel __attribute__((reqd_work_group_size(%ld, %ld, 1)))\n" // opencl_local_work[0] opencl_local_work[1]

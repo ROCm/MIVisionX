@@ -201,7 +201,7 @@ static vx_status VX_CALLBACK calc_lens_distortionwarp_map_opencl_codegen(
 
 	char item[8192];
 	if (pad_img){
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"\n"
@@ -266,7 +266,7 @@ static vx_status VX_CALLBACK calc_lens_distortionwarp_map_opencl_codegen(
 	}
 	else
 	{
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 			"\n"
@@ -555,7 +555,7 @@ static vx_status VX_CALLBACK compute_default_camIdx_opencl_codegen(
 	opencl_global_work[0] = (((out_width + 15) >> 4) + 7) & ~7;
 	opencl_global_work[1] = (out_height + 7) & ~7;
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"\n"
@@ -745,7 +745,7 @@ static vx_status VX_CALLBACK extend_padding_dilate_opencl_codegen(
 	opencl_global_work[0] = (((out_width + 7) >> 3) + 7) & ~7;
 	opencl_global_work[1] = (out_height + 7) & ~7;
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"\n"

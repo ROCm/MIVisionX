@@ -601,7 +601,7 @@ int agoDramaDivideScaleImageNode(AgoNodeList * nodeList, AgoNode * anode)
 				new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_CONSTANT;
 				// create scalar object for border mode
 				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-				char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+				char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
 				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 				if (!dataBorder) return -1;
 				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
@@ -1514,7 +1514,7 @@ int agoDramaDivideRemapNode(AgoNodeList * nodeList, AgoNode * anode)
 			if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
 				// create scalar object for border mode
 				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-				char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+				char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
 				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 				if (!dataBorder) return -1;
 				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
@@ -1565,7 +1565,7 @@ int agoDramaDivideWarpAffineNode(AgoNodeList * nodeList, AgoNode * anode)
 		if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
 			// create scalar object for border mode
 			AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-			char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+			char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
 			AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 			if (!dataBorder) return -1;
 			agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
@@ -1603,7 +1603,7 @@ int agoDramaDivideWarpPerspectiveNode(AgoNodeList * nodeList, AgoNode * anode)
 		if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
 			// create scalar object for border mode
 			AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-			char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+			char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
 			AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 			if (!dataBorder) return -1;
 			agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
@@ -1631,7 +1631,7 @@ int agoDramaDivideCannyEdgeDetectorNode(AgoNodeList * nodeList, AgoNode * anode)
 	// create virtual stack data for canny edges
 	//   stack size: TBD (currently set the size of the image)
 	vx_uint32 canny_stack_size = paramList[0]->u.img.width * paramList[0]->u.img.height;
-	char desc[256]; sprintf(desc, "ago-canny-stack-virtual:%u", canny_stack_size);
+	char desc[256]; snprintf(desc, sizeof(desc), "ago-canny-stack-virtual:%u", canny_stack_size);
 	AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
 	AgoData * data = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 	if (!data) return -1;
@@ -1658,7 +1658,7 @@ int agoDramaDivideCannyEdgeDetectorNode(AgoNodeList * nodeList, AgoNode * anode)
 	int status = agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 #else
 	// create virtual data for sobel output
-	char descSobel[64]; sprintf(descSobel, "image-virtual:U016,%d,%d", paramList[0]->u.img.width, paramList[0]->u.img.height);
+	char descSobel[64]; snprintf(descSobel, sizeof(descSobel), "image-virtual:U016,%d,%d", paramList[0]->u.img.width, paramList[0]->u.img.height);
 	AgoData * dataSobel = agoCreateDataFromDescription(anode->ref.context, agraph, descSobel, false);
 	if (!dataSobel) return -1;
 	agoGenerateVirtualDataName(agraph, "canny-sobel", dataSobel->name);
@@ -1719,15 +1719,15 @@ int agoDramaDivideHarrisCornersNode(AgoNodeList * nodeList, AgoNode * anode)
 	// create virtual images for HG3, HVC, and XYS
 	AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
 	char desc[64];
-	sprintf(desc, "image-virtual:F332,%d,%d", paramList[0]->u.img.width, paramList[0]->u.img.height);
+	snprintf(desc, sizeof(desc), "image-virtual:F332,%d,%d", paramList[0]->u.img.width, paramList[0]->u.img.height);
 	AgoData * dataHG3 = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
-	sprintf(desc, "image-virtual:F032,%d,%d", paramList[0]->u.img.width, paramList[0]->u.img.height);
+	snprintf(desc, sizeof(desc), "image-virtual:F032,%d,%d", paramList[0]->u.img.width, paramList[0]->u.img.height);
 	AgoData * dataHVC = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
-	sprintf(desc, "array-virtual:KEYPOINT_XYS,%d", paramList[0]->u.img.width * paramList[0]->u.img.height); // TBD: this array can have smaller capacity
+	snprintf(desc, sizeof(desc), "array-virtual:KEYPOINT_XYS,%d", paramList[0]->u.img.width * paramList[0]->u.img.height); // TBD: this array can have smaller capacity
 	AgoData * dataXYS = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
-	sprintf(desc, "scalar-virtual:UINT32,%d", paramList[0]->u.img.width);
+	snprintf(desc, sizeof(desc), "scalar-virtual:UINT32,%d", paramList[0]->u.img.width);
 	AgoData * dataWidth = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
-	sprintf(desc, "scalar-virtual:UINT32,%d", paramList[0]->u.img.height);
+	snprintf(desc, sizeof(desc), "scalar-virtual:UINT32,%d", paramList[0]->u.img.height);
 	AgoData * dataHeight = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 	if (!dataHG3 || !dataHVC || !dataXYS || !dataWidth || !dataHeight) return -1;
 	agoGenerateVirtualDataName(agraph, "HG3", dataHG3->name);
@@ -1828,10 +1828,10 @@ int agoDramaDivideOpticalFlowPyrLkNode(AgoNodeList * nodeList, AgoNode * anode)
 	vx_status status;
 	char desc[256];
 	// add VX_KERNEL_AMD_OPTICAL_FLOW_PREPARE_LK_XY_XY node
-	sprintf(desc, "array-virtual:INT32,%d", paramList[1]->u.arr.capacity);
+	snprintf(desc, sizeof(desc), "array-virtual:INT32,%d", paramList[1]->u.arr.capacity);
 	AgoData * dataXYmap = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false); if (!dataXYmap) return -1; 
 	dataXYmap->name = agoGenerateVirtualDataName(agraph, "XYmap"); agoAddData(&agraph->dataList, dataXYmap);
-	sprintf(desc, "array-virtual:COORDINATES2D,%d", paramList[1]->u.arr.capacity);
+	snprintf(desc, sizeof(desc), "array-virtual:COORDINATES2D,%d", paramList[1]->u.arr.capacity);
 	AgoData * dataXY0 = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false); if (!dataXY0) return -1;
 	dataXY0->name = agoGenerateVirtualDataName(agraph, "XY"); agoAddData(&agraph->dataList, dataXY0);
 	anode->paramList[0] = dataXY0;      // tmpXY
@@ -1846,10 +1846,10 @@ int agoDramaDivideOpticalFlowPyrLkNode(AgoNodeList * nodeList, AgoNode * anode)
 	for (vx_int32 child = (vx_int32)anode->paramList[0]->u.pyr.levels - 1; child >= 0; child--) {
 		AgoData * imgOld = paramList[0]->children[child]; if (!imgOld) return VX_ERROR_INVALID_REFERENCE;
 		AgoData * imgNew = paramList[1]->children[child]; if (!imgNew) return VX_ERROR_INVALID_REFERENCE;
-		sprintf(desc, "array-virtual:COORDINATES2D,%d", paramList[1]->u.arr.capacity);
+		snprintf(desc, sizeof(desc), "array-virtual:COORDINATES2D,%d", paramList[1]->u.arr.capacity);
 		AgoData * dataXY1 = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false); if (!dataXY1) return -1;
 		dataXY1->name = agoGenerateVirtualDataName(agraph, "XY"); agoAddData(&agraph->dataList, dataXY1);
-		sprintf(desc, "scalar-virtual:FLOAT,%g", scale);
+		snprintf(desc, sizeof(desc), "scalar-virtual:FLOAT,%g", scale);
 		AgoData * dataScale = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false); if (!dataScale) return -1;
 		dataScale->name = agoGenerateVirtualDataName(agraph, "scale"); agoAddData(&agraph->dataList, dataScale);
 		anode->paramList[0] = dataXY1;      // new points

@@ -24,8 +24,8 @@
 #
 ################################################################################
 
-cmake_minimum_required (VERSION 3.0)
-project (openvx_color_convert)
+cmake_minimum_required(VERSION 3.5)
+project (openvx_channel_extract)
 
 set (CMAKE_CXX_STANDARD 14)
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
@@ -33,5 +33,5 @@ set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 include_directories (${ROCM_PATH}/include/mivisionx)
 link_directories    (${ROCM_PATH}/lib)
 
-add_executable(openvx_color_convert color_convert.cpp)
+add_executable(openvx_channel_extract channel_extract.cpp)
 target_link_libraries(${PROJECT_NAME} openvx)

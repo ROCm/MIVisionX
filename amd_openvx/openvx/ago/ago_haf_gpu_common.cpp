@@ -74,7 +74,7 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 	bool use_vload = ((dTypeShift > 2) && (gxoffset & ((1 << dTypeShift) - 1))) ? true : false;
 
 	// generate code
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"  { // load %dx%d bytes into local memory using %dx%d workgroup\n" // LMWidth, LMHeight, WGWidth, WGHeight
 		"    int loffset = ly * %d + (lx << %d);\n" // LMWidth, dTypeShift
@@ -90,10 +90,10 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 			return -1;
 		}
 		if (use_vload) {
-			sprintf(item, "    *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
+			snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
 		}
 		else {
-			sprintf(item, "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
+			snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
 		}
 		code += item;
 		// get configuration for extra load
@@ -102,7 +102,7 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 		int dSize = dWidth * dHeight;
 		int dWidthShift = leftmostbit(dWidth);
 		if (dWidth != (1 << dWidthShift)) dWidthShift = -1;
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"    bool doExtraLoad = false;\n"
 			"    if (ly < %d) {\n" // LMHeight - WGHeight
@@ -125,10 +125,10 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 			, gyoffset, dTypeShift, (WGWidth << LMdivWGWidthShift) - gxoffset, LMHeight);
 		code += item;
 		if (use_vload) {
-			sprintf(item, "      *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
+			snprintf(item, sizeof(item), "      *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
 		}
 		else {
-			sprintf(item, "      *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
+			snprintf(item, sizeof(item), "      *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
 		}
 		code += item;
 		code += "    }\n";
@@ -136,21 +136,21 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 	else {
 		for (int y = 0; y < LMHeight; y += WGHeight) {
 			if ((LMHeight - y) < WGHeight) {
-				sprintf(item, "   if (ly < %d) {\n", LMHeight - y);
+				snprintf(item, sizeof(item), "   if (ly < %d) {\n", LMHeight - y);
 				code += item;
 			}
 			if (y > 0) {
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					"    loffset += %d * %d;\n" // WGHeight, LMWidth
 					"    goffset += %d * gstride;\n" // WGHeight
 					, WGHeight, LMWidth, WGHeight);
 				code += item;
 			}
 			if (use_vload) {
-				sprintf(item, "    *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
+				snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
 			}
 			else {
-				sprintf(item, "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
+				snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
 			}
 			code += item;
 			if (dGroups > 1) {
@@ -165,16 +165,16 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 						"    int goffset_t = goffset;\n";
 				}
 				for (int ix = 1; ix < dGroups; ix++) {
-					sprintf(item,
+					snprintf(item, sizeof(item),
 						"    loffset_t += %d;\n" // WGWidth << dTypeShift
 						"    goffset_t += %d;\n" // WGWidth << dTypeShift
 						, WGWidth << dTypeShift, WGWidth << dTypeShift);
 					code += item;
 					if (use_vload) {
-						sprintf(item, "    *(__local %s *)(lbuf + loffset_t) = vload%c(0, (__global uint *)(gbuf + goffset_t));\n", dType, dType[4]);
+						snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset_t) = vload%c(0, (__global uint *)(gbuf + goffset_t));\n", dType, dType[4]);
 					}
 					else {
-						sprintf(item, "    *(__local %s *)(lbuf + loffset_t) = *(__global %s *)(gbuf + goffset_t);\n", dType, dType);
+						snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset_t) = *(__global %s *)(gbuf + goffset_t);\n", dType, dType);
 					}
 					code += item;
 				}
@@ -196,7 +196,7 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 			int dWidthShift = leftmostbit(dWidth);
 			if (dWidth != (1 << dWidthShift)) dWidthShift = -1;
 			// compute start addresses
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"    __local uchar * lbufptr = lbuf + %d;\n" // (WGWidth << LMdivWGWidthShift)
 				"    goffset = (gy - ly - %d) * gstride + ((gx - lx) << %d) + %d;\n" // gyoffset, dTypeShift, (WGWidth << LMdivWGWidthShift) - gxoffset
 				, (WGWidth << LMdivWGWidthShift), gyoffset, dTypeShift, (WGWidth << LMdivWGWidthShift) - gxoffset);
@@ -204,31 +204,31 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 			// load memory
 			for (int dCount = 0; dCount < dSize; dCount += WGWidth * WGHeight) {
 				// compute rx & ry of remaining region
-				if (dCount == 0) sprintf(item, "    int id = ly * %d + lx, rx, ry;\n", WGWidth);
-				else             sprintf(item, "    id += %d;\n", WGWidth * WGHeight);
+				if (dCount == 0) snprintf(item, sizeof(item), "    int id = ly * %d + lx, rx, ry;\n", WGWidth);
+				else             snprintf(item, sizeof(item), "    id += %d;\n", WGWidth * WGHeight);
 				code += item;
 				if (dWidthShift < 0) {
-					sprintf(item,
+					snprintf(item, sizeof(item),
 						"    ry = id / %d;\n" // dWidth
 						"    rx = id - ry * %d;\n" // dWidth
 						, dWidth, dWidth);
 				}
 				else {
-					sprintf(item,
+					snprintf(item, sizeof(item),
 						"    ry = id >> %d;\n" // dWidthShift
 						"    rx = id & %d;\n" // dWidth-1
 						, dWidthShift, dWidth - 1);
 				}
 				code += item;
 				if ((dSize - dCount) < (WGWidth * WGHeight)) {
-					sprintf(item, "   if (ry < %d) {\n", dHeight);
+					snprintf(item, sizeof(item), "   if (ry < %d) {\n", dHeight);
 					code += item;
 				}
 				if (use_vload) {
-					sprintf(item, "    *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = vload%c(0, (__global uint *)(gbuf + goffset + ry * gstride + (rx << %d)));\n", dType, LMWidth, dTypeShift, dType[4], dTypeShift);
+					snprintf(item, sizeof(item), "    *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = vload%c(0, (__global uint *)(gbuf + goffset + ry * gstride + (rx << %d)));\n", dType, LMWidth, dTypeShift, dType[4], dTypeShift);
 				}
 				else {
-					sprintf(item, "    *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = *(__global %s *)(gbuf + goffset + ry * gstride + (rx << %d));\n", dType, LMWidth, dTypeShift, dType, dTypeShift);
+					snprintf(item, sizeof(item), "    *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = *(__global %s *)(gbuf + goffset + ry * gstride + (rx << %d));\n", dType, LMWidth, dTypeShift, dType, dTypeShift);
 				}
 				code += item;
 				if ((dSize - dCount) < (WGWidth * WGHeight)) {
@@ -291,7 +291,7 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 	bool use_vload = ((dTypeShift > 2) && (gxoffset & ((1 << dTypeShift) - 1))) ? true : false;
 
 	// generate code
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"  { // load %dx%d bytes into local memory using %dx%d workgroup\n" // LMWidth, LMHeight, WGWidth, WGHeight
 		"    int loffset = ly * %d + (lx << %d);\n" // LMWidth, dTypeShift
@@ -307,10 +307,10 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 			return -1;
 		}
 		if (use_vload) {
-			sprintf(item, "    *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
+			snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
 		}
 		else {
-			sprintf(item, "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
+			snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
 		}
 		code += item;
 		// get configuration for extra load
@@ -319,7 +319,7 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 		int dSize = dWidth * dHeight;
 		int dWidthShift = leftmostbit(dWidth);
 		if (dWidth != (1 << dWidthShift)) dWidthShift = -1;
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"    bool doExtraLoad = false;\n"
 			"    if (ly < %d) {\n" // LMHeight - WGHeight
@@ -342,10 +342,10 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 			, gyoffset, dTypeShift, (WGWidth << LMdivWGWidthShift) - gxoffset, LMHeight);
 		code += item;
 		if (use_vload) {
-			sprintf(item, "      *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
+			snprintf(item, sizeof(item), "      *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
 		}
 		else {
-			sprintf(item, "      *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
+			snprintf(item, sizeof(item), "      *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
 		}
 		code += item;
 		code += "    }\n";
@@ -353,11 +353,11 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 	else {
 		for (int y = 0; y < LMHeight; y += WGHeight) {
 			if ((LMHeight - y) < WGHeight) {
-				sprintf(item, "    if (ly < %d) {\n", LMHeight - y);
+				snprintf(item, sizeof(item), "    if (ly < %d) {\n", LMHeight - y);
 				code += item;
 			}
 			if (y > 0) {
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					"    loffset += %d * %d;\n" // WGHeight, LMWidth
 					"    goffset += %d * gstride;\n" // WGHeight
 					"    int sidx = gbuf + goffset - p1_buf - p1_offset;\n"  // gbuf = p1_buf + p1_offset + (((gy - ly) << 1) + 1) * gstride + ((gx - lx) << 3). Subtract p1_buf and p1_offset to get the actual offset
@@ -366,10 +366,10 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 				code += item;
 			}
 			if (use_vload) {
-				sprintf(item, "    *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
+				snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = vload%c(0, (__global uint *)(gbuf + goffset));\n", dType, dType[4]);
 			}
 			else {
-				sprintf(item, "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
+				snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
 			}
 			code += item;
 			if (dGroups > 1) {
@@ -384,16 +384,16 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 						"    int goffset_t = goffset;\n";
 				}
 				for (int ix = 1; ix < dGroups; ix++) {
-					sprintf(item,
+					snprintf(item, sizeof(item),
 						"    loffset_t += %d;\n" // WGWidth << dTypeShift
 						"    goffset_t += %d;\n" // WGWidth << dTypeShift
 						, WGWidth << dTypeShift, WGWidth << dTypeShift);
 					code += item;
 					if (use_vload) {
-						sprintf(item, "    *(__local %s *)(lbuf + loffset_t) = vload%c(0, (__global uint *)(gbuf + goffset_t));\n", dType, dType[4]);
+						snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset_t) = vload%c(0, (__global uint *)(gbuf + goffset_t));\n", dType, dType[4]);
 					}
 					else {
-						sprintf(item, "    *(__local %s *)(lbuf + loffset_t) = *(__global %s *)(gbuf + goffset_t);\n", dType, dType);
+						snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset_t) = *(__global %s *)(gbuf + goffset_t);\n", dType, dType);
 					}
 					code += item;
 				}
@@ -415,7 +415,7 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 			int dWidthShift = leftmostbit(dWidth);
 			if (dWidth != (1 << dWidthShift)) dWidthShift = -1;
 			// compute start addresses
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				"    __local uchar * lbufptr = lbuf + %d;\n" // (WGWidth << LMdivWGWidthShift)
 				"    goffset = (gy - ly - %d) * gstride + ((gx - lx) << %d) + %d;\n" // gyoffset, dTypeShift, (WGWidth << LMdivWGWidthShift) - gxoffset
 				, (WGWidth << LMdivWGWidthShift), gyoffset, dTypeShift, (WGWidth << LMdivWGWidthShift) - gxoffset);
@@ -423,35 +423,35 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 			// load memory
 			for (int dCount = 0; dCount < dSize; dCount += WGWidth * WGHeight) {
 				// compute rx & ry of remaining region
-				if (dCount == 0) sprintf(item, "    int id = ly * %d + lx, rx, ry;\n", WGWidth);
-				else             sprintf(item, "    id += %d;\n", WGWidth * WGHeight);
+				if (dCount == 0) snprintf(item, sizeof(item), "    int id = ly * %d + lx, rx, ry;\n", WGWidth);
+				else             snprintf(item, sizeof(item), "    id += %d;\n", WGWidth * WGHeight);
 				code += item;
 				if (dWidthShift < 0) {
-					sprintf(item,
+					snprintf(item, sizeof(item),
 						"    ry = id / %d;\n" // dWidth
 						"    rx = id - ry * %d;\n" // dWidth
 						, dWidth, dWidth);
 				}
 				else {
-					sprintf(item,
+					snprintf(item, sizeof(item),
 						"    ry = id >> %d;\n" // dWidthShift
 						"    rx = id & %d;\n" // dWidth-1
 						, dWidthShift, dWidth - 1);
 				}
 				code += item;
-				sprintf(item, 
+				snprintf(item, sizeof(item), 
 					"    int sidx2 = gbuf + goffset - p1_buf - p1_offset + ry * gstride + (rx << %d);\n" // gbuf = p1_buf + p1_offset + (((gy - ly) << 1) + 1) * gstride + ((gx - lx) << 3). Subtract p1_buf and p1_offset to get the actual offset
 					, dTypeShift);
 				code += item;
 				if ((dSize - dCount) < (WGWidth * WGHeight)) {
-					sprintf(item, "    if (ry < %d && (sidx2 < %d)) {\n", dHeight, srcImageBufferSize);
+					snprintf(item, sizeof(item), "    if (ry < %d && (sidx2 < %d)) {\n", dHeight, srcImageBufferSize);
 					code += item;
 				}
 				if (use_vload) {
-					sprintf(item, "    *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = vload%c(0, (__global uint *)(gbuf + goffset + ry * gstride + (rx << %d)));\n", dType, LMWidth, dTypeShift, dType[4], dTypeShift);
+					snprintf(item, sizeof(item), "    *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = vload%c(0, (__global uint *)(gbuf + goffset + ry * gstride + (rx << %d)));\n", dType, LMWidth, dTypeShift, dType[4], dTypeShift);
 				}
 				else {
-					sprintf(item, "    *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = *(__global %s *)(gbuf + goffset + ry * gstride + (rx << %d));\n", dType, LMWidth, dTypeShift, dType, dTypeShift);
+					snprintf(item, sizeof(item), "    *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = *(__global %s *)(gbuf + goffset + ry * gstride + (rx << %d));\n", dType, LMWidth, dTypeShift, dType, dTypeShift);
 				}
 				code += item;
 				if ((dSize - dCount) < (WGWidth * WGHeight)) {

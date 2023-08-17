@@ -592,7 +592,7 @@ static vx_status DumpInternalTables(ls_context stitch, const char * fileNamePref
 			bool isIntermediateTmpData = false, isForCpuUseOnly = false;
 			const char * fileNameSuffix = GetFileNameSuffix(stitch, refList[i], isIntermediateTmpData, isForCpuUseOnly);
 			if (fileNameSuffix && (!isIntermediateTmpData || dumpIntermediateTmpDataToo)) {
-				char fileName[1024]; sprintf(fileName, "%s-%s", fileNamePrefix, fileNameSuffix);
+				char fileName[1024]; snprintf(fileName, sizeof(fileName), "%s-%s", fileNamePrefix, fileNameSuffix);
 				vx_status status = DumpReference(refList[i], fileName);
 				if (status != VX_SUCCESS)
 					return status;
@@ -603,19 +603,19 @@ static vx_status DumpInternalTables(ls_context stitch, const char * fileNamePref
 		for (vx_int32 level = 0; level < stitch->num_bands; level++) {
 			vx_status status;
 			char fileName[1024];
-			sprintf(fileName, "%s-blend-pyr-mask-%d.raw", fileNamePrefix, level);
+			snprintf(fileName, sizeof(fileName), "%s-blend-pyr-mask-%d.raw", fileNamePrefix, level);
 			status = DumpImage(stitch->pStitchMultiband[level].WeightPyrImgGaussian, fileName);
 			if (status != VX_SUCCESS)
 				return status;
-			sprintf(fileName, "%s-blend-pyr-gauss-%d.raw", fileNamePrefix, level);
+			snprintf(fileName, sizeof(fileName), "%s-blend-pyr-gauss-%d.raw", fileNamePrefix, level);
 			status = DumpImage(stitch->pStitchMultiband[level].DstPyrImgGaussian, fileName);
 			if (status != VX_SUCCESS)
 				return status;
-			sprintf(fileName, "%s-blend-pyr-lap-%d.raw", fileNamePrefix, level);
+			snprintf(fileName, sizeof(fileName), "%s-blend-pyr-lap-%d.raw", fileNamePrefix, level);
 			status = DumpImage(stitch->pStitchMultiband[level].DstPyrImgLaplacian, fileName);
 			if (status != VX_SUCCESS)
 				return status;
-			sprintf(fileName, "%s-blend-pyr-lap-rec-%d.raw", fileNamePrefix, level);
+			snprintf(fileName, sizeof(fileName), "%s-blend-pyr-lap-rec-%d.raw", fileNamePrefix, level);
 			status = DumpImage(stitch->pStitchMultiband[level].DstPyrImgLaplacianRec, fileName);
 			if (status != VX_SUCCESS)
 				return status;
@@ -722,7 +722,7 @@ static vx_status quickSetupDumpTables(ls_context stitch)
 			bool isIntermediateTmpData = false, isForCpuUseOnly = false;
 			const char * fileNameSuffix = GetFileNameSuffix(stitch, refList[i], isIntermediateTmpData, isForCpuUseOnly);
 			if (fileNameSuffix && (!isIntermediateTmpData)) {
-				char fileName[1024]; sprintf(fileName, "%s",fileNameSuffix);
+				char fileName[1024]; snprintf(fileName, sizeof(fileName), "%s",fileNameSuffix);
 				vx_status status = DumpReference(refList[i], fileName);
 				if (status != VX_SUCCESS)
 					return status;
@@ -900,7 +900,7 @@ static vx_status quickSetupLoadTables(ls_context stitch)
 			bool isIntermediateTmpData = false, isForCpuUseOnly = false;
 			const char * fileNameSuffix = GetFileNameSuffix(stitch, refList[i], isIntermediateTmpData, isForCpuUseOnly);
 			if (fileNameSuffix && (!isIntermediateTmpData)) {
-				char fileName[1024]; sprintf(fileName, "%s", fileNameSuffix);
+				char fileName[1024]; snprintf(fileName, sizeof(fileName), "%s", fileNameSuffix);
 				vx_status status = loadReference(refList[i], fileName);
 				if (status != VX_SUCCESS)
 					return status;
@@ -3515,7 +3515,7 @@ LIVE_STITCH_API_ENTRY vx_status VX_API_CALL lsExportConfiguration(ls_context sti
 					camFileFormat = s + 1;
 			}
 			else {
-				sprintf(camFileName, camFileFormat, i);
+				snprintf(camFileName, sizeof(camFileName), camFileFormat, i);
 			}
 			// add camera entry
 			vx_uint32 width = stitch->camera_buffer_width / stitch->num_camera_columns;
@@ -3773,7 +3773,7 @@ LIVE_STITCH_API_ENTRY vx_status VX_API_CALL lsExportConfiguration(ls_context sti
 								ERROR_CHECK_STATUS_(vxQueryImage((vx_image)ref, VX_IMAGE_WIDTH, &width, sizeof(width)));
 								ERROR_CHECK_STATUS_(vxQueryImage((vx_image)ref, VX_IMAGE_HEIGHT, &height, sizeof(height)));
 								ERROR_CHECK_STATUS_(vxQueryImage((vx_image)ref, VX_IMAGE_FORMAT, &format, sizeof(format)));
-								char name[64]; sprintf(name, "img_%02d", genImageCount++);
+								char name[64]; snprintf(name, sizeof(name), "img_%02d", genImageCount++);
 								fprintf(fp, "data %s = image:%d,%d,%4.4s\n", name, width, height, (const char *)&format);
 								refNameList[ref] = name;
 							}
@@ -3781,7 +3781,7 @@ LIVE_STITCH_API_ENTRY vx_status VX_API_CALL lsExportConfiguration(ls_context sti
 								vx_enum data_type; char value[1024] = { 0 };
 								ERROR_CHECK_STATUS_(vxQueryScalar((vx_scalar)ref, VX_SCALAR_TYPE, &data_type, sizeof(data_type)));
 								ERROR_CHECK_STATUS_(vxReadScalarValue((vx_scalar)ref, value));
-								char name[64]; sprintf(name, "scalar_%02d", genScalarCount++);
+								char name[64]; snprintf(name, sizeof(name), "scalar_%02d", genScalarCount++);
 								if (data_type == VX_TYPE_UINT32) fprintf(fp, "data %s = scalar:VX_TYPE_UINT32,%u\n", name, *(vx_uint32 *)value);
 								else if (data_type == VX_TYPE_ENUM) fprintf(fp, "data %s = scalar:VX_TYPE_ENUM,0x%08x\n", name, *(vx_enum *)value);
 								else if (data_type == VX_TYPE_INT32) fprintf(fp, "data %s = scalar:VX_TYPE_INT32,%d\n", name, *(vx_int32 *)value);

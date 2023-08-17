@@ -223,7 +223,7 @@ static vx_status VX_CALLBACK merge_opencl_codegen(
 	vx_float32 wt_mul_factor = 1.0f / 255.0f;
 	// kernel header and reading
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"float4 amd_unpack(uint src)\n"

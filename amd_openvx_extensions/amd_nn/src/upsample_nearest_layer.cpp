@@ -111,7 +111,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     if (num_of_dims == 4) {
         char item[8192];
         if (type == VX_TYPE_FLOAT32) {
-        sprintf(item,
+        snprintf(item, sizeof(item),
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
                 "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                 "{ \n"
@@ -128,7 +128,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "     *(__global float *)&out[out_stride.s1+out_stride.s0] = value;\n"
                 " }\n", opencl_kernel_function_name);
         } else {
-            sprintf(item,
+            snprintf(item, sizeof(item),
                     "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
                     "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
                     "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride) \n"

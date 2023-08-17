@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 project(amd_openvx)
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
@@ -31,6 +31,9 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     endif()
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900;gfx906;gfx908;gfx90a;gfx940;gfx1030;gfx1031;gfx1032")
+    if (BUILD_WITH_AMD_ADVANCE)
+        set(DEFAULT_AMDGPU_TARGETS ${DEFAULT_AMDGPU_TARGETS} "gfx941")
+    endif()
     set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
     find_package(HIP QUIET)
     if(HIP_FOUND)

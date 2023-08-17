@@ -719,7 +719,7 @@ vx_status loadBufferFromMultipleImages(cl_mem mem, const char * fileName, vx_uin
 	for (vx_uint32 row = 0, camIndex = 0; row < num_rows; row++) {
 		for (vx_uint32 column = 0; column < num_cols; column++, camIndex++) {
 			char bmpFileName[256] = { 0 };
-			if (strstr(fileName, "%")) sprintf(bmpFileName, fileName, camIndex);
+			if (strstr(fileName, "%")) snprintf(bmpFileName, sizeof(bmpFileName), fileName, camIndex);
 			else {
 				vx_uint32 pos = 0;
 				for (vx_uint32 skipItem = 0; skipItem < camIndex; skipItem++) {
@@ -822,7 +822,7 @@ vx_status saveBufferToMultipleImages(cl_mem mem, const char * fileName, vx_uint3
 		for (vx_uint32 row = 0, camIndex = 0; row < num_rows; row++) {
 			for (vx_uint32 column = 0; column < num_cols; column++, camIndex++) {
 				char bmpFileName[256] = { 0 };
-				if (strstr(fileName, "%")) sprintf(bmpFileName, fileName, camIndex);
+				if (strstr(fileName, "%")) snprintf(bmpFileName, sizeof(bmpFileName), fileName, camIndex);
 				else {
 					vx_uint32 pos = 0;
 					for (vx_uint32 skipItem = 0; skipItem < camIndex; skipItem++) {
@@ -863,7 +863,7 @@ vx_status saveBufferToMultipleImages(cl_mem mem, const char * fileName, vx_uint3
 	else if (buffer_format == VX_DF_IMAGE_RGBX) {
 		for (vx_uint32 row = 0, camIndex = 0; row < num_rows; row++) {
 			for (vx_uint32 column = 0; column < num_cols; column++, camIndex++) {
-				char bmpFileName[256]; sprintf(bmpFileName, fileName, camIndex);
+				char bmpFileName[256]; snprintf(bmpFileName, sizeof(bmpFileName), fileName, camIndex);
 				FILE * fp = fopen(bmpFileName, "wb"); if (!fp) return Error("ERROR: unable to create: %s", bmpFileName);
 				vx_uint32 size = 4 * width * height;
 				short bmpHeader[122 / 2] = {
@@ -887,7 +887,7 @@ vx_status saveBufferToMultipleImages(cl_mem mem, const char * fileName, vx_uint3
 		unsigned char * buf = new unsigned char[width * 3]; if (!buf) return Error("ERROR: new[%d] failed", width * 3);
 		for (vx_uint32 row = 0, camIndex = 0; row < num_rows; row++) {
 			for (vx_uint32 column = 0; column < num_cols; column++, camIndex++) {
-				char bmpFileName[256]; sprintf(bmpFileName, fileName, camIndex);
+				char bmpFileName[256]; snprintf(bmpFileName, sizeof(bmpFileName), fileName, camIndex);
 				FILE * fp = fopen(bmpFileName, "wb"); if (!fp) return Error("ERROR: unable to create: %s", bmpFileName);
 				vx_uint32 size = 3 * width * height;
 				short bmpHeader[54 / 2] = {

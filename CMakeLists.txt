@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 project(MIVisionX)
 set(VERSION "2.5.0")
@@ -50,6 +50,7 @@ option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
 option(BUILD_DEV        "Build MIVisionX Development Package"      ON)
 option(AMD_FP16_SUPPORT "Build MIVisionX with float16 Support"    OFF)
+option(BUILD_WITH_AMD_ADVANCE "Build MIVisionX for advanced AMD GPU Architecture"    OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")
@@ -84,7 +85,7 @@ endif()
 if(NOT DEFINED BACKEND)
   set(BACKEND "HIP")   # set default backend to HIP
 else()
-  if("${BACKEND}" STREQUAL "OPENCL" OR "${BACKEND}" STREQUAL "OCL" OR "${BACKEND}" STREQUAL "OpenCL")
+  if("${BACKEND}" STREQUAL "OPENCL" OR "${BACKEND}" STREQUAL "OCL" OR "${BACKEND}" STREQUAL "OpenCL" OR "${BACKEND}" STREQUAL "opencl")
     set(BACKEND "OPENCL")
   elseif("${BACKEND}" STREQUAL "HIP" OR "${BACKEND}" STREQUAL "hip")
     set(BACKEND "HIP")
@@ -150,11 +151,10 @@ endif()
 
 enable_testing()
 include(CTest)
-add_subdirectory(tests/openvx)
+add_subdirectory(tests/openvx_api_tests)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})
-set(CPACK_PACKAGE_NAME          "mivisionx")
 set(CPACK_PACKAGE_LICENSE       "MIT")
 set(CPACK_PACKAGE_CONTACT       "MIVisionX Support <mivisionx.support@amd.com>")
 set(CPACK_PACKAGE_VENDOR        "AMD ROCm")
@@ -163,9 +163,11 @@ set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
 
 if(ENABLE_ASAN_PACKAGING)
+  set(CPACK_PACKAGE_NAME          "mivisionx-asan")
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION      "AMD MIVisionX address sanitizer libraries")
   set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX address sanitizer libraries")
 else()
+  set(CPACK_PACKAGE_NAME          "mivisionx")
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION   "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit
   MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, \
 utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly \
@@ -204,6 +206,8 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
   set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
+# Set the dependent packages
+set(MIVISIONX_PACKAGE_REQS "half, rpp, rocblas, miopen-hip, migraphx")
 # set dependency to ROCm if set to TRUE, default to OFF
 set(ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
 if(ROCM_DEP_ROCMCORE)
@@ -212,9 +216,11 @@ if(ROCM_DEP_ROCMCORE)
   else()
     set(_rocm_core_pkg "rocm-core")
   endif()
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${_rocm_core_pkg}")
-  set(CPACK_RPM_PACKAGE_REQUIRES   "${_rocm_core_pkg}")
+  set(MIVISIONX_PACKAGE_REQS  "${MIVISIONX_PACKAGE_REQS}, ${_rocm_core_pkg}")
 endif()
+
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "${MIVISIONX_PACKAGE_REQS}, rocblas-dev, miopen-hip-dev, migraphx-dev")
+set(CPACK_RPM_PACKAGE_REQUIRES   "${MIVISIONX_PACKAGE_REQS}, rocblas-devel, miopen-hip-devel, migraphx-devel")
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(COMMAND rpm --eval %{?dist}

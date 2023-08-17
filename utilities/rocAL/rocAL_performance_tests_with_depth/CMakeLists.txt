@@ -24,7 +24,7 @@
 #
 ################################################################################
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 project (rocAL_performance_tests_with_depth)
 

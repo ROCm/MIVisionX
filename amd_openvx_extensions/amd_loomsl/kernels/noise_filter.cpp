@@ -181,7 +181,7 @@ static vx_status VX_CALLBACK noise_filter_opencl_codegen(
 
 	// kernel header and reading
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
 		"float4 amd_unpack(uint src)\n"

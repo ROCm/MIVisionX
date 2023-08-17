@@ -124,7 +124,7 @@ def generateCMakeFiles(graph, outputFolder):
         generateLicenseForScript(f)
         f.write(
             """
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 project (mvdeploy)
 
 set (CMAKE_CXX_STANDARD 14)
@@ -273,7 +273,7 @@ def generateCMakeExtras(graph, outputFolder):
         generateLicenseForScript(f)
         f.write(
             """
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 project (mv_extras)
 set (CMAKE_CXX_STANDARD 14)
 list(APPEND CMAKE_MODULE_PATH ../cmake)
@@ -1085,7 +1085,7 @@ static mv_status copyTensor(std::string fileName, vx_size *dims, vx_size *stride
     {
         for(size_t n = 0; n < dims[3]; n++) {
             char imgFileName[1024];
-            sprintf(imgFileName, fileName.c_str(), (int)n);
+            snprintf(imgFileName, sizeof(imgFileName), fileName.c_str(), (int)n);
             Mat img = imread(imgFileName, CV_LOAD_IMAGE_COLOR);
             if(!img.data || img.rows != dims[1] || img.cols != dims[0]) {
                 printf("ERROR: invalid image or dimensions: %%s\\n", imgFileName);
@@ -1246,8 +1246,8 @@ MIVID_API_ENTRY mv_status MIVID_API_CALL mvGetOutput(mivid_handle handle, int ou
         vxQueryTensor(handle->outputs[output_num], VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
         vxQueryTensor(handle->outputs[output_num], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
         vxQueryTensor(handle->outputs[output_num], VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
-        if((data_type != VX_TYPE_FLOAT32) && (data_type != VX_TYPE_FLOAT16)) {
-            std::cerr << "ERROR: mvGetOutput() supports only VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 " << std::endl;
+        if((data_type != VX_TYPE_FLOAT32) && (data_type != VX_TYPE_FLOAT16) && (data_type != VX_TYPE_INT64)) {
+            std::cerr << "ERROR: mvGetOutput() supports only VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT64" << std::endl;
             return MV_ERROR_INVALID_TYPE;
         }
         vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
@@ -1955,7 +1955,7 @@ int main(int argc, const char ** argv)
             {
                 for(size_t n = 0; n < inp_dims[3]; n++) {
                     char imgFileName[1024];
-                    sprintf(imgFileName, inpFileName.c_str(), (int)n);
+                    snprintf(imgFileName, sizeof(imgFileName), inpFileName.c_str(), (int)n);
                     unsigned char *img_data;
                     Mat img = imread(imgFileName, CV_LOAD_IMAGE_COLOR);
                     img_data = img.data;

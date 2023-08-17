@@ -32,7 +32,7 @@ static void clDumpBuffer(const char * fileNameFormat, cl_command_queue opencl_cm
 {
     if(!data->opencl_buffer) return;
     static int dumpBufferCount = 0; dumpBufferCount++;
-    char fileName[1024]; sprintf(fileName, fileNameFormat, dumpBufferCount);
+    char fileName[1024]; snprintf(fileName, sizeof(fileName), fileNameFormat, dumpBufferCount);
     cl_mem opencl_buffer = data->opencl_buffer;
     cl_uint gpu_buffer_offset = data->gpu_buffer_offset;
     cl_uint size = (cl_uint)0;
@@ -941,7 +941,7 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
                         int64_t etime = agoGetClockCounter();
                         graph->gpu_perf.buffer_write += etime - stime;
 #if ENABLE_DEBUG_DUMP_CL_BUFFERS
-                        char fileName[128]; sprintf(fileName, "input_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
+                        char fileName[128]; snprintf(fileName, sizeof(fileName), "input_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
                         clDumpBuffer(fileName, opencl_cmdq, dataToSync);
 #endif
                     }
@@ -1199,7 +1199,7 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
                     int64_t etime = agoGetClockCounter();
                     graph->gpu_perf.buffer_write += etime - stime;
 #if ENABLE_DEBUG_DUMP_CL_BUFFERS
-                    char fileName[128]; sprintf(fileName, "input_%%04d_tensor.raw");
+                    char fileName[128]; snprintf(fileName, sizeof(fileName), "input_%%04d_tensor.raw");
                     clDumpBuffer(fileName, opencl_cmdq, dataToSync);
 #endif
                 }
@@ -1337,47 +1337,47 @@ static std::string agoGpuOclData2Decl(AgoData * data, vx_uint32 index, vx_uint32
     // add the object to argument
     if (data->ref.type == VX_TYPE_IMAGE) {
         if (dataFlags & NODE_OPENCL_TYPE_NEED_IMGSIZE) {
-            sprintf(item, "uint p%d_width, uint p%d_height, ", index, index);
+            snprintf(item, sizeof(item), "uint p%d_width, uint p%d_height, ", index, index);
             code += item;
         }
-        sprintf(item, "__global uchar * p%d_buf, uint p%d_stride, uint p%d_offset", index, index, index);
+        snprintf(item, sizeof(item), "__global uchar * p%d_buf, uint p%d_stride, uint p%d_offset", index, index, index);
         code += item;
         if (dataFlags & DATA_OPENCL_FLAG_NEED_LOCAL) {
-            sprintf(item, ", __local uchar * p%d_lbuf", index);
+            snprintf(item, sizeof(item), ", __local uchar * p%d_lbuf", index);
             code += item;
         }
     }
     else if (data->ref.type == VX_TYPE_ARRAY) {
-        sprintf(item, "__global uchar * p%d_buf, uint p%d_offset, uint p%d_numitems", index, index, index);
+        snprintf(item, sizeof(item), "__global uchar * p%d_buf, uint p%d_offset, uint p%d_numitems", index, index, index);
         code += item;
     }
     else if (data->ref.type == VX_TYPE_SCALAR) {
-        sprintf(item, "%s p%d", (data->u.scalar.type == VX_TYPE_FLOAT32) ? "float" : "uint", index);
+        snprintf(item, sizeof(item), "%s p%d", (data->u.scalar.type == VX_TYPE_FLOAT32) ? "float" : "uint", index);
         code += item;
     }
     else if (data->ref.type == VX_TYPE_THRESHOLD) {
-        sprintf(item, "%s p%d", (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) ? "uint2" : "uint", index);
+        snprintf(item, sizeof(item), "%s p%d", (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) ? "uint2" : "uint", index);
         code += item;
     }
     else if (data->ref.type == VX_TYPE_MATRIX) {
         if (data->u.mat.type == VX_TYPE_FLOAT32 && data->u.mat.columns == 2 && data->u.mat.rows == 3) {
-            sprintf(item, "ago_affine_matrix_t p%d", index);
+            snprintf(item, sizeof(item), "ago_affine_matrix_t p%d", index);
             code += item;
         }
         else if (data->u.mat.type == VX_TYPE_FLOAT32 && data->u.mat.columns == 3 && data->u.mat.rows == 3) {
-            sprintf(item, "ago_perspective_matrix_t p%d", index);
+            snprintf(item, sizeof(item), "ago_perspective_matrix_t p%d", index);
             code += item;
         }
         else if (data->u.mat.type == VX_TYPE_FLOAT32) {
-            sprintf(item, "__global float p%d_buf, uint p%d_columns, p%d_uint rows", index, index, index);
+            snprintf(item, sizeof(item), "__global float p%d_buf, uint p%d_columns, p%d_uint rows", index, index, index);
             code += item;
         }
         else if (data->u.mat.type == VX_TYPE_INT32) {
-            sprintf(item, "__global int p%d_buf, uint p%d_columns, p%d_uint rows", index, index, index);
+            snprintf(item, sizeof(item), "__global int p%d_buf, uint p%d_columns, p%d_uint rows", index, index, index);
             code += item;
         }
         else if (data->u.mat.type == VX_TYPE_UINT8) {
-            sprintf(item, "__global uchar p%d_buf, uint p%d_columns, p%d_uint rows", index, index, index);
+            snprintf(item, sizeof(item), "__global uchar p%d_buf, uint p%d_columns, p%d_uint rows", index, index, index);
             code += item;
         }
         else {
@@ -1385,21 +1385,21 @@ static std::string agoGpuOclData2Decl(AgoData * data, vx_uint32 index, vx_uint32
         }
     }
     else if (data->ref.type == VX_TYPE_CONVOLUTION) {
-        sprintf(item, "COEF_" VX_FMT_SIZE "x" VX_FMT_SIZE " p%d", data->u.conv.columns, data->u.conv.rows, index);
+        snprintf(item, sizeof(item), "COEF_" VX_FMT_SIZE "x" VX_FMT_SIZE " p%d", data->u.conv.columns, data->u.conv.rows, index);
         code += item;
     }
     else if (data->ref.type == VX_TYPE_LUT) {
         if (data->u.lut.type == VX_TYPE_UINT8) {
-            sprintf(item, "__read_only image1d_t p%d", index);
+            snprintf(item, sizeof(item), "__read_only image1d_t p%d", index);
             code += item;
         }
         else if (data->u.lut.type == VX_TYPE_INT16) {
-            sprintf(item, "__global short * p%d_buf, uint p%d_count, uint p%d_offset", index, index, index);
+            snprintf(item, sizeof(item), "__global short * p%d_buf, uint p%d_count, uint p%d_offset", index, index, index);
             code += item;
         }
     }
     else if (data->ref.type == VX_TYPE_REMAP) {
-        sprintf(item, "__global uchar * p%d_buf, uint p%d_stride", index, index);
+        snprintf(item, sizeof(item), "__global uchar * p%d_buf, uint p%d_stride", index, index);
         code += item;
     }
     else {
@@ -1839,7 +1839,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
     for (size_t index = 0; index < supernode->nodeList.size(); index++) {
         // get node and set node name
         AgoNode * node = supernode->nodeList[index];
-        sprintf(node->opencl_name, "_n7%04d6f", (int)index ^ 3123);
+        snprintf(node->opencl_name, sizeof(node->opencl_name), "_n7%04d6f", (int)index ^ 3123);
         // generate kernel function code
         int status = VX_ERROR_NOT_IMPLEMENTED;
         if (node->akernel->func) {
@@ -1855,7 +1855,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
             // generation function declaration
             std::string code2;
             char item[512];
-            sprintf(item, "void %s(", node->opencl_name); code2 = item;
+            snprintf(item, sizeof(item), "void %s(", node->opencl_name); code2 = item;
             for (vx_uint32 i = 0; i < node->paramCount; i++) {
                 AgoData * data = node->paramList[i];
                 if (data) {
@@ -1864,19 +1864,19 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
                     if (data->ref.type == VX_TYPE_IMAGE) {
                         if (node->akernel->argConfig[i] & AGO_KERNEL_ARG_INPUT_FLAG) {
                             code2 += "uint x, uint y";
-                            sprintf(item, ", __global uchar * p%d_buf, uint p%d_stride", (int)data_index, (int)data_index);
+                            snprintf(item, sizeof(item), ", __global uchar * p%d_buf, uint p%d_stride", (int)data_index, (int)data_index);
                             code2 += item;
-                            sprintf(item, ", uint p%d_width, uint p%d_height", (int)data_index, (int)data_index);
+                            snprintf(item, sizeof(item), ", uint p%d_width, uint p%d_height", (int)data_index, (int)data_index);
                             code2 += item;
                         }
                         else {
                             const char * reg_type = agoGpuImageFormat2RegType(data->u.img.format);
-                            sprintf(item, "%s p%d", reg_type, (int)data_index);
+                            snprintf(item, sizeof(item), "%s p%d", reg_type, (int)data_index);
                             code2 += item;
                         }
                     }
                     else if (data->ref.type == VX_TYPE_REMAP) {
-                        sprintf(item, "__global uchar * p%d_buf, uint p%d_stride", (int)data_index, (int)data_index);
+                        snprintf(item, sizeof(item), "__global uchar * p%d_buf, uint p%d_stride", (int)data_index, (int)data_index);
                         code2 += item;
                     }
                     else {
@@ -1949,7 +1949,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
         }
     }
     // generate code: kernel declaration
-    sprintf(item, OPENCL_FORMAT("__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\nvoid %s(uint width, uint height"), work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME);
+    snprintf(item, sizeof(item), OPENCL_FORMAT("__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\nvoid %s(uint width, uint height"), work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME);
     code += item;
 #if ENABLE_LOCAL_DEBUG_MESSAGES
     printf("===> *** supernode-%d has dataList.size()=%d\n", supernode->group, supernode->dataList.size());
@@ -1989,12 +1989,12 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
         AgoData * data = supernode->dataList[index];
         if (data->ref.type == VX_TYPE_IMAGE) {
             if (supernode->dataInfo[index].data_type_flags & DATA_OPENCL_FLAG_NEED_LOCAL) {
-                sprintf(item, "\t__local uchar p%d_lbuf[%d];\n", (int)index, supernode->dataInfo[index].local_buffer_size_in_bytes);
+                snprintf(item, sizeof(item), "\t__local uchar p%d_lbuf[%d];\n", (int)index, supernode->dataInfo[index].local_buffer_size_in_bytes);
                 code += item;
                 uses_local_memory = true;
             }
             if (supernode->dataInfo[index].data_type_flags & DATA_OPENCL_FLAG_BUFFER) {
-                sprintf(item, "\tp%d_buf += p%d_offset;\n", (int)index, (int)index);
+                snprintf(item, sizeof(item), "\tp%d_buf += p%d_offset;\n", (int)index, (int)index);
                 code += item;
             }
             if (supernode->dataInfo[index].needed_as_a_kernel_argument) { // only use objects that need read/write access
@@ -2013,7 +2013,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
         AgoData * data = supernode->dataList[index];
         if (data->ref.type == VX_TYPE_IMAGE) {
             const char * reg_type = agoGpuImageFormat2RegType(data->u.img.format);
-            sprintf(item, "\t\t%sx8 p%d;\n", reg_type, (int)index);
+            snprintf(item, sizeof(item), "\t\t%sx8 p%d;\n", reg_type, (int)index);
             code += item;
             if (supernode->dataInfo[index].needed_as_a_kernel_argument) { // only use objects that need read/write access
                 if (supernode->dataInfo[index].argument_usage[VX_OUTPUT]) {
@@ -2033,7 +2033,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
                 size_t data_index = std::find(supernode->dataList.begin(), supernode->dataList.end(), data) - supernode->dataList.begin();
                 if ((supernode->dataInfo[data_index].data_type_flags & NODE_OPENCL_TYPE_REG2REG) && (supernode->dataInfo[data_index].data_type_flags & DATA_OPENCL_FLAG_NEED_LOAD_R2R)) {
                     const char * reg_type = agoGpuImageFormat2RegType(data->u.img.format);
-                    sprintf(item, "\t\tload_%sx8(&p%d, x, y, p%d_buf, p%d_stride);\n", reg_type, (int)data_index, (int)data_index, (int)data_index);
+                    snprintf(item, sizeof(item), "\t\tload_%sx8(&p%d, x, y, p%d_buf, p%d_stride);\n", reg_type, (int)data_index, (int)data_index, (int)data_index);
                     code += item;
                     // mark that load has been issued
                     supernode->dataInfo[data_index].data_type_flags &= ~DATA_OPENCL_FLAG_NEED_LOAD_R2R;
@@ -2041,7 +2041,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
             }
         }
         // generate computation
-        sprintf(item, "\t\t%s(", node->opencl_name); code += item;
+        snprintf(item, sizeof(item), "\t\t%s(", node->opencl_name); code += item;
         for (vx_uint32 i = 0; i < node->paramCount; i++) {
             AgoData * data = node->paramList[i];
             if (data) {
@@ -2053,28 +2053,28 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
                     {
                         code += ", x, y";
                         if (node->opencl_local_buffer_usage_mask & (1 << i)) {
-                            sprintf(item, ", p%d_lbuf", (int)data_index);
+                            snprintf(item, sizeof(item), ", p%d_lbuf", (int)data_index);
                             code += item;
                         }
-                        sprintf(item, ", p%d_buf, p%d_stride", (int)data_index, (int)data_index);
+                        snprintf(item, sizeof(item), ", p%d_buf, p%d_stride", (int)data_index, (int)data_index);
                         code += item;
                         if (supernode->dataInfo[data_index].data_type_flags & NODE_OPENCL_TYPE_NEED_IMGSIZE) {
-                            sprintf(item, ", p%d_width, p%d_height", (int)data_index, (int)data_index);
+                            snprintf(item, sizeof(item), ", p%d_width, p%d_height", (int)data_index, (int)data_index);
                             code += item;
                         }
                         // mark that load has been issued
                         supernode->dataInfo[data_index].data_type_flags &= ~DATA_OPENCL_FLAG_NEED_LOAD_M2R;
                     }
                     else if (data->ref.type == VX_TYPE_REMAP) {
-                        sprintf(item, ", p%d_buf, p%d_stride", (int)data_index, (int)data_index);
+                        snprintf(item, sizeof(item), ", p%d_buf, p%d_stride", (int)data_index, (int)data_index);
                         code += item;
                     }
                     else if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_INT16) {
-                        sprintf(item, ", p%d_buf, p%d_count, p%d_offset", (int)data_index, (int)data_index, (int)data_index);
+                        snprintf(item, sizeof(item), ", p%d_buf, p%d_count, p%d_offset", (int)data_index, (int)data_index, (int)data_index);
                         code += item;
                     }			
                     else {
-                        sprintf(item, "%s%sp%d", i ? ", " : "", (node->akernel->argConfig[i] & AGO_KERNEL_ARG_OUTPUT_FLAG) ? "&" : "", (int)data_index);
+                        snprintf(item, sizeof(item), "%s%sp%d", i ? ", " : "", (node->akernel->argConfig[i] & AGO_KERNEL_ARG_OUTPUT_FLAG) ? "&" : "", (int)data_index);
                         code += item;
                     }
                 }
@@ -2096,7 +2096,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
                 (supernode->dataInfo[index].argument_usage[VX_OUTPUT] || supernode->dataInfo[index].argument_usage[VX_BIDIRECTIONAL]))
             { // only use objects that need write access
                 const char * reg_type = agoGpuImageFormat2RegType(data->u.img.format);
-                sprintf(item, "\t\tstore_%sx8(p%d, x, y, p%d_buf, p%d_stride);\n", reg_type, (int)index, (int)index, (int)index);
+                snprintf(item, sizeof(item), "\t\tstore_%sx8(p%d, x, y, p%d_buf, p%d_stride);\n", reg_type, (int)index, (int)index, (int)index);
                 code += item;
             }
         }
@@ -2114,7 +2114,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
     char textBuffer[1024];
     if (agoGetEnvironmentVariable("AGO_DUMP_GPU", textBuffer, sizeof(textBuffer))) {
         char fileName[2048];
-        sprintf(fileName, "%s-%d.cl", textBuffer, supernode->group);
+        snprintf(fileName, sizeof(fileName), "%s-%d.cl", textBuffer, supernode->group);
         FILE * fp = fopen(fileName, "w");
         if (!fp) agoAddLogEntry(NULL, VX_FAILURE, "ERROR: unable to create: %s\n", fileName);
         else {
@@ -2240,7 +2240,7 @@ int agoGpuOclSuperNodeWait(AgoGraph * graph, AgoSuperNode * supernode)
                 if (need_access) { // only use image objects that need write access
                     if (need_write_access) {
                         auto dataToSync = data->u.img.isROI ? data->u.img.roiMasterImage : data;
-                        char fileName[128]; sprintf(fileName, "output_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
+                        char fileName[128]; snprintf(fileName, sizeof(fileName), "output_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
                         cl_command_queue opencl_cmdq = graph->opencl_cmdq ? graph->opencl_cmdq : graph->ref.context->opencl_cmdq;
                         clDumpBuffer(fileName, opencl_cmdq, dataToSync);
                         //printf("Press ENTER to continue... ");  char line[256]; gets(line);
@@ -2265,7 +2265,7 @@ int agoGpuOclSingleNodeFinalize(AgoGraph * graph, AgoNode * node)
     char textBuffer[1024];
     if (agoGetEnvironmentVariable("AGO_DUMP_GPU", textBuffer, sizeof(textBuffer))) {
         char fileName[2048]; static int counter = 0;
-        sprintf(fileName, "%s-0.%04d.cl", textBuffer, counter++);
+        snprintf(fileName, sizeof(fileName), "%s-0.%04d.cl", textBuffer, counter++);
         FILE * fp = fopen(fileName, "w");
         if (!fp) agoAddLogEntry(NULL, VX_FAILURE, "ERROR: unable to create: %s\n", fileName);
         else {
@@ -2431,7 +2431,7 @@ int agoGpuOclSingleNodeWait(AgoGraph * graph, AgoNode * node)
             else if (node->paramList[index]->ref.type == VX_TYPE_IMAGE) {
                 if (need_write_access) {
                     auto dataToSync = node->paramList[index]->u.img.isROI ? node->paramList[index]->u.img.roiMasterImage : node->paramList[index];
-                    char fileName[128]; sprintf(fileName, "input_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
+                    char fileName[128]; snprintf(fileName, sizeof(fileName), "input_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
                     cl_command_queue opencl_cmdq = graph->opencl_cmdq ? graph->opencl_cmdq : graph->ref.context->opencl_cmdq;
                     clDumpBuffer(fileName, opencl_cmdq, node->paramList[index]);
                     //printf("Press ENTER to continue... ");  char line[256]; gets(line);
@@ -2440,7 +2440,7 @@ int agoGpuOclSingleNodeWait(AgoGraph * graph, AgoNode * node)
             else if (node->paramList[index]->ref.type == VX_TYPE_TENSOR) {
                 if (need_write_access) {
                     auto dataToSync = node->paramList[index]->u.tensor.roiMaster ? node->paramList[index]->u.tensor.roiMaster : node->paramList[index];
-                    char fileName[128]; sprintf(fileName, "input_%%04d_tensor.raw");
+                    char fileName[128]; snprintf(fileName, sizeof(fileName), "input_%%04d_tensor.raw");
                     cl_command_queue opencl_cmdq = graph->opencl_cmdq ? graph->opencl_cmdq : graph->ref.context->opencl_cmdq;
                     clDumpBuffer(fileName, opencl_cmdq, node->paramList[index]);
                     //printf("Press ENTER to continue... ");  char line[256]; gets(line);

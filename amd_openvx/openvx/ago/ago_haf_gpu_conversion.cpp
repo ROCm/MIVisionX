@@ -47,7 +47,7 @@ int HafGpu_ChannelCombine_U32_422(AgoNode * node)
 
 	char combineCode[1024];
 	if (kernel == VX_KERNEL_AMD_CHANNEL_COMBINE_U32_U8U8U8_UYVY) {
-		sprintf(combineCode,
+		snprintf(combineCode, sizeof(combineCode),
 			OPENCL_FORMAT(
 			"    out.s0 = amd_pack((float4)(amd_unpack0(pU), amd_unpack0(pY.s0), amd_unpack0(pV), amd_unpack1(pY.s0)));\n"
 			"    out.s1 = amd_pack((float4)(amd_unpack1(pU), amd_unpack2(pY.s0), amd_unpack1(pV), amd_unpack3(pY.s0)));\n"
@@ -56,7 +56,7 @@ int HafGpu_ChannelCombine_U32_422(AgoNode * node)
 			));
 	}
 	else if (kernel == VX_KERNEL_AMD_CHANNEL_COMBINE_U32_U8U8U8_YUYV) {
-		sprintf(combineCode,
+		snprintf(combineCode, sizeof(combineCode),
 			OPENCL_FORMAT(
 			"    out.s0 = amd_pack((float4)(amd_unpack0(pY.s0), amd_unpack0(pU), amd_unpack1(pY.s0), amd_unpack0(pV)));\n"
 			"    out.s1 = amd_pack((float4)(amd_unpack2(pY.s0), amd_unpack1(pU), amd_unpack3(pY.s0), amd_unpack1(pV)));\n"
@@ -71,7 +71,7 @@ int HafGpu_ChannelCombine_U32_422(AgoNode * node)
 
 	// kernel body
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -139,25 +139,25 @@ int HafGpu_ChannelExtract_U8_U32(AgoNode * node)
 
 	char extractionCode[1024];
 	if (kernel == VX_KERNEL_AMD_CHANNEL_EXTRACT_U8_U32_POS0)	{
-		sprintf(extractionCode,
+		snprintf(extractionCode, sizeof(extractionCode),
 			"	r.s0 = amd_pack((float4)(amd_unpack0(L.s0), amd_unpack0(L.s1), amd_unpack0(L.s2), amd_unpack0(L.s3)));\n"
 			"	r.s1 = amd_pack((float4)(amd_unpack0(L.s4), amd_unpack0(L.s5), amd_unpack0(L.s6), amd_unpack0(L.s7)));\n"
 			);
 	}
 	else if (kernel == VX_KERNEL_AMD_CHANNEL_EXTRACT_U8_U32_POS1)	{
-		sprintf(extractionCode,
+		snprintf(extractionCode, sizeof(extractionCode),
 			"	r.s0 = amd_pack((float4)(amd_unpack1(L.s0), amd_unpack1(L.s1), amd_unpack1(L.s2), amd_unpack1(L.s3)));\n"
 			"	r.s1 = amd_pack((float4)(amd_unpack1(L.s4), amd_unpack1(L.s5), amd_unpack1(L.s6), amd_unpack1(L.s7)));\n"
 			);
 	}
 	else if (kernel == VX_KERNEL_AMD_CHANNEL_EXTRACT_U8_U32_POS2)	{
-		sprintf(extractionCode,
+		snprintf(extractionCode, sizeof(extractionCode),
 			"	r.s0 = amd_pack((float4)(amd_unpack2(L.s0), amd_unpack2(L.s1), amd_unpack2(L.s2), amd_unpack2(L.s3)));\n"
 			"	r.s1 = amd_pack((float4)(amd_unpack2(L.s4), amd_unpack2(L.s5), amd_unpack2(L.s6), amd_unpack2(L.s7)));\n"
 			);
 	}
 	else if (kernel == VX_KERNEL_AMD_CHANNEL_EXTRACT_U8_U32_POS3)	{
-		sprintf(extractionCode,
+		snprintf(extractionCode, sizeof(extractionCode),
 			"	r.s0 = amd_pack((float4)(amd_unpack3(L.s0), amd_unpack3(L.s1), amd_unpack3(L.s2), amd_unpack3(L.s3)));\n"
 			"	r.s1 = amd_pack((float4)(amd_unpack3(L.s4), amd_unpack3(L.s5), amd_unpack3(L.s6), amd_unpack3(L.s7)));\n"
 			);
@@ -169,7 +169,7 @@ int HafGpu_ChannelExtract_U8_U32(AgoNode * node)
 
 	// kernel body
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -231,7 +231,7 @@ int HafGpu_FormatConvert_420_422(AgoNode * node)
 
 	char conversionCode[1024];
 	if (kernel == VX_KERNEL_AMD_FORMAT_CONVERT_IYUV_YUYV) {
-		sprintf(conversionCode,
+		snprintf(conversionCode, sizeof(conversionCode),
 			OPENCL_FORMAT(
 			"    pY0.s0 = amd_pack((float4)(amd_unpack0(L0.s0), amd_unpack2(L0.s0), amd_unpack0(L0.s1), amd_unpack2(L0.s1)));\n"
 			"    pY0.s1 = amd_pack((float4)(amd_unpack0(L0.s2), amd_unpack2(L0.s2), amd_unpack0(L0.s3), amd_unpack2(L0.s3)));\n"
@@ -246,7 +246,7 @@ int HafGpu_FormatConvert_420_422(AgoNode * node)
 			));
 	}
 	else if (kernel == VX_KERNEL_AMD_FORMAT_CONVERT_IYUV_UYVY) {
-		sprintf(conversionCode,
+		snprintf(conversionCode, sizeof(conversionCode),
 			OPENCL_FORMAT(
 			"    pY0.s0 = amd_pack((float4)(amd_unpack1(L0.s0), amd_unpack3(L0.s0), amd_unpack1(L0.s1), amd_unpack3(L0.s1)));\n"
 			"    pY0.s1 = amd_pack((float4)(amd_unpack1(L0.s2), amd_unpack3(L0.s2), amd_unpack1(L0.s3), amd_unpack3(L0.s3)));\n"
@@ -261,7 +261,7 @@ int HafGpu_FormatConvert_420_422(AgoNode * node)
 			));
 	}
 	else if (kernel == VX_KERNEL_AMD_FORMAT_CONVERT_NV12_YUYV) {
-		sprintf(conversionCode,
+		snprintf(conversionCode, sizeof(conversionCode),
 			OPENCL_FORMAT(
 			"    pY0.s0 = amd_pack((float4)(amd_unpack0(L0.s0), amd_unpack2(L0.s0), amd_unpack0(L0.s1), amd_unpack2(L0.s1)));\n"
 			"    pY0.s1 = amd_pack((float4)(amd_unpack0(L0.s2), amd_unpack2(L0.s2), amd_unpack0(L0.s3), amd_unpack2(L0.s3)));\n"
@@ -276,7 +276,7 @@ int HafGpu_FormatConvert_420_422(AgoNode * node)
 			));
 	}
 	else if (kernel == VX_KERNEL_AMD_FORMAT_CONVERT_NV12_UYVY) {
-		sprintf(conversionCode,
+		snprintf(conversionCode, sizeof(conversionCode),
 			OPENCL_FORMAT(
 			"    pY0.s0 = amd_pack((float4)(amd_unpack1(L0.s0), amd_unpack3(L0.s0), amd_unpack1(L0.s1), amd_unpack3(L0.s1)));\n"
 			"    pY0.s1 = amd_pack((float4)(amd_unpack1(L0.s2), amd_unpack3(L0.s2), amd_unpack1(L0.s3), amd_unpack3(L0.s3)));\n"
@@ -298,7 +298,7 @@ int HafGpu_FormatConvert_420_422(AgoNode * node)
 	// kernel declaration
 	char item[8192];
 	if ((kernel == VX_KERNEL_AMD_FORMAT_CONVERT_IYUV_YUYV) || (kernel == VX_KERNEL_AMD_FORMAT_CONVERT_IYUV_UYVY)) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
@@ -332,7 +332,7 @@ int HafGpu_FormatConvert_420_422(AgoNode * node)
 		node->opencl_code = item;
 	}
 	else if ((kernel == VX_KERNEL_AMD_FORMAT_CONVERT_NV12_YUYV) || (kernel == VX_KERNEL_AMD_FORMAT_CONVERT_NV12_UYVY)) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
@@ -399,7 +399,7 @@ int HafGpu_FormatConvert_Chroma(AgoNode * node)
 	// kernel declaration
 	char item[8192];
 	if (kernel == VX_KERNEL_AMD_FORMAT_CONVERT_UV_UV12) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
@@ -432,7 +432,7 @@ int HafGpu_FormatConvert_Chroma(AgoNode * node)
 		node->opencl_code = item;
 	}
 	else if (kernel == VX_KERNEL_AMD_FORMAT_CONVERT_IUV_UV12) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
@@ -471,7 +471,7 @@ int HafGpu_FormatConvert_Chroma(AgoNode * node)
 		node->opencl_code = item;
 	}
 	else if (kernel == VX_KERNEL_AMD_FORMAT_CONVERT_UV12_IUV) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
@@ -509,7 +509,7 @@ int HafGpu_FormatConvert_Chroma(AgoNode * node)
 		node->opencl_code = item;
 	}
 	else if (kernel == VX_KERNEL_AMD_SCALE_UP_2x2_U8_U8) {
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 			"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
@@ -652,7 +652,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 
 	// kernel header and reading
 	char item[8192];
-	sprintf(item,
+	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -694,7 +694,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 	}
 	if (isSourceRGB) {
 		pRGB_stride = node->paramList[argCount++]->u.img.stride_in_bytes;
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"uint pRGB_width, uint pRGB_height, __global uchar * pRGB_buf, uint pRGB_stride, uint pRGB_offset)\n"
 			"{\n"
@@ -712,7 +712,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 	}
 	else if (isSourceRGBX) {
 		pRGB_stride = node->paramList[argCount++]->u.img.stride_in_bytes;
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"uint pRGB_width, uint pRGB_height, __global uchar * pRGB_buf, uint pRGB_stride, uint pRGB_offset)\n"
 			"{\n"
@@ -728,7 +728,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 	}
 	else if (isSourceUYVY || isSourceYUYV) {
 		p422_stride = node->paramList[argCount++]->u.img.stride_in_bytes;
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"uint p422_width, uint p422_height, __global uchar * p422_buf, uint p422_stride, uint p422_offset)\n"
 			"{\n"
@@ -746,7 +746,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 		pY_stride = node->paramList[argCount++]->u.img.stride_in_bytes;
 		pU_stride = node->paramList[argCount++]->u.img.stride_in_bytes;
 		pV_stride = node->paramList[argCount++]->u.img.stride_in_bytes;
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"uint pY_width, uint pY_height, __global uchar * pY_buf, uint pY_stride, uint pY_offset,\n    "
 			"uint pU_width, uint pU_height, __global uchar * pU_buf, uint pU_stride, uint pU_offset,\n    "
@@ -769,7 +769,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 	else {
 		pY_stride = node->paramList[argCount++]->u.img.stride_in_bytes;
 		pUV_stride = node->paramList[argCount++]->u.img.stride_in_bytes;
-		sprintf(item,
+		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
 			"uint pY_width, uint pY_height, __global uchar * pY_buf, uint pY_stride, uint pY_offset,\n    "
 			"uint pUV_width, uint pUV_height, __global uchar * pUV_buf, uint pUV_stride, uint pUV_offset)\n"
@@ -1147,7 +1147,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 				"    pUV.s1 = amd_pack(f);\n"
 				);
 			if (destinationHasY) {
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					OPENCL_FORMAT(
 					"    pY_buf += pY_offset + (gy * %d) + (gx << 3);\n" // pY_stride * 2
 					"    pUV_buf += pUV_offset + (gy * %d) + (gx << 3);\n" // pUV_stride
@@ -1158,7 +1158,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 				node->opencl_code += item;
 			}
 			else {
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					OPENCL_FORMAT(
 					"    pUV_buf += pUV_offset + (gy * %d) + (gx << 3);\n" // pUV_stride
 					"    *(__global U8x8 *) pUV_buf = pUV;\n"
@@ -1167,7 +1167,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 			}
 		}
 		else if (destinationHasY) {
-			sprintf(item,
+			snprintf(item, sizeof(item),
 				OPENCL_FORMAT(
 				"    pY_buf += pY_offset + (gy * %d) + (gx << 3);\n" // pY_stride * 2
 				"    pU_buf += pU_offset + (gy * %d) + (gx << 2);\n" // pU_stride
@@ -1181,7 +1181,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 		}
 		else {
 			if (!destinationNoU) {
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					OPENCL_FORMAT(
 					"    pU_buf += pU_offset + (gy * %d) + (gx << 2);\n" // pU_stride
 					"    *(__global uint *) pU_buf = pU0.s0;\n"
@@ -1189,7 +1189,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 				node->opencl_code += item;
 			}
 			if (!destinationNoV) {
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					OPENCL_FORMAT(
 					"    pV_buf += pV_offset + (gy * %d) + (gx << 2);\n" // pV_stride
 					"    *(__global uint *) pV_buf = pV0.s0;\n"
@@ -1335,7 +1335,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 		}
 		if (isDestinationRGB) {
 			if (input_channel_range == VX_CHANNEL_RANGE_RESTRICTED) {
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					OPENCL_FORMAT(
 					"    float3 yuv; U24x8 pRGB0, pRGB1;\n"
 					"    yuv.s0 = mad(amd_unpack0(pY0.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack0(pU0.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack0(pV0.s0),r2f.s2,r2f.s3);\n"
@@ -1378,7 +1378,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 					), pRGB_stride * 2, pRGB_stride, pRGB_stride);
 			}
 			else { // VX_CHANNEL_RANGE_FULL
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					OPENCL_FORMAT(
 					"    float3 yuv; U24x8 pRGB0, pRGB1;\n"
 					"    yuv.s0 = amd_unpack0(pY0.s0); yuv.s1 = amd_unpack0(pU0.s0); yuv.s2 = amd_unpack0(pV0.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
@@ -1424,7 +1424,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 		}
 		else if (isDestinationRGBX) {
 			if (input_channel_range == VX_CHANNEL_RANGE_RESTRICTED) {
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					OPENCL_FORMAT(
 					"    float3 yuv; f.s3 = 255.0f; U32x8 pRGB0, pRGB1;\n"
 					"    yuv.s0 = mad(amd_unpack0(pY0.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack0(pU0.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack0(pV0.s0),r2f.s2,r2f.s3);\n"
@@ -1466,7 +1466,7 @@ int HafGpu_ColorConvert(AgoNode * node)
 				node->opencl_code += item;
 			}
 			else { // VX_CHANNEL_RANGE_FULL
-				sprintf(item,
+				snprintf(item, sizeof(item),
 					OPENCL_FORMAT(
 					"    float3 yuv; f.s3 = 255.0f; U32x8 pRGB0, pRGB1;\n"
 					"    yuv.s0 = amd_unpack0(pY0.s0); yuv.s1 = amd_unpack0(pU0.s0); yuv.s2 = amd_unpack0(pV0.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"

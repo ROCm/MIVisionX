@@ -467,13 +467,13 @@ int agoRemoveDataTree(AgoDataList * list, AgoData * item, AgoData ** trash)
 void agoRemoveDataInGraph(AgoGraph * agraph, AgoData * adata)
 {
 #if ENABLE_DEBUG_MESSAGES
-    char name[256];
+    char name[1024];
     agoGetDataName(name, adata);
     debug_printf("INFO: agoRemoveDataInGraph: removing data %s\n", name[0] ? name : "<?>");
 #endif
     // clear parent link in it's children and give them a name, when missing
     if (adata->children) {
-        char dataName[256];
+        char dataName[1024];
         agoGetDataName(dataName, adata);
         for (vx_uint32 i = 0; dataName[i]; i++) {
             if (dataName[i] == '[' || dataName[i] == ']')
@@ -484,8 +484,8 @@ void agoRemoveDataInGraph(AgoGraph * agraph, AgoData * adata)
                 // make sure that adata is the owner parent, before clearing the parent link
                 if (adata->children[i]->parent == adata) {
                     if (dataName[0] && !adata->children[i]->name.length()) {
-                        char nameChild[512];
-                        sprintf(nameChild, "%s!%d!", dataName, i);
+                        char nameChild[2048];
+                        snprintf(nameChild, sizeof(nameChild), "%s!%d!", dataName, i);
                         adata->children[i]->name = nameChild;
                     }
                     adata->children[i]->parent = NULL;
@@ -503,7 +503,7 @@ void agoRemoveDataInGraph(AgoGraph * agraph, AgoData * adata)
     }
     // move the virtual data to trash
     if (agoRemoveData(&agraph->dataList, adata, &agraph->dataList.trash)) {
-        char name[256];
+        char name[1024];
         agoGetDataName(name, adata);
         agoAddLogEntry(&adata->ref, VX_FAILURE, "ERROR: agoRemoveDataInGraph: agoRemoveData(*,%s) failed\n", name[0] ? name : "<?>");
     }
@@ -538,7 +538,7 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
 
     // replace parent link in it's children and give them a name, when missing
     if (dataFind->children) {
-        char dataName[256];
+        char dataName[1024];
         agoGetDataName(dataName, dataFind);
         for (vx_uint32 i = 0; dataName[i]; i++) {
             if (dataName[i] == '[' || dataName[i] == ']')
@@ -547,8 +547,8 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
         for (vx_uint32 i = 0; i < dataFind->numChildren; i++) {
             if (dataFind->children[i]) {
                 if (dataName[0] && !dataFind->children[i]->name.length()) {
-                    char nameChild[512];
-                    sprintf(nameChild, "%s!%d!", dataName, i);
+                    char nameChild[2048];
+                    snprintf(nameChild, sizeof(nameChild), "%s!%d!", dataName, i);
                     dataFind->children[i]->name = nameChild;
                 }
                 dataFind->children[i]->parent = dataReplace;
@@ -574,7 +574,7 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
     if (!removed) {
         // move the virtual data into trash
         if (agoRemoveDataTree(&agraph->dataList, dataFind, &agraph->dataList.trash)) {
-            char name[256];
+            char name[1024];
             agoGetDataName(name, dataFind);
             agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReplaceDataInGraph: agoRemoveDataTree(*,%s) failed\n", name[0] ? name : "<?>");
         }
@@ -691,12 +691,12 @@ AgoKernel * agoFindKernelByName(AgoContext * acontext, const vx_char * name)
     if (!strstr(name, ".")) {
         char fullName[VX_MAX_KERNEL_NAME];
         // search for org.khronos.openvx.<name>
-        sprintf(fullName, "org.khronos.openvx.%s", name);
+        snprintf(fullName, VX_MAX_KERNEL_NAME, "org.khronos.openvx.%s", name);
         for (AgoKernel * kernel = acontext->kernelList.head; kernel; kernel = kernel->next) {
             if (!strcmp(kernel->name, fullName)) return kernel;
         }
         // search for org.amd.openvx.<name>
-        sprintf(fullName, "com.amd.openvx.%s", name);
+        snprintf(fullName, VX_MAX_KERNEL_NAME, "com.amd.openvx.%s", name);
         for (AgoKernel * kernel = acontext->kernelList.head; kernel; kernel = kernel->next) {
             if (!strcmp(kernel->name, fullName)) return kernel;
         }
@@ -860,119 +860,119 @@ void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * dat
     const char * virt = data->isVirtual ? "-virtual" : "";
     desc[0] = 0;
     if (data->ref.type == VX_TYPE_DELAY) {
-        sprintf(desc + strlen(desc), "delay%s:%d,[", virt, data->u.delay.count);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "delay%s:%d,[", virt, data->u.delay.count);
         agoGetDescriptionFromData(acontext, desc + strlen(desc), data->children[0]);
-        sprintf(desc + strlen(desc), "]");
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "]");
     }
     else if (data->ref.type == VX_TYPE_IMAGE) {
         if (data->u.img.isROI) {
-            sprintf(desc + strlen(desc), "image-roi:%s,%d,%d,%d,%d", data->u.img.roiMasterImage->name.c_str(), data->u.img.rect_roi.start_x, data->u.img.rect_roi.start_y, data->u.img.rect_roi.end_x, data->u.img.rect_roi.end_y);
+            snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "image-roi:%s,%d,%d,%d,%d", data->u.img.roiMasterImage->name.c_str(), data->u.img.rect_roi.start_x, data->u.img.rect_roi.start_y, data->u.img.rect_roi.end_x, data->u.img.rect_roi.end_y);
         }
         else if (data->u.img.isUniform) {
-            sprintf(desc + strlen(desc), "image-uniform%s:%4.4s,%d,%d", virt, FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
-            for (vx_size i = 0; i < data->u.img.components; i++) sprintf(desc + strlen(desc), ",%d", (unsigned int)data->u.img.uniform[i]);
+            snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "image-uniform%s:%4.4s,%d,%d", virt, FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
+            for (vx_size i = 0; i < data->u.img.components; i++) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, ",%d", (unsigned int)data->u.img.uniform[i]);
         }
-        else sprintf(desc + strlen(desc), "image%s:%4.4s,%d,%d", virt, FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
+        else snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "image%s:%4.4s,%d,%d", virt, FORMAT_STR(data->u.img.format), data->u.img.width, data->u.img.height);
     }
     else if (data->ref.type == VX_TYPE_PYRAMID) {
         char scale[64];
-        if (data->u.pyr.scale == VX_SCALE_PYRAMID_HALF) sprintf(scale, "HALF");
-        else if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) sprintf(scale, "ORB");
-        else sprintf(scale, "%g", data->u.pyr.scale);
-        sprintf(desc + strlen(desc), "pyramid%s:%4.4s,%d,%d," VX_FMT_SIZE ",%s", virt, FORMAT_STR(data->u.pyr.format), data->u.pyr.width, data->u.pyr.height, data->u.pyr.levels, scale);
+        if (data->u.pyr.scale == VX_SCALE_PYRAMID_HALF) snprintf(scale, sizeof(scale), "HALF");
+        else if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) snprintf(scale, sizeof(scale), "ORB");
+        else snprintf(scale, sizeof(scale), "%g", data->u.pyr.scale);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "pyramid%s:%4.4s,%d,%d," VX_FMT_SIZE ",%s", virt, FORMAT_STR(data->u.pyr.format), data->u.pyr.width, data->u.pyr.height, data->u.pyr.levels, scale);
     }
     else if (data->ref.type == VX_TYPE_ARRAY) {
         if (data->u.arr.itemtype >= VX_TYPE_USER_STRUCT_START && data->u.arr.itemtype <= VX_TYPE_USER_STRUCT_END) {
             const char * name = agoGetUserStructName(acontext, data->u.arr.itemtype);
             if (name)
-                sprintf(desc + strlen(desc), "array%s:%s," VX_FMT_SIZE "", virt, name, data->u.arr.capacity);
+                snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "array%s:%s," VX_FMT_SIZE "", virt, name, data->u.arr.capacity);
             else
-                sprintf(desc + strlen(desc), "array%s:USER-STRUCT-" VX_FMT_SIZE "," VX_FMT_SIZE "", virt, data->u.arr.itemsize, data->u.arr.capacity);
+                snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "array%s:USER-STRUCT-" VX_FMT_SIZE "," VX_FMT_SIZE "", virt, data->u.arr.itemsize, data->u.arr.capacity);
         }
         else
-            sprintf(desc + strlen(desc), "array%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.arr.itemtype), data->u.arr.capacity);
+            snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "array%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.arr.itemtype), data->u.arr.capacity);
     }
     else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
         /*if(data->u.objarr.itemtype >= VX_TYPE_KHRONOS_OBJECT_START && data->u.objarr.itemtype <= VX_TYPE_KHRONOS_OBJECT_END) {
             if(data->u.objarr.itemtype != VX_TYPE_DELAY && data->u.objarr.itemtype != VX_TYPE_OBJECT_ARRAY)
-                sprintf(desc + strlen(desc), "objectarray%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.objarr.itemtype), data->u.objarr.numitems);
+                snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "objectarray%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.objarr.itemtype), data->u.objarr.numitems);
         }
         else
-            sprintf(desc + strlen(desc), "objectarray%s:UNSUPPORTED,NULL", virt);*/
-        sprintf(desc + strlen(desc), "objectarray%s:%zu,[", virt, data->u.objarr.numitems);
+            snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "objectarray%s:UNSUPPORTED,NULL", virt);*/
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "objectarray%s:%zu,[", virt, data->u.objarr.numitems);
         agoGetDescriptionFromData(acontext, desc + strlen(desc), data->children[0]);
-        sprintf(desc + strlen(desc), "]");
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "]");
     }
     else if (data->ref.type == VX_TYPE_SCALAR) {
         if (data->u.scalar.type == VX_TYPE_ENUM) {
             const char * name = agoEnum2Name(data->u.scalar.u.e);
             if (name)
-                sprintf(desc + strlen(desc), "scalar%s:ENUM,%s", virt, name);
+                snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:ENUM,%s", virt, name);
             else
-                sprintf(desc + strlen(desc), "scalar%s:ENUM,0x%08x", virt, data->u.scalar.u.e);
+                snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:ENUM,0x%08x", virt, data->u.scalar.u.e);
         }
-        else if (data->u.scalar.type == VX_TYPE_UINT32) sprintf(desc + strlen(desc), "scalar%s:UINT32,%u", virt, data->u.scalar.u.u);
-        else if (data->u.scalar.type == VX_TYPE_INT32) sprintf(desc + strlen(desc), "scalar%s:INT32,%d", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_UINT16) sprintf(desc + strlen(desc), "scalar%s:UINT16,%u", virt, data->u.scalar.u.u);
-        else if (data->u.scalar.type == VX_TYPE_INT16) sprintf(desc + strlen(desc), "scalar%s:INT16,%d", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_UINT8) sprintf(desc + strlen(desc), "scalar%s:UINT8,%u", virt, data->u.scalar.u.u);
-        else if (data->u.scalar.type == VX_TYPE_INT8) sprintf(desc + strlen(desc), "scalar%s:INT8,%u", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_CHAR) sprintf(desc + strlen(desc), "scalar%s:CHAR,%u", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_FLOAT32) sprintf(desc + strlen(desc), "scalar%s:FLOAT32,%g", virt, data->u.scalar.u.f);
-        else if (data->u.scalar.type == VX_TYPE_SIZE) sprintf(desc + strlen(desc), "scalar%s:SIZE," VX_FMT_SIZE "", virt, data->u.scalar.u.s);
-        else if (data->u.scalar.type == VX_TYPE_BOOL) sprintf(desc + strlen(desc), "scalar%s:BOOL,%d", virt, data->u.scalar.u.i);
-        else if (data->u.scalar.type == VX_TYPE_DF_IMAGE) sprintf(desc + strlen(desc), "scalar%s:DF_IMAGE,%4.4s", virt, (const char *)&data->u.scalar.u.df);
-        else if (data->u.scalar.type == VX_TYPE_FLOAT64) sprintf(desc + strlen(desc), "scalar%s:FLOAT64,%lg", virt, data->u.scalar.u.f64);
-        else if (data->u.scalar.type == VX_TYPE_INT64) sprintf(desc + strlen(desc), "scalar%s:INT64,%" PRId64, virt, data->u.scalar.u.i64);
-        else if (data->u.scalar.type == VX_TYPE_UINT64) sprintf(desc + strlen(desc), "scalar%s:UINT64,%" PRIu64, virt, data->u.scalar.u.u64);
-        else if (data->u.scalar.type == VX_TYPE_STRING_AMD) sprintf(desc + strlen(desc), "scalar%s:STRING,%s", virt, data->buffer ? (const char *)data->buffer : "");
-        else if (data->u.scalar.type == VX_TYPE_FLOAT16) sprintf(desc + strlen(desc), "scalar%s:FLOAT16,%u", virt, data->u.scalar.u.u & 0xffff);
-        else sprintf(desc + strlen(desc), "scalar%s:UNSUPPORTED,NULL", virt);
+        else if (data->u.scalar.type == VX_TYPE_UINT32) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UINT32,%u", virt, data->u.scalar.u.u);
+        else if (data->u.scalar.type == VX_TYPE_INT32) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:INT32,%d", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_UINT16) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UINT16,%u", virt, data->u.scalar.u.u);
+        else if (data->u.scalar.type == VX_TYPE_INT16) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:INT16,%d", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_UINT8) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UINT8,%u", virt, data->u.scalar.u.u);
+        else if (data->u.scalar.type == VX_TYPE_INT8) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:INT8,%u", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_CHAR) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:CHAR,%u", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_FLOAT32) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:FLOAT32,%g", virt, data->u.scalar.u.f);
+        else if (data->u.scalar.type == VX_TYPE_SIZE) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:SIZE," VX_FMT_SIZE "", virt, data->u.scalar.u.s);
+        else if (data->u.scalar.type == VX_TYPE_BOOL) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:BOOL,%d", virt, data->u.scalar.u.i);
+        else if (data->u.scalar.type == VX_TYPE_DF_IMAGE) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:DF_IMAGE,%4.4s", virt, (const char *)&data->u.scalar.u.df);
+        else if (data->u.scalar.type == VX_TYPE_FLOAT64) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:FLOAT64,%lg", virt, data->u.scalar.u.f64);
+        else if (data->u.scalar.type == VX_TYPE_INT64) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:INT64,%" PRId64, virt, data->u.scalar.u.i64);
+        else if (data->u.scalar.type == VX_TYPE_UINT64) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UINT64,%" PRIu64, virt, data->u.scalar.u.u64);
+        else if (data->u.scalar.type == VX_TYPE_STRING_AMD) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:STRING,%s", virt, data->buffer ? (const char *)data->buffer : "");
+        else if (data->u.scalar.type == VX_TYPE_FLOAT16) snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:FLOAT16,%u", virt, data->u.scalar.u.u & 0xffff);
+        else snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "scalar%s:UNSUPPORTED,NULL", virt);
     }
     else if (data->ref.type == VX_TYPE_DISTRIBUTION) {
-        sprintf(desc + strlen(desc), "distribution%s:" VX_FMT_SIZE ",%d,%u", virt, data->u.dist.numbins, data->u.dist.offset, data->u.dist.range);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "distribution%s:" VX_FMT_SIZE ",%d,%u", virt, data->u.dist.numbins, data->u.dist.offset, data->u.dist.range);
     }
     else if (data->ref.type == VX_TYPE_LUT) {
-        sprintf(desc + strlen(desc), "lut%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.lut.type), data->u.lut.count);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "lut%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.lut.type), data->u.lut.count);
     }
     else if (data->ref.type == VX_TYPE_THRESHOLD) {
-        sprintf(desc + strlen(desc), "threshold%s:%s,%u,%u", virt, agoEnum2Name(data->u.thr.thresh_type), data->u.thr.input_format, data->u.thr.output_format);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "threshold%s:%s,%u,%u", virt, agoEnum2Name(data->u.thr.thresh_type), data->u.thr.input_format, data->u.thr.output_format);
         /*if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY)
-            sprintf(desc + strlen(desc), ":I,%d", data->u.thr.threshold_lower);
+            snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, ":I,%d", data->u.thr.threshold_lower);
         else if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE)
-            sprintf(desc + strlen(desc), ":I,%d,%d", data->u.thr.threshold_lower, data->u.thr.threshold_upper);
+            snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, ":I,%d,%d", data->u.thr.threshold_lower, data->u.thr.threshold_upper);
         */
     }
     else if (data->ref.type == VX_TYPE_CONVOLUTION) {
-        sprintf(desc + strlen(desc), "convolution%s:" VX_FMT_SIZE "," VX_FMT_SIZE "", virt, data->u.conv.columns, data->u.conv.rows);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "convolution%s:" VX_FMT_SIZE "," VX_FMT_SIZE "", virt, data->u.conv.columns, data->u.conv.rows);
         if (data->u.conv.shift)
-            sprintf(desc + strlen(desc), ",%u", data->u.conv.shift);
+            snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, ",%u", data->u.conv.shift);
     }
     else if (data->ref.type == VX_TYPE_MATRIX) {
-        sprintf(desc + strlen(desc), "matrix%s:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.mat.type), data->u.mat.columns, data->u.mat.rows);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "matrix%s:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.mat.type), data->u.mat.columns, data->u.mat.rows);
     }
     else if (data->ref.type == VX_TYPE_REMAP) {
-        sprintf(desc + strlen(desc), "remap%s:%u,%u,%u,%u", virt, data->u.remap.src_width, data->u.remap.src_height, data->u.remap.dst_width, data->u.remap.dst_height);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "remap%s:%u,%u,%u,%u", virt, data->u.remap.src_width, data->u.remap.src_height, data->u.remap.dst_width, data->u.remap.dst_height);
     }
     else if (data->ref.type == VX_TYPE_TENSOR) {
         char dims[64] = "";
         for (vx_size i = 0; i < data->u.tensor.num_dims; i++)
-            sprintf(dims + strlen(dims), "%s%u", i ? "," : "", (vx_uint32)data->u.tensor.dims[i]);
-        sprintf(desc + strlen(desc), "tensor%s:%u,{%s},%s,%u", virt, (vx_uint32)data->u.tensor.num_dims, dims, agoEnum2Name(data->u.tensor.data_type), (vx_uint32)data->u.tensor.fixed_point_pos);
+            snprintf(dims + strlen(dims), sizeof(dims), "%s%u", i ? "," : "", (vx_uint32)data->u.tensor.dims[i]);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "tensor%s:%u,{%s},%s,%u", virt, (vx_uint32)data->u.tensor.num_dims, dims, agoEnum2Name(data->u.tensor.data_type), (vx_uint32)data->u.tensor.fixed_point_pos);
     }
     else if (data->ref.type == AGO_TYPE_MEANSTDDEV_DATA) {
-        sprintf(desc + strlen(desc), "ago-meanstddev-data%s:", virt);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "ago-meanstddev-data%s:", virt);
     }
     else if (data->ref.type == AGO_TYPE_MINMAXLOC_DATA) {
-        sprintf(desc + strlen(desc), "ago-minmaxloc-data%s:", virt);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "ago-minmaxloc-data%s:", virt);
     }
     else if (data->ref.type == AGO_TYPE_CANNY_STACK) {
-        sprintf(desc + strlen(desc), "ago-canny-stack%s:%u", virt, data->u.cannystack.count);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "ago-canny-stack%s:%u", virt, data->u.cannystack.count);
     }
     else if (data->ref.type == AGO_TYPE_SCALE_MATRIX) {
-        sprintf(desc + strlen(desc), "ago-scale-matrix%s:%.12e,%.12e,%.12e,%.12e", virt, data->u.scalemat.xscale, data->u.scalemat.yscale, data->u.scalemat.xoffset, data->u.scalemat.yoffset);
+        snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "ago-scale-matrix%s:%.12e,%.12e,%.12e,%.12e", virt, data->u.scalemat.xscale, data->u.scalemat.yscale, data->u.scalemat.xoffset, data->u.scalemat.yoffset);
     }
-    else sprintf(desc + strlen(desc), "UNSUPPORTED%s:0x%08x", virt, data->ref.type);
+    else snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "UNSUPPORTED%s:0x%08x", virt, data->ref.type);
 }
 
 int agoParseWordFromDescription(const char *& desc, vx_size size, char * word)
@@ -1092,7 +1092,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                 vx_df_image format;
                 vx_uint32 width, height;
                 if (agoGetImagePlaneFormat(acontext, data->u.img.format, data->u.img.width, data->u.img.height, child, &format, &width, &height)) return -1;
-                char imgdesc[64]; sprintf(imgdesc, "image%s:%4.4s,%d,%d", data->isVirtual ? "-virtual" : "", FORMAT_STR(format), width, height);
+                char imgdesc[64]; snprintf(imgdesc, sizeof(imgdesc), "image%s:%4.4s,%d,%d", data->isVirtual ? "-virtual" : "", FORMAT_STR(format), width, height);
                 if ((data->children[child] = agoCreateDataFromDescription(acontext, agraph, imgdesc, false)) == NULL) return -1;
                 if (agoGetImageComponentsAndPlanes(acontext, data->children[child]->u.img.format, &data->children[child]->u.img.components, &data->children[child]->u.img.planes, &data->children[child]->u.img.pixel_size_in_bits_num, &data->children[child]->u.img.pixel_size_in_bits_denom, &data->children[child]->u.img.color_space, &data->children[child]->u.img.channel_range)) return -1;
                 data->children[child]->siblingIndex = (vx_int32)child;
@@ -1148,7 +1148,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                 if (data->u.img.format == VX_DF_IMAGE_NV21 && child == 1) value = (value << 8) | (vx_uint32)data->u.img.uniform[child + 1];
                 else if (data->u.img.format == VX_DF_IMAGE_NV12 && child == 1) value = value | ((vx_uint32)data->u.img.uniform[child + 1] << 8);
 
-                char imgdesc[64]; sprintf(imgdesc, "image-uniform%s:%4.4s,%d,%d,%d", data->isVirtual ? "-virtual" : "", FORMAT_STR(format), width, height, value);
+                char imgdesc[64]; snprintf(imgdesc, sizeof(imgdesc), "image-uniform%s:%4.4s,%d,%d,%d", data->isVirtual ? "-virtual" : "", FORMAT_STR(format), width, height, value);
                 if ((data->children[child] = agoCreateDataFromDescription(acontext, agraph, imgdesc, false)) == NULL) return -1;
                 if (agoGetImageComponentsAndPlanes(acontext, data->children[child]->u.img.format, &data->children[child]->u.img.components, &data->children[child]->u.img.planes, &data->children[child]->u.img.pixel_size_in_bits_num, &data->children[child]->u.img.pixel_size_in_bits_denom, &data->children[child]->u.img.color_space, &data->children[child]->u.img.channel_range)) return -1;
                 data->children[child]->isInitialized = vx_true_e;
@@ -1311,7 +1311,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->children = new AgoData *[data->numChildren];
         for (vx_uint32 level = 0, width = data->u.pyr.width, height = data->u.pyr.height; level < data->u.pyr.levels; level++) {
             char imgdesc[64];
-            sprintf(imgdesc, "image%s:%4.4s,%d,%d", data->isVirtual ? "-virtual" : "", FORMAT_STR(data->u.pyr.format), width, height);
+            snprintf(imgdesc, sizeof(imgdesc), "image%s:%4.4s,%d,%d", data->isVirtual ? "-virtual" : "", FORMAT_STR(data->u.pyr.format), width, height);
             if ((data->children[level] = agoCreateDataFromDescription(acontext, agraph, imgdesc, false)) == NULL) return -1;
             if (agoGetImageComponentsAndPlanes(acontext, data->u.pyr.format, &data->children[level]->u.img.components, &data->children[level]->u.img.planes, &data->children[level]->u.img.pixel_size_in_bits_num, &data->children[level]->u.img.pixel_size_in_bits_denom, &data->children[level]->u.img.color_space, &data->children[level]->u.img.channel_range)) return -1;
             data->children[level]->siblingIndex = (vx_int32)level;
@@ -1965,14 +1965,14 @@ AgoData * agoCreateDataFromDescription(AgoContext * acontext, AgoGraph * agraph,
 void agoGenerateDataName(AgoContext * acontext, const char * postfix, std::string& name_)
 {
     char name[1024];
-    sprintf(name, "AUTOX!%04d!%s", acontext->dataGenerationCount++, postfix);
+    snprintf(name, sizeof(name), "AUTOX!%04d!%s", acontext->dataGenerationCount++, postfix);
     name_ = name;
 }
 
 void agoGenerateVirtualDataName(AgoGraph * agraph, const char * postfix, std::string& name_)
 {
     char name[1024];
-    sprintf(name, "AUTO!%04d!%s", agraph->virtualDataGenerationCount++, postfix);
+    snprintf(name, sizeof(name), "AUTO!%04d!%s", agraph->virtualDataGenerationCount++, postfix);
     name_ = name;
 }
 
@@ -2103,12 +2103,12 @@ void agoGetDataName(vx_char * name, AgoData * data)
 {
     name[0] = 0;
     for (AgoData * pdata = data; pdata; pdata = pdata->parent) {
-        char tmp[1024]; strcpy(tmp, name);
+        char tmp[512]; strcpy(tmp, name);
         if (pdata->parent) {
-            sprintf(name, "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY || pdata->parent->ref.type == VX_TYPE_OBJECT_ARRAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
+            snprintf(name, MAX_MODULE_NAME_SIZE, "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY || pdata->parent->ref.type == VX_TYPE_OBJECT_ARRAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
         }
         else if (pdata->name.length()) {
-            sprintf(name, "%s%s", pdata->name.c_str(), tmp);
+            snprintf(name, MAX_MODULE_NAME_SIZE, "%s%s", pdata->name.c_str(), tmp);
         }
         else {
             name[0] = 0;
@@ -3030,7 +3030,7 @@ void agoEvaluateIntegerExpression(char * expr)
             return; // error
     }
     if (valStackTop == 1) {
-        sprintf(expr, "%d", valStack[0]);
+        snprintf(expr, sizeof(expr), "%d", valStack[0]);
     }
 }
 
@@ -3363,7 +3363,7 @@ AgoContext::AgoContext()
     // initialize constants as enumerations with name "!<name>"
     for (vx_uint32 i = 0; s_table_constants[i].name; i++) {
         char word[64];
-        sprintf(word, "scalar:ENUM,0x%08x", s_table_constants[i].value);
+        snprintf(word, sizeof(word), "scalar:ENUM,0x%08x", s_table_constants[i].value);
         AgoData * data = agoCreateDataFromDescription(this, NULL, word, false);
         if (!data) {
             agoAddLogEntry(nullptr, VX_FAILURE, "ERROR: AgoContext::AgoContext: agoCreateDataFromDescription(*,%s) failed\n", word);

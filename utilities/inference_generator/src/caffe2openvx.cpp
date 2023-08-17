@@ -2323,7 +2323,7 @@ void generateCode(
     /////
     // generate CMakeLists.txt
     //
-    ofsCodeM << "cmake_minimum_required (VERSION 2.8)" << std::endl;
+    ofsCodeM << "cmake_minimum_required(VERSION 3.5)" << std::endl;
     ofsCodeM << "project (annmodule)" << std::endl;
     ofsCodeM << "set (CMAKE_CXX_STANDARD 14)" << std::endl;
     ofsCodeM << "list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)" << std::endl;

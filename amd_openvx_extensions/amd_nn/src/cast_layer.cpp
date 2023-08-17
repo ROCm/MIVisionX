@@ -131,14 +131,14 @@ static vx_status VX_CALLBACK opencl_codegen(
 
     if (num_dims == 2 || num_dims == 4) {
         char item[8192];
-        sprintf(item,
+        snprintf(item, sizeof(item),
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
                 "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, const int output_data_type, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                 "{ \n"
                 , opencl_kernel_function_name);
         opencl_kernel_code = item;
         if (num_dims == 2) {
-                sprintf(item,
+                snprintf(item, sizeof(item),
                 "    uint x = get_global_id(0) * %d;\n"
 		        "    uint y = get_global_id(1);\n"
 		        "    in += in_offset + y * in_stride.s1 + x * in_stride.s0;\n"
@@ -147,7 +147,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             opencl_kernel_code += item;
         }
         else if (num_dims == 4){
-            sprintf(item,
+            snprintf(item, sizeof(item),
                 "   uint x = get_global_id(0) * %d;\n"
                 "   uint y = get_global_id(1);\n"
                 "   uint c = get_global_id(2);\n"
@@ -159,7 +159,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         if(input_element_count_multiple_of_4) {
         	if(input_type == VX_TYPE_FLOAT32) {
         		if(output_type == VX_TYPE_INT32) {
-        			sprintf(item,
+        			snprintf(item, sizeof(item),
                 	"	float4 f = *(__global float4 *)in; \n"
                 	"	int4 i = convert_int4(f);  \n"
                 	"	*(__global int4 *)&out[0] = i; \n"
@@ -167,7 +167,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         			opencl_kernel_code += item;
         		}
         		else if(output_type == VX_TYPE_INT64) {
-        			sprintf(item,
+        			snprintf(item, sizeof(item),
                 	"	float4 f = *(__global float4 *)in; \n"
                 	"	long4 i = convert_long4(f);  \n"
                 	"	*(__global long4 *)&out[0] = i; \n"
@@ -175,7 +175,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         			opencl_kernel_code += item;
         		}
                 else if(output_type == VX_TYPE_FLOAT32) {
-                    sprintf(item,
+                    snprintf(item, sizeof(item),
                     "   float4 i = *(__global float4 *)in; \n"
                     "   *(__global float4 *)&out[0] = i; \n"
                     );
@@ -184,7 +184,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         	}
         	else if(input_type == VX_TYPE_INT32) {
         		if(output_type == VX_TYPE_INT64) {
-        			sprintf(item,
+        			snprintf(item, sizeof(item),
                 	"	int4 f = *(__global int4 *)in; \n"
                 	"	long4 i = convert_long4(f);  \n"
                 	"	*(__global long4 *)&out[0] = i; \n"
@@ -194,7 +194,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         	}
         	else if(input_type == VX_TYPE_INT64) {
         		if(output_type == VX_TYPE_INT32) {
-        			sprintf(item,
+        			snprintf(item, sizeof(item),
         			"	long4 f = *(__global long4 *)in; \n"
                 	"	int4 i = convert_int4(f); \n"
                 	"	*(__global int4 *)&out[0] = i; \n"
@@ -206,7 +206,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         else {
         	if(input_type == VX_TYPE_FLOAT32) {
         		if(output_type == VX_TYPE_INT32) {
-        			sprintf(item,
+        			snprintf(item, sizeof(item),
                 	"	float f = *(__global float *)in; \n"
                 	"	int i = convert_int(f); \n"
                 	"	*(__global int *)&out[0] = i; \n"
@@ -214,7 +214,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         			opencl_kernel_code += item;
         		}
         		else if(output_type == VX_TYPE_INT64) {
-        			sprintf(item,
+        			snprintf(item, sizeof(item),
                 	"	float f = *(__global float *)in; \n"
                 	"	long i = convert_long(f); \n"
                 	"	*(__global long *)&out[0] = i; \n"
@@ -222,7 +222,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         			opencl_kernel_code += item;
         		}
                 else if(output_type == VX_TYPE_FLOAT32) {
-                    sprintf(item,
+                    snprintf(item, sizeof(item),
                     "   float i = *(__global float *)in; \n"
                     "   *(__global float *)&out[0] = i; \n"
                     );
@@ -231,7 +231,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         	}
         	else if(input_type == VX_TYPE_INT32) {
         		if(output_type == VX_TYPE_INT64) {
-        			sprintf(item,
+        			snprintf(item, sizeof(item),
                 	"	int f = *(__global int *)in; \n"
                 	"	long i = convert_long(f); \n"
                 	"	*(__global long *)&out[0] = i; \n"
@@ -241,7 +241,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         	}
         	else if(input_type == VX_TYPE_INT64) {
         		if(output_type == VX_TYPE_INT32) {        			
-        			sprintf(item,
+        			snprintf(item, sizeof(item),
                 	"	long f = *(__global long *)in; \n"
                 	"	int i = convert_int(f); \n"
                 	"	*(__global int *)&out[0] = i; \n"

@@ -28,9 +28,9 @@ THE SOFTWARE.
 #include <map>
 #include <iterator>
 #include <algorithm>
+#include <google/protobuf/message_lite.h>
 #include "reader.h"
 #include "timing_debug.h"
-#include <google/protobuf/message_lite.h>
 #include "example.pb.h"
 #include "feature.pb.h"
 

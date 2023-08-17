@@ -175,24 +175,23 @@ if(${BUILD_ROCAL})
                 ../../amd_openvx/openvx/include/
                 ../../amd_openvx_extensions/amd_rpp/include/
                 ../../amd_openvx_extensions/amd_media/include/
-                ./include/api/
-                ./include/augmentations/color_augmentations/
-                ./include/augmentations/effects_augmentations/
-                ./include/augmentations/geometry_augmentations/
-                ./include/augmentations/
-                ./include/decoders/image/
-                ./include/decoders/video/
-                ./include/device/
-                ./include/loaders/
-                ./include/loaders/image/
-                ./include/loaders/video/
-                ./include/meta_data/
-                ./include/parameters/
-                ./include/readers/image/
-                ./include/readers/video/
-                ./include/pipeline/
-                include
-                )
+                include/api/
+                include/augmentations/color_augmentations/
+                include/augmentations/effects_augmentations/
+                include/augmentations/geometry_augmentations/
+                include/augmentations/
+                include/decoders/image/
+                include/decoders/video/
+                include/device/
+                include/loaders/
+                include/loaders/image/
+                include/loaders/video/
+                include/meta_data/
+                include/parameters/
+                include/pipeline/
+                include/readers/image/
+                include/readers/video/
+    )
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
         link_directories(${HIP_PATH}/lib)

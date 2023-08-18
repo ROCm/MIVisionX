@@ -30,7 +30,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include <google/protobuf/message_lite.h>
 #include <lmdb.h>
-#include "reader.h"
+#include "image_reader.h"
 #include "caffe_protos.pb.h"
 #include "timing_debug.h"
 

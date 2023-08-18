@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include "commons.h"
 #include "meta_data.h"
 #include "meta_data_reader.h"
-#include "reader.h"
+#include "image_reader.h"
 #include "caffe_protos.pb.h"
 
 class CaffeMetaDataReader: public MetaDataReader

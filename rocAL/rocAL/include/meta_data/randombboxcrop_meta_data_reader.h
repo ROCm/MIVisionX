@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include <string>
 #include <memory>
 #include "randombboxcrop_meta_data.h"
-#include "reader.h"
+#include "image_reader.h"
 #include "meta_data_reader.h"
 #include "graph.h"
 #include "parameter_factory.h"

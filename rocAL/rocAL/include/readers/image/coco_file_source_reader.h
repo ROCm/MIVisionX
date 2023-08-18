@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <memory>
 #include <fstream>
 #include <dirent.h>
-#include "reader.h"
+#include "image_reader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
 #include "timing_debug.h"

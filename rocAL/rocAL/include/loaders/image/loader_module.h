@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #pragma  once
 #include <memory>
-#include "reader.h"
+#include "image_reader.h"
 #include "decoder.h"
 #include "commons.h"
 #include "image.h"

@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 project(rocal)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -51,6 +51,9 @@ if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     endif()
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900;gfx906;gfx908;gfx90a;gfx940;gfx1030;gfx1031;gfx1032")
+    if (BUILD_WITH_AMD_ADVANCE)
+        set(DEFAULT_AMDGPU_TARGETS ${DEFAULT_AMDGPU_TARGETS} "gfx941")
+    endif()
     set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
     find_package(HIP QUIET)
     if(HIP_FOUND)
@@ -172,24 +175,23 @@ if(${BUILD_ROCAL})
                 ../../amd_openvx/openvx/include/
                 ../../amd_openvx_extensions/amd_rpp/include/
                 ../../amd_openvx_extensions/amd_media/include/
-                ./include/api/
-                ./include/augmentations/color_augmentations/
-                ./include/augmentations/effects_augmentations/
-                ./include/augmentations/geometry_augmentations/
-                ./include/augmentations/
-                ./include/decoders/image/
-                ./include/decoders/video/
-                ./include/device/
-                ./include/loaders/
-                ./include/loaders/image/
-                ./include/loaders/video/
-                ./include/meta_data/
-                ./include/parameters/
-                ./include/readers/image/
-                ./include/readers/video/
-                ./include/pipeline/
-                include
-                )
+                include/api/
+                include/augmentations/color_augmentations/
+                include/augmentations/effects_augmentations/
+                include/augmentations/geometry_augmentations/
+                include/augmentations/
+                include/decoders/image/
+                include/decoders/video/
+                include/device/
+                include/loaders/
+                include/loaders/image/
+                include/loaders/video/
+                include/meta_data/
+                include/parameters/
+                include/pipeline/
+                include/readers/image/
+                include/readers/video/
+    )
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
         link_directories(${HIP_PATH}/lib)
@@ -202,7 +204,7 @@ if(${BUILD_ROCAL})
     protobuf_generate_cpp(CAFFE_PROTO_SRCS CAFFE_PROTO_HEADERS proto/caffe_protos.proto)
     link_directories(${AMDRPP_LIBRARIES_DIRS} ${TurboJpeg_LIBRARIES_DIR} ${PROTOBUF_LIBRARY_DIRS} /usr/local/lib/)
 
-    file(GLOB_RECURSE SOURCES "./source/*.cpp")
+    file(GLOB_RECURSE SOURCES "source/*.cpp")
     add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS} ${CAFFE_PROTO_HEADERS} ${CAFFE_PROTO_SRCS} ${CAFFE2_PROTO_SRCS} ${CAFFE2_PROTO_HEADERS})
 
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)

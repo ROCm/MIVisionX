@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <map>
 #include <vector>
 #include <tuple>
+#include <lmdb.h>
 #include "meta_data_reader.h"
 
 #define CHECK_LMDB_RETURN_STATUS(status)          \

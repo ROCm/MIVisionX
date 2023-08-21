@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "caffe2_meta_data_reader_detection.h"
 #include <iostream>
 #include <utility>
 #include <algorithm>
@@ -28,7 +27,8 @@ THE SOFTWARE.
 #include <string>
 #include <stdint.h>
 #include <google/protobuf/message_lite.h>
-#include "lmdb.h"
+#include <lmdb.h>
+#include "caffe2_meta_data_reader_detection.h"
 #include "caffe2_protos.pb.h"
 
 using namespace std;

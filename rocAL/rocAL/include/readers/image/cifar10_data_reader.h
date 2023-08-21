@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include <string>
 #include <memory>
 #include <dirent.h>
-#include "reader.h"
+#include "image_reader.h"
 
 
 class CIFAR10DataReader : public Reader {

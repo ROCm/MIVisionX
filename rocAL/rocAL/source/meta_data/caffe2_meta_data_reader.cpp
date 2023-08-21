@@ -20,15 +20,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "caffe2_meta_data_reader.h"
 #include <iostream>
 #include <utility>
 #include <algorithm>
-#include<fstream>
+#include <fstream>
 #include <string>
 #include <stdint.h>
 #include <google/protobuf/message_lite.h>
-#include "lmdb.h"
+#include <lmdb.h>
+#include "caffe2_meta_data_reader.h"
 #include "caffe2_protos.pb.h"
 
 using namespace std;

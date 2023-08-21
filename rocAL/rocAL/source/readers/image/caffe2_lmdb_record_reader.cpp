@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #include <cassert>
 #include <commons.h>
-#include "caffe2_lmdb_record_reader.h"
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
@@ -31,6 +30,7 @@ THE SOFTWARE.
 #include <sstream>
 #include <fstream>
 #include <stdint.h>
+#include "caffe2_lmdb_record_reader.h"
 using namespace std;
 namespace filesys = boost::filesystem;
 

@@ -341,6 +341,7 @@ extern "C"
 	 * \param [in] y1 The input array of batch size in <tt>VX_TYPE_UINT32t</tt> containing the start y-position for each image. 
 	 * \param [in] mean The input array of batch size in <tt>VX_TYPE_FLOAT</tt> containing the mean value.
 	 * \param [in] std_dev The input array of batch size in <tt>VX_TYPE_FLOAT</tt> containing the standard deviation value.
+	 * \param [in] flip The input array of batch size in <tt>VX_TYPE_UINT32</tt> containing the flip value.
 	 * \param [in] chnShift An input scalar value of type <tt>VX_TYPE_UINT32</tt> containing the channel shift value.
 	 * \param [in] nbatchSize The input scalar in <tt>\ref VX_TYPE_UINT32</tt> to set batch size.
 	 * \return <tt> vx_node</tt>.
@@ -577,13 +578,13 @@ extern "C"
 	 * \ingroup group_amd_rpp
 	 * \param [in] graph The handle to the graph.
 	 * \param [in] pSrc The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_RGB</tt> format data.
-	 * \param [in] srcImgWidth The input array of batch size in <tt>unsigned int<tt> containing the image width data.
-	 * \param [in] srcImgHeight The input array of batch size in <tt>unsigned int<tt> containing the image height data.
+	 * \param [in] srcImgWidth The input array of batch size in <tt>unsigned int</tt> containing the image width data.
+	 * \param [in] srcImgHeight The input array of batch size in <tt>unsigned int</tt> containing the image height data.
 	 * \param [out] pDst The output image data.
 	 * \param [in] gaussianKernelSize The input array of batch size in <tt>\ref VX_TYPE_UINT32</tt> format containing gaussian kernel size.
-	 * \param [in] stdDev The input array in <tt>float<tt> format containing the standard deviation data.
+	 * \param [in] stdDev The input array in <tt>float</tt> format containing the standard deviation data.
 	 * \param [in] kernelSize The input array of batch size in <tt>\ref VX_TYPE_UINT32</tt> format containing the corner detection kernel size.
-	 * \param [in] kValue The input array in <tt>\ref VX_TYPE_FLOAT32<tt> format containing the 'k' value.
+	 * \param [in] kValue The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the 'k' value.
 	 * \param [in] threshold The input array of batch size in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the threshold for corners.
 	 * \param [in] nonMaxKernelSize The input array in <tt>\ref VX_TYPE_UINT32</tt> format containing the nonmax suppression kernel size.
 	 * \param [in] nbatchSize The input scalar in <tt>\ref VX_TYPE_UINT32</tt> to set batch size.
@@ -731,7 +732,7 @@ extern "C"
 	 * \param [in] srcImgWidth The input array of batch size in <tt>unsigned int</tt> containing the image width data.
 	 * \param [in] srcImgHeight The input array of batch size in <tt>unsigned int</tt> containing the image height data.
 	 * \param [out] pDst The output image data.
-	 * \param [in] lutPtr The input array in <tt>unsigned char<tt> format containing the strength data.
+	 * \param [in] lutPtr The input array in <tt>unsigned char</tt> format containing the strength data.
 	 * \param [in] nbatchSize The input scalar in <tt>\ref VX_TYPE_UINT32</tt> to set batch size.
 	 * \return <tt> vx_node</tt>.
 	 * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
@@ -783,8 +784,8 @@ extern "C"
 	 * \ingroup group_amd_rpp
 	 * \param [in] graph The handle to the graph.
 	 * \param [in] pSrc The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_RGB</tt> format data.
-	 * \param [in] srcImgWidth The input array of batch size in <tt>unsigned int<tt> containing the image width data.
-	 * \param [in] srcImgHeight The input array of batch size in <tt>unsigned int<tt> containing the image height data.
+	 * \param [in] srcImgWidth The input array of batch size in <tt>unsigned int</tt> containing the image width data.
+	 * \param [in] srcImgHeight The input array of batch size in <tt>unsigned int</tt> containing the image height data.
 	 * \param [out] pDst The output image data.
 	 * \param [in] kernelSize The input array in <tt>\ref VX_TYPE_UINT32</tt> format containing the kernel size data.
 	 * \param [in] nbatchSize The input scalar in <tt>\ref VX_TYPE_UINT32</tt> to set batch size.
@@ -1424,7 +1425,7 @@ extern "C"
 	 * \ingroup group_amd_rpp
 	 * \param [in] graph The handle to the graph.
 	 * \param [in] pSrc The input tensor data.
-	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh/ltrb format.
 	 * \param [out] pDst The output tensor data.
 	 * \param [in] pDstWidth The input array in <tt>\ref VX_TYPE_UINT32</tt> format containing the output width data.
 	 * \param [in] pDstHeight The input array in <tt>\ref VX_TYPE_UINT32</tt> format containing the output height data.

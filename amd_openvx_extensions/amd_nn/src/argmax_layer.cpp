@@ -31,7 +31,7 @@ static vx_status VX_CALLBACK validateKernel(vx_node node, const vx_reference par
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     if (num_dims != 2 && num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validation: argmax: #0 num_dims=%ld (num_dims must be 2 or 4)\n", num_dims);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &input_dims[4-num_dims], sizeof(input_dims[0])*num_dims));
-    if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validation: argmax: #0 type=%d (not float/float16)\n", type);
+    if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validation: argmax: #0 type=%d (not float32/float16)\n", type);
 
     // check output object type and set configuration
     ERROR_CHECK_STATUS(vxQueryReference(parameters[1], VX_REFERENCE_TYPE, &type, sizeof(type)));

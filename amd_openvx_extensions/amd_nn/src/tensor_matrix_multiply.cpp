@@ -449,6 +449,7 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
                         0,
                         0);
             if (rstatus != rocblas_status_success) {
+                printf("ERROR: rocblas_gemm_ex initialization failed for fp32 with status %d\n", rstatus);
                 return VX_FAILURE;
             }
             break;
@@ -479,7 +480,7 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
                         0,
                         0);
             if (rstatus != rocblas_status_success) {
-                printf("ERROR: rocblas_gemm_ex failed fp16 initialize %d\n", rstatus);
+                printf("ERROR: rocblas_gemm_ex initialization failed for fp16 with status %d\n", rstatus);
                 return VX_FAILURE;
             }
         break;
@@ -561,7 +562,7 @@ static vx_status VX_CALLBACK process(vx_node node, const vx_reference * paramete
                         0,
                         0);
             if (rstatus != rocblas_status_success) {
-                printf("ERROR: rocblas_gemm_ex failed fp32 process\n");
+                printf("ERROR: rocblas_gemm_ex process failed for fp32 with status %d\n", rstatus);
                 return VX_FAILURE;
             }
             break;
@@ -592,7 +593,7 @@ static vx_status VX_CALLBACK process(vx_node node, const vx_reference * paramete
                         0,
                         0);
             if (rstatus != rocblas_status_success) {
-                printf("ERROR: rocblas_gemm_ex failed fp32 process\n");
+                printf("ERROR: rocblas_gemm_ex process failed for fp16 with status %d\n", rstatus);
                 return VX_FAILURE;
             }
         break;

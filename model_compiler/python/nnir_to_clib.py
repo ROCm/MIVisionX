@@ -298,7 +298,7 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
 endif()
 
 find_package(OpenCV QUIET)
-include_directories (${ROCM_PATH}/include ${ROCM_PATH}/include/mivisionx ../)
+include_directories (${ROCM_PATH}/include ${ROCM_PATH}/include/mivisionx)
 link_directories    (${ROCM_PATH}/lib)
 add_library(${PROJECT_NAME} SHARED mv_extras_postproc.cpp)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")

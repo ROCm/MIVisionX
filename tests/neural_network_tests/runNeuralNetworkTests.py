@@ -132,6 +132,8 @@ parser.add_argument('--backend_type',       type=str, default='HIP',
                     help='Backend type - optional (default:HIP [options:HOST/HIP/OCL])')
 parser.add_argument('--install_directory',    type=str, default='/opt/rocm',
                     help='MIVisionX Install Directory - optional')
+parser.add_argument('--reinstall', 	type=str, default='ON',
+                    help='Remove previous setup and reinstall - optional (default:OFF) [options:ON/OFF]')
 args = parser.parse_args()
 
 profileMode = args.profiler_mode
@@ -140,6 +142,7 @@ miopenFind = args.miopen_find
 testInfo = args.test_info
 backendType = args.backend_type
 installDir = args.install_directory
+reinstall = args.reinstall.upper()
 
 platfromInfo = platform.platform()
 
@@ -176,9 +179,15 @@ if backendType == 'HOST':
     print("ERROR: HOST Backend currently NOT Supported [Supported: OCL/HIP]")
     exit()
 
+if reinstall not in ('OFF', 'ON'):
+    print(
+        "ERROR: Re-Install Option Not Supported - [Supported Options: OFF or ON]\n")
+    parser.print_help()
+    exit()
+
 # check install
 runVX_exe = installDir+'/bin/runvx'
-if(os.path.isfile(runVX_exe)):
+if (os.path.isfile(runVX_exe)):
     print("STATUS: MIVisionX Install Path Found - "+installDir)
 else:
     print("\nERROR: MIVisionX Install Path Not Found\n")
@@ -192,7 +201,7 @@ modelCompilerDir = os.path.expanduser(
     installDir+'/libexec/mivisionx/model_compiler/python')
 pythonScript = modelCompilerDir+'/caffe_to_nnir.py'
 modelCompilerScript = os.path.abspath(pythonScript)
-if(os.path.isfile(modelCompilerScript)):
+if (os.path.isfile(modelCompilerScript)):
     print("\nMIVisionX Neural Net Tests on "+platfromInfo+"\n")
     print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir+"\n")
 else:
@@ -203,6 +212,14 @@ else:
 # Install Model Compiler Deps
 modelCompilerDeps = os.path.expanduser('~/.mivisionx-model-compiler-deps')
 linuxCMake = 'cmake'
+
+# Delete previous install
+if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
+    os.system('sudo -v')
+    os.system('sudo rm -rf '+modelCompilerDeps)
+    print("\nMIVisionX runNeuralNetworkTests: Removing Previous Install -- " +
+          modelCompilerDeps+"\n")
+
 if not os.path.exists(modelCompilerDeps):
     print("STATUS: Model Compiler Deps Install - "+modelCompilerDeps+"\n")
     # sudo requirement check
@@ -219,16 +236,18 @@ if not os.path.exists(modelCompilerDeps):
 
     linuxSystemInstall = ''
     linuxSystemInstall_check = ''
-    if "centos" in platfromInfo or "redhat" in platfromInfo:
+    if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/bin/yum'):
         linuxSystemInstall = 'yum -y'
         linuxSystemInstall_check = '--nogpgcheck'
         if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
             linuxCMake = 'cmake3'
-            os.system(linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install cmake3')
+            os.system(linuxSystemInstall+' install cmake3')
+        if not "centos" in platfromInfo or not "redhat" in platfromInfo:
+            platfromInfo = platfromInfo+'-redhat'
     elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
         linuxSystemInstall = 'apt-get -y'
         linuxSystemInstall_check = '--allow-unauthenticated'
+        linuxFlag = '-S'
         if not "Ubuntu" in platfromInfo:
             platfromInfo = platfromInfo+'-Ubuntu'
     elif os.path.exists('/usr/bin/zypper'):
@@ -236,8 +255,9 @@ if not os.path.exists(modelCompilerDeps):
         linuxSystemInstall_check = '--no-gpg-checks'
         platfromInfo = platfromInfo+'-SLES'
     else:
-        print("\nMIVisionX runNeuralNetworkTests.py on "+platfromInfo+" is unsupported\n")
-        print("\nrunNeuralNetworkTests.py Supported on: Ubuntu 18/20; CentOS 7/8; RedHat 7/8; & SLES 15-SP2\n")
+        print("\nMIVisionX runNeuralNetworkTests.py on " +
+              platfromInfo+" is unsupported\n")
+        print("\nMIVisionX runNeuralNetworkTests.py Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP4\n")
         exit()
 
     if userName == 'root':
@@ -250,10 +270,13 @@ if not os.path.exists(modelCompilerDeps):
         os.system(
             'sudo '+linuxSystemInstall+' ' +
             linuxSystemInstall_check+' install git inxi python3 python3-pip protobuf-compiler libprotoc-dev')
-    elif "centos" in platfromInfo or "redhat" in platfromInfo:
+    elif "centos" in platfromInfo or "redhat" in platfromInfo or "SLES" in platfromInfo:
         os.system(
             'sudo '+linuxSystemInstall+' ' +
-            linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
+            linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf-devel python3-protobuf')
+        if "SLES" in platfromInfo:
+            os.system('sudo pip3 install numpy')
+    # Install base Deps
     os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
     # Install CAFFE Deps
     os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
@@ -307,7 +330,8 @@ if profileMode == 0 or profileMode == 1:
                       currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log)')
-            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
             if annTestResults.find("successful") == -1:
                 returnStatus = -1
@@ -361,7 +385,8 @@ if profileMode == 0 or profileMode == 2:
                       currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log)')
-            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
             if annTestResults.find("successful") == -1:
                 returnStatus = -1
@@ -415,7 +440,8 @@ if profileMode == 0 or profileMode == 3:
                       currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log)')
-            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
             if annTestResults.find("successful") == -1:
                 returnStatus = -1
@@ -469,7 +495,8 @@ if profileMode == 0 or profileMode == 4:
                       currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log)')
-            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
             if annTestResults.find("successful") == -1:
                 returnStatus = -1
@@ -523,7 +550,8 @@ if profileMode == 0 or profileMode == 5:
                       currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log)')
-            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
             if annTestResults.find("successful") == -1:
                 returnStatus = -1
@@ -577,7 +605,8 @@ if profileMode == 0 or profileMode == 6:
                       currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log)')
-            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
             if annTestResults.find("successful") == -1:
                 returnStatus = -1
@@ -631,7 +660,8 @@ if profileMode == 0 or profileMode == 7:
                       currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log)')
-            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
             if annTestResults.find("successful") == -1:
                 returnStatus = -1
@@ -685,7 +715,8 @@ if profileMode == 0 or profileMode == 8:
                       currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log)')
-            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
             if annTestResults.find("successful") == -1:
                 returnStatus = -1
@@ -739,7 +770,8 @@ if profileMode == 0 or profileMode == 9:
                       currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
                       ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log)')
-            annTestResults = shell('(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
             if annTestResults.find("successful") == -1:
                 returnStatus = -1

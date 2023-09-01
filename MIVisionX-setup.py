@@ -378,12 +378,14 @@ else:
                 if "Ubuntu" in platfromInfo:
                     os.system(
                         'sudo '+linuxSystemInstall+' ' +
-                        linuxSystemInstall_check+' install git inxi python3 python3-pip protobuf-compiler libprotoc-dev')
-                elif "centos" in platfromInfo or "redhat" in platfromInfo:
+                        linuxSystemInstall_check+' install git inxi python3-dev python3-pip protobuf-compiler libprotoc-dev')
+                else:
                     os.system(
                         'sudo '+linuxSystemInstall+' ' +
-                        linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
-                os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
+                        linuxSystemInstall_check+' install git inxi python-devel python3-devel python3-pip protobuf-devel python3-protobuf')
+                # Install base Deps
+                os.system(
+                    'sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
                 # Install CAFFE Deps
                 os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
                 # Install ONNX Deps
@@ -438,11 +440,13 @@ else:
         # clang
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install clang')
+                  linuxSystemInstall_check+' install clang')
         if "SLES" in platfromInfo:
             os.system('sudo -v')
-            os.system('sudo update-alternatives --install /usr/bin/clang clang /opt/rocm-*/llvm/bin/clang 100')
-            os.system('sudo update-alternatives --install /usr/bin/clang++ clang++ /opt/rocm-*/llvm/bin/clang++ 100')
+            os.system(
+                'sudo update-alternatives --install /usr/bin/clang clang /opt/rocm-*/llvm/bin/clang 100')
+            os.system(
+                'sudo update-alternatives --install /usr/bin/clang++ clang++ /opt/rocm-*/llvm/bin/clang++ 100')
         # OS Deps
         if "Ubuntu" in platfromInfo:
             # Install Packages for rocAL

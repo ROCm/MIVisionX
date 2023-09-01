@@ -269,13 +269,11 @@ if not os.path.exists(modelCompilerDeps):
     if "Ubuntu" in platfromInfo:
         os.system(
             'sudo '+linuxSystemInstall+' ' +
-            linuxSystemInstall_check+' install git inxi python3 python3-pip protobuf-compiler libprotoc-dev')
-    elif "centos" in platfromInfo or "redhat" in platfromInfo or "SLES" in platfromInfo:
+            linuxSystemInstall_check+' install git inxi python3-dev python3-pip protobuf-compiler libprotoc-dev')
+    else:
         os.system(
             'sudo '+linuxSystemInstall+' ' +
-            linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf-devel python3-protobuf')
-        if "SLES" in platfromInfo:
-            os.system('sudo pip3 install numpy')
+            linuxSystemInstall_check+' install git inxi python-devel python3-devel python3-pip protobuf-devel python3-protobuf')
     # Install base Deps
     os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
     # Install CAFFE Deps
@@ -292,7 +290,7 @@ if not os.path.exists(modelCompilerDeps):
         '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
-    if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
+    if "centos-7" in platfromInfo:
         linuxCMake = 'cmake3'
 
 currentWorkingDirectory = os.getcwd()

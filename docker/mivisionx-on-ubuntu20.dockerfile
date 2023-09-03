@@ -8,7 +8,7 @@ WORKDIR $MIVISIONX_DEPS_ROOT
 
 RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git libcanberra-gtk-module
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration &&  \
         sudo apt-get -y clean && dpkg --add-architecture i386 && \

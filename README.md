@@ -40,9 +40,13 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   - [Verifying on Windows](#verifying-on-windows)
 - [Docker](#docker)
   - [MIVisionX Docker](#mivisionx-docker)
-  - [Docker Workflow Sample on Ubuntu `20.04`](#docker-workflow-sample-on-ubuntu-2004)
-    - [Sample Prerequisites](#sample-prerequisites)
-    - [Sample Workflow](#sample-workflow)
+  - [Docker Workflow on Ubuntu `20.04`/`22.04`](#docker-workflow-on-ubuntu-20042204)
+    - [Prerequisites](#prerequisites-1)
+    - [Workflow](#workflow)
+  - [Run docker image: Local Machine](#run-docker-image-local-machine)
+    - [**Option 1**: Map localhost directory on the docker image](#option-1-map-localhost-directory-on-the-docker-image)
+    - [**Option 2**:  Display with docker](#option-2--display-with-docker)
+  - [Run docker image with display: Remote Server Machine](#run-docker-image-with-display-remote-server-machine)
 - [Technical Support](#technical-support)
 - [Release Notes](#release-notes)
   - [Latest Release Version](#latest-release-version)
@@ -351,88 +355,75 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 ## Docker
 
-MIVisionX provides developers with docker images for **Ubuntu** `20.04` and **CentOS** `7` / `8`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
+MIVisionX provides developers with docker images for Ubuntu `20.04` / `22.04`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
 Docker files to build MIVisionX containers are [available](docker#mivisionx-docker)
 
 ### MIVisionX Docker
+* [Ubuntu 20.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-20.04)
+* [Ubuntu 22.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-22.04)
 
-* [Ubuntu 20.04](https://hub.docker.com/r/mivisionx/ubuntu-20.04)
-* [CentOS 7](https://hub.docker.com/r/mivisionx/centos-7)
-* [CentOS 8](https://hub.docker.com/r/mivisionx/centos-8)
+### Docker Workflow on Ubuntu `20.04`/`22.04`
 
-### Docker Workflow Sample on Ubuntu `20.04`
-
-#### Sample Prerequisites
-
+#### Prerequisites
 * Ubuntu `20.04`/`22.04`
-* [rocm supported hardware](https://docs.amd.com)
+* [ROCm supported hardware](https://docs.amd.com)
+* [ROCm](https://docs.amd.com)
+* [Docker](https://docs.docker.com/engine/install/ubuntu/)
 
-#### Sample Workflow
+#### Workflow
 
-* Step 1 - *Install rocm-dkms*
+* **Step 1** - Get latest docker image
+  ```
+  sudo docker pull mivisionx/ubuntu-20.04:latest
+  ```
+  * **NOTE:** Use the above command to bring in latest changes from upstream
 
+* **Step 2** - Run docker image
+
+### Run docker image: Local Machine
 ```
-sudo apt update -y
-sudo apt dist-upgrade -y
-sudo apt install libnuma-dev wget
-sudo reboot
+sudo docker run -it --privileged --device=/dev/kfd --device=/dev/dri --device=/dev/mem --cap-add=SYS_RAWIO  --group-add video --shm-size=4g --ipc="host" --network=host mivisionx/ubuntu-20.04:latest
 ```
+* **Test** - Computer Vision Workflow
+  ```
+  python3 /workspace/MIVisionX/tests/vision_tests/runVisionTests.py --num_frames 1
+  ```
+* **Test** - Neural Network Workflow
+  ```
+  python3 /workspace/MIVisionX/tests/neural_network_tests/runNeuralNetworkTests.py --profiler_level 1
+  ```
+* **Test** - Khronos OpenVX 1.3.0 Conformance Test
+  ```
+  python3 /workspace/MIVisionX/tests/conformance_tests/runConformanceTests.py --backend_type HOST
+  ```
 
-```
-wget https://repo.radeon.com/amdgpu-install/21.50/ubuntu/focal/amdgpu-install_21.50.50000-1_all.deb
-sudo apt-get install -y ./amdgpu-install_21.50.50000-1_all.deb
-sudo apt-get update -y
-sudo amdgpu-install -y --usecase=rocm
-sudo reboot
-```
+#### **Option 1**: Map localhost directory on the docker image
+* option to map the localhost directory with data to be accessed on the docker image
+* **usage**: -v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH} 
+  ```
+  sudo docker run -it -v /home/:/root/hostDrive/ -privileged --device=/dev/kfd --device=/dev/dri --device=/dev/mem --cap-add=SYS_RAWIO  --group-add video --shm-size=4g --ipc="host" --network=host mivisionx/ubuntu-20.04:latest
+  ```
+#### **Option 2**:  Display with docker
+* Using host display for docker
 
-* Step 2 - *Setup Docker*
+  ```
+  xhost +local:root
+  sudo docker run -it --privileged --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=$DISPLAY --volume="$HOME/.Xauthority:/root/.Xauthority:rw" --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-20.04:latest
+  ```
+* **Test** display with MIVisionX sample
+  ```
+  runvx -v /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
+  ```
+### Run docker image with display: Remote Server Machine
 
-```
-sudo apt-get install curl
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-sudo apt-get update
-apt-cache policy docker-ce
-sudo apt-get install -y docker-ce
-sudo systemctl status docker
-```
-
-* Step 3 - *Get Docker Image*
-
-```
-sudo docker pull mivisionx/ubuntu-20.04
-```
-
-* Step 4 - *Run the docker image*
-
-```
-sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-20.04:latest
-```
-  **Note:**
-  * Map host directory on the docker image
-
-    + map the localhost directory to be accessed on the docker image.
-    + use `-v` option with docker run command: `-v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH}`
-    + usage:
-    ```
-    sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-20.04:latest
-    ```
-
-  * Display option with docker
-    + Using host display
-    ```
-    xhost +local:root
-    sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-20.04:latest
-    ```
-
-    + Test display with MIVisionX sample
-    ```
-    export PATH=$PATH:/opt/rocm/bin
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
-    runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
-    ```
+  ```
+  sudo docker run -it --privileged --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=$DISPLAY --volume="$HOME/.Xauthority:/root/.Xauthority:rw" --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-20.04:latest
+  ```
+* **Test** display with MIVisionX sample
+  ```
+  runvx -v /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
+  ```
 
 ## Technical Support
 

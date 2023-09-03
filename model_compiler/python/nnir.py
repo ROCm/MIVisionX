@@ -281,9 +281,9 @@ class IrGraph(object):
         self.tensor_dict[tensor.name] = tensor
         self.tensor_types[tensor.name] = tensor.type
         self.tensor_shapes[tensor.name] = tensor.shape
-        if self.all_F032 == True and tensor.type != 'F032':
+        if self.all_F032 == True and tensor.type == 'F016':
             self.all_F032 = False
-        if self.all_F016 == True and tensor.type != 'F016':
+        if self.all_F016 == True and tensor.type == 'F032':
             self.all_F016 = False
         self.output_names.append(tensor.name)
 
@@ -294,18 +294,18 @@ class IrGraph(object):
         self.tensor_dict[tensor.name] = tensor
         self.tensor_types[tensor.name] = tensor.type
         self.tensor_shapes[tensor.name] = tensor.shape
-        if self.all_F032 == True and tensor.type != 'F032':
+        if self.all_F032 == True and tensor.type == 'F016':
             self.all_F032 = False
-        if self.all_F016 == True and tensor.type != 'F016':
+        if self.all_F016 == True and tensor.type == 'F032':
             self.all_F016 = False
 
     def addLocal(self,tensor):
         self.tensor_dict[tensor.name] = tensor
         self.tensor_types[tensor.name] = tensor.type
         self.tensor_shapes[tensor.name] = tensor.shape
-        if self.all_F032 == True and tensor.type != 'F032':
+        if self.all_F032 == True and tensor.type == 'F016':
             self.all_F032 = False
-        if self.all_F016 == True and tensor.type != 'F016':
+        if self.all_F016 == True and tensor.type == 'F032':
             self.all_F016 = False
         if not tensor.name in self.output_names:
             self.locals.append(tensor)
@@ -901,22 +901,26 @@ class IrGraph(object):
                 keepAsFP32.append(node.inputs[4])
         if self.all_F032:
             for tensor in self.inputs:
-                tensor.type = 'F016'
-                self.tensor_types[tensor.name] = tensor.type
-                self.tensor_dict[tensor.name] = tensor
-            for tensor in self.outputs:
-                tensor.type = 'F016'
-                self.tensor_types[tensor.name] = tensor.type
-                self.tensor_dict[tensor.name] = tensor
-            for tensor in self.locals:
-                tensor.type = 'F016'
-                self.tensor_types[tensor.name] = tensor.type
-                self.tensor_dict[tensor.name] = tensor
-            for tensor in self.initializers:
-                if tensor.name not in keepAsFP32:    
+                if tensor.type == 'F032':
                     tensor.type = 'F016'
                     self.tensor_types[tensor.name] = tensor.type
                     self.tensor_dict[tensor.name] = tensor
+            for tensor in self.outputs:
+                if tensor.type == 'F032':
+                    tensor.type = 'F016'
+                    self.tensor_types[tensor.name] = tensor.type
+                    self.tensor_dict[tensor.name] = tensor
+            for tensor in self.locals:
+                if tensor.type == 'F032':
+                    tensor.type = 'F016'
+                    self.tensor_types[tensor.name] = tensor.type
+                    self.tensor_dict[tensor.name] = tensor
+            for tensor in self.initializers:
+                if tensor.name not in keepAsFP32:    
+                    if tensor.type == 'F032':
+                        tensor.type = 'F016'
+                        self.tensor_types[tensor.name] = tensor.type
+                        self.tensor_dict[tensor.name] = tensor
             for idx, binary in enumerate(self.binaries):
                 if binary not in keepAsFP32:
                     weight = np.frombuffer(self.binaries[binary], dtype=np.float32)

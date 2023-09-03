@@ -29,7 +29,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -132,6 +132,8 @@ parser.add_argument('--backend_type',       type=str, default='HIP',
                     help='Backend type - optional (default:HIP [options:HOST/HIP/OCL])')
 parser.add_argument('--install_directory',    type=str, default='/opt/rocm',
                     help='MIVisionX Install Directory - optional')
+parser.add_argument('--reinstall', 	type=str, default='ON',
+                    help='Remove previous setup and reinstall - optional (default:OFF) [options:ON/OFF]')
 args = parser.parse_args()
 
 profileMode = args.profiler_mode
@@ -140,8 +142,11 @@ miopenFind = args.miopen_find
 testInfo = args.test_info
 backendType = args.backend_type
 installDir = args.install_directory
+reinstall = args.reinstall.upper()
 
 platfromInfo = platform.platform()
+
+returnStatus = 0
 
 # check arguments
 if not 0 <= profileMode <= 9:
@@ -174,9 +179,15 @@ if backendType == 'HOST':
     print("ERROR: HOST Backend currently NOT Supported [Supported: OCL/HIP]")
     exit()
 
+if reinstall not in ('OFF', 'ON'):
+    print(
+        "ERROR: Re-Install Option Not Supported - [Supported Options: OFF or ON]\n")
+    parser.print_help()
+    exit()
+
 # check install
 runVX_exe = installDir+'/bin/runvx'
-if(os.path.isfile(runVX_exe)):
+if (os.path.isfile(runVX_exe)):
     print("STATUS: MIVisionX Install Path Found - "+installDir)
 else:
     print("\nERROR: MIVisionX Install Path Not Found\n")
@@ -190,7 +201,7 @@ modelCompilerDir = os.path.expanduser(
     installDir+'/libexec/mivisionx/model_compiler/python')
 pythonScript = modelCompilerDir+'/caffe_to_nnir.py'
 modelCompilerScript = os.path.abspath(pythonScript)
-if(os.path.isfile(modelCompilerScript)):
+if (os.path.isfile(modelCompilerScript)):
     print("\nMIVisionX Neural Net Tests on "+platfromInfo+"\n")
     print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir+"\n")
 else:
@@ -201,6 +212,14 @@ else:
 # Install Model Compiler Deps
 modelCompilerDeps = os.path.expanduser('~/.mivisionx-model-compiler-deps')
 linuxCMake = 'cmake'
+
+# Delete previous install
+if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
+    os.system('sudo -v')
+    os.system('sudo rm -rf '+modelCompilerDeps)
+    print("\nMIVisionX runNeuralNetworkTests: Removing Previous Install -- " +
+          modelCompilerDeps+"\n")
+
 if not os.path.exists(modelCompilerDeps):
     print("STATUS: Model Compiler Deps Install - "+modelCompilerDeps+"\n")
     # sudo requirement check
@@ -217,16 +236,18 @@ if not os.path.exists(modelCompilerDeps):
 
     linuxSystemInstall = ''
     linuxSystemInstall_check = ''
-    if "centos" in platfromInfo or "redhat" in platfromInfo:
+    if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/bin/yum'):
         linuxSystemInstall = 'yum -y'
         linuxSystemInstall_check = '--nogpgcheck'
         if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
             linuxCMake = 'cmake3'
-            os.system(linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install cmake3')
+            os.system(linuxSystemInstall+' install cmake3')
+        if not "centos" in platfromInfo or not "redhat" in platfromInfo:
+            platfromInfo = platfromInfo+'-redhat'
     elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
         linuxSystemInstall = 'apt-get -y'
         linuxSystemInstall_check = '--allow-unauthenticated'
+        linuxFlag = '-S'
         if not "Ubuntu" in platfromInfo:
             platfromInfo = platfromInfo+'-Ubuntu'
     elif os.path.exists('/usr/bin/zypper'):
@@ -234,8 +255,9 @@ if not os.path.exists(modelCompilerDeps):
         linuxSystemInstall_check = '--no-gpg-checks'
         platfromInfo = platfromInfo+'-SLES'
     else:
-        print("\nMIVisionX runNeuralNetworkTests.py on "+platfromInfo+" is unsupported\n")
-        print("\nrunNeuralNetworkTests.py Supported on: Ubuntu 18/20; CentOS 7/8; RedHat 7/8; & SLES 15-SP2\n")
+        print("\nMIVisionX runNeuralNetworkTests.py on " +
+              platfromInfo+" is unsupported\n")
+        print("\nMIVisionX runNeuralNetworkTests.py Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP4\n")
         exit()
 
     if userName == 'root':
@@ -247,11 +269,12 @@ if not os.path.exists(modelCompilerDeps):
     if "Ubuntu" in platfromInfo:
         os.system(
             'sudo '+linuxSystemInstall+' ' +
-            linuxSystemInstall_check+' install git inxi python3 python3-pip protobuf-compiler libprotoc-dev')
-    elif "centos" in platfromInfo or "redhat" in platfromInfo:
+            linuxSystemInstall_check+' install git inxi python3-dev python3-pip protobuf-compiler libprotoc-dev')
+    else:
         os.system(
             'sudo '+linuxSystemInstall+' ' +
-            linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
+            linuxSystemInstall_check+' install git inxi python-devel python3-devel python3-pip protobuf-devel python3-protobuf')
+    # Install base Deps
     os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
     # Install CAFFE Deps
     os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
@@ -267,12 +290,13 @@ if not os.path.exists(modelCompilerDeps):
         '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
-    if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
+    if "centos-7" in platfromInfo:
         linuxCMake = 'cmake3'
 
+currentWorkingDirectory = os.getcwd()
 
 # Create working directory
-outputDirectory = scriptPath+'/models/develop'
+outputDirectory = currentWorkingDirectory+'/vx_nn_test'
 if not os.path.exists(outputDirectory):
     os.makedirs(outputDirectory)
 else:
@@ -281,7 +305,7 @@ else:
 
 # run caffe2nnir2openvx no fuse flow
 if profileMode == 0 or profileMode == 1:
-    outputDirectory = scriptPath+'/models/develop/caffeNoFuse'
+    outputDirectory = currentWorkingDirectory+'/vx_nn_test/caffeNoFuse'
     os.makedirs(outputDirectory)
     for i in range(len(caffeModelConfig)):
         modelName, channel, height, width = caffeModelConfig[i]
@@ -301,22 +325,27 @@ if profileMode == 0 or profileMode == 1:
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/caffe_no_fuse_output.log')
+                      currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/caffe_no_fuse_output.log)')
+                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = annTestResults.decode()
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/caffe_no_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/caffe2nnir2openvx_noFuse_profile.csv'''
+        currentWorkingDirectory+'''/vx_nn_test/caffe_no_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/caffe2nnir2openvx_noFuse_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/caffe_no_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/caffe2nnir2openvx_noFuse_profile.txt'''
+        currentWorkingDirectory+'''/vx_nn_test/caffe_no_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/caffe2nnir2openvx_noFuse_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/caffe2nnir2openvx_noFuse_profile.md', 'a')
+        currentWorkingDirectory+'/vx_nn_test/caffe2nnir2openvx_noFuse_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -325,13 +354,13 @@ if profileMode == 0 or profileMode == 1:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/caffe_no_fuse_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/caffe2nnir2openvx_noFuse_profile.md'''
+        currentWorkingDirectory+'''/vx_nn_test/caffe_no_fuse_output.log | tee -a ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/caffe2nnir2openvx_noFuse_profile.md'''
     os.system(runAwk_md)
 
 # run caffe2nnir2openvx with fuse flow
 if profileMode == 0 or profileMode == 2:
-    outputDirectory = scriptPath+'/models/develop/caffeFuse'
+    outputDirectory = currentWorkingDirectory+'/vx_nn_test/caffeFuse'
     os.makedirs(outputDirectory)
     for i in range(len(caffeModelConfig)):
         modelName, channel, height, width = caffeModelConfig[i]
@@ -351,22 +380,27 @@ if profileMode == 0 or profileMode == 2:
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/caffe_fuse_output.log')
+                      currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/caffe_fuse_output.log)')
+                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = annTestResults.decode()
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/caffe_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/caffe2nnir2openvx_Fuse_profile.csv'''
+        currentWorkingDirectory+'''/vx_nn_test/caffe_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/caffe2nnir2openvx_Fuse_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/caffe_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/caffe2nnir2openvx_Fuse_profile.txt'''
+        currentWorkingDirectory+'''/vx_nn_test/caffe_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/caffe2nnir2openvx_Fuse_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/caffe2nnir2openvx_Fuse_profile.md', 'a')
+        currentWorkingDirectory+'/vx_nn_test/caffe2nnir2openvx_Fuse_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -375,13 +409,13 @@ if profileMode == 0 or profileMode == 2:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/caffe_fuse_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/caffe2nnir2openvx_Fuse_profile.md'''
+        currentWorkingDirectory+'''/vx_nn_test/caffe_fuse_output.log | tee -a ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/caffe2nnir2openvx_Fuse_profile.md'''
     os.system(runAwk_md)
 
 # run caffe2nnir2openvx with fp16 flow
 if profileMode == 0 or profileMode == 3:
-    outputDirectory = scriptPath+'/models/develop/caffeFP16'
+    outputDirectory = currentWorkingDirectory+'/vx_nn_test/caffeFP16'
     os.makedirs(outputDirectory)
     for i in range(len(caffeModelConfig)):
         modelName, channel, height, width = caffeModelConfig[i]
@@ -401,22 +435,27 @@ if profileMode == 0 or profileMode == 3:
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/caffe_fp16_output.log')
+                      currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/caffe_fp16_output.log)')
+                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = annTestResults.decode()
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/caffe_fp16_output.log > ''' + \
-        scriptPath+'''/models/develop/caffe2nnir2openvx_FP16_profile.csv'''
+        currentWorkingDirectory+'''/vx_nn_test/caffe_fp16_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/caffe2nnir2openvx_FP16_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/caffe_fp16_output.log > ''' + \
-        scriptPath+'''/models/develop/caffe2nnir2openvx_FP16_profile.txt'''
+        currentWorkingDirectory+'''/vx_nn_test/caffe_fp16_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/caffe2nnir2openvx_FP16_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/caffe2nnir2openvx_FP16_profile.md', 'a')
+        currentWorkingDirectory+'/vx_nn_test/caffe2nnir2openvx_FP16_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -425,13 +464,13 @@ if profileMode == 0 or profileMode == 3:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/caffe_fp16_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/caffe2nnir2openvx_FP16_profile.md'''
+        currentWorkingDirectory+'''/vx_nn_test/caffe_fp16_output.log | tee -a ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/caffe2nnir2openvx_FP16_profile.md'''
     os.system(runAwk_md)
 
 # run onnx2nnir2openvx no fuse flow
 if profileMode == 0 or profileMode == 4:
-    outputDirectory = scriptPath+'/models/develop/onnxNoFuse'
+    outputDirectory = currentWorkingDirectory+'/vx_nn_test/onnxNoFuse'
     os.makedirs(outputDirectory)
     for i in range(len(onnxModelConfig)):
         modelName, channel, height, width = onnxModelConfig[i]
@@ -451,22 +490,27 @@ if profileMode == 0 or profileMode == 4:
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/onnx_no_fuse_output.log')
+                      currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/onnx_no_fuse_output.log)')
+                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = annTestResults.decode()
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/onnx_no_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/onnx2nnir2openvx_noFuse_profile.csv'''
+        currentWorkingDirectory+'''/vx_nn_test/onnx_no_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/onnx2nnir2openvx_noFuse_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/onnx_no_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/onnx2nnir2openvx_noFuse_profile.txt'''
+        currentWorkingDirectory+'''/vx_nn_test/onnx_no_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/onnx2nnir2openvx_noFuse_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/onnx2nnir2openvx_noFuse_profile.md', 'a')
+        currentWorkingDirectory+'/vx_nn_test/onnx2nnir2openvx_noFuse_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -475,13 +519,13 @@ if profileMode == 0 or profileMode == 4:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/onnx_no_fuse_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/onnx2nnir2openvx_noFuse_profile.md'''
+        currentWorkingDirectory+'''/vx_nn_test/onnx_no_fuse_output.log | tee -a ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/onnx2nnir2openvx_noFuse_profile.md'''
     os.system(runAwk_md)
 
 # run onnx2nnir2openvx with fuse flow
 if profileMode == 0 or profileMode == 5:
-    outputDirectory = scriptPath+'/models/develop/onnxFuse'
+    outputDirectory = currentWorkingDirectory+'/vx_nn_test/onnxFuse'
     os.makedirs(outputDirectory)
     for i in range(len(onnxModelConfig)):
         modelName, channel, height, width = onnxModelConfig[i]
@@ -501,22 +545,27 @@ if profileMode == 0 or profileMode == 5:
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/onnx_fuse_output.log')
+                      currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/onnx_fuse_output.log)')
+                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = annTestResults.decode()
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/onnx_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/onnx2nnir2openvx_Fuse_profile.csv'''
+        currentWorkingDirectory+'''/vx_nn_test/onnx_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/onnx2nnir2openvx_Fuse_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/onnx_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/onnx2nnir2openvx_Fuse_profile.txt'''
+        currentWorkingDirectory+'''/vx_nn_test/onnx_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/onnx2nnir2openvx_Fuse_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/onnx2nnir2openvx_Fuse_profile.md', 'a')
+        currentWorkingDirectory+'/vx_nn_test/onnx2nnir2openvx_Fuse_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -525,13 +574,13 @@ if profileMode == 0 or profileMode == 5:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/onnx_fuse_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/onnx2nnir2openvx_Fuse_profile.md'''
+        currentWorkingDirectory+'''/vx_nn_test/onnx_fuse_output.log | tee -a ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/onnx2nnir2openvx_Fuse_profile.md'''
     os.system(runAwk_md)
 
 # run onnx2nnir2openvx with fp16 flow
 if profileMode == 0 or profileMode == 6:
-    outputDirectory = scriptPath+'/models/develop/onnxFP16'
+    outputDirectory = currentWorkingDirectory+'/vx_nn_test/onnxFP16'
     os.makedirs(outputDirectory)
     for i in range(len(onnxModelConfig)):
         modelName, channel, height, width = onnxModelConfig[i]
@@ -551,22 +600,27 @@ if profileMode == 0 or profileMode == 6:
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/onnx_fp16_output.log')
+                      currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/onnx_fp16_output.log)')
+                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = annTestResults.decode()
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/onnx_fp16_output.log > ''' + \
-        scriptPath+'''/models/develop/onnx2nnir2openvx_FP16_profile.csv'''
+        currentWorkingDirectory+'''/vx_nn_test/onnx_fp16_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/onnx2nnir2openvx_FP16_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/onnx_fp16_output.log > ''' + \
-        scriptPath+'''/models/develop/onnx2nnir2openvx_FP16_profile.txt'''
+        currentWorkingDirectory+'''/vx_nn_test/onnx_fp16_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/onnx2nnir2openvx_FP16_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/onnx2nnir2openvx_FP16_profile.md', 'a')
+        currentWorkingDirectory+'/vx_nn_test/onnx2nnir2openvx_FP16_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -575,13 +629,13 @@ if profileMode == 0 or profileMode == 6:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/onnx_fp16_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/onnx2nnir2openvx_FP16_profile.md'''
+        currentWorkingDirectory+'''/vx_nn_test/onnx_fp16_output.log | tee -a ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/onnx2nnir2openvx_FP16_profile.md'''
     os.system(runAwk_md)
 
 # run nnef2nnir2openvx no fuse flow
 if profileMode == 0 or profileMode == 7:
-    outputDirectory = scriptPath+'/models/develop/nnefNoFuse'
+    outputDirectory = currentWorkingDirectory+'/vx_nn_test/nnefNoFuse'
     os.makedirs(outputDirectory)
     for i in range(len(nnefModelConfig)):
         modelName, channel, height, width = nnefModelConfig[i]
@@ -601,22 +655,27 @@ if profileMode == 0 or profileMode == 7:
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/nnef_no_fuse_output.log')
+                      currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/nnef_no_fuse_output.log)')
+                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = annTestResults.decode()
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_no_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_noFuse_profile.csv'''
+        currentWorkingDirectory+'''/vx_nn_test/nnef_no_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/nnef2nnir2openvx_noFuse_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_no_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_noFuse_profile.txt'''
+        currentWorkingDirectory+'''/vx_nn_test/nnef_no_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/nnef2nnir2openvx_noFuse_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/nnef2nnir2openvx_noFuse_profile.md', 'a')
+        currentWorkingDirectory+'/vx_nn_test/nnef2nnir2openvx_noFuse_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -625,13 +684,13 @@ if profileMode == 0 or profileMode == 7:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_no_fuse_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_noFuse_profile.md'''
+        currentWorkingDirectory+'''/vx_nn_test/nnef_no_fuse_output.log | tee -a ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/nnef2nnir2openvx_noFuse_profile.md'''
     os.system(runAwk_md)
 
 # run nnef2nnir2openvx fuse flow
 if profileMode == 0 or profileMode == 8:
-    outputDirectory = scriptPath+'/models/develop/nnefFuse'
+    outputDirectory = currentWorkingDirectory+'/vx_nn_test/nnefFuse'
     os.makedirs(outputDirectory)
     for i in range(len(nnefModelConfig)):
         modelName, channel, height, width = nnefModelConfig[i]
@@ -651,22 +710,27 @@ if profileMode == 0 or profileMode == 8:
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/nnef_fuse_output.log')
+                      currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/nnef_fuse_output.log)')
+                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = annTestResults.decode()
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_Fuse_profile.csv'''
+        currentWorkingDirectory+'''/vx_nn_test/nnef_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/nnef2nnir2openvx_Fuse_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_Fuse_profile.txt'''
+        currentWorkingDirectory+'''/vx_nn_test/nnef_fuse_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/nnef2nnir2openvx_Fuse_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/nnef2nnir2openvx_Fuse_profile.md', 'a')
+        currentWorkingDirectory+'/vx_nn_test/nnef2nnir2openvx_Fuse_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -675,13 +739,13 @@ if profileMode == 0 or profileMode == 8:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_fuse_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_Fuse_profile.md'''
+        currentWorkingDirectory+'''/vx_nn_test/nnef_fuse_output.log | tee -a ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/nnef2nnir2openvx_Fuse_profile.md'''
     os.system(runAwk_md)
 
 # run nnef2nnir2openvx FP16 flow
 if profileMode == 0 or profileMode == 9:
-    outputDirectory = scriptPath+'/models/develop/nnefFP16'
+    outputDirectory = currentWorkingDirectory+'/vx_nn_test/nnefFP16'
     os.makedirs(outputDirectory)
     for i in range(len(nnefModelConfig)):
         modelName, channel, height, width = nnefModelConfig[i]
@@ -701,22 +765,27 @@ if profileMode == 0 or profileMode == 9:
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/nnef_fp16_output.log')
+                      currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/nnef_fp16_output.log)')
+                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log)')
+            annTestResults = shell(
+                '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
+            annTestResults = annTestResults.decode()
+            if annTestResults.find("successful") == -1:
+                returnStatus = -1
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_fp16_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_FP16_profile.csv'''
+        currentWorkingDirectory+'''/vx_nn_test/nnef_fp16_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/nnef2nnir2openvx_FP16_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_fp16_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_FP16_profile.txt'''
+        currentWorkingDirectory+'''/vx_nn_test/nnef_fp16_output.log > ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/nnef2nnir2openvx_FP16_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/nnef2nnir2openvx_FP16_profile.md', 'a')
+        currentWorkingDirectory+'/vx_nn_test/nnef2nnir2openvx_FP16_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -725,8 +794,8 @@ if profileMode == 0 or profileMode == 9:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_fp16_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_FP16_profile.md'''
+        currentWorkingDirectory+'''/vx_nn_test/nnef_fp16_output.log | tee -a ''' + \
+        currentWorkingDirectory+'''/vx_nn_test/nnef2nnir2openvx_FP16_profile.md'''
     os.system(runAwk_md)
 
 # get system data
@@ -800,13 +869,13 @@ with open(reportFilename, 'w') as f:
         for i in range(len(reportConfig)):
             modelType, reportFile = reportConfig[i]
             f.write("\n### MODEL FORMAT: %s\n" % modelType)
-            with open(scriptPath+'/models/develop/'+reportFile) as benchmarkFile:
+            with open(currentWorkingDirectory+'/vx_nn_test/'+reportFile) as benchmarkFile:
                 for line in benchmarkFile:
                     f.write("%s" % line)
     else:
         modelType, reportFile = reportConfig[profileMode - 1]
         f.write("\n### MODEL FORMAT: %s\n" % modelType)
-        with open(scriptPath+'/models/develop/'+reportFile) as benchmarkFile:
+        with open(currentWorkingDirectory+'/vx_nn_test/'+reportFile) as benchmarkFile:
             for line in benchmarkFile:
                 f.write("%s" % line)
 
@@ -842,3 +911,5 @@ reportFileDir = os.path.abspath(reportFilename)
 print("\nSTATUS: Output Report File - "+reportFileDir)
 
 print("\nrunNeuralNetworkTests.py completed - V:"+__version__+"\n")
+
+exit(returnStatus)

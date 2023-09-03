@@ -60,11 +60,15 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 ## Documentation
 
 Run the steps below to build documentation locally.
-
+* sphinx documentation
 ```Bash
 cd docs
 pip3 install -r .sphinx/requirements.txt
 python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+```
+* Doxygen 
+```
+doxygen .Doxyfile
 ```
 
 ## AMD OpenVX&trade;
@@ -170,7 +174,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + **RedHat** - `8` / `9`
   + **SLES** - `15-SP4`
 * Install [ROCm](https://docs.amd.com)
-* CMake 3.0 or later
+* CMake 3.5 or later
 * ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
@@ -243,14 +247,18 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   ```
   sudo apt-get install mivisionx
   ```
-* On `CentOS`
+* On `CentOS`/`RedHat`
   ```
   sudo yum install mivisionx
+  ```
+* On `SLES`
+  ```
+  sudo zypper install mivisionxF
   ```
 
   **Note:**
   * `vx_winml` is not supported on `Linux`
-  * source code will not available with `apt-get` / `yum` install
+  * source code will not available with `apt-get` / `yum` / `zypper` install
   * the installer will copy
     + Executables into `/opt/rocm/bin`
     + Libraries into `/opt/rocm/lib`
@@ -258,7 +266,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     + Model compiler, & toolkit folders into `/opt/rocm/libexec/mivisionx`
     + Apps, & samples folder into `/opt/rocm/share/mivisionx`
     + Docs folder into `/opt/rocm/share/doc/mivisionx`
-  * Package (.deb & .rpm) install requires `OpenCV v3+` to execute `AMD OpenCV extensions`
+  * Package (.deb & .rpm) install requires `OpenCV v4.6` to execute `AMD OpenCV extensions`
 
 #### Using MIVisionX-setup.py
 
@@ -293,30 +301,8 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     + rocal_pybind not supported on windows.
     + `sudo` required for pybind installation
 
-  + Instructions for building MIVisionX with **OPENCL** GPU backend:
+  + Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/OpenCL-Backend)
 
-    + run the setup script to install all the dependencies required by the **OPENCL** GPU backend:
-    ```
-    python MIVisionX-setup.py --reinstall ON --backend OCL
-    ```
-
-    + run the below commands to build MIVisionX with the **OPENCL** GPU backend:
-    ```
-    mkdir build-ocl
-    cd build-ocl
-    cmake -DBACKEND=OPENCL ../
-    make -j8
-    sudo make install
-    ```
-
-  **Note:**
-  + MIVisionX cannot be installed for both GPU backends in the same default folder (i.e., /opt/rocm/)
-  if an app interested in installing MIVisionX with both GPU backends, then add **-DCMAKE_INSTALL_PREFIX** in the cmake
-  commands to install MIVisionX with OPENCL and HIP backends into two separate custom folders.
-  + vx_winml is not supported on Linux
-  + ```PyPackageInstall``` used for rocal_pybind installation - supported only with HIP Backend
-  + rocal_pybind not supported on windows
-  + `sudo` required for pybind installation
 
 ## Verify the Installation
 

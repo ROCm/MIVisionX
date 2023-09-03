@@ -147,8 +147,7 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
     include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 endif()
 
-include_directories(${ROCM_PATH}/include/mivisionx)
-
+include_directories(${ROCM_PATH}/include ${ROCM_PATH}/include/mivisionx)
 link_directories(${ROCM_PATH}/lib)
 
 list(APPEND SOURCES annmodule.cpp)

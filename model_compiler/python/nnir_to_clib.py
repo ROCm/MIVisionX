@@ -161,9 +161,9 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
 endif()
 
 find_package(OpenCV QUIET)
-include_directories (/opt/rocm/include/mivisionx)
+include_directories (${ROCM_PATH}/include ${ROCM_PATH}/include/mivisionx)
 include_directories (${PROJECT_SOURCE_DIR}/lib)
-link_directories    (/opt/rocm/lib)
+link_directories    (${ROCM_PATH}/lib)
 list(APPEND SOURCES mvmodule.cpp)
 add_library(mv_deploy SHARED ${SOURCES})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
@@ -221,7 +221,7 @@ find_path(OPENCL_INCLUDE_DIRS
     PATHS
     /usr/include
     /usr/local/include
-    /opt/rocm/opencl/include
+    ${ROCM_PATH}/opencl/include
     DOC "OpenCL header file path"
     )
 mark_as_advanced( OPENCL_INCLUDE_DIRS )
@@ -236,7 +236,7 @@ if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
         PATH_SUFFIXES x86_64 x64 x86_64/sdk
         PATHS
         /usr/lib
-        /opt/rocm/opencl/lib
+        ${ROCM_PATH}/opencl/lib
         )
 else( )
     find_library( OPENCL_LIBRARIES
@@ -298,8 +298,8 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
 endif()
 
 find_package(OpenCV QUIET)
-include_directories (/opt/rocm/include/miviisionx ../)
-link_directories    (/opt/rocm/lib)
+include_directories (${ROCM_PATH}/include ${ROCM_PATH}/include/mivisionx)
+link_directories    (${ROCM_PATH}/lib)
 add_library(${PROJECT_NAME} SHARED mv_extras_postproc.cpp)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
 

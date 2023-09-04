@@ -26,14 +26,14 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
     - [Windows](#windows)
     - [macOS](#macos)
     - [Linux](#linux)
-      - [Prerequisites setup script for Linux](#prerequisites-setup-script-for-linux)
-        - [Prerequisites for running the script](#prerequisites-for-running-the-script)
+  - [Prerequisites setup script for Linux](#prerequisites-setup-script-for-linux)
+    - [Prerequisites for running the script](#prerequisites-for-running-the-script)
 - [Build \& Install MIVisionX](#build--install-mivisionx)
   - [Building on Windows](#building-on-windows)
     - [Using `Visual Studio`](#using-visual-studio)
   - [Building on macOS](#building-on-macos)
   - [Building on Linux](#building-on-linux)
-    - [Using `apt-get` or `yum`](#using-apt-get-or-yum)
+    - [Using `apt-get` / `yum` / `zypper`](#using-apt-get--yum--zypper)
     - [Using MIVisionX-setup.py](#using-mivisionx-setuppy)
 - [Verify the Installation](#verify-the-installation)
   - [Verifying on Linux / macOS](#verifying-on-linux--macos)
@@ -174,23 +174,20 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + **SLES** - `15-SP4`
 * Install [ROCm](https://docs.amd.com)
 * CMake 3.5 or later
-* ROCm MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn))
-* Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
-* [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
-  + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
+* MIOpen for [vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn) extension
+* MIGraphX for `vx_migraphx` extension
+* [Protobuf](https://github.com/google/protobuf)
 * [OpenCV 4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-  + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * [FFMPEG n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
-  + FFMPEG is required for amd_media & mv_deploy modules
 * [rocAL](rocAL/README.md#prerequisites) Prerequisites
 
-##### Prerequisites setup script for Linux
+### Prerequisites setup script for Linux
 
 For the convenience of the developer, we provide the setup script `MIVisionX-setup.py` which will install all the dependencies required by this project.
 
   **NOTE:** This script only needs to be executed once.
 
-###### Prerequisites for running the script
+#### Prerequisites for running the script
 
 * Linux distribution
   + Ubuntu - `20.04` / `22.04`
@@ -238,10 +235,11 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 ### Building on Linux
 
-#### Using `apt-get` or `yum`
+#### Using `apt-get` / `yum` / `zypper`
 
 * [ROCm supported hardware](https://docs.amd.com)
 * Install [ROCm](https://docs.amd.com)
+
 * On `Ubuntu`
   ```
   sudo apt-get install mivisionx
@@ -447,7 +445,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Known issues
 
-* Package install requires **OpenCV** `V-4.6.X` to execute `AMD OpenCV extensions`
+* Package install requires **OpenCV** `V-4.6.0` to execute `AMD OpenCV extensions`
 
 ## MIVisionX Dependency Map
 

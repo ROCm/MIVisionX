@@ -1,14 +1,14 @@
 FROM ubuntu:20.04
 
-ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.4.1/ubuntu/focal/amdgpu-install_5.4.50401-1_all.deb 
-ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.4.50401-1_all.deb
+ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.6.1/ubuntu/focal/amdgpu-install_5.6.50601-1_all.deb
+ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.6.50601-1_all.deb
 
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
 
 RUN apt-get update -y
 # install mivisionx base dependencies - Level 1
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git libcanberra-gtk-module
 # install ROCm for mivisionx OpenCL/HIP dependency - Level 2
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-dev wget sudo keyboard-configuration &&  \
         sudo apt-get -y clean && dpkg --add-architecture i386 && \
@@ -19,6 +19,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
 
 ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE
+
+ENV PATH=$PATH:/opt/rocm/bin
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 
 # Clone MIVisionX 
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \

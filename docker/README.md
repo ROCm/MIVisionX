@@ -5,13 +5,13 @@ Docker is a set of platform as a service (PaaS) products that use OS-level virtu
 ## Build - dockerfiles
 
 ```
-sudo docker build --build-arg {ARG_NAME}={ARG_VALUE} -f {DOCKER_FILE_NAME}.dockerfile -t {DOCKER_IMAGE_NAME} .
+sudo docker build --build-arg {ARG_1_NAME}={ARG_1_VALUE} [--build-arg {ARG_2_NAME}={ARG_2_VALUE}] -f {DOCKER_FILE_NAME}.dockerfile -t {DOCKER_IMAGE_NAME} .
 ```
 
 ## Run - docker
 
 ```
-sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix {DOCKER_IMAGE_NAME}
+sudo docker run -it --privileged --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=$DISPLAY --volume="$HOME/.Xauthority:/root/.Xauthority:rw" --volume /tmp/.X11-unix/:/tmp/.X11-unix {DOCKER_IMAGE_NAME}
 ```
 
 ## Ubuntu `20`/`22` DockerFiles

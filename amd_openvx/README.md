@@ -183,7 +183,7 @@ Build this project to generate AMD OpenVX&trade; library
 
 ### Build using CMake
 
-* Install CMake 3.0 or later
+* Install CMake 3.5 or later
 * Use CMake to configure and generate Makefile
 
 **NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

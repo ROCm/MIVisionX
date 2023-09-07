@@ -86,7 +86,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference parameter
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     if (num_dims < 2) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: matmul: #4 num_dims=%ld (must >= 2)\n", num_dims);
-    if ((out_type != VX_TYPE_FLOAT32)&& (out_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: matmul: #4 type=%d (must be float/float16)\n", type);
+    if ((out_type != VX_TYPE_FLOAT32) && (out_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: matmul: #4 type=%d (must be float/float16)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, output_dims, num_dims*sizeof(vx_size)));
 
     // set output tensor configuration
@@ -96,10 +96,10 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference parameter
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[4], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
     // check that tensors are 2D
-    if (((input1_dims[3]&input1_dims[2]) != 1) && ((input1_dims[1]&input1_dims[0]) != 1) ||
-       ((input2_dims[3]&input2_dims[2]) != 1) && ((input2_dims[1]&input2_dims[0]) != 1) ||
-       ((input3_dims[3]&input3_dims[2]) != 1) && ((input3_dims[1]&input3_dims[0]) != 1) ||
-       ((output_dims[3]&output_dims[2]) != 1) && ((output_dims[1]&output_dims[0]) != 1))
+    if (((input1_dims[3] & input1_dims[2]) != 1) && ((input1_dims[1] & input1_dims[0]) != 1) ||
+       ((input2_dims[3] & input2_dims[2]) != 1) && ((input2_dims[1] & input2_dims[0]) != 1) ||
+       ((input3_dims[3] & input3_dims[2]) != 1) && ((input3_dims[1] & input3_dims[0]) != 1) ||
+       ((output_dims[3] & output_dims[2]) != 1) && ((output_dims[1] & output_dims[0]) != 1))
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: matmul: dims input1[%ld,%ld,%ld,%ld] input2[%ld,%ld,%ld,%ld] input3[%ld,%ld,%ld,%ld] output[%ld,%ld,%ld,%ld]\n",
                     input1_dims[0], input1_dims[1], input1_dims[2], input1_dims[3],
                     input2_dims[0], input2_dims[1], input2_dims[2], input2_dims[3],
@@ -200,18 +200,18 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
     data->tA = params.transpose_input1 ? true : false;
     data->tB = params.transpose_input2 ? true : false;
     data->tI = params.transpose_input3 ? true : false;
-   if (input1_dims[2]&input1_dims[3]) {
+    if (input1_dims[2] & input1_dims[3]) {
         data->k = input1_dims[params.transpose_input1 ? 1 : 0];
         data->m = input1_dims[params.transpose_input1 ? 0 : 1];
     }
-    else if(input1_dims[0]&input1_dims[1]) {
+    else if(input1_dims[0] & input1_dims[1]) {
         data->k = input1_dims[params.transpose_input1 ? 3 : 2];
         data->m = input1_dims[params.transpose_input1 ? 2 : 3];
     }
-    if (input2_dims[2]&input2_dims[3]) {
+    if (input2_dims[2] & input2_dims[3]) {
         data->n = input2_dims[params.transpose_input2 ? 1 : 0];
     }
-    else if (input2_dims[0]&input2_dims[1]) {
+    else if (input2_dims[0] & input2_dims[1]) {
         data->n = input2_dims[params.transpose_input2 ? 3 : 2];
     }
 
@@ -223,33 +223,35 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_OFFSET_GPU, &data->a_offset, sizeof(vx_size)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_OFFSET_GPU, &data->b_offset, sizeof(vx_size)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_OFFSET_GPU, &data->c_offset, sizeof(vx_size)));
+
+    int shift_value = (type == VX_TYPE_FLOAT32) ? 2 : 1; // elem_size for fp32 = 4, fp16 = 2
     data->a_offset >>= 2;
     data->b_offset >>= 2;
     data->c_offset >>= 2;
-    if (input1_dims[2]&input1_dims[3]) {
-        data->lda = a_stride[data->tA ? 2 : 1] >> 2;
+    if (input1_dims[2] & input1_dims[3]) {
+        data->lda = a_stride[data->tA ? 2 : 1] >> shift_value;
     }
-    else if(input1_dims[0]&input1_dims[1]) {   
-        data->lda = a_stride[3] >> 2;
+    else if(input1_dims[0] & input1_dims[1]) {   
+        data->lda = a_stride[3] >> shift_value;
     }
-    if (input2_dims[2]&input2_dims[3]) {
-        data->ldb = b_stride[data->tB ? 2 : 1] >> 2;
+    if (input2_dims[2] & input2_dims[3]) {
+        data->ldb = b_stride[data->tB ? 2 : 1] >> shift_value;
     }
-    else if(input1_dims[0]&input1_dims[1]) {
-        data->ldb = b_stride[3] >> 2;
+    else if(input1_dims[0] & input1_dims[1]) {
+        data->ldb = b_stride[3] >> shift_value;
     }
-    if (output_dims[2] == 1 && output_dims[3] ==1) {
-        data->ldc = c_stride[1] >> 2;
+    if (output_dims[2] == 1 && output_dims[3] == 1) {
+        data->ldc = c_stride[1] >> shift_value;
     }
     else if (output_dims[0] == 1 && output_dims[1] == 1) {
-        data->ldc = c_stride[3] >> 2;
+        data->ldc = c_stride[3] >> shift_value;
     }
     if(parameters[2]) {
         vx_size i_stride[4];
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_GPU, i_stride, sizeof(c_stride)));
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_OFFSET_GPU, &data->i_offset, sizeof(vx_size)));
         data->i_offset >>= 2;
-        data->ldi = i_stride[data->tI ? 2 : 1] >> 2;
+        data->ldi = i_stride[data->tI ? 2 : 1] >> shift_value;
     }
 
 #if ENABLE_OPENCL
@@ -447,7 +449,7 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
                         0,
                         0);
             if (rstatus != rocblas_status_success) {
-                printf("ERROR: rocblas_gemm_ex failed\n");
+                printf("ERROR: rocblas_gemm_ex initialization failed for fp32 with status %d\n", rstatus);
                 return VX_FAILURE;
             }
             break;
@@ -478,7 +480,7 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
                         0,
                         0);
             if (rstatus != rocblas_status_success) {
-                printf("ERROR: rocblas_gemm_ex failed\n");
+                printf("ERROR: rocblas_gemm_ex initialization failed for fp16 with status %d\n", rstatus);
                 return VX_FAILURE;
             }
         break;
@@ -560,7 +562,7 @@ static vx_status VX_CALLBACK process(vx_node node, const vx_reference * paramete
                         0,
                         0);
             if (rstatus != rocblas_status_success) {
-                printf("ERROR: rocblas_gemm_ex failed\n");
+                printf("ERROR: rocblas_gemm_ex process failed for fp32 with status %d\n", rstatus);
                 return VX_FAILURE;
             }
             break;
@@ -591,7 +593,7 @@ static vx_status VX_CALLBACK process(vx_node node, const vx_reference * paramete
                         0,
                         0);
             if (rstatus != rocblas_status_success) {
-                printf("ERROR: rocblas_gemm_ex failed\n");
+                printf("ERROR: rocblas_gemm_ex process failed for fp16 with status %d\n", rstatus);
                 return VX_FAILURE;
             }
         break;

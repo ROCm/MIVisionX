@@ -113,7 +113,6 @@ static vx_status VX_CALLBACK validateConvolutionLayer(vx_node node, const vx_ref
     if(num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: conv: #4 num_dims=%ld (must be 4)\n", num_dims);
     if((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #4 type=%d (must be float/float16)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
-
     if(output_dims[3] != input_dims[3] || output_dims[2] != weights_dims[3])
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: conv: input[%ldx%ldx%ldx%ld] weights[%ldx%ldx%ldx%ld] output[%ldx%ldx%ldx%ld]\n",
             input_dims[3], input_dims[2], input_dims[1], input_dims[0],

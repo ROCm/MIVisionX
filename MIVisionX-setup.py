@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.5.4"
+__version__ = "2.5.5"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -378,12 +378,14 @@ else:
                 if "Ubuntu" in platfromInfo:
                     os.system(
                         'sudo '+linuxSystemInstall+' ' +
-                        linuxSystemInstall_check+' install git inxi python3 python3-pip protobuf-compiler libprotoc-dev')
-                elif "centos" in platfromInfo or "redhat" in platfromInfo:
+                        linuxSystemInstall_check+' install git inxi python3-dev python3-pip protobuf-compiler libprotoc-dev')
+                else:
                     os.system(
                         'sudo '+linuxSystemInstall+' ' +
-                        linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
-                os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
+                        linuxSystemInstall_check+' install git inxi python-devel python3-devel python3-pip protobuf-devel python3-protobuf')
+                # Install base Deps
+                os.system(
+                    'sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
                 # Install CAFFE Deps
                 os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
                 # Install ONNX Deps
@@ -438,11 +440,13 @@ else:
         # clang
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install clang')
+                  linuxSystemInstall_check+' install clang')
         if "SLES" in platfromInfo:
             os.system('sudo -v')
-            os.system('sudo update-alternatives --install /usr/bin/clang clang /opt/rocm-*/llvm/bin/clang 100')
-            os.system('sudo update-alternatives --install /usr/bin/clang++ clang++ /opt/rocm-*/llvm/bin/clang++ 100')
+            os.system(
+                'sudo update-alternatives --install /usr/bin/clang clang /opt/rocm-*/llvm/bin/clang 100')
+            os.system(
+                'sudo update-alternatives --install /usr/bin/clang++ clang++ /opt/rocm-*/llvm/bin/clang++ 100')
         # OS Deps
         if "Ubuntu" in platfromInfo:
             # Install Packages for rocAL
@@ -498,7 +502,7 @@ else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-devel hipcub-devel python3-devel')
         os.system('sudo -v')
-        os.system('(cd '+deps_dir+'; git clone https://github.com/ROCmSoftwarePlatform/cupy.git; export CUPY_INSTALL_USE_HIP=1; export ROCM_HOME=/opt/rocm; cd cupy; git submodule update --init; pip install -e . --no-cache-dir -vvvv)')
+        os.system('(cd '+deps_dir+'; git clone -b v12.2.0 https://github.com/ROCmSoftwarePlatform/cupy.git; export CUPY_INSTALL_USE_HIP=1; export ROCM_HOME=/opt/rocm; cd cupy; git submodule update --init; pip install -e . --no-cache-dir -vvvv)')
         os.system('pip install numpy==1.21')
 
     # Install ffmpeg

@@ -27,7 +27,7 @@ Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/n
 
 ### Prerequisites
 
-* Ubuntu `18.04`/`20.04` or CentOS `7`/`8`
+* Ubuntu `20.04`/`22.04` or CentOS `7`/`8`
 * [ROCm supported hardware](https://docs.amd.com/bundle/ROCm-Installation-Guide-v5.1.1/page/Prerequisite_Actions.html) 
 	* AMD Radeon GPU or AMD APU required
 * Latest [ROCm](https://docs.amd.com/category/ROCm™%20v5.x)
@@ -35,11 +35,23 @@ Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/n
 
 #### Docker for Samples
 
-MIVisionX provides developers with [docker images](https://hub.docker.com/u/mivisionx) for [Ubuntu 18.04](https://hub.docker.com/r/mivisionx/ubuntu-18.04), [Ubuntu 20.04](https://hub.docker.com/r/mivisionx/ubuntu-20.04), [CentOS 7](https://hub.docker.com/r/mivisionx/centos-7), & [CentOS 8](https://hub.docker.com/r/mivisionx/centos-8). Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
+MIVisionX provides developers with docker images for Ubuntu `20.04` / `22.04`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
+
+Docker files to build MIVisionX containers are [available](docker#mivisionx-docker)
+
+### MIVisionX Docker
+* [Ubuntu 20.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-20.04)
+* [Ubuntu 22.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-22.04)
+
+### Docker Workflow on Ubuntu `20.04`/`22.04`
+
+#### Prerequisites
+* Ubuntu `20.04`/`22.04`
+* [ROCm supported hardware](https://docs.amd.com)
+* [ROCm](https://docs.amd.com)
+* [Docker](https://docs.docker.com/engine/install/ubuntu/)
 
 ##### Docker with display option for the samples
-
-* Check [docker prerequisites](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#docker-workflow-sample-on-ubuntu-1804--2004)
 
 * Start docker with display
 ````

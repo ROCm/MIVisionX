@@ -36,7 +36,7 @@ Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/n
 
 ## Prerequisites
 
-* Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6`
+* Ubuntu `20.04` / `22.04` or CentOS `7.5` / `7.6`
 * [ROCm supported hardware](https://rocm.github.io/ROCmInstall.html#hardware-support) 
   + AMD Radeon GPU or AMD APU required
 * Latest [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)

@@ -6,12 +6,12 @@ mv_deploy consists of a model-compiler and necessary header/.cpp files which are
 
 The "mv_compile" will be built as part of MIVisionX package installer
 To build and application using mv_compile, the user can use the deployment api from mv_deploy.h.
-The entire use of the mv_compile and deployment is shown in [mv_objdetectsample](../samples/inference/mv_objdetect)
+The entire use of the mv_compile and deployment is shown in [mv_objdetectsample](../samples/mv_objdetect)
 The sample demonstrates the use of mv_compile utility to do video decoding and inference.
 
 ## Prerequisites
 
-* Ubuntu `18.04`/`20.04` or CentOS `7`/`8`
+* Ubuntu `20.04`/`22.04` or CentOS `7`/`8`
 * [ROCm supported hardware](https://rocm.github.io/ROCmInstall.html#hardware-support) 
 	* AMD Radeon GPU or APU required
 * [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)

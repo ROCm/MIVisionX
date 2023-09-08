@@ -9,8 +9,7 @@ The sample has two .cpp files, `mvobjdetect.cpp` and `visualize.cpp`. But it nee
 ## Prerequisites
 
 * Linux
-  * Ubuntu `18.04`/`20.04`
-  * CentOS `7`/`8`
+  * Ubuntu `20.04`/`22.04`
 * [ROCm supported hardware](https://docs.amd.com) 
   * **GPU**: [AMD Radeon&trade; Graphics](https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html) [Required]
   * **APU**: [AMD Radeon&trade; `Mobile`/`Embedded`](https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html) [optional]
@@ -33,7 +32,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 wget https://github.com/kiritigowda/YoloV2NCS/raw/master/models/caffemodels/yoloV2Tiny20.caffemodel
 ```
 
-### Step 2. compile model for OPENCL-ROCm-OpenVX backend using mv_compile utility
+### Step 2. compile model for OpenVX backend using mv_compile utility
 The mv_compile utility generates deployment library, header files, and .cpp files required to run inference for the specified model.
 
 * Usage:
@@ -149,7 +148,7 @@ cd ..
 
 ### Step 10. Sample output for multiple video object detection
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/inference/mv_objdetect/data/images/Video_4_screenshot.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/mv_objdetect/data/images/Video_4_screenshot.png" /></p>
 
 # License
 This project is licensed under the MIT License - see the LICENSE.md file for details

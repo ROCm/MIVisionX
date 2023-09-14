@@ -6,7 +6,7 @@ MIVisionX samples using OpenVX and OpenVX extensions. In the samples below we wi
 * [GDF - Graph Description Format Samples](#gdf---graph-description-format)
 * [Loom 360 Stitch - Radeon Loom 360 Stitch Samples](#loom-360-stitch---radeon-loom-360-stitch-samples)
 * [Model Compiler Samples - Run Efficient Inference](#model-compiler-samples---run-efficient-inference)
-* [MIVisionX Inference Deploy Samples](inference/mv_objdetect/)
+* [MIVisionX Inference Deploy Samples](mv_objdetect)
 
 ## GDF - Graph Description Format
 
@@ -108,7 +108,7 @@ make
 
 MIVisionX samples using [LoomShell](../utilities/loom_shell/README.md#radeon-loomshell)
 
-[![Loom Stitch](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/loom-4.pngloom-4.png)](https://youtu.be/E8pPU04iZjw)
+[![Loom Stitch](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/loom-4.png)](https://youtu.be/E8pPU04iZjw)
 
 **Note:** 
 
@@ -225,3 +225,11 @@ In this [sample](model_compiler_samples/README.md#mivisionx-model-compiler-sampl
 ### [Sample-3: Classification Using Pre-Trained NNEF Model](model_compiler_samples/README.md#sample-3---classification-using-pre-trained-nnef-model)
 
 ### [Sample-4: Classification Using Pre-Trained Caffe Model](model_compiler_samples/README.md#sample-4---classification-using-pre-trained-caffe-model)
+
+## MV Object Detect Samples
+
+This [sample](mv_objdetect) shows how to run video decoding and object detection using pre-trained `YoloV2` Caffe Model
+
+The sample demonstrates the use of mv_compile utility to do video decoding and inference.
+
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/mv_objdetect/data/images/Video_4_screenshot.png" /></p>

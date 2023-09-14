@@ -132,7 +132,7 @@ if(BUILD_DEV)
     install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
     install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
     install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../samples/inference/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
+    install(DIRECTORY ../../samples/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
     install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
 endif(BUILD_DEV)
 

@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
-ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.6.1/ubuntu/jammy/amdgpu-install_5.6.50601-1_all.deb
-ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.6.50601-1_all.deb
+ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.7/ubuntu/jammy/amdgpu-install_5.7.50700-1_all.deb
+ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.7.50700-1_all.deb
 
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
@@ -65,6 +65,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install git g++ hipblas hipsparse 
 
 ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE
+
+ENV PATH=$PATH:/opt/rocm/bin
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 
 # Clone MIVisionX
 RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \

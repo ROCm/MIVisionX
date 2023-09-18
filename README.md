@@ -215,7 +215,7 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
   ```
     **Note:**
-    * **ROCm upgrade** with `sudo apt upgrade` requires the setup script **rerun**.
+    * **ROCm upgrade** requires the setup script **rerun**.
     * use `X Window` / `X11` for [remote GUI app control](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/X-Window-forwarding)
 
 ## Build & Install MIVisionX
@@ -250,7 +250,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   ```
 * On `SLES`
   ```
-  sudo zypper install mivisionxF
+  sudo zypper install mivisionx
   ```
 
   **Note:**

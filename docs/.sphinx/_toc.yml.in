@@ -64,7 +64,7 @@ subtrees:
         - entries:
           - file: samples/c_samples/README
           - file: samples/gdf/README
-          - file: samples/inference/mv_objdetect/README
+          - file: samples/mv_objdetect/README
           - file: samples/loom_360_stitch/README
           - file: samples/model_compiler_samples/README
             subtrees:

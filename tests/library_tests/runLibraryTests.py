@@ -313,6 +313,4 @@ reportFileDir = os.path.abspath(reportFilename)
 print("STATUS: Output Report File - "+reportFileDir)
 if warning == 1:
     print("WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
-else:
-    print("SUCCESS: All modules of MIVisionX built")
-print("runLibraryTests.py completed - V:"+__version__+"\n")
+print("MIVisionX Tests - runLibraryTests.py - V:"+__version__+"\n")

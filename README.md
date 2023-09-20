@@ -448,7 +448,8 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Known issues
 
-* Package install requires **OpenCV** `V-4.6.0` to execute `AMD OpenCV extensions`
+* OpenCV 4.X support for some apps missing
+* MIVisionX Package install requires manual prerequisites installation 
 
 ## MIVisionX Dependency Map
 

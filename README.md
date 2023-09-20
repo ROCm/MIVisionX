@@ -128,10 +128,10 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ## Utilities
 
-* [inference_generator](utilities/inference_generator/README.md#inference-generator): generate inference library from pre-trained CAFFE models
 * [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
-* [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
+* [mv_deploy](utilities/mv_deploy/README.md): consists of a model-compiler and necessary header/.cpp files which are required to run inference for a specific NeuralNet model
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
+* [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 
 ## Prerequisites
 

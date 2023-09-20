@@ -25,6 +25,9 @@
 ################################################################################
 cmake_minimum_required(VERSION 3.5)
 
+# TBD - INSTALL TESTS
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../library_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests)
+
 # default run
 # canny
 add_test(

@@ -22,19 +22,19 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 - [Utilities](#utilities)
 - [Prerequisites](#prerequisites)
   - [Hardware](#hardware)
-  - [Operating System](#operating-system)
+  - [Operating System \& Prerequisites](#operating-system--prerequisites)
     - [Windows](#windows)
     - [macOS](#macos)
     - [Linux](#linux)
   - [Prerequisites setup script for Linux](#prerequisites-setup-script-for-linux)
     - [Prerequisites for running the script](#prerequisites-for-running-the-script)
 - [Build \& Install MIVisionX](#build--install-mivisionx)
-  - [Building on Windows](#building-on-windows)
+  - [Windows](#windows-1)
     - [Using `Visual Studio`](#using-visual-studio)
-  - [Building on macOS](#building-on-macos)
-  - [Building on Linux](#building-on-linux)
+  - [macOS](#macos-1)
+  - [Linux](#linux-1)
     - [Using `apt-get` / `yum` / `zypper`](#using-apt-get--yum--zypper)
-    - [Using MIVisionX-setup.py](#using-mivisionx-setuppy)
+    - [Using `MIVisionX-setup.py`](#using-mivisionx-setuppy)
 - [Verify the Installation](#verify-the-installation)
   - [Verifying on Linux / macOS](#verifying-on-linux--macos)
   - [Verifying on Windows](#verifying-on-windows)
@@ -143,7 +143,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
   **Note:** Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
 
-### Operating System
+### Operating System & Prerequisites
 
 #### Windows
 
@@ -172,7 +172,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + **CentOS** - `7` / `8`
   + **RedHat** - `8` / `9`
   + **SLES** - `15-SP4`
-* Install [ROCm](https://docs.amd.com)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 * CMake 3.5 or later
 * MIOpen for [vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn) extension
 * MIGraphX for `vx_migraphx` extension
@@ -194,8 +194,8 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
   + CentOS - `7` / `8`
   + RedHat - `8` / `9`
   + SLES - `15-SP4`
-* [ROCm supported hardware](https://docs.amd.com)
-* [ROCm](https://docs.amd.com)
+* [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 
   **usage:**
 
@@ -215,12 +215,12 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
   ```
     **Note:**
-    * **ROCm upgrade** with `sudo apt upgrade` requires the setup script **rerun**.
+    * **ROCm upgrade** requires the setup script **rerun**.
     * use `X Window` / `X11` for [remote GUI app control](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/X-Window-forwarding)
 
 ## Build & Install MIVisionX
 
-### Building on Windows
+### Windows
 
 #### Using `Visual Studio`
 
@@ -229,16 +229,16 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
 
   **NOTE:** `vx_nn` is not supported on `Windows` in this release
 
-### Building on macOS
+### macOS
 
 macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
 
-### Building on Linux
+### Linux
+
+* [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 
 #### Using `apt-get` / `yum` / `zypper`
-
-* [ROCm supported hardware](https://docs.amd.com)
-* Install [ROCm](https://docs.amd.com)
 
 * On `Ubuntu`
   ```
@@ -250,7 +250,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   ```
 * On `SLES`
   ```
-  sudo zypper install mivisionxF
+  sudo zypper install mivisionx
   ```
 
   **Note:**
@@ -265,9 +265,8 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     + Docs folder into `/opt/rocm/share/doc/mivisionx`
   * Package (.deb & .rpm) install requires `OpenCV v4.6` to execute `AMD OpenCV extensions`
 
-#### Using MIVisionX-setup.py
+#### Using `MIVisionX-setup.py`
 
-* Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * Use the below commands to set up and build MIVisionX
 
   ```
@@ -355,8 +354,8 @@ Docker files to build MIVisionX containers are [available](docker#mivisionx-dock
 
 #### Prerequisites
 * Ubuntu `20.04`/`22.04`
-* [ROCm supported hardware](https://docs.amd.com)
-* [ROCm](https://docs.amd.com)
+* [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)
 
 #### Workflow

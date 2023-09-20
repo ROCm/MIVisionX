@@ -272,7 +272,6 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
   ```
   git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
-  cd MIVisionX
   ```
 
   **Note:** MIVisionX has support for two GPU backends: **OPENCL** and **HIP**:
@@ -281,6 +280,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
     + run the setup script to install all the dependencies required by the **HIP** GPU backend:
     ```
+    cd MIVisionX
     python MIVisionX-setup.py
     ```
 
@@ -292,6 +292,11 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     make -j8
     sudo cmake --build . --target PyPackageInstall
     sudo make install
+    ```
+    
+    + run tests - [test option instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/CTest)
+    ```
+    make test
     ```
     **Note:**
     + `PyPackageInstall` used for rocal_pybind installation

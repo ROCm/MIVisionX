@@ -32,7 +32,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
         make -j8 && sudo make install && cd
 
 # install MIVisionX neural net dependency - Level 4
-RUN apt-get -y install rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx
 
 ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE

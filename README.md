@@ -267,7 +267,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 #### Using `MIVisionX-setup.py`
 
-* Use the below commands to set up and build MIVisionX
+* Clone MIVisionX git repository
 
   ```
   git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git

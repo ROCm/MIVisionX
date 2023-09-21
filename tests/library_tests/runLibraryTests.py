@@ -86,8 +86,10 @@ elif os.path.exists('/usr/bin/zypper'):
         platform_name = platform_name+'-SLES'
 else:
     print("\nMIVisionX Library Test on "+platform_name+" is unsupported")
-    print("MIVisionX Library Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+    print("MIVisionX Library Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP4")
     exit(1)
+
+# TBD - Install inxi package
 
 print("\nMIVisionX Library Test V:"+__version__ +
       " on "+platform_name+" is supported")
@@ -311,6 +313,4 @@ reportFileDir = os.path.abspath(reportFilename)
 print("STATUS: Output Report File - "+reportFileDir)
 if warning == 1:
     print("WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
-else:
-    print("SUCCESS: All modules of MIVisionX built")
-print("runLibraryTests.py completed - V:"+__version__+"\n")
+print("MIVisionX Tests - runLibraryTests.py - V:"+__version__+"\n")

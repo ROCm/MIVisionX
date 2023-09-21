@@ -1,6 +1,6 @@
 # MIVisionX Library Tests
 
-## Script to check if all libraries are built
+## Script to check if all libraries are built & installed
 
 ```
 python runLibraryTests.py

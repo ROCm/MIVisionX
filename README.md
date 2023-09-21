@@ -22,19 +22,19 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 - [Utilities](#utilities)
 - [Prerequisites](#prerequisites)
   - [Hardware](#hardware)
-  - [Operating System](#operating-system)
+  - [Operating System \& Prerequisites](#operating-system--prerequisites)
     - [Windows](#windows)
     - [macOS](#macos)
     - [Linux](#linux)
   - [Prerequisites setup script for Linux](#prerequisites-setup-script-for-linux)
     - [Prerequisites for running the script](#prerequisites-for-running-the-script)
 - [Build \& Install MIVisionX](#build--install-mivisionx)
-  - [Building on Windows](#building-on-windows)
+  - [Windows](#windows-1)
     - [Using `Visual Studio`](#using-visual-studio)
-  - [Building on macOS](#building-on-macos)
-  - [Building on Linux](#building-on-linux)
+  - [macOS](#macos-1)
+  - [Linux](#linux-1)
     - [Using `apt-get` / `yum` / `zypper`](#using-apt-get--yum--zypper)
-    - [Using MIVisionX-setup.py](#using-mivisionx-setuppy)
+    - [Using `MIVisionX-setup.py`](#using-mivisionx-setuppy)
 - [Verify the Installation](#verify-the-installation)
   - [Verifying on Linux / macOS](#verifying-on-linux--macos)
   - [Verifying on Windows](#verifying-on-windows)
@@ -128,10 +128,10 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ## Utilities
 
-* [inference_generator](utilities/inference_generator/README.md#inference-generator): generate inference library from pre-trained CAFFE models
 * [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
-* [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
+* [mv_deploy](utilities/mv_deploy/README.md): consists of a model-compiler and necessary header/.cpp files which are required to run inference for a specific NeuralNet model
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
+* [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 
 ## Prerequisites
 
@@ -143,7 +143,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
   **Note:** Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
 
-### Operating System
+### Operating System & Prerequisites
 
 #### Windows
 
@@ -172,7 +172,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + **CentOS** - `7` / `8`
   + **RedHat** - `8` / `9`
   + **SLES** - `15-SP4`
-* Install [ROCm](https://docs.amd.com)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 * CMake 3.5 or later
 * MIOpen for [vx_nn](amd_openvx_extensions/amd_nn/README.md#openvx-neural-network-extension-library-vx_nn) extension
 * MIGraphX for `vx_migraphx` extension
@@ -194,8 +194,8 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
   + CentOS - `7` / `8`
   + RedHat - `8` / `9`
   + SLES - `15-SP4`
-* [ROCm supported hardware](https://docs.amd.com)
-* [ROCm](https://docs.amd.com)
+* [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 
   **usage:**
 
@@ -215,12 +215,12 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
   ```
     **Note:**
-    * **ROCm upgrade** with `sudo apt upgrade` requires the setup script **rerun**.
+    * **ROCm upgrade** requires the setup script **rerun**.
     * use `X Window` / `X11` for [remote GUI app control](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/X-Window-forwarding)
 
 ## Build & Install MIVisionX
 
-### Building on Windows
+### Windows
 
 #### Using `Visual Studio`
 
@@ -229,16 +229,16 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
 
   **NOTE:** `vx_nn` is not supported on `Windows` in this release
 
-### Building on macOS
+### macOS
 
 macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
 
-### Building on Linux
+### Linux
+
+* [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 
 #### Using `apt-get` / `yum` / `zypper`
-
-* [ROCm supported hardware](https://docs.amd.com)
-* Install [ROCm](https://docs.amd.com)
 
 * On `Ubuntu`
   ```
@@ -250,7 +250,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   ```
 * On `SLES`
   ```
-  sudo zypper install mivisionxF
+  sudo zypper install mivisionx
   ```
 
   **Note:**
@@ -265,22 +265,21 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     + Docs folder into `/opt/rocm/share/doc/mivisionx`
   * Package (.deb & .rpm) install requires `OpenCV v4.6` to execute `AMD OpenCV extensions`
 
-#### Using MIVisionX-setup.py
+#### Using `MIVisionX-setup.py`
 
-* Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
-* Use the below commands to set up and build MIVisionX
+* Clone MIVisionX git repository
 
   ```
   git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
-  cd MIVisionX
   ```
 
   **Note:** MIVisionX has support for two GPU backends: **OPENCL** and **HIP**:
 
-  + Instructions for building MIVisionX with the **HIP** GPU backend (i.e., default GPU backend):
+* Instructions for building MIVisionX with the **HIP** GPU backend (i.e., default GPU backend):
 
     + run the setup script to install all the dependencies required by the **HIP** GPU backend:
     ```
+    cd MIVisionX
     python MIVisionX-setup.py
     ```
 
@@ -293,12 +292,17 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     sudo cmake --build . --target PyPackageInstall
     sudo make install
     ```
+
+    + run tests - [test option instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/CTest)
+    ```
+    make test
+    ```
     **Note:**
     + `PyPackageInstall` used for rocal_pybind installation
     + rocal_pybind not supported on windows.
     + `sudo` required for pybind installation
 
-  + Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/OpenCL-Backend)
+* Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/OpenCL-Backend)
 
 
 ## Verify the Installation
@@ -350,8 +354,8 @@ Docker files to build MIVisionX containers are [available](docker#mivisionx-dock
 
 #### Prerequisites
 * Ubuntu `20.04`/`22.04`
-* [ROCm supported hardware](https://docs.amd.com)
-* [ROCm](https://docs.amd.com)
+* [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)
 
 #### Workflow
@@ -432,20 +436,20 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + CentOS - `7` / `8`
   + RHEL - `8` / `9`
   + SLES - `15-SP4`
-* ROCm: rocm-core - `5.4.3.50403-121`
-* miopen-hip - `2.19.0.50403-121`
-* miopen-opencl - `2.18.0.50300-63`
-* migraphx - `2.4.0.50403-121`
+* ROCm: rocm-core - `5.7.0.50700-6`
+* miopen-hip - `2.20.0.50700-63`
+* migraphx - `2.7.0.50700-63`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [1.2.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.2.0)
+* RPP - [1.2.0.50700-63](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.2.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
 * MIVisionX Setup Script - `V2.5.5`
 
 ### Known issues
 
-* Package install requires **OpenCV** `V-4.6.0` to execute `AMD OpenCV extensions`
+* OpenCV 4.X support for some apps missing
+* MIVisionX Package install requires manual prerequisites installation 
 
 ## MIVisionX Dependency Map
 

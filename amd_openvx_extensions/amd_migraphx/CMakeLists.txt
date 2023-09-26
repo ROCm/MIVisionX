@@ -59,7 +59,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         target_link_libraries(${PROJECT_NAME} openvx migraphx::c hip::host)
         # install MIVisionX libs -- {ROCM_PATH}/lib
         install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-        set(MIVISIONX_DEBIAN_PACKAGE_LIST ${MIVISIONX_DEBIAN_PACKAGE_LIST} migraphx migraphx-dev)
+        set(MIVISIONX_DEBIAN_PACKAGE_LIST ${MIVISIONX_DEBIAN_PACKAGE_LIST} migraphx migraphx-dev PARENT_SCOPE)
         if(BUILD_DEV)
             # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 	        install(FILES include/vx_amd_migraphx.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)

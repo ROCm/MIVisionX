@@ -221,7 +221,7 @@ if(ROCM_DEP_ROCMCORE)
   set(MIVISIONX_PACKAGE_REQS  "${MIVISIONX_PACKAGE_REQS}, ${_rocm_core_pkg}")
 endif()
 
-set(CPACK_DEBIAN_PACKAGE_DEPENDS ${MIVISIONX_PACKAGE_REQS} ${MIVISIONX_DEBIAN_PACKAGE_LIST})
+set(CPACK_DEBIAN_PACKAGE_DEPENDS ${_rocm_core_pkg} ${MIVISIONX_DEBIAN_PACKAGE_LIST})
 set(CPACK_RPM_PACKAGE_REQUIRES   "${MIVISIONX_PACKAGE_REQS}, rocblas-devel, miopen-hip-devel, migraphx-devel")
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides

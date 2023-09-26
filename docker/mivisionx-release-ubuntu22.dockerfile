@@ -18,7 +18,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         sudo apt-get update -y && \
         sudo amdgpu-install -y --usecase=graphics,rocm
 # RPP          
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang libboost-filesystem-dev half && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang libboost-filesystem-dev half libomp-dev libpthread-stubs0-dev && \
         git clone -b 1.2.0 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && \
         cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install

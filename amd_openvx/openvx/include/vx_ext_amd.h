@@ -41,7 +41,13 @@ THE SOFTWARE.
  * \ingroup group_amd
  */
 #define AGO_TARGET_AFFINITY_CPU 0x0010 // CPU
+/*! \brief AMD target affinity enumerations for AgoTargetAffinityInfo.device_type
+ * \ingroup group_amd
+ */
 #define AGO_TARGET_AFFINITY_GPU 0x0020 // GPU
+/*! \brief AMD target affinity enumerations for AgoTargetAffinityInfo.device_type
+ * \ingroup group_amd
+ */
 #define AGO_TARGET_AFFINITY_APU 0x0030 // APU
 
 /*! \brief AMD internal parameters. [TODO: This needs to be moved to ago_internal.h]

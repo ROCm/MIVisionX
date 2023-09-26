@@ -95,8 +95,8 @@ extern "C"
 	 * \param [in] graph The reference to the graph.
 	 * \param [in] input input image vx_image.
 	 * \param [out] output The output Tensor.
-	 * \param [in] a a in vx_scalar.
-	 * \param [in] b b in vx_scalar.
+	 * \param [in] a The input 'a' in vx_scalar.
+	 * \param [in] b The input 'b' in vx_scalar.
 	 * \param [in] reverse_channel_order reverse channel order in vx_scalar.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/

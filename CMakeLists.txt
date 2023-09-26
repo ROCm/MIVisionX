@@ -117,6 +117,9 @@ else()
 endif()
 message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}")
 
+# MIVisionX Package Dependencies
+set(MIVISIONX_DEPS_PACKAGE_LIST )
+
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=${NEURAL_NET} [Turn ON/OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D ROCAL=${ROCAL} [Turn ON/OFF ROCAL Modules (default:ON)]${ColourReset}")

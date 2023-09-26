@@ -25,6 +25,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 
+# TBD: HIP required to build vx_migraphx
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     if(NOT DEFINED HIP_PATH)
         if(NOT DEFINED ENV{HIP_PATH})
@@ -37,7 +38,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     find_package(HIP QUIET)
 
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
-
+    # TBD: migraphx package required to build vx_migraphx
     find_package(migraphx QUIET)
 
     include_directories(../../amd_openvx/openvx/include
@@ -58,6 +59,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         target_link_libraries(${PROJECT_NAME} openvx migraphx::c hip::host)
         # install MIVisionX libs -- {ROCM_PATH}/lib
         install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        set(MIVISIONX_DEBIAN_PACKAGE_LIST ${MIVISIONX_DEBIAN_PACKAGE_LIST} migraphx migraphx-dev)
         if(BUILD_DEV)
             # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 	        install(FILES include/vx_amd_migraphx.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)

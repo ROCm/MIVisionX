@@ -118,7 +118,7 @@ endif()
 message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}")
 
 # MIVisionX Package Dependencies
-set(MIVISIONX_DEPS_PACKAGE_LIST )
+set(MIVISIONX_DEBIAN_PACKAGE_LIST ${MIVISIONX_DEBIAN_PACKAGE_LIST})
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=${NEURAL_NET} [Turn ON/OFF Neural Net Modules (default:ON)]${ColourReset}")
@@ -221,7 +221,7 @@ if(ROCM_DEP_ROCMCORE)
   set(MIVISIONX_PACKAGE_REQS  "${MIVISIONX_PACKAGE_REQS}, ${_rocm_core_pkg}")
 endif()
 
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "${MIVISIONX_PACKAGE_REQS}, rocblas-dev, miopen-hip-dev, migraphx-dev")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS ${MIVISIONX_PACKAGE_REQS} ${MIVISIONX_DEBIAN_PACKAGE_LIST})
 set(CPACK_RPM_PACKAGE_REQUIRES   "${MIVISIONX_PACKAGE_REQS}, rocblas-devel, miopen-hip-devel, migraphx-devel")
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides

@@ -22,9 +22,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang libboost-filesystem-
         cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install
 # install mivisionx package dependencies
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libboost-filesystem-dev liblmdb-dev && \
-        half migraphx migraphx-dev ffmpeg libavcodec-dev libavformat-dev libswscale-dev && \
-        libopencv-dev rapidjson-dev pybind11-dev libturbojpeg0-dev  libprotobuf-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install half miopen-hip-dev rocblas-dev migraphx migraphx-dev 
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg libavcodec-dev libavformat-dev libswscale-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libopencv-dev 
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install liblmdb-dev rapidjson-dev libturbojpeg0-dev libprotobuf-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python3-dev python3-setuptools python3-pip python3-opencv pybind11-dev
 
 ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE

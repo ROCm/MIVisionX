@@ -70,6 +70,7 @@ list(APPEND SOURCES decoder.cpp encoder.cpp kernels.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${AVUTIL_LIBRARY} ${AVCODEC_LIBRARY} ${SWSCALE_LIBRARY} ${AVFORMAT_LIBRARY} openvx)
+set(MIVISIONX_DEBIAN_PACKAGE_LIST ${MIVISIONX_DEBIAN_PACKAGE_LIST} ffmpeg libavcodec-dev libavformat-dev libswscale-dev)
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARIES})

@@ -254,6 +254,7 @@ else()
   endif()
   if(EXISTS ${DPKG_EXE})
     list(APPEND CPACK_GENERATOR "DEB")
+    message("-- ${White}MIVisionX -- CPACK_DEBIAN_PACKAGE_DEPENDS:${CPACK_DEBIAN_PACKAGE_DEPENDS}${ColourReset}")
   endif()
 endif()
 

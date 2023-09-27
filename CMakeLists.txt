@@ -131,6 +131,7 @@ find_package(HALF QUIET)
 
 if(HALF_FOUND)
   add_definitions(-DAMD_FP16_SUPPORT)
+  include_directories(${HALF_INCLUDE_DIRS})
   message("-- ${Blue}MIVisionX Built with float16 Support -- -DAMD_FP16_SUPPORT definition added${ColourReset}")
 else()
   message("-- ${Blue}MIVisionX Built with float16 Support OFF${ColourReset}")

@@ -1769,7 +1769,8 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         if (data->u.tensor.data_type != VX_TYPE_BOOL && data->u.tensor.data_type != VX_TYPE_INT16 &&
             data->u.tensor.data_type != VX_TYPE_UINT8 && data->u.tensor.data_type != VX_TYPE_UINT16 &&
             data->u.tensor.data_type != VX_TYPE_FLOAT32 && data->u.tensor.data_type != VX_TYPE_FLOAT16 &&
-            data->u.tensor.data_type != VX_TYPE_INT64 && data->u.tensor.data_type != VX_TYPE_INT32)
+            data->u.tensor.data_type != VX_TYPE_INT64 && data->u.tensor.data_type != VX_TYPE_INT32 && 
+            data->u.tensor.data_type != VX_TYPE_UINT32 && data->u.tensor.data_type != VX_TYPE_INT8)
         {
             agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid data_type for tensor: %s\n", data_type);
             return -1;

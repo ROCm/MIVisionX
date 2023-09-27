@@ -9820,6 +9820,17 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryTensor(vx_tensor tensor, vx_enum attri
 
 #endif
 #endif
+			case VX_TENSOR_BUFFER_HOST:
+                if (size == sizeof(vx_uint8 *)) {
+                    if (data->buffer) {
+                        *(vx_uint8 **)ptr = data->buffer;
+                    }
+                    else {
+                        *(vx_uint8 **)ptr = NULL;
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;

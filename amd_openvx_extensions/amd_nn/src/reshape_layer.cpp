@@ -114,7 +114,7 @@ static vx_status VX_CALLBACK initializeReshapeLayer(vx_node node, const vx_refer
     // check if the input and output tensors are aliased
     data->aliased = vxIsTensorAliased((vx_tensor)parameters[0], 0, (vx_tensor)parameters[1]);
 
-    vx_size dataTypeSize = (type == VX_TYPE_FLOAT32) ? sizeof(float) : sizeof(half);
+    vx_size dataTypeSize = (type == VX_TYPE_FLOAT32) ? sizeof(vx_float32) : sizeof(vx_float16);
     data->memsizeInBytes = dims[0]*dims[1]*dims[2]*dims[3]* dataTypeSize;
     ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;

@@ -41,15 +41,30 @@ THE SOFTWARE.
 #endif
 
 #ifndef dimof
+/*! \def dimof(x)
+ *  \brief A macro to get the number of elements in an array.
+ *  \param [in] x The array whose size is to be determined.
+ *  \return The number of elements in the array.
+ */
 #define dimof(x) (sizeof(x) / sizeof(x[0]))
 #endif
 
 #if _WIN32
 #define SHARED_PUBLIC __declspec(dllexport)
 #else
+/*! \def SHARED_PUBLIC
+ *  \brief A macro to specify public visibility for shared library symbols.
+ */
 #define SHARED_PUBLIC __attribute__((visibility("default")))
 #endif
 
+/*! \brief Creates a node in a graph using a predefined kernel structure.
+ *  \param [in] graph The handle to the graph.
+ *  \param [in] kernelenum The enum value representing the kernel to be used.
+ *  \param [in] params An array of parameter references for the kernel.
+ *  \param [in] num The number of parameters in the params array.
+ *  \return A handle to the created node.
+ */
 vx_node vxCreateNodeByStructure(vx_graph graph, vx_enum kernelenum, vx_reference params[], vx_uint32 num);
 
 #ifdef __cplusplus
@@ -70,7 +85,7 @@ extern "C"
 	 * \param [in] kheight The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set normalized box filter height.
 	 * \param [in] Anchor_X The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set anchor point x.
 	 * \param [in] Anchor_Y The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set anchor point y.
-	 * \param [in] Border_Type The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set borderType.
+	 * \param [in] Bordertype The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set borderType.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
 	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_blur(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 Bordertype);
@@ -83,6 +98,10 @@ extern "C"
 	 * \param [in] ddepth The input <tt>\ref VX_TYPE_INT32</tt> scalar to set output image depth.
 	 * \param [in] kwidth The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set box filter width.
 	 * \param [in] kheight The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set box filter height.
+	 * \param [in] Anchor_X The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set anchor point x.
+	 * \param [in] Anchor_Y The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set anchor point y.
+	 * \param [in] Normalized The input <tt>\ref VX_TYPE_BOOL</tt> scalar for Normalized argument.
+	 * \param [in] Bordertype The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set borderType.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
 	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_boxFilter(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_bool Normalized, vx_int32 Bordertype);
@@ -145,12 +164,12 @@ extern "C"
 	/*! \brief [Graph] Creates a OpenCV BilateralFilter function node.
 	 * \ingroup group_opencv
 	 * \param [in] graph The reference to the graph.
-	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt>  format.
+	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
 	 * \param [out] output The output image is as same size and type of input.
 	 * \param [in] d The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set K width.
-	 * \param [in] sigmaColor The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set sigmaX.
-	 * \param [in] sigmaSpace The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set sigmaY.
-	 * \param [in] Border mode The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set border mode.
+	 * \param [in] Sigma_Color The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set sigmaX.
+	 * \param [in] Sigma_Space The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set sigmaY.
+	 * \param [in] border_mode mode The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set border mode.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
 	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bilateralFilter(vx_graph graph, vx_image input, vx_image output, vx_uint32 d, vx_float32 Sigma_Color, vx_float32 Sigma_Space, vx_int32 border_mode);
@@ -232,13 +251,16 @@ extern "C"
 	 * \ingroup group_opencv
 	 * \param [in] graph The reference to the graph.
 	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
-	 * \param [in] input_kp The output keypoints <tt>\ref vx_array</tt> of <tt>\ref VX_TYPE_KEYPOINT</tt>.
+	 * \param [in] mask The mask image in <tt>\ref VX_DF_IMAGE_U8</tt> format (optional).
+	 * \param [in] output_kp The output keypoints <tt>\ref vx_array</tt> of <tt>\ref VX_TYPE_KEYPOINT</tt>.
 	 * \param [out] output_des The output descriptors <tt>\ref vx_array</tt> of user defined data type with 64/128 byte element size depending upon extended argument.
+	 * \param [in] nfeatures The input <tt>\ref VX_TYPE_INT32</tt> scalar for nfeatures argument.
 	 * \param [in] scaleFactor The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for scaleFactor argument.
 	 * \param [in] nlevels The input <tt>\ref VX_TYPE_INT32</tt> scalar for nlevels argument.
 	 * \param [in] edgeThreshold The input <tt>\ref VX_TYPE_INT32</tt> scalar for edgeThreshold argument.
 	 * \param [in] firstLevel The input <tt>\ref VX_TYPE_INT32</tt> scalar for firstLevel argument.
 	 * \param [in] WTA_K The input <tt>\ref VX_TYPE_INT32</tt> scalar for WTA_K argument.
+	 * \param [in] scoreType The input <tt>\ref VX_TYPE_INT32</tt> scalar for scoreType argument.
 	 * \param [in] patchSize The input <tt>\ref VX_TYPE_INT32</tt> scalar for patchSize argument.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
@@ -250,7 +272,6 @@ extern "C"
 	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
 	 * \param [in] mask The mask image in <tt>\ref VX_DF_IMAGE_U8</tt> format (optional).
 	 * \param [out] output_kp The output keypoints <tt>\ref vx_array</tt> of <tt>\ref VX_TYPE_KEYPOINT</tt>.
-	 * \param [out] output_des The output descriptors <tt>\ref vx_array</tt> of user defined data type with 64/128 byte element size depending upon extended argument (optional).
 	 * \param [in] nfeatures The input <tt>\ref VX_TYPE_INT32</tt> scalar for nfeatures argument.
 	 * \param [in] scaleFactor The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for scaleFactor argument.
 	 * \param [in] nlevels The input <tt>\ref VX_TYPE_INT32</tt> scalar for nlevels argument.
@@ -267,9 +288,13 @@ extern "C"
 	 * \ingroup group_opencv
 	 * \param [in] graph The reference to the graph.
 	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
-	 * \param [in] input_kp The input keypoints <tt>\ref vx_array</tt> of <tt>\ref VX_TYPE_KEYPOINT</tt>.
+	 * \param [in] mask The mask image in <tt>\ref VX_DF_IMAGE_U8</tt> format (optional).
+	 * \param [in] output_kp The output keypoints <tt>\ref vx_array</tt> of <tt>\ref VX_TYPE_KEYPOINT</tt>.
 	 * \param [out] output_des The output descriptors <tt>\ref vx_array</tt> of user defined data type with 128 byte element size.
+	 * \param [in] nfeatures The input <tt>\ref VX_TYPE_INT32</tt> scalar for nfeatures argument.
 	 * \param [in] nOctaveLayers The input <tt>\ref VX_TYPE_INT32</tt> scalar for nOctaveLayers argument.
+	 * \param [in] contrastThreshold The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for contrastThreshold argument.
+	 * \param [in] edgeThreshold The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for edgeThreshold argument.
 	 * \param [in] sigma The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for sigma argument.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
@@ -281,7 +306,6 @@ extern "C"
 	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
 	 * \param [in] mask The mask image in <tt>\ref VX_DF_IMAGE_U8</tt> format (optional).
 	 * \param [out] output_kp The output keypoints <tt>\ref vx_array</tt> of <tt>\ref VX_TYPE_KEYPOINT</tt>.
-	 * \param [out] output_des The output descriptors <tt>\ref vx_array</tt> of user defined data type with 128 byte element size (optional).
 	 * \param [in] nfeatures The input <tt>\ref VX_TYPE_INT32</tt> scalar for nfeatures argument. Set this to capacity of output_kp to retain best keypoints.
 	 * \param [in] nOctaveLayers The input <tt>\ref VX_TYPE_INT32</tt> scalar for nOctaveLayers argument.
 	 * \param [in] contrastThreshold The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for contrastThreshold argument.
@@ -320,8 +344,12 @@ extern "C"
 	 * \ingroup group_opencv
 	 * \param [in] graph The reference to the graph.
 	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
-	 * \param [in] input_kp The input keypoints <tt>\ref vx_array</tt> of <tt>\ref VX_TYPE_KEYPOINT</tt>.
+	 * \param [in] mask The mask image in <tt>\ref VX_DF_IMAGE_U8</tt> format (optional).
+	 * \param [in] output_kp The output keypoints <tt>\ref vx_array</tt> of <tt>\ref VX_TYPE_KEYPOINT</tt>.
 	 * \param [out] output_des The output descriptors <tt>\ref vx_array</tt> of user defined data type with 64/128 byte element size depending upon extended argument.
+	 * \param [in] hessianThreshold The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for hessianThreshold argument.
+	 * \param [in] nOctaves The input <tt>\ref VX_TYPE_INT32</tt> scalar for nOctaves argument.
+	 * \param [in] nOctaveLayers The input <tt>\ref VX_TYPE_INT32</tt> scalar for nOctaveLayers argument.
 	 * \param [in] extended The input <tt>\ref VX_TYPE_BOOL</tt> scalar for extended argument.
 	 * \param [in] upright The input <tt>\ref VX_TYPE_BOOL</tt> scalar for upright argument.
 	 * \return <tt>\ref vx_node</tt>.
@@ -338,8 +366,6 @@ extern "C"
 	 * \param [in] hessianThreshold The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for hessianThreshold argument.
 	 * \param [in] nOctaves The input <tt>\ref VX_TYPE_INT32</tt> scalar for nOctaves argument.
 	 * \param [in] nOctaveLayers The input <tt>\ref VX_TYPE_INT32</tt> scalar for nOctaveLayers argument.
-	 * \param [in] extended The input <tt>\ref VX_TYPE_BOOL</tt> scalar for extended argument.
-	 * \param [in] upright The input <tt>\ref VX_TYPE_BOOL</tt> scalar for upright argument.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
 	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_surfDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_float32 hessianThreshold, vx_int32 nOctaves, vx_int32 nOctaveLayers);
@@ -378,7 +404,7 @@ extern "C"
 	 * \param [in] graph The reference to the graph.
 	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
 	 * \param [out] norm_value The output <tt>\ref VX_TYPE_FLOAT32</tt> scalar norm_value.
-	 * \param [in] sdepth The input <tt>\ref VX_TYPE_INT32</tt> scalar to set sdepth.
+	 * \param [in] norm_type The input <tt>\ref VX_TYPE_INT32</tt> scalar to set norm_type.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
 	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_norm(vx_graph graph, vx_image input, vx_float32 norm_value, vx_int32 norm_type);
@@ -458,7 +484,7 @@ extern "C"
 	 * \param [in] dtype The input <tt>\ref VX_TYPE_INT32</tt> scalar to set dtype.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_addWeighted(vx_graph graph, vx_image imput_1, vx_float32 aplha, vx_image input_2, vx_float32 beta, vx_float32 gamma, vx_image output, vx_int32 dtype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_addWeighted(vx_graph graph, vx_image input_1, vx_float32 aplha, vx_image input_2, vx_float32 beta, vx_float32 gamma, vx_image output, vx_int32 dtype);
 
 	/*! \brief [Graph] Creates a OpenCV adaptiveThreshold function node.
 	 * \ingroup group_opencv
@@ -573,7 +599,6 @@ extern "C"
 	 * \param [in] graph The reference to the graph.
 	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
 	 * \param [out] output The output Pyramid.
-	 * \param [in] OP The input <tt>\ref VX_TYPE_INT32</tt> scalar to set OP.
 	 * \param [in] maxLevel The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set maxLevel.
 	 * \param [in] border The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set border.
 	 * \return <tt>\ref vx_node</tt>.
@@ -585,13 +610,13 @@ extern "C"
 	 * \param [in] graph The reference to the graph.
 	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
 	 * \param [out] output The output Pyramid.
-	 * \param [in] WIN_Size_Width The input <tt>\ref VX_TYPE_INT32</tt> scalar to set WIN_Size_Width.
-	 * \param [in] WIN_Size_Height The input <tt>\ref VX_TYPE_INT32</tt> scalar to set WIN_Size_Height.
-	 * \param [in] maxLevel The input <tt>\ref VX_TYPE_INT32</tt> scalar to set maxLevel.
-	 * \param [in] withDerivatives The input <tt>\ref VX_TYPE_BOOL</tt> scalar to set withDerivatives.
-	 * \param [in] pyrBorder The input <tt>\ref VX_TYPE_INT32</tt> scalar to set pyrBorder.
-	 * \param [in] derivBorder The input <tt>\ref VX_TYPE_INT32</tt> scalar to set derivBorder.
-	 * \param [in] tryReuseInputImage The input <tt>\ref VX_TYPE_BOOL</tt> scalar to set tryReuseInputImage.
+	 * \param [in] S_width The input <tt>\ref VX_TYPE_INT32</tt> scalar to set S_width.
+	 * \param [in] S_height The input <tt>\ref VX_TYPE_INT32</tt> scalar to set S_height.
+	 * \param [in] WinSize The input <tt>\ref VX_TYPE_INT32</tt> scalar to set WinSize.
+	 * \param [in] WithDerivatives The input <tt>\ref VX_TYPE_BOOL</tt> scalar to set withDerivatives.
+	 * \param [in] Pyr_border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set Pyr_border.
+	 * \param [in] derviBorder The input <tt>\ref VX_TYPE_INT32</tt> scalar to set derviBorder.
+	 * \param [in] tryReuse The input <tt>\ref VX_TYPE_BOOL</tt> scalar to set tryReuseInputImage.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
 	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_buildOpticalFlowPyramid(vx_graph graph, vx_image input, vx_pyramid output, vx_uint32 S_width, vx_uint32 S_height, vx_int32 WinSize, vx_bool WithDerivatives, vx_int32 Pyr_border, vx_int32 derviBorder, vx_bool tryReuse);
@@ -714,7 +739,7 @@ extern "C"
 	 * \param [in] threshold1 The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set threshold1.
 	 * \param [in] threshold2 The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set threshold2.
 	 * \param [in] aperture_size The input <tt>\ref VX_TYPE_INT32</tt> scalar to set aperture_size.
-	 * \param [in] L2_Gradient The input <tt>\ref VX_BOOL</tt> scalar to set L2_Gradient.
+	 * \param [in] L2_Gradient The input <tt>\ref VX_TYPE_BOOL</tt> scalar to set L2_Gradient.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
 	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_canny(vx_graph graph, vx_image input, vx_image output, vx_float32 threshold1, vx_float32 threshold2, vx_int32 aperture_size, vx_bool L2_Gradient);
@@ -733,8 +758,8 @@ extern "C"
 	/*! \brief [Graph] Creates a OpenCV convertScaleAbs function node.
 	 * \ingroup group_opencv
 	 * \param [in] graph The reference to the graph.
-	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt>  format.
-	 * \param [out] output The output image is as same size and type of input.
+	 * \param [in] image_in The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
+	 * \param [out] image_out The output image is as same size and type of input.
 	 * \param [in] alpha The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set alpha.
 	 * \param [in] beta The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set beta.
 	 * \return <tt>\ref vx_node</tt>.
@@ -748,7 +773,7 @@ extern "C"
 	 * \param [out] output The output image is as same size and type of input.
 	 * \param [in] blocksize The input <tt>\ref VX_TYPE_INT32</tt> scalar to set blocksize.
 	 * \param [in] ksize The input <tt>\ref VX_TYPE_INT32</tt> scalar to set ksize.
-	 * \param [in] K The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set K.
+	 * \param [in] k The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set K.
 	 * \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	 * \return <tt>\ref vx_node</tt>.
 	 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
@@ -759,7 +784,7 @@ extern "C"
 	 * \param [in] graph The reference to the graph.
 	 * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
 	 * \param [out] output The output image is as same size and type of input.
-	 * \param [in] blocksize The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set blocksize.
+	 * \param [in] blockSize The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set blocksize.
 	 * \param [in] ksize The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set ksize.
 	 * \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	 * \return <tt>\ref vx_node</tt>.

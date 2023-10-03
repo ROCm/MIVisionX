@@ -49,7 +49,7 @@ find_library(TurboJpeg_LIBRARIES
     ${TURBO_JPEG_PATH}/lib
     ${TURBO_JPEG_PATH}/lib64
     /usr/lib
-    /usr/lib/x86_64-linux-gnu
+    #/usr/lib/x86_64-linux-gnu - package install libturbojpeg0-dev
     /opt/libjpeg-turbo/lib
 )
 mark_as_advanced(TurboJpeg_LIBRARIES)
@@ -63,7 +63,7 @@ find_path(TurboJpeg_LIBRARIES_DIRS
     ${TURBO_JPEG_PATH}/lib
     ${TURBO_JPEG_PATH}/lib64
     /usr/lib
-    /usr/lib/x86_64-linux-gnu
+    #/usr/lib/x86_64-linux-gnu - package install libturbojpeg0-dev
     /opt/libjpeg-turbo/lib
 )
 mark_as_advanced(TurboJpeg_LIBRARIES_DIRS)

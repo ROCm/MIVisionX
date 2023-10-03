@@ -41,11 +41,10 @@ include_directories(../../amd_openvx/openvx/include/ include)
 # AMD RPP
 include_directories(${AMDRPP_INCLUDE_DIRS})
 set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})
-set(MIVISIONX_DEBIAN_PACKAGE_LIST ${MIVISIONX_DEBIAN_PACKAGE_LIST} rpp PARENT_SCOPE)
+
 # BOOST
 include_directories(${Boost_INCLUDE_DIRS})
 set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
-set(MIVISIONX_DEBIAN_PACKAGE_LIST ${MIVISIONX_DEBIAN_PACKAGE_LIST} libboost-filesystem-dev PARENT_SCOPE)
 
 list(APPEND SOURCES
         source/image/AbsoluteDifferencebatchPD.cpp

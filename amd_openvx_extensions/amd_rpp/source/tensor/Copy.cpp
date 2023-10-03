@@ -107,7 +107,7 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
         data->tensorSize *= tensor_dims[i];
 
     if (input_tensor_type == vx_type_e::VX_TYPE_FLOAT32 && output_tensor_type == vx_type_e::VX_TYPE_FLOAT32) {
-        data->tensorSize *= sizeof(float);
+        data->tensorSize *= sizeof(vx_float32);
     } else if (input_tensor_type == vx_type_e::VX_TYPE_FLOAT16 && output_tensor_type == vx_type_e::VX_TYPE_FLOAT16) {
 #if defined(AMD_FP16_SUPPORT)
         data->tensorSize *= sizeof(vx_float16);

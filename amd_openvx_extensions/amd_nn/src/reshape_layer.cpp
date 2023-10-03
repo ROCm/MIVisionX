@@ -116,6 +116,7 @@ static vx_status VX_CALLBACK initializeReshapeLayer(vx_node node, const vx_refer
 #if defined(AMD_FP16_SUPPORT)
     vx_size dataTypeSize = (type == VX_TYPE_FLOAT32) ? sizeof(vx_float32) : sizeof(vx_float16);
 #else
+    // TBD: Add vx_float16 support for all nodes using uint16
     vx_size dataTypeSize = (type == VX_TYPE_FLOAT32) ? sizeof(vx_float32) : sizeof(vx_uint16);
 #endif
 

@@ -110,7 +110,7 @@ requests==2.31.0
     # via
     #   pygithub
     #   sphinx
-rocm-docs-core[api_reference]==0.24.2
+rocm-docs-core[api_reference]==0.25.0
     # via -r requirements.in
 smmap==5.0.0
     # via gitdb
@@ -155,7 +155,7 @@ tqdm==4.65.0
     # via mpire
 typing-extensions==4.5.0
     # via pydata-sphinx-theme
-urllib3==1.26.15
+urllib3==1.26.17
     # via requests
 wrapt==1.15.0
     # via deprecated

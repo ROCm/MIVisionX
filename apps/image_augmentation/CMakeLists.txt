@@ -46,6 +46,7 @@ find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
 # Application Includes & Libraries
+include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR})
 include_directories(${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx ${ROCM_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal)
 link_directories(${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR})
 

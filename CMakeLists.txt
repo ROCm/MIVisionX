@@ -211,6 +211,12 @@ endif()
 
 # Set the dependent packages
 set(MIVISIONX_PACKAGE_REQS "half, rpp, rocblas, miopen-hip, migraphx")
+# MIVisionX Package Dependencies
+set(MIVISIONX_DEBIAN_PACKAGE_LIST "ffmpeg, libavcodec-dev, \
+libavformat-dev, libswscale-dev, libomp-dev, miopen-hip-dev, \
+rocblas-dev, libboost-filesystem-dev, libopencv-dev, migraphx-dev")
+set(MIVISIONX_RPM_PACKAGE_LIST "rocblas-devel, miopen-hip-devel, \
+migraphx-devel")
 # set dependency to ROCm if set to TRUE, default to OFF
 set(ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
 if(ROCM_DEP_ROCMCORE)
@@ -222,8 +228,8 @@ if(ROCM_DEP_ROCMCORE)
   set(MIVISIONX_PACKAGE_REQS  "${MIVISIONX_PACKAGE_REQS}, ${_rocm_core_pkg}")
 endif()
 
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "${MIVISIONX_PACKAGE_REQS}, rocblas-dev, miopen-hip-dev, migraphx-dev")
-set(CPACK_RPM_PACKAGE_REQUIRES   "${MIVISIONX_PACKAGE_REQS}, rocblas-devel, miopen-hip-devel, migraphx-devel")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "${MIVISIONX_PACKAGE_REQS}, ${MIVISIONX_DEBIAN_PACKAGE_LIST}")
+set(CPACK_RPM_PACKAGE_REQUIRES   "${MIVISIONX_PACKAGE_REQS}, ${MIVISIONX_RPM_PACKAGE_LIST}")
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(COMMAND rpm --eval %{?dist}
@@ -252,9 +258,11 @@ else()
   endif()
   if(EXISTS ${RPMBUILD_EXE})
     list(APPEND CPACK_GENERATOR "RPM")
+    message("-- ${White}MIVisionX -- CPACK_RPM_PACKAGE_REQUIRES:${CPACK_RPM_PACKAGE_REQUIRES}${ColourReset}")
   endif()
   if(EXISTS ${DPKG_EXE})
     list(APPEND CPACK_GENERATOR "DEB")
+    message("-- ${White}MIVisionX -- CPACK_DEBIAN_PACKAGE_DEPENDS:${CPACK_DEBIAN_PACKAGE_DEPENDS}${ColourReset}")
   endif()
 endif()
 

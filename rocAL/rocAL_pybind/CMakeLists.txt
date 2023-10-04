@@ -37,6 +37,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
 elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     find_package(AMDRPP QUIET)
     find_package(TurboJpeg QUIET)
+    find_package(HALF QUIET)
     if(NOT DEFINED HIP_PATH)
         if(NOT DEFINED ENV{HIP_PATH})
             set(HIP_PATH ${ROCM_PATH} CACHE PATH "Path to which HIP has been installed")
@@ -84,6 +85,11 @@ if(ROCAL_PYTHON)
         message("-- ${Yellow}NOTE: rocAL pybind requires TurboJpeg, Not Found${ColourReset}")
     endif()
 
+    if(NOT HALF_FOUND)
+        set(BUILD_ROCAL_PYBIND false)
+        message("-- ${Yellow}NOTE: rocAL pybind requires half.hpp, Not Found${ColourReset}")
+    endif()
+
     set(Python3_FIND_VIRTUALENV FIRST)
     find_package(Python3 QUIET COMPONENTS Interpreter Development)
     if(NOT Python3_FOUND)
@@ -123,6 +129,8 @@ if(ROCAL_PYTHON)
         message("-- ${Green}NOTE: rocAL pybind requires Python3, Found --  ${Python3_EXECUTABLE} ${ColourReset}")
         # PyBind11
         include_directories(${pybind11_INCLUDE_DIRS})
+        # half
+        include_directories(${HALF_INCLUDE_DIRS})
 
         file(GLOB_RECURSE pyfiles amd/*.py)
         file(GLOB_RECURSE sources *.cpp)

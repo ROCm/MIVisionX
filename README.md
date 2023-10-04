@@ -209,7 +209,7 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --inference [MIVisionX Neural Net Inference Dependency Install - optional (default:ON) [options:ON/OFF]]
-                            --developer [Setup Developer Options - optional (default:ON) [options:ON/OFF]]
+                            --developer [Setup Developer Options - optional (default:OFF) [options:ON/OFF]]
                             --reinstall [Remove previous setup and reinstall (default:OFF)[options:ON/OFF]]
                             --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]]
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
@@ -444,7 +444,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * RPP - [1.2.0.50700-63](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.2.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.5.5`
+* MIVisionX Setup Script - `V2.5.6`
 
 ### Known issues
 

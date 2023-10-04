@@ -509,8 +509,7 @@ typedef struct
 /*! \brief A 16-bit float value.
  */
 #include <half/half.hpp>
-using half_float::half;
-typedef half vx_float16;
+typedef half_float::half vx_float16;
 #endif
 #endif
 

@@ -471,7 +471,43 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 ### Known issues
 
-* Package install requires **OpenCV** `V-4.6.X` to execute `AMD OpenCV extensions`
+* OpenCV 4.X support for some apps missing
+* **MIVisionX Package install requires manual prerequisites installation:** some prerequisites for MIVisionX are build from source and do not have equivalent packages in linux. The user has to manually install these prerequisites. Instructions for these is given below.
+  + Boost - Version `1.72.0`
+    ```
+    wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2
+    tar xjvf boost_1_72_0.tar.bz2
+    cd ./boost_1_72_0/
+    ./bootstrap.sh --prefix=/usr/local --with-python=python3
+    ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11"
+    sudo ./b2 install threading=multi link=shared --with-system --with-filesystem
+    ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic"
+    sudo ./b2 install threading=multi link=static --with-system --with-filesystem
+    ```
+  + OpenCV - Version `4.6.0`
+    ```
+    wget https://github.com/opencv/opencv/archive/4.6.0.zip
+    unzip 4.6.0.zip
+    mkdir -p build/OpenCV
+    cd build/OpenCV
+    cmake -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-4.6.0
+    make -j8
+    make install
+    ldconfig
+    ```
+  + FFMPEG - Version [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
+  + Turbo JPEG installation - Version `2.0.6.1`
+    ```
+    git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git
+    cd libjpeg-turbo && mkdir build && cd build
+    cmake -DCMAKE_INSTALL_PREFIX=/usr \
+      -DCMAKE_BUILD_TYPE=RELEASE  \
+      -DENABLE_STATIC=FALSE       \
+      -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
+      -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib  \
+      ..
+    make -j$nproc && sudo make install
+    ```
 
 ## MIVisionX Dependency Map
 

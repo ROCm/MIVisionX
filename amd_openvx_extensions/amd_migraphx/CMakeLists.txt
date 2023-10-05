@@ -25,6 +25,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 
+# TBD: HIP required to build vx_migraphx
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     if(NOT DEFINED HIP_PATH)
         if(NOT DEFINED ENV{HIP_PATH})
@@ -37,7 +38,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     find_package(HIP QUIET)
 
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
-
+    # TBD: migraphx package required to build vx_migraphx
     find_package(migraphx QUIET)
 
     include_directories(../../amd_openvx/openvx/include

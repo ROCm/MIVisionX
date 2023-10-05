@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #include <tuple>
 #include <assert.h>
-#include <boost/filesystem.hpp>
 #ifdef ROCAL_VIDEO
 #include "node_video_loader.h"
 #include "node_video_loader_single_shard.h"
@@ -39,8 +38,6 @@ THE SOFTWARE.
 #include "node_fused_jpeg_crop_single_shard.h"
 #include "node_resize.h"
 #include "meta_node_resize.h"
-
-namespace filesys = boost::filesystem;
 
 std::tuple<unsigned, unsigned>
 evaluate_image_data_set(RocalImageSizeEvaluationPolicy decode_size_policy, StorageType storage_type,

@@ -26,7 +26,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg libavcodec-dev liba
 # VX_openCV
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libopencv-dev
 # RPP          
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang libboost-filesystem-dev half rpp
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang half rpp
 # rocAL
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install liblmdb-dev rapidjson-dev libturbojpeg0-dev libprotobuf-dev
 # rocAL PyBind

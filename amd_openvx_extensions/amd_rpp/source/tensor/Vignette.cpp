@@ -44,6 +44,7 @@ static vx_status VX_CALLBACK refreshVignette(vx_node node, const vx_reference *p
 
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_OPENCL
         status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));

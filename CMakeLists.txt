@@ -35,7 +35,7 @@ find_program(DPKG_EXE dpkg)
 
 
 if(DEFINED ENV{ROCM_PATH})
-  set(ROCM_PATH ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+  set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
 elseif(ROCM_PATH)
   message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
 else()

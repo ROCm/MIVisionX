@@ -120,3 +120,6 @@ subtrees:
           - file: docker/pytorch/README
           - file: docker/tensorflow/README
     - file: CHANGELOG
+  - caption: About
+    entries:
+      - file: license

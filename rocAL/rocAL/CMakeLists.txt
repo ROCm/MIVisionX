@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(rocal)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(BUILD_ROCAL true)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)

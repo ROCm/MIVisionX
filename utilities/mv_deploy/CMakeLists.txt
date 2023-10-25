@@ -36,7 +36,6 @@ if(NOT ENABLE_ASAN_PACKAGING)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++17 ")
-target_link_libraries(mv_compile ${CMAKE_DL_LIBS} stdc++fs)
 
 if(BUILD_DEV)
     # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/

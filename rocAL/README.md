@@ -63,7 +63,9 @@ rocAL can be currently used to perform the following operations either with rand
 *  [LMBD Library](http://www.lmdb.tech/doc/)
 *  [RapidJSON](https://github.com/Tencent/rapidjson)
 *  [PyBind11](https://github.com/pybind/pybind11)
-
+*  [HIP](https://github.com/ROCm-Developer-Tools/HIP)
+*  OpenMP
+*  C++ Version `17`
 ## Build instructions
 
 `rocAL` builds and installs as part of the MIVisonX toolkit. The rocAL dependencies are installed with MIVisionX-setup.py. To manually install rocAL dependencies, follow below instructions.

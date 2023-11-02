@@ -221,7 +221,7 @@ set(MIVISIONX_PACKAGE_REQS "half, rpp, rocblas, miopen-hip, migraphx")
 # MIVisionX Package Dependencies - TBD: Setup & Package need to install same packages
 #set(MIVISIONX_DEBIAN_PACKAGE_LIST "ffmpeg, libavcodec-dev, \
 #libavformat-dev, libswscale-dev, libomp-dev, miopen-hip-dev, \
-#rocblas-dev, libboost-filesystem-dev, libopencv-dev, migraphx-dev")
+#rocblas-dev, libopencv-dev, migraphx-dev")
 set(MIVISIONX_DEBIAN_PACKAGE_LIST "rocblas-dev, miopen-hip-dev, migraphx-dev")
 set(MIVISIONX_RPM_PACKAGE_LIST "rocblas-devel, miopen-hip-devel, migraphx-devel")
 # set dependency to ROCm if set to TRUE, default to OFF

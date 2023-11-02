@@ -21,7 +21,13 @@ THE SOFTWARE.
 */
 
 #pragma once
-#include <boost/filesystem.hpp>
+#ifdef USE_STD_FILESYSTEM
+#include <filesystem>
+namespace filesys = std::filesystem;
+#elif defined(USE_EXP_FILESYSTEM)
+#include <experimental/filesystem>
+namespace filesys = std::experimental::filesystem;
+#endif
 #include <dirent.h>
 #include <sstream>
 #include <iostream>
@@ -35,8 +41,6 @@ extern "C"
 }
 #endif
 #include "commons.h"
-
-namespace filesys = boost::filesystem;
 
 #ifdef ROCAL_VIDEO
 typedef struct VideoProperties

@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include <cstring>
 #include <map>
 #include <tuple>
-#include <boost/filesystem.hpp>
 #include "commons.h"
 #include "ffmpeg_video_decoder.h"
 #include "video_reader_factory.h"

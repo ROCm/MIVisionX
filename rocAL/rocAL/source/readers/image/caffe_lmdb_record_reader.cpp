@@ -22,8 +22,6 @@ THE SOFTWARE.
 
 #include <cassert>
 #include <commons.h>
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -34,8 +32,6 @@ THE SOFTWARE.
 
 using namespace std;
 using caffe_protos::Datum;
-
-namespace filesys = boost::filesystem;
 
 CaffeLMDBRecordReader::CaffeLMDBRecordReader()
 {

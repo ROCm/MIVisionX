@@ -31,12 +31,6 @@ RUN yum -y install --nogpgcheck autoconf automake bzip2 bzip2-devel cmake freety
 RUN yum -y install --nogpgcheck libsqlite3x-devel python-devel python3-devel python3-venv bzip2-devel openssl-devel autoconf automake libtool curl make g++ unzip && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && cp half-files/include/half.hpp /usr/local/include/ && \
-        wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 && tar xjvf boost_1_72_0.tar.bz2 && \
-        cd boost_1_72_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3.6.8 && \
-        ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11" && \
-        ./b2 install threading=multi link=shared --with-system --with-filesystem && \
-        ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
-        ./b2 install threading=multi link=static --with-system --with-filesystem && cd ../ && \
         git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && make install
 RUN git clone -b rocm-5.1.1 https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \

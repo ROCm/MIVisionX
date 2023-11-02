@@ -24,7 +24,13 @@ THE SOFTWARE.
 #include <iostream>
 #include <utility>
 #include <algorithm>
-#include <boost/filesystem.hpp>
+#ifdef USE_STD_FILESYSTEM
+#include <filesystem>
+namespace filesys = std::filesystem;
+#elif defined(USE_EXP_FILESYSTEM)
+#include <experimental/filesystem>
+namespace filesys = std::experimental::filesystem;
+#endif
 #include "commons.h"
 #include "exception.h"
 #include "cifar10_meta_data_reader.h"
@@ -32,7 +38,6 @@ THE SOFTWARE.
 
 using namespace std;
 
-namespace filesys = boost::filesystem;
 
 Cifar10MetaDataReader::Cifar10MetaDataReader()
 {

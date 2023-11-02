@@ -23,16 +23,12 @@ THE SOFTWARE.
 #include <cassert>
 #include <commons.h>
 #include "tf_record_reader.h"
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sstream>
 #include <fstream>
 #include <stdint.h>
-
-namespace filesys = boost::filesystem;
 
 TFRecordReader::TFRecordReader()
 {

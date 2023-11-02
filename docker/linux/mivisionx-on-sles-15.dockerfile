@@ -16,13 +16,7 @@ RUN zypper -n install autoconf automake bzip2 openssl-devel python3-devel gflags
         git clone -b 2.0.6.2 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd
-RUN zypper -n install sqlite-devel libtool && zypper -n install -t pattern devel_basis && \
-    wget https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.bz2 && tar xjvf boost_1_80_0.tar.bz2 && \
-    cd boost_1_80_0 && ./bootstrap.sh --prefix=/usr/local --with-python=python3 && \
-    ./b2 stage -j16 threading=multi link=shared cxxflags="-std=c++11" && \
-    sudo ./b2 install threading=multi link=shared --with-system --with-filesystem && \
-    ./b2 stage -j16 threading=multi link=static cxxflags="-std=c++11 -fpic" cflags="-fpic" && \
-    sudo ./b2 install threading=multi link=static --with-system --with-filesystem
+RUN zypper -n install sqlite-devel libtool && zypper -n install -t pattern devel_basis
 RUN git clone -b v3.21.9 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
 RUN git clone -b 1.4.0 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \

@@ -90,7 +90,4 @@ else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
 endif()
 
-# Binary files not required for ASAN package
-if(NOT ENABLE_ASAN_PACKAGING)
-    install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})
-endif()
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

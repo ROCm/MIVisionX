@@ -134,5 +134,8 @@ include_directories(${ROCM_PATH}/include/mivisionx/rocal)
 link_directories(${ROCM_PATH}/lib/)
 target_link_libraries(${PROJECT_NAME} rocal)
 
-# Install Application in ROCm Bin Directory
-install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})
+# Binary files not required for ASAN package
+if(NOT ENABLE_ASAN_PACKAGING)
+  # Install Application in ROCm Bin Directory
+  install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})
+endif()

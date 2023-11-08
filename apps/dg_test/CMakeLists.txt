@@ -64,8 +64,5 @@ else()
 	message(FATAL_ERROR "${PROJECT_NAME} -- OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
 
-# Binary files not required for ASAN package
-if(NOT ENABLE_ASAN_PACKAGING)
-    # Install Application in ROCm Bin Directory
-    install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})
-endif()
+# Install Application in ROCm Bin Directory
+install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

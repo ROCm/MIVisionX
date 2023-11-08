@@ -26,9 +26,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # TBD - Install additional data indepedent tests
-if(NOT ENABLE_ASAN_PACKAGING)
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../library_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests)
-endif()
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../library_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests)
 
 # default run
 # canny

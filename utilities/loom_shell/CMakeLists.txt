@@ -32,11 +32,8 @@ include_directories(../../amd_openvx/openvx/include
 list(APPEND SOURCES loom_shell_util.cpp loom_shell.cpp help.cpp)
 
 add_executable(loom_shell ${SOURCES})
-# Binary files not required for ASAN package
-if(NOT ENABLE_ASAN_PACKAGING)
-    # install MIVisionX executables -- {ROCM_PATH}/bin
-    install(TARGETS loom_shell DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif()
+# install MIVisionX executables -- {ROCM_PATH}/bin
+install(TARGETS loom_shell DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 target_link_libraries(loom_shell vx_loomsl openvx)
 

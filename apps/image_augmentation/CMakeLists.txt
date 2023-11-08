@@ -78,8 +78,5 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mf16c -Wall ")
 target_link_libraries(${PROJECT_NAME} rocal ${OpenCV_LIBRARIES} )
 
-# Binary files not required for ASAN package
-if(NOT ENABLE_ASAN_PACKAGING)
-    # Install Application in ROCm Bin Directory
-    install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})
-endif()
+# Install Application in ROCm Bin Directory
+install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})

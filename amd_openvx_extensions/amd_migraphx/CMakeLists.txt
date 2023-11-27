@@ -20,7 +20,7 @@
 
 cmake_minimum_required(VERSION 3.5)
 set(VERSION "1.0.0")
-project(vx_amd_migraphx)
+project(vx_amd_migraphx VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 

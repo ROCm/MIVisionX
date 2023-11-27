@@ -55,13 +55,13 @@ add_library(vx_loomsl SHARED ${SOURCES})
 target_link_libraries(vx_loomsl ${OpenCL_LIBRARIES} openvx)
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS vx_loomsl DESTINATION ${CMAKE_INSTALL_LIBDIR})
-if(BUILD_DEV)
-	# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-	install(FILES live_stitch_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-	# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-	install(DIRECTORY ../../samples/loom_360_stitch DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-endif(BUILD_DEV)
+install(TARGETS vx_loomsl LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+install(TARGETS vx_loomsl LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+install(TARGETS vx_loomsl LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+install(FILES live_stitch_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+install(DIRECTORY ../../samples/loom_360_stitch DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")

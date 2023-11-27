@@ -29,18 +29,15 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include
                    )
 
 add_executable(mv_compile mv_compile.cpp)
-# Binary files not required for ASAN package
-if(NOT ENABLE_ASAN_PACKAGING)
-    # install MIVisionX executables -- {ROCM_PATH}/bin
-    install (TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif()
+
+# install MIVisionX executables -- {ROCM_PATH}/bin
+install(TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
+install(TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT dev)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++17 ")
 target_link_libraries(mv_compile ${CMAKE_DL_LIBS} stdc++fs)
 
-if(BUILD_DEV)
-    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-    install (FILES mvdeploy_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-    install (FILES mv_extras_postproc.h DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
-    install (FILES mv_extras_postproc.cpp DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy)
-endif(BUILD_DEV)
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+install(FILES mvdeploy_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(FILES mv_extras_postproc.h DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy COMPONENT dev)
+install(FILES mv_extras_postproc.cpp DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy COMPONENT dev)

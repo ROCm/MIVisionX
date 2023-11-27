@@ -120,21 +120,21 @@ else()
 endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS vx_nn DESTINATION ${CMAKE_INSTALL_LIBDIR})
-if(BUILD_DEV)
-    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-    install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-    # install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
-    install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
-    install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
-    # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-    install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../samples/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-    install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-endif(BUILD_DEV)
+install(TARGETS vx_nn LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+install(TARGETS vx_nn LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+install(TARGETS vx_nn LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+# install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
+install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx COMPONENT dev)
+install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx COMPONENT dev)
+# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../samples/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")

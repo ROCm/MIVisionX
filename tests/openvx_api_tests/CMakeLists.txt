@@ -25,10 +25,9 @@
 ################################################################################
 cmake_minimum_required(VERSION 3.5)
 
-# TBD - Install additional data indepedent tests
-if(NOT ENABLE_ASAN_PACKAGING)
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../library_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests)
-endif()
+# Install data indepedent tests
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../openvx_api_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests COMPONENT test)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../library_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests COMPONENT test)
 
 # default run
 # canny
@@ -172,6 +171,8 @@ if(GPU_SUPPORT)
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 9 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../neural_network_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests COMPONENT test)
   endif(NEURAL_NET AND Python3_FOUND)
 
 endif(GPU_SUPPORT)

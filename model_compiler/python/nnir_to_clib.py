@@ -169,7 +169,7 @@ add_library(mv_deploy SHARED ${SOURCES})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
 target_compile_definitions(mv_deploy PRIVATE ENABLE_MVDEPLOY=1)
 target_link_libraries(mv_deploy openvx vx_nn pthread ${CMAKE_DL_LIBS})
-install (TARGETS mv_deploy DESTINATION lib)
+install(TARGETS mv_deploy DESTINATION lib)
 
 option (USE_POSTPROC  "Use postprocessing module implementation" OFF) 
 add_executable(mvtestdeploy mvtestdeploy.cpp mvdeploy_api.cpp)
@@ -202,7 +202,7 @@ if (USE_POSTPROC)
 endif (USE_POSTPROC)
 target_compile_definitions (mvtestdeploy PRIVATE ENABLE_MVDEPLOY=1)
 target_link_libraries(mvtestdeploy openvx vx_nn vx_amd_media pthread mv_deploy ${EXTRA_LIBS} ${CMAKE_DL_LIBS})
-install (TARGETS mvtestdeploy DESTINATION bin)
+install(TARGETS mvtestdeploy DESTINATION bin)
 
 """)
     if not os.path.isdir(outputFolder + '/cmake'):

@@ -57,6 +57,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         link_directories(${HIP_PATH}/lib)
         add_library(${PROJECT_NAME} SHARED ${SOURCES})
         target_link_libraries(${PROJECT_NAME} openvx migraphx::c hip::host)
+        set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
         # install MIVisionX libs -- {ROCM_PATH}/lib
         install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
         install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)

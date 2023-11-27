@@ -53,6 +53,7 @@ list(APPEND SOURCES
 include_directories(. kernels)
 add_library(vx_loomsl SHARED ${SOURCES})
 target_link_libraries(vx_loomsl ${OpenCL_LIBRARIES} openvx)
+set_target_properties(vx_loomsl PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_loomsl LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)

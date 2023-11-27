@@ -118,6 +118,7 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
 else()
     message("-- ${Red}WARNING: OpenCL/HIP Not Found -- amd_nn module excluded${ColourReset}")
 endif()
+set_target_properties(vx_nn PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_nn LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)

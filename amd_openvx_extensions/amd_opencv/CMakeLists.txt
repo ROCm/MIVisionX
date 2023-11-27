@@ -111,6 +111,7 @@ endif()
 
 target_link_libraries(vx_opencv openvx)
 target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
+set_target_properties(vx_opencv PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)

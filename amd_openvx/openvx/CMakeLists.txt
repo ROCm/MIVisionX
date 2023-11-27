@@ -109,6 +109,9 @@ target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
 target_compile_definitions(vxu PUBLIC ENABLE_HIP=${ENABLE_HIP})
 target_link_libraries(vxu openvx)
 
+set_target_properties(openvx PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+set_target_properties(vxu PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
 install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)

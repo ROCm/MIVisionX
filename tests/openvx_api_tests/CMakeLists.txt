@@ -177,3 +177,4 @@ if(GPU_SUPPORT)
 
 endif(GPU_SUPPORT)
 
+install(FILE ${CMAKE_SOURCE_DIR}/CTestTestfile.cmake DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests COMPONENT test)

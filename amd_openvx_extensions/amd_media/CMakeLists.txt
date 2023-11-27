@@ -19,6 +19,7 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.5)
+set(VERSION "1.1.0")
 project(vx_amd_media)
 
 set(CMAKE_CXX_STANDARD 14)

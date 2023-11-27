@@ -19,6 +19,7 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.5)
+set(VERSION "1.3.0")
 project(openvx)
 
 set(CMAKE_CXX_STANDARD 14)

@@ -19,7 +19,8 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.5)
-project(amd_opencv)
+set(VERSION "1.0.0")
+project(amd_opencv VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -111,13 +112,15 @@ endif()
 
 target_link_libraries(vx_opencv openvx)
 target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
+set_target_properties(vx_opencv PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS vx_opencv DESTINATION ${CMAKE_INSTALL_LIBDIR})
-if(BUILD_DEV)
-	# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-	install(FILES include/vx_ext_opencv.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-endif(BUILD_DEV)
+install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+install(FILES include/vx_ext_opencv.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+
 if(WIN32)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

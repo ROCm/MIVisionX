@@ -21,7 +21,8 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.5)
-project(rocal)
+set(VERSION "1.1.0")
+project(rocal VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(BUILD_ROCAL true)
@@ -279,12 +280,14 @@ if(${BUILD_ROCAL})
     endif()
     target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
     message("-- ${White}rocAL -- Link Libraries: ${LINK_LIBRARY_LIST}${ColourReset}")
+    set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
     # install MIVisionX libs -- {ROCM_PATH)/lib
-    install(TARGETS rocal DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    if(BUILD_DEV)
-        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-        install(FILES
+    install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+    install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+    install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+    install(FILES
                 include/api/rocal_api.h
                 include/api/rocal_api_info.h
                 include/api/rocal_api_augmentation.h
@@ -293,9 +296,8 @@ if(${BUILD_ROCAL})
                 include/api/rocal_api_data_transfer.h
                 include/api/rocal_api_parameters.h
                 include/api/rocal_api_meta_data.h
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal
-        )
-    endif(BUILD_DEV)
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal COMPONENT dev
+    )
 else()
     message("-- ${Red}WARNING: rocAL module excluded ${ColourReset}")
 endif()

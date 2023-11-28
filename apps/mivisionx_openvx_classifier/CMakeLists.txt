@@ -71,4 +71,4 @@ else()
 endif()
 
 # Install Application in ROCm Bin Directory
-install(TARGETS ${PROJECT_NAME} DESTINATION ${ROCM_PATH}/${CMAKE_INSTALL_BINDIR})
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)

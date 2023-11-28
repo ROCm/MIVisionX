@@ -19,7 +19,8 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.5)
-project(openvx)
+set(VERSION "1.3.0")
+project(openvx VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -109,18 +110,24 @@ target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
 target_compile_definitions(vxu PUBLIC ENABLE_HIP=${ENABLE_HIP})
 target_link_libraries(vxu openvx)
 
+set_target_properties(openvx PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+set_target_properties(vxu PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS openvx DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS vxu DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+install(TARGETS vxu LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+install(TARGETS vxu LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+install(TARGETS vxu LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 
-if(BUILD_DEV)
-    # install MIVisionX backend type files -- {ROCM_PATH}/include/mivisionx/
-    configure_file("${PROJECT_SOURCE_DIR}/include/openvx_backend.h.in" "${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h")
-    install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+# install MIVisionX backend type files -- {ROCM_PATH}/include/mivisionx/
+configure_file("${PROJECT_SOURCE_DIR}/include/openvx_backend.h.in" "${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h")
+install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
 
-    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-    install(FILES include/vx_ext_amd.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-    install(FILES
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+install(FILES include/vx_ext_amd.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(FILES
             include/VX/vx.h
             include/VX/vx_api.h
             include/VX/vx_compatibility.h
@@ -141,13 +148,12 @@ if(BUILD_DEV)
             include/VX/vx_types.h
             include/VX/vx_vendors.h
             include/VX/vxu.h
-	    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX)
-    # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-    install(DIRECTORY ../../apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../samples/c_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-    install(DIRECTORY ../../samples/images DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-endif(BUILD_DEV)
+	    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX COMPONENT dev)
+# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+install(DIRECTORY ../../apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../samples/c_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+install(DIRECTORY ../../samples/images DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")

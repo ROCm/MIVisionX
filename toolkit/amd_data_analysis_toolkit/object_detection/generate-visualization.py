@@ -652,7 +652,7 @@ print ("\t<a href=\"https://www.amd.com/en\" target=\"_blank\">");
 print ("\t<img \" src=\"icons/small_amd_logo.png\" alt=\"AMD\" /></a>");
 print ("\t<a href=\"https://gpuopen.com/\" target=\"_blank\">");
 print ("\t<img \" src=\"icons/small_radeon_logo.png\" alt=\"GPUopen\" /></a>");
-print ("\t<a href=\"https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules#amd-openvx-modules-amdovx-modules\" target=\"_blank\">");
+print ("\t<a href=\"https://github.com/ROCm/amdovx-modules#amd-openvx-modules-amdovx-modules\" target=\"_blank\">");
 print ("\t<img \" src=\"icons/small_github_logo.png\" alt=\"AMD GitHub\" /></a>");
 print ("\t<img \" src=\"icons/ADAT_500x100.png\" alt=\"AMD Inference ToolKit\" hspace=\"100\" height=\"90\"/> ");
 print ("\t</div>");

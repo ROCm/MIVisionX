@@ -31,5 +31,5 @@ RUN yum -y install --nogpgcheck autoconf automake bzip2 bzip2-devel cmake freety
 WORKDIR /workspace
 
 # install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && mkdir build && cd build && \
         cmake3 ../MIVisionX && make -j8 && make install

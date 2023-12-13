@@ -13,5 +13,5 @@ SHELL [ "/usr/bin/scl", "enable", "devtoolset-7" ]
 WORKDIR /workspace
 
 # install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && mkdir build && cd build && \
         cmake3 ../MIVisionX && make -j8 && make install

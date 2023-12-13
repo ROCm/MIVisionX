@@ -1,11 +1,11 @@
 ## Running tf_petsTrainingExample
 
 ### Building the required TF Rocm docker
-* Use the instructions in the [docker section](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/docker) to build the required [Tensorflow docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/docker/tensorflow)
+* Use the instructions in the [docker section](https://github.com/ROCm/MIVisionX/tree/master/docker) to build the required [Tensorflow docker](https://github.com/ROCm/MIVisionX/tree/master/docker/tensorflow)
 * Upgrade pip to the latest version.
 
 ### Building the required Pytorch Rocm docker
-* Use the instructions in the [docker section](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/docker) to build the required [Pytorch docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/docker/pytorch)
+* Use the instructions in the [docker section](https://github.com/ROCm/MIVisionX/tree/master/docker) to build the required [Pytorch docker](https://github.com/ROCm/MIVisionX/tree/master/docker/pytorch)
 * Upgrade pip to the latest version.
 * Run requirements.sh to install the required packages.
 

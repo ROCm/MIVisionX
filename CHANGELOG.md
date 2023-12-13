@@ -1,4 +1,4 @@
-<p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX.png" /></p>
+<p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX.png" /></p>
 
 # Changelog for MIVisionX
 
@@ -44,7 +44,7 @@ Documentation for MIVisionX is available at
 * MIGraphX - `2.7.0.50700-63`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [1.4.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.4.0)
+* RPP - [1.4.0](https://github.com/ROCm/rpp/releases/tag/1.4.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all preceding packages
 * MIVisionX setup script - `V2.5.6`
@@ -102,7 +102,7 @@ Documentation for MIVisionX is available at
 * MIGraphX - `2.4.0.50403-121`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [1.0.0](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.0.0)
+* RPP - [1.0.0](https://github.com/ROCm/rpp/releases/tag/1.0.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all preceding packages
 * MIVisionX setup script - `V2.4.2`
@@ -147,7 +147,7 @@ Documentation for MIVisionX is available at
 * MIGraphX - `2.3.0.50300-36`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
-* RPP - [0.97](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.97)
+* RPP - [0.97](https://github.com/ROCm/rpp/releases/tag/0.97)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all preceding packages
 * MIVisionX setup script - `V2.3.7`
@@ -187,7 +187,7 @@ Documentation for MIVisionX is available at
 * MIGraphX - `2.1.0.50101-48`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
-* RPP - [0.93](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.93)
+* RPP - [0.93](https://github.com/ROCm/rpp/releases/tag/0.93)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all preceding packages
 * MIVisionX setup script - `V2.3.2`
@@ -231,7 +231,7 @@ Documentation for MIVisionX is available at
 * MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [4.5.5](https://github.com/opencv/opencv/releases/tag/4.5.5)
-* RPP - [0.93](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.93)
+* RPP - [0.93](https://github.com/ROCm/rpp/releases/tag/0.93)
 * FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all preceding packages
 * MIVisionX Setup Script - `V2.1.1`
@@ -278,7 +278,7 @@ Documentation for MIVisionX is available at
 * MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
-* RPP - [0.92](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.92)
+* RPP - [0.92](https://github.com/ROCm/rpp/releases/tag/0.92)
 * FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all preceding packages
 * MIVisionX Setup Script - `V2.0.0`
@@ -323,7 +323,7 @@ Documentation for MIVisionX is available at
 * MIOpen - [2.14.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.14.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
-* RPP - [0.92](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.92)
+* RPP - [0.92](https://github.com/ROCm/rpp/releases/tag/0.92)
 * FFMPEG - [n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
 * Dependencies for all preceding packages
 * MIVisionX Setup Script - `V2.0.0`

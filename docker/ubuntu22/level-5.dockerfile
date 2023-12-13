@@ -47,7 +47,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && apt-get -y install autoc
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install sqlite3 libsqlite3-dev libtool build-essential
 RUN git clone -b v3.21.9 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
-RUN git clone -b 1.4.0  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
+RUN git clone -b 1.4.0  https://github.com/ROCm/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3 python3-pip python3-dev && \
         git clone https://github.com/Tencent/rapidjson.git && cd rapidjson && mkdir build && cd build && \
@@ -61,5 +61,5 @@ ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE
 
 # Clone MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && \
         mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install

@@ -4,11 +4,11 @@ This application runs know CNN image classifiers on live or pre-recorded video s
 
 ## MIVisionX Image Classification Control
 
-<p align="center"><img width="100%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/mivisionx_openvx_classifier_imageClassification.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/mivisionx_openvx_classifier_imageClassification.png" /></p>
 
 ## MIVisionX Image Classification
 
-<p align="center"><img width="100%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/mivisionx_openvx_classifier_classifier.png" /></p>
+<p align="center"><img width="100%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/mivisionx_openvx_classifier_classifier.png" /></p>
 
 ## Usage
 
@@ -17,12 +17,12 @@ This application runs know CNN image classifiers on live or pre-recorded video s
 * Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6`
 * [ROCm supported hardware](https://rocm.github.io/ROCmInstall.html#hardware-support)
 * [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
-* Build & Install [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#linux-1)
+* Build & Install [MIVisionX](https://github.com/ROCm/MIVisionX#linux-1)
 
 ### Build
 
 ``` 
-git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+git clone https://github.com/ROCm/MIVisionX.git
 cd MIVisionX/apps/mivisionx_openvx_classifier
 mkdir build
 cd build
@@ -62,7 +62,7 @@ Usage: ./classifier	--label <label text> [required]
 
 Here is the sample download [link](https://github.com/SnailTyan/caffe-model-zoo) that contains all the prototxt: 
 
-2. Use [MIVisionX Model Compiler](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/model_compiler#neural-net-model-compiler--optimizer) to extract weights.bin from the pre-trained caffe models
+2. Use [MIVisionX Model Compiler](https://github.com/ROCm/MIVisionX/tree/master/model_compiler#neural-net-model-compiler--optimizer) to extract weights.bin from the pre-trained caffe models
 
 **Note:** MIVisionX installs all the model compiler scripts in `/opt/rocm/libexec/mivisionx/model_compiler/python/` folder
 

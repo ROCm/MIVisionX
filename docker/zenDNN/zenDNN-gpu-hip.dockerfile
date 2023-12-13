@@ -37,7 +37,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev
         git clone -b 2.0.6.2 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
         -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ../ && make -j4 && sudo make install && cd ../../ && \
-        git clone -b 0.96  https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git && cd rpp && mkdir build && cd build && \
+        git clone -b 0.96  https://github.com/ROCm/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd ../../ && \
         git clone -b v3.12.4 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
@@ -72,7 +72,7 @@ RUN DEBIAN_FRONTEND=noninteractive git clone https://github.com/amd/ZenDNN.git &
 	source scripts/zendnn_aocc_build.sh
 
 # Clone MIVisionX 
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+RUN git clone https://github.com/ROCm/MIVisionX.git
         #mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install
 
 ENTRYPOINT source ~/.profile && /bin/bash

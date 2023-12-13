@@ -14,10 +14,10 @@ The sample has two .cpp files, `mvobjdetect.cpp` and `visualize.cpp`. But it nee
   * **GPU**: [AMD Radeon&trade; Graphics](https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html) [Required]
   * **APU**: [AMD Radeon&trade; `Mobile`/`Embedded`](https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html) [optional]
 * [ROCm](https://docs.amd.com)
-* Build & Install [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#linux-1)
+* Build & Install [MIVisionX](https://github.com/ROCm/MIVisionX#linux-1)
   * MIVisionX installs model compiler at `/opt/rocm/libexec/mivisionx`
   * mv_compile installs at `/opt/rocm/bin` and mvdeploy_api.h installs at `/opt/rocm/include/mivisionx`
-* Install MIVisionX [Model Compiler Prerequisites](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/model_compiler/README.md#pre-requisites)
+* Install MIVisionX [Model Compiler Prerequisites](https://github.com/ROCm/MIVisionX/tree/master/model_compiler/README.md#pre-requisites)
 * Add MIVisionX libraries & executables to PATH
 ```
 export PATH=$PATH:/opt/rocm/bin
@@ -148,7 +148,7 @@ cd ..
 
 ### Step 10. Sample output for multiple video object detection
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/mv_objdetect/data/images/Video_4_screenshot.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/mv_objdetect/data/images/Video_4_screenshot.png" /></p>
 
 # License
 This project is licensed under the MIT License - see the LICENSE.md file for details

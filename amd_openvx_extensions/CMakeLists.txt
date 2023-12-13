@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(amd_openvx_extensions)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 if(WIN32)
     set(OpenCV_DIR "$ENV{OpenCV_DIR}")
 endif()

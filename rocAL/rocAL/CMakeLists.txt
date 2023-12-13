@@ -27,7 +27,7 @@ project(rocal VERSION ${VERSION} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(BUILD_ROCAL true)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
 find_package(AMDRPP QUIET)
 find_package(TurboJpeg QUIET)

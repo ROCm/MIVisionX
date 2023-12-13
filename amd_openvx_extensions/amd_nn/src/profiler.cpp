@@ -94,7 +94,7 @@ const char * footer =
 "</head>\n"
 "<table>\n"
 "<tr>\n"
-"<td><img width=\"30%\" src = \"https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/mivisionx/develop/docs/images/MIVisionX.png\" \n"
+"<td><img width=\"30%\" src = \"https://raw.githubusercontent.com/ROCm/mivisionx/develop/docs/images/MIVisionX.png\" \n"
 "alt = \"MIVisionX\" style=\"float:center; width:160px; height:60px; \"></td>\n"
 "</tr>\n"
 "<tr>\n"

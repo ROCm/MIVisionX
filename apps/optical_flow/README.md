@@ -14,25 +14,25 @@ In this sample, we provide OpenVX sample applications to use with any conformant
 
 In this sample we will create an OpenVX graph to run Optical Flow on a video/live. This sample application uses <a href="https://en.wikipedia.org/wiki/OpenCV" target="_blank">OpenCV</a> to decode input video and display the output.
 
-<p align="center"> <img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/optical_flow_video.gif"> </p>
+<p align="center"> <img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/optical_flow_video.gif"> </p>
 
 ### Prerequisites
 
-* [Conformant OpenVX Implementation](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
+* [Conformant OpenVX Implementation](https://github.com/ROCm/MIVisionX)
   
 * [OpenCV](https://github.com/opencv/opencv/releases/tag/3.4.0)
 
 
 ### Steps to run the Optical Flow sample
 
-* **Step - 1:** Build and install [Conformant OpenVX Implementation](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX). 
+* **Step - 1:** Build and install [Conformant OpenVX Implementation](https://github.com/ROCm/MIVisionX). 
 
 ```
 Build OpenVX on Linux
 
 * Git Clone project 
 
-      git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+      git clone https://github.com/ROCm/MIVisionX.git
 
 * Use CMake to build
 

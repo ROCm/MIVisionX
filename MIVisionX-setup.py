@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.5.7"
+__version__ = "2.5.8"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -438,7 +438,7 @@ else:
                   ' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
         # RPP
         os.system('sudo -v')
-        os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
+        os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/ROCm/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
                   linuxCMake+' -DBACKEND='+backend+' -DCMAKE_INSTALL_PREFIX='+ROCM_PATH+' ../; make -j4; sudo make install)')
         # RapidJSON
         os.system('sudo -v')

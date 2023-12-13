@@ -38,5 +38,5 @@ RUN wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/1.1.5.zip &&
 WORKDIR /workspace
 
 # install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && mkdir build && cd build && \
         cmake ../MIVisionX && make -j8 && make install

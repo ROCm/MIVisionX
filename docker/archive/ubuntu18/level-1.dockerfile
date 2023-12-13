@@ -10,5 +10,5 @@ RUN apt-get -y install gcc g++ cmake git
 WORKDIR /workspace
 
 # install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && mkdir build && cd build && \
         cmake -DBACKEND=OCL ../MIVisionX && make -j8 && make install

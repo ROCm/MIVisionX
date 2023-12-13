@@ -42,5 +42,5 @@ RUN git clone -b rocm-5.1.1 https://github.com/RadeonOpenCompute/rocm-cmake.git 
 WORKDIR /workspace
 
 # install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && mkdir build && cd build && \
         cmake3 -DBACKEND=HIP ../MIVisionX && make -j8 && make install

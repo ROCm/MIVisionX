@@ -34,7 +34,7 @@ class BinaryDistribution(Distribution):
 setup(
       name='amd-rocal',
       description='AMD ROCm Augmentation Library',
-      url='https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/rocAL',
+      url='https://github.com/ROCm/MIVisionX/rocAL',
       version='1.0.0',
       author='AMD',
       license='Apache License 2.0',

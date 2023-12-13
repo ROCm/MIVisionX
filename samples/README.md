@@ -29,7 +29,7 @@ runvx -h
 
 ### skintonedetect.gdf
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/images/skinToneDetect_image.PNG" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/skinToneDetect_image.PNG" /></p>
 
 usage:
 
@@ -39,7 +39,7 @@ runvx gdf/skintonedetect.gdf
 
 ### canny.gdf
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/canny_image.PNG" /></p>
 
 usage:
 
@@ -108,7 +108,7 @@ make
 
 MIVisionX samples using [LoomShell](../utilities/loom_shell/README.md#radeon-loomshell)
 
-[![Loom Stitch](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/loom-4.png)](https://youtu.be/E8pPU04iZjw)
+[![Loom Stitch](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/loom-4.png)](https://youtu.be/E8pPU04iZjw)
 
 **Note:** 
 
@@ -214,7 +214,7 @@ loom_shell loomStitch-sample3.txt
 
 ## Model Compiler Samples - Run Efficient Inference
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/modelCompilerWorkflow.png" /></p>
 
 In this [sample](model_compiler_samples/README.md#mivisionx-model-compiler-samples), we will learn how to run inference efficiently using OpenVX and OpenVX Extensions. The sample will go over each step required to convert a pre-trained neural net model into an OpenVX Graph and run this graph efficiently on any target hardware. In this [sample](model_compiler_samples/README.md#mivisionx-model-compiler-samples), we will also learn about AMD MIVisionX which delivers open-source implementation of OpenVX and OpenVX Extensions along with MIVisionX Neural Net Model Compiler & Optimizer.
 
@@ -232,4 +232,4 @@ This [sample](mv_objdetect) shows how to run video decoding and object detection
 
 The sample demonstrates the use of mv_compile utility to do video decoding and inference.
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/mv_objdetect/data/images/Video_4_screenshot.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/mv_objdetect/data/images/Video_4_screenshot.png" /></p>

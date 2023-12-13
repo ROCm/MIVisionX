@@ -34,6 +34,6 @@ node com.amd.amd_migraphx_node model image_tensor output_tensor
 write output_tensor out_mnist.f32
 ```
 
-For additional examples for using the `vx_amd_migraphx` extension, please see [amd_migraphx_test](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/tests/amd_migraphx_test/) section.
+For additional examples for using the `vx_amd_migraphx` extension, please see [amd_migraphx_test](https://github.com/ROCm/MIVisionX/tree/master/tests/amd_migraphx_test/) section.
 
 **NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

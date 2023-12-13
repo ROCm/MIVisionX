@@ -48,7 +48,7 @@ python generate-visualization.py -i sample/boundingBoxCompare-results.csv -d ../
 
 ### Overall Summary
 
-![picture alt](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/loom-4.pngbounding_box_summary.png "Overall Summary")
+![picture alt](https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/loom-4.pngbounding_box_summary.png "Overall Summary")
 
 This section summarizes the results for the current session, with information on the dataset and the model. The section classifies the dataset into images with or without ground truth and only considers the images with ground truth for analysis to avoid skewing the results.
 
@@ -58,7 +58,7 @@ The summary also timestamps the results to avoid confusion with different iterat
 
 ### Graphs
 
-![picture alt](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/loom-4.pngbounding_box_graph.png "Graph")
+![picture alt](https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/loom-4.pngbounding_box_graph.png "Graph")
 
 The graph section allows the user to visualize the dataset and model accurately. The graphs can help detect any anomalies with the data or the model from a higher level. The graphs can be saved or shared with others.
 

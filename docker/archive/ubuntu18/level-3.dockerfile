@@ -28,5 +28,5 @@ RUN apt-get -y install autoconf automake build-essential cmake git-core libass-d
 WORKDIR /workspace
 
 # install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && mkdir build && cd build && \
         cmake -DBACKEND=OCL ../MIVisionX && make -j8 && make install

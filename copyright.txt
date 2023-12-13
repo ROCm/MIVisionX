@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: mivisionx
-Source: https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX
+Source: https://github.com/ROCm/MIVisionX
 
 Files: *
 Copyright: 2015 - 2023 Advanced Micro Devices, Inc.

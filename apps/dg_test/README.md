@@ -3,7 +3,7 @@
 MIVisionX DGtest is a tutorial program for those who are new to MIOpen & OpenVX. It runs inference on the [MNIST](http://yann.lecun.com/exdb/mnist/) dataset using MIOpen & OpenVX.
 
 <p align="center">
- <img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/DGtest.gif">
+ <img src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/DGtest.gif">
 </p>
 
 ### Explanation
@@ -30,7 +30,7 @@ See the [OpenVX documentation](https://www.khronos.org/registry/OpenVX/specs/1.0
 
 ### Pre-requisites
 
-1. Build & Install [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx)
+1. Build & Install [MIVisionX](https://github.com/ROCm/MIVisionX#build--install-mivisionx)
 2. [OpenCV 3.1](https://github.com/opencv/opencv/releases) or higher
 
 ### Build using Cmake on Linux (Ubuntu 16.04 64bit)
@@ -55,7 +55,7 @@ See the below section for using your caffemodel.
  
 ### Testing with your Caffemodel
 
-You can test your trained MNIST caffemodel using the [model compiler](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/tree/develop/utils/model_compiler)
+You can test your trained MNIST caffemodel using the [model compiler](https://github.com/ROCm/amdovx-modules/tree/develop/utils/model_compiler)
 
  1. Convert your caffemodel->NNIR->openvx using the model compiler.
  2. From the generated files, copy
@@ -80,5 +80,5 @@ You can test your trained MNIST caffemodel using the [model compiler](https://gi
 ```
  
 <p align="center">
- <img src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/dg_test_sample.png">
+ <img src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/dg_test_sample.png">
 </p>

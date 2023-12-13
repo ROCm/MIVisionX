@@ -9,5 +9,5 @@ RUN yum -y update --nogpgcheck && yum -y install --nogpgcheck gcc gcc-c++ kernel
 WORKDIR /workspace
 
 # install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && mkdir build && cd build && \
         cmake ../MIVisionX && make -j8 && make install

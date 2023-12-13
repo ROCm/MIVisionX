@@ -14,7 +14,7 @@ written primarily in C/C++ language can be used effectively in Python.
 * [CuPy for rocm](https://github.com/ROCmSoftwarePlatform/cupy)
 
 ## Install
-rocAL_pybind installs during [MIVisionX build](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx)
+rocAL_pybind installs during [MIVisionX build](https://github.com/ROCm/MIVisionX#build--install-mivisionx)
 
 #### Prerequisites
 

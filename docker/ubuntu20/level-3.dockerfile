@@ -36,5 +36,5 @@ ENV PATH=$PATH:/opt/rocm/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 
 # Clone MIVisionX 
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && \
         mkdir build && cd build && cmake -DBACKEND=HIP ../MIVisionX && make -j8 && make install

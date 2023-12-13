@@ -1,6 +1,6 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-<p align="center"><img width="50%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
+<p align="center"><img width="50%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/OpenVX_logo.png" /></p>
 
 # OpenVX Samples
 
@@ -12,7 +12,7 @@ In this project, we provide OpenVX sample applications to use with any conforman
 
 In this sample we will create an OpenVX graph to run VX Bubble Pop on a live camera. This sample application uses <a href="https://en.wikipedia.org/wiki/OpenCV" target="_blank">OpenCV</a> to decode input image, draw bubbles/donuts and display the output.
 
- <p align="center"><img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/vx-pop-app.gif" /></p>
+ <p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/vx-pop-app.gif" /></p>
 
 ### Prerequisites
 
@@ -20,7 +20,7 @@ In this sample we will create an OpenVX graph to run VX Bubble Pop on a live cam
 
 * Camera
 
-* Build and install [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) 
+* Build and install [MIVisionX](https://github.com/ROCm/MIVisionX#build--install-mivisionx) 
 
 ### Steps to run the Bubble Pop sample
 
@@ -29,7 +29,7 @@ In this sample we will create an OpenVX graph to run VX Bubble Pop on a live cam
 ``` 
 cd ~/ && mkdir OpenVX-bubble-pop
 cd OpenVX-bubble-pop/
-git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX
+git clone https://github.com/ROCm/MIVisionX
 ```
 
 * **Step - 2:** CMake and Build the pop application

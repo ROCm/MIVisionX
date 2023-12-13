@@ -1,4 +1,4 @@
-<p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
+<p align="center"><img width="30%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/OpenVX_logo.png" /></p>
 
 # Khronos OpenVX&trade;
 
@@ -10,7 +10,7 @@ OpenVX&trade; is an open, royalty-free standard for cross platform acceleration 
 
 * OpenVX is used to build, verify, and coordinate computer vision and neural network graph executions. The graph abstraction enables OpenVX implementation to optimize execution for the underlying hardware.  Using optimized OpenVX conformant implementation, software developers can spend more time on algorithmic innovations without worrying about the performance and portability of their applications.
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/openvx_software_layers.png" style="background-color:black;" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/openvx_software_layers.png" style="background-color:black;" /></p>
 
 * The standard defines graph conventions and execution semantics to address the needs of the developers. The advantage of the graphical interface is the ability of the underlying conformant implementation to optimize the whole graph pipeline instead of specific functions.
 
@@ -154,7 +154,7 @@ To provide a basic set of vision processing functions. This set of functions is 
   * **vx_loomsl**: Radeon LOOM stitching library for live 360-degree video applications
   * **vx_nn**: OpenVX neural network module that was built on top of [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen)
   * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels
-  * **vx_rpp**: OpenVX extension providing an interface to some of the ROCm Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) functions. This extension is used to enable [rocAL](../rocAL/README.md) to perform image augmentation.
+  * **vx_rpp**: OpenVX extension providing an interface to some of the ROCm Performance Primitives ([RPP](https://github.com/ROCm/rpp)) functions. This extension is used to enable [rocAL](../rocAL/README.md) to perform image augmentation.
   * **vx_winml**: OpenVX module that implemented a mechanism to access Windows Machine Learning(WinML) functionality as OpenVX kernels
 
 ## Pre-requisites

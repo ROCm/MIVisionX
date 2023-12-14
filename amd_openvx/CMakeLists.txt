@@ -43,7 +43,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     endif()
 endif()
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
 add_subdirectory(openvx)
 message("-- ${Green}AMD OpenVX -- OpenVX module added${ColourReset}")

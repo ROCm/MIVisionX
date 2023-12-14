@@ -23,7 +23,7 @@ project(rocAL_pybind)
 
 set(TARGET_NAME rocAL_pybind)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 
 set(CMAKE_CXX_STANDARD 14)

@@ -121,7 +121,6 @@ endif()
 
 # install MIVisionX executables -- {ROCM_PATH}/bin
 install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
-install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT dev)
 
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
 install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)

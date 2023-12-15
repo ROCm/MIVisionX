@@ -25,13 +25,24 @@
 ################################################################################
 cmake_minimum_required(VERSION 3.5)
 
-# Install data indepedent tests
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/amd_opencv_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
-# install test cmake
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/ctest_cmakelists/CMakeLists.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+project(mivisionx-test)
+
+# make test with CTest
+enable_testing()
+include(CTest)
+
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+  set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+  message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+  set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
+
+# set GPU HIP support on by default for Test Package
+set(GPU_SUPPORT ON)
+set(BACKEND "HIP")
 
 # default run
 # canny
@@ -91,16 +102,16 @@ find_package(OpenCV QUIET)
 # OpenVX Tests
 if(Python3_FOUND)
   add_test(NAME openvx_tests_runVisionPython_CPU 
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/vision_tests/runVisionTests.py
-            --runvx_directory ${CMAKE_BINARY_DIR}/bin --num_frames 10
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
+            --runvx_directory ${ROCM_PATH}/bin --num_frames 10
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(Python3_FOUND)
 
 # OpenCV Tests
 if(OpenCV_FOUND AND Python3_FOUND)
   add_test(NAME vx_opencv_tests_runOpenCVPython 
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/amd_opencv_tests/runOpenCVTests.py
-            --runvx_directory ${CMAKE_BINARY_DIR}/bin
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/amd_opencv_tests/runOpenCVTests.py
+            --runvx_directory ${ROCM_PATH}/bin
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(OpenCV_FOUND AND Python3_FOUND)
 
@@ -123,8 +134,8 @@ if(GPU_SUPPORT)
   # OpenVX Tests
   if(Python3_FOUND)
     add_test(NAME openvx_tests_runVisionPython_GPU 
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/vision_tests/runVisionTests.py
-          --runvx_directory ${CMAKE_BINARY_DIR}/bin --num_frames 10 --hardware_mode GPU --backend_type ${BACKEND}
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
+          --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --hardware_mode GPU --backend_type ${BACKEND}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif(Python3_FOUND)
 
@@ -132,51 +143,50 @@ if(GPU_SUPPORT)
   if(NEURAL_NET AND Python3_FOUND)
     # caffe2nnir2openvx No Fuse flow
     add_test(NAME caffe2nnir2openvx_no_fuse
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 1
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     # caffe2nnir2openvx Fuse flow
     add_test(NAME caffe2nnir2openvx_fuse 
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 2 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     # caffe2nnir2openvx FP16 flow
     add_test(NAME caffe2nnir2openvx_fp16
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 3 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     # onnx2nnir2openvx No Fuse flow
     add_test(NAME onnx2nnir2openvxx_no_fuse 
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 4 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})    
     # onnx2nnir2openvx Fuse flow
     add_test(NAME onnx2nnir2openvxx_fuse 
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 5 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     # onnx2nnir2openvx FP16 flow
     add_test(NAME onnx2nnir2openvxx_fp16 
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 6 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     # nnef2nnir2openvx No Fuse flow
     add_test(NAME nnef2nnir2openvxx_no_fuse 
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 7 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})    
     # nnef2nnir2openvx Fuse flow
     add_test(NAME nnef2nnir2openvxx_fuse 
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 8 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     # nnef2nnir2openvx FP16 flow
     add_test(NAME nnef2nnir2openvxx_fp16 
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 9 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+
   endif(NEURAL_NET AND Python3_FOUND)
 
 endif(GPU_SUPPORT)

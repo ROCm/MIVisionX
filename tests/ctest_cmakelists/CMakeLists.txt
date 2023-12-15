@@ -43,6 +43,7 @@ endif()
 # set GPU HIP support on by default for Test Package
 set(GPU_SUPPORT ON)
 set(BACKEND "HIP")
+set(NEURAL_NET ON)
 
 # default run
 # canny

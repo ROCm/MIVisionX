@@ -160,7 +160,7 @@ endif()
 
 enable_testing()
 include(CTest)
-add_subdirectory(tests/openvx_api_tests)
+add_subdirectory(tests)
 
 # set package information
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})

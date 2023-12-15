@@ -26,8 +26,8 @@
 cmake_minimum_required(VERSION 3.5)
 
 # Install data indepedent tests
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../openvx_api_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests COMPONENT test)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../library_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests COMPONENT test)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/library_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 
 # default run
 # canny
@@ -36,7 +36,7 @@ add_test(
     openvx_canny
   COMMAND
     "${CMAKE_CTEST_COMMAND}"
-            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/canny"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/canny"
                               "${CMAKE_CURRENT_BINARY_DIR}/canny"
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_canny"
@@ -48,7 +48,7 @@ add_test(
     openvx_channel_extract
   COMMAND
     "${CMAKE_CTEST_COMMAND}"
-            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/channel_extract"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/channel_extract"
                               "${CMAKE_CURRENT_BINARY_DIR}/channel_extract"
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_channel_extract"
@@ -60,7 +60,7 @@ add_test(
     openvx_color_convert
   COMMAND
     "${CMAKE_CTEST_COMMAND}"
-            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/color_convert"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/color_convert"
                               "${CMAKE_CURRENT_BINARY_DIR}/color_convert"
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_color_convert"
@@ -172,9 +172,7 @@ if(GPU_SUPPORT)
           --profiler_mode 9 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../neural_network_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests COMPONENT test)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
   endif(NEURAL_NET AND Python3_FOUND)
 
 endif(GPU_SUPPORT)
-
-install(FILES ${CMAKE_BINARY_DIR}/CTestTestfile.cmake DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/tests COMPONENT test)

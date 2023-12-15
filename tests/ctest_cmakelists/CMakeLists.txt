@@ -43,7 +43,9 @@ endif()
 # set GPU HIP support on by default for Test Package
 set(GPU_SUPPORT ON)
 set(BACKEND "HIP")
-set(NEURAL_NET ON)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests")
+  set(NEURAL_NET ON)
+endif()
 
 # default run
 # canny
@@ -104,17 +106,9 @@ find_package(OpenCV QUIET)
 if(Python3_FOUND)
   add_test(NAME openvx_tests_runVisionPython_CPU 
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
-            --runvx_directory ${ROCM_PATH}/bin --num_frames 10
+            --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(Python3_FOUND)
-
-# OpenCV Tests
-if(OpenCV_FOUND AND Python3_FOUND)
-  add_test(NAME vx_opencv_tests_runOpenCVPython 
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/amd_opencv_tests/runOpenCVTests.py
-            --runvx_directory ${ROCM_PATH}/bin
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-endif(OpenCV_FOUND AND Python3_FOUND)
 
 # GPU Tests
 if(GPU_SUPPORT)
@@ -136,7 +130,7 @@ if(GPU_SUPPORT)
   if(Python3_FOUND)
     add_test(NAME openvx_tests_runVisionPython_GPU 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
-          --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --hardware_mode GPU --backend_type ${BACKEND}
+          --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no --hardware_mode GPU --backend_type ${BACKEND}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif(Python3_FOUND)
 

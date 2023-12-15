@@ -25,13 +25,11 @@
 ################################################################################
 cmake_minimum_required(VERSION 3.5)
 
-# Install data indepedent tests
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/amd_opencv_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 # install test cmake
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/ctest_cmakelists/CMakeLists.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+# Install data indepedent tests
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 
 # default run
 # canny
@@ -130,6 +128,7 @@ if(GPU_SUPPORT)
 
   # Neural Network tests
   if(NEURAL_NET AND Python3_FOUND)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
     # caffe2nnir2openvx No Fuse flow
     add_test(NAME caffe2nnir2openvx_no_fuse
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
@@ -175,8 +174,6 @@ if(GPU_SUPPORT)
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 9 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
   endif(NEURAL_NET AND Python3_FOUND)
 
 endif(GPU_SUPPORT)

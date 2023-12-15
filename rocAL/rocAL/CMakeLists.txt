@@ -42,7 +42,7 @@ find_package(RapidJSON QUIET)
 
 # Check for filesystem support
 include(CheckCXXSourceCompiles)
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
 set(CMAKE_REQUIRED_INCLUDES "")
 check_cxx_source_compiles("#include <filesystem>\nnamespace fs = std::filesystem;\nint main() { return 0; }" HAS_STD_FILESYSTEM)
 check_cxx_source_compiles("#include <experimental/filesystem>\nnamespace fs = std::experimental::filesystem;\nint main() { return 0; }" HAS_EXP_FILESYSTEM)

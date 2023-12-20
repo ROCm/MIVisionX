@@ -2,7 +2,7 @@
 
 MIVisionX samples using [LoomShell](https://github.com/ROCm/MIVisionX/tree/master/utilities/loom_shell#radeon-loomshell)
 
-[![Loom Stitch](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/images/LOOM_LOGO_250X125.png)](https://youtu.be/E8pPU04iZjw)
+[![Loom Stitch](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/loom-4.png)](https://youtu.be/E8pPU04iZjw)
 
 **Note:** 
 

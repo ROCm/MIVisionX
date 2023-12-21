@@ -1,8 +1,8 @@
 ## Loom 360 Stitch - Radeon Loom 360 Stitch Samples
 
-MIVisionX samples using [LoomShell](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/utilities/loom_shell#radeon-loomshell)
+MIVisionX samples using [LoomShell](https://github.com/ROCm/MIVisionX/tree/master/utilities/loom_shell#radeon-loomshell)
 
-[![Loom Stitch](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/images/LOOM_LOGO_250X125.png)](https://youtu.be/E8pPU04iZjw)
+[![Loom Stitch](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/loom-4.png)](https://youtu.be/E8pPU04iZjw)
 
 **Note:** 
 

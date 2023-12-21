@@ -26,7 +26,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg libavcodec-dev liba
 # VX_openCV
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libopencv-dev
 # RPP          
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang libboost-filesystem-dev half rpp
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang half rpp
 # rocAL
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install liblmdb-dev rapidjson-dev libturbojpeg0-dev libprotobuf-dev
 # rocAL PyBind
@@ -39,5 +39,5 @@ ENV PATH=$PATH:/opt/rocm/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 
 # Clone MIVisionX 
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && \
         mkdir build && cd build && cmake -D BACKEND=HIP -D ROCAL=OFF ../MIVisionX && make -j8 && make install

@@ -18,9 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 cmake_minimum_required(VERSION 3.5)
-
-project(MIVisionX)
 set(VERSION "2.5.0")
+
+# Set Project Version and Language
+project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
@@ -33,7 +34,14 @@ find_program(MAKE_NSIS_EXE makensis)
 find_program(RPMBUILD_EXE rpmbuild)
 find_program(DPKG_EXE dpkg)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+  set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+  message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+  set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
 # avoid setting the default installation path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
@@ -47,7 +55,6 @@ option(ROCAL_PYTHON     "Build rocAL Python Package"               ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
-option(BUILD_DEV        "Build MIVisionX Development Package"      ON)
 option(BUILD_WITH_AMD_ADVANCE "Build MIVisionX for advanced AMD GPU Architecture"    OFF)
 
 if(WIN32)
@@ -124,9 +131,8 @@ message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM Modules (default:ON)]$
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
-message("-- ${Cyan}     -D BUILD_DEV=${BUILD_DEV} [MIVisionX Developement/Runtime Build(default:ON)]${ColourReset}")
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/amd_openvx/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(HALF QUIET)
 
 if(HALF_FOUND)
@@ -154,53 +160,41 @@ endif()
 
 enable_testing()
 include(CTest)
-add_subdirectory(tests/openvx_api_tests)
+add_subdirectory(tests)
 
 # set package information
-set(CPACK_PACKAGE_VERSION       ${VERSION})
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set(CPACK_PACKAGE_LICENSE       "MIT")
 set(CPACK_PACKAGE_CONTACT       "MIVisionX Support <mivisionx.support@amd.com>")
 set(CPACK_PACKAGE_VENDOR        "AMD ROCm")
-set(CPACK_PACKAGE_ICON          "${CMAKE_SOURCE_DIR}/docs/data/MIVisionX.bmp")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
 
 if(ENABLE_ASAN_PACKAGING)
-  set(CPACK_PACKAGE_NAME          "mivisionx-asan")
-  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION      "AMD MIVisionX address sanitizer libraries")
-  set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX address sanitizer libraries")
+  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "AMD MIVisionX address sanitizer libraries")
+  set(CPACK_RPM_PACKAGE_SUMMARY "AMD MIVisionX address sanitizer libraries")
 else()
-  set(CPACK_PACKAGE_NAME          "mivisionx")
-  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION   "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit
-  MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, \
-utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly \
-optimized open-source implementation of the Khronos OpenVX and OpenVX Extensions along with \
-Convolution Neural Net Model Compiler & Optimizer supporting ONNX, and Khronos NNEF exchange formats. \
-The toolkit allows for rapid prototyping and deployment of optimized computer vision and \
-machine learning inference workloads on a wide range of computer hardware, including \
-small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.")
-  set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+  set(CPACK_RPM_PACKAGE_SUMMARY "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+endif()
+
+if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
+  set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")
 endif()
 
 # set license information
 set(CPACK_RPM_PACKAGE_LICENSE    "MIT")
 set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
 
-# NOTE: ASAN package requires address sanitized libraries and license file
-# BUILD_DEV will be set to OFF for ASAN biulds.
-if(ENABLE_ASAN_PACKAGING)
-  install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx-asan)
-else()
-  install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/mivisionx)
-endif()
-if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
-  set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")
-endif()
-
-set(CPACK_DEBIAN_FILE_NAME       "DEB-DEFAULT")
-set(CPACK_RPM_FILE_NAME          "RPM-DEFAULT")
-set(CPACK_DEBIAN_PACKAGE_RELEASE "local")
-set(CPACK_RPM_PACKAGE_RELEASE    "local")
+# set license information - {ROCM_PATH}/share/doc/mivisionx
+set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DOCDIR}-asan COMPONENT asan)
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT runtime)
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DOCDIR}-dev COMPONENT dev)
+install(FILES ${CPACK_RESOURCE_FILE_LICENSE} DESTINATION ${CMAKE_INSTALL_DOCDIR}-test COMPONENT test)
 
 if(DEFINED ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
   set(CPACK_DEBIAN_PACKAGE_RELEASE $ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
@@ -210,47 +204,98 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
 # Set the dependent packages
-set(MIVISIONX_PACKAGE_REQS "half, rpp, rocblas, miopen-hip, migraphx")
-# MIVisionX Package Dependencies - TBD: Setup & Package need to install same packages
-#set(MIVISIONX_DEBIAN_PACKAGE_LIST "ffmpeg, libavcodec-dev, \
-#libavformat-dev, libswscale-dev, libomp-dev, miopen-hip-dev, \
-#rocblas-dev, libboost-filesystem-dev, libopencv-dev, migraphx-dev")
-set(MIVISIONX_DEBIAN_PACKAGE_LIST "rocblas-dev, miopen-hip-dev, migraphx-dev")
-set(MIVISIONX_RPM_PACKAGE_LIST "rocblas-devel, miopen-hip-devel, migraphx-devel")
-# set dependency to ROCm if set to TRUE, default to OFF
-set(ROCM_DEP_ROCMCORE OFF CACHE BOOL "Set rocm-core dependency")
-if(ROCM_DEP_ROCMCORE)
-  if(ENABLE_ASAN_PACKAGING)
-    set(_rocm_core_pkg "rocm-core-asan")
-  else()
-    set(_rocm_core_pkg "rocm-core")
-  endif()
-  set(MIVISIONX_PACKAGE_REQS  "${MIVISIONX_PACKAGE_REQS}, ${_rocm_core_pkg}")
-endif()
-
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "${MIVISIONX_PACKAGE_REQS}, ${MIVISIONX_DEBIAN_PACKAGE_LIST}")
-set(CPACK_RPM_PACKAGE_REQUIRES   "${MIVISIONX_PACKAGE_REQS}, ${MIVISIONX_RPM_PACKAGE_LIST}")
+set(MIVISIONX_DEBIAN_PACKAGE_LIST  "half, rpp, rocblas, miopen-hip, migraphx, ffmpeg")
+set(MIVISIONX_RPM_PACKAGE_LIST     "half, rpp, rocblas, miopen-hip, migraphx")
+# Set the dev dependent packages
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rocblas-dev, miopen-hip-dev, migraphx-dev, libavcodec-dev, libavformat-dev, libavutil-dev")
+# TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel
+set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "rocblas-devel, miopen-hip-devel, migraphx-devel")
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
-execute_process(COMMAND rpm --eval %{?dist}
-                RESULT_VARIABLE PROC_RESULT
-                OUTPUT_VARIABLE EVAL_RESULT
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-if (PROC_RESULT EQUAL "0" AND NOT EVAL_RESULT STREQUAL "")
-  string (APPEND CPACK_RPM_PACKAGE_RELEASE "%{?dist}")
+execute_process(
+    COMMAND rpm --eval %{?dist}
+    RESULT_VARIABLE PROC_RESULT
+    OUTPUT_VARIABLE EVAL_RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(PROC_RESULT EQUAL "0" AND NOT EVAL_RESULT STREQUAL "")
+  string(APPEND CPACK_RPM_PACKAGE_RELEASE "%{?dist}")
 endif()
 
+# set package 
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${CPACK_PACKAGE_HOMEPAGE})
+set(CPACK_RPM_PACKAGE_URL ${CPACK_PACKAGE_HOMEPAGE})
+set(CPACK_RPM_PACKAGE_AUTOREQPROV "no")
+# Debian package - COMPONENT
+set(CPACK_DEB_COMPONENT_INSTALL ON)
+set(CPACK_DEBIAN_RUNTIME_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "rocm-core, ${MIVISIONX_DEBIAN_PACKAGE_LIST}")
+set(CPACK_DEBIAN_DEV_PACKAGE_NAME "${PROJECT_NAME}-dev")
+set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS 
+  "rocm-core, ${CPACK_DEBIAN_RUNTIME_PACKAGE_NAME}, ${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}")
+# Debian package - specific variable for ASAN
+set(CPACK_DEBIAN_ASAN_PACKAGE_NAME "${PROJECT_NAME}-asan" )
+set(CPACK_DEBIAN_ASAN_PACKAGE_DEPENDS "rocm-core-asan, ${MIVISIONX_DEBIAN_PACKAGE_LIST}" )
+# Debian package - Test
+set(CPACK_DEBIAN_TEST_PACKAGE_NAME "${PROJECT_NAME}-test" )
+set(CPACK_DEBIAN_TEST_PACKAGE_DEPENDS "rocm-core, ${CPACK_DEBIAN_DEV_PACKAGE_NAME}" )
+# RPM package - COMPONENT
+set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_RPM_RUNTIME_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "rocm-core, ${MIVISIONX_RPM_PACKAGE_LIST}")
+set(CPACK_RPM_RUNTIME_PACKAGE_PROVIDES "${PROJECT_NAME}")
+set(CPACK_RPM_RUNTIME_PACKAGE_OBSOLETES "${PROJECT_NAME}")
+set(CPACK_RPM_DEV_PACKAGE_NAME "${PROJECT_NAME}-devel")
+set(CPACK_RPM_DEV_PACKAGE_REQUIRES "rocm-core, ${CPACK_RPM_RUNTIME_PACKAGE_NAME}, ${MIVISIONX_RPM_DEV_PACKAGE_LIST}")
+set(CPACK_RPM_DEV_PACKAGE_PROVIDES "${PROJECT_NAME}-devel")
+set(CPACK_RPM_DEV_PACKAGE_OBSOLETES "${PROJECT_NAME}-devel")
+# RPM package - specific variable for ASAN
+set(CPACK_RPM_ASAN_PACKAGE_NAME "${PROJECT_NAME}-asan" )
+set(CPACK_RPM_ASAN_PACKAGE_REQUIRES "rocm-core-asan, ${MIVISIONX_RPM_PACKAGE_LIST}" )
+set(CPACK_RPM_ASAN_PACKAGE_PROVIDES "${PROJECT_NAME}-asan")
+set(CPACK_RPM_ASAN_PACKAGE_OBSOLETES "${PROJECT_NAME}-asan")
+# RPM package specific variable for ASAN
+set(CPACK_RPM_TEST_PACKAGE_NAME "${PROJECT_NAME}-test" )
+set(CPACK_RPM_TEST_PACKAGE_REQUIRES "rocm-core, ${CPACK_RPM_DEV_PACKAGE_NAME}" )
+set(CPACK_RPM_TEST_PACKAGE_PROVIDES "${PROJECT_NAME}-test")
+set(CPACK_RPM_TEST_PACKAGE_OBSOLETES "${PROJECT_NAME}-test")
 
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
-set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
-set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
+if(NOT ROCM_DEP_ROCMCORE)
+  string(REGEX REPLACE ",? ?rocm-core," "" CPACK_RPM_RUNTIME_PACKAGE_REQUIRES ${CPACK_RPM_RUNTIME_PACKAGE_REQUIRES})
+  string(REGEX REPLACE ",? ?rocm-core-asan," "" CPACK_RPM_ASAN_PACKAGE_REQUIRES ${CPACK_RPM_ASAN_PACKAGE_REQUIRES})
+  string(REGEX REPLACE ",? ?rocm-core," "" CPACK_RPM_DEV_PACKAGE_REQUIRES ${CPACK_RPM_DEV_PACKAGE_REQUIRES})
+  string(REGEX REPLACE ",? ?rocm-core," "" CPACK_RPM_TEST_PACKAGE_REQUIRES ${CPACK_RPM_TEST_PACKAGE_REQUIRES})
+  string(REGEX REPLACE ",? ?rocm-core," "" CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS ${CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS})
+  string(REGEX REPLACE ",? ?rocm-core-asan," "" CPACK_DEBIAN_ASAN_PACKAGE_DEPENDS ${CPACK_DEBIAN_ASAN_PACKAGE_DEPENDS})
+  string(REGEX REPLACE ",? ?rocm-core," "" CPACK_DEBIAN_DEV_PACKAGE_DEPENDS ${CPACK_DEBIAN_DEV_PACKAGE_DEPENDS})
+  string(REGEX REPLACE ",? ?rocm-core," "" CPACK_DEBIAN_TEST_PACKAGE_DEPENDS ${CPACK_DEBIAN_TEST_PACKAGE_DEPENDS})
+endif()
+
+if(ENABLE_ASAN_PACKAGING)
+  # ASAN Package requires asan component with only libraries and license file
+  set(CPACK_COMPONENTS_ALL asan)
+else()
+  set(CPACK_COMPONENTS_ALL runtime dev test)
+endif()
+
+set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
+set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
+set(CPACK_DEBIAN_PACKAGE_RELEASE "local")
+set(CPACK_RPM_PACKAGE_RELEASE "local")
+
+if(DEFINED ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
+ set(CPACK_DEBIAN_PACKAGE_RELEASE $ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
+endif()
+if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
+ set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
+endif()
 
 if(APPLE)
   set(CPACK_GENERATOR "Bundle")
-  set(CPACK_BUNDLE_NAME ${CPACK_PACKAGE_NAME})
-  set(CPACK_BUNDLE_ICON ${CPACK_PACKAGE_ICON})
-  set(CPACK_BUNDLE_PLIST "${CMAKE_SOURCE_DIR}/.github/info.plist")
+  set(CPACK_BUNDLE_NAME "${PROJECT_NAME}")
+  set(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/.github/info.plist")
+  set(CPACK_BUNDLE_PLIST "${CMAKE_SOURCE_DIR}/docs/data/MIVisionX.bmp")
 else()
   set(CPACK_GENERATOR "TGZ;ZIP")
   if(EXISTS ${MAKE_NSIS_EXE})
@@ -258,12 +303,34 @@ else()
   endif()
   if(EXISTS ${RPMBUILD_EXE})
     list(APPEND CPACK_GENERATOR "RPM")
-    message("-- ${White}MIVisionX -- CPACK_RPM_PACKAGE_REQUIRES:${CPACK_RPM_PACKAGE_REQUIRES}${ColourReset}")
+    message("-- ${White}AMD ROCm MIVisionX RunTime Package -- ${CPACK_RPM_RUNTIME_PACKAGE_REQUIRES}${ColourReset}")
+    message("-- ${White}AMD ROCm MIVisionX Dev Package -- ${CPACK_RPM_DEV_PACKAGE_REQUIRES}${ColourReset}")
   endif()
   if(EXISTS ${DPKG_EXE})
     list(APPEND CPACK_GENERATOR "DEB")
-    message("-- ${White}MIVisionX -- CPACK_DEBIAN_PACKAGE_DEPENDS:${CPACK_DEBIAN_PACKAGE_DEPENDS}${ColourReset}")
+    message("-- ${White}AMD ROCm MIVisionX RunTime Package -- ${CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS}${ColourReset}")
+    message("-- ${White}AMD ROCm MIVisionX Dev Package -- ${CPACK_DEBIAN_DEV_PACKAGE_DEPENDS}${ColourReset}")
   endif()
 endif()
 
 include(CPack)
+
+cpack_add_component(runtime
+                  DISPLAY_NAME "MIVisionX Runtime Package"
+                  DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit. \
+MIVisionX runtime package provides MIVisionX libraries and license.txt")
+
+cpack_add_component(dev
+                  DISPLAY_NAME "MIVisionX Develop Package"
+                  DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit. \
+MIVisionX develop package provides MIVisionX libraries, header files, samples, and license.txt")
+
+cpack_add_component(asan
+                  DISPLAY_NAME "MIVisionX ASAN Package"
+                  DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit. \
+MIVisionX ASAN package provides MIVisionX ASAN libraries")
+
+cpack_add_component(test
+                  DISPLAY_NAME "MIVisionX Test Package"
+                  DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit. \
+MIVisionX Test package provides MIVisionX Test Components")

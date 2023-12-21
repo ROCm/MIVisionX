@@ -53,7 +53,7 @@ RUN DEBIAN_FRONTEND=noninteractive git clone https://github.com/amd/ZenDNN.git &
 	source scripts/zendnn_aocc_build.sh
 
 # install MIVisionX
-RUN git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git && mkdir build && cd build && \
+RUN git clone https://github.com/ROCm/MIVisionX.git && mkdir build && cd build && \
     cmake ../MIVisionX && make -j8 && make install
 
 ENTRYPOINT source ~/.profile && /bin/bash

@@ -118,12 +118,11 @@ else()
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations -std=gnu++14")
 endif()
-# Binary files and samples not required for ASAN package
-if(NOT ENABLE_ASAN_PACKAGING)
-    # install MIVisionX executables -- {ROCM_PATH}/bin
-    install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR})
-    # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-    install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-endif()
+
+# install MIVisionX executables -- {ROCM_PATH}/bin
+install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
+
+# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
 
 message("-- ${White}runVX -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

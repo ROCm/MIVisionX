@@ -340,7 +340,7 @@ If available, this project uses OpenCV for camera capture and image display.
 Here are few examples that demonstrate use of RUNVX prototyping tool.
 
 ### Canny Edge Detector
-This example demonstrates building OpenVX graph for Canny edge detector. Use [face1.jpg](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-core/master/examples/images/face1.jpg) for this example.
+This example demonstrates building OpenVX graph for Canny edge detector. Use [face1.jpg](https://raw.githubusercontent.com/ROCm/amdovx-core/master/examples/images/face1.jpg) for this example.
 
     % runvx[.exe] file canny.gdf
 
@@ -367,7 +367,7 @@ File **canny.gdf**:
     node org.khronos.openvx.canny_edge_detector luma hyst gradient_size !NORM_L1 output
 
 ### Skintone Pixel Detector
-This example demonstrates building OpenVX graph for pixel-based skin tone detector [Peer et al. 2003]. Use [face1.jpg](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-core/master/examples/images/face1.jpg) for this example.
+This example demonstrates building OpenVX graph for pixel-based skin tone detector [Peer et al. 2003]. Use [face1.jpg](https://raw.githubusercontent.com/ROCm/amdovx-core/master/examples/images/face1.jpg) for this example.
 
     % runvx[.exe] file skintonedetect.gdf
 

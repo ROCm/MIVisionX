@@ -25,7 +25,6 @@ THE SOFTWARE.
 #include <fstream>
 #include <utility>
 #include <algorithm>
-#include <boost/filesystem.hpp>
 #include "commons.h"
 #include "exception.h"
 #include "caffe_meta_data_reader.h"
@@ -33,8 +32,6 @@ THE SOFTWARE.
 using std::string;
 using caffe_protos::Datum;
 using namespace std;
-
-namespace filesys = boost::filesystem;
 
 CaffeMetaDataReader::CaffeMetaDataReader()
 {

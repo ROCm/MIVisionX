@@ -32,7 +32,7 @@ Usage: ./rocAL_unittests reader-type pipeline-type=1(classification)2(detection)
 
 The bash script `testAllScript.sh` can be used to run and dump the outputs for all test cases in rocAL and run the python script to verify the correctness of the generated outputs with the golden outputs.
 
-Input data is available in the following link : [MIVisionX-data](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX-data)
+Input data is available in the following link : [MIVisionX-data](https://github.com/ROCm/MIVisionX-data)
 
 `export ROCAL_DATA_PATH=<absolute_path_to_MIVIsionX-data>`
 

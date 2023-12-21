@@ -19,7 +19,8 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.5)
-project(vx_amd_custom)
+set(VERSION "1.0.1")
+project(vx_amd_custom VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -66,12 +67,13 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND OpenMP_FOUND)
         add_subdirectory(custom_lib)
         add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
         target_link_libraries(${PROJECT_NAME} openvx hip::host ${LINK_LIBRARY_LIST})
+        set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
         # install MIVisionX libs -- {ROCM_PATH}/lib -- TBD: Remove duplicate install 
-        install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-        if(BUILD_DEV)
-            # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-	        install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-        endif(BUILD_DEV)
+        install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+        install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+        install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+	    install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
     else()
         message("-- ${Red}WARNING: HIP Not Found -- ${PROJECT_NAME} module excluded${ColourReset}")
     endif()
@@ -82,10 +84,11 @@ else()
   add_subdirectory(custom_lib)
   add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
   target_link_libraries(${PROJECT_NAME} openvx hip::host)
+  set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
   # install MIVisionX libs -- {ROCM_PATH}/lib
-  install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-  if(BUILD_DEV)
-    # install include files -- {ROCM_PATH}/include/mivisionx/
-    install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-  endif(BUILD_DEV)
+  install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+  install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+  install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+  # install include files -- {ROCM_PATH}/include/mivisionx/
+  install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
 endif()

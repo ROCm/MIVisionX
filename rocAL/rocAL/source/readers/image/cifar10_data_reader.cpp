@@ -21,12 +21,18 @@ THE SOFTWARE.
 */
 
 #include <cassert>
+#include <cstring>
+#include <algorithm>
 #include <commons.h>
 #include "cifar10_data_reader.h"
-#include <boost/filesystem.hpp>
+#ifdef USE_STD_FILESYSTEM
+#include <filesystem>
+namespace filesys = std::filesystem;
+#elif defined(USE_EXP_FILESYSTEM)
+#include <experimental/filesystem>
+namespace filesys = std::experimental::filesystem;
+#endif
 #include <file_source_reader.h>
-
-namespace filesys = boost::filesystem;
 
 CIFAR10DataReader::CIFAR10DataReader()
 {

@@ -37,9 +37,6 @@ THE SOFTWARE.
 #elif __has_include(<experimental/filesystem>)
     #include <experimental/filesystem>
     namespace fs = std::experimental::filesystem;
-#elif __has_include(<boost/filesystem.hpp>)
-    #include <boost/filesystem.hpp>
-    namespace fs = boost::filesystem;
 #endif
 // helper functions
 void info(const char * format, ...)

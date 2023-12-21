@@ -19,9 +19,10 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.5)
-project(amd_nn)
+set(VERSION "1.3.1")
+project(amd_nn VERSION ${VERSION} LANGUAGES CXX)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 set(CMAKE_CXX_STANDARD 14)
 
 find_package(miopen     PATHS ${ROCM_PATH} REQUIRED)
@@ -35,7 +36,7 @@ elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900;gfx906;gfx908;gfx90a;gfx940;gfx1030;gfx1031;gfx1032;gfx1100")
     if (BUILD_WITH_AMD_ADVANCE)
-        set(DEFAULT_AMDGPU_TARGETS ${DEFAULT_AMDGPU_TARGETS} "gfx941")
+        set(DEFAULT_AMDGPU_TARGETS ${DEFAULT_AMDGPU_TARGETS} "gfx941;gfx942")
     endif()
     set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
     find_package(HIP REQUIRED)
@@ -118,23 +119,24 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
 else()
     message("-- ${Red}WARNING: OpenCL/HIP Not Found -- amd_nn module excluded${ColourReset}")
 endif()
+set_target_properties(vx_nn PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS vx_nn DESTINATION ${CMAKE_INSTALL_LIBDIR})
-if(BUILD_DEV)
-    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-    install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
-    # install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
-    install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
-    install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx)
-    # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-    install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps)
-    install(DIRECTORY ../../samples/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-    install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples)
-endif(BUILD_DEV)
+install(TARGETS vx_nn LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+install(TARGETS vx_nn LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+install(TARGETS vx_nn LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+# install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
+install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx COMPONENT dev)
+install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx COMPONENT dev)
+# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ../../samples/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")

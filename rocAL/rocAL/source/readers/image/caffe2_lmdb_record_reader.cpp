@@ -22,8 +22,6 @@ THE SOFTWARE.
 
 #include <cassert>
 #include <commons.h>
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -32,7 +30,6 @@ THE SOFTWARE.
 #include <stdint.h>
 #include "caffe2_lmdb_record_reader.h"
 using namespace std;
-namespace filesys = boost::filesystem;
 
 Caffe2LMDBRecordReader::Caffe2LMDBRecordReader()
 {

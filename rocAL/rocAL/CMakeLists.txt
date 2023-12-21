@@ -21,12 +21,13 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.5)
-project(rocal)
+set(VERSION "1.1.0")
+project(rocal VERSION ${VERSION} LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(BUILD_ROCAL true)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
 find_package(AMDRPP QUIET)
 find_package(TurboJpeg QUIET)
@@ -34,12 +35,26 @@ find_package(Protobuf QUIET)
 find_package(FFmpeg QUIET)
 find_package(OpenCV QUIET)
 find_package(OpenMP QUIET)
-set(BOOST_COMPONENTS filesystem system)
-find_package(Boost COMPONENTS ${BOOST_COMPONENTS} QUIET)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads QUIET)
 find_package(LMDB QUIET)
 find_package(RapidJSON QUIET)
+
+# Check for filesystem support
+include(CheckCXXSourceCompiles)
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
+set(CMAKE_REQUIRED_INCLUDES "")
+check_cxx_source_compiles("#include <filesystem>\nnamespace fs = std::filesystem;\nint main() { return 0; }" HAS_STD_FILESYSTEM)
+check_cxx_source_compiles("#include <experimental/filesystem>\nnamespace fs = std::experimental::filesystem;\nint main() { return 0; }" HAS_EXP_FILESYSTEM)
+
+if (HAS_STD_FILESYSTEM)
+    set(FS_FOUND true)
+elseif (HAS_EXP_FILESYSTEM)
+    set(FS_FOUND true)
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} stdc++fs)
+else ()
+    set(FS_FOUND false)
+endif ()
 
 if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     if(NOT DEFINED HIP_PATH)
@@ -52,7 +67,7 @@ if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900;gfx906;gfx908;gfx90a;gfx940;gfx1030;gfx1031;gfx1032;gfx1100")
     if (BUILD_WITH_AMD_ADVANCE)
-        set(DEFAULT_AMDGPU_TARGETS ${DEFAULT_AMDGPU_TARGETS} "gfx941")
+        set(DEFAULT_AMDGPU_TARGETS ${DEFAULT_AMDGPU_TARGETS} "gfx941;gfx942")
     endif()
     set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
     find_package(HIP QUIET)
@@ -117,9 +132,9 @@ if(NOT OpenMP_FOUND)
     set(BUILD_ROCAL false)
     message("-- ${Yellow}NOTE: rocAL library requires OpenMP, Not Found ${ColourReset}")
 endif()
-if(NOT Boost_FOUND)
+if(NOT FS_FOUND)
     set(BUILD_ROCAL false)
-    message("-- ${Yellow}NOTE: rocAL library requires Boost, Not Found ${ColourReset}")
+    message("-- ${Yellow}NOTE: rocAL library requires FileSystem, Not Found ${ColourReset}")
 endif()
 if(NOT Threads_FOUND)
     set(BUILD_ROCAL false)
@@ -146,9 +161,6 @@ if(${BUILD_ROCAL})
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenMP::OpenMP_CXX)
     # Threads
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} Threads::Threads)
-    # BOOST
-    include_directories(${Boost_INCLUDE_DIRS})
-    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
     # TurboJPEG
     include_directories(${TurboJpeg_INCLUDE_DIRS})
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${TurboJpeg_LIBRARIES})
@@ -244,6 +256,12 @@ if(${BUILD_ROCAL})
     else()
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
+    #FileSystem
+    if (HAS_STD_FILESYSTEM)
+        target_compile_definitions(${PROJECT_NAME} PUBLIC USE_STD_FILESYSTEM)
+    elseif (HAS_EXP_FILESYSTEM)
+        target_compile_definitions(${PROJECT_NAME} PUBLIC USE_EXP_FILESYSTEM)
+    endif()
     # -Wall -- Enable most warning messages
     # -mavx2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and AVX2 built-in functions and code generation
     # -mfma -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and FMA built-in functions and code generation
@@ -263,12 +281,14 @@ if(${BUILD_ROCAL})
     endif()
     target_link_libraries(${PROJECT_NAME} ${LINK_LIBRARY_LIST})
     message("-- ${White}rocAL -- Link Libraries: ${LINK_LIBRARY_LIST}${ColourReset}")
+    set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
     # install MIVisionX libs -- {ROCM_PATH)/lib
-    install(TARGETS rocal DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    if(BUILD_DEV)
-        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-        install(FILES
+    install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+    install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+    install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+    install(FILES
                 include/api/rocal_api.h
                 include/api/rocal_api_info.h
                 include/api/rocal_api_augmentation.h
@@ -277,9 +297,8 @@ if(${BUILD_ROCAL})
                 include/api/rocal_api_data_transfer.h
                 include/api/rocal_api_parameters.h
                 include/api/rocal_api_meta_data.h
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal
-        )
-    endif(BUILD_DEV)
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/rocal COMPONENT dev
+    )
 else()
     message("-- ${Red}WARNING: rocAL module excluded ${ColourReset}")
 endif()

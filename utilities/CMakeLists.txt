@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(utilities)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 #set(ROCM_PATH /opt/rocm CACHE PATH " default ROCm installation path")
 
 if(GPU_SUPPORT)

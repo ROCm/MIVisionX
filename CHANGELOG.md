@@ -24,7 +24,7 @@ Documentation for MIVisionX is available at
   * PyBind11
   * RapidJSON
 * Setup Updates
-* RPP Version - 1.4.0
+* RPP - Use package install
 * Dockerfiles: Updates & bugfix
 
 ### Fixes
@@ -44,10 +44,10 @@ Documentation for MIVisionX is available at
 * MIGraphX - `2.7.0.50700-63`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [1.4.0](https://github.com/ROCm/rpp/releases/tag/1.4.0)
+* RPP - [1.5.0]
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all preceding packages
-* MIVisionX setup script - `V2.5.6`
+* MIVisionX setup script - `V2.6.0`
 
 ### Known issues
 

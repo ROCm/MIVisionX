@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.6.0"
+__version__ = "2.6.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -452,20 +452,6 @@ else:
         os.system('pip install pytest==7.3.1')
         os.system('(cd '+deps_dir+'; git clone -b '+pybind11Version+' https://github.com/pybind/pybind11; cd pybind11; mkdir build; cd build; ' +
                   linuxCMake+' -DDOWNLOAD_CATCH=ON -DDOWNLOAD_EIGEN=ON ../; make -j4; sudo make install)')
-        # CuPy Install
-        os.system('sudo -v')
-        os.system(linuxSystemInstall+' update')
-        os.system('pip install scipy==1.9.3 cython==0.29.*')
-        os.system('pip install git+https://github.com/ROCmSoftwarePlatform/hipify_torch.git')
-        if "Ubuntu" in platfromInfo:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3-dev')
-        else:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-devel hipcub-devel python3-devel')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'; git clone -b rocm6.0_internal_testing https://github.com/ROCmSoftwarePlatform/cupy.git; export CUPY_INSTALL_USE_HIP=1; export ROCM_HOME=/opt/rocm; cd cupy; git submodule update --init; pip install -e . --no-cache-dir -vvvv)')
-        os.system('pip install numpy==1.21')
 
     # Install ffmpeg
     if ffmpegInstall == 'ON':

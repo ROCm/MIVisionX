@@ -202,7 +202,6 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default:4.6.0)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.4)]
-                            --rpp       [RPP Version - optional (default:1.0.0)]
                             --pybind11  [PyBind11 Version - optional (default:v2.10.4)]
                             --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:ON) [options:ON/OFF]]
                             --rocal     [MIVisionX rocAL Dependency Install - optional (default:ON) [options:ON/OFF]]
@@ -440,10 +439,10 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * migraphx - `2.7.0.50700-63`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [1.4.0](https://github.com/ROCm/rpp/releases/tag/1.4.0)
+* RPP - [1.5.0]
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.5.7`
+* MIVisionX Setup Script - `V2.6.0`
 
 ### Known issues
 

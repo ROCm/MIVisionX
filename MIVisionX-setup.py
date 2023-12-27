@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.5.8"
+__version__ = "2.6.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -43,8 +43,6 @@ parser.add_argument('--opencv',    	type=str, default='4.6.0',
                     help='OpenCV Version - optional (default:4.6.0)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.4',
                     help='ProtoBuf Version - optional (default:3.12.4)')
-parser.add_argument('--rpp',   		type=str, default='1.4.0',
-                    help='RPP Version - optional (default:1.4.0)')
 parser.add_argument('--pybind11',   type=str, default='v2.10.4',
                     help='PyBind11 Version - optional (default:v2.10.4)')
 parser.add_argument('--ffmpeg',    	type=str, default='ON',
@@ -68,7 +66,6 @@ args = parser.parse_args()
 setupDir = args.directory
 opencvVersion = args.opencv
 ProtoBufVersion = args.protobuf
-rppVersion = args.rpp
 pybind11Version = args.pybind11
 ffmpegInstall = args.ffmpeg.upper()
 neuralNetInstall = args.neural_net.upper()
@@ -228,10 +225,12 @@ if os.path.exists(deps_dir):
 
     if rocalInstall == 'ON':
         # RPP
-        if os.path.exists(deps_dir+'/rpp/build-'+backend):
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/rpp/build-'+backend+'; sudo ' +
-                      linuxFlag+' make install -j8)')
+        if "Ubuntu" in platfromInfo:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                          ' '+linuxSystemInstall_check+' install -y rpp rpp-dev')
+        else:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                          ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
 
     if ffmpegInstall == 'ON':
         # FFMPEG
@@ -438,8 +437,12 @@ else:
                   ' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
         # RPP
         os.system('sudo -v')
-        os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/ROCm/rpp.git; cd rpp; mkdir build-'+backend+'; cd build-'+backend+'; ' +
-                  linuxCMake+' -DBACKEND='+backend+' -DCMAKE_INSTALL_PREFIX='+ROCM_PATH+' ../; make -j4; sudo make install)')
+        if "Ubuntu" in platfromInfo:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y rpp rpp-dev')
+        else:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                      ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
         # RapidJSON
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'; git clone https://github.com/Tencent/rapidjson.git; cd rapidjson; mkdir build; cd build; ' +

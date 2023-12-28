@@ -26,6 +26,7 @@ Documentation for MIVisionX is available at
 * Setup Updates
 * RPP - Use package install
 * Dockerfiles: Updates & bugfix
+* CuPy - No longer installed with setup.py
 
 ### Fixes
 
@@ -47,7 +48,7 @@ Documentation for MIVisionX is available at
 * RPP - [1.5.0]
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all preceding packages
-* MIVisionX setup script - `V2.6.0`
+* MIVisionX setup script - `V2.6.1`
 
 ### Known issues
 

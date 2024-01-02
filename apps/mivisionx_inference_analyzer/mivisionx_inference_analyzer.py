@@ -30,7 +30,7 @@ colors =[
         (153,76,0),       # Top3
         (0,128,255),      # Top4
         (255,102,102),    # Top5
-        ];
+        ]
 
 # AMD Neural Net python wrapper
 class AnnAPI:
@@ -68,7 +68,7 @@ class annieObjectWrapper():
             output,opName,n_o,c_o,h_o,w_o = output_info.split(',')
         else:
             output,opName,n_o,c_o= output_info.split(',')
-            h_o = '1'; w_o  = '1';
+            h_o = '1'; w_o  = '1'
         self.hdl = self.api.annCreateInference(weightsfile.encode('utf-8'))
         self.dim = (int(w_i),int(h_i))
         self.outputDim = (int(n_o),int(c_o),int(h_o),int(w_o))
@@ -351,7 +351,7 @@ if __name__ == '__main__':
     classifier = annieObjectWrapper(pythonLib, weightsFile)
 
     # check for image val text
-    totalImages = 0;
+    totalImages = 0
     if(imageVal == ''):
         print("\nFlow without Image Validation Text..Creating a file with no ground truths\n")
         imageList = os.listdir(inputImageDir)
@@ -380,7 +380,7 @@ if __name__ == '__main__':
     sys.stdout = orig_stdout
 
     # process images
-    correctTop5 = 0; correctTop1 = 0; wrong = 0; noGroundTruth = 0;
+    correctTop5 = 0; correctTop1 = 0; wrong = 0; noGroundTruth = 0
     for x in range(totalImages):
         imageFileName,grountTruth = imageValidation[x].split(' ')
         groundTruthIndex = int(grountTruth)

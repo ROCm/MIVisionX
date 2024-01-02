@@ -167,13 +167,13 @@ if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/
     if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
         linuxCMake = 'cmake3'
         os.system(linuxSystemInstall+' install cmake3')
-    if not "centos" in platfromInfo or not "redhat" in platfromInfo:
+    if "centos" not in platfromInfo or "redhat" not in platfromInfo:
         platfromInfo = platfromInfo+'-redhat'
 elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
     linuxSystemInstall = 'apt-get -y'
     linuxSystemInstall_check = '--allow-unauthenticated'
     linuxFlag = '-S'
-    if not "Ubuntu" in platfromInfo:
+    if "Ubuntu" not in platfromInfo:
         platfromInfo = platfromInfo+'-Ubuntu'
 elif os.path.exists('/usr/bin/zypper'):
     linuxSystemInstall = 'zypper -n'

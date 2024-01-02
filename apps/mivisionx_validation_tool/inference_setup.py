@@ -47,7 +47,7 @@ class annieObjectWrapper():
             output,opName,n_o,c_o,h_o,w_o = output_info.split(',')
         else:
             output,opName,n_o,c_o= output_info.split(',')
-            h_o = '1'; w_o  = '1';
+            h_o = '1'; w_o  = '1'
         self.hdl = self.api.annCreateInference(weightsfile.encode('utf-8'))
         self.dim = (int(w_i),int(h_i))
         self.outputDim = (int(n_o),int(c_o),int(h_o),int(w_o))

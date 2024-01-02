@@ -50,7 +50,7 @@ if (OPENVX_BACKEND_OPENCL_FOUND)
     include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 endif()
 
-include_directories (${ROCM_PATH}/include/mivisionx ${PROJECT_SOURCE_DIR} )
+include_directories (${ROCM_PATH}/include ${ROCM_PATH}/include/mivisionx ${PROJECT_SOURCE_DIR} )
 link_directories    (${ROCM_PATH}/lib ${PROJECT_SOURCE_DIR}/lib)
 option (USE_POSTPROC  "Use postprocessing module implementation" ON)
 set(SOURCES mvobjdetect.cpp mvdeploy_api.cpp visualize.cpp)

@@ -724,7 +724,7 @@ int agoDramaDivideMeanStddevNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[0] = data;
 	anode->paramList[1] = paramList[0];
 	anode->paramCount = 2;
-	int status;
+	int status = VX_FAILURE;
 	if(paramList[0]->u.img.format == VX_DF_IMAGE_U8)
 		status = agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_MEAN_STD_DEV_DATA_U8);
 	else if(paramList[0]->u.img.format == VX_DF_IMAGE_U1)

@@ -1042,10 +1042,10 @@ vx_status loadBlendWeights(ls_context stitch, const char * fileName)
 	fseek(fp, 0, SEEK_END);  long size = ftell(fp); fseek(fp, 0, SEEK_SET);
 	vx_uint8 * buf = new vx_uint8[size];
 	if (!buf) {
-			fclose(fp);
-			return Error("ERROR: alloc(%d) failed", size);
+		fclose(fp);
+		return Error("ERROR: alloc(%d) failed", size);
 	}
-        ERROR_CHECK_FREAD_(fread(buf, 1, size, fp),size);
+	ERROR_CHECK_FREAD_(fread(buf, 1, size, fp), size);
 	fclose(fp);
 	vx_status status = lsSetBlendWeights(stitch, buf, size);
 	if (status) return Error("ERROR: lsSetBlendWeights(*,*,%d): failed (%d)\n", size, status);

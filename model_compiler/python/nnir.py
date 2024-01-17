@@ -123,12 +123,12 @@ class IrAttr(object):
         self.dict_set = []
 
     def set(self,name,value):
-        if not name in self.dict_values:
+        if name not in self.dict_values:
             raise ValueError("Unsupported IR attribute: {}".format(name))
         if type(value) != type(self.dict_values[name]):
             raise ValueError("Invalid IR attribute value type: {} for {}".format(type(value).__name__, name))
         self.dict_values[name] = value
-        if not name in self.dict_set:
+        if name not in self.dict_set:
             self.dict_set.append(name)
 
     def is_set(self,name):
@@ -227,7 +227,7 @@ class IrNode(object):
         }
 
     def set(self,type,inputs,outputs,attr):
-        if not type in self.dict_types or self.dict_types[type] == 0:
+        if type not in self.dict_types or self.dict_types[type] == 0:
             print('ERROR: IrNode.set: operation "%s" not supported' % (type))
             sys.exit(1)
         self.type = type
@@ -307,7 +307,7 @@ class IrGraph(object):
             self.all_F032 = False
         if self.all_F016 == True and tensor.type == 'F032':
             self.all_F016 = False
-        if not tensor.name in self.output_names:
+        if tensor.name not in self.output_names:
             self.locals.append(tensor)
 
     def addNode(self,node):
@@ -873,7 +873,7 @@ class IrGraph(object):
         for name in self.tensor_dict:
             fullTensorList.append(name)
         for name in fullTensorList:
-            if not name in usedTensorList:
+            if name not in usedTensorList:
                 self.removeTensor(name)
 
     def updateBatchSize(self,batchSize):
@@ -1037,7 +1037,7 @@ class IrGraph(object):
                     prevNode = node
                     prevOutput = node.outputs[0]
                 elif node.type == 'copy':
-                    if prevSkipNode != None:
+                    if prevSkipNode is not None:
                         prevSkipNode.outputs[0] = node.outputs[0]
                     else:
                         prevNode.outputs[0] = node.outputs[0]
@@ -1045,7 +1045,7 @@ class IrGraph(object):
                     nodesToRemove.append(node)
                     fusedAnOp = True
                 elif node.type == 'transpose':
-                    if prevSkipNode != None:
+                    if prevSkipNode is not None:
                         prevSkipNode.outputs[0] = node.outputs[0]
                     else:
                         prevNode.outputs[0] = node.outputs[0]
@@ -1124,7 +1124,7 @@ class IrGraph(object):
                     weight = weight * np.repeat(scale, N)
                     self.addBinary(prevNode.inputs[1], weight.view())
                     self.addBinary(prevNode.inputs[2], bias.view())
-                    if prevSkipNode != None:
+                    if prevSkipNode is not None:
                         prevSkipNode.outputs[0] = node.outputs[0]
                     else:
                         prevNode.outputs[0] = node.outputs[0]
@@ -1145,7 +1145,7 @@ class IrGraph(object):
                         leaky_alpha = 0.0
                     prevNode.attr.set('mode', 1)
                     prevNode.attr.set('alpha', leaky_alpha)
-                    if prevSkipNode != None:
+                    if prevSkipNode is not None:
                         prevSkipNode.outputs[0] = node.outputs[0]
                     else:
                         prevNode.outputs[0] = node.outputs[0]

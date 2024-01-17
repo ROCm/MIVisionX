@@ -252,8 +252,8 @@ class InferenceViewer(QtWidgets.QMainWindow):
             qOrigImageResized = qOrigImage.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.IgnoreAspectRatio)  
             index = self.imgCount % self.frameCount
             self.origImage_layout.itemAt(index).widget().setPixmap(QtGui.QPixmap.fromImage(qOrigImageResized))
-            self.origImage_layout.itemAt(index).widget().setStyleSheet("border: 5px solid yellow;");
-            self.origImage_layout.itemAt(self.lastIndex).widget().setStyleSheet("border: 0");
+            self.origImage_layout.itemAt(index).widget().setStyleSheet("border: 5px solid yellow;")
+            self.origImage_layout.itemAt(self.lastIndex).widget().setStyleSheet("border: 0")
             self.imgCount += 1
             self.lastIndex = index
         

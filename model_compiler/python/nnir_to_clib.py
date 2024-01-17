@@ -596,7 +596,7 @@ MIVID_API_ENTRY vx_status MIVID_API_CALL mvAddToGraph(vx_graph graph, %s, %s, co
         for tensor in graph.outputs:
             outputList.append(tensor.name)
         for idx, tensor in enumerate(graph.locals):
-            if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
+            if (tensor.name not in outputList) and (tensor.name not in localList[:idx]):
                 f.write(
                     """    vx_size dims_%s[%d] = { %s };
     vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
@@ -927,7 +927,7 @@ MIVID_API_ENTRY vx_status MIVID_API_CALL mvAddToGraph(vx_graph graph, %s, %s, co
     // release local tensors
 """)
         for idx, tensor in enumerate(graph.locals):
-            if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
+            if (tensor.name not in outputList) and (tensor.name not in localList[:idx]):
                 f.write(
                     """    ERROR_CHECK_STATUS(vxReleaseTensor(&%s));
 """ % (tensor.name))

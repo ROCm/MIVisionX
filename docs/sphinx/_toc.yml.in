@@ -116,7 +116,6 @@ subtrees:
     - file: docker/README
       subtrees:
         - entries:
-          - file: docker/archive/README
           - file: docker/pytorch/README
           - file: docker/tensorflow/README
     - file: CHANGELOG

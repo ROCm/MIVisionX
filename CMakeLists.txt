@@ -204,12 +204,12 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
 # Set the dependent packages
-set(MIVISIONX_DEBIAN_PACKAGE_LIST  "half, rpp, rocblas, miopen-hip, migraphx, ffmpeg")
-set(MIVISIONX_RPM_PACKAGE_LIST     "half, rpp, rocblas, miopen-hip, migraphx")
+set(MIVISIONX_DEBIAN_PACKAGE_LIST  "rocm-hip-runtime, half, rpp, rocblas, miopen-hip, migraphx")
+set(MIVISIONX_RPM_PACKAGE_LIST     "rocm-hip-runtime, half, rpp, rocblas, miopen-hip, migraphx")
 # Set the dev dependent packages
-set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, libavcodec-dev, libavformat-dev, libavutil-dev")
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev")
 # TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel
-set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
+set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(

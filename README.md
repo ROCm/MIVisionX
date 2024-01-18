@@ -122,7 +122,8 @@ Install MIVisionX runtime, development, and test packages.
 ##### Prerequisites setup script for Linux
 
 For the convenience of the developer, we provide the setup script `MIVisionX-setup.py` which will install all the dependencies required by this project.
-  **NOTE:** This script only needs to be executed once.
+
+**NOTE:** This script only needs to be executed once.
 
 ##### Prerequisites for running the script
 
@@ -165,12 +166,14 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
 * Instructions for building MIVisionX with the **HIP** GPU backend (default GPU backend):
 
     + run the setup script to install all the dependencies required by the **HIP** GPU backend:
+  
     ```shell
     cd MIVisionX
     python MIVisionX-setup.py
     ```
 
     + run the below commands to build MIVisionX with the **HIP** GPU backend:
+
     ```shell
     mkdir build-hip
     cd build-hip
@@ -181,9 +184,11 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
     ```
 
     + run tests - [test option instructions](https://github.com/ROCm/MIVisionX/wiki/CTest)
+
     ```shell
     make test
     ```
+
     **Note:**
     + `PyPackageInstall` used for rocal_pybind installation
     + `sudo` required for pybind installation
@@ -202,13 +207,14 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
 
 #### Using Visual Studio
 * Use `MIVisionX.sln` to build for x64 platform
-  **NOTE:** Some modules in MIVisionX are only supported on Linux
+
+**NOTE:** Some modules in MIVisionX are only supported on Linux
 
 ### macOS
 
 macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions)
-  
-  **NOTE:** MIVisionX CPU backend is supported in macOS
+
+**NOTE:** MIVisionX CPU backend is supported in macOS
 
 ## Verify installation
 

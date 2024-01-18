@@ -171,7 +171,7 @@ set(CPACK_PACKAGE_LICENSE       "MIT")
 set(CPACK_PACKAGE_CONTACT       "MIVisionX Support <mivisionx.support@amd.com>")
 set(CPACK_PACKAGE_VENDOR        "AMD ROCm")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
-set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
+set(CPACK_PACKAGE_HOMEPAGE      "https://github.com/ROCm/MIVisionX")
 
 if(ENABLE_ASAN_PACKAGING)
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "AMD MIVisionX address sanitizer libraries")

@@ -147,6 +147,7 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(Jitter_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(LensCorrection_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Noise_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(GaussianNoise_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Nop_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Pixelate_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Rain_Register));
@@ -160,6 +161,7 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(Snow_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Vignette_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(WarpAffine_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Slice_Register));
 
     return status;
 }

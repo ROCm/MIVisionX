@@ -1891,6 +1891,34 @@ extern "C"
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor srcDims, vx_tensor pDst, vx_tensor anchor, vx_tensor shape, vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType);
 
+	/*!
+	 * \brief [Graph] Creates a Tensor Normalize function node.
+	 * \ingroup group_amd_rpp
+	 * TO BE ADDED
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar axis_mask, vx_array pMean, vx_array pStddev, vx_scalar computeMean, vx_scalar computeStddev, vx_scalar scale, vx_scalar shift, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+        /*!
+	 * \brief [Graph] Creates a Tensor Transpose function node.
+	 * \ingroup group_amd_rpp
+	 * TO BE ADDED
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppTranspose(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array perm, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+	
+	/*! \brief [Graph] Creates a Cast function node.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh/ltrb format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] layout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
+	 * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32</tt> denotes whether source roi is of XYWH/LTRB type.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppCast(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar layout, vx_scalar roiType);
+
+
 #ifdef __cplusplus
 }
 #endif

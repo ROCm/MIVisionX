@@ -170,11 +170,11 @@ static vx_status VX_CALLBACK processNoise(vx_node node, const vx_reference *para
     #if ENABLE_OPENCL
             return_status = VX_ERROR_NOT_IMPLEMENTED;
     #elif ENABLE_HIP
-            rpp_status = rppt_gaussian_noise_3d_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->mean, data->std_dev, data->seed, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
+            // rpp_status = rppt_gaussian_noise_3d_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->mean, data->std_dev, data->seed, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     #endif
         } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rpp_status = rppt_gaussian_noise_3d_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->mean, data->std_dev, data->seed, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
+            // rpp_status = rppt_gaussian_noise_3d_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->mean, data->std_dev, data->seed, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         }
     }

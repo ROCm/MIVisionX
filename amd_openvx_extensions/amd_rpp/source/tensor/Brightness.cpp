@@ -162,11 +162,11 @@ static vx_status VX_CALLBACK processBrightness(vx_node node, const vx_reference 
     #if ENABLE_OPENCL
             return_status = VX_ERROR_NOT_IMPLEMENTED;
     #elif ENABLE_HIP
-            rppt_fmadd_scalar_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
+            // rppt_fmadd_scalar_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     #endif
         } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rppt_fmadd_scalar_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
+            // rppt_fmadd_scalar_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         }
     }

@@ -204,13 +204,13 @@ def onnx_graph_to_ir_graph(onnx_graph):
             graph.addNode(node)
     for tensor in onnx_graph.initializer:
         tensorName = onnx_name_to_ir_name(tensor.name)
-        if not tensorName in shapeList:
+        if tensorName not in shapeList:
             initializerList.append(tensorName)
             graph.addVariable(onnx_tensor_info_to_data(tensor, tensor.dims))
             raw_data = numpy_helper.to_array(tensor)
             graph.addBinary(tensorName, raw_data)
     for tensor in onnx_graph.input:
-        if not onnx_name_to_ir_name(tensor.name) in initializerList and not onnx_name_to_ir_name(tensor.name) in shapeList:
+        if onnx_name_to_ir_name(tensor.name) not in initializerList and onnx_name_to_ir_name(tensor.name) not in shapeList:
             input_dims = [int(x.dim_value) for x in tensor.type.tensor_type.shape.dim]
             if (len(sys.argv) > 3) and (sys.argv[3] == "--input_dims"):
                 if (x == 0 or x is None or x == '?' for x in input_dims):
@@ -220,7 +220,7 @@ def onnx_graph_to_ir_graph(onnx_graph):
     for tensor in onnx_graph.output:
         output_dims = [int(x.dim_value) for x in tensor.type.tensor_type.shape.dim]
         if (x == 0 or x is None or x == '?' for x in output_dims):
-            if inputUser == True:
+            if inputUser is True:
                 output_dims[0] = input_dims[0]
         while len(output_dims) != 4:
             output_dims.append(1)

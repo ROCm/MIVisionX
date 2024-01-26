@@ -242,13 +242,13 @@ if not os.path.exists(modelCompilerDeps):
         if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
             linuxCMake = 'cmake3'
             os.system(linuxSystemInstall+' install cmake3')
-        if not "centos" in platfromInfo or not "redhat" in platfromInfo:
+        if "centos" not in platfromInfo or "redhat" not in platfromInfo:
             platfromInfo = platfromInfo+'-redhat'
     elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
         linuxSystemInstall = 'apt-get -y'
         linuxSystemInstall_check = '--allow-unauthenticated'
         linuxFlag = '-S'
-        if not "Ubuntu" in platfromInfo:
+        if "Ubuntu" not in platfromInfo:
             platfromInfo = platfromInfo+'-Ubuntu'
     elif os.path.exists('/usr/bin/zypper'):
         linuxSystemInstall = 'zypper -n'
@@ -801,13 +801,13 @@ if profileMode == 0 or profileMode == 9:
 # get system data
 platform_name = platform.platform()
 if os.path.exists('/usr/bin/yum'):
-    if not "centos" in platform_name or not "redhat" in platform_name:
+    if "centos" not in platform_name or "redhat" not in platform_name:
         platfromInfo = platform_name+'-CentOS-RedHat'
 elif os.path.exists('/usr/bin/apt-get'):
-    if not "Ubuntu" in platform_name:
+    if "Ubuntu" not in platform_name:
         platform_name = platform_name+'-Ubuntu'
 elif os.path.exists('/usr/bin/zypper'):
-    if not "SLES" in platform_name:
+    if "SLES" not in platform_name:
         platform_name = platform_name+'-SLES'
 else:
     print("\nMIVisionX Neural Network Test on "+platform_name+" is unsupported")

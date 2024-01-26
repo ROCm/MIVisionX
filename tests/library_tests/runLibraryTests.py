@@ -76,13 +76,13 @@ MIVisionXAbsPath = os.path.abspath(installDir)
 platform_name = platform.platform()
 
 if os.path.exists('/usr/bin/yum'):
-    if not "centos" in platform_name or not "redhat" in platform_name:
+    if "centos" not in platform_name or "redhat" not in platform_name:
         platfromInfo = platform_name+'-CentOS-RedHat'
 elif os.path.exists('/usr/bin/apt-get'):
-    if not "Ubuntu" in platform_name:
+    if "Ubuntu" not in platform_name:
         platform_name = platform_name+'-Ubuntu'
 elif os.path.exists('/usr/bin/zypper'):
-    if not "SLES" in platform_name:
+    if "SLES" not in platform_name:
         platform_name = platform_name+'-SLES'
 else:
     print("\nMIVisionX Library Test on "+platform_name+" is unsupported")

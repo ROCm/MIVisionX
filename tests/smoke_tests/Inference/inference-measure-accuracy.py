@@ -22,7 +22,6 @@ import os
 import getopt
 import sys
 import subprocess
-from subprocess import call
 import datetime
 
 #Input: inference-test.py test results directory, [network]-[precision]-[date]

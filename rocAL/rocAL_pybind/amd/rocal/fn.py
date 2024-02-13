@@ -18,7 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
+from amd.rocal import readers
+from amd.rocal import decoders
+from amd.rocal import random
+from amd.rocal import noise
+from amd.rocal import reductions
 
 import amd.rocal.types as types
 import rocal_pybind as b

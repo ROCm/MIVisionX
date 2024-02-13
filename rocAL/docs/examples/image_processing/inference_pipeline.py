@@ -19,10 +19,7 @@
 # THE SOFTWARE.
 
 import sys
-from tkinter import W
 from amd.rocal.pipeline import pipeline_def
-import numpy as np
-import rocal_pybind as b
 from amd.rocal.plugin.pytorch import ROCALClassificationIterator
 import amd.rocal.fn as fn
 import amd.rocal.types as types

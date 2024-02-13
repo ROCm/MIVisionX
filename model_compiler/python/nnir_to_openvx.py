@@ -469,7 +469,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
         for tensor in graph.outputs:
             outputList.append(tensor.name)
         for idx, tensor in enumerate(graph.locals):
-            if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
+            if (tensor.name not in outputList) and (tensor.name not in localList[:idx]):
                 tensor.shape = [int(v) for v in tensor.shape]
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
@@ -518,7 +518,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
       ERROR_CHECK_STATUS(vxReleaseScalar(&s_alpha));
 """ %(alpha))
                 if (node.attr.get('group') > 1):
-                    group = node.attr.get('group');
+                    group = node.attr.get('group')
                     f.write( \
 """      vx_int32 groupCount = %d;
       vx_scalar s_groupCount = vxCreateScalarWithSize(context, VX_TYPE_INT32, &groupCount, sizeof(groupCount));
@@ -858,7 +858,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
       ERROR_CHECK_OBJECT(node);
 """ % (node.inputs[0], node.outputs[0]))
                 if (node.attr.get('axis') > 1):
-                    axis = node.attr.get('axis');
+                    axis = node.attr.get('axis')
                     f.write( \
 """      vx_int32 axis = %d;
       vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
@@ -1035,7 +1035,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     % (node.inputs[0], node.inputs[1], node.inputs[2], node.attr.get('num_classes'), node.attr.get('share_location'), node.attr.get('background_label_id'), \
          node.attr.get('nms_threshold'), node.attr.get('code_type'), node.attr.get('keep_top_k'), node.attr.get('variance_encoded_in_target'), node.outputs[0]))
                 if (node.attr.get('top_k') > -1):
-                    top_k = node.attr.get('top_k');
+                    top_k = node.attr.get('top_k')
                     f.write( \
 """      vx_int32 top_k = %d;
       vx_scalar s_topK = vxCreateScalarWithSize(context, VX_TYPE_INT32, &top_k, sizeof(top_k));
@@ -1043,7 +1043,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
       ERROR_CHECK_STATUS(vxReleaseScalar(&s_topK));
 """ % (top_k))
                 if (node.attr.get('confidence_threshold') > -sys.float_info.max):
-                    confidence_threshold = node.attr.get('confidence_threshold');
+                    confidence_threshold = node.attr.get('confidence_threshold')
                     f.write( \
 """      vx_float32 confidence_threshold = %f;
       vx_scalar s_confidence_threshold = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &confidence_threshold, sizeof(confidence_threshold));
@@ -1051,7 +1051,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
       ERROR_CHECK_STATUS(vxReleaseScalar(&s_confidence_threshold));
 """ % (confidence_threshold))
                 if (node.attr.get('eta') > 0.0 and node.attr.get('eta') <= 1.0):
-                    eta = node.attr.get('eta');
+                    eta = node.attr.get('eta')
                     f.write( \
 """      vx_float32 eta = %f;
       vx_scalar s_eta = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &eta, sizeof(eta));
@@ -1209,7 +1209,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     // release local tensors
 """)
         for idx, tensor in enumerate(graph.locals):
-            if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
+            if (tensor.name not in outputList) and (tensor.name not in localList[:idx]):
                 f.write( \
 """    ERROR_CHECK_STATUS(vxReleaseTensor(&%s));
 """ %(tensor.name))
@@ -1374,7 +1374,7 @@ VX_API_ENTRY const char * VX_API_CALL annQueryInference()
 {
     return "%s";
 }
-""" % (configLocals));
+""" % (configLocals))
 
             f.write( \
 """
@@ -2781,9 +2781,9 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     ...
 
 """
-    pos = 1;
+    pos = 1
     argmaxOutput = None
-    virtual_tensor_flag = 1;
+    virtual_tensor_flag = 1
     while len(sys.argv[pos:]) >= 2 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--argmax':
             argmaxOutput = sys.argv[pos+1]
@@ -2818,11 +2818,11 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     graph.fromFile(inputFolder)
     for tensor in graph.outputs:
         if len(tensor.shape) == 1:
-            print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], 1, 1, 1));    
+            print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], 1, 1, 1))
         elif len(tensor.shape) == 2:
-            print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], 1, 1));
+            print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], 1, 1))
         elif len(tensor.shape) == 4:
-            print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], tensor.shape[2], tensor.shape[3]));
+            print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], tensor.shape[2], tensor.shape[3]))
     print('creating C code in ' + outputFolder + ' ...')
     generateCode(graph,argmaxOutput,outputFolder,virtual_tensor_flag)
 

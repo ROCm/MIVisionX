@@ -850,7 +850,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
 """%(i, node.outputs[0], i, layerNumber, layerNumber))
                 layerNumber += 1
             elif node.type == 'softmax':
-                axis = node.attr.get('axis');
+                axis = node.attr.get('axis')
                 f.write( \
 """
     // Start: Model Layer %d - softMax
@@ -1000,7 +1000,7 @@ def main():
 Usage: python nnir_to_zendnn.py <nnirInputFolder> <outputFolder>
 
 """
-    pos = 1;
+    pos = 1
     argmaxOutput = None
     while len(sys.argv[pos:]) >= 2 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] != '--help':

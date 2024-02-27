@@ -64,19 +64,6 @@ find_library(VXRPP_LIBRARIES
 )
 mark_as_advanced(VXRPP_LIBRARIES)
 
-find_path(MIVisionX_LIBRARIES_DIRS
-    NAMES libopenvx${SHARED_LIB_TYPE}
-    HINTS
-    $ENV{ROCM_PATH}/lib
-    $ENV{ROCM_PATH}/lib64
-    $ENV{MIVisionX_PATH}/lib
-    PATHS
-    ${MIVisionX_PATH}/lib
-    /usr/lib
-    ${ROCM_PATH}/lib
-)
-mark_as_advanced(MIVisionX_LIBRARIES_DIRS)
-
 if(OPENVX_LIBRARIES AND MIVisionX_INCLUDE_DIRS)
     set(MIVisionX_FOUND TRUE)
 endif( )
@@ -88,14 +75,12 @@ find_package_handle_standard_args( MIVisionX
         OPENVX_LIBRARIES
         VXRPP_LIBRARIES  
         MIVisionX_INCLUDE_DIRS
-        MIVisionX_LIBRARIES_DIRS
 )
 
 set(MIVisionX_FOUND ${MIVisionX_FOUND} CACHE INTERNAL "")
 set(OPENVX_LIBRARIES ${OPENVX_LIBRARIES} CACHE INTERNAL "")
 set(VXRPP_LIBRARIES ${VXRPP_LIBRARIES} CACHE INTERNAL "")
 set(MIVisionX_INCLUDE_DIRS ${MIVisionX_INCLUDE_DIRS} CACHE INTERNAL "")
-set(MIVisionX_LIBRARIES_DIRS ${MIVisionX_LIBRARIES_DIRS} CACHE INTERNAL "")
 
 if(MIVisionX_FOUND)
     message("-- ${White}Using MIVisionX -- \n\tLibraries:${OPENVX_LIBRARIES} \n\tIncludes:${MIVisionX_INCLUDE_DIRS}${ColourReset}")    

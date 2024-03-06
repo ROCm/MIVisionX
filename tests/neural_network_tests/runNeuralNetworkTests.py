@@ -279,7 +279,7 @@ if not os.path.exists(modelCompilerDeps):
     # Install CAFFE Deps
     os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
     # Install ONNX Deps
-    os.system('sudo pip3 install onnx==1.11.0')
+    os.system('sudo pip3 install onnx==1.12.0')
     # Install NNEF Deps
     os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
     os.system(

@@ -72,7 +72,7 @@ sudo pip3 install google==3.0.0 protobuf==3.12.4
 * protobuf
 * onnx
 ``` 
-sudo pip3 install protobuf==3.12.4 onnx==1.11.0
+sudo pip3 install protobuf==3.12.4 onnx==1.12.0
 ```
 **Note:** 
 * ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)

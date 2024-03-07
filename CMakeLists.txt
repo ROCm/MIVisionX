@@ -23,6 +23,9 @@ set(VERSION "3.0.0")
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
 
+# Support for Shared/Static Deliverables = Default Enabled Shared
+set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library (.so) or not.")
+
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
 

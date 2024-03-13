@@ -29,8 +29,12 @@ list(APPEND SOURCES runcl.cpp)
 
 add_executable(runcl ${SOURCES})
 # install MIVisionX executables -- {ROCM_PATH}/bin
-install(TARGETS runcl DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
-install(TARGETS runcl DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT dev)
+if( NOT BUILD_SHARED_LIBS)
+  install(TARGETS runcl DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT static)
+else()
+  install(TARGETS runcl DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
+  install(TARGETS runcl DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT dev)
+endif()
 
 if(OpenCL_FOUND)
 	target_compile_definitions(runcl PUBLIC ENABLE_OPENCL=1)

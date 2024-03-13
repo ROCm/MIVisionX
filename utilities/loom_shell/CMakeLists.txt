@@ -37,6 +37,9 @@ target_link_libraries(loom_shell vx_loomsl openvx)
 # install MIVisionX executables -- {ROCM_PATH}/bin
 install(TARGETS loom_shell DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
 install(TARGETS loom_shell DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT dev)
+if(NOT BUILD_SHARED_LIBS)
+  install(TARGETS loom_shell DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT static)
+endif()
 
 if (OpenCL_FOUND)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)

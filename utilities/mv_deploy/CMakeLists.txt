@@ -31,12 +31,24 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include
 add_executable(mv_compile mv_compile.cpp)
 
 # install MIVisionX executables -- {ROCM_PATH}/bin
-install(TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
+if(NOT BUILD_SHARED_LIBS)
+  install(TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT static)
+else()
+  install(TARGETS mv_compile DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
+endif()
+
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++17 ")
 target_link_libraries(mv_compile ${CMAKE_DL_LIBS} stdc++fs)
 
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES mvdeploy_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
-install(FILES mv_extras_postproc.h DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy COMPONENT dev)
-install(FILES mv_extras_postproc.cpp DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy COMPONENT dev)
+if(NOT BUILD_SHARED_LIBS)
+  install(FILES mvdeploy_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT static)
+  install(FILES mv_extras_postproc.h DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy COMPONENT static)
+  install(FILES mv_extras_postproc.cpp DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy COMPONENT static)
+else()
+  install(FILES mvdeploy_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+  install(FILES mv_extras_postproc.h DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy COMPONENT dev)
+  install(FILES mv_extras_postproc.cpp DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx/model_compiler/mv_deploy COMPONENT dev)
+endif()
+

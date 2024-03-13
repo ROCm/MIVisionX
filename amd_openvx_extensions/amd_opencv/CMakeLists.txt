@@ -24,6 +24,12 @@ project(amd_opencv VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
+if(NOT BUILD_SHARED_LIBS)
+  find_program(hipcc_executable hipcc)
+  message(STATUS "hipcc executable: ${hipcc_executable}")
+  set(CMAKE_AR "${hipcc_executable}")
+endif()
+
 find_package(OpenCV QUIET)
 
 include_directories(../../amd_openvx/openvx/include
@@ -95,12 +101,20 @@ list(APPEND SOURCES
 	source/OpenCV_warpPerspective.cpp
 	)
 
-add_library(vx_opencv SHARED ${SOURCES})
+if(NOT BUILD_SHARED_LIBS)
+  add_library(vx_opencv ${SOURCES})
+else()
+  add_library(vx_opencv SHARED ${SOURCES})
+endif()
 
 if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
     message("-- ${White}OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X${ColourReset}")
     include_directories(${OpenCV_INCLUDE_DIRS})
-    target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
+    if(NOT BUILD_SHARED_LIBS)
+        target_link_libraries(vx_opencv INTERFACE ${OpenCV_LIBRARIES})
+    else()
+        target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
+    endif()
     if(${OpenCV_VERSION_MAJOR} EQUAL 4)
 	    target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=1)
     else()
@@ -110,22 +124,41 @@ else()
     message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
 endif()
 
-target_link_libraries(vx_opencv openvx)
+if(NOT BUILD_SHARED_LIBS)
+    target_link_libraries(vx_opencv INTERFACE openvx)
+    target_link_libraries(vx_opencv PRIVATE --emit-static-lib)
+    get_property(link_libraries TARGET vx_opencv PROPERTY LINK_LIBRARIES)
+    string (REPLACE ";" " " LINK_PROPS "${link_libraries}")
+    set(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> -o <TARGET> ${LINK_PROPS} <LINK_FLAGS> <OBJECTS>")
+else()
+    target_link_libraries(vx_opencv openvx)
+endif()
 target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
-set_target_properties(vx_opencv PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
-# install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
-install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
-install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
-# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_ext_opencv.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+if(NOT BUILD_SHARED_LIBS)
+    # install MIVisionX libs -- {ROCM_PATH}/lib
+    install(TARGETS vx_opencv DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT static)
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+    install(FILES include/vx_ext_opencv.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT static)
+else()
+    set_target_properties(vx_opencv PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+    # install MIVisionX libs -- {ROCM_PATH}/lib
+    install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+    install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+    install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+    # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+    install(FILES include/vx_ext_opencv.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+endif()
 
 if(WIN32)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
+    if(NOT BUILD_SHARED_LIBS)
+        target_link_libraries(vx_opencv INTERFACE openvx)
+    else()
 	target_link_libraries(vx_opencv openvx)
+    endif()
 	# -fdata-sections -- Place data items into their own section.
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
 endif()

@@ -76,6 +76,7 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
 vx_status createRPPHandle(vx_node node, vxRppHandle ** pHandle, Rpp32u batchSize, Rpp32u deviceType);
 vx_status releaseRPPHandle(vx_node node, vxRppHandle * handle, Rpp32u deviceType);
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims);
+void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims);
 RpptDataType getRpptDataType(vx_enum dataType);
 
 class Kernellist

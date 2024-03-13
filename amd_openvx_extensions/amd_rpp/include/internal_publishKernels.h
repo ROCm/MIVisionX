@@ -155,6 +155,7 @@ vx_status Snow_Register(vx_context);
 vx_status Vignette_Register(vx_context);
 vx_status WarpAffine_Register(vx_context);
 vx_status SequenceRearrange_Register(vx_context);
+vx_status PreemphasisFilter_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -279,5 +280,6 @@ vx_status SequenceRearrange_Register(vx_context);
 #define VX_KERNEL_RPP_NOP_NAME                                   "org.rpp.Nop"
 #define VX_KERNEL_RPP_RESIZE_NAME                                "org.rpp.Resize"
 #define VX_KERNEL_RPP_SEQUENCEREARRANGE_NAME                     "org.rpp.SequenceRearrange"
+#define VX_KERNEL_RPP_PREEMPHASISFILTER_NAME "org.rpp.PreemphasisFilter"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

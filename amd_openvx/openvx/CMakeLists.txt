@@ -64,13 +64,12 @@ list(APPEND SOURCES
     api/vx_nodes.cpp
 )
 
-find_program(hipcc_executable hipcc)
-message(STATUS "hipcc executable: ${hipcc_executable}")
-execute_process(
-  COMMAND         bash "-c" "${hipcc_executable} --version | grep 'HIP version' | awk -F\" \" '{ printf $3}' | awk -F\"-\" '{ printf $1}'"
-  OUTPUT_VARIABLE hipcc_version_string)
-message(STATUS "hipcc version:    ${hipcc_version_string}")
-set(CMAKE_AR "${hipcc_executable}")
+if(NOT BUILD_SHARED_LIBS)
+  # Setting CMAKE_AR for Static Library Generation
+  find_program(hipcc_executable hipcc)
+  message(STATUS "hipcc executable: ${hipcc_executable}")
+  set(CMAKE_AR "${hipcc_executable}")
+endif()
 
 if(NOT BUILD_SHARED_LIBS)
   message(STATUS "Building static MIVISIONX library")
@@ -83,6 +82,7 @@ else()
   message(STATUS "Building shared RCCL library")
   add_library(openvx SHARED ${SOURCES})
 endif()
+
 add_library(vxu SHARED api/vxu.cpp ago/ago_platform.cpp)
 set(ENABLE_OPENCL 0)
 set(ENABLE_HIP 0)
@@ -140,9 +140,7 @@ set_target_properties(vxu PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJ
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 if(NOT BUILD_SHARED_LIBS)
-  install(TARGETS openvx COMPONENT runtime)
-  install(TARGETS openvx COMPONENT dev)
-  install(TARGETS openvx COMPONENT asan)
+  install(TARGETS openvx DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT static)
 else()
   install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
   install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
@@ -154,37 +152,75 @@ install(TARGETS vxu LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 
 # install MIVisionX backend type files -- {ROCM_PATH}/include/mivisionx/
 configure_file("${PROJECT_SOURCE_DIR}/include/openvx_backend.h.in" "${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h")
-install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+if(NOT BUILD_SHARED_LIBS)
+  install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h 
+          DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx 
+          COMPONENT static)
 
-# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_ext_amd.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
-install(FILES
-            include/VX/vx.h
-            include/VX/vx_api.h
-            include/VX/vx_compatibility.h
-            include/VX/vx_import.h
-            include/VX/vx_kernels.h
-            include/VX/vx_khr_buffer_aliasing.h
-            include/VX/vx_khr_class.h
-            include/VX/vx_khr_icd.h
-            include/VX/vx_khr_import_kernel.h
-            include/VX/vx_khr_ix.h
-            include/VX/vx_khr_nn.h
-            include/VX/vx_khr_opencl_interop.h
-            include/VX/vx_khr_pipelining.h
-            include/VX/vx_khr_tiling.h
-            include/VX/vx_khr_user_data_object.h
-            include/VX/vx_khr_xml.h
-            include/VX/vx_nodes.h
-            include/VX/vx_types.h
-            include/VX/vx_vendors.h
-            include/VX/vxu.h
-	    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX COMPONENT dev)
-# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
-install(DIRECTORY ../../apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
-install(DIRECTORY ../../samples/c_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
-install(DIRECTORY ../../samples/images DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+  # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+  install(FILES include/vx_ext_amd.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT static)
+  install(FILES
+              include/VX/vx.h
+              include/VX/vx_api.h
+              include/VX/vx_compatibility.h
+              include/VX/vx_import.h
+              include/VX/vx_kernels.h
+              include/VX/vx_khr_buffer_aliasing.h
+              include/VX/vx_khr_class.h
+              include/VX/vx_khr_icd.h
+              include/VX/vx_khr_import_kernel.h
+              include/VX/vx_khr_ix.h
+              include/VX/vx_khr_nn.h
+              include/VX/vx_khr_opencl_interop.h
+              include/VX/vx_khr_pipelining.h
+              include/VX/vx_khr_tiling.h
+              include/VX/vx_khr_user_data_object.h
+              include/VX/vx_khr_xml.h
+              include/VX/vx_nodes.h
+              include/VX/vx_types.h
+              include/VX/vx_vendors.h
+              include/VX/vxu.h
+	      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX COMPONENT static)
+  # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+  install(DIRECTORY ../../apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT static)
+  install(DIRECTORY ../../apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT static)
+  install(DIRECTORY ../../samples/c_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT static)
+  install(DIRECTORY ../../samples/images DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT static)
+else()
+  install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h 
+          DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx 
+          COMPONENT dev)
+
+  # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+  install(FILES include/vx_ext_amd.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+  install(FILES
+              include/VX/vx.h
+              include/VX/vx_api.h
+              include/VX/vx_compatibility.h
+              include/VX/vx_import.h
+              include/VX/vx_kernels.h
+              include/VX/vx_khr_buffer_aliasing.h
+              include/VX/vx_khr_class.h
+              include/VX/vx_khr_icd.h
+              include/VX/vx_khr_import_kernel.h
+              include/VX/vx_khr_ix.h
+              include/VX/vx_khr_nn.h
+              include/VX/vx_khr_opencl_interop.h
+              include/VX/vx_khr_pipelining.h
+              include/VX/vx_khr_tiling.h
+              include/VX/vx_khr_user_data_object.h
+              include/VX/vx_khr_xml.h
+              include/VX/vx_nodes.h
+              include/VX/vx_types.h
+              include/VX/vx_vendors.h
+              include/VX/vxu.h
+	      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX COMPONENT dev)
+  # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+  install(DIRECTORY ../../apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+  install(DIRECTORY ../../apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+  install(DIRECTORY ../../samples/c_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+  install(DIRECTORY ../../samples/images DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+endif()
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")

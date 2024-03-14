@@ -27,11 +27,9 @@ if sys.version_info[0] < 3:
 else:
     import subprocess
 
-__author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.6.1"
-__maintainer__ = "Kiriti Nagesh Gowda"
+__version__ = "2.7"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -181,7 +179,7 @@ elif os.path.exists('/usr/bin/zypper'):
     platfromInfo = platfromInfo+'-SLES'
 else:
     print("\nMIVisionX Setup on "+platfromInfo+" is unsupported\n")
-    print("\nMIVisionX Setup Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3\n")
+    print("\nMIVisionX Setup Supported on: Ubuntu 20/22, CentOS 7, RedHat 8/9, & SLES 15 SP4\n")
     exit()
 
 # MIVisionX Setup
@@ -197,47 +195,54 @@ if os.path.exists(deps_dir) and reinstall == 'ON':
     os.system('sudo rm -rf '+deps_dir)
     print("\nMIVisionX Setup: Removing Previous Install -- "+deps_dir+"\n")
 
+neuralNetDebianPackages = [
+    'half',
+    'rocblas-dev',
+    'miopen-hip-dev',
+    'migraphx-dev'
+]
+
+neuralNetRPMPackages = [
+    'half',
+    'rocblas-devel',
+    'miopen-hip-devel',
+    'migraphx-devel'
+]
+
 # Re-Install
 if os.path.exists(deps_dir):
     print("\nMIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
-    # opencv
-    if os.path.exists(deps_dir+'/build/OpenCV'):
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/OpenCV; sudo ' +
-                  linuxFlag+' make install -j8)')
 
     if neuralNetInstall == 'ON':
         os.system('sudo -v')
         if backend == 'HIP':
             if "Ubuntu" in platfromInfo:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y half rocblas-dev miopen-hip-dev migraphx-dev')
+                for i in range(len(neuralNetDebianPackages)):
+                    try:
+                        os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i])
+                    except:
+                        exit('Failed to install the '+ neuralNetDebianPackages[i])
             else:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y half rocblas-devel miopen-hip-devel migraphx-devel')
-
-    if (rocalInstall == 'ON' or neuralNetInstall == 'ON'):
-        # ProtoBuf
-        if os.path.exists(deps_dir+'/protobuf-'+ProtoBufVersion):
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
-                      '; sudo '+linuxFlag+' make install -j8)')
-
-    if rocalInstall == 'ON':
-        # RPP
-        if "Ubuntu" in platfromInfo:
+                for i in range(len(neuralNetRPMPackages)):
+                    try:
+                        os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetRPMPackages[i])
+                    except:
+                        exit('Failed to install the '+ neuralNetRPMPackages[i])
+    # RPP
+    if "Ubuntu" in platfromInfo:
+        try:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y rpp rpp-dev')
-        else:
+                ' '+linuxSystemInstall_check+' install -y rpp-dev')
+        except:
+            exit('Failed to install the rpp-dev')
+    else:
+        try:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
-
-    if ffmpegInstall == 'ON':
-        # FFMPEG
-        if os.path.exists(deps_dir+'/FFmpeg-n4.4.2'):
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; sudo ' +
-                      linuxFlag+' make install -j8)')
+                ' '+linuxSystemInstall_check+' install -y rpp-devel')
+        except:
+            exit('Failed to install the rpp-dev')
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
     exit()

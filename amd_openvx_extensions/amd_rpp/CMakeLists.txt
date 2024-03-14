@@ -133,6 +133,7 @@ list(APPEND SOURCES
         source/tensor/Copy.cpp
         source/tensor/Crop.cpp
         source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Downmix.cpp
         source/tensor/Exposure.cpp
         source/tensor/FishEye.cpp
         source/tensor/Flip.cpp
@@ -160,7 +161,6 @@ list(APPEND SOURCES
         source/tensor/WarpAffine.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/PreemphasisFilter.cpp
-        source/tensor/Downmix.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )

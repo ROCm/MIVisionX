@@ -1876,15 +1876,6 @@ extern "C"
 	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppPreemphasisFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_array preemphCoeff, vx_scalar borderType);
-	/*! \brief [Graph] Applies downmixing to the input tensor.
-	 * \ingroup group_amd_rpp
-	 * \param [in] graph The handle to the graph.
-	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	 * \param [in] pDstRoi The output tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
-	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
-	 */
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppDownmix(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_tensor srcRoi);
 
 	/*! \brief [Graph] Performs leading and trailing silence detection to the input tensor.
 	* \ingroup group_amd_rpp

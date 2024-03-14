@@ -160,7 +160,6 @@ list(APPEND SOURCES
         source/tensor/WarpAffine.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/PreemphasisFilter.cpp
-        source/tensor/Downmix.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )

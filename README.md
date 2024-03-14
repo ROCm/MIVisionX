@@ -19,7 +19,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 ## AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
+The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below listed OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
 
 <p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 
@@ -28,12 +28,12 @@ The OpenVX framework provides a mechanism to add new vision functionality to Ope
 * [amd_migraphx](amd_openvx_extensions/amd_migraphx/README.md): AMD MIGraphX extension integrates the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> into an OpenVX graph. This extension allows developers to combine the vision funcions in OpenVX with the MIGraphX and build an end-to-end application for inference.
 * [amd_nn](amd_openvx_extensions/amd_nn/README.md): OpenVX neural network module
 * [amd_opencv](amd_openvx_extensions/amd_opencv/README.md): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
-* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): OpenVX extension providing an interface to some of the [RPP](https://github.com/ROCm/rpp)'s (ROCm Performance Primitives) functions. This extension is used to enable [rocAL](rocAL/README.md) to perform image augmentation.
-* [amd_winml](amd_openvx_extensions/amd_winml/README.md): AMD WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
+* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): OpenVX extension providing an interface to some of the [ROCm Performance Primitives](https://github.com/ROCm/rpp) (RPP) functions. This extension enables [rocAL](rocAL/README.md) to perform image augmentation.
+* [amd_winml](amd_openvx_extensions/amd_winml/README.md): AMD WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This extension aims to help developers to build an end to end application for inference.
 
 ## Applications
 
-MIVisionX has several [applications](apps/README.md#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications that can be used to prototype or use as a model to develop products.
+MIVisionX has several [applications](apps/README.md#applications) built on top of OpenVX modules. These applications can serve as excellent prototypes and samples for developers to build upon.
 
 <p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX-applications.png" /></p>
 
@@ -51,9 +51,9 @@ rocAL is now available as an independent module at [https://github.com/ROCm/rocA
 
 ## Toolkit
 
-[MIVisionX Toolkit](toolkit/README.md), is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides you with helpful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
+[MIVisionX Toolkit](toolkit/README.md) is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides useful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit has been designed to help you deploy your work on any AMD or 3rd party hardware, from embedded to servers.
 
-MIVisionX provides you with tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
+MIVisionX toolkit provides tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
 
 ## Utilities
 
@@ -76,10 +76,10 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 ### Operating System
 
 #### Linux
-* **Ubuntu** - `20.04` / `22.04`
-* **CentOS** - `7`
-* **RedHat** - `8` / `9`
-* **SLES** - `15-SP4`
+* Ubuntu - `20.04` / `22.04`
+* CentOS - `7`
+* RedHat - `8` / `9`
+* SLES - `15-SP4`
 
 #### Windows
 * Windows `10` / `11`
@@ -97,7 +97,7 @@ The installation process uses the following steps:
 
 * Install ROCm `6.0.0` or later with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) with `--usecase=rocm`
 
-* Use either [Package install](#package-install) or [Source install](#source-install) as described below.
+* Use **either** [Package install](#package-install) **or** [Source install](#source-install) as described below.
 
 #### Package install
 
@@ -120,25 +120,16 @@ Install MIVisionX runtime, development, and test packages.
   ```
 
 > [!IMPORTANT]
+>  * Package install supports `HIP` backend
 >  * Package install requires `OpenCV V4.6` and `Protobuf V3.12.4`  manual install
 >  * `CentOS`/`RedHat`/`SLES` requires `FFMPEG Dev` package manual install
 
 #### Source install
 
-##### Prerequisites setup script for Linux
+##### Prerequisites setup script
 
-For the convenience of the developer, we provide the setup script `MIVisionX-setup.py` which will install all the dependencies required by this project.
+For your convenience, we provide the setup script, `MIVisionX-setup.py`, which installs all required dependencies.
 
-> [!NOTE]
->  This script only needs to be executed once.
-
-##### Prerequisites for running the script
-
-* Linux distribution
-* [ROCm supported hardware](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html)
-* Install ROCm with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) with `--usecase=rocm`
-
-  **usage:**
   ```shell
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default:4.6.0)]
@@ -154,7 +145,9 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
   ```
 > [!NOTE]
-> **ROCm upgrade** requires the setup script **rerun**
+> * Install ROCm before running the setup script
+> * This script only needs to be executed once
+> * ROCm upgrade requires the setup script rerun
 
 ##### Using MIVisionX-setup.py 
 
@@ -167,7 +160,7 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
 > [!NOTE]
 > MIVisionX has support for two GPU backends: **OPENCL** and **HIP**
 
-* Instructions for building MIVisionX with the **HIP** GPU backend (default GPU backend):
+* Instructions for building MIVisionX with the **HIP** GPU backend (default backend):
 
     + run the setup script to install all the dependencies required by the **HIP** GPU backend:
   
@@ -194,8 +187,8 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
   ```
 
 > [!NOTE]
->    + `PyPackageInstall` used for rocal_pybind installation
->    + `sudo` required for pybind installation
+>  + `PyPackageInstall` used for rocal_pybind installation
+>  + `sudo` required for pybind installation
 
 
 * Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/ROCm/MIVisionX/wiki/OpenCL-Backend)
@@ -220,7 +213,7 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
 
 macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions)
 
-> [!NOTE]
+> [!IMPORTANT]
 > MIVisionX CPU only backend is supported in macOS
 
 ## Verify installation
@@ -315,12 +308,12 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + CentOS - `7` / `8`
   + RHEL - `8` / `9`
   + SLES - `15-SP4`
-* ROCm: rocm-core - `5.7.0.50700-6`
-* miopen-hip - `2.20.0.50700-63`
-* migraphx - `2.7.0.50700-63`
+* ROCm: rocm-core - `6.1.0.60100`
+* RPP - `1.5.0.60100`
+* miopen-hip - `3.1.0.60100`
+* migraphx - `2.9.0.60100`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - 1.5.0
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
 * MIVisionX Setup Script - `V2.6.1`

@@ -187,8 +187,8 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
   ```
 
 > [!NOTE]
->    + `PyPackageInstall` used for rocal_pybind installation
->    + `sudo` required for pybind installation
+>  + `PyPackageInstall` used for rocal_pybind installation
+>  + `sudo` required for pybind installation
 
 
 * Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/ROCm/MIVisionX/wiki/OpenCL-Backend)
@@ -213,7 +213,7 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
 
 macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions)
 
-> [!NOTE]
+> [!IMPORTANT]
 > MIVisionX CPU only backend is supported in macOS
 
 ## Verify installation

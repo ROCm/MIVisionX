@@ -195,15 +195,24 @@ if os.path.exists(deps_dir) and reinstall == 'ON':
     os.system('sudo rm -rf '+deps_dir)
     print("\nMIVisionX Setup: Removing Previous Install -- "+deps_dir+"\n")
 
-neuralNetDebianPackages = [
+commonPackages = [
+    'gcc',
+    'cmake',
+    'git',
+    'wget',
+    'unzip',
+    'pkg-config',
+    'inxi',
     'half',
+]
+
+neuralNetDebianPackages = [
     'rocblas-dev',
     'miopen-hip-dev',
     'migraphx-dev'
 ]
 
 neuralNetRPMPackages = [
-    'half',
     'rocblas-devel',
     'miopen-hip-devel',
     'migraphx-devel'
@@ -213,6 +222,15 @@ neuralNetRPMPackages = [
 if os.path.exists(deps_dir):
     print("\nMIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
 
+    # common packages
+    for i in range(len(commonPackages)):
+        try:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i])
+        except:
+            exit('Failed to install the '+ commonPackages[i])
+
+    # neural net packages
     if neuralNetInstall == 'ON':
         os.system('sudo -v')
         if backend == 'HIP':

@@ -26,10 +26,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg libavcodec-dev liba
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libopencv-dev
 # RPP          
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang half rpp
-# rocAL
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install liblmdb-dev rapidjson-dev libturbojpeg0-dev libprotobuf-dev
-# rocAL PyBind
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python3-dev python3-setuptools python3-pip python3-opencv pybind11-dev
 
 ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE
@@ -39,4 +35,4 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 
 # Clone MIVisionX 
 RUN git clone https://github.com/ROCm/MIVisionX.git && \
-        mkdir build && cd build && cmake -D BACKEND=HIP -D ROCAL=OFF ../MIVisionX && make -j8 && make install
+        mkdir build && cd build && cmake -D BACKEND=HIP ../MIVisionX && make -j8 && make install

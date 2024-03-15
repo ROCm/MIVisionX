@@ -23,12 +23,6 @@ This sample [application](./dg_test/README.md#amd-dgtest) is used to recognize h
 
 <p align="center"> <img src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/DGtest.gif"> </p>
 
-## Image Augmentation
-
-This sample [application](./image_augmentation/README.md#image-augmentation-application) demonstrates the basic usage of rocAL's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
-
-<p align="center"> <img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/image_augmentation.png" /> </p>
-
 # MIVisionX Inference Analyzer
 
 [MIVisionX Inference Analyzer Application](./mivisionx_inference_analyzer/README.md#mivisionx-python-inference-analyzer) using pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze and summarize images.

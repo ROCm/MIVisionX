@@ -146,6 +146,7 @@ list(APPEND SOURCES
         source/tensor/Noise.cpp
         source/tensor/Nop.cpp
         source/tensor/NonSilentRegion.cpp
+        source/tensor/Normalize.cpp
         source/tensor/Rotate.cpp
         source/tensor/Pixelate.cpp
         source/tensor/Rain.cpp
@@ -157,6 +158,7 @@ list(APPEND SOURCES
         source/tensor/SequenceRearrange.cpp
         source/tensor/Snow.cpp
         source/tensor/Spectrogram.cpp
+        source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
         source/tensor/SequenceRearrange.cpp

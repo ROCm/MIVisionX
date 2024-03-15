@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
-ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.7/ubuntu/focal/amdgpu-install_5.7.50700-1_all.deb
-ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.7.50700-1_all.deb
+ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/6.0.2/ubuntu/jammy/amdgpu-install_6.0.60002-1_all.deb
+ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_6.0.60002-1_all.deb
 
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
@@ -21,11 +21,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
 # VX_NN & VX_MIGraphX
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install half miopen-hip-dev rocblas-dev migraphx migraphx-dev
 # VX_MEDIA
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg libavcodec-dev libavformat-dev libswscale-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
 # VX_openCV
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libopencv-dev
 # RPP          
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang half rpp
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang half rpp-dev
 
 ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE

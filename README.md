@@ -121,7 +121,7 @@ Install MIVisionX runtime, development, and test packages.
 
 > [!IMPORTANT]
 >  * Package install supports `HIP` backend
->  * Package install requires `OpenCV V4.6` and `Protobuf V3.12.4`  manual install
+>  * Package install requires `OpenCV V4.6` manual install
 >  * `CentOS`/`RedHat`/`SLES` requires `FFMPEG Dev` package manual install
 
 #### Source install

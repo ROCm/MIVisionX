@@ -124,7 +124,6 @@ nn_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_nn.so')
 migraphx_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_amd_migraphx.so')
 # level 5 - libraries
 rpp_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_rpp.so')
-rocal_lib = shell('ldd '+MIVisionXAbsPath+'/lib/librocal.so')
 
 # Executables
 runvx_exe = shell('ldd '+MIVisionXAbsPath+'/bin/runvx')
@@ -193,15 +192,6 @@ with open(reportFilename, 'w') as f:
         warning = 1
     else:
         write_formatted(rpp_lib, f)
-    f.write("\n")
-    # rocAL Libraries
-    f.write("* rocAL Library\n")
-    if not rocal_lib:
-        f.write("WARNING: rocAL Library Not Built\n")
-        print("WARNING: rocAL Library Not Built\n")
-        warning = 1
-    else:
-        write_formatted(rocal_lib, f)
     f.write("\n")
     if backendType == 'OCL':
         # Loom Libraries

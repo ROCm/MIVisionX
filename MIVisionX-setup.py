@@ -30,7 +30,7 @@ else:
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.6.1"
+__version__ = "2.7.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -51,8 +51,8 @@ parser.add_argument('--neural_net',	type=str, default='ON',
                     help='MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]')
 parser.add_argument('--inference',	type=str, default='ON',
                     help='MIVisionX Neural Net Inference Dependency Install - optional (default:ON) [options:ON/OFF]')
-parser.add_argument('--rocal',	 	type=str, default='ON',
-                    help='MIVisionX rocAL Dependency Install - optional (default:ON) [options:ON/OFF]')
+parser.add_argument('--amd_rpp',	 	type=str, default='ON',
+                    help='MIVisionX amd_rpp Dependency Install - optional (default:ON) [options:ON/OFF]')
 parser.add_argument('--developer', 	type=str, default='OFF',
                     help='Setup Developer Options - optional (default:OFF) [options:ON/OFF]')
 parser.add_argument('--reinstall', 	type=str, default='OFF',
@@ -70,7 +70,7 @@ pybind11Version = args.pybind11
 ffmpegInstall = args.ffmpeg.upper()
 neuralNetInstall = args.neural_net.upper()
 inferenceInstall = args.inference.upper()
-rocalInstall = args.rocal.upper()
+amdRPPInstall = args.amd_rpp.upper()
 developerInstall = args.developer.upper()
 reinstall = args.reinstall.upper()
 backend = args.backend.upper()
@@ -95,7 +95,7 @@ if inferenceInstall not in ('OFF', 'ON'):
         "ERROR: Inference Install Option Not Supported - [Supported Options: OFF or ON]\n")
     parser.print_help()
     exit()
-if rocalInstall not in ('OFF', 'ON'):
+if amdRPPInstall not in ('OFF', 'ON'):
     print(
         "ERROR: Neural Net Install Option Not Supported - [Supported Options: OFF or ON]\n")
     parser.print_help()
@@ -200,11 +200,6 @@ if os.path.exists(deps_dir) and reinstall == 'ON':
 # Re-Install
 if os.path.exists(deps_dir):
     print("\nMIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
-    # opencv
-    if os.path.exists(deps_dir+'/build/OpenCV'):
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/OpenCV; sudo ' +
-                  linuxFlag+' make install -j8)')
 
     if neuralNetInstall == 'ON':
         os.system('sudo -v')
@@ -216,14 +211,7 @@ if os.path.exists(deps_dir):
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                           ' '+linuxSystemInstall_check+' install -y half rocblas-devel miopen-hip-devel migraphx-devel')
 
-    if (rocalInstall == 'ON' or neuralNetInstall == 'ON'):
-        # ProtoBuf
-        if os.path.exists(deps_dir+'/protobuf-'+ProtoBufVersion):
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
-                      '; sudo '+linuxFlag+' make install -j8)')
-
-    if rocalInstall == 'ON':
+    if amdRPPInstall == 'ON':
         # RPP
         if "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -231,13 +219,6 @@ if os.path.exists(deps_dir):
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                           ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
-
-    if ffmpegInstall == 'ON':
-        # FFMPEG
-        if os.path.exists(deps_dir+'/FFmpeg-n4.4.2'):
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; sudo ' +
-                      linuxFlag+' make install -j8)')
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
     exit()
@@ -257,16 +238,12 @@ else:
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
     os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
-    if (rocalInstall == 'ON' or neuralNetInstall == 'ON'):
-        os.system(
-            '(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v'+ProtoBufVersion+'.zip )')
-        os.system('(cd '+deps_dir+'; unzip v'+ProtoBufVersion+'.zip )')
     if ffmpegInstall == 'ON':
         os.system(
             '(cd '+deps_dir+'; wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.4.2.zip && unzip n4.4.2.zip )')
 
     # Install
-    if (rocalInstall == 'ON' or neuralNetInstall == 'ON'):
+    if (amdRPPInstall == 'ON' or neuralNetInstall == 'ON'):
         # package dependencies
         os.system('sudo -v')
         if "centos" in platfromInfo or "redhat" in platfromInfo:
@@ -288,20 +265,6 @@ else:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                   ' '+linuxSystemInstall_check+' install -y half')
-        # Install ProtoBuf
-        os.system('(cd '+deps_dir+'/protobuf-' +
-                  ProtoBufVersion+'; ./autogen.sh )')
-        os.system('(cd '+deps_dir+'/protobuf-' +
-                  ProtoBufVersion+'; ./configure )')
-        os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; make -j8 )')
-        os.system('(cd '+deps_dir+'/protobuf-' +
-                  ProtoBufVersion+'; make check -j8 )')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
-                  '; sudo '+linuxFlag+' make install )')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
-                  '; sudo '+linuxFlag+' ldconfig )')
 
     if neuralNetInstall == 'ON':
         if backend == 'HIP':
@@ -317,6 +280,7 @@ else:
         else:
             print(
                 "\nSTATUS: MIVisionX Setup: Neural Network only supported with HIP backend\n")
+            exit(-1)
 
         # Install Model Compiler Deps
         if inferenceInstall == 'ON':
@@ -395,47 +359,8 @@ else:
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
 
-    if rocalInstall == 'ON':
+    if amdRPPInstall == 'ON':
         # Install RPP
-        # clang
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                  linuxSystemInstall_check+' install clang')
-        if "SLES" in platfromInfo:
-            os.system('sudo -v')
-            os.system(
-                'sudo update-alternatives --install /usr/bin/clang clang /opt/rocm-*/llvm/bin/clang 100')
-            os.system(
-                'sudo update-alternatives --install /usr/bin/clang++ clang++ /opt/rocm-*/llvm/bin/clang++ 100')
-        # OS Deps
-        if "Ubuntu" in platfromInfo:
-            # Install Packages for rocAL
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install libgflags-dev libgoogle-glog-dev liblmdb-dev')
-            # Yasm/Nasm for TurboJPEG
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install nasm yasm')
-        elif "redhat" in platfromInfo or "SLES" in platfromInfo:
-            # Nasm & Yasm
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install nasm yasm')
-            # JSON-cpp
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install jsoncpp-devel')
-            # lmbd
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install lmdb-devel')
-        # turbo-JPEG - https://github.com/rrawther/libjpeg-turbo.git -- 2.0.6.2
-        os.system(
-            '(cd '+deps_dir+'; git clone -b 2.0.6.2 https://github.com/rrawther/libjpeg-turbo.git )')
-        os.system('(cd '+deps_dir+'/libjpeg-turbo; mkdir build; cd build; '+linuxCMake +
-                  ' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
-        # RPP
         os.system('sudo -v')
         if "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -443,15 +368,6 @@ else:
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
-        # RapidJSON
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'; git clone https://github.com/Tencent/rapidjson.git; cd rapidjson; mkdir build; cd build; ' +
-                  linuxCMake+' ../; make -j4; sudo make install)')
-        # PyBind11
-        os.system('sudo -v')
-        os.system('pip install pytest==7.3.1')
-        os.system('(cd '+deps_dir+'; git clone -b '+pybind11Version+' https://github.com/pybind/pybind11; cd pybind11; mkdir build; cd build; ' +
-                  linuxCMake+' -DDOWNLOAD_CATCH=ON -DDOWNLOAD_EIGEN=ON ../; make -j4; sudo make install)')
 
     # Install ffmpeg
     if ffmpegInstall == 'ON':

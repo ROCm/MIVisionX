@@ -39,7 +39,7 @@ logger.addHandler(consoleHandler)
 
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2023, AMD Dataset Analysis Tool"
+__copyright__ = "Copyright 2018 - 2024, AMD Dataset Analysis Tool"
 __credits__ = ["Mike Schmit"]
 __license__ = "MIT"
 __version__ = "0.9.5"

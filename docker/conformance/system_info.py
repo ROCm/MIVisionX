@@ -24,7 +24,7 @@ import os
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2023, AMD MIVisionX - System Report"
+__copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - System Report"
 __license__ = "MIT"
 __version__ = "1.0.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -123,7 +123,7 @@ with open(reportFilename, 'w') as f:
     write_formatted(rocmInfo, f)
     f.write("\n")
 
-    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2023 -- system_info.py V-"+__version__+"**\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2024 -- system_info.py V-"+__version__+"**\n")
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)

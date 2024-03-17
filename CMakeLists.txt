@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 cmake_minimum_required(VERSION 3.5)
-set(VERSION "2.5.0")
+set(VERSION "3.0.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)

@@ -280,7 +280,7 @@ else:
         else:
             print(
                 "\nSTATUS: MIVisionX Setup: Neural Network only supported with HIP backend\n")
-            exit(-1)
+            exit()
 
         # Install Model Compiler Deps
         if inferenceInstall == 'ON':

@@ -27,7 +27,7 @@ import sys
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2023, AMD MIVisionX - Vision Test Full Report"
+__copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Vision Test Full Report"
 __license__ = "MIT"
 __version__ = "1.3.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -783,7 +783,7 @@ else:
         f.write("\n")
 
         f.write(
-            "\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2023 -- runVisionTests.py V-"+__version__+"**\n")
+            "\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2024 -- runVisionTests.py V-"+__version__+"**\n")
         f.write("\n")
 
         # report file

@@ -27,11 +27,9 @@ if sys.version_info[0] < 3:
 else:
     import subprocess
 
-__author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
 __license__ = "MIT"
 __version__ = "2.7.0"
-__maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -201,24 +199,23 @@ if os.path.exists(deps_dir) and reinstall == 'ON':
 if os.path.exists(deps_dir):
     print("\nMIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
 
-    if neuralNetInstall == 'ON':
+    if neuralNetInstall == 'ON' and backend == 'HIP':
         os.system('sudo -v')
-        if backend == 'HIP':
-            if "Ubuntu" in platfromInfo:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y half rocblas-dev miopen-hip-dev migraphx-dev')
-            else:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y half rocblas-devel miopen-hip-devel migraphx-devel')
+        if "Ubuntu" in platfromInfo:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y half rocblas-dev miopen-hip-dev migraphx-dev')
+        else:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y half rocblas-devel miopen-hip-devel migraphx-devel')
 
-    if amdRPPInstall == 'ON':
+    if amdRPPInstall == 'ON' and backend == 'HIP':
         # RPP
         if "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y rpp rpp-dev')
+                        ' '+linuxSystemInstall_check+' install -y rpp rpp-dev')
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
+                        ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
     exit()
@@ -232,7 +229,7 @@ else:
     # install pre-reqs
     os.system('sudo -v')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-              linuxSystemInstall_check+' install gcc cmake git wget unzip pkg-config inxi')
+            linuxSystemInstall_check+' install gcc cmake git wget unzip pkg-config inxi')
 
     # Get Installation Source
     os.system(
@@ -249,54 +246,46 @@ else:
         if "centos" in platfromInfo or "redhat" in platfromInfo:
             if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' + linuxSystemInstall_check +
-                          ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make g++ unzip')
+                        ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make g++ unzip')
             elif "centos-8" in platfromInfo or "redhat" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' + linuxSystemInstall_check +
-                          ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool make gcc-c++ unzip')
+                        ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool make gcc-c++ unzip')
         elif "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool')
+                    linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install curl make g++ unzip libomp-dev libpthread-stubs0-dev')
+                    linuxSystemInstall_check+' install curl make g++ unzip libomp-dev libpthread-stubs0-dev')
         elif "SLES" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                      linuxSystemInstall_check+' install sqlite3 sqlite3-devel libbz2-devel libopenssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
+                    linuxSystemInstall_check+' install sqlite3 sqlite3-devel libbz2-devel libopenssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
         # Install half.hpp
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                  ' '+linuxSystemInstall_check+' install -y half')
+                ' '+linuxSystemInstall_check+' install -y half')
 
-    if neuralNetInstall == 'ON':
-        if backend == 'HIP':
-            os.system('sudo -v')
+    if neuralNetInstall == 'ON' and backend == 'HIP':
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                ' '+linuxSystemInstall_check+' install -y half')
+        if "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y half')
-            if "Ubuntu" in platfromInfo:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y rocblas-dev miopen-hip-dev migraphx-dev')
-            else:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                          ' '+linuxSystemInstall_check+' install -y rocblas-devel miopen-hip-devel migraphx-devel')
+                        ' '+linuxSystemInstall_check+' install -y rocblas-dev miopen-hip-dev migraphx-dev')
         else:
-            print(
-                "\nSTATUS: MIVisionX Setup: Neural Network only supported with HIP backend\n")
-            exit()
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y rocblas-devel miopen-hip-devel migraphx-devel')
 
         # Install Model Compiler Deps
         if inferenceInstall == 'ON':
-            modelCompilerDeps = os.path.expanduser(
-                '~/.mivisionx-model-compiler-deps')
+            modelCompilerDeps = os.path.expanduser('~/.mivisionx-model-compiler-deps')
 
             # Delete previous install
             if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
                 os.system('sudo -v')
                 os.system('sudo rm -rf '+modelCompilerDeps)
-                print(
-                    "\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
+                print("\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
 
             if not os.path.exists(modelCompilerDeps):
-                print("STATUS: Model Compiler Deps Install - " +
-                      modelCompilerDeps+"\n")
+                print("STATUS: Model Compiler Deps Install - " +modelCompilerDeps+"\n")
                 os.makedirs(modelCompilerDeps)
                 os.system('sudo -v')
                 if "Ubuntu" in platfromInfo:
@@ -323,8 +312,9 @@ else:
                 os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
             else:
-                print("STATUS: Model Compiler Deps Pre-Installed - " +
-                      modelCompilerDeps+"\n")
+                print("STATUS: Model Compiler Deps Pre-Installed - " +modelCompilerDeps+"\n")
+    else:
+        print("\nSTATUS: MIVisionX Setup: Neural Network only supported with HIP backend\n")
 
     # Install OpenCV
     os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')
@@ -333,100 +323,102 @@ else:
     if "Ubuntu" in platfromInfo:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                  ' install build-essential pkg-config libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy ')
+                ' install build-essential pkg-config libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy ')
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                  ' install libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip')
+                ' install libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip')
     elif "centos" in platfromInfo or "redhat" in platfromInfo:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                  ' groupinstall \'Development Tools\'')
+                ' groupinstall \'Development Tools\'')
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                  ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
+                ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
     elif "SLES" in platfromInfo:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                  ' install -t pattern devel_basis')
+                ' install -t pattern devel_basis')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                  ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
+                ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
     # OpenCV 4.6.0
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
-              ' -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )')
+            ' -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )')
     os.system('(cd '+deps_dir+'/build/OpenCV; make -j8 )')
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' make install )')
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
 
-    if amdRPPInstall == 'ON':
+    if amdRPPInstall == 'ON' and backend == 'HIP':
         # Install RPP
         os.system('sudo -v')
         if "Ubuntu" in platfromInfo:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y rpp rpp-dev')
+                    ' '+linuxSystemInstall_check+' install -y rpp rpp-dev')
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
+                    ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
+    else:
+        print("\nSTATUS: MIVisionX Setup: AMD VX RPP only supported with HIP backend\n")
 
     # Install ffmpeg
     if ffmpegInstall == 'ON':
         if "Ubuntu" in platfromInfo:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install autoconf automake build-essential git-core libass-dev libfreetype6-dev')
+                    ' install autoconf automake build-essential git-core libass-dev libfreetype6-dev')
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install libsdl2-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev')
+                    ' install libsdl2-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev')
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo zlib1g-dev')
+                    ' install libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo zlib1g-dev')
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev')
+                    ' install nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev')
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install autoconf automake bzip2 bzip2-devel freetype-devel')
+                    ' install autoconf automake bzip2 bzip2-devel freetype-devel')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install gcc-c++ libtool make pkgconfig zlib-devel')
+                    ' install gcc-c++ libtool make pkgconfig zlib-devel')
             # Nasm
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install nasm')
+                    ' install nasm')
             if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
                 # Yasm
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm')
+                        ' install http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' --enablerepo=extras install epel-release')
+                        ' --enablerepo=extras install epel-release')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install yasm')
+                        ' install yasm')
                 # libx264 & libx265
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install libx264-devel libx265-devel')
+                        ' install libx264-devel libx265-devel')
                 # libfdk_aac
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install https://forensics.cert.org/cert-forensics-tools-release-el7.rpm')
+                        ' install https://forensics.cert.org/cert-forensics-tools-release-el7.rpm')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' --enablerepo=forensics install fdk-aac')
+                        ' --enablerepo=forensics install fdk-aac')
                 # libASS
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install libass-devel')
+                        ' install libass-devel')
             elif "centos-8" in platfromInfo or "redhat" in platfromInfo:
                 # el8 x86_64 packages
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm')
+                        ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm')
+                        ' install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm')
+                        ' install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install ffmpeg ffmpeg-devel')
+                        ' install ffmpeg ffmpeg-devel')
             elif "SLES" in platfromInfo:
                 # FFMPEG-4 packages
                 os.system(
                     'sudo zypper ar -cfp 90 \'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_$releasever/Essentials\' packman-essentials')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                          ' install ffmpeg-4')
+                        ' install ffmpeg-4')
 
         # FFMPEG 4 from source -- for Ubuntu, CentOS 7, & RedHat 7
         if "Ubuntu" in platfromInfo or "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
@@ -437,22 +429,22 @@ else:
             os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; make -j8 )')
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; sudo ' +
-                      linuxFlag+' make install )')
+                    linuxFlag+' make install )')
 
     if developerInstall == 'ON':
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install autoconf texinfo')
+                ' install autoconf texinfo')
         if "Ubuntu" in platfromInfo:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install build-essential libgmp-dev')
+                    ' install build-essential libgmp-dev')
         else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' install gmp-devel')
+                    ' install gmp-devel')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                      ' groupinstall \'Development Tools\' ')
+                    ' groupinstall \'Development Tools\' ')
         os.system(
             '(cd '+deps_dir+'; wget https://ftp.gnu.org/gnu/gdb/gdb-12.1.tar.gz )')
         os.system('(cd '+deps_dir+'; tar -xvzf gdb-12.1.tar.gz )')

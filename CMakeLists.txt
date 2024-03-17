@@ -146,7 +146,7 @@ message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM OpenCL Modules (defaul
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
-message("-- ${Cyan}     -D BUILD_WITH_AMD_ADVANCE=${BUILD_WITH_AMD_ADVANCE} [Turn ON/OFF Build for AMD advanced GPUs(default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D BUILD_WITH_AMD_ADVANCE=${BUILD_WITH_AMD_ADVANCE} [Turn ON/OFF Build for AMD advanced GPUs(default:OFF)]${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

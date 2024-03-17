@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 cmake_minimum_required(VERSION 3.5)
-set(VERSION "2.5.0")
+set(VERSION "3.0.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
@@ -120,15 +120,9 @@ else()
 endif()
 message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}")
 
-message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
-message("-- ${Cyan}     -D NEURAL_NET=${NEURAL_NET} [Turn ON/OFF Neural Net Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(HALF QUIET)
+find_package(HIP QUIET)
 
 if(HALF_FOUND)
   add_definitions(-DAMD_FP16_SUPPORT)
@@ -137,6 +131,22 @@ if(HALF_FOUND)
 else()
   message("-- ${Blue}MIVisionX Built with float16 Support OFF${ColourReset}")
 endif()
+
+if(HIP_FOUND)
+  message("-- ${BoldBlue}ROCm Version -- ${HIP_VERSION}${ColourReset}")
+  set(LOOM OFF)
+  if(HIP_VERSION  VERSION_GREATER 5.7.50701)
+    set(BUILD_WITH_AMD_ADVANCE ON)
+  endif()
+endif()
+
+message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
+message("-- ${Cyan}     -D NEURAL_NET=${NEURAL_NET} [Turn ON/OFF Neural Net Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM OpenCL Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
+message("-- ${Cyan}     -D BUILD_WITH_AMD_ADVANCE=${BUILD_WITH_AMD_ADVANCE} [Turn ON/OFF Build for AMD advanced GPUs(default:OFF)]${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

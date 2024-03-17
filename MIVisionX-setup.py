@@ -27,7 +27,7 @@ if sys.version_info[0] < 3:
 else:
     import subprocess
 
-__copyright__ = "Copyright 2018 - 2023, AMD ROCm MIVisionX"
+__copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
 __version__ = "2.7.0"
 __email__ = "mivisionx.support@amd.com"
@@ -39,10 +39,6 @@ parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
                     help='Setup home directory - optional (default:~/)')
 parser.add_argument('--opencv',    	type=str, default='4.6.0',
                     help='OpenCV Version - optional (default:4.6.0)')
-parser.add_argument('--protobuf',  	type=str, default='3.12.4',
-                    help='ProtoBuf Version - optional (default:3.12.4)')
-parser.add_argument('--pybind11',   type=str, default='v2.10.4',
-                    help='PyBind11 Version - optional (default:v2.10.4)')
 parser.add_argument('--ffmpeg',    	type=str, default='ON',
                     help='FFMPEG V4.4.2 Installation - optional (default:ON) [options:ON/OFF]')
 parser.add_argument('--neural_net',	type=str, default='ON',
@@ -63,8 +59,6 @@ args = parser.parse_args()
 
 setupDir = args.directory
 opencvVersion = args.opencv
-ProtoBufVersion = args.protobuf
-pybind11Version = args.pybind11
 ffmpegInstall = args.ffmpeg.upper()
 neuralNetInstall = args.neural_net.upper()
 inferenceInstall = args.inference.upper()

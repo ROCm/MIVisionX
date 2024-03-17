@@ -133,8 +133,6 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
   ```shell
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default:4.6.0)]
-                            --protobuf  [ProtoBuf Version - optional (default:3.12.4)]
-                            --pybind11  [PyBind11 Version - optional (default:v2.10.4)]
                             --ffmpeg    [FFMPEG V4.4.2 Installation - optional (default:ON) [options:ON/OFF]]
                             --amd_rpp   [MIVisionX VX RPP Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]]
@@ -142,7 +140,7 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
                             --developer [Setup Developer Options - optional (default:OFF) [options:ON/OFF]]
                             --reinstall [Remove previous setup and reinstall (default:OFF)[options:ON/OFF]]
                             --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]]
-                            --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
+                            --rocm_path [ROCm Installation Path - optional (default:/opt/rocm ROCm Installation Required)]
   ```
 > [!NOTE]
 > * Install ROCm before running the setup script
@@ -309,7 +307,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V2.6.1`
+* MIVisionX Setup Script - `V2.7.0`
 
 ### Known issues
 

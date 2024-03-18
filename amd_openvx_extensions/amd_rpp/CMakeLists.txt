@@ -163,6 +163,9 @@ list(APPEND SOURCES
         source/tensor/WarpAffine.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/PreemphasisFilter.cpp
+        source/tensor/Resample.cpp
+        source/tensor/TensorMulScalar.cpp
+        source/tensor/TensorAddTensor.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )
@@ -204,7 +207,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14 -mavx2")
 endif()
 
 target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST})

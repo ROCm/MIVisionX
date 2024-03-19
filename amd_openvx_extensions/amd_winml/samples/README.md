@@ -5,7 +5,7 @@ Get ONNX models from [ONNX Model Zoo](https://github.com/onnx/models)
 ## Sample - SqueezeNet
 
 * Download the [SqueezeNet](https://s3.amazonaws.com/download.onnx/models/opset_8/squeezenet.tar.gz) ONNX Model
-* Use [Netron](https://lutzroeder.github.io/netron/) to open the model.onnx
+* Use [Netron](https://github.com/lutzroeder/netron) to open the model.onnx
 	* Look at Model Properties to find Input & Output Tensor Name (data_0 - input; softmaxout_1 - output)
 	* Look at output tensor dimensions (n,c,h,w  - [1,1000,1,1] for softmaxout_1)
 * Use the label file - [data\Labels.txt](data/Labels.txt) and sample image - data\car.JPEG to run samples

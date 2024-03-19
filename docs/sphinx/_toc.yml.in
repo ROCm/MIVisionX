@@ -1,6 +1,6 @@
 # Anywhere {branch} is used, the branch name will be substituted.
 # These comments will also be removed.
-root: doxygen/html/index
+root: README
 subtrees:
   - numbered: False
     entries:

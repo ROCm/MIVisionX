@@ -141,7 +141,8 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
                             --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]]
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm ROCm Installation Required)]
   ```
-> [!NOTE]
+
+**NOTE:**
 > * Install ROCm before running the setup script
 > * This script only needs to be executed once
 > * ROCm upgrade requires the setup script rerun
@@ -154,8 +155,7 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
   git clone https://github.com/ROCm/MIVisionX.git
   ```
 
-> [!NOTE]
-> MIVisionX has support for two GPU backends: **OPENCL** and **HIP**
+**NOTE:** MIVisionX has support for two GPU backends: **OPENCL** and **HIP**
 
 * Instructions for building MIVisionX with the **HIP** GPU backend (default backend):
 
@@ -197,15 +197,13 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
 #### Using Visual Studio
 * Use `MIVisionX.sln` to build for x64 platform
 
-> [!IMPORTANT]
-> Some modules in MIVisionX are only supported on Linux
+**IMPORTANT:** Some modules in MIVisionX are only supported on Linux
 
 ### macOS
 
 macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions)
 
-> [!IMPORTANT]
-> MIVisionX CPU only backend is supported in macOS
+**IMPORTANT:** MIVisionX CPU only backend is supported in macOS
 
 ## Verify installation
 
@@ -229,7 +227,8 @@ macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-bu
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
   runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
   ```
-> [!NOTE]
+
+**NOTE:**
 > * More samples are available [here](samples/README.md#samples)
 > * For `macOS` use `export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/rocm/lib`
 

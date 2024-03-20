@@ -144,6 +144,7 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
                             --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]]
                             --rocm_path [ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required]
   ```
+
 > [!NOTE]
 > * Install ROCm before running the setup script
 > * This script only needs to be executed once
@@ -157,7 +158,7 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
   git clone https://github.com/ROCm/MIVisionX.git
   ```
 
-> [!NOTE]
+> [!IMPORTANT]
 > MIVisionX has support for two GPU backends: **OPENCL** and **HIP**
 
 * Instructions for building MIVisionX with the **HIP** GPU backend (default backend):
@@ -214,7 +215,7 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
 macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions)
 
 > [!IMPORTANT]
-> MIVisionX CPU only backend is supported in macOS
+> macOS only supports MIVisionX CPU backend
 
 ## Verify installation
 
@@ -238,8 +239,9 @@ macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-bu
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
   runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
   ```
+
 > [!NOTE]
-> * More samples are available [here](samples#samples)
+> * More samples are available [here](samples/README.md#samples)
 > * For `macOS` use `export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/rocm/lib`
 
 #### Verify with mivisionx-test package
@@ -264,7 +266,7 @@ ctest -VV
 
 MIVisionX provides developers with docker images for Ubuntu `20.04` / `22.04`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
-Docker files to build MIVisionX containers and suggested workflow are [available](docker#mivisionx-docker)
+Docker files to build MIVisionX containers and suggested workflow are [available](docker/README.md#mivisionx-docker)
 
 ### MIVisionX docker
 * [Ubuntu 20.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-20.04)

@@ -57,7 +57,7 @@ static vx_status VX_CALLBACK refreshPreemphasisFilter(vx_node node, const vx_ref
     }
     RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
     RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
-    for (int n = data->inputTensorDims[0] - 1; n >= 0; n--)
+    for (int n = 0; n < data->inputTensorDims[0]; n++)
         data->pSampleSize[n] = src_roi[n].xywhROI.roiWidth * src_roi[n].xywhROI.roiHeight;
 
     update_destination_roi(parameters, data, src_roi, dst_roi);

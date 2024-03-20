@@ -1,14 +1,13 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/)
-[![Build Status](https://travis-ci.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
+[![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/MIVisionX.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX.png" /></p>
 
 MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade;</a> and OpenVX&trade; Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF&trade;</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
 #### Latest Release
 
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/ROCm/MIVisionX/releases)
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
@@ -60,43 +59,46 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 Run the steps below to build documentation locally.
 * sphinx documentation
+
 ```Bash
 cd docs
 pip3 install -r .sphinx/requirements.txt
 python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
 ```
+
 * Doxygen 
+
 ```
 doxygen .Doxyfile
 ```
 
 ## AMD OpenVX&trade;
 
-<p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
+<p align="center"><img width="30%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
 
 [AMD OpenVX&trade;](amd_openvx/README.md) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
-<a href="https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html" target="_blank">Khronos OpenVX&trade; 1.0.1</a> conformant implementation is available in [MIVisionX Lite](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/openvx-1.0.1)
+<a href="https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html" target="_blank">Khronos OpenVX&trade; 1.0.1</a> conformant implementation is available in [MIVisionX Lite](https://github.com/ROCm/MIVisionX/tree/openvx-1.0.1)
 
 ## AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
+The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has the following OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl/README.md): AMD Radeon Loom stitching library for live 360 degree video applications
 * [amd_media](amd_openvx_extensions/amd_media/README.md): `vx_amd_media` is an OpenVX AMD media extension module for encode and decode
 * [amd_migraphx](amd_openvx_extensions/amd_migraphx/README.md): amd_migraphx extension integrates the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> into an OpenVX graph. This extension allows developers to combine the vision funcions in OpenVX with the MIGraphX and build an end-to-end application for inference.
 * [amd_nn](amd_openvx_extensions/amd_nn/README.md): OpenVX neural network module
 * [amd_opencv](amd_openvx_extensions/amd_opencv/README.md): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
-* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (ROCm Performance Primitives) functions. This extension is used to enable [rocAL](rocAL/README.md) to perform image augmentation.
+* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): OpenVX extension providing an interface to some of the [RPP](https://github.com/ROCm/rpp)'s (ROCm Performance Primitives) functions. This extension is used to enable [rocAL](rocAL/README.md) to perform image augmentation.
 * [amd_winml](amd_openvx_extensions/amd_winml/README.md): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 ## Applications
 
 MIVisionX has several [applications](apps/README.md#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications that can be used to prototype or use as a model to develop products.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/MIVisionX-applications.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX-applications.png" /></p>
 
 * [Bubble Pop](apps/bubble_pop/README.md#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
 * [Cloud Inference Application](apps/cloud_inference/README.md#cloud-inference-application): This sample application does inference using a client-server system.
@@ -112,7 +114,7 @@ MIVisionX has several [applications](apps/README.md#applications) built on top o
 
 ## Neural Net Model Compiler & Optimizer
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/modelCompilerWorkflow.png" /></p>
 
 [Neural Net Model Compiler & Optimizer](model_compiler/README.md#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
@@ -194,8 +196,8 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
   + CentOS - `7` / `8`
   + RedHat - `8` / `9`
   + SLES - `15-SP4`
-* [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
-* Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
+* [ROCm supported hardware](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html)
+* Install [ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/index.html#install.html) with `--usecase=graphics,rocm`
 
   **usage:**
 
@@ -231,11 +233,11 @@ For the convenience of the developer, we provide the setup script `MIVisionX-set
 
 ### macOS
 
-macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
+macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions)
 
 ### Linux
 
-* [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
+* [ROCm supported hardware](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html)
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 
 #### Using `apt-get` / `yum` / `zypper`
@@ -270,7 +272,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 * Clone MIVisionX git repository
 
   ```
-  git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+  git clone https://github.com/ROCm/MIVisionX.git
   ```
 
   **Note:** MIVisionX has support for two GPU backends: **OPENCL** and **HIP**:
@@ -293,7 +295,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     sudo make install
     ```
 
-    + run tests - [test option instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/CTest)
+    + run tests - [test option instructions](https://github.com/ROCm/MIVisionX/wiki/CTest)
     ```
     make test
     ```
@@ -302,7 +304,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
     + rocal_pybind not supported on windows.
     + `sudo` required for pybind installation
 
-* Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/OpenCL-Backend)
+* Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/ROCm/MIVisionX/wiki/OpenCL-Backend)
 
 
 ## Verify the Installation
@@ -320,14 +322,14 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
   **Canny Edge Detection**
 
-  <p align="center"><img width="60%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
+  <p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
 
   ```
   export PATH=$PATH:/opt/rocm/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
   runvx /opt/rocm/share/mivisionx/samples/gdf/canny.gdf
   ```
-  **Note:** More samples are available [here](samples#samples)
+  **Note:** More samples are available [here](samples/README.md#samples)
 
   **Note:** For `macOS` use `export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/rocm/lib`
 
@@ -344,7 +346,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 MIVisionX provides developers with docker images for Ubuntu `20.04` / `22.04`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
-Docker files to build MIVisionX containers are [available](docker#mivisionx-docker)
+Docker files to build MIVisionX containers are [available](docker/README.md#mivisionx-docker)
 
 ### MIVisionX Docker
 * [Ubuntu 20.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-20.04)
@@ -364,7 +366,7 @@ Docker files to build MIVisionX containers are [available](docker#mivisionx-dock
   ```
   sudo docker pull mivisionx/ubuntu-20.04:latest
   ```
-  * **NOTE:** Use the above command to bring in latest changes from upstream
+  * **NOTE:** Use the above command to bring in the latest changes from upstream
 
 * **Step 2** - Run docker image
 
@@ -416,13 +418,13 @@ sudo docker run -it --privileged --device=/dev/kfd --device=/dev/dri --device=/d
 
 Please email `mivisionx.support@amd.com` for questions, and feedback on MIVisionX.
 
-Please submit your feature requests, and bug reports on the [GitHub issues](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/issues) page.
+Please submit your feature requests, and bug reports on the [GitHub issues](https://github.com/ROCm/MIVisionX/issues) page.
 
 ## Release Notes
 
 ### Latest Release Version
 
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/ROCm/MIVisionX?style=for-the-badge)](https://github.com/ROCm/MIVisionX/releases)
 
 ### Changelog
 
@@ -441,7 +443,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * migraphx - `2.7.0.50700-63`
 * Protobuf - [V3.12.4](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.4)
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* RPP - [1.2.0.50700-63](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/1.2.0)
+* RPP - [1.2.0.50700-63](https://github.com/ROCm/rpp/releases/tag/1.2.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
 * MIVisionX Setup Script - `V2.5.6`
@@ -457,8 +459,8 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 **Docker Image:** `sudo docker build -f docker/ubuntu20/{DOCKER_LEVEL_FILE_NAME}.dockerfile -t {mivisionx-level-NUMBER} .`
 
-- ![#c5f015](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/green_square.png) `new component added to the level`
-- ![#1589F0](https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/develop/docs/data/blue_square.png) `existing component from the previous level`
+- ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/green_square.png) `new component added to the level`
+- ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/blue_square.png) `existing component from the previous level`
 
 | Build Level | MIVisionX Dependencies                             | Modules                                                                   | Libraries and Executables                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Docker Tag                                                                                                                                                                                                     |
 | ----------- | -------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

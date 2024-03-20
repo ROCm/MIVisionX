@@ -50,11 +50,14 @@ This application is a sample for developing windows application using MIVisionX 
 
 ## MIVisionX Image Classification
 
-![MIVisionX Image Classification](images/MIVisionX-ImageClassification.png)
+![MIVisionX Image Classification](https://raw.githubusercontent.com/ROCm/MIVisionX/master/apps/mivisionx_winml_classifier/images/MIVisionX-ImageClassification.png)
+
 
 ## MIVisionX Image Classification using WinML
 
-![MIVisionX Image Classification using WinML](images/MIVisionX-ImageClassification-WinML.png)
+![MIVisionX Image Classification](https://raw.githubusercontent.com/ROCm/MIVisionX/master/apps/mivisionx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png)
+
+
 
 Example:
 

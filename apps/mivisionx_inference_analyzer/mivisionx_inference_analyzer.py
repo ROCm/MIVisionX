@@ -398,7 +398,17 @@ if __name__ == '__main__':
 
             # resize and process frame
             start = time.time()
-            resizedFrame = cv2.resize(frame, (w_i,h_i))
+            
+            gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            gray = np.float32(gray)
+            dst = cv2.cornerHarris(gray,2,3,0.04)
+            num_corners = np.sum(dst > 0.01 * dst.max())
+            
+            if(num_corners <= 100):
+                resizedFrame = cv2.resize(frame, (w_i,h_i), interpolation = cv2.INTER_LINEAR)
+            else:
+                resizedFrame = cv2.resize(frame, (w_i,h_i), interpolation = cv2.INTER_AREA)
+
             RGBframe = cv2.cvtColor(resizedFrame, cv2.COLOR_BGR2RGB)
             if(inputAdd != '' or inputMultiply != ''):
                 pFrame = np.zeros(RGBframe.shape).astype('float32')

@@ -27,7 +27,7 @@ struct PreemphasisFilterLocalData {
     Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    vx_uint32 borderType;
+    vx_int32 borderType;
     Rpp32f *pPreemphCoeff;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;

@@ -36,10 +36,6 @@ struct PreemphasisFilterLocalData {
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-void update_destination_roi(const vx_reference *parameters, PreemphasisFilterLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
-    memcpy(dst_roi, src_roi, data->pSrcDesc->n * sizeof(RpptROI));
-}
-
 static vx_status VX_CALLBACK refreshPreemphasisFilter(vx_node node, const vx_reference *parameters, PreemphasisFilterLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
@@ -60,7 +56,6 @@ static vx_status VX_CALLBACK refreshPreemphasisFilter(vx_node node, const vx_ref
     for (int n = 0; n < data->inputTensorDims[0]; n++)
         data->pSampleSize[n] = src_roi[n].xywhROI.roiWidth * src_roi[n].xywhROI.roiHeight;
 
-    update_destination_roi(parameters, data, src_roi, dst_roi);
     return status;
 }
 

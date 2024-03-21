@@ -41,7 +41,7 @@ static vx_status VX_CALLBACK refreshPreemphasisFilter(vx_node node, const vx_ref
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->pSrcDesc->n, sizeof(float), data->pPreemphCoeff, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
- #if ENABLE_OPENCL || ENABLE_HIP
+#if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     }

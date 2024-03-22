@@ -29,7 +29,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "2.7.0"
+__version__ = "3.0.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -218,43 +218,42 @@ if os.path.exists(deps_dir):
 
     # common packages
     for i in range(len(commonPackages)):
-        try:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i])
-        except:
+        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]) == 0:
+            print(commonPackages[i] + ' Installed')
+        else:
             exit('Failed to install the '+ commonPackages[i])
 
     # neural net packages
-    if neuralNetInstall == 'ON':
+    if neuralNetInstall == 'ON' and backend == 'HIP':
         os.system('sudo -v')
-        if backend == 'HIP':
-            if "Ubuntu" in platfromInfo:
-                for i in range(len(neuralNetDebianPackages)):
-                    try:
-                        os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i])
-                    except:
-                        exit('Failed to install the '+ neuralNetDebianPackages[i])
-            else:
-                for i in range(len(neuralNetRPMPackages)):
-                    try:
-                        os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetRPMPackages[i])
-                    except:
-                        exit('Failed to install the '+ neuralNetRPMPackages[i])
+        if "Ubuntu" in platfromInfo:
+            for i in range(len(neuralNetDebianPackages)):
+                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i]) == 0:
+                    print(neuralNetDebianPackages[i] + ' Installed')
+                else:
+                    exit('Failed to install the '+ neuralNetDebianPackages[i])
+        else:
+            for i in range(len(neuralNetRPMPackages)):
+                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetRPMPackages[i]) == 0:
+                    print(neuralNetRPMPackages[i] + ' Installed')
+                else:
+                    exit('Failed to install the '+ neuralNetRPMPackages[i])
     # RPP
     if "Ubuntu" in platfromInfo:
-        try:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                ' '+linuxSystemInstall_check+' install -y rpp-dev')
-        except:
+        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                ' '+linuxSystemInstall_check+' install -y rpp-dev') == 0:
+            print('rpp-dev Installed')
+        else:
             exit('Failed to install the rpp-dev')
     else:
-        try:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                ' '+linuxSystemInstall_check+' install -y rpp-devel')
-        except:
-            exit('Failed to install the rpp-dev')
+        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                ' '+linuxSystemInstall_check+' install -y rpp-devel') == 0:
+            print('rpp-devel Installed')
+        else:
+            exit('Failed to install the rpp-devel')
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
     exit()

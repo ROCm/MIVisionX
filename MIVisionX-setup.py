@@ -40,7 +40,7 @@ parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
 parser.add_argument('--opencv',    	type=str, default='4.6.0',
                     help='OpenCV Version - optional (default:4.6.0)')
 parser.add_argument('--ffmpeg',    	type=str, default='ON',
-                    help='FFMPEG V4.4.2 Installation - optional (default:ON) [options:ON/OFF]')
+                    help='FFMPEG Installation - optional (default:ON) [options:ON/OFF]')
 parser.add_argument('--neural_net',	type=str, default='ON',
                     help='MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]')
 parser.add_argument('--inference',	type=str, default='ON',
@@ -173,7 +173,7 @@ elif os.path.exists('/usr/bin/zypper'):
     platfromInfo = platfromInfo+'-SLES'
 else:
     print("\nMIVisionX Setup on "+platfromInfo+" is unsupported\n")
-    print("\nMIVisionX Setup Supported on: Ubuntu 20/22, CentOS 7, RedHat 8/9, & SLES 15 SP4\n")
+    print("\nMIVisionX Setup Supported on: Ubuntu 20/22, CentOS 7, RedHat 8/9, & SLES 15\n")
     exit()
 
 # MIVisionX Setup
@@ -206,10 +206,41 @@ neuralNetDebianPackages = [
     'migraphx-dev'
 ]
 
+inferenceDebianPackages = [
+    'python3-dev',
+    'python3-pip',
+    'protobuf-compiler',
+    'libprotoc-dev'
+]
+
 neuralNetRPMPackages = [
     'rocblas-devel',
     'miopen-hip-devel',
     'migraphx-devel'
+]
+
+inferenceRPMPackages = [
+    'python3-devel',
+    'python3-pip',
+    'protobuf-devel',
+    'python3-protobuf'
+]
+
+pip3InferencePackages = [
+    'future==0.18.2',
+    'pytz==2022.1',
+    'numpy==1.21',
+    'google==3.0.0',
+    'protobuf==3.12.4',
+    'onnx==1.12.0'
+]
+
+ffmpegDebianPackages = [
+    'ffmpeg',
+    'libavcodec-dev',
+    'libavformat-dev',
+    'libavutil-dev',
+    'libswscale-dev'
 ]
 
 # Re-Install
@@ -222,7 +253,7 @@ if os.path.exists(deps_dir):
                         ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]) == 0:
             print(commonPackages[i] + ' Installed')
         else:
-            exit('Failed to install the '+ commonPackages[i])
+            exit('Failed to install: '+ commonPackages[i])
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
@@ -233,27 +264,27 @@ if os.path.exists(deps_dir):
                         ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i]) == 0:
                     print(neuralNetDebianPackages[i] + ' Installed')
                 else:
-                    exit('Failed to install the '+ neuralNetDebianPackages[i])
+                    exit('Failed to install: '+ neuralNetDebianPackages[i])
         else:
             for i in range(len(neuralNetRPMPackages)):
                 if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ neuralNetRPMPackages[i]) == 0:
                     print(neuralNetRPMPackages[i] + ' Installed')
                 else:
-                    exit('Failed to install the '+ neuralNetRPMPackages[i])
+                    exit('Failed to install: '+ neuralNetRPMPackages[i])
     # RPP
     if "Ubuntu" in platfromInfo:
         if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                 ' '+linuxSystemInstall_check+' install -y rpp-dev') == 0:
             print('rpp-dev Installed')
         else:
-            exit('Failed to install the rpp-dev')
+            exit('Failed to install: rpp-dev')
     else:
         if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                 ' '+linuxSystemInstall_check+' install -y rpp-devel') == 0:
             print('rpp-devel Installed')
         else:
-            exit('Failed to install the rpp-devel')
+            exit('Failed to install: rpp-devel')
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
     exit()
@@ -266,51 +297,38 @@ else:
     os.system('(cd '+deps_dir+'; mkdir build )')
     # install pre-reqs
     os.system('sudo -v')
-    os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-            linuxSystemInstall_check+' install gcc cmake git wget unzip pkg-config inxi')
+    # common packages
+    for i in range(len(commonPackages)):
+        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]) == 0:
+            print(commonPackages[i] + ' Installed')
+        else:
+            exit('Failed to install: '+ commonPackages[i])
 
     # Get Installation Source
-    os.system(
-        '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
-    os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
-    if ffmpegInstall == 'ON':
-        os.system(
-            '(cd '+deps_dir+'; wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n4.4.2.zip && unzip n4.4.2.zip )')
+    if os.system(
+        '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )') == 0:
+        os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
+    else:
+        exit('Failed to wget: OpenCV V'+opencvVersion)
 
-    # Install
-    if (amdRPPInstall == 'ON' or neuralNetInstall == 'ON'):
-        # package dependencies
-        os.system('sudo -v')
-        if "centos" in platfromInfo or "redhat" in platfromInfo:
-            if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' + linuxSystemInstall_check +
-                        ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make g++ unzip')
-            elif "centos-8" in platfromInfo or "redhat" in platfromInfo:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' + linuxSystemInstall_check +
-                        ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool make gcc-c++ unzip')
-        elif "Ubuntu" in platfromInfo:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                    linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                    linuxSystemInstall_check+' install curl make g++ unzip libomp-dev libpthread-stubs0-dev')
-        elif "SLES" in platfromInfo:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
-                    linuxSystemInstall_check+' install sqlite3 sqlite3-devel libbz2-devel libopenssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
-        # Install half.hpp
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                ' '+linuxSystemInstall_check+' install -y half')
-
+    # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
         os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                ' '+linuxSystemInstall_check+' install -y half')
         if "Ubuntu" in platfromInfo:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y rocblas-dev miopen-hip-dev migraphx-dev')
+            for i in range(len(neuralNetDebianPackages)):
+                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i]) == 0:
+                    print(neuralNetDebianPackages[i] + ' Installed')
+                else:
+                    exit('Failed to install: '+ neuralNetDebianPackages[i])
         else:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y rocblas-devel miopen-hip-devel migraphx-devel')
+            for i in range(len(neuralNetRPMPackages)):
+                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetRPMPackages[i]) == 0:
+                    print(neuralNetRPMPackages[i] + ' Installed')
+                else:
+                    exit('Failed to install: '+ neuralNetRPMPackages[i])
 
         # Install Model Compiler Deps
         if inferenceInstall == 'ON':
@@ -327,28 +345,38 @@ else:
                 os.makedirs(modelCompilerDeps)
                 os.system('sudo -v')
                 if "Ubuntu" in platfromInfo:
-                    os.system(
-                        'sudo '+linuxSystemInstall+' ' +
-                        linuxSystemInstall_check+' install git inxi python3-dev python3-pip protobuf-compiler libprotoc-dev')
+                    for i in range(len(inferenceDebianPackages)):
+                        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                                ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]) == 0:
+                            print(inferenceDebianPackages[i] + ' Installed')
+                        else:
+                            exit('Failed to install: '+ inferenceDebianPackages[i])
                 else:
-                    os.system(
-                        'sudo '+linuxSystemInstall+' ' +
-                        linuxSystemInstall_check+' install git inxi python-devel python3-devel python3-pip protobuf-devel python3-protobuf')
+                    for i in range(len(inferenceRPMPackages)):
+                        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                                ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]) == 0:
+                            print(inferenceRPMPackages[i] + ' Installed')
+                        else:
+                            exit('Failed to install: '+ inferenceRPMPackages[i])
                 # Install base Deps
+                for i in range(len(pip3InferencePackages)):
+                        if os.system('sudo pip3 install '+ pip3InferencePackages[i]) == 0:
+                            print(pip3InferencePackages[i] + ' Installed')
+                        else:
+                            exit('Failed to install: '+ pip3InferencePackages[i])
                 os.system(
                     'sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
-                # Install CAFFE Deps
-                os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
-                # Install ONNX Deps
-                os.system('sudo pip3 install onnx==1.12.0')
                 # Install NNEF Deps
                 os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
                 os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)')
                 os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make)')
-                os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
+                if os.system(
+                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)') == 0:
+                    print("NNEF Installed\n")
+                else:
+                    exit('Failed to install: NNEF')
             else:
                 print("STATUS: Model Compiler Deps Pre-Installed - " +modelCompilerDeps+"\n")
     else:
@@ -388,32 +416,32 @@ else:
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
 
     if amdRPPInstall == 'ON' and backend == 'HIP':
-        # Install RPP
-        os.system('sudo -v')
+        # RPP
         if "Ubuntu" in platfromInfo:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                    ' '+linuxSystemInstall_check+' install -y rpp rpp-dev')
+            if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                ' '+linuxSystemInstall_check+' install -y rpp-dev') == 0:
+                print('rpp-dev Installed')
+            else:
+                exit('Failed to install: rpp-dev')
         else:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                    ' '+linuxSystemInstall_check+' install -y rpp rpp-devel')
+            if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                ' '+linuxSystemInstall_check+' install -y rpp-devel') == 0:
+                print('rpp-devel Installed')
+            else:
+                exit('Failed to install: rpp-devel')
     else:
         print("\nSTATUS: MIVisionX Setup: AMD VX RPP only supported with HIP backend\n")
 
     # Install ffmpeg
     if ffmpegInstall == 'ON':
         if "Ubuntu" in platfromInfo:
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                    ' install autoconf automake build-essential git-core libass-dev libfreetype6-dev')
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                    ' install libsdl2-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev')
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                    ' install libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo zlib1g-dev')
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                    ' install nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev')
+            for i in range(len(ffmpegDebianPackages)):
+                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                                ' '+linuxSystemInstall_check+' install -y '+ ffmpegDebianPackages[i]) == 0:
+                    print(ffmpegDebianPackages[i] + ' Installed')
+                else:
+                    exit('Failed to install: '+ ffmpegDebianPackages[i])
+
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                     ' install autoconf automake bzip2 bzip2-devel freetype-devel')
@@ -457,17 +485,6 @@ else:
                     'sudo zypper ar -cfp 90 \'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_$releasever/Essentials\' packman-essentials')
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                         ' install ffmpeg-4')
-
-        # FFMPEG 4 from source -- for Ubuntu, CentOS 7, & RedHat 7
-        if "Ubuntu" in platfromInfo or "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
-            os.system('sudo -v')
-            os.system(
-                '(cd '+deps_dir+'/FFmpeg-n4.4.2; sudo '+linuxFlag+' ldconfig )')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/FFmpeg-n4.4.2; sudo ' +
-                    linuxFlag+' make install )')
 
     if developerInstall == 'ON':
         os.system('sudo -v')

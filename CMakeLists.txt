@@ -202,7 +202,7 @@ endif()
 set(MIVISIONX_DEBIAN_PACKAGE_LIST  "rocm-hip-runtime, half, rpp, rocblas, miopen-hip, migraphx")
 set(MIVISIONX_RPM_PACKAGE_LIST     "rocm-hip-runtime, half, rpp, rocblas, miopen-hip, migraphx")
 # Set the dev dependent packages
-set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev")
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev")
 # TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel
 set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
 

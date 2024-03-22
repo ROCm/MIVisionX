@@ -2,7 +2,7 @@ __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2019 - 2024, AMD MIVisionX"
 __credits__     = ["Mike Schmit; Hansel Yang; Lakshmi Kumar;"]
 __license__     = "MIT"
-__version__     = "1.0"
+__version__     = "1.1"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "mivisionx.support@amd.com"
 __status__      = "Shipping"
@@ -381,6 +381,7 @@ if __name__ == '__main__':
 
     # process images
     correctTop5 = 0; correctTop1 = 0; wrong = 0; noGroundTruth = 0
+    totalTimeForInference = 0
     for x in range(totalImages):
         imageFileName,grountTruth = imageValidation[x].split(' ')
         groundTruthIndex = int(grountTruth)
@@ -393,18 +394,22 @@ if __name__ == '__main__':
             start = time.time()
             frame = cv2.imread(imageFile)
             end = time.time()
+            totalTimeForInference += ((end - start)*1000)
             if(verbosePrint):
                 print('%30s' % 'Read Image in ', str((end - start)*1000), 'ms')
-
-            # resize and process frame
-            start = time.time()
-            
+                
             # image complexity detection
+            start = time.time()
             gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
             gray = np.float32(gray)
             dst = cv2.cornerHarris(gray,2,3,0.04)
             num_corners = np.sum(dst > 0.01 * dst.max())
-            
+            end = time.time()
+            if(verbosePrint):
+                print('%30s' % 'Image complexity detection in ', str((end - start)*1000), 'ms')
+
+            # resize and process frame
+            start = time.time()
             if(num_corners <= 100):
                 resizedFrame = cv2.resize(frame, (w_i,h_i), interpolation = cv2.INTER_LINEAR)
             else:
@@ -417,6 +422,7 @@ if __name__ == '__main__':
                     pFrame[:,:,i] = RGBframe.copy()[:,:,i] * Mx[i] + Ax[i]
                 RGBframe = pFrame
             end = time.time()
+            totalTimeForInference += ((end - start)*1000)
             if(verbosePrint):
                 print('%30s' % 'Input pre-processed in ', str((end - start)*1000), 'ms')
 
@@ -424,6 +430,7 @@ if __name__ == '__main__':
             start = time.time()
             output = classifier.classify(RGBframe)
             end = time.time()
+            totalTimeForInference += ((end - start)*1000)
             if(verbosePrint):
                 print('%30s' % 'Executed Model in ', str((end - start)*1000), 'ms')
 
@@ -438,7 +445,7 @@ if __name__ == '__main__':
             cv2.imshow(windowResult, resultImage)
             end = time.time()
             if(verbosePrint):
-                print('%30s' % 'Processed display in ', str((end - start)*1000), 'ms\n')
+                print('%30s' % 'Processed display in ', str((end - start)*1000), 'ms')
 
             # write image results to a file
             start = time.time()
@@ -515,6 +522,7 @@ if __name__ == '__main__':
             end = time.time()
             if(verbosePrint):
                 print('%30s' % 'Progress image created in ', str((end - start)*1000), 'ms')
+                print('Images Processed: ' +str(x)+'\n\n')
 
             # exit on ESC
             key = cv2.waitKey(2)
@@ -523,6 +531,8 @@ if __name__ == '__main__':
 
     # Inference Analyzer Successful
     print("\nSUCCESS: Images Inferenced with the Model\n")
+    timePerInference = float (totalTimeForInference / totalImages)
+    print('%30s' % 'Time per image Inference ', str(timePerInference), 'ms')
     cv2.destroyWindow(windowInput)
     cv2.destroyWindow(windowResult)
 

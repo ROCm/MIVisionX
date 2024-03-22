@@ -399,6 +399,7 @@ if __name__ == '__main__':
             # resize and process frame
             start = time.time()
             
+            # image complexity detection
             gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
             gray = np.float32(gray)
             dst = cv2.cornerHarris(gray,2,3,0.04)

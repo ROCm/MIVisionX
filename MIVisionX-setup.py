@@ -52,7 +52,7 @@ parser.add_argument('--developer', 	type=str, default='OFF',
 parser.add_argument('--reinstall', 	type=str, default='OFF',
                     help='Remove previous setup and reinstall - optional (default:OFF) [options:ON/OFF]')
 parser.add_argument('--backend', 	type=str, default='HIP',
-                    help='MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]')
+                    help='MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/CPU]')
 parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
                     help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
 args = parser.parse_args()
@@ -68,10 +68,12 @@ reinstall = args.reinstall.upper()
 backend = args.backend.upper()
 ROCM_PATH = args.rocm_path
 
+# override default path if env path set 
 if "ROCM_PATH" in os.environ:
     ROCM_PATH = os.environ.get('ROCM_PATH')
 print("\nROCm PATH set to -- "+ROCM_PATH+"\n")
 
+# check developer inputs
 if ffmpegInstall not in ('OFF', 'ON'):
     print(
         "ERROR: FFMPEG Install Option Not Supported - [Supported Options: OFF or ON]\n")
@@ -122,6 +124,7 @@ else:
         print("\nSTATUS: CPU Backend Install\n")
     neuralNetInstall = 'OFF'
     inferenceInstall = 'OFF'
+    ffmpegInstall = 'OFF'
 
 # get platfrom info
 platfromInfo = platform.platform()
@@ -158,7 +161,10 @@ if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/
     linuxSystemInstall_check = '--nogpgcheck'
     if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
         linuxCMake = 'cmake3'
-        os.system(linuxSystemInstall+' install cmake3')
+        if os.system(linuxSystemInstall+' install cmake3') == 0:
+            print('cmake3 installed')
+        else:
+            exit('Failed to install: cmake3')
     if "centos" not in platfromInfo or "redhat" not in platfromInfo:
         platfromInfo = platfromInfo+'-redhat'
 elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
@@ -181,7 +187,10 @@ print("\nMIVisionX Setup on: "+platfromInfo+"\n")
 
 if userName == 'root':
     os.system(linuxSystemInstall+' update')
-    os.system(linuxSystemInstall+' install sudo')
+    if os.system(linuxSystemInstall+' install sudo') == 0:
+        print('sudo installed')
+    else:
+        exit('Failed to install: sudo')
 
 # Delete previous install
 if os.path.exists(deps_dir) and reinstall == 'ON':
@@ -389,7 +398,7 @@ else:
     if "Ubuntu" in platfromInfo:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install build-essential pkg-config libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy ')
+                ' install build-essential pkg-config libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev')
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip')

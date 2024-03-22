@@ -163,6 +163,7 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(PreemphasisFilter_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Spectrogram_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Downmix_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ToDecibels_Register));
 
     return status;
 }

@@ -1877,20 +1877,6 @@ extern "C"
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppPreemphasisFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_array preemphCoeff, vx_scalar borderType);
 
-	/*! \brief [Graph] Performs leading and trailing silence detection to the input tensor.
-	* \ingroup group_amd_rpp
-	* \param [in] graph The handle to the graph.
-	* \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	* \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
-	* \param [out] pDst1 The output tensor (begin) in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	* \param [out] pDst2 The output tensor (length) in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	* \param [in] cutOffDB The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the threshold, in dB, below which the signal is considered silent.
-	* \param [in] referencePower The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the reference power.
-	* \param [in] windowLength The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the size of the sliding window.
-	* \param [in] resetInterval The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the frequency at which the moving mean average is recalculated to mitigate precision loss.
-	* \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
-	*/
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNonSilentRegion(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst1, vx_tensor pDst2, vx_scalar cutOffDB, vx_scalar referencePower, vx_scalar windowLength, vx_scalar resetInterval);
 
 	/*! \brief [Graph] Produces a spectrogram from a 1D signal.
 	* \ingroup group_amd_rpp

@@ -59,6 +59,7 @@ void copy_src_dims_and_update_dst_roi(SpectrogramLocalData *data, RpptROI *src_r
 
 static vx_status VX_CALLBACK refreshSpectrogram(vx_node node, const vx_reference *parameters, vx_uint32 num, SpectrogramLocalData *data) {
     vx_status status = VX_SUCCESS;
+    vx_status return_status = VX_SUCCESS;
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL || ENABLE_HIP

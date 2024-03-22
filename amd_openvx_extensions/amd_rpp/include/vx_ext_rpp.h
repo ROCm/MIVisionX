@@ -1896,7 +1896,7 @@ extern "C"
 	* \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	*/
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcLength, vx_tensor pDst, vx_tensor pDstDims, vx_array windowFn, vx_scalar centerWindow, vx_scalar reflectPadding, vx_scalar spectrogramLayout,
-															vx_scalar power, vx_scalar nfft, vx_scalar windowLength, vx_scalar windowStep);
+														  vx_scalar power, vx_scalar nfft, vx_scalar windowLength, vx_scalar windowStep);
 
 #ifdef __cplusplus
 }

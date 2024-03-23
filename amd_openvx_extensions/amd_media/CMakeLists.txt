@@ -24,6 +24,14 @@ project(vx_amd_media VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
+if(NOT BUILD_SHARED_LIBS)
+# Setting CMAKE_AR for Static Library Generation
+    find_program(hipcc_executable hipcc)
+    message(STATUS "hipcc executable: ${hipcc_executable}")
+    set(CMAKE_AR "${hipcc_executable}")
+endif()
+
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
 set(ENABLE_OPENCL 0)
@@ -69,23 +77,42 @@ include_directories(${AVUTIL_INCLUDE_DIR}
 
 list(APPEND SOURCES decoder.cpp encoder.cpp kernels.cpp)
 
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
-target_link_libraries(${PROJECT_NAME} ${AVUTIL_LIBRARY} ${AVCODEC_LIBRARY} ${SWSCALE_LIBRARY} ${AVFORMAT_LIBRARY} openvx)
+if(NOT BUILD_SHARED_LIBS)
+  add_library(${PROJECT_NAME} ${SOURCES})
+  target_link_libraries(${PROJECT_NAME} PRIVATE --emit-static-lib)
+  get_property(link_libraries TARGET ${PROJECT_NAME} PROPERTY LINK_LIBRARIES)
+  string (REPLACE ";" " " LINK_PROPS "${link_libraries}")
+  set(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> -o <TARGET> ${LINK_PROPS} <LINK_FLAGS> <OBJECTS>")
+  target_link_libraries(${PROJECT_NAME} INTERFACE ${AVUTIL_LIBRARY} ${AVCODEC_LIBRARY} ${SWSCALE_LIBRARY} ${AVFORMAT_LIBRARY} openvx)
 
-if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
-    target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARIES})
-elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
-    target_link_libraries(${PROJECT_NAME} hip::host)
+  if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
+         target_link_libraries(${PROJECT_NAME} INTERFACE ${OpenCL_LIBRARIES})
+  elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
+         target_link_libraries(${PROJECT_NAME} INTERFACE hip::host)
+  endif()
+
+  # install MIVisionX libs -- {ROCM_PATH}/lib
+  install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT static)
+  # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+  install(FILES include/vx_amd_media.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT static)
+else()
+  add_library(${PROJECT_NAME} SHARED ${SOURCES})
+  target_link_libraries(${PROJECT_NAME} ${AVUTIL_LIBRARY} ${AVCODEC_LIBRARY} ${SWSCALE_LIBRARY} ${AVFORMAT_LIBRARY} openvx)
+  if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
+      target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARIES})
+  elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
+      target_link_libraries(${PROJECT_NAME} hip::host)
+  endif()
+  set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+
+  # install MIVisionX libs -- {ROCM_PATH}/lib
+  install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+  install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+  install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+
+  # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+  install(FILES include/vx_amd_media.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
 endif()
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
-
-# install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
-install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
-install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
-
-# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_amd_media.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

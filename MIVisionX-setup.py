@@ -266,10 +266,6 @@ if os.path.exists(deps_dir):
         ERROR_CHECK(os.system('sudo -v'))
         if "Ubuntu" in platfromInfo:
             for i in range(len(neuralNetDebianPackages)):
-                # It looks like the code is attempting to use a comment in Python to indicate that an
-                # error check is being performed. However, the syntax used for comments in Python is a
-                # hash symbol (#) followed by the actual comment text. The code provided has an
-                # incorrect syntax for a comment in Python.
                 ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i]))
         else:
@@ -290,11 +286,11 @@ if os.path.exists(deps_dir):
 # Clean Install
 else:
     print("\nMIVisionX Dependencies Installation with MIVisionX-setup.py V-"+__version__+"\n")
-    os.system('mkdir '+deps_dir)
+    ERROR_CHECK(os.system('mkdir '+deps_dir))
     # Create Build folder
-    os.system('(cd '+deps_dir+'; mkdir build )')
+    ERROR_CHECK(os.system('(cd '+deps_dir+'; mkdir build )'))
     # install pre-reqs
-    os.system('sudo -v')
+    ERROR_CHECK(os.system('sudo -v'))
     # common packages
     for i in range(len(commonPackages)):
         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -303,11 +299,11 @@ else:
     # Get Installation Source
     ERROR_CHECK(os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )'))
-    os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
+    ERROR_CHECK(os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )'))
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
-        os.system('sudo -v')
+        ERROR_CHECK(os.system('sudo -v'))
         if "Ubuntu" in platfromInfo:
             for i in range(len(neuralNetDebianPackages)):
                 ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -323,14 +319,14 @@ else:
 
             # Delete previous install
             if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
-                os.system('sudo -v')
-                os.system('sudo rm -rf '+modelCompilerDeps)
+                ERROR_CHECK(os.system('sudo -v'))
+                ERROR_CHECK(os.system('sudo rm -rf '+modelCompilerDeps))
                 print("\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
 
             if not os.path.exists(modelCompilerDeps):
                 print("STATUS: Model Compiler Deps Install - " +modelCompilerDeps+"\n")
-                os.makedirs(modelCompilerDeps)
-                os.system('sudo -v')
+                ERROR_CHECK(os.makedirs(modelCompilerDeps))
+                ERROR_CHECK(os.system('sudo -v'))
                 if "Ubuntu" in platfromInfo:
                     for i in range(len(inferenceDebianPackages)):
                         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -343,11 +339,11 @@ else:
                 for i in range(len(pip3InferencePackages)):
                         ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackages[i]))
                 # Install NNEF Deps
-                os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
-                os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)')
-                os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make)')
+                ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
+                ERROR_CHECK(os.system(
+                    '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)'))
+                ERROR_CHECK(os.system(
+                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make)'))
                 ERROR_CHECK(os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:
@@ -355,8 +351,8 @@ else:
     else:
         print("\nSTATUS: MIVisionX Setup: Neural Network only supported with HIP backend\n")
 
-    # Install OpenCV
-    os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')
+    # Install OpenCV -- TBD cleanup
+    ERROR_CHECK(os.system('(cd '+deps_dir+'/build; mkdir OpenCV )'))
     # Install pre-reqs
     os.system('sudo -v')
     if "Ubuntu" in platfromInfo:
@@ -451,7 +447,7 @@ else:
                         ' install ffmpeg-4')
 
     if developerInstall == 'ON':
-        os.system('sudo -v')
+        ERROR_CHECK(os.system('sudo -v'))
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install autoconf texinfo')
         if "Ubuntu" in platfromInfo:

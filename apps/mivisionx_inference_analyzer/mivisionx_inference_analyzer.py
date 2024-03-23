@@ -15,6 +15,7 @@ import ctypes
 import cv2
 import time
 import numpy
+import statistics
 import numpy as np
 from numpy.ctypeslib import ndpointer
 from inference_control import inference_control
@@ -382,6 +383,8 @@ if __name__ == '__main__':
     # process images
     correctTop5 = 0; correctTop1 = 0; wrong = 0; noGroundTruth = 0
     totalTimeForInference = 0
+    totalCorners = 0
+    listOfCorners = []
     for x in range(totalImages):
         imageFileName,grountTruth = imageValidation[x].split(' ')
         groundTruthIndex = int(grountTruth)
@@ -403,14 +406,16 @@ if __name__ == '__main__':
             gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
             gray = np.float32(gray)
             dst = cv2.cornerHarris(gray,2,3,0.04)
-            num_corners = np.sum(dst > 0.01 * dst.max())
+            numCorners = np.sum(dst > 0.01 * dst.max())
+            listOfCorners.append(numCorners)
+            totalCorners += numCorners
             end = time.time()
             if(verbosePrint):
                 print('%30s' % 'Image complexity detection in ', str((end - start)*1000), 'ms')
 
             # resize and process frame
             start = time.time()
-            if(num_corners <= 100):
+            if(numCorners <= 100):
                 resizedFrame = cv2.resize(frame, (w_i,h_i), interpolation = cv2.INTER_LINEAR)
             else:
                 resizedFrame = cv2.resize(frame, (w_i,h_i), interpolation = cv2.INTER_AREA)
@@ -533,6 +538,9 @@ if __name__ == '__main__':
     print("\nSUCCESS: Images Inferenced with the Model\n")
     timePerInference = float (totalTimeForInference / totalImages)
     print('%30s' % 'Time per image Inference ', str(timePerInference), 'ms')
+    avgCornersPerImage = float(totalCorners / totalImages )
+    print('Avg number of corners per image: ' +str(avgCornersPerImage)+'\n')
+    print('Mean number of corners per image: ' +str(statistics.mean(listOfCorners))+'\n')
     cv2.destroyWindow(windowInput)
     cv2.destroyWindow(windowResult)
 
@@ -548,7 +556,7 @@ if __name__ == '__main__':
         os.system('python '+ADATPath+'/generate-visualization.py --inference_results '+finalImageResultsFile+
         ' --image_dir '+inputImageDir+' --label '+labelText+' --hierarchy '+hierarchyText+' --model_name '+modelName+' --output_dir '+adatOutputDir+' --output_name '+modelName+'-ADAT')
     print("\nSUCCESS: Image Analysis Toolkit Created\n")
-    print("Press ESC to exit or close progess window\n")
+    print("Press ESC to exit or close progress window\n")
 
     # Wait to quit
     while True:

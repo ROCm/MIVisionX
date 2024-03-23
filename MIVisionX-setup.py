@@ -33,6 +33,12 @@ __version__ = "3.0.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
+# error check calls
+def ERROR_CHECK(call):
+    status = call
+    if(status != 0):
+        exit(status)
+
 # Arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
@@ -52,7 +58,7 @@ parser.add_argument('--developer', 	type=str, default='OFF',
 parser.add_argument('--reinstall', 	type=str, default='OFF',
                     help='Remove previous setup and reinstall - optional (default:OFF) [options:ON/OFF]')
 parser.add_argument('--backend', 	type=str, default='HIP',
-                    help='MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/CPU]')
+                    help='MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/CPU/OCL]')
 parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
                     help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
 args = parser.parse_args()
@@ -161,10 +167,7 @@ if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/
     linuxSystemInstall_check = '--nogpgcheck'
     if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
         linuxCMake = 'cmake3'
-        if os.system(linuxSystemInstall+' install cmake3') == 0:
-            print('cmake3 installed')
-        else:
-            exit('Failed to install: cmake3')
+        ERROR_CHECK(os.system(linuxSystemInstall+' install cmake3')) 
     if "centos" not in platfromInfo or "redhat" not in platfromInfo:
         platfromInfo = platfromInfo+'-redhat'
 elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
@@ -186,16 +189,13 @@ else:
 print("\nMIVisionX Setup on: "+platfromInfo+"\n")
 
 if userName == 'root':
-    os.system(linuxSystemInstall+' update')
-    if os.system(linuxSystemInstall+' install sudo') == 0:
-        print('sudo installed')
-    else:
-        exit('Failed to install: sudo')
+    ERROR_CHECK(os.system(linuxSystemInstall+' update'))
+    ERROR_CHECK(os.system(linuxSystemInstall+' install sudo'))
 
 # Delete previous install
 if os.path.exists(deps_dir) and reinstall == 'ON':
-    os.system('sudo -v')
-    os.system('sudo rm -rf '+deps_dir)
+    ERROR_CHECK(os.system('sudo -v'))
+    ERROR_CHECK(os.system('sudo rm -rf '+deps_dir))
     print("\nMIVisionX Setup: Removing Previous Install -- "+deps_dir+"\n")
 
 commonPackages = [
@@ -258,42 +258,31 @@ if os.path.exists(deps_dir):
 
     # common packages
     for i in range(len(commonPackages)):
-        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]) == 0:
-            print(commonPackages[i] + ' Installed')
-        else:
-            exit('Failed to install: '+ commonPackages[i])
+        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]))
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
-        os.system('sudo -v')
+        ERROR_CHECK(os.system('sudo -v'))
         if "Ubuntu" in platfromInfo:
             for i in range(len(neuralNetDebianPackages)):
-                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i]) == 0:
-                    print(neuralNetDebianPackages[i] + ' Installed')
-                else:
-                    exit('Failed to install: '+ neuralNetDebianPackages[i])
+                # It looks like the code is attempting to use a comment in Python to indicate that an
+                # error check is being performed. However, the syntax used for comments in Python is a
+                # hash symbol (#) followed by the actual comment text. The code provided has an
+                # incorrect syntax for a comment in Python.
+                ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i]))
         else:
             for i in range(len(neuralNetRPMPackages)):
-                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetRPMPackages[i]) == 0:
-                    print(neuralNetRPMPackages[i] + ' Installed')
-                else:
-                    exit('Failed to install: '+ neuralNetRPMPackages[i])
+                ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetRPMPackages[i]))
     # RPP
     if "Ubuntu" in platfromInfo:
-        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                ' '+linuxSystemInstall_check+' install -y rpp-dev') == 0:
-            print('rpp-dev Installed')
-        else:
-            exit('Failed to install: rpp-dev')
+        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                ' '+linuxSystemInstall_check+' install -y rpp-dev'))
     else:
-        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                ' '+linuxSystemInstall_check+' install -y rpp-devel') == 0:
-            print('rpp-devel Installed')
-        else:
-            exit('Failed to install: rpp-devel')
+        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                ' '+linuxSystemInstall_check+' install -y rpp-devel'))
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
     exit()
@@ -308,36 +297,25 @@ else:
     os.system('sudo -v')
     # common packages
     for i in range(len(commonPackages)):
-        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]) == 0:
-            print(commonPackages[i] + ' Installed')
-        else:
-            exit('Failed to install: '+ commonPackages[i])
+        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]))
 
     # Get Installation Source
-    if os.system(
-        '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )') == 0:
-        os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
-    else:
-        exit('Failed to wget: OpenCV V'+opencvVersion)
+    ERROR_CHECK(os.system(
+        '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )'))
+    os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )')
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
         os.system('sudo -v')
         if "Ubuntu" in platfromInfo:
             for i in range(len(neuralNetDebianPackages)):
-                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i]) == 0:
-                    print(neuralNetDebianPackages[i] + ' Installed')
-                else:
-                    exit('Failed to install: '+ neuralNetDebianPackages[i])
+                ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetDebianPackages[i]))
         else:
             for i in range(len(neuralNetRPMPackages)):
-                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetRPMPackages[i]) == 0:
-                    print(neuralNetRPMPackages[i] + ' Installed')
-                else:
-                    exit('Failed to install: '+ neuralNetRPMPackages[i])
+                ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ neuralNetRPMPackages[i]))
 
         # Install Model Compiler Deps
         if inferenceInstall == 'ON':
@@ -355,37 +333,23 @@ else:
                 os.system('sudo -v')
                 if "Ubuntu" in platfromInfo:
                     for i in range(len(inferenceDebianPackages)):
-                        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                                ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]) == 0:
-                            print(inferenceDebianPackages[i] + ' Installed')
-                        else:
-                            exit('Failed to install: '+ inferenceDebianPackages[i])
+                        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                                ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]))
                 else:
                     for i in range(len(inferenceRPMPackages)):
-                        if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                                ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]) == 0:
-                            print(inferenceRPMPackages[i] + ' Installed')
-                        else:
-                            exit('Failed to install: '+ inferenceRPMPackages[i])
+                        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                                ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
                 # Install base Deps
                 for i in range(len(pip3InferencePackages)):
-                        if os.system('sudo pip3 install '+ pip3InferencePackages[i]) == 0:
-                            print(pip3InferencePackages[i] + ' Installed')
-                        else:
-                            exit('Failed to install: '+ pip3InferencePackages[i])
-                os.system(
-                    'sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
+                        ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackages[i]))
                 # Install NNEF Deps
                 os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
                 os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)')
                 os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make)')
-                if os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)') == 0:
-                    print("NNEF Installed\n")
-                else:
-                    exit('Failed to install: NNEF')
+                ERROR_CHECK(os.system(
+                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:
                 print("STATUS: Model Compiler Deps Pre-Installed - " +modelCompilerDeps+"\n")
     else:
@@ -427,17 +391,11 @@ else:
     if amdRPPInstall == 'ON' and backend == 'HIP':
         # RPP
         if "Ubuntu" in platfromInfo:
-            if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                ' '+linuxSystemInstall_check+' install -y rpp-dev') == 0:
-                print('rpp-dev Installed')
-            else:
-                exit('Failed to install: rpp-dev')
+            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                ' '+linuxSystemInstall_check+' install -y rpp-dev'))
         else:
-            if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                ' '+linuxSystemInstall_check+' install -y rpp-devel') == 0:
-                print('rpp-devel Installed')
-            else:
-                exit('Failed to install: rpp-devel')
+            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                ' '+linuxSystemInstall_check+' install -y rpp-devel'))
     else:
         print("\nSTATUS: MIVisionX Setup: AMD VX RPP only supported with HIP backend\n")
 
@@ -445,11 +403,8 @@ else:
     if ffmpegInstall == 'ON':
         if "Ubuntu" in platfromInfo:
             for i in range(len(ffmpegDebianPackages)):
-                if os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                                ' '+linuxSystemInstall_check+' install -y '+ ffmpegDebianPackages[i]) == 0:
-                    print(ffmpegDebianPackages[i] + ' Installed')
-                else:
-                    exit('Failed to install: '+ ffmpegDebianPackages[i])
+                ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                                ' '+linuxSystemInstall_check+' install -y '+ ffmpegDebianPackages[i]))
 
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +

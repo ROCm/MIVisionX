@@ -2558,7 +2558,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppPreemphasisFilter(vx_graph graph, vx_te
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcLength, vx_tensor pDst, vx_tensor pDstDims, vx_array windowFn, vx_scalar centerWindows, vx_scalar reflectPadding, vx_scalar spectrogramLayout,
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_array windowFunction, vx_scalar centerWindows, vx_scalar reflectPadding, vx_scalar spectrogramLayout,
                                                      vx_scalar power, vx_scalar nfft, vx_scalar windowLength, vx_scalar windowStep) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -2567,10 +2567,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor p
         vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devtype);
         vx_reference params[] = {
             (vx_reference)pSrc,
-            (vx_reference)pSrcLength,
+            (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)pDstDims,
-            (vx_reference)windowFn,
+            (vx_reference)pDstRoi,
+            (vx_reference)windowFunction,
             (vx_reference)centerWindows,
             (vx_reference)reflectPadding,
             (vx_reference)spectrogramLayout,

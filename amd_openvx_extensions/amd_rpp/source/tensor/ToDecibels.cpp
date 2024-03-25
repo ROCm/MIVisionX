@@ -40,8 +40,8 @@ struct ToDecibelsLocalData {
 void copy_src_dims_and_update_dst_roi(ToDecibelsLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
     memcpy(dst_roi, src_roi, data->pSrcDesc->n * sizeof(RpptROI));
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcDims[i].width = src_roi[i].xywhROI.xy.x;
-        data->pSrcDims[i].height = src_roi[i].xywhROI.xy.y;
+        data->pSrcDims[i].width = src_roi[i].xywhROI.roiWidth;
+        data->pSrcDims[i].height = src_roi[i].xywhROI.roiHeight;
     }
 }
 

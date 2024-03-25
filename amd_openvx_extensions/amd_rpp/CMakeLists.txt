@@ -159,7 +159,6 @@ list(APPEND SOURCES
         source/tensor/WarpAffine.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/PreemphasisFilter.cpp
-        source/tensor/MelFilterBank.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )

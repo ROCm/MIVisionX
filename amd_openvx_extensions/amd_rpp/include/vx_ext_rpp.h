@@ -1978,6 +1978,24 @@ extern "C"
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcDims, vx_tensor pDst, vx_tensor pDstDims, vx_scalar axisMask, vx_scalar mean, vx_scalar stdDev, vx_scalar scale, vx_scalar shift, vx_scalar epsilon, vx_scalar ddof, vx_uint32 numOfDims);
 
+	/*! \brief [Graph] Produces a mel-spectrogram from spectrogram on applying a bank of triangular filters
+	* \ingroup group_amd_rpp
+	* \param [in] graph The handle to the graph.
+	* \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_FLOAT32</tt> format data.
+	* \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh (w- samples, h - channels) format.
+	* \param [out] pDst The output tensor (begin) in <tt>\ref VX_TYPE_FLOAT32</tt> format data.
+	* \param [in] pDstRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh (w- samples, h - channels) format.
+	* \param [in] freqHigh The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the maximum frequency.
+	* \param [in] freqLow The input scalar in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the minimum frequency.
+	* \param [in] melFormula The input scalar in <tt>\ref VX_TYPE_INT32</tt> format indicates the formula used to convert frequencies from hertz to mel and vice versa.
+	* \param [in] nfilter The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the number of mel filters.
+	* \param [in] normalize The input scalar in <tt>\ref VX_TYPE_BOOL</tt> format to determine weather to normalize the triangular filter weights by the width of the frequecny bands.
+	* \param [in] sampleRate The input scalar in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the sampling rate of the audio data.
+	* \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	*/
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppMelFilterBank(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_scalar freqHigh,
+															vx_scalar freqLow, vx_scalar melFormula, vx_scalar nfilter, vx_scalar normalize, vx_scalar sampleRate);
+
 #ifdef __cplusplus
 }
 #endif

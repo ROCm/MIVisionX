@@ -38,8 +38,8 @@ struct PreemphasisFilterLocalData {
 
 static vx_status VX_CALLBACK refreshPreemphasisFilter(vx_node node, const vx_reference *parameters, PreemphasisFilterLocalData *data) {
     vx_status status = VX_SUCCESS;
-    void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->pSrcDesc->n, sizeof(float), data->pPreemphCoeff, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    void *roi_tensor_ptr_src;
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->pSrcDesc->n, sizeof(float), data->pPreemphCoeff, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
@@ -49,10 +49,8 @@ static vx_status VX_CALLBACK refreshPreemphasisFilter(vx_node node, const vx_ref
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
     }
     RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
-    RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
     for (int n = 0; n < data->inputTensorDims[0]; n++)
         data->pSampleSize[n] = src_roi[n].xywhROI.roiWidth * src_roi[n].xywhROI.roiHeight;
 
@@ -62,7 +60,7 @@ static vx_status VX_CALLBACK refreshPreemphasisFilter(vx_node node, const vx_ref
 static vx_status VX_CALLBACK validatePreemphasisFilter(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
-    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[5], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[4], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #4 type=%d (must be size)\n", scalar_type);
 
@@ -100,7 +98,6 @@ static vx_status VX_CALLBACK processPreemphasisFilter(vx_node node, const vx_ref
 #endif
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        refreshPreemphasisFilter(node, parameters, data);
         rpp_status = rppt_pre_emphasis_filter_host((float *)data->pSrc, data->pSrcDesc, (float *)data->pDst, data->pDstDesc, (Rpp32s *)data->pSampleSize, data->pPreemphCoeff, RpptAudioBorderType(data->borderType), data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
@@ -112,8 +109,8 @@ static vx_status VX_CALLBACK initializePreemphasisFilter(vx_node node, const vx_
     memset(data, 0, sizeof(PreemphasisFilterLocalData));
 
     vx_enum input_tensor_datatype, output_tensor_datatype;
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[5], &data->borderType));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->borderType));
 
     // Querying for input tensor
     data->pSrcDesc = new RpptDesc;
@@ -177,7 +174,7 @@ vx_status PreemphasisFilter_Register(vx_context context) {
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.PreemphasisFilter",
                                        VX_KERNEL_RPP_PREEMPHASISFILTER,
                                        processPreemphasisFilter,
-                                       7,
+                                       6,
                                        validatePreemphasisFilter,
                                        initializePreemphasisFilter,
                                        uninitializePreemphasisFilter);
@@ -199,10 +196,9 @@ vx_status PreemphasisFilter_Register(vx_context context) {
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
     if (status != VX_SUCCESS) {

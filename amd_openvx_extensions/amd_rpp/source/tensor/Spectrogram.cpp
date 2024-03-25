@@ -43,7 +43,7 @@ struct SpectrogramLocalData {
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-void copy_src_dims_and_update_dst_roi(SpectrogramLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
+void updateDstRoi(SpectrogramLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
     const Rpp32s num_frames = ((data->nfft / 2) + 1);
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         data->pSrcLength[i] = static_cast<int>(src_roi[i].xywhROI.roiHeight); // bins, frames
@@ -71,7 +71,7 @@ static vx_status VX_CALLBACK refreshSpectrogram(vx_node node, const vx_reference
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
     }
-    copy_src_dims_and_update_dst_roi(data, reinterpret_cast<RpptROI *>(roi_tensor_ptr_src), reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst));
+    updateDstRoi(data, reinterpret_cast<RpptROI *>(roi_tensor_ptr_src), reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst));
     return status;
 }
 

@@ -37,7 +37,7 @@ __status__ = "Shipping"
 def ERROR_CHECK(call):
     status = call
     if(status != 0):
-        print('Failed -',call)
+        print('ERROR_CHECK failed with status:'+str(status))
         exit(status)
 
 # Arguments
@@ -277,7 +277,7 @@ opencvDebianPackages = [
     'libjpeg-dev',
     'libpng-dev',
     'libtiff-dev',
-    'libdc1394-22-dev',
+    'libdc1394-dev',
     'unzip'
 ]
 

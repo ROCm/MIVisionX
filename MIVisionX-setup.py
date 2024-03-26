@@ -469,10 +469,10 @@ else:
     # OpenCV 4.6.0
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
             ' -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )'))
-    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; make -j)'))
+    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; make -j$(nproc))'))
     ERROR_CHECK(os.system('sudo -v'))
-    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' make install)'))
-    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig)'))
+    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo make install)'))
+    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo ldconfig)'))
 
     if developerInstall == 'ON':
         ERROR_CHECK(os.system('sudo -v'))
@@ -490,6 +490,6 @@ else:
             '(cd '+deps_dir+'; wget https://ftp.gnu.org/gnu/gdb/gdb-12.1.tar.gz )'))
         ERROR_CHECK(os.system('(cd '+deps_dir+'; tar -xvzf gdb-12.1.tar.gz )'))
         ERROR_CHECK(os.system(
-            '(cd '+deps_dir+'/gdb-12.1; ./configure --with-python3; make CXXFLAGS="-static-libstdc++" -j; sudo make install)'))
+            '(cd '+deps_dir+'/gdb-12.1; ./configure --with-python3; make CXXFLAGS="-static-libstdc++" -j$(nproc); sudo make install)'))
 
     print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")

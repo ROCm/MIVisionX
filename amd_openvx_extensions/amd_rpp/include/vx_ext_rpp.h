@@ -1920,51 +1920,53 @@ extern "C"
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar cutOffDB, vx_scalar multiplier, vx_scalar referenceMagnitude);
 
 	/*! \brief [Graph] Creates a RPP Resample function node.
-     * \ingroup group_amd_rpp
-     * \param [in] graph The handle to the graph.
-     * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
-     * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
-     * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
-     * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
-     * \param [in] pSrcDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
-     * \param [in] pDstDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
-     * \param [in] outRateTensor The input tensor in <tt>\ref VX_TYPE_FLOAT32<tt> format containing the output sample rate data.
-     * \param [in] inRateTensor The input array in <tt>\ref VX_TYPE_FLOAT32<tt> format containing the affine input sample rate data.
-     * \param [in] quality The resampling is achieved by applying a sinc filter with Hann window with an extent controlled by the quality argument.
-     * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
-     * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
-     */
-    SHARED_PUBLIC vx_node VX_API_CALL vxExtRppResample(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_tensor pSrcDims, vx_tensor pDstDims, vx_tensor outRateTensor, vx_array inRateTensor, vx_scalar quality);
-    /*! \brief [Graph] Creates a RPP Resample function node.
-     * \ingroup group_amd_rpp
-     * \param [in] graph The handle to the graph.
-     * \param [in] pSrc1 The input tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
-     * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
+	 * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
+	 * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
+	 * \param [in] pSrcDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
+	 * \param [in] pDstDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
+	 * \param [in] outRateTensor The input tensor in <tt>\ref VX_TYPE_FLOAT32<tt> format containing the output sample rate data.
+	 * \param [in] inRateTensor The input array in <tt>\ref VX_TYPE_FLOAT32<tt> format containing the affine input sample rate data.
+	 * \param [in] quality The resampling is achieved by applying a sinc filter with Hann window with an extent controlled by the quality argument.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+	 * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppResample(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_tensor pSrcDims, vx_tensor pDstDims, vx_tensor outRateTensor, vx_array inRateTensor, vx_scalar quality);
+
+	/*! \brief [Graph] Creates a Tensor scalar multiplication node.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc1 The input tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
+	 * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
 	 * \param [in] pSrc2 The input tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
-     * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
-     * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
-     * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
-     * \param [in] nbatchSize The input batch size.
-     * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
-     * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
-     */
-    SHARED_PUBLIC vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_scalar scalar_value, vx_uint32 nbatchSize);
-    /*! \brief [Graph] Creates a RPP Resample function node.
-     * \ingroup group_amd_rpp
-     * \param [in] graph The handle to the graph.
-     * \param [in] pSrc1 The input tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
-     * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
+	 * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
+	 * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
+	 * \param [in] nbatchSize The input batch size.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+	 * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_scalar scalar_value, vx_uint32 nbatchSize);
+
+	/*! \brief [Graph] Creates a Tensor scalar addition node.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc1 The input tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
+	 * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
 	 * \param [in] pSrc2 The input tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
-     * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
-     * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
-     * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
-     * \param [in] pSrcDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
-     * \param [in] pDstDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
-     * \param [in] nbatchSize The input batch size.
-     * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
-     * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
-     */
-    SHARED_PUBLIC vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pDst, vx_tensor pSrcDims, vx_tensor pDstDims, vx_uint32 nbatchSize);
+	 * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8<tt> or <tt>\ref VX_TYPE_FLOAT32<tt> or
+	 * <tt>\ref VX_TYPE_FLOAT16<tt> or <tt>\ref VX_TYPE_INT8<tt> format data.
+	 * \param [in] pSrcDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
+	 * \param [in] pDstDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
+	 * \param [in] nbatchSize The input batch size.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+	 * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pDst, vx_tensor pSrcDims, vx_tensor pDstDims, vx_uint32 nbatchSize);
 
 #ifdef __cplusplus
 }

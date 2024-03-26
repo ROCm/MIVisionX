@@ -37,6 +37,7 @@ __status__ = "Shipping"
 def ERROR_CHECK(call):
     status = call
     if(status != 0):
+        print('Failed -',call)
         exit(status)
 
 # Arguments

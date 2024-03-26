@@ -180,7 +180,6 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
     data->pSrcLength = new int[data->pSrcDesc->n];
     data->pWindowFn = new float[data->windowLength];
 
-    refreshSpectrogram(node, parameters, data);
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->windowLength, sizeof(float), data->pWindowFn, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

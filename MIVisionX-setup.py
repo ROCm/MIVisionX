@@ -365,7 +365,7 @@ else:
 
             if not os.path.exists(modelCompilerDeps):
                 print("STATUS: Model Compiler Deps Install - " +modelCompilerDeps+"\n")
-                ERROR_CHECK(os.makedirs(modelCompilerDeps))
+                os.makedirs(modelCompilerDeps)
                 ERROR_CHECK(os.system('sudo -v'))
                 if "Ubuntu" in platfromInfo:
                     for i in range(len(inferenceDebianPackages)):

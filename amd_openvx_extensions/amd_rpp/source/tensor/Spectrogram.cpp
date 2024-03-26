@@ -46,7 +46,7 @@ struct SpectrogramLocalData {
 void updateDstRoi(SpectrogramLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
     const Rpp32s num_frames = ((data->nfft / 2) + 1);
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcLength[i] = static_cast<int>(src_roi[i].xywhROI.roiHeight); // bins, frames
+        data->pSrcLength[i] = static_cast<int>(src_roi[i].xywhROI.roiWidth);
         if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
             dst_roi[i].xywhROI.roiWidth = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
             dst_roi[i].xywhROI.roiHeight = num_frames;
@@ -104,13 +104,13 @@ static vx_status VX_CALLBACK validateSpectrogram(vx_node node, const vx_referenc
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #12 type=%d (must be size)\n", scalar_type);
 
     // Check for input parameters
-    size_t num_tensor_dims, tensor_dims[RPP_MAX_TENSOR_DIMS];
+    size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Spectrogram: tensor: #0 dimensions=%lu (must be equal to 3)\n", num_tensor_dims);
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
-    if (tensor_dims[2]!=1) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: Spectrogram: tensor dimensions[2] = %lu (must be equal to 1). Input data is expected to be single channel \n", num_tensor_dims);
+    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Spectrogram: tensor: #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
+
     // Check for output parameters
     vx_uint8 tensor_fixed_point_position;
+    size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_datatype;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
     if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Spectrogram: tensor: #2 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);

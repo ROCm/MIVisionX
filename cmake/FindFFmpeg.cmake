@@ -67,6 +67,7 @@ else()
   find_path(AVCODEC_INCLUDE_DIR 
     NAMES libavcodec/avcodec.h
     PATHS ${_FFMPEG_AVCODEC_INCLUDE_DIRS}
+      /usr/include/x86_64-linux-gnu
       /usr/local/include
       /usr/include
       /opt/local/include
@@ -77,6 +78,7 @@ else()
   find_library(AVCODEC_LIBRARY
     NAMES avcodec
     PATHS ${_FFMPEG_AVCODEC_LIBRARY_DIRS}
+      /usr/lib/x86_64-linux-gnu
       /usr/local/lib
       /usr/lib
       /opt/local/lib
@@ -88,6 +90,7 @@ else()
   find_path(AVFORMAT_INCLUDE_DIR 
     NAMES libavformat/avformat.h
     PATHS ${_FFMPEG_AVFORMAT_INCLUDE_DIRS}
+      /usr/include/x86_64-linux-gnu
       /usr/local/include
       /usr/include
       /opt/local/include
@@ -98,6 +101,7 @@ else()
   find_library(AVFORMAT_LIBRARY
     NAMES avformat
     PATHS ${_FFMPEG_AVFORMAT_LIBRARY_DIRS}
+      /usr/lib/x86_64-linux-gnu
       /usr/local/lib
       /usr/lib
       /opt/local/lib
@@ -109,6 +113,7 @@ else()
   find_path(AVUTIL_INCLUDE_DIR 
     NAMES libavutil/avutil.h
     PATHS ${_FFMPEG_AVUTIL_INCLUDE_DIRS}
+      /usr/include/x86_64-linux-gnu
       /usr/local/include
       /usr/include
       /opt/local/include
@@ -119,6 +124,7 @@ else()
   find_library(AVUTIL_LIBRARY
     NAMES avutil
     PATHS ${_FFMPEG_AVUTIL_LIBRARY_DIRS}
+      /usr/lib/x86_64-linux-gnu
       /usr/local/lib
       /usr/lib
       /opt/local/lib
@@ -130,6 +136,7 @@ else()
   find_path(SWSCALE_INCLUDE_DIR 
     NAMES libswscale/swscale.h
     PATHS ${_FFMPEG_SWSCALE_INCLUDE_DIRS}
+      /usr/include/x86_64-linux-gnu
       /usr/local/include
       /usr/include
       /opt/local/include
@@ -140,6 +147,7 @@ else()
   find_library(SWSCALE_LIBRARY
     NAMES swscale
     PATHS ${_FFMPEG_SWSCALE_LIBRARY_DIRS}
+      /usr/lib/x86_64-linux-gnu
       /usr/local/lib
       /usr/lib
       /opt/local/lib

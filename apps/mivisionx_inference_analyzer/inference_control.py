@@ -42,7 +42,7 @@ class inference_control(QtWidgets.QMainWindow):
         self.image_lineEdit.textChanged.connect(self.checkInput)
         self.image_lineEdit.textChanged.connect(self.checkInput)
         self.close_pushButton.clicked.connect(self.closeEvent)
-        self.file_lineEdit.setPlaceholderText("File Directory [required]")
+        self.file_lineEdit.setPlaceholderText("File Directory for NNEF / Model File for CAFFE/ONNX [required]")
         self.name_lineEdit.setPlaceholderText("Model Name [required]")
         self.idims_lineEdit.setPlaceholderText("c,h,w [required]")
         self.odims_lineEdit.setPlaceholderText("c,h,w [required]")
@@ -61,22 +61,26 @@ class inference_control(QtWidgets.QMainWindow):
         if self.format_comboBox.currentText() == 'nnef':
             self.file_lineEdit.setText(QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))
         else:
-            self.file_lineEdit.setText(QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*'))
+            filename, _filter = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './')
+            self.file_lineEdit.setText(filename)
 
     def browseOutput(self):
         self.output_lineEdit.setText(QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))
 
     def browseLabel(self):
-        self.label_lineEdit.setText(QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*.txt'))
+        filename, _filter = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', filter="Text files (*.txt)")
+        self.label_lineEdit.setText(filename)
 
     def browseImage(self):
         self.image_lineEdit.setText(QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))
 
     def browseVal(self):
-        self.val_lineEdit.setText(QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*.txt'))
+        filename, _filter = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', filter="Text files (*.txt)")
+        self.val_lineEdit.setText(filename)
 
     def browseHier(self):
-        self.hier_lineEdit.setText(QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*.csv'))
+        filename, _filter = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*.csv')
+        self.hier_lineEdit.setText(filename)
 
     def readSetupFile(self):
         setupDir = '~/.mivisionx-inference-analyzer'

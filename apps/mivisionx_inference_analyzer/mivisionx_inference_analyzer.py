@@ -2,7 +2,7 @@ __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2019 - 2024, AMD MIVisionX"
 __credits__     = ["Mike Schmit; Hansel Yang; Lakshmi Kumar;"]
 __license__     = "MIT"
-__version__     = "1.0"
+__version__     = "1.1"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "mivisionx.support@amd.com"
 __status__      = "Shipping"
@@ -15,6 +15,7 @@ import ctypes
 import cv2
 import time
 import numpy
+import statistics
 import numpy as np
 from numpy.ctypeslib import ndpointer
 from inference_control import inference_control
@@ -31,6 +32,11 @@ colors =[
         (0,128,255),      # Top4
         (255,102,102),    # Top5
         ]
+# error check calls
+def ERROR_CHECK(call):
+    status = call
+    if(status != 0):
+        exit(status)
 
 # AMD Neural Net python wrapper
 class AnnAPI:
@@ -54,7 +60,7 @@ class AnnAPI:
         self.annRunInference = self.lib.annRunInference
         self.annRunInference.restype = ctypes.c_int
         self.annRunInference.argtypes = [ctypes.c_void_p, ctypes.c_int]
-        print('OK: AnnAPI found "' + self.annQueryInference().decode("utf-8") + '" as configuration in ' + library)
+        print('OK: AMD VX NN API found "' + self.annQueryInference().decode("utf-8") + '" as configuration in ' + library)
 
 # classifier definition
 class annieObjectWrapper():
@@ -85,15 +91,15 @@ class annieObjectWrapper():
         # copy input f32 to inference input
         status = self.api.annCopyToInferenceInput(self.hdl, np.ascontiguousarray(img_t, dtype=np.float32), (img.shape[0]*img.shape[1]*3*4), 0)
         if(status):
-                print('ERROR: annCopyToInferenceInput Failed ')
+                print('ERROR: AMD VX NN CopyToInferenceInput Failed ')
         # run inference
         status = self.api.annRunInference(self.hdl, 1)
         if(status):
-                print('ERROR: annRunInference Failed ')
+                print('ERROR: AMD VX NN RunInference Failed ')
         # copy output f32
         status = self.api.annCopyFromInferenceOutput(self.hdl, np.ascontiguousarray(out, dtype=np.float32), out.nbytes)
         if(status):
-                print('ERROR: annCopyFromInferenceOutput Failed ')
+                print('ERROR: AMD VX NN CopyFromInferenceOutput Failed ')
         return out
 
     def classify(self, img):
@@ -260,13 +266,13 @@ if __name__ == '__main__':
         print("\nMIVisionX Inference Analyzer\n")
         # replace old model or throw error
         if(replaceModel == 'yes'):
-            os.system('rm -rf '+modelDir)
+            ERROR_CHECK(os.system('rm -rf '+modelDir))
         elif(os.path.exists(modelDir)):
             print("OK: Model exists")
 
     else:
         print("\nMIVisionX Inference Analyzer Created\n")
-        os.system('(cd ; mkdir .mivisionx-inference-analyzer)')
+        ERROR_CHECK(os.system('(cd ; mkdir .mivisionx-inference-analyzer)'))
 
     # Setup Text File for Demo
     if (not os.path.isfile(analyzerDir + "/setupFile.txt")):
@@ -291,7 +297,7 @@ if __name__ == '__main__':
             delModelName = data[0].split(';')[1]
             delmodelPath = analyzerDir + '/' + delModelName + '_dir'
             if(os.path.exists(delmodelPath)): 
-                os.system('rm -rf ' + delmodelPath)
+                ERROR_CHECK(os.system('rm -rf ' + delmodelPath))
             with open(analyzerDir + "/setupFile.txt", "w") as fout:
                 fout.writelines(data[1:])
             with open(analyzerDir + "/setupFile.txt", "a") as fappend:
@@ -300,36 +306,36 @@ if __name__ == '__main__':
 
     # Compile Model and generate python .so files
     if (replaceModel == 'yes' or not os.path.exists(modelDir)):
-        os.system('mkdir '+modelDir)
+        ERROR_CHECK(os.system('mkdir '+modelDir))
         if(os.path.exists(modelDir)):
             # convert to NNIR
             if(modelFormat == 'caffe'):
-                os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/caffe_to_nnir.py '+trainedModel+' nnir-files --input-dims 1,'+modelInputDims+' )')
+                ERROR_CHECK(os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/caffe_to_nnir.py '+trainedModel+' nnir-files --input-dims 1,'+modelInputDims+' )'))
             elif(modelFormat == 'onnx'):
-                os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/onnx_to_nnir.py '+trainedModel+' nnir-files --input-dims 1,'+modelInputDims+' )')
+                ERROR_CHECK(os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/onnx_to_nnir.py '+trainedModel+' nnir-files --input-dims 1,'+modelInputDims+' )'))
             elif(modelFormat == 'nnef'):
-                os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/nnef_to_nnir.py '+trainedModel+' nnir-files )')
+                ERROR_CHECK(os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/nnef_to_nnir.py '+trainedModel+' nnir-files )'))
             else:
                 print("ERROR: Neural Network Format Not supported, use caffe/onnx/nnef in arugment --model_format")
                 quit()
             # convert the model to FP16
             if(FP16inference):
-                os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/nnir_update.py --convert-fp16 1 --fuse-ops 1 nnir-files nnir-files)')
+                ERROR_CHECK(os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/nnir_update.py --convert-fp16 1 --fuse-ops 1 nnir-files nnir-files)'))
                 print("\nModel Quantized to FP16\n")
             # convert to openvx
             if(os.path.exists(nnirDir)):
-                os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/nnir_to_openvx.py nnir-files openvx-files)')
+                ERROR_CHECK(os.system('(cd '+modelDir+'; python3 '+modelCompilerPath+'/nnir_to_openvx.py nnir-files openvx-files)'))
             else:
                 print("ERROR: Converting Pre-Trained model to NNIR Failed")
                 quit()
             
             # build model
             if(os.path.exists(openvxDir)):
-                os.system('mkdir '+modelBuildDir)
+                ERROR_CHECK(os.system('mkdir '+modelBuildDir))
             else:
                 print("ERROR: Converting NNIR to OpenVX Failed")
                 quit()
-    os.system('(cd '+modelBuildDir+'; cmake ../openvx-files; make; ./anntest ../openvx-files/weights.bin )')
+    ERROR_CHECK(os.system('(cd '+modelBuildDir+'; cmake ../openvx-files; make; ./anntest ../openvx-files/weights.bin )'))
     print("\nSUCCESS: Converting Pre-Trained model to MIVisionX Runtime successful\n")
     
     #else:
@@ -381,6 +387,9 @@ if __name__ == '__main__':
 
     # process images
     correctTop5 = 0; correctTop1 = 0; wrong = 0; noGroundTruth = 0
+    totalTimeForInference = 0
+    totalCorners = 0
+    listOfCorners = []
     for x in range(totalImages):
         imageFileName,grountTruth = imageValidation[x].split(' ')
         groundTruthIndex = int(grountTruth)
@@ -393,12 +402,28 @@ if __name__ == '__main__':
             start = time.time()
             frame = cv2.imread(imageFile)
             end = time.time()
+            totalTimeForInference += ((end - start)*1000)
             if(verbosePrint):
                 print('%30s' % 'Read Image in ', str((end - start)*1000), 'ms')
+                
+            # image complexity detection
+            start = time.time()
+            gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            gray = np.float32(gray)
+            dst = cv2.cornerHarris(gray,2,3,0.04)
+            numCorners = np.sum(dst > 0.01 * dst.max())
+            listOfCorners.append(numCorners)
+            totalCorners += numCorners
+            end = time.time()
+            if(verbosePrint):
+                print('%30s' % 'Image complexity detection in ', str((end - start)*1000), 'ms')
 
             # resize and process frame
             start = time.time()
-            resizedFrame = cv2.resize(frame, (w_i,h_i))
+            if(numCorners <= 3500):
+                resizedFrame = cv2.resize(frame, (w_i,h_i), interpolation = cv2.INTER_LINEAR)
+            else:
+                resizedFrame = cv2.resize(frame, (w_i,h_i), interpolation = cv2.INTER_AREA)
             RGBframe = cv2.cvtColor(resizedFrame, cv2.COLOR_BGR2RGB)
             if(inputAdd != '' or inputMultiply != ''):
                 pFrame = np.zeros(RGBframe.shape).astype('float32')
@@ -406,6 +431,7 @@ if __name__ == '__main__':
                     pFrame[:,:,i] = RGBframe.copy()[:,:,i] * Mx[i] + Ax[i]
                 RGBframe = pFrame
             end = time.time()
+            totalTimeForInference += ((end - start)*1000)
             if(verbosePrint):
                 print('%30s' % 'Input pre-processed in ', str((end - start)*1000), 'ms')
 
@@ -413,6 +439,7 @@ if __name__ == '__main__':
             start = time.time()
             output = classifier.classify(RGBframe)
             end = time.time()
+            totalTimeForInference += ((end - start)*1000)
             if(verbosePrint):
                 print('%30s' % 'Executed Model in ', str((end - start)*1000), 'ms')
 
@@ -427,7 +454,7 @@ if __name__ == '__main__':
             cv2.imshow(windowResult, resultImage)
             end = time.time()
             if(verbosePrint):
-                print('%30s' % 'Processed display in ', str((end - start)*1000), 'ms\n')
+                print('%30s' % 'Processed display in ', str((end - start)*1000), 'ms')
 
             # write image results to a file
             start = time.time()
@@ -504,6 +531,7 @@ if __name__ == '__main__':
             end = time.time()
             if(verbosePrint):
                 print('%30s' % 'Progress image created in ', str((end - start)*1000), 'ms')
+                print('%30s' % 'Images Processed: ', str(x), '\n\n')
 
             # exit on ESC
             key = cv2.waitKey(2)
@@ -512,22 +540,27 @@ if __name__ == '__main__':
 
     # Inference Analyzer Successful
     print("\nSUCCESS: Images Inferenced with the Model\n")
+    timePerInference = float (totalTimeForInference / totalImages)
+    print('%30s' % 'Time per image Inference ', str(timePerInference), 'ms')
+    avgCornersPerImage = float(totalCorners / totalImages )
+    print('%30s' % 'Avg number of corners per image: ', str(avgCornersPerImage))
+    print('%30s' % 'Mean number of corners per image: ', str(statistics.mean(listOfCorners)))
     cv2.destroyWindow(windowInput)
     cv2.destroyWindow(windowResult)
 
     # Create ADAT folder and file
     print("\nADAT tool called to create the analysis toolkit\n")
     if(not os.path.exists(adatOutputDir)):
-        os.system('mkdir ' + adatOutputDir)
+        ERROR_CHECK(os.system('mkdir -p ' + adatOutputDir))
     
     if(hierarchy == ''):
-        os.system('python '+ADATPath+'/generate-visualization.py --inference_results '+finalImageResultsFile+
-        ' --image_dir '+inputImageDir+' --label '+labelText+' --model_name '+modelName+' --output_dir '+adatOutputDir+' --output_name '+modelName+'-ADAT')
+        ERROR_CHECK(os.system('python '+ADATPath+'/generate-visualization.py --inference_results '+finalImageResultsFile+
+        ' --image_dir '+inputImageDir+' --label '+labelText+' --model_name '+modelName+' --output_dir '+adatOutputDir+' --output_name '+modelName+'-ADAT'))
     else:
-        os.system('python '+ADATPath+'/generate-visualization.py --inference_results '+finalImageResultsFile+
-        ' --image_dir '+inputImageDir+' --label '+labelText+' --hierarchy '+hierarchyText+' --model_name '+modelName+' --output_dir '+adatOutputDir+' --output_name '+modelName+'-ADAT')
+        ERROR_CHECK(os.system('python '+ADATPath+'/generate-visualization.py --inference_results '+finalImageResultsFile+
+        ' --image_dir '+inputImageDir+' --label '+labelText+' --hierarchy '+hierarchyText+' --model_name '+modelName+' --output_dir '+adatOutputDir+' --output_name '+modelName+'-ADAT'))
     print("\nSUCCESS: Image Analysis Toolkit Created\n")
-    print("Press ESC to exit or close progess window\n")
+    print("Press ESC to exit or close progress window\n")
 
     # Wait to quit
     while True:
@@ -539,4 +572,4 @@ if __name__ == '__main__':
             break
 
     outputHTMLFile = os.path.expanduser(adatOutputDir+'/'+modelName+'-ADAT-toolKit/index.html')
-    os.system('firefox '+outputHTMLFile)
+    ERROR_CHECK(os.system('firefox '+outputHTMLFile))

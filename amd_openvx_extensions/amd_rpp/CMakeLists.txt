@@ -133,6 +133,7 @@ list(APPEND SOURCES
         source/tensor/Copy.cpp
         source/tensor/Crop.cpp
         source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Downmix.cpp
         source/tensor/Exposure.cpp
         source/tensor/FishEye.cpp
         source/tensor/Flip.cpp
@@ -154,9 +155,12 @@ list(APPEND SOURCES
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/Snow.cpp
+        source/tensor/Spectrogram.cpp
+        source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
         source/tensor/SequenceRearrange.cpp
+        source/tensor/PreemphasisFilter.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )

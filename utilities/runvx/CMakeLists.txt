@@ -122,7 +122,12 @@ endif()
 # install MIVisionX executables -- {ROCM_PATH}/bin
 install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
 
-# install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+if(NOT BUILD_SHARED_LIBS)
+  # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+  install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT static)
+else()
+  # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
+  install(DIRECTORY ../../samples/gdf DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+endif()
 
 message("-- ${White}runVX -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

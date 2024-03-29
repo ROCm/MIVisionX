@@ -25,14 +25,12 @@ THE SOFTWARE.
 
 struct DownmixLocalData {
     vxRppHandle *handle;
-    Rpp32u device_type;
+    Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    vx_int32 *srcDims;
+    vx_int32 *psrcRoi;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
-    RpptDesc srcDesc;
-    RpptDesc dstDesc;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
@@ -40,20 +38,19 @@ struct DownmixLocalData {
 static vx_status VX_CALLBACK refreshDownmix(vx_node node, const vx_reference *parameters, vx_uint32 num, DownmixLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr_src;
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
-    }
 #endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU) {
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
     }
     RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
     for (int n = 0; n < data->inputTensorDims[0]; n++) {
-        data->srcDims[n * 2] = src_roi[n].xywhROI.roiWidth;
-        data->srcDims[n * 2 + 1] = src_roi[n].xywhROI.roiHeight;
+        data->psrcRoi[n * 2] = src_roi[n].xywhROI.roiWidth;
+        data->psrcRoi[n * 2 + 1] = src_roi[n].xywhROI.roiHeight;
     }
     return status;
 }
@@ -63,7 +60,7 @@ static vx_status VX_CALLBACK validateDownmix(vx_node node, const vx_reference pa
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[3], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #4 type=%d (must be size)\n", scalar_type);
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #3 type=%d (must be size)\n", scalar_type);
 
     // Check for input parameters
     size_t num_tensor_dims;
@@ -93,14 +90,13 @@ static vx_status VX_CALLBACK processDownmix(vx_node node, const vx_reference *pa
     vx_status return_status = VX_SUCCESS;
     DownmixLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if (data->device_type == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-    }
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_OPENCL || ENABLE_HIP
+        return VX_ERROR_NOT_IMPLEMENTED;
 #endif
-    if (data->device_type == AGO_TARGET_AFFINITY_CPU) {
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshDownmix(node, parameters, num, data);
-        rpp_status = rppt_down_mixing_host((float *)data->pSrc, data->pSrcDesc, (float *)data->pDst, data->pDstDesc, (Rpp32s *)data->srcDims, false, data->handle->rppHandle);
+        rpp_status = rppt_down_mixing_host((float *)data->pSrc, data->pSrcDesc, (float *)data->pDst, data->pDstDesc, (Rpp32s *)data->psrcRoi, false, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -111,8 +107,7 @@ static vx_status VX_CALLBACK initializeDownmix(vx_node node, const vx_reference 
     memset(data, 0, sizeof(DownmixLocalData));
 
     vx_enum input_tensor_datatype, output_tensor_datatype;
-
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     // Querying for input tensor
     data->pSrcDesc = new RpptDesc;
@@ -132,11 +127,10 @@ static vx_status VX_CALLBACK initializeDownmix(vx_node node, const vx_reference 
     data->pDstDesc->offsetInBytes = 0;
     fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
-    data->srcDims = new vx_int32[data->pSrcDesc->n * 2];
+    data->psrcRoi = new vx_int32[data->pSrcDesc->n * 2];
 
     refreshDownmix(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->device_type));
-
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
@@ -144,14 +138,16 @@ static vx_status VX_CALLBACK initializeDownmix(vx_node node, const vx_reference 
 static vx_status VX_CALLBACK uninitializeDownmix(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     DownmixLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
-    delete (data->srcDims);
-    delete (data);
+    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
+    delete[] data->psrcRoi;
+    delete data->pSrcDesc;
+    delete data->pDstDesc;
+    delete data;
     return VX_SUCCESS;
 }
 
 //! \brief The kernel target support callback.
-// TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
+// TODO::currently the node is setting the same affinity as context. This needs to change when we have hybrid modes in the same graph
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
                                                   vx_bool use_opencl_1_2,               // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
                                                   vx_uint32 &supported_target_affinity  // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
@@ -188,7 +184,7 @@ vx_status Downmix_Register(vx_context context) {
     if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));
 #else
-            vx_bool enableBufferAccess = vx_false_e;
+    vx_bool enableBufferAccess = vx_false_e;
 #endif
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
 
@@ -197,7 +193,6 @@ vx_status Downmix_Register(vx_context context) {
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        // PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }

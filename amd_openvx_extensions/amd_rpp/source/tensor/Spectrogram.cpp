@@ -29,7 +29,7 @@ struct SpectrogramLocalData {
     RppPtr_t pDst;
     bool centerWindows;
     bool reflectPadding;
-    // RpptSpectrogramLayout spectrogramLayout;
+    RpptSpectrogramLayout spectrogramLayout;
     Rpp32s power;
     Rpp32s nfft;
     Rpp32s windowLength;
@@ -43,31 +43,27 @@ struct SpectrogramLocalData {
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-void copy_src_dims_and_update_dst_roi(SpectrogramLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
+void updateDstRoi(SpectrogramLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
     const Rpp32s num_frames = ((data->nfft / 2) + 1);
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         data->pSrcLength[i] = static_cast<int>(src_roi[i].xywhROI.roiWidth);
-        // if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
-        //     dst_roi[i].xywhROI.roiWidth = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
-        //     dst_roi[i].xywhROI.roiHeight = num_frames;
-        // } else if (data->spectrogramLayout == RpptSpectrogramLayout::TF) {
-        //     dst_roi[i].xywhROI.roiWidth = num_frames;
-        //     dst_roi[i].xywhROI.roiHeight = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
-        // }
+        if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
+            dst_roi[i].xywhROI.roiWidth = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
+            dst_roi[i].xywhROI.roiHeight = num_frames;
+        } else if (data->spectrogramLayout == RpptSpectrogramLayout::TF) {
+            dst_roi[i].xywhROI.roiWidth = num_frames;
+            dst_roi[i].xywhROI.roiHeight = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
+        }
     }
 }
 
-static vx_status VX_CALLBACK refreshSpectrogram(vx_node node, const vx_reference *parameters, vx_uint32 num, SpectrogramLocalData *data) {
+static vx_status VX_CALLBACK refreshSpectrogram(vx_node node, const vx_reference *parameters, SpectrogramLocalData *data) {
     vx_status status = VX_SUCCESS;
+    vx_status return_status = VX_SUCCESS;
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
+#if ENABLE_OPENCL || ENABLE_HIP
+        return_status = VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
@@ -75,9 +71,7 @@ static vx_status VX_CALLBACK refreshSpectrogram(vx_node node, const vx_reference
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
     }
-    RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
-    RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
-    copy_src_dims_and_update_dst_roi(data, src_roi, dst_roi);
+    updateDstRoi(data, reinterpret_cast<RpptROI *>(roi_tensor_ptr_src), reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst));
     return status;
 }
 
@@ -91,7 +85,7 @@ static vx_status VX_CALLBACK validateSpectrogram(vx_node node, const vx_referenc
     if (scalar_type != VX_TYPE_BOOL)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #6 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_UINT32)
+    if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #7 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[8], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
@@ -135,16 +129,14 @@ static vx_status VX_CALLBACK processSpectrogram(vx_node node, const vx_reference
     vx_status return_status = VX_SUCCESS;
     SpectrogramLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshSpectrogram(node, parameters, num, data);
+    refreshSpectrogram(node, parameters, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_OPENCL || ENABLE_HIP
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        // rpp_status = rppt_spectrogram_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
-        //                                    data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->spectrogramLayout, data->handle->rppHandle);
+        rpp_status = rppt_spectrogram_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
+                                           data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->spectrogramLayout, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -164,9 +156,8 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &data->windowLength));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[11], &data->windowStep));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    // data->spectrogramLayout = (spectrogram_layout == 0) ? RpptSpectrogramLayout::FT : RpptSpectrogramLayout::TF;
-    if (!data->centerWindows)
-        data->windowOffset = data->windowLength;
+    data->spectrogramLayout = (spectrogram_layout == 0) ? RpptSpectrogramLayout::FT : RpptSpectrogramLayout::TF;
+    data->windowOffset = (!data->centerWindows) ? data->windowLength : 0;
 
     // Querying for input tensor
     data->pSrcDesc = new RpptDesc;
@@ -189,7 +180,6 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
     data->pSrcLength = new int[data->pSrcDesc->n];
     data->pWindowFn = new float[data->windowLength];
 
-    refreshSpectrogram(node, parameters, num, data);
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->windowLength, sizeof(float), data->pWindowFn, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -199,12 +189,12 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
 static vx_status VX_CALLBACK uninitializeSpectrogram(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     SpectrogramLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete (data->pSrcLength);
-    delete (data->pWindowFn);
-    delete (data->pSrcDesc);
-    delete (data->pDstDesc);
+    delete[] data->pSrcLength;
+    delete[] data->pWindowFn;
+    delete data->pSrcDesc;
+    delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
-    delete (data);
+    delete data;
     return VX_SUCCESS;
 }
 

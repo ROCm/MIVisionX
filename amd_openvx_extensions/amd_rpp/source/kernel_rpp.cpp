@@ -2540,28 +2540,26 @@ VX_API_CALL vx_node VX_API_CALL vxExtRppSequenceRearrange(vx_graph graph, vx_ten
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppPreemphasisFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_array preemphCoeff, vx_scalar borderType) 
-{
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppPreemphasisFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pPreemphCoeff, vx_scalar borderType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
-    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) 
-    {
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_uint32 devType = getGraphAffinity(graph);
         vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
         vx_reference params[] = {
             (vx_reference)pSrc,
             (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)pDstRoi,
-            (vx_reference)preemphCoeff,
+            (vx_reference)pPreemphCoeff,
             (vx_reference)borderType,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_PREEMPHASISFILTER, params, 7);
+        node = createNode(graph, VX_KERNEL_RPP_PREEMPHASISFILTER, params, 6);
     }
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcLength, vx_tensor pDst, vx_tensor pDstDims, vx_array windowFn, vx_scalar centerWindows, vx_scalar reflectPadding, vx_scalar spectrogramLayout,
+
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_array windowFunction, vx_scalar centerWindows, vx_scalar reflectPadding, vx_scalar spectrogramLayout,
                                                      vx_scalar power, vx_scalar nfft, vx_scalar windowLength, vx_scalar windowStep) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -2570,10 +2568,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor p
         vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devtype);
         vx_reference params[] = {
             (vx_reference)pSrc,
-            (vx_reference)pSrcLength,
+            (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)pDstDims,
-            (vx_reference)windowFn,
+            (vx_reference)pDstRoi,
+            (vx_reference)windowFunction,
             (vx_reference)centerWindows,
             (vx_reference)reflectPadding,
             (vx_reference)spectrogramLayout,
@@ -2631,23 +2629,23 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, v
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppDownmix(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_tensor srcRoi) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppDownmix(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_tensor pSrcRoi) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
-        vx_uint32 dev_type = getGraphAffinity(graph);
-        vx_scalar devType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &dev_type);
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
         vx_reference params[] = {
             (vx_reference)pSrc,
             (vx_reference)pDst,
-            (vx_reference)srcRoi,
-            (vx_reference)devType};
+            (vx_reference)pSrcRoi,
+            (vx_reference)deviceType};
         node = createNode(graph, VX_KERNEL_RPP_DOWNMIX, params, 4);
     }
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcDims, vx_tensor pDst, vx_tensor pDstDims, vx_scalar cutOffDB, vx_scalar multiplier, vx_scalar referenceMagnitude) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar cutOffDB, vx_scalar multiplier, vx_scalar referenceMagnitude) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2655,53 +2653,22 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pS
         vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
         vx_reference params[] = {
             (vx_reference)pSrc,
-            (vx_reference)pSrcDims,
+            (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)pDstDims,
             (vx_reference)cutOffDB,
             (vx_reference)multiplier,
             (vx_reference)referenceMagnitude,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_TODECIBELS, params, 8);
-    }
-    return node;
-}
-
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcDims, vx_tensor pDst, vx_tensor pDstDims,
-                                                   vx_scalar axisMask, vx_scalar mean, vx_scalar stdDev, vx_scalar scale,
-                                                   vx_scalar shift, vx_scalar epsilon, vx_scalar ddof, vx_uint32 numOfDims) {
-    vx_node node = NULL;
-    vx_context context = vxGetContext((vx_reference)graph);
-    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
-        vx_uint32 devType = getGraphAffinity(graph);
-        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
-        vx_scalar numberOfDims = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &numOfDims);
-        vx_reference params[] = {
-            (vx_reference)pSrc,
-            (vx_reference)pSrcDims,
-            (vx_reference)pDst,
-            (vx_reference)pDstDims,
-            (vx_reference)axisMask,
-            (vx_reference)mean,
-            (vx_reference)stdDev,
-            (vx_reference)scale,
-            (vx_reference)shift,
-            (vx_reference)epsilon,
-            (vx_reference)ddof,
-            (vx_reference)numberOfDims,
-            (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_NORMALIZE, params, 13);
+        node = createNode(graph, VX_KERNEL_RPP_TODECIBELS, params, 7);
     }
     return node;
 }
 
 VX_API_ENTRY vx_node VX_API_CALL vxExtRppResample(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_tensor srcDims, vx_tensor dstDims,
-                                                  vx_tensor outRateTensor, vx_array inRateTensor, vx_scalar quality)
-{
+                                                  vx_tensor outRateTensor, vx_array inRateTensor, vx_scalar quality) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
-    if (vxGetStatus((vx_reference)context) == VX_SUCCESS)
-    {
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_uint32 devType = getGraphAffinity(graph);
         vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
         vx_reference params[] = {
@@ -2718,12 +2685,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppResample(vx_graph graph, vx_tensor pSrc
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_scalar scalar_value, vx_uint32 nbatchSize)
-{
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_scalar scalar_value, vx_uint32 nbatchSize) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
-    if (vxGetStatus((vx_reference)context) == VX_SUCCESS)
-    {
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_uint32 dev_type = getGraphAffinity(graph);
         vx_scalar devType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &dev_type);
         vx_reference params[] = {
@@ -2736,12 +2701,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tens
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pDst, vx_tensor srcRoi, vx_tensor dstRoi, vx_uint32 nbatchSize)
-{
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pDst, vx_tensor srcRoi, vx_tensor dstRoi, vx_uint32 nbatchSize) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
-    if (vxGetStatus((vx_reference)context) == VX_SUCCESS)
-    {
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_uint32 dev_type = getGraphAffinity(graph);
         vx_scalar devType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &dev_type);
         vx_scalar NBATCHSIZE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &nbatchSize);
@@ -2829,8 +2792,8 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, siz
 
 void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
     descPtr->n = tensorDims[0];
-    descPtr->h = tensorDims[2];
-    descPtr->w = tensorDims[1];
+    descPtr->h = tensorDims[1];
+    descPtr->w = tensorDims[2];
     descPtr->c = 1;
     descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
     descPtr->strides.hStride = descPtr->c * descPtr->w;

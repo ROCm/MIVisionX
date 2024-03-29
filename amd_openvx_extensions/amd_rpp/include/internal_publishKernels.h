@@ -159,7 +159,6 @@ vx_status PreemphasisFilter_Register(vx_context);
 vx_status Spectrogram_Register(vx_context);
 vx_status Downmix_Register(vx_context);
 vx_status ToDecibels_Register(vx_context);
-vx_status Normalize_Register(vx_context);
 vx_status Resample_Register(vx_context);
 vx_status TensorMulScalar_Register(vx_context);
 vx_status TensorAddTensor_Register(vx_context);
@@ -293,7 +292,6 @@ vx_status Slice_Register(vx_context);
 #define VX_KERNEL_RPP_SPECTROGRAM_NAME                          "org.rpp.Spectrogram"
 #define VX_KERNEL_RPP_DOWNMIX_NAME                              "org.rpp.Downmix"
 #define VX_KERNEL_RPP_TODECIBELS_NAME                           "org.rpp.ToDecibels"
-#define VX_KERNEL_RPP_NORMALIZE_NAME                            "org.rpp.Normalize"
 #define VX_KERNEL_RPP_RESAMPLE_NAME                             "org.rpp.Resample"
 #define VX_KERNEL_RPP_TENSORMULSCALAR_NAME                      "org.rpp.TensorMulScalar"
 #define VX_KERNEL_RPP_TENSORADDTENSOR_NAME                      "org.rpp.TensorAddTensor"

@@ -1968,6 +1968,16 @@ extern "C"
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pDst, vx_tensor pSrcDims, vx_tensor pDstDims, vx_uint32 nbatchSize);
 
+	/*! \brief [Graph] Applies downmixing to the input tensor.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrcDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input tensor in xywh/ltrb format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pDstDims The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the output tensor in xywh/ltrb format.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcDims, vx_tensor pDst, vx_tensor pDstDims, vx_scalar axisMask, vx_scalar mean, vx_scalar stdDev, vx_scalar scale, vx_scalar shift, vx_scalar epsilon, vx_scalar ddof, vx_uint32 numOfDims);
+
 #ifdef __cplusplus
 }
 #endif

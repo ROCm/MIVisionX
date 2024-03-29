@@ -26,8 +26,8 @@ struct NonSilentRegionLocalData {
     vxRppHandle *handle;
     Rpp32u deviceType;
     RppPtr_t pSrc;
-    Rpp32f *pDst1;
-    Rpp32f *pDst2;
+    Rpp32s *pDst1;
+    Rpp32s *pDst2;
     Rpp32f cutOffDB;
     Rpp32f referencePower;
     Rpp32s windowLength;

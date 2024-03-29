@@ -29,7 +29,7 @@ struct SpectrogramLocalData {
     RppPtr_t pDst;
     bool centerWindows;
     bool reflectPadding;
-    RpptSpectrogramLayout spectrogramLayout;
+    // RpptSpectrogramLayout spectrogramLayout;
     Rpp32s power;
     Rpp32s nfft;
     Rpp32s windowLength;
@@ -47,13 +47,13 @@ void copy_src_dims_and_update_dst_roi(SpectrogramLocalData *data, RpptROI *src_r
     const Rpp32s num_frames = ((data->nfft / 2) + 1);
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         data->pSrcLength[i] = static_cast<int>(src_roi[i].xywhROI.roiWidth);
-        if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
-            dst_roi[i].xywhROI.roiWidth = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
-            dst_roi[i].xywhROI.roiHeight = num_frames;
-        } else if (data->spectrogramLayout == RpptSpectrogramLayout::TF) {
-            dst_roi[i].xywhROI.roiWidth = num_frames;
-            dst_roi[i].xywhROI.roiHeight = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
-        }
+        // if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
+        //     dst_roi[i].xywhROI.roiWidth = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
+        //     dst_roi[i].xywhROI.roiHeight = num_frames;
+        // } else if (data->spectrogramLayout == RpptSpectrogramLayout::TF) {
+        //     dst_roi[i].xywhROI.roiWidth = num_frames;
+        //     dst_roi[i].xywhROI.roiHeight = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
+        // }
     }
 }
 
@@ -143,8 +143,8 @@ static vx_status VX_CALLBACK processSpectrogram(vx_node node, const vx_reference
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_spectrogram_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
-                                           data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->spectrogramLayout, data->handle->rppHandle);
+        // rpp_status = rppt_spectrogram_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
+        //                                    data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->spectrogramLayout, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -164,7 +164,7 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &data->windowLength));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[11], &data->windowStep));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    data->spectrogramLayout = (spectrogram_layout == 0) ? RpptSpectrogramLayout::FT : RpptSpectrogramLayout::TF;
+    // data->spectrogramLayout = (spectrogram_layout == 0) ? RpptSpectrogramLayout::FT : RpptSpectrogramLayout::TF;
     if (!data->centerWindows)
         data->windowOffset = data->windowLength;
 

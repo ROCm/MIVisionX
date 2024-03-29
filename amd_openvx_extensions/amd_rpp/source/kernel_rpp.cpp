@@ -2839,6 +2839,46 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
     descPtr->numDims = 4;
 }
 
+void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &dscPtr3D, vxTensorLayout layout, size_t *tensorDims) {
+    switch(layout) {
+        case vxTensorLayout::VX_NDHWC: {
+            dscPtr3D->numDims = 5;
+            dscPtr3D->layout = RpptLayout::NDHWC;
+            dscPtr3D->dims[0] = tensorDims[0];
+            dscPtr3D->dims[1] = tensorDims[1];
+            dscPtr3D->dims[2] = tensorDims[2];
+            dscPtr3D->dims[3] = tensorDims[3];
+            dscPtr3D->dims[4] = tensorDims[4];
+
+            dscPtr3D->strides[0] = dscPtr3D->dims[1] * dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
+            dscPtr3D->strides[1] = dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
+            dscPtr3D->strides[2] = dscPtr3D->dims[3] * dscPtr3D->dims[4];
+            dscPtr3D->strides[3] = dscPtr3D->dims[4];
+            dscPtr3D->strides[4] = 1;
+            break;
+        }
+        case vxTensorLayout::VX_NCDHW: {
+            dscPtr3D->numDims = 5;
+            dscPtr3D->layout = RpptLayout::NCDHW;
+            dscPtr3D->dims[0] = tensorDims[0];
+            dscPtr3D->dims[1] = tensorDims[1];
+            dscPtr3D->dims[2] = tensorDims[2];
+            dscPtr3D->dims[3] = tensorDims[3];
+            dscPtr3D->dims[4] = tensorDims[4];
+
+            dscPtr3D->strides[0] = dscPtr3D->dims[1] * dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
+            dscPtr3D->strides[1] = dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
+            dscPtr3D->strides[2] = dscPtr3D->dims[3] * dscPtr3D->dims[4];
+            dscPtr3D->strides[3] = dscPtr3D->dims[4];
+            dscPtr3D->strides[4] = 1;
+            break;
+        }
+        default: {
+            throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims.");
+        }
+    }
+}
+
 // utility functions
 vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx_uint32 num)
 {

@@ -166,6 +166,8 @@ list(APPEND SOURCES
         source/tensor/Resample.cpp
         source/tensor/TensorMulScalar.cpp
         source/tensor/TensorAddTensor.cpp
+        source/tensor/NonSilentRegion.cpp
+        source/tensor/Slice.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )

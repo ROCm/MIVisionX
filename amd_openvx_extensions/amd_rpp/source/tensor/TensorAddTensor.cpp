@@ -75,9 +75,6 @@ static vx_status VX_CALLBACK validateTensorAddTensor(vx_node node, const vx_refe
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[5], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #4 type=%d (must be size)\n", scalar_type);
-    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #5 type=%d (must be size)\n", scalar_type);
 
     // Validate for input parameters
     size_t num_tensor_dims;
@@ -119,8 +116,8 @@ static vx_status VX_CALLBACK processTensorAddTensor(vx_node node, const vx_refer
                 float *src1Temp = static_cast<float *>(data->pSrc1) + i * nStride;
                 float *src2Temp = static_cast<float *>(data->pSrc2) + i;
                 float *dstTemp = static_cast<float *>(data->pDst) + i * nStride;
-                uint height = data->pSrcRoi[i].xywhROI.roiWidth;
-                uint width = data->pSrcRoi[i].xywhROI.roiHeight;
+                uint height = data->pSrcRoi[i].xywhROI.roiHeight;
+                uint width = data->pSrcRoi[i].xywhROI.roiWidth;
                 uint alignedWidth = (width / 8) * 8;
                 float additionFactor = src2Temp[0];
                 __m256 pSrc2 = _mm256_set1_ps(additionFactor);

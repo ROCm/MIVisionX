@@ -42,15 +42,6 @@ struct TensorAddTensorLocalData {
     vx_enum outTensorType;
 };
 
-void update_destination_roi(TensorAddTensorLocalData *data, void *roi_tensor_ptr_src, void *roi_tensor_ptr_dst) {
-    data->pDstRoi = static_cast<RpptROI *>(roi_tensor_ptr_dst);
-    data->pSrcRoi = static_cast<RpptROI *>(roi_tensor_ptr_src);
-    for (uint i = 0; i < data->inputTensorDims1[0]; i++) {
-        data->pDstRoi[i].xywhROI.roiWidth = data->pSrcRoi[i].xywhROI.roiWidth;
-        data->pDstRoi[i].xywhROI.roiHeight = data->pSrcRoi[i].xywhROI.roiHeight;
-    }
-}
-
 static vx_status VX_CALLBACK refreshTensorAddTensor(vx_node node, const vx_reference *parameters, vx_uint32 num, TensorAddTensorLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
@@ -64,7 +55,12 @@ static vx_status VX_CALLBACK refreshTensorAddTensor(vx_node node, const vx_refer
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
-        update_destination_roi(data, roi_tensor_ptr_src, roi_tensor_ptr_dst);
+        data->pDstRoi = static_cast<RpptROI *>(roi_tensor_ptr_dst);
+        data->pSrcRoi = static_cast<RpptROI *>(roi_tensor_ptr_src);
+        for (uint i = 0; i < data->inputTensorDims1[0]; i++) {
+            data->pDstRoi[i].xywhROI.roiWidth = data->pSrcRoi[i].xywhROI.roiWidth;
+            data->pDstRoi[i].xywhROI.roiHeight = data->pSrcRoi[i].xywhROI.roiHeight;
+        }
     }
     return status;
 }
@@ -79,7 +75,6 @@ static vx_status VX_CALLBACK validateTensorAddTensor(vx_node node, const vx_refe
     // Validate for input parameters
     size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate TensorAddTensor: tensor #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
 
     // Validate for output parameters
     vx_uint8 tensor_fixed_point_position;
@@ -87,8 +82,6 @@ static vx_status VX_CALLBACK validateTensorAddTensor(vx_node node, const vx_refe
     vx_enum tensor_type;
 
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate TensorAddTensor: tensor #2 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
-
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &tensor_type, sizeof(tensor_type)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_FIXED_POINT_POSITION, &tensor_fixed_point_position, sizeof(tensor_fixed_point_position)));

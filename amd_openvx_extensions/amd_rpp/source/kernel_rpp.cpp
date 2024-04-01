@@ -2656,7 +2656,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tens
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pDst, vx_tensor srcRoi, vx_tensor dstRoi) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pDst, vx_tensor pSrcRoi, vx_tensor pDstRoi) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2666,8 +2666,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tens
             (vx_reference)pSrc1,
             (vx_reference)pSrc2,
             (vx_reference)pDst,
-            (vx_reference)srcRoi,
-            (vx_reference)dstRoi,
+            (vx_reference)pSrcRoi,
+            (vx_reference)pDstRoi,
             (vx_reference)deviceType};
         node = createNode(graph, VX_KERNEL_RPP_TENSORADDTENSOR, params, 6);
     }

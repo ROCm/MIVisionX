@@ -147,7 +147,9 @@ list(APPEND SOURCES
         source/tensor/Nop.cpp
         source/tensor/Rotate.cpp
         source/tensor/Pixelate.cpp
+        source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
+        source/tensor/Resample.cpp
         source/tensor/Resize.cpp
         source/tensor/ResizeCrop.cpp
         source/tensor/ResizeCropMirror.cpp
@@ -156,14 +158,11 @@ list(APPEND SOURCES
         source/tensor/SequenceRearrange.cpp
         source/tensor/Snow.cpp
         source/tensor/Spectrogram.cpp
+        source/tensor/TensorAddTensor.cpp
+        source/tensor/TensorMulScalar.cpp
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
-        source/tensor/SequenceRearrange.cpp
-        source/tensor/PreemphasisFilter.cpp
-        source/tensor/Resample.cpp
-        source/tensor/TensorMulScalar.cpp
-        source/tensor/TensorAddTensor.cpp
         source/tensor/NonSilentRegion.cpp
         source/tensor/Slice.cpp
         source/kernel_rpp.cpp

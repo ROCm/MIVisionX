@@ -42,9 +42,7 @@ struct TensorMulScalarLocalData {
 static vx_status VX_CALLBACK refreshTensorMulScalar(vx_node node, const vx_reference *parameters, vx_uint32 num, TensorMulScalarLocalData *data) {
     vx_status status = VX_SUCCESS;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
@@ -67,15 +65,12 @@ static vx_status VX_CALLBACK validateTensorMulScalar(vx_node node, const vx_refe
     // Validate for input parameters
     size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate TensorMulScalar: tensor #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
 
     // Validate for output parameters
     vx_uint8 tensor_fixed_point_position;
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_type;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate TensorMulScalar: tensor #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
-
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &tensor_type, sizeof(tensor_type)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_FIXED_POINT_POSITION, &tensor_fixed_point_position, sizeof(tensor_fixed_point_position)));
@@ -92,10 +87,8 @@ static vx_status VX_CALLBACK processTensorMulScalar(vx_node node, const vx_refer
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshTensorMulScalar(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        status = VX_ERROR_NOT_IMPLEMENTED;
+#if ENABLE_OPENCL || ENABLE_HIP
+        return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT32) {
@@ -115,6 +108,8 @@ static vx_status VX_CALLBACK processTensorMulScalar(vx_node node, const vx_refer
             }
             for (; vectorLoopCount < bufferLength; vectorLoopCount++)
                 *dstPtrTemp++ = *srcPtrTemp++ * scalarValue;
+        } else {
+            return VX_ERROR_NOT_SUPPORTED;
         }
     }
     return status;
@@ -137,6 +132,8 @@ static vx_status VX_CALLBACK initializeTensorMulScalar(vx_node node, const vx_re
         data->tensorSize *= tensor_dims[i];
     if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT32)
         data->tensorSize *= sizeof(float);
+    else
+        return VX_ERROR_NOT_SUPPORTED;
     refreshTensorMulScalar(node, parameters, num, data);
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
@@ -145,16 +142,15 @@ static vx_status VX_CALLBACK initializeTensorMulScalar(vx_node node, const vx_re
 static vx_status VX_CALLBACK uninitializeTensorMulScalar(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     TensorMulScalarLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete (data);
+    delete data;
     return VX_SUCCESS;
 }
 
 //! \brief The kernel target support callback.
-// TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
+// TODO::currently the node is setting the same affinity as context. This needs to change when we have hybrid modes in the same graph
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
-                                                  vx_bool use_opencl_1_2,               // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
-                                                  vx_uint32 &supported_target_affinity  // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
-) {
+                                                  vx_bool use_opencl_1_2,
+                                                  vx_uint32 &supported_target_affinity) {
     vx_context context = vxGetContext((vx_reference)graph);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));

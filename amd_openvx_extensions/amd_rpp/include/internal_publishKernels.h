@@ -162,7 +162,7 @@ vx_status ToDecibels_Register(vx_context);
 vx_status Resample_Register(vx_context);
 vx_status TensorMulScalar_Register(vx_context);
 vx_status TensorAddTensor_Register(vx_context);
-vx_status NonSilentRegion_Register(vx_context);
+vx_status NonSilentRegionDetection_Register(vx_context);
 vx_status Slice_Register(vx_context);
 
 // kernel names
@@ -295,7 +295,7 @@ vx_status Slice_Register(vx_context);
 #define VX_KERNEL_RPP_RESAMPLE_NAME                             "org.rpp.Resample"
 #define VX_KERNEL_RPP_TENSORMULSCALAR_NAME                      "org.rpp.TensorMulScalar"
 #define VX_KERNEL_RPP_TENSORADDTENSOR_NAME                      "org.rpp.TensorAddTensor"
-#define VX_KERNEL_RPP_NONSILENTREGION_NAME                      "org.rpp.NonSilentRegion"
+#define VX_KERNEL_RPP_NONSILENTREGIONDETECTION_NAME             "org.rpp.NonSilentRegionDetection"
 #define VX_KERNEL_RPP_SLICE_NAME                                "org.rpp.Slice"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

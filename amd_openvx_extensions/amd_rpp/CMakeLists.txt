@@ -144,6 +144,7 @@ list(APPEND SOURCES
         source/tensor/Jitter.cpp
         source/tensor/LensCorrection.cpp
         source/tensor/Noise.cpp
+        source/tensor/NonSilentRegionDetection.cpp
         source/tensor/Nop.cpp
         source/tensor/Rotate.cpp
         source/tensor/Pixelate.cpp
@@ -163,7 +164,6 @@ list(APPEND SOURCES
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
-        source/tensor/NonSilentRegion.cpp
         source/tensor/Slice.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp

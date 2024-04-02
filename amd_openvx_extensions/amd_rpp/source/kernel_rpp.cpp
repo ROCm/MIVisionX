@@ -2585,7 +2585,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor p
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegion(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcLength, vx_tensor pDst1, vx_tensor pDst2, vx_scalar cutOffDB, vx_scalar referencePower, vx_scalar windowLength, vx_scalar resetInterval) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegionDetection(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcLength, vx_tensor pDst1, vx_tensor pDst2, vx_scalar cutOffDB, vx_scalar referencePower, vx_scalar windowLength, vx_scalar resetInterval) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2601,7 +2601,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegion(vx_graph graph, vx_tens
             (vx_reference)windowLength,
             (vx_reference)resetInterval,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_NONSILENTREGION, params, 9);
+        node = createNode(graph, VX_KERNEL_RPP_NONSILENTREGIONDETECTION, params, 9);
     }
     return node;
 }
@@ -2794,7 +2794,6 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
     descPtr->h = tensorDims[1];
     descPtr->w = tensorDims[2];
     descPtr->c = 1;
-    std::cerr << "\n fillAudioDescriptionPtrFromDims :: " << tensorDims[1] << "\t" << tensorDims[2];
     descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
     descPtr->strides.hStride = descPtr->c * descPtr->w;
     descPtr->strides.wStride = descPtr->c;

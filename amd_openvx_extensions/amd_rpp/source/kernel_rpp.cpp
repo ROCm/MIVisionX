@@ -2606,7 +2606,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegion(vx_graph graph, vx_tens
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor srcDims, vx_tensor pDst, vx_tensor anchor, vx_tensor shape,
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor srcDims, vx_tensor pDst, vx_tensor dstDims, vx_tensor anchor, vx_tensor shape,
                                                vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -2617,6 +2617,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, v
             (vx_reference)pSrc,
             (vx_reference)srcDims,
             (vx_reference)pDst,
+            (vx_reference)dstDims,
             (vx_reference)anchor,
             (vx_reference)shape,
             (vx_reference)fillValue,
@@ -2624,7 +2625,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, v
             (vx_reference)inputLayout,
             (vx_reference)roiType,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_SLICE, params, 10);
+        node = createNode(graph, VX_KERNEL_RPP_SLICE, params, 11);
     }
     return node;
 }
@@ -2795,6 +2796,7 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
     descPtr->h = tensorDims[1];
     descPtr->w = tensorDims[2];
     descPtr->c = 1;
+    std::cerr << "\n fillAudioDescriptionPtrFromDims :: " << tensorDims[1] << "\t" << tensorDims[2];
     descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
     descPtr->strides.hStride = descPtr->c * descPtr->w;
     descPtr->strides.wStride = descPtr->c;
@@ -2834,6 +2836,23 @@ void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &dscPtr3D, vxTensorLay
             dscPtr3D->strides[2] = dscPtr3D->dims[3] * dscPtr3D->dims[4];
             dscPtr3D->strides[3] = dscPtr3D->dims[4];
             dscPtr3D->strides[4] = 1;
+            break;
+        }
+        case vxTensorLayout::VX_NONE: {
+            std::cerr << "\n NONE LAYOUT FOR AUDIO";
+            dscPtr3D->dims[0] = tensorDims[0];
+            dscPtr3D->dims[1] = tensorDims[1];
+            dscPtr3D->dims[2] = tensorDims[2];
+            dscPtr3D->dims[3] = 1;
+            if(dscPtr3D->dims[2] == 1)
+                dscPtr3D->numDims = 2;
+            else
+                dscPtr3D->numDims = 3;
+
+            dscPtr3D->strides[0] = dscPtr3D->dims[1] * dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
+            dscPtr3D->strides[1] = dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
+            dscPtr3D->strides[2] = dscPtr3D->dims[3] * dscPtr3D->dims[4];
+            dscPtr3D->strides[3] = dscPtr3D->dims[4];
             break;
         }
         default: {

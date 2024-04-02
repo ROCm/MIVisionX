@@ -2789,10 +2789,10 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, siz
     }
 }
 
-void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
-    descPtr->n = tensorDims[0];
-    descPtr->h = tensorDims[1];
-    descPtr->w = tensorDims[2];
+void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims) {
+    descPtr->n = maxTensorDims[0];
+    descPtr->h = maxTensorDims[1];
+    descPtr->w = maxTensorDims[2];
     descPtr->c = 1;
     descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
     descPtr->strides.hStride = descPtr->c * descPtr->w;
@@ -2801,22 +2801,21 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
     descPtr->numDims = 4;
 }
 
-void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &dscPtr3D, vxTensorLayout layout, size_t *tensorDims) {
+void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &dscPtr3D, vxTensorLayout layout, size_t *maxTensorDims) {
     switch(layout) {
         case vxTensorLayout::VX_NONE: {
-            dscPtr3D->dims[0] = tensorDims[0];
-            dscPtr3D->dims[1] = tensorDims[1];
-            dscPtr3D->dims[2] = tensorDims[2];
+            dscPtr3D->dims[0] = maxTensorDims[0];
+            dscPtr3D->dims[1] = maxTensorDims[1];
+            dscPtr3D->dims[2] = maxTensorDims[2];
             dscPtr3D->dims[3] = 1;
             if(dscPtr3D->dims[2] == 1)
                 dscPtr3D->numDims = 2;
             else
                 dscPtr3D->numDims = 3;
 
-            dscPtr3D->strides[0] = dscPtr3D->dims[1] * dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[1] = dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[2] = dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[3] = dscPtr3D->dims[4];
+            dscPtr3D->strides[0] = dscPtr3D->dims[1] * dscPtr3D->dims[2] * dscPtr3D->dims[3];
+            dscPtr3D->strides[1] = dscPtr3D->dims[2] * dscPtr3D->dims[3];
+            dscPtr3D->strides[2] = dscPtr3D->dims[3];
             break;
         }
         default: {

@@ -110,29 +110,18 @@ static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *para
     RppSize_t numDims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * numDims));
-    std::cerr << "\n numDims :: " << numDims;
-    std::cerr << "\n data->inputTensorDims[2] ::" << data->inputTensorDims[2];
-    std::cerr << "\n data->pSrcGenericDesc->numDims :: " << data->pSrcGenericDesc->numDims;
     if ((numDims == 3) && (data->inputTensorDims[2] == 1)) {
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 2) {
             data->pSrcDims[j] = src_roi[i].xywhROI.xy.x;
             data->pSrcDims[j + 1] = src_roi[i].xywhROI.roiWidth;
-            std::cerr << "\n src_roi[i].xywhROI.xy.x :: " << src_roi[i].xywhROI.xy.x;
-            std::cerr << "\n src_roi[i].xywhROI.xy.y :: " << src_roi[i].xywhROI.xy.y;
-            std::cerr << "\n src_roi[i].xywhROI.roiWidth; :: " << src_roi[i].xywhROI.roiWidth;
-            std::cerr << "\n src_roi[i].xywhROI.roiHeight; :: " << src_roi[i].xywhROI.roiHeight;
-
         }
         data->pSrcRoi3D = static_cast<unsigned *>(data->pSrcDims);
-    std::cerr << "Comes to IF PART in SLICE.cpp";
     }
 
     else {
         data->pSrcRoi3D = static_cast<unsigned *>(roi_tensor_ptr);
     }
-    for (int i =0; i< data->inputTensorDims[0]*2; i++)
-        std::cerr << "\n data->pSrcRoi3D :" <<data->pSrcRoi3D[i];
     unsigned *src_roi = static_cast<unsigned *>(roi_tensor_ptr);
     unsigned *dst_roi = static_cast<unsigned *>(roi_tensor_ptr_dst);
     copy_src_dims_and_update_dst_roi(data, src_roi, dst_roi, reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst), parameters);
@@ -189,26 +178,7 @@ static vx_status VX_CALLBACK processSlice(vx_node node, const vx_reference *para
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        float *psrc = (float *)data->pSrc;
-        for (int n = 0; n < 10; n++) {
-            std::cerr << "\n src:  " << (float)psrc[n] << "\n";
-        }
-        int *panchor = (int *)data->pAnchor;
-        for (int n = 0; n < 1; n++) {
-            std::cerr << "\n Anchor/ Begin:  " << (int)panchor[n] << "\n";
-        }
-        int *pshape = (int *)data->pShape;
-        for (int n = 0; n < 1; n++) {
-            std::cerr << "\n Shape/ Length:  " << (int)pshape[n] << "\n";
-        }
-        for (int i =0; i< 2; i++)
-            std::cerr << "\n data->pSrcRoi3D :" <<data->pSrcRoi3D[i];
         rpp_status = rppt_slice_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAnchor, data->pShape, data->pFillValues, (bool)data->policy, data->pSrcRoi3D, data->handle->rppHandle);
-        // rpp_status = rppt_slice_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->pAnchor, data->pShape, data->pFillValues, data->handle->rppHandle);
-        float *pdst = (float *)data->pDst;
-        for (int n = 0; n < 10; n++) {
-            std::cerr << "\n dst:  " << (float)pdst[n] << "\n";
-        }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -236,13 +206,7 @@ static vx_status VX_CALLBACK initializeSlice(vx_node node, const vx_reference *p
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
         data->pSrcGenericDesc->dataType = getRpptDataType(input_tensor_dtype);
         data->pSrcGenericDesc->offsetInBytes = 0;
-        std::cerr << "\n Before Filling - data->pSrcGenericDesc->numDims :: " << data->pSrcGenericDesc->numDims;
-        for(uint i=0; i< data->pSrcGenericDesc->numDims; i++)
-            std::cerr << "\n Before Filling - data->inputTensorDims :: " << data->inputTensorDims[i];
         fillGenericDescriptionPtrfromDims(data->pSrcGenericDesc, data->inputLayout, data->inputTensorDims);
-        std::cerr << "\n After Filling - data->pSrcGenericDesc->numDims :: " << data->pSrcGenericDesc->numDims;
-        for(uint i=0; i< data->pSrcGenericDesc->numDims; i++)
-            std::cerr << "\n After Filling - data->inputTensorDims :: " << data->inputTensorDims[i];
         // Querying for output tensor
         data->pDstGenericDesc = new RpptGenericDesc;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstGenericDesc->numDims, sizeof(data->pDstGenericDesc->numDims)));
@@ -250,13 +214,7 @@ static vx_status VX_CALLBACK initializeSlice(vx_node node, const vx_reference *p
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
         data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
         data->pDstGenericDesc->offsetInBytes = 0;
-        std::cerr << "\n  Before Filling - data->pDstGenericDesc->numDims :: " << data->pDstGenericDesc->numDims;
-        for(uint i=0; i< data->pDstGenericDesc->numDims; i++)
-            std::cerr << "\n  Before Filling - data->outputTensorDims :: " << data->outputTensorDims[i];
         fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->inputLayout, data->outputTensorDims); 
-        std::cerr << "\n After Filling - data->pDstGenericDesc->numDims :: " << data->pDstGenericDesc->numDims;
-        for(uint i=0; i< data->pDstGenericDesc->numDims; i++)
-            std::cerr << "\n After Filling - data->outputTensorDims :: " << data->outputTensorDims[i];
     }
     else {
         // Querying for input tensor

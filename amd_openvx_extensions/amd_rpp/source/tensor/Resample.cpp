@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +28,9 @@ struct ResampleLocalData {
     RppPtr_t pSrc;
     RppPtr_t pDst;
     float quality;
+    Rpp32s *pSrcRoi;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
-    Rpp32s *pSampleFrames;
-    Rpp32s *pSampleChannels;
     Rpp32f *pInRateTensor;
     Rpp32f *pOutRateTensor;
     RpptResamplingWindow window;
@@ -74,26 +73,20 @@ inline void windowed_sinc(RpptResamplingWindow &window, int coeffs, int lobes) {
 void update_destination_roi(ResampleLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
     float scale_ratio;
     for (unsigned i = 0; i < data->pSrcDesc->n; i++) {
-        data->pSampleFrames[i] = src_roi[i].xywhROI.roiWidth;
-        data->pSampleChannels[i] = src_roi[i].xywhROI.roiHeight;
-        if (data->pInRateTensor[i] != 0)
-            scale_ratio = data->pOutRateTensor[i] / static_cast<float>(data->pInRateTensor[i]);
-        else
-            scale_ratio = 0;
-        dst_roi[i].xywhROI.roiWidth = (int)std::ceil(scale_ratio * src_roi[i].xywhROI.roiWidth);
+        scale_ratio = (data->pInRateTensor[i] != 0) ? (data->pOutRateTensor[i] / static_cast<float>(data->pInRateTensor[i])) : 0;
+        dst_roi[i].xywhROI.roiWidth = static_cast<int>(std::ceil(scale_ratio * src_roi[i].xywhROI.roiWidth));
         dst_roi[i].xywhROI.roiHeight = src_roi[i].xywhROI.roiHeight;
     }
 }
 
 static vx_status VX_CALLBACK refreshResample(vx_node node, const vx_reference *parameters, vx_uint32 num, ResampleLocalData *data) {
     vx_status status = VX_SUCCESS;
+    int nDim = 2;  // Num dimensions for audio tensor
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->pSrcDesc->n, sizeof(float), data->pInRateTensor, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HOST, &data->pOutRateTensor, sizeof(data->pOutRateTensor)));
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     }
@@ -102,10 +95,17 @@ static vx_status VX_CALLBACK refreshResample(vx_node node, const vx_reference *p
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
+        if (!data->pSrcRoi) {
+            data->pSrcRoi = new Rpp32s[data->pSrcDesc->n * nDim];
+        }
     }
     RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
     RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
     update_destination_roi(data, src_roi, dst_roi);
+    for (unsigned i = 0; i < data->pSrcDesc->n; i++) {
+        data->pSrcRoi[i * nDim] = src_roi[i].xywhROI.roiWidth;
+        data->pSrcRoi[i * nDim + 1] = src_roi[i].xywhROI.roiHeight;
+    }
     return status;
 }
 
@@ -151,15 +151,13 @@ static vx_status VX_CALLBACK processResample(vx_node node, const vx_reference *p
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshResample(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_resample_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                        data->pInRateTensor, data->pOutRateTensor, data->pSampleFrames, data->window, data->handle->rppHandle);
+                                        data->pInRateTensor, data->pOutRateTensor, data->pSrcRoi, data->window, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -190,9 +188,7 @@ static vx_status VX_CALLBACK initializeResample(vx_node node, const vx_reference
     data->pDstDesc->offsetInBytes = 0;
     fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
-    data->pSampleFrames = static_cast<signed int *>(calloc(data->pSrcDesc->n, sizeof(unsigned int)));
-    data->pSampleChannels = static_cast<signed int *>(calloc(data->pSrcDesc->n, sizeof(unsigned int)));
-    data->pInRateTensor = static_cast<float *>(calloc(data->pSrcDesc->n, sizeof(float)));
+    data->pInRateTensor = new float[data->pSrcDesc->n];
     int lobes = std::round(0.007 * data->quality * data->quality - 0.09 * data->quality + 3);
     int lookupSize = lobes * 64 + 1;
     windowed_sinc(data->window, lookupSize, lobes);
@@ -206,21 +202,19 @@ static vx_status VX_CALLBACK uninitializeResample(vx_node node, const vx_referen
     ResampleLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
-    if (data->pSampleFrames != nullptr) free(data->pSampleFrames);
-    if (data->pSampleChannels != nullptr) free(data->pSampleChannels);
-    if (data->pInRateTensor != nullptr) free(data->pInRateTensor);
-    delete (data->pSrcDesc);
-    delete (data->pDstDesc);
-    delete (data);
+    delete[] data->pInRateTensor;
+    delete[] data->pSrcRoi;
+    delete data->pSrcDesc;
+    delete data->pDstDesc;
+    delete data;
     return VX_SUCCESS;
 }
 
 //! \brief The kernel target support callback.
-// TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
+// TODO::currently the node is setting the same affinity as context. This needs to change when we have hybrid modes in the same graph
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
-                                                  vx_bool use_opencl_1_2,               // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
-                                                  vx_uint32 &supported_target_affinity  // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
-) {
+                                                  vx_bool use_opencl_1_2,
+                                                  vx_uint32 &supported_target_affinity) {
     vx_context context = vxGetContext((vx_reference)graph);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));

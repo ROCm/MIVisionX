@@ -1986,7 +1986,7 @@ extern "C"
 	*/
 	// To remove commented code once tested with golden outputs
 	// SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor srcDims, vx_tensor pDst, vx_tensor dstDims, vx_tensor anchor, vx_tensor shape, vx_array fillValue, vx_scalar axes, vx_scalar normalizedAnchor, vx_scalar normalizedShape, vx_scalar policy, vx_scalar dimsStride);
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor srcDims, vx_tensor pDst, vx_tensor anchor, vx_tensor shape, vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType);
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor srcDims, vx_tensor pDst, vx_tensor dstDims, vx_tensor anchor, vx_tensor shape, vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType);
 
 	/*! \brief [Graph] Applies downmixing to the input tensor.
 	 * \ingroup group_amd_rpp

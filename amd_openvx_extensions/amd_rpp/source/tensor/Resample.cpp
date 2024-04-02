@@ -81,6 +81,7 @@ void update_destination_roi(ResampleLocalData *data, RpptROI *src_roi, RpptROI *
 
 static vx_status VX_CALLBACK refreshResample(vx_node node, const vx_reference *parameters, vx_uint32 num, ResampleLocalData *data) {
     vx_status status = VX_SUCCESS;
+    int nDim = 2;  // Num dimensions for audio tensor
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->pSrcDesc->n, sizeof(float), data->pInRateTensor, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HOST, &data->pOutRateTensor, sizeof(data->pOutRateTensor)));
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
@@ -94,11 +95,17 @@ static vx_status VX_CALLBACK refreshResample(vx_node node, const vx_reference *p
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
+        if (!data->pSrcRoi) {
+            data->pSrcRoi = new Rpp32s[data->pSrcDesc->n * nDim];
+        }
     }
     RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
     RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
     update_destination_roi(data, src_roi, dst_roi);
-    data->pSrcRoi = reinterpret_cast<Rpp32s *>(roi_tensor_ptr_src);
+    for (unsigned i = 0; i < data->pSrcDesc->n; i++) {
+        data->pSrcRoi[i * nDim] = src_roi[i].xywhROI.roiWidth;
+        data->pSrcRoi[i * nDim + 1] = src_roi[i].xywhROI.roiHeight;
+    }
     return status;
 }
 
@@ -185,7 +192,7 @@ static vx_status VX_CALLBACK initializeResample(vx_node node, const vx_reference
     int lobes = std::round(0.007 * data->quality * data->quality - 0.09 * data->quality + 3);
     int lookupSize = lobes * 64 + 1;
     windowed_sinc(data->window, lookupSize, lobes);
-    // refreshResample(node, parameters, num, data);
+    refreshResample(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
@@ -196,6 +203,7 @@ static vx_status VX_CALLBACK uninitializeResample(vx_node node, const vx_referen
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete[] data->pInRateTensor;
+    delete[] data->pSrcRoi;
     delete data->pSrcDesc;
     delete data->pDstDesc;
     delete data;

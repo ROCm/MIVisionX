@@ -40,12 +40,12 @@ struct MelFilterBankLocalData {
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-void copy_src_dims_and_update_dst_roi(MelFilterBankLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
+void copy_src_dims_and_update_dst_roi(MelFilterBankLocalData *data, RpptROI *srcRoi, RpptROI *dstRoi) {
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcDims[i].width = src_roi[i].xywhROI.xy.x;
-        data->pSrcDims[i].height = src_roi[i].xywhROI.xy.y;
-        dst_roi[i].xywhROI.xy.x = src_roi[i].xywhROI.xy.x;
-        dst_roi[i].xywhROI.xy.y = data->nfilter;
+        data->pSrcDims[i].width = srcRoi[i].xywhROI.roiWidth;  
+        data->pSrcDims[i].height = srcRoi[i].xywhROI.roiHeight;
+        dstRoi[i].xywhROI.roiWidth = srcRoi[i].xywhROI.roiWidth;
+        dstRoi[i].xywhROI.roiHeight = data->nfilter;
     }
 }
 
@@ -53,13 +53,8 @@ static vx_status VX_CALLBACK refreshMelFilterBank(vx_node node, const vx_referen
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_src, sizeof(&roi_tensor_ptr_src)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(&roi_tensor_ptr_dst)));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
@@ -67,9 +62,9 @@ static vx_status VX_CALLBACK refreshMelFilterBank(vx_node node, const vx_referen
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
     }
-    RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
-    RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
-    copy_src_dims_and_update_dst_roi(data, src_roi, dst_roi);
+    RpptROI *srcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
+    RpptROI *dstRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
+    copy_src_dims_and_update_dst_roi(data, srcRoi, dstRoi);
     return status;
 }
 
@@ -124,15 +119,12 @@ static vx_status VX_CALLBACK processMelFilterBank(vx_node node, const vx_referen
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshMelFilterBank(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
+#if ENABLE_OPENCL || ENABLE_HIP
+        return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        // To be uncommented once normalize kernel is added in RPP
-        // rpp_status = rppt_mel_filter_bank_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->freqHigh, data->freqLow,
-        //                                        data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle);
+        rpp_status = rppt_mel_filter_bank_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, (Rpp32s*)data->pSrcDims, data->freqHigh, data->freqLow,
+                                               data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -172,7 +164,6 @@ static vx_status VX_CALLBACK initializeMelFilterBank(vx_node node, const vx_refe
     fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
     data->pSrcDims = new RpptImagePatch[data->pSrcDesc->n];
-    refreshMelFilterBank(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
@@ -182,18 +173,18 @@ static vx_status VX_CALLBACK uninitializeMelFilterBank(vx_node node, const vx_re
     MelFilterBankLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
-    delete (data->pSrcDims);
-    delete (data->pSrcDesc);
-    delete (data->pDstDesc);
-    delete (data);
+    delete data->pSrcDims;
+    delete data->pSrcDesc;
+    delete data->pDstDesc;
+    delete data;
     return VX_SUCCESS;
 }
 
 //! \brief The kernel target support callback.
 // TODO::currently the node is setting the same affinity as context. This needs to change when we have hybrid modes in the same graph
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
-                                                  vx_bool use_opencl_1_2,               // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
-                                                  vx_uint32 &supported_target_affinity  // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+                                                  vx_bool use_opencl_1_2,
+                                                  vx_uint32 &supported_target_affinity
 ) {
     vx_context context = vxGetContext((vx_reference)graph);
     AgoTargetAffinityInfo affinity;

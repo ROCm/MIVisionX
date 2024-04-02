@@ -69,9 +69,7 @@ enum vxTensorLayout {
     VX_NCHW = 1,
     VX_NFHWC = 2,
     VX_NFCHW = 3,
-    VX_NDHWC = 4,
-    VX_NCDHW = 5,
-    VX_NONE =6,
+    VX_NONE = 4
 };
 
 //! Brief The utility functions

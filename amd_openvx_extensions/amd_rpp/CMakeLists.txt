@@ -145,7 +145,7 @@ list(APPEND SOURCES
         source/tensor/LensCorrection.cpp
         source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
-        source/tensor/NonSilentRegion.cpp
+        source/tensor/NonSilentRegionDetection.cpp
         source/tensor/Nop.cpp
         source/tensor/Normalize.cpp
         source/tensor/Rotate.cpp

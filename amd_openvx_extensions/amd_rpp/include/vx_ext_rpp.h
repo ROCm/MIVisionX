@@ -1959,34 +1959,33 @@ extern "C"
 	* \ingroup group_amd_rpp
 	* \param [in] graph The handle to the graph.
 	* \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_FLOAT32</tt> format data.
-	* \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
-	* \param [out] pDst1 The output tensor (begin) in <tt>\ref VX_TYPE_INT32</tt> format data.
-	* \param [out] pDst2 The output tensor (length) in <tt>\ref VX_TYPE_INT32</tt> format data.
-	* \param [in] cutOffDB The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the threshold, in dB, below which the signal is considered silent.
-	* \param [in] referencePower The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the reference power.
-	* \param [in] windowLength The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the size of the sliding window.
-	* \param [in] resetInterval The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the frequency at which the moving mean average is recalculated to mitigate precision loss.
+	* \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in <begin_dim1, begin_dim2 .., length_dim1, length_dim2> format for each dimension.
+	* \param [out] pDst1 The output tensor containing begin values of the non-silent region of the audio-data in <tt>\ref VX_TYPE_INT32</tt> format data.
+	* \param [out] pDst2 The output tensor containing length values of the non-silent region of the audio-data in <tt>\ref VX_TYPE_INT32</tt> format data.
+	* \param [in] cutOffDB The input scalar in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the threshold, in dB, below which the signal is considered silent.
+	* \param [in] referencePower The input scalar in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the reference power.
+	* \param [in] windowLength The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the size of the sliding window.
+	* \param [in] resetInterval The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the frequency at which the moving mean average is recalculated to mitigate precision loss.
 	* \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	*/
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNonSilentRegion(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst1, vx_tensor pDst2, vx_scalar cutOffDB, vx_scalar referencePower, vx_scalar windowLength, vx_scalar resetInterval);
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNonSilentRegionDetection(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst1, vx_tensor pDst2, vx_scalar cutOffDB, vx_scalar referencePower, vx_scalar windowLength, vx_scalar resetInterval);
 
-	//TODO: Change the explanations
 	/*! \brief [Graph] Slice's the input tensor
 	* \ingroup group_amd_rpp
 	* \param [in] graph The handle to the graph.
-	* \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	* \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh/ltrb format.
-	* \param [out] pDst1 The output tensor (begin) in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	* \param [out] pDst2 The output tensor (length) in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	* \param [in] cutOffDB The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the threshold, in dB, below which the signal is considered silent.
-	* \param [in] referencePower The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the reference power.
-	* \param [in] windowLength The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the size of the sliding window.
-	* \param [in] resetInterval The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the frequency at which the moving mean average is recalculated to mitigate precision loss.
+	* \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_FLOAT32</tt> format data.
+	* \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> format containing the roi values for the input in xywh/ltrb format.
+	* \param [out] pDst The output tensor (begin) in <tt>\ref VX_TYPE_FLOAT32</tt> format data.
+	* \param [in] pDstRoi The input tensor of batch size in <tt>unsigned int<tt> format containing the roi values for the input in xywh/ltrb format.
+	* \param [in] anchor The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the absolute coordinates for the starting point of the slice.
+	* \param [in] shape The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the absolute coordinates for the dimensions of the slice
+	* \param [in] fillValue The input array in <tt>\ref VX_TYPE_INT32</tt> format which determines the values to be padded and is only relevant if policy is set to “pad”.
+	* \param [in] policy The input scalar in <tt>\ref VX_TYPE_INT32</tt> format which determines the policy when slicing the out of bounds area of the input. The values can be "error", "pad", "trim_to_shape"
+	* \param [in] inputLayout The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the layout of the input tensor.
+	* \param [in] roiType The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the roi type which can be ltrb/xywh.
 	* \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	*/
-	// To remove commented code once tested with golden outputs
-	// SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor srcDims, vx_tensor pDst, vx_tensor dstDims, vx_tensor anchor, vx_tensor shape, vx_array fillValue, vx_scalar axes, vx_scalar normalizedAnchor, vx_scalar normalizedShape, vx_scalar policy, vx_scalar dimsStride);
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor srcDims, vx_tensor pDst, vx_tensor dstDims, vx_tensor anchor, vx_tensor shape, vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType);
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_tensor anchor, vx_tensor shape, vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType);
 
 	/*! \brief [Graph] Applies mean-stddev normalization to the input tensor.
 	 * \ingroup group_amd_rpp

@@ -2584,7 +2584,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor p
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegion(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcLength, vx_tensor pDst1, vx_tensor pDst2, vx_scalar cutOffDB, vx_scalar referencePower, vx_scalar windowLength, vx_scalar resetInterval) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegionDetection(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst1, vx_tensor pDst2, vx_scalar cutOffDB, vx_scalar referencePower, vx_scalar windowLength, vx_scalar resetInterval) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2592,7 +2592,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegion(vx_graph graph, vx_tens
         vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
         vx_reference params[] = {
             (vx_reference)pSrc,
-            (vx_reference)pSrcLength,
+            (vx_reference)pSrcRoi,
             (vx_reference)pDst1,
             (vx_reference)pDst2,
             (vx_reference)cutOffDB,
@@ -2600,12 +2600,12 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegion(vx_graph graph, vx_tens
             (vx_reference)windowLength,
             (vx_reference)resetInterval,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_NONSILENTREGION, params, 9);
+        node = createNode(graph, VX_KERNEL_RPP_NONSILENTREGIONDETECTION, params, 9);
     }
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor srcDims, vx_tensor pDst, vx_tensor dstDims, vx_tensor anchor, vx_tensor shape,
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcDims, vx_tensor pDst, vx_tensor pDstDims, vx_tensor pAnchor, vx_tensor pShape,
                                                vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -2614,11 +2614,11 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, v
         vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
         vx_reference params[] = {
             (vx_reference)pSrc,
-            (vx_reference)srcDims,
+            (vx_reference)pSrcDims,
             (vx_reference)pDst,
-            (vx_reference)dstDims,
-            (vx_reference)anchor,
-            (vx_reference)shape,
+            (vx_reference)pDstDims,
+            (vx_reference)pAnchor,
+            (vx_reference)pShape,
             (vx_reference)fillValue,
             (vx_reference)policy,
             (vx_reference)inputLayout,
@@ -2840,12 +2840,11 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, siz
     }
 }
 
-void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
-    descPtr->n = tensorDims[0];
-    descPtr->h = tensorDims[1];
-    descPtr->w = tensorDims[2];
+void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims) {
+    descPtr->n = maxTensorDims[0];
+    descPtr->h = maxTensorDims[1];
+    descPtr->w = maxTensorDims[2];
     descPtr->c = 1;
-    std::cerr << "\n fillAudioDescriptionPtrFromDims :: " << tensorDims[1] << "\t" << tensorDims[2];
     descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
     descPtr->strides.hStride = descPtr->c * descPtr->w;
     descPtr->strides.wStride = descPtr->c;
@@ -2853,55 +2852,21 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
     descPtr->numDims = 4;
 }
 
-void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &dscPtr3D, vxTensorLayout layout, size_t *tensorDims) {
+void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims) {
     switch(layout) {
-        case vxTensorLayout::VX_NDHWC: {
-            dscPtr3D->numDims = 5;
-            dscPtr3D->layout = RpptLayout::NDHWC;
-            dscPtr3D->dims[0] = tensorDims[0];
-            dscPtr3D->dims[1] = tensorDims[1];
-            dscPtr3D->dims[2] = tensorDims[2];
-            dscPtr3D->dims[3] = tensorDims[3];
-            dscPtr3D->dims[4] = tensorDims[4];
-
-            dscPtr3D->strides[0] = dscPtr3D->dims[1] * dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[1] = dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[2] = dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[3] = dscPtr3D->dims[4];
-            dscPtr3D->strides[4] = 1;
-            break;
-        }
-        case vxTensorLayout::VX_NCDHW: {
-            dscPtr3D->numDims = 5;
-            dscPtr3D->layout = RpptLayout::NCDHW;
-            dscPtr3D->dims[0] = tensorDims[0];
-            dscPtr3D->dims[1] = tensorDims[1];
-            dscPtr3D->dims[2] = tensorDims[2];
-            dscPtr3D->dims[3] = tensorDims[3];
-            dscPtr3D->dims[4] = tensorDims[4];
-
-            dscPtr3D->strides[0] = dscPtr3D->dims[1] * dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[1] = dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[2] = dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[3] = dscPtr3D->dims[4];
-            dscPtr3D->strides[4] = 1;
-            break;
-        }
         case vxTensorLayout::VX_NONE: {
-            std::cerr << "\n NONE LAYOUT FOR AUDIO";
-            dscPtr3D->dims[0] = tensorDims[0];
-            dscPtr3D->dims[1] = tensorDims[1];
-            dscPtr3D->dims[2] = tensorDims[2];
-            dscPtr3D->dims[3] = 1;
-            if(dscPtr3D->dims[2] == 1)
-                dscPtr3D->numDims = 2;
+            genericDescPtr->dims[0] = maxTensorDims[0];
+            genericDescPtr->dims[1] = maxTensorDims[1];
+            genericDescPtr->dims[2] = maxTensorDims[2];
+            genericDescPtr->dims[3] = 1;
+            if(genericDescPtr->dims[2] == 1)
+                genericDescPtr->numDims = 2;
             else
-                dscPtr3D->numDims = 3;
+                genericDescPtr->numDims = 3;
 
-            dscPtr3D->strides[0] = dscPtr3D->dims[1] * dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[1] = dscPtr3D->dims[2] * dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[2] = dscPtr3D->dims[3] * dscPtr3D->dims[4];
-            dscPtr3D->strides[3] = dscPtr3D->dims[4];
+            genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
+            genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
+            genericDescPtr->strides[2] = genericDescPtr->dims[3];
             break;
         }
         default: {

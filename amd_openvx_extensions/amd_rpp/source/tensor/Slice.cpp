@@ -214,28 +214,9 @@ static vx_status VX_CALLBACK initializeSlice(vx_node node, const vx_reference *p
         data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
         data->pDstGenericDesc->offsetInBytes = 0;
         fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->inputLayout, data->outputTensorDims);
-    } else {
-        // Querying for input tensor
-        data->pSrcDesc = new RpptDesc;
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
-        data->pSrcDesc->dataType = getRpptDataType(input_tensor_dtype);
-        data->pSrcDesc->offsetInBytes = 0;
-        fillDescriptionPtrfromDims(data->pSrcDesc, data->inputLayout, data->inputTensorDims);
-
-        // Querying for output tensor
-        data->pDstDesc = new RpptDesc;
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
-        data->pDstDesc->dataType = getRpptDataType(output_tensor_dtype);
-        data->pDstDesc->offsetInBytes = 0;
-        fillDescriptionPtrfromDims(data->pDstDesc, data->inputLayout, data->outputTensorDims);
     }
 
     data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
-    data->pFillValues = new float[data->inputTensorDims[0]];
 
     refreshSlice(node, parameters, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));

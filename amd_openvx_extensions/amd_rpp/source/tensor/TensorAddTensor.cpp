@@ -103,6 +103,7 @@ static vx_status VX_CALLBACK processTensorAddTensor(vx_node node, const vx_refer
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshTensorAddTensor(node, parameters, num, data);
+        // Currently supports adding audio tensors and distribution node tensors - (BS, samples, 1) and (BS, 1) - will be extended to include all tensors of supported layouts
         if (data->inTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outTensorType == vx_type_e::VX_TYPE_FLOAT32) {
             size_t nStride = data->inputTensorDims1[1] * data->inputTensorDims1[2];
             for (uint i = 0; i < data->inputTensorDims1[0]; i++) {

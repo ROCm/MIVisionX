@@ -2606,7 +2606,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegionDetection(vx_graph graph
 }
 
 VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_tensor pAnchor, vx_tensor pShape,
-                                               vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType) {
+                                               vx_array pFillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2619,7 +2619,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, v
             (vx_reference)pDstRoi,
             (vx_reference)pAnchor,
             (vx_reference)pShape,
-            (vx_reference)fillValue,
+            (vx_reference)pFillValue,
             (vx_reference)policy,
             (vx_reference)inputLayout,
             (vx_reference)roiType,

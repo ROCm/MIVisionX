@@ -43,7 +43,7 @@ struct SliceLocalData {
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-void updateDestinationRoi(SliceLocalData *data, unsigned *src_roi, unsigned *dst_roi, RpptROI *dst_roi_xywh, const vx_reference parameters[]) {
+void updateDestinationRoi(SliceLocalData *data, unsigned *src_roi, unsigned *dst_roi, const vx_reference parameters[]) {
     // Query the Anchor / Shape Tensor Dims
     RppSize_t num_dims;
     size_t anchorTensorDims[RPP_MAX_TENSOR_DIMS];
@@ -56,11 +56,12 @@ void updateDestinationRoi(SliceLocalData *data, unsigned *src_roi, unsigned *dst
     total_anchor_dims /= anchorTensorDims[0];
 
     if (total_anchor_dims == 1) {
-        // if input is 1D - shape will be of size (batchSize) or (batchSize, 1) - so fill only width of dst_roi from buffer and set height to 1
-        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-            dst_roi_xywh[i].xywhROI.xy.x = data->pAnchor[i];
-            dst_roi_xywh[i].xywhROI.roiWidth = data->pShape[i];
-            dst_roi_xywh[i].xywhROI.roiHeight = 1;
+        // if input is 1D - shape will be of size (batchSize) or (batchSize, 1) - so fill only 1st dim of length in dst_roi from buffer and set 2nd dim of length to 1
+        for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 4) {
+            dst_roi[j] = data->pAnchor[i];
+            dst_roi[j + 1] = 0;
+            dst_roi[j + 2] = data->pShape[i];
+            dst_roi[j + 3] = 1;
         }
     } else {
         // if input is nD - shape will be of size (batchSize * n) - so fill dst_roi using both values
@@ -123,7 +124,7 @@ static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *para
     }
     unsigned *src_roi = static_cast<unsigned *>(roi_tensor_ptr);
     unsigned *dst_roi = static_cast<unsigned *>(roi_tensor_ptr_dst);
-    updateDestinationRoi(data, src_roi, dst_roi, reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst), parameters);
+    updateDestinationRoi(data, src_roi, dst_roi, parameters);
     return status;
 }
 

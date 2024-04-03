@@ -1973,19 +1973,19 @@ extern "C"
 	/*! \brief [Graph] Slice's the input tensor using anchors and shapes values
 	* \ingroup group_amd_rpp
 	* \param [in] graph The handle to the graph.
-	* \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_FLOAT32</tt> format data.
+	* \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> format data.
 	* \param [in] pSrcRoi The input tensor in <tt>unsigned int<tt> format containing the roi values for the input format <begin_dim1, begin_dim2 .., length_dim1, length_dim2> format for each dimension.
-	* \param [out] pDst The output tensor (begin) in <tt>\ref VX_TYPE_FLOAT32</tt> format data.
+	* \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> format data.
 	* \param [in] pDstRoi The input tensor in <tt>unsigned int<tt> format containing the roi values for the output tensor format <begin_dim1, begin_dim2 .., length_dim1, length_dim2> format for each dimension.
-	* \param [in] anchor The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the absolute coordinates for the starting point of the slice.
-	* \param [in] shape The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the absolute coordinates for the dimensions of the slice
-	* \param [in] fillValue The input array in <tt>\ref VX_TYPE_INT32</tt> format which determines the values to be padded and is only relevant if policy is set to “pad”.
+	* \param [in] pAnchor The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the absolute coordinates for the starting point of the slice.
+	* \param [in] pShape The input array in <tt>\ref VX_TYPE_INT32</tt> format containing the absolute coordinates for the dimensions of the slice
+	* \param [in] pFillValue The input array in <tt>\ref VX_TYPE_INT32</tt> format which determines the values to be padded and is only relevant if policy is set to “pad”.
 	* \param [in] policy The input scalar in <tt>\ref VX_TYPE_INT32</tt> format which determines the policy when slicing the out of bounds area of the input. The values can be "error", "pad", "trim_to_shape"
 	* \param [in] inputLayout The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the layout of the input tensor.
 	* \param [in] roiType The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the roi type which can be ltrb/xywh.
 	* \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	*/
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_tensor anchor, vx_tensor shape, vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType);
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_tensor pAnchor, vx_tensor pShape, vx_array pFillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType);
 
 #ifdef __cplusplus
 }

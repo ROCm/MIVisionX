@@ -77,7 +77,7 @@ void updateDestinationRoi(SliceLocalData *data, unsigned *src_roi, unsigned *dst
     }
 }
 
-static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *parameters, vx_uint32 num, SliceLocalData *data) {
+static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *parameters, SliceLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
@@ -170,7 +170,7 @@ static vx_status VX_CALLBACK processSlice(vx_node node, const vx_reference *para
     vx_status return_status = VX_SUCCESS;
     SliceLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshSlice(node, parameters, num, data);
+    refreshSlice(node, parameters, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         rpp_status = rppt_slice_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAnchor, data->pShape, data->pFillValues, data->policy, data->pSrcRoi3D, data->handle->rppHandle);
@@ -236,7 +236,7 @@ static vx_status VX_CALLBACK initializeSlice(vx_node node, const vx_reference *p
     data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
     data->pFillValues = new float[data->inputTensorDims[0]];
 
-    refreshSlice(node, parameters, num, data);
+    refreshSlice(node, parameters, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;

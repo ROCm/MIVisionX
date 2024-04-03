@@ -38,7 +38,7 @@ struct NonSilentRegionDetectionLocalData {
     size_t ouputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-static vx_status VX_CALLBACK refreshNonSilentRegionDetection(vx_node node, const vx_reference *parameters, vx_uint32 num, NonSilentRegionDetectionLocalData *data) {
+static vx_status VX_CALLBACK refreshNonSilentRegionDetection(vx_node node, const vx_reference *parameters, NonSilentRegionDetectionLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
@@ -117,7 +117,7 @@ static vx_status VX_CALLBACK processNonSilentRegionDetection(vx_node node, const
     vx_status return_status = VX_SUCCESS;
     NonSilentRegionDetectionLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshNonSilentRegionDetection(node, parameters, num, data);
+    refreshNonSilentRegionDetection(node, parameters, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
@@ -151,9 +151,8 @@ static vx_status VX_CALLBACK initializeNonSilentRegionDetection(vx_node node, co
     data->pSrcDesc->offsetInBytes = 0;
     fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims);
 
-    data->pSrcDesc->numDims = 4;
     data->pSrcLength = new int[data->pSrcDesc->n];
-    refreshNonSilentRegionDetection(node, parameters, num, data);
+    refreshNonSilentRegionDetection(node, parameters, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
@@ -162,10 +161,10 @@ static vx_status VX_CALLBACK initializeNonSilentRegionDetection(vx_node node, co
 static vx_status VX_CALLBACK uninitializeNonSilentRegionDetection(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     NonSilentRegionDetectionLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete (data->pSrcLength);
-    delete (data->pSrcDesc);
+    delete data->pSrcLength;
+    delete data->pSrcDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
-    delete (data);
+    delete data;
     return VX_SUCCESS;
 }
 

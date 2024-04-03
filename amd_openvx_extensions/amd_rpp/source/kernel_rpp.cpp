@@ -2605,8 +2605,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegionDetection(vx_graph graph
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcDims, vx_tensor pDst, vx_tensor pDstDims, vx_tensor pAnchor, vx_tensor pShape,
-                                               vx_array fillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_tensor pAnchor, vx_tensor pShape,
+                                               vx_array pFillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2614,12 +2614,12 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, v
         vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
         vx_reference params[] = {
             (vx_reference)pSrc,
-            (vx_reference)pSrcDims,
+            (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)pDstDims,
+            (vx_reference)pDstRoi,
             (vx_reference)pAnchor,
             (vx_reference)pShape,
-            (vx_reference)fillValue,
+            (vx_reference)pFillValue,
             (vx_reference)policy,
             (vx_reference)inputLayout,
             (vx_reference)roiType,

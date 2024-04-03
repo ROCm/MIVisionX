@@ -2800,21 +2800,21 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
     descPtr->numDims = 4;
 }
 
-void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &dscPtr3D, vxTensorLayout layout, size_t *maxTensorDims) {
+void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims) {
     switch(layout) {
         case vxTensorLayout::VX_NONE: {
-            dscPtr3D->dims[0] = maxTensorDims[0];
-            dscPtr3D->dims[1] = maxTensorDims[1];
-            dscPtr3D->dims[2] = maxTensorDims[2];
-            dscPtr3D->dims[3] = 1;
-            if(dscPtr3D->dims[2] == 1)
-                dscPtr3D->numDims = 2;
+            genericDescPtr->dims[0] = maxTensorDims[0];
+            genericDescPtr->dims[1] = maxTensorDims[1];
+            genericDescPtr->dims[2] = maxTensorDims[2];
+            genericDescPtr->dims[3] = 1;
+            if(genericDescPtr->dims[2] == 1)
+                genericDescPtr->numDims = 2;
             else
-                dscPtr3D->numDims = 3;
+                genericDescPtr->numDims = 3;
 
-            dscPtr3D->strides[0] = dscPtr3D->dims[1] * dscPtr3D->dims[2] * dscPtr3D->dims[3];
-            dscPtr3D->strides[1] = dscPtr3D->dims[2] * dscPtr3D->dims[3];
-            dscPtr3D->strides[2] = dscPtr3D->dims[3];
+            genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
+            genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
+            genericDescPtr->strides[2] = genericDescPtr->dims[3];
             break;
         }
         default: {

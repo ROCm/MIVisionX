@@ -1996,7 +1996,7 @@ extern "C"
 	 * \param [in] pDstRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the output.
 	* \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	*/
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_scalar axisMask, vx_scalar mean, vx_scalar stdDev, vx_scalar scale, vx_scalar shift, vx_scalar epsilon, vx_scalar ddof, vx_uint32 numOfDims);
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_scalar axis_mask, vx_array pMean, vx_array pStddev, vx_scalar computeMean, vx_scalar computeStddev, vx_scalar scale, vx_scalar shift, vx_scalar inputLayout, vx_scalar roiType);
 
 	/*! \brief [Graph] Produces a mel-spectrogram from spectrogram on applying a bank of triangular filters
 	* \ingroup group_amd_rpp

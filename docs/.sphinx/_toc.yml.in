@@ -5,6 +5,10 @@ root: README
 subtrees:
   - numbered: False
     entries:
+    - file: doxygen/html/modules
+      title: MIVisionX APIs
+    - file: doxygen/html/files
+      title: MIVisionX Header Files
     - file: amd_openvx/README
       subtrees:
         - entries:

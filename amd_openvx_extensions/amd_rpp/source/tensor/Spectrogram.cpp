@@ -47,14 +47,13 @@ void updateDstRoi(SpectrogramLocalData *data, RpptROI *src_roi, RpptROI *dst_roi
     const Rpp32s num_frames = ((data->nfft / 2) + 1);
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         data->pSrcLength[i] = static_cast<int>(src_roi[i].xywhROI.roiWidth);
-        if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
+        if (data->spectrogramLayout == RpptSpectrogramLayout::TF) {
             dst_roi[i].xywhROI.roiWidth = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
             dst_roi[i].xywhROI.roiHeight = num_frames;
-        } else if (data->spectrogramLayout == RpptSpectrogramLayout::TF) {
+        } else if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
             dst_roi[i].xywhROI.roiWidth = num_frames;
             dst_roi[i].xywhROI.roiHeight = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
         }
-        std::cerr << "Updating spec dst_roi with " << dst_roi[i].xywhROI.xy.x << " " << dst_roi[i].xywhROI.xy.y << " " << dst_roi[i].xywhROI.roiWidth << " " << dst_roi[i].xywhROI.roiHeight << "\n";
     }
 }
 

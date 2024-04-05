@@ -41,13 +41,11 @@ struct MelFilterBankLocalData {
 };
 
 void copy_src_dims_and_update_dst_roi(MelFilterBankLocalData *data, RpptROI *srcRoi, RpptROI *dstRoi) {
-    std::cerr << "ROI values: \n";
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcDims[i * data->inputTensorDims[0]] = srcRoi[i].xywhROI.roiHeight;  
-        data->pSrcDims[i * data->inputTensorDims[0] + 1] = srcRoi[i].xywhROI.roiWidth;
-        std::cerr << data->pSrcDims[i * data->inputTensorDims[0]] << " " << data->pSrcDims[i * data->inputTensorDims[0] + 1] << "\n";
+        data->pSrcDims[i * data->inputTensorDims[0]] = srcRoi[i].xywhROI.roiWidth;  
+        data->pSrcDims[i * data->inputTensorDims[0] + 1] = srcRoi[i].xywhROI.roiHeight;
         dstRoi[i].xywhROI.roiWidth = data->nfilter;
-        dstRoi[i].xywhROI.roiHeight = srcRoi[i].xywhROI.roiWidth;
+        dstRoi[i].xywhROI.roiHeight = srcRoi[i].xywhROI.roiHeight;
     }
 }
 
@@ -120,20 +118,6 @@ static vx_status VX_CALLBACK processMelFilterBank(vx_node node, const vx_referen
     MelFilterBankLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshMelFilterBank(node, parameters, num, data);
-    std::cerr << "data->pSrcDesc\n";
-    std::cerr << "data->pSrcDesc_n: " << data->pSrcDesc->n << "\n";
-    std::cerr << "data->pSrcDesc_h: " << data->pSrcDesc->h << "\n";
-    std::cerr << "data->pSrcDesc_w: " << data->pSrcDesc->w << "\n";
-    std::cerr << "data->pSrcDesc->strides.nStride: " << data->pSrcDesc->strides.nStride << "\n";
-    std::cerr << "data->pSrcDesc->strides.hStride: " << data->pSrcDesc->strides.hStride << "\n";
-    std::cerr << "data->pSrcDesc->strides.wStride: " << data->pSrcDesc->strides.wStride << "\n";
-    std::cerr << "data->pDstDesc\n";
-    std::cerr << "data->pDstDesc_n: " << data->pDstDesc->n << "\n";
-    std::cerr << "data->pDstDesc_h: " << data->pDstDesc->h << "\n";
-    std::cerr << "data->pDstDesc_w: " << data->pDstDesc->w << "\n";
-    std::cerr << "data->pDstDesc->strides.nStride: " << data->pDstDesc->strides.nStride << "\n";
-    std::cerr << "data->pDstDesc->strides.hStride: " << data->pDstDesc->strides.hStride << "\n";
-    std::cerr << "data->pDstDesc->strides.wStride: " << data->pDstDesc->strides.wStride << "\n";
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;

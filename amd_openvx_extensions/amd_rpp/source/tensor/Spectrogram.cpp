@@ -54,6 +54,7 @@ void updateDstRoi(SpectrogramLocalData *data, RpptROI *src_roi, RpptROI *dst_roi
             dst_roi[i].xywhROI.roiWidth = num_frames;
             dst_roi[i].xywhROI.roiHeight = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
         }
+        std::cerr << "Updating spec dst_roi with " << dst_roi[i].xywhROI.xy.x << " " << dst_roi[i].xywhROI.xy.y << " " << dst_roi[i].xywhROI.roiWidth << " " << dst_roi[i].xywhROI.roiHeight << "\n";
     }
 }
 

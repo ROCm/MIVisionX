@@ -42,7 +42,7 @@ struct MelFilterBankLocalData {
 
 void copy_src_dims_and_update_dst_roi(MelFilterBankLocalData *data, RpptROI *srcRoi, RpptROI *dstRoi) {
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcDims[i * data->inputTensorDims[0]] = srcRoi[i].xywhROI.roiWidth;  
+        data->pSrcDims[i * data->inputTensorDims[0]] = srcRoi[i].xywhROI.roiWidth;
         data->pSrcDims[i * data->inputTensorDims[0] + 1] = srcRoi[i].xywhROI.roiHeight;
         dstRoi[i].xywhROI.roiWidth = data->nfilter;
         dstRoi[i].xywhROI.roiHeight = srcRoi[i].xywhROI.roiHeight;
@@ -184,8 +184,7 @@ static vx_status VX_CALLBACK uninitializeMelFilterBank(vx_node node, const vx_re
 // TODO::currently the node is setting the same affinity as context. This needs to change when we have hybrid modes in the same graph
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
                                                   vx_bool use_opencl_1_2,
-                                                  vx_uint32 &supported_target_affinity
-) {
+                                                  vx_uint32 &supported_target_affinity) {
     vx_context context = vxGetContext((vx_reference)graph);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));

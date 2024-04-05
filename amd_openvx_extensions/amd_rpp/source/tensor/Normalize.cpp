@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -73,26 +73,14 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+            data->pSrcDims[j] = src_roi[i].xywhROI.xy.x;
+            data->pSrcDims[j + 1] = src_roi[i].xywhROI.roiWidth;
             dst_roi[i].xywhROI.roiWidth = src_roi[i].xywhROI.roiWidth;
             dst_roi[i].xywhROI.roiHeight = src_roi[i].xywhROI.roiHeight;
         }
-//     std::cerr << "ROI values: \n";
-        
-//         for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 2) {
-//             data->pSrcDims[j] = src_roi[i].xywhROI.xy.x;
-//             data->pSrcDims[j + 1] = src_roi[i].xywhROI.roiWidth;
-//             std::cerr << data->pSrcDims[j] << " " << data->pSrcDims[j + 1] << "\n";
-// }
-//     std::cerr << "\n";
         data->pSrcRoi = static_cast<unsigned *>(data->pSrcDims);
     } else {
         data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
-            std::cerr << "ROI values: \n";
-        
-        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-            std::cerr << data->pSrcRoi[0] << " " << data->pSrcRoi[1] << " " << data->pSrcRoi[2] << " " << data->pSrcRoi[3] << "\n";
-}
-    std::cerr << "\n";
     }
     int nDim = data->pSrcGenericDesc->numDims - 1;
     Rpp32u axis[nDim];
@@ -182,7 +170,6 @@ static vx_status VX_CALLBACK processNormalize(vx_node node, const vx_reference *
         rpp_status = rppt_normalize_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMean, data->computeStddev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
-    std::cerr << "Completed processNormalize\n";
     return return_status;
 }
 

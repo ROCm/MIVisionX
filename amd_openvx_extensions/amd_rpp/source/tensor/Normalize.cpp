@@ -72,7 +72,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     if ((numDims == 3) && (data->inputTensorDims[2] == 1)) {
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
-        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+        for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 2) {
             data->pSrcDims[j] = src_roi[i].xywhROI.xy.x;
             data->pSrcDims[j + 1] = src_roi[i].xywhROI.roiWidth;
             dst_roi[i].xywhROI.roiWidth = src_roi[i].xywhROI.roiWidth;

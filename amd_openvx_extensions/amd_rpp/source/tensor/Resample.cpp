@@ -95,9 +95,6 @@ static vx_status VX_CALLBACK refreshResample(vx_node node, const vx_reference *p
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
-        if (!data->pSrcRoi) {
-            data->pSrcRoi = new Rpp32s[data->pSrcDesc->n * nDim];
-        }
     }
     RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
     RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
@@ -188,6 +185,7 @@ static vx_status VX_CALLBACK initializeResample(vx_node node, const vx_reference
     data->pDstDesc->offsetInBytes = 0;
     fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
+    data->pSrcRoi = new Rpp32s[data->pSrcDesc->n * 2];
     data->pInRateTensor = new float[data->pSrcDesc->n];
     int lobes = std::round(0.007 * data->quality * data->quality - 0.09 * data->quality + 3);
     int lookupSize = lobes * 64 + 1;

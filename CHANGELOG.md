@@ -13,6 +13,7 @@ Documentation for MIVisionX is available at
 * Hardware support updates
 * Doxygen support for API documentation
 * Support for PreEmphasis Filter augmentation in openVX extensions
+* Support for Spectrogram augmentation in openVX extensions
 
 ### Optimizations
 

@@ -2815,6 +2815,7 @@ void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTen
             genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
             genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
             genericDescPtr->strides[2] = genericDescPtr->dims[3];
+            genericDescPtr->layout = RpptLayout::NONE;
             break;
         }
         default: {

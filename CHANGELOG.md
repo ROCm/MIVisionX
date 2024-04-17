@@ -10,6 +10,9 @@ Documentation for MIVisionX is available at
 ### Additions
 
 * Support for advanced GPUs
+* Support for PreEmphasis Filter augmentation in openVX extensions
+* Support for Spectrogram augmentation in openVX extensions
+* Support for Downmix and ToDecibels augmentations in openVX extensions
 
 ### Optimizations
 
@@ -51,9 +54,6 @@ Documentation for MIVisionX is available at
 * CTest: Tests for install verification
 * Hardware support updates
 * Doxygen support for API documentation
-* Support for PreEmphasis Filter augmentation in openVX extensions
-* Support for Spectrogram augmentation in openVX extensions
-* Support for Downmix and ToDecibels augmentations in openVX extensions
 
 ### Optimizations
 

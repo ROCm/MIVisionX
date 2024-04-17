@@ -8,15 +8,9 @@ The sample has two .cpp files, `mvobjdetect.cpp` and `visualize.cpp`. But it nee
 
 ## Prerequisites
 
-* Linux
-  * Ubuntu `20.04`/`22.04`
-* [ROCm supported hardware](https://docs.amd.com) 
-  * **GPU**: [AMD Radeon&trade; Graphics](https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html) [Required]
-  * **APU**: [AMD Radeon&trade; `Mobile`/`Embedded`](https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html) [optional]
-* [ROCm](https://docs.amd.com)
-* Build & Install [MIVisionX](https://github.com/ROCm/MIVisionX#linux-1)
-  * MIVisionX installs model compiler at `/opt/rocm/libexec/mivisionx`
-  * mv_compile installs at `/opt/rocm/bin` and mvdeploy_api.h installs at `/opt/rocm/include/mivisionx`
+* MIVisionX
+  + MIVisionX installs model compiler at `/opt/rocm/libexec/mivisionx`
+  + mv_compile installs at `/opt/rocm/bin` and mvdeploy_api.h installs at `/opt/rocm/include/mivisionx`
 * Install MIVisionX [Model Compiler Prerequisites](https://github.com/ROCm/MIVisionX/tree/master/model_compiler/README.md#pre-requisites)
 * Add MIVisionX libraries & executables to PATH
 ```
@@ -28,9 +22,10 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 
 ### Step 1. Download pre-trained YoloV2 caffe model - [yoloV2Tiny20.caffemodel](https://github.com/kiritigowda/YoloV2NCS/raw/master/models/caffemodels/yoloV2Tiny20.caffemodel) 
 
-```
-wget https://github.com/kiritigowda/YoloV2NCS/raw/master/models/caffemodels/yoloV2Tiny20.caffemodel
-```
+> [!TIP]
+> ```
+> wget https://github.com/kiritigowda/YoloV2NCS/raw/master/models/caffemodels/yoloV2Tiny20.caffemodel
+> ```
 
 ### Step 2. compile model for OpenVX backend using mv_compile utility
 The mv_compile utility generates deployment library, header files, and .cpp files required to run inference for the specified model.
@@ -45,14 +40,15 @@ mv_compile  --model 	        <model_name: name of the trained model with path> 	
 	    --quant_mode       <quant_mode: fp32/fp16 - quantization mode: if enabled the model and weights are converted> 	[optional -default: fp32]
 ```
 
-* Sample:
-```
-mv_compile --model yoloV2Tiny20.caffemodel --install_folder mvdeploy --input_dims 1,3,416,416
-```
-**NOTE:**
-* There will be a file libmv_deploy.so (under ./lib), weights.bin and mvtestdeploy sample app (under ./bin).
-* There will be mv_extras folder for extra post-processing helper functions.
-* Open mvdeploy_api.h to go through API functions supported for inference deployment. 
+> [!TIP]
+> ```
+> mv_compile --model yoloV2Tiny20.caffemodel --install_folder mvdeploy --input_dims 1,3,416,416
+> ```
+
+> [!NOTE]
+> * There will be a file libmv_deploy.so (under ./lib), weights.bin and mvtestdeploy sample app (under ./bin)
+> * There will be mv_extras folder for extra post-processing helper functions
+> * Open mvdeploy_api.h to go through API functions supported for inference deployment
 
 ### Step 3. Make sure mvtestdeploy utility runs
 mvtestdeploy is a pre-generated application built in Step 3 which shows how to deploy inference for an input image file
@@ -65,12 +61,14 @@ mvtestdeploy is a pre-generated application built in Step 3 which shows how to d
 			--t <N: number of iterations>					[required]
 ```
 
-* Sample:
-```	
-cd mvdeploy
-./bin/mvtestdeploy /opt/rocm/share/mivisionx/samples/mv_objdetect/data/images/img_04.JPG output.bin --install_folder . --t 100
-```
-**NOTE:** This runs inference for an input file and generate output for N number of iterations.
+> [!TIP]
+> ```	
+> cd mvdeploy
+> ./bin/mvtestdeploy /opt/rocm/share/mivisionx/samples/mv_objdetect/data/images/img_04.JPG output.bin --install_folder . --t 100
+> ```
+
+> [!NOTE]
+> This runs inference for an input file and generate output for N number of iterations.
 
 ### Step 4. Build mvobjdetect example
 * mvobjdetect is built on top of all the files generated in Step 4. Basically it shows how to add preprocessing OpenVX nodes for video decoding and image_to_tensor conversion. 
@@ -81,21 +79,26 @@ cd mvdeploy
 **TODO:**
 * Copy all files in cloned sample folder (mvobjdetect.cpp, visualize.cpp, visualize.h and CMakeLists.txt) into mvdeploy folder. This  brings all the files into a single folder to build and run the sample.
 
-```
-cp /opt/rocm/share/mivisionx/samples/mv_objdetect/mvobjdetect.cpp .
-cp /opt/rocm/share/mivisionx/samples/mv_objdetect/visualize.cpp .
-cp /opt/rocm/share/mivisionx/samples/mv_objdetect/visualize.h .
-cp /opt/rocm/share/mivisionx/samples/mv_objdetect/CMakeLists.txt .
-```
+> [!TIP]
+> ```
+> cp /opt/rocm/share/mivisionx/samples/mv_objdetect/mvobjdetect.cpp .
+> cp /opt/rocm/share/mivisionx/samples/mv_objdetect/visualize.cpp .
+> cp /opt/rocm/share/mivisionx/samples/mv_objdetect/visualize.h .
+> cp /opt/rocm/share/mivisionx/samples/mv_objdetect/CMakeLists.txt .
+> ```
 
 ### Step 5. cmake and make mvobjdetect
-```
-mkdir mv_build
-cd mv_build
-cmake ../
-make -j
-```
-**Note:** if build directory exists from previous build, name the new build directly differently (eg: mv_build).
+> [!TIP]
+> ```
+> mkdir mv_build
+> cd mv_build
+> cmake ../
+> make -j
+> ```
+
+
+> [!NOTE]
+> If build directory exists from previous build, name the new build directly differently (eg: mv_build).
 
 ### Step 6. Run object detection with video/image
 * Usage:
@@ -109,42 +112,51 @@ Usage: mvobjdetect <options>
 	--backend <backend>: is the name of the backend for compilation  	[optional: default OpenVX_Rocm_GPU]
 	--argmax <topK> : give argmax output in vec<label,prob>          	[optional: default no argmax]
 	--t <num of interations> to run for performance                  	[optional: default 1]
-	--hwdec <1/0>:use hwaccel for decoding                            [optional: default cpu decoding, 1:hwdec 0:cpu dec]
+	--hwdec <1/0>:use hwaccel for decoding                                  [optional: default cpu decoding, 1:hwdec 0:cpu dec]
 	--label <labels.txt>                                             	[optional: default use yolo_v2 20 classes]
 	--v :if specified visualize the result on the input image        	[optional: default no visualization]
 
 ```
 
-* Sample
-```
-cd ..
-./mv_build/mvobjdetect /opt/rocm/share/mivisionx/samples/mv_objdetect/data/images/img_04.JPG - --install_folder . --bb 20 0.2 0.4 --v
-./mv_build/mvobjdetect <PATH TO VIDEO FILE> - --install_folder . --bb 20 0.2 0.4 --v
-```
-**Note:** Make sure the input image and video file exist and specified with full path
+> [!TIP]
+> ```
+> cd ..
+> ./mv_build/mvobjdetect /opt/rocm/share/mivisionx/samples/mv_objdetect/data/images/img_04.JPG --install_folder . --bb 20 0.2 0.4 --v
+> ```
+
+> [!NOTE]
+> * Make sure the input image and video file exist and specified with full path
+> * For Video - `./mv_build/mvobjdetect <PATH TO VIDEO FILE> --install_folder . --bb 20 0.2 0.4 --v`
+> * For hardware decode use `--hwdec 1`
 
 ### Step 7. Run object detection with multiple video streams (e.g batch 4, 8 and 16)
-* Go through steps 3 to 6, this time compiling the model for a batch of `4`.  
+
+* Go through steps 2 to 6, this time compiling the model for a batch of `4` using `--input_dims 4,3,416,416` in step 2 .  
 * Also this sample can do batch of 8 and 16 decoding as well.  
 	* For **batch 8:** `--input_dims 8,3,416,416`  and create `Videos_8.txt` file with 8 input streams  
 	* For **batch 16:** `--input_dims 16,3,416,416` and create `Videos_16.txt` file with 16 input streams
 
-```
-cd ..
-mv_compile --model yoloV2Tiny20.caffemodel --install_folder mvdeploy_batch4 --input_dims 4,3,416,416
-cd mvdeploy_batch4
-cp ../mvobjdetect.cpp ../visualize.cpp ../visualize.h ../CMakeLists.txt .
-mkdir mv_build4
-cd mv_build4
-cmake ../
-make -j
-cd ..
-./mv_build4/mvobjdetect <Videos_4.txt> - --install_folder . --bb 20 0.2 0.4 --v
-```
-**Note:** 
-* Where `Videos_4.txt` has the names of input video files with full path.
-* e.g: Use the `../data/Videos/Videos_4.txt` file. Modify it to specify your input files. 
-* The last bit `(:0 / :1)` chooses software or hardware mode for decoding.
+> [!TIP]
+> For batch size `4`
+> ```
+> mkdir mvcompile-4 && cd mvcompile-4
+> wget https://github.com/kiritigowda/YoloV2NCS/raw/master/models/caffemodels/yoloV2Tiny20.caffemodel
+> mv_compile --model yoloV2Tiny20.caffemodel --install_folder mvdeploy-4 --input_dims 4,3,416,416
+> cd mvdeploy-4/
+> cp /opt/rocm/share/mivisionx/samples/mv_objdetect/mvobjdetect.cpp .
+> cp /opt/rocm/share/mivisionx/samples/mv_objdetect/visualize.cpp .
+> cp /opt/rocm/share/mivisionx/samples/mv_objdetect/visualize.h .
+> cp /opt/rocm/share/mivisionx/samples/mv_objdetect/CMakeLists.txt .
+> mkdir mv_build && cd mv_build
+> cmake ../ && make -j8
+> cd ../
+> ./mv_build/mvobjdetect <Videos_4.txt> --install_folder . --bb 20 0.2 0.4 --v
+> ```
+
+> [!IMPORTANT]
+> *`Videos_4.txt` has the names of input video files with full path.
+> * Use the `../data/Videos/Videos_4.txt` file. Modify it to specify your input files. 
+> * The last bit `(:0 / :1)` chooses software or hardware mode for decoding.
 
 ### Step 10. Sample output for multiple video object detection
 

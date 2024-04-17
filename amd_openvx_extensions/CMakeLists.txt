@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -163,7 +163,7 @@ elseif(AMDRPP_FOUND AND ("${BACKEND}" STREQUAL "CPU" OR NOT(GPU_SUPPORT)))
     add_subdirectory(amd_rpp)
     message("-- ${Green}AMD ROCm Performance Primitives -- amd_rpp module added with CPU only backend support${ColourReset}")
 else()
-    message("-- ${Red}WARNING:AMD RPP Not Found -- OpenVX Extension amd_rpp module excluded${ColourReset}")
+    message("-- ${Red}WARNING: AMD RPP Not Found -- OpenVX Extension amd_rpp module excluded${ColourReset}")
 endif()
 
 if(OpenCV_FOUND)

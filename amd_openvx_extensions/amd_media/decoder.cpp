@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2024 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -536,16 +536,18 @@ vx_status CLoomIoMediaDecoder::Initialize()
                 vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Failed to create specified HW device.\n");
                 return VX_FAILURE;
             }
-        }
-
-        if (codecContext->pix_fmt == AV_PIX_FMT_YUVJ420P)
-          decoderFormat = AV_PIX_FMT_NV12;    // set non-depracated format, vaapi uses NV12 for YUVJ420P
-        else if (codecContext->pix_fmt == AV_PIX_FMT_YUVJ422P)
-          decoderFormat = AV_PIX_FMT_YUV422P;    // set non-depracated format
-        else if (codecContext->pix_fmt == AV_PIX_FMT_YUVJ444P)
-          decoderFormat = AV_PIX_FMT_YUV444P;    // set non-depracated format
-        else
-          decoderFormat = codecContext->pix_fmt;    // correct format will be set after vaapi initialization for hwdec
+            decoderFormat = codecContext->pix_fmt;
+            if (decoderFormat == AV_PIX_FMT_YUVJ420P)
+                decoderFormat = AV_PIX_FMT_YUV420P;    // set non-depracated format, vaapi uses NV12 for YUVJ420P
+            else if (decoderFormat == AV_PIX_FMT_YUVJ422P)
+                decoderFormat = AV_PIX_FMT_YUV422P;    // set non-depracated format
+            else if (decoderFormat == AV_PIX_FMT_YUVJ444P)
+                decoderFormat = AV_PIX_FMT_YUV444P;    // set non-depracated format
+            // vaapi uses NV12 for AV_PIX_FMT_YUV420P: looks like FFMpeg is returning the wrong format which can cause swscale to fail
+            if (decoderFormat == AV_PIX_FMT_YUV420P)
+                decoderFormat = AV_PIX_FMT_NV12;
+        } else
+            decoderFormat = codecContext->pix_fmt;    // correct format will be set after
 
         ERROR_CHECK_STATUS(avcodec_open2(codecContext, decoder, nullptr));
         SwsContext * swsContext = NULL;
@@ -693,7 +695,7 @@ vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
                 // do sws_scale
                 int ret = sws_scale(conversionContext[mediaIndex], frame->data, frame->linesize, 0, frame->height, dst_data, dst_linesize);
                 if (ret < decoderImageHeight) {
-                    fprintf(stderr, "Error in output image scaling using sws_scale\n");
+                    fprintf(stderr, "Error in output image scaling using sws_scale <%d>\n", ret);
                     return VX_FAILURE;
                 }
                 #if DUMP_DECODED_FRAME

@@ -2,7 +2,7 @@
 # 
 # MIT License
 # 
-# Copyright (c) 2017 - 2023 Advanced Micro Devices, Inc.
+# Copyright (c) 2017 - 2024 Advanced Micro Devices, Inc.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -51,7 +51,9 @@ set(HALF_FOUND ${HALF_FOUND} CACHE INTERNAL "")
 set(HALF_INCLUDE_DIRS ${HALF_INCLUDE_DIRS} CACHE INTERNAL "")
 
 if(HALF_FOUND)
-    message("-- ${White}Using HALF -- \n\tIncludes:${HALF_INCLUDE_DIRS}${ColourReset}")    
+    if(HALF_FIND_REQUIRED)
+        message("-- ${White}Using HALF -- \n\tIncludes:${HALF_INCLUDE_DIRS}${ColourReset}")
+    endif()
 else()
     if(HALF_FIND_REQUIRED)
         message(FATAL_ERROR "{Red}FindHALF -- NOT FOUND${ColourReset}")

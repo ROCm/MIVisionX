@@ -55,7 +55,7 @@ See the below section for using your caffemodel.
  
 ### Testing with your Caffemodel
 
-You can test your trained MNIST caffemodel using the [model compiler](https://github.com/ROCm/amdovx-modules/tree/develop/utils/model_compiler)
+You can test your trained MNIST caffemodel using the [model compiler](https://github.com/ROCm/MIVisionX/tree/master/model_compiler)
 
  1. Convert your caffemodel->NNIR->openvx using the model compiler.
  2. From the generated files, copy

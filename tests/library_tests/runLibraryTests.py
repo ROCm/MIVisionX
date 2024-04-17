@@ -1,4 +1,4 @@
-# Copyright (c) 2020 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2020 - 2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ import os
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2023, AMD MIVisionX - Library Tests Report"
+__copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Library Tests Report"
 __license__ = "MIT"
 __version__ = "1.2.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -124,7 +124,6 @@ nn_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_nn.so')
 migraphx_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_amd_migraphx.so')
 # level 5 - libraries
 rpp_lib = shell('ldd '+MIVisionXAbsPath+'/lib/libvx_rpp.so')
-rocal_lib = shell('ldd '+MIVisionXAbsPath+'/lib/librocal.so')
 
 # Executables
 runvx_exe = shell('ldd '+MIVisionXAbsPath+'/bin/runvx')
@@ -193,15 +192,6 @@ with open(reportFilename, 'w') as f:
         warning = 1
     else:
         write_formatted(rpp_lib, f)
-    f.write("\n")
-    # rocAL Libraries
-    f.write("* rocAL Library\n")
-    if not rocal_lib:
-        f.write("WARNING: rocAL Library Not Built\n")
-        print("WARNING: rocAL Library Not Built\n")
-        warning = 1
-    else:
-        write_formatted(rocal_lib, f)
     f.write("\n")
     if backendType == 'OCL':
         # Loom Libraries
@@ -305,7 +295,7 @@ with open(reportFilename, 'w') as f:
         print("SUCCESS: All modules of MIVisionX built")
     f.write("\n")
 
-    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2023 -- runLibraryTests.py V-"+__version__+"**\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2024 -- runLibraryTests.py V-"+__version__+"**\n")
     f.write("\n")
 
 # report file

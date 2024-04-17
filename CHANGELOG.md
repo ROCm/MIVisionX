@@ -5,6 +5,45 @@
 Documentation for MIVisionX is available at
 [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
+## MIVisionX 3.0.0 (unreleased)
+
+### Additions
+
+* Support for advanced GPUs
+
+### Optimizations
+
+* Readme
+
+### Changes
+
+* rocAL: Deprecated with V3.0.0, rocAL will be available at https://github.com/ROCm/rocAL
+
+### Fixes
+
+* Dependencies
+
+### Tested configurations
+
+* Windows `10` / `11`
+* Linux distribution
+  + Ubuntu - `20.04` / `22.04`
+  + CentOS - `7`
+  + RHEL - `8` / `9`
+  + SLES - `15-SP4`
+* ROCm: rocm-core - `6.1.0.60100`
+* RPP - `1.5.0.60100`
+* miopen-hip - `3.1.0.60100`
+* migraphx - `2.9.0.60100`
+* OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
+* FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
+* Dependencies for all the above packages
+* MIVisionX Setup Script - `V2.6.1`
+
+### Known issues
+
+* MIVisionX package install requires manual prerequisites installation
+
 ## MIVisionX 2.5.0
 
 ### Additions

@@ -3,7 +3,7 @@
 MIVisionX has several applications built on top of OpenVX and its modules, it uses AMD optimized libraries to build applications that can be used as prototypes or used as models to develop products.
 
 ## Prerequisites
-* [MIVisionX](https://github.com/ROCm/MIVisionX/README.md#build--install-mivisionx) installed
+* [MIVisionX](https://github.com/ROCm/MIVisionX/blob/master/README.md#prerequisites) installed
 
 ## Bubble Pop
 
@@ -22,12 +22,6 @@ This sample [application](./cloud_inference/README.md#cloud-inference-applicatio
 This sample [application](./dg_test/README.md#amd-dgtest) is used to recognize hand written digits.
 
 <p align="center"> <img src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/DGtest.gif"> </p>
-
-## Image Augmentation
-
-This sample [application](./image_augmentation/README.md#image-augmentation-application) demonstrates the basic usage of rocAL's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
-
-<p align="center"> <img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/image_augmentation.png" /> </p>
 
 # MIVisionX Inference Analyzer
 

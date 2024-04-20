@@ -170,13 +170,23 @@ if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/
         linuxCMake = 'cmake3'
         ERROR_CHECK(os.system(linuxSystemInstall+' install cmake3')) 
     if "centos" not in platfromInfo or "redhat" not in platfromInfo:
-        platfromInfo = platfromInfo+'-redhat'
+        if "8" in platform.version():
+            platfromInfo = platfromInfo+'-redhat-8'
+        elif "9" in platform.version():
+            platfromInfo = platfromInfo+'-redhat-9'
+        else:
+            platfromInfo = platfromInfo+'-redhat-centos-undefined-version'
 elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
     linuxSystemInstall = 'apt-get -y'
     linuxSystemInstall_check = '--allow-unauthenticated'
     linuxFlag = '-S'
     if "Ubuntu" not in platfromInfo:
-        platfromInfo = platfromInfo+'-Ubuntu'
+        if "20" in platform.version():
+            platfromInfo = platfromInfo+'-Ubuntu-20'
+        elif "22" in platform.version():
+            platfromInfo = platfromInfo+'-Ubuntu-22'
+        else:
+            platfromInfo = platfromInfo+'-Ubuntu-undefined-version'
 elif os.path.exists('/usr/bin/zypper'):
     linuxSystemInstall = 'zypper -n'
     linuxSystemInstall_check = '--no-gpg-checks'
@@ -433,9 +443,9 @@ else:
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install install https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm'))
+                ' install https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm'))
+                ' install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +

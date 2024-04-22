@@ -20,16 +20,16 @@ AMD OpenVX
 .. image:: ./data/OpenVX_logo.png
    :alt: OpenVX Logo
 
-:doc:`AMD OpenVX <./amd_openvx/amd_openvx>` is a highly optimized conformant open source implementation of the `Khronos OpenVX <https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html>`_ computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+:doc:`AMD OpenVX <./how-to/amd_openvx>` is a highly optimized conformant open source implementation of the `OpenVX Specification Version 1.3 <https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html>`_ computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 .. note::
-   The `Khronos OpenVX 1.0.1 <href="https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html>`_ is available in `MIVisionX Lite <https://github.com/ROCm/MIVisionX/tree/openvx-1.0.1>`_. 
+   The `Khronos OpenVX 1.0.1 <https://www.khronos.org/registry/OpenVX/specs/1.0.1/html/index.html>`_ is available in `MIVisionX Lite <https://github.com/ROCm/MIVisionX/tree/openvx-1.0.1>`_. 
 
 
 AMD OpenVX Extensions
 ======================================
 
-The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has the following `OpenVX modules <https://github.com/ROCm/MIVisionX/tree/master/amd_openvx_extensions>`_ and utilities to extend AMD OpenVX, which contains the AMD OpenVX Core Engine.
+The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has the following `OpenVX extension modules <https://github.com/ROCm/MIVisionX/tree/master/amd_openvx_extensions>`_ and utilities to extend AMD OpenVX, which contains the AMD OpenVX core engine.
 
 .. image:: ./data/MIVisionX-OpenVX-Extensions.png
    :alt: MIVisionX Logo
@@ -46,7 +46,7 @@ The OpenVX framework provides a mechanism to add new vision functionality to Ope
 Applications
 =================
 
-MIVisionX has several :doc:`example applications <./apps/mivision-applications>` built on top of OpenVX modules. These applications can serve as excellent prototypes and samples for developers to build upon.
+MIVisionX has several :doc:`example applications <./tutorials/mivisionx-apps>` built on top of OpenVX modules. These applications can serve as excellent prototypes and samples for developers to build upon.
 
 .. image:: ./data/MIVisionX-applications.png
    :alt: MIVisionX Logo
@@ -61,22 +61,22 @@ Neural network model compiler and optimizer
    :width: 80%
 
 
-:doc:`Neural net model compiler and optimizer <./model_compiler/model-compiler>` converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
+:doc:`Neural net model compiler and optimizer <./how-to/model-compiler>` converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
 Toolkit
 =================
 
-:doc:`Toolkit <./toolkit/toolkit>` is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides useful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit has been designed to help you deploy your work on any AMD or 3rd party hardware, from embedded to servers.
+:doc:`Toolkit <./reference/toolkit>` is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides useful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit has been designed to help you deploy your work on any AMD or 3rd party hardware, from embedded to servers.
 
 MIVisionX toolkit provides tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
 
 Utilities
 ===============
 
-* `loom_shell <https://github.com/ROCm/MIVisionX/tree/master/utilities/loom_shell>`_: an interpreter to prototype 360 degree video stitching applications using a script
-* `mv_deploy <https://github.com/ROCm/MIVisionX/tree/master/utilities/mv_deploy/README.md>`_: consists of a model-compiler and necessary header/.cpp files which are required to run inference for a specific NeuralNet model
-* `RunCL <https://github.com/ROCm/MIVisionX/tree/master/utilities/runcl/README.md>`_: command-line utility to build, execute, and debug OpenCL programs
-* `RunVX <https://github.com/ROCm/MIVisionX/tree/master/utilities/runvx/README.md>`_: command-line utility to execute OpenVX graph described in GDF text file
+* :doc:`loom_shell <./reference/utilities-loom_shell>`: an interpreter to prototype 360 degree video stitching applications using a script
+* :doc:`mv_deploy <./reference/utilities-mv_deploy>`: consists of a model-compiler and necessary header/.cpp files which are required to run inference for a specific NeuralNet model
+* :doc:`RunCL <./reference/utilities-runcl>`: command-line utility to build, execute, and debug OpenCL programs
+* :doc:`RunVX <./reference/utilities-runvx>`: command-line utility to execute OpenVX graph described in GDF text file
 
 Documentation
 ======================

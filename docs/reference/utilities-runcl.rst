@@ -14,6 +14,7 @@ RunCL Usage
 ===========
 
 .. code-block:: shell
+
     Usage: runcl [platform-options] [-I<include-dir>] [[-D<name>=<value>] ...]
                 <kernel.[cl|elf]> [kernel-arguments] 
                 <arguments> <num_work_items>[/<work_group_size>]
@@ -37,31 +38,43 @@ RunCL Usage
 The ``<arguments>`` should be given in the order as required by the kernel.
 
 * For value arguments use:
+
 .. code-block:: shell
+
     iv#<int/float>[,<int/float>...] or 
     iv:<file> (e.g., iv#10.2,10,0x10)
 
 * For local memory use: 
+
 .. code-block:: shell
+
     lm#<local-memory-size> (e.g., lm#8192)
 
 * For input buffer use: 
+
 .. code-block:: shell
+
     if[#<buffer-size>]:[<file>][#[[<checksum>][/<file>[@<offset>#<end>]]]]
     (e.g., if:input.bin)
 
 * For output (or RW) buffer: 
+
 .. code-block:: shell
+
     of[#<buffer-size>]:[#]<file>[@<ofile>][#[[<checksum>][/[+<float-tolerance>]<file>[@<offset>#<end>]]]] 
     (e.g., of#16384:output.bin)
 
 * For input image  use:
+
 .. code-block:: shell
+
     ii#<width>x<height>,<stride>,<u8/s16/u16/bgra/rgba/argb>:<file> 
     (e.g., ii#1920x1080,7680,bgra:screen1920x1080.rgb)
 
 * For output image  use: 
+
 .. code-block:: shell
+
     oi#<width>x<height>,<stride>,<u8/s16/u16/bgra/rgba/argb>:<file> 
     (e.g., oi#1920x1080,7680,bgra:screen1920x1080.rgb
 
@@ -70,6 +83,7 @@ Example
 =======
 
 .. code-block:: shell
+    
     % cat subtract.cl
     __kernel __attribute__((reqd_work_group_size(64, 1, 1)))
     void subtract(

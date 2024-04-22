@@ -17,11 +17,11 @@ subtrees:
 
 - caption: How to
   entries:
-  - file: amd_openvx/amd_openvx.rst
+  - file: how-to/amd_openvx.rst
     title: Using AMD OpenVX
-  - file: model_compiler/model-compiler.rst
+  - file: how-to/model-compiler.rst
     title: Working with model compiler
-  - file: docker/mivisionx-docker.rst
+  - file: how-to/mivisionx-docker.rst
     title: Using Docker
 
 - caption: API reference
@@ -30,18 +30,18 @@ subtrees:
     title: MIVisionX APIs
   - file: doxygen/html/files
     title: MIVisionX Header Files
-  - file: toolkit/toolkit.rst
+  - file: reference/toolkit.rst
     title: Toolkit
-  - file: utilities/utilities.rst
+  - file: reference/utilities.rst
     title: Utilities
 
 - caption: Tutorials
   entries:
-  - file: apps/mivision-applications.rst     
+  - file: tutorials/mivisionx-apps.rst     
     title: Example applications
-  - file: samples/samples.rst     
+  - file: tutorials/mivisionx-samples.rst     
     title: Samples
-  - file: tests/mivision-tests.rst     
+  - file: tutorials/mivisionx-tests.rst     
     title: Installation and functionality tests
 
 - caption: About

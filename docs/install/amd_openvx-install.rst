@@ -11,8 +11,8 @@ AMD OpenVX installation
 Pre-requisites
 ==============
 
-* **CPU**: `AMD64 <https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html>`_
-* **GPU**: `AMD Radeon Graphics <https://docs.amd.com/bundle/Hardware_and_Software_Reference_Guide/page/Hardware_and_Software_Support.html>`_ [optional]
+* **CPU**: AMD64
+* **GPU**: AMD Radeon Graphics [optional]
 
   + Windows: install the latest drivers and OpenCL SDK `download <https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases>`_
   + Linux: install `ROCm <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/>`_

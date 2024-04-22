@@ -8,9 +8,10 @@
 RunVX Reference
 ******************************************
 
-RunVX is a command-line tool to execute OpenVX graphs, with a simple, easy-to-use interface. It encapsulates most of the routine OpenVX calls, thus speeding up development and enabling rapid prototyping. As input, RunVX takes a GDF (Graph Description Format) file, a simple and intuitive syntax to describe the various data, nodes, and their dependencies. The tool has other useful features, such as, file read/write, data compares, image and keypoint data visualization, etc.
+RunVX is a command-line tool to execute OpenVX graphs, with a simple, easy-to-use interface. It encapsulates most of the routine OpenVX calls, thus speeding up development and enabling rapid prototyping. As input, RunVX takes a graph description format (GDF) file. The GDF file provides a simple and intuitive syntax to describe the various data, nodes, and their dependencies. The ``runvx`` tool also provides file read/write, data compares, image and keypoint data visualization.
 
-If available, this project uses OpenCV for camera capture and image display.
+.. note:: 
+    ``runvx`` uses OpenCV when it is available for camera capture and image display.
 
 Prerequisites
 =============
@@ -19,119 +20,135 @@ Prerequisites
 * **GPU**: AMD Radeon Graphics [optional]
 * Windows: install the latest drivers and OpenCL SDK download [optional]
 * Linux: install ROCm [optional]
-* Install `libssl-dev` on Linux [optional]
+* Install ``libssl-dev`` on Linux [optional]
 * OpenCV `3.4+` [optional]
 
-  + `Windows`:Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+  + for Windows set `OpenCV_DIR` environment variable to point to the `OpenCV/build` folder
 
 
 RunVX Usage and GDF Syntax
 ==========================
 
 .. code-block:: shell
+
     runvx.exe [options] <file.gdf> [argument(s)]
     runvx.exe [options] node <kernelName> [argument(s)]
     runvx.exe [options] shell [argument(s)]
         
-    The argument(s) are data objects created using <data-description> syntax.
-    These arguments can be accessed from inside GDF as $1, $2, etc.
+The argument(s) are data objects created using ``<data-description>`` syntax.
+The arguments can be accessed from inside GDF as ``$1``, ``$2``, etc.
 
-    The available command-line options are:
-      -h
-          Show full help.
-      -v
-          Turn on verbose logs.
-      -root:<directory>
-          Replace ~ in filenames with <directory> in the command-line and
-          GDF file. The default value of '~' is current working directory.
-      -frames:[<start>:]<end>|eof|live
-          Run the graph/node for specified frames or until eof or just as live.
-          Use live to indicate that input is live until aborted by user.
-      -affinity:CPU|GPU[<device-index>]
-          Set context affinity to CPU or GPU.
-      -dump-profile
-          Print performance profiling information after graph launch.
-      -discard-compare-errors
-          Continue graph processing even if compare mismatches occur.
-      -disable-virtual
-          Replace all virtual data types in GDF with non-virtual data types.
-          Use of this flag (i.e. for debugging) can make a graph run slower.
-      -dump-data-config:<dumpFilePrefix>,<object-type>[,object-type[...]]
-          Automatically dump all non-virtual objects of specified object types
-          into files '<dumpFilePrefix>dumpdata_####_<object-type>_<object-name>.raw'
-      -discard-commands:<cmd>[,cmd[...]]
-          Discard the listed commands.
+The available command-line options are:
+
+.. code-block:: shell
+
+    -h
+        Show full help.
+
+    -v
+        Turn on verbose logs.
+
+    -root:<directory>
+        Replace ~ in filenames with <directory> in the command-line and
+        GDF file. The default value of '~' is current working directory.
+
+    -frames:[<start>:]<end>|eof|live
+        Run the graph/node for specified frames or until eof or just as live.
+        Use live to indicate that input is live until aborted by user.
+
+    -affinity:CPU|GPU[<device-index>]
+        Set context affinity to CPU or GPU.
+
+    -dump-profile
+        Print performance profiling information after graph launch.
+
+    -discard-compare-errors
+        Continue graph processing even if compare mismatches occur.
+
+    -disable-virtual
+        Replace all virtual data types in GDF with non-virtual data types.
+        Use of this flag (i.e. for debugging) can make a graph run slower.
+
+    -dump-data-config:<dumpFilePrefix>,<object-type>[,object-type[...]]
+        Automatically dump all non-virtual objects of specified object types
+        into files '<dumpFilePrefix>dumpdata_####_<object-type>_<object-name>.raw'
+
+    -discard-commands:<cmd>[,cmd[...]]
+        Discard the listed commands.
     
 
 The supported list of OpenVX built-in kernel names is given below:
-    ``org.khronos.openvx.color_convert
-    org.khronos.openvx.channel_extract
-    org.khronos.openvx.channel_combine
-    org.khronos.openvx.sobel_3x3
-    org.khronos.openvx.magnitude
-    org.khronos.openvx.phase
-    org.khronos.openvx.scale_image
-    org.khronos.openvx.table_lookup
-    org.khronos.openvx.histogram
-    org.khronos.openvx.equalize_histogram
-    org.khronos.openvx.absdiff
-    org.khronos.openvx.mean_stddev
-    org.khronos.openvx.threshold
-    org.khronos.openvx.integral_image
-    org.khronos.openvx.dilate_3x3
-    org.khronos.openvx.erode_3x3
-    org.khronos.openvx.median_3x3
-    org.khronos.openvx.box_3x3
-    org.khronos.openvx.gaussian_3x3
-    org.khronos.openvx.custom_convolution
-    org.khronos.openvx.gaussian_pyramid
-    org.khronos.openvx.accumulate
-    org.khronos.openvx.accumulate_weighted
-    org.khronos.openvx.accumulate_square
-    org.khronos.openvx.minmaxloc
-    org.khronos.openvx.convertdepth
-    org.khronos.openvx.canny_edge_detector
-    org.khronos.openvx.and
-    org.khronos.openvx.or
-    org.khronos.openvx.xor
-    org.khronos.openvx.not
-    org.khronos.openvx.multiply
-    org.khronos.openvx.add
-    org.khronos.openvx.subtract
-    org.khronos.openvx.warp_affine
-    org.khronos.openvx.warp_perspective
-    org.khronos.openvx.harris_corners
-    org.khronos.openvx.fast_corners
-    org.khronos.openvx.optical_flow_pyr_lk
-    org.khronos.openvx.remap
-    org.khronos.openvx.halfscale_gaussian``
+
+* ``org.khronos.openvx.color_convert``
+* ``org.khronos.openvx.channel_extract``
+* ``org.khronos.openvx.channel_combine``
+* ``org.khronos.openvx.sobel_3x3``
+* ``org.khronos.openvx.magnitude``
+* ``org.khronos.openvx.phase``
+* ``org.khronos.openvx.scale_image``
+* ``org.khronos.openvx.table_lookup``
+* ``org.khronos.openvx.histogram``
+* ``org.khronos.openvx.equalize_histogram``
+* ``org.khronos.openvx.absdiff``
+* ``org.khronos.openvx.mean_stddev``
+* ``org.khronos.openvx.threshold``
+* ``org.khronos.openvx.integral_image``
+* ``org.khronos.openvx.dilate_3x3``
+* ``org.khronos.openvx.erode_3x3``
+* ``org.khronos.openvx.median_3x3``
+* ``org.khronos.openvx.box_3x3``
+* ``org.khronos.openvx.gaussian_3x3``
+* ``org.khronos.openvx.custom_convolution``
+* ``org.khronos.openvx.gaussian_pyramid``
+* ``org.khronos.openvx.accumulate``
+* ``org.khronos.openvx.accumulate_weighted``
+* ``org.khronos.openvx.accumulate_square``
+* ``org.khronos.openvx.minmaxloc``
+* ``org.khronos.openvx.convertdepth``
+* ``org.khronos.openvx.canny_edge_detector``
+* ``org.khronos.openvx.and``
+* ``org.khronos.openvx.or``
+* ``org.khronos.openvx.xor``
+* ``org.khronos.openvx.not``
+* ``org.khronos.openvx.multiply``
+* ``org.khronos.openvx.add``
+* ``org.khronos.openvx.subtract``
+* ``org.khronos.openvx.warp_affine``
+* ``org.khronos.openvx.warp_perspective``
+* ``org.khronos.openvx.harris_corners``
+* ``org.khronos.openvx.fast_corners``
+* ``org.khronos.openvx.optical_flow_pyr_lk``
+* ``org.khronos.openvx.remap``
+* ``org.khronos.openvx.halfscale_gaussian``
         
 The supported list of AMD's built-in kernel names is given below:
-    ``com.amd.nn_extension.argmax_layer
-    com.amd.nn_extension.batch_normalization_layer
-    com.amd.nn_extension.cast_layer
-    com.amd.nn_extension.concat_layer
-    com.amd.nn_extension.crop_layer
-    com.amd.nn_extension.crop_and_resize_layer
-    com.amd.nn_extension.detection_output
-    com.amd.nn_extension.permute_layer
-    com.amd.nn_extension.prior_box_layer
-    com.amd.nn_extension.scale_layer
-    com.amd.nn_extension.slice_layer
-    com.amd.nn_extension.convert_image_to_tensor
-    com.amd.nn_extension.convert_tensor_to_image
-    com.amd.nn_extension.tensor_exp
-    com.amd.nn_extension.tensor_log
-    com.amd.nn_extension.upsample_nearest_layer
-    com.amd.nn_extension.reshape_layer
-    com.amd.nn_extension.gather_layer
-    com.amd.nn_extension.topk_layer
-    com.amd.nn_extension.nms_layer``
+
+* ``com.amd.nn_extension.argmax_layer``
+* ``com.amd.nn_extension.batch_normalization_layer``
+* ``com.amd.nn_extension.cast_layer``
+* ``com.amd.nn_extension.concat_layer``
+* ``com.amd.nn_extension.crop_layer``
+* ``com.amd.nn_extension.crop_and_resize_layer``
+* ``com.amd.nn_extension.detection_output``
+* ``com.amd.nn_extension.permute_layer``
+* ``com.amd.nn_extension.prior_box_layer``
+* ``com.amd.nn_extension.scale_layer``
+* ``com.amd.nn_extension.slice_layer``
+* ``com.amd.nn_extension.convert_image_to_tensor``
+* ``com.amd.nn_extension.convert_tensor_to_image``
+* ``com.amd.nn_extension.tensor_exp``
+* ``com.amd.nn_extension.tensor_log``
+* ``com.amd.nn_extension.upsample_nearest_layer``
+* ``com.amd.nn_extension.reshape_layer``
+* ``com.amd.nn_extension.gather_layer``
+* ``com.amd.nn_extension.topk_layer``
+* ``com.amd.nn_extension.nms_layer``
 
 
 The available GDF commands are:
 
 .. code-block:: shell
+
     import <libraryName>
         Import kernels in a library using vxLoadKernel API.
 
@@ -238,7 +255,7 @@ The available GDF commands are:
                 Show graph details for debug.
 
     rename <dataNameOld> <dataNameNew>
-        Rename a data object\n"
+        Rename a data object\n
 
     init <dataName> <initial-value>
         Initialize data object with specified value.
@@ -345,7 +362,7 @@ The available GDF commands are:
     pause
         Wait until a key is pressed before processing next GDF command.
 
-    help [command]
+    help <command>
         Show the GDF command help.
 
     exit
@@ -366,11 +383,13 @@ Canny Edge Detector
 This example demonstrates building OpenVX graph for Canny edge detector. Use [face1.jpg](https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/face1.jpg) for this example.
 
 .. code-block:: shell
+
     % runvx[.exe] file canny.gdf
 
 The contents of ``canny.gdf``:
 
 .. code-block:: shell
+
     # create input and output images
     data input  = image:480,360,RGB2
     data output = image:480,360,U008
@@ -398,11 +417,13 @@ Skintone Pixel Detector
 This example demonstrates building OpenVX graph for pixel-based skin tone detector [Peer et al. 2003]. Use [face1.jpg](https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/face1.jpg) for this example.
 
 .. code-block:: shell
+
     % runvx[.exe] file skintonedetect.gdf
 
 The contents of ``skintonedetect.gdf``:
 
 .. code-block:: shell
+
     # create input and output images
     data input  = image:480,360,RGB2
     data output = image:480,360,U008
@@ -463,11 +484,13 @@ This example requires use of delay data objects that contain multiple pyramid an
 Use `PETS09-S1-L1-View001.avi <http://ewh.ieee.org/r6/scv/sps/openvx-material/PETS09-S1-L1-View001.avi>`_ as input video sequence.
 
 .. code-block:: shell
+
     % runvx[.exe] file feature_tracker.gdf
 
 The contents of ``feature_tracker.gdf``:
 
 .. code-block:: shell
+
     # create image object for the input video sequence.
     data input = image:768,576,RGB2
     read input PETS09-S1-L1-View001.avi

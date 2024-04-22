@@ -2,7 +2,7 @@
   :description: MIVisionX API
   :keywords: MIVisionX, ROCm, API, reference, data type, support
 
-.. _index:
+.. _mivisionx-apps:
 
 ******************************************
 MIVisionX applications
@@ -13,7 +13,7 @@ MIVisionX has several applications built on top of OpenVX and its modules, it us
 Prerequisites
 =============
 
-* :ref:`installation`
+* MIVisionX :ref:`installation`
 
 Bubble pop
 ==========
@@ -102,7 +102,7 @@ External Application
 
 * `MIVisionX-Classifier <https://github.com/kiritigowda/MIVisionX-Classifier>`_ - This application runs CNN image classifiers on live or pre-recorded video stream. 
 
-* `MIVisionX-Classifier <https://github.com/kiritigowda/YoloV2NCS>`_ - Run tiny yolov2 (20 classes) with AMD's MIVisionX. 
+* `YoloV2 <https://github.com/kiritigowda/YoloV2NCS>`_ - Run tiny yolov2 (20 classes) with AMD's MIVisionX. 
 
 * `Traffic Vision <https://github.com/srohit0/trafficVision#traffic-vision>`_ - This application detects cars and buses in live traffic at 50 frames/sec with HD resolution (1920x1080) using deep learning network Yolo-V2. The model used in the app is optimized for inferencing performance on AMD-GPUs using the MIVisionX toolkit.
 

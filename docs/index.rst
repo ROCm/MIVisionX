@@ -25,22 +25,22 @@ The documentation is structured as follows:
 
   .. grid-item-card:: How to
 
-    * :doc:`Using AMD OpenVX <./amd_openvx/amd_openvx>`
-    * :doc:`Working with model compiler <./model_compiler/model-compiler>`
-    * :doc:`Using MIVisionX with Docker <./docker/mivisionx-docker>`
+    * :doc:`Using AMD OpenVX <./how-to/amd_openvx>`
+    * :doc:`Working with model compiler <./how-to/model-compiler>`
+    * :doc:`Using MIVisionX with Docker <./how-to/mivisionx-docker>`
 
   .. grid-item-card:: API reference
 
     * :doc:`MIVisionX APIs <doxygen/html/modules>`
     * :doc:`MIVisionX header files <doxygen/html/files>`
-    * :doc:`Toolkit <./toolkit/toolkit>`
-    * :doc:`Utilities <./utilities/utilities>`
+    * :doc:`Toolkit <./reference/toolkit>`
+    * :doc:`Utilities <./reference/utilities>`
 
   .. grid-item-card:: Tutorials
 
-    * :doc:`Example applications <./apps/mivision-applications>`
-    * :doc:`Samples <./samples/samples>`
-    * :doc:`Installation and functionality tests <./tests/mivision-tests>`
+    * :doc:`Example applications <./tutorials/mivisionx-apps>`
+    * :doc:`Samples <./tutorials/mivisionx-samples>`
+    * :doc:`Installation and functionality tests <./tutorials/mivisionx-tests>`
 
 
 To contribute to the documentation, refer to

@@ -1,6 +1,15 @@
-# Radeon LoomShell
+.. meta::
+  :description: MIVisionX API
+  :keywords: MIVisionX, ROCm, API, reference, data type, support
 
-<p align="center"><img src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/LOOM_LOGO_250X125.png" /></p>
+.. _loomshell-ref:
+
+******************************************
+Radeon LoomShell reference
+******************************************
+
+.. image:: ../data/LOOM_LOGO_250X125.png
+    :alt: Image of 3d video 
 
 ## DESCRIPTION
 LoomShell is an interpreter that enables stitching 360 degree videos using a script. It provides direct access to 

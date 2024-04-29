@@ -10,6 +10,7 @@ Documentation for MIVisionX is available at
 ### Additions
 
 * Support for advanced GPUs
+* Support for PreEmphasis Filter augmentation in openVX extensions
 
 ### Optimizations
 

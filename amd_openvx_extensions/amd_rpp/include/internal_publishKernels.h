@@ -143,6 +143,7 @@ vx_status LensCorrection_Register(vx_context);
 vx_status Noise_Register(vx_context);
 vx_status Nop_Register(vx_context);
 vx_status Pixelate_Register(vx_context);
+vx_status PreemphasisFilter_Register(vx_context);
 vx_status Rain_Register(vx_context);
 vx_status Resize_Register(vx_context);
 vx_status ResizeCrop_Register(vx_context);
@@ -279,5 +280,6 @@ vx_status SequenceRearrange_Register(vx_context);
 #define VX_KERNEL_RPP_NOP_NAME                                   "org.rpp.Nop"
 #define VX_KERNEL_RPP_RESIZE_NAME                                "org.rpp.Resize"
 #define VX_KERNEL_RPP_SEQUENCEREARRANGE_NAME                     "org.rpp.SequenceRearrange"
+#define VX_KERNEL_RPP_PREEMPHASISFILTER_NAME                     "org.rpp.PreemphasisFilter"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

@@ -6,7 +6,7 @@ Docker is a set of platform as a service (PaaS) products that use OS-level virtu
 
 #### Prerequisites
 * Ubuntu `20.04`/`22.04`
-* [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
+* [ROCm supported hardware](https://rocm.docs.amd.com/projects/install-on-linux/en/docs-6.1.0/reference/system-requirements.html)
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=graphics,rocm`
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)
 

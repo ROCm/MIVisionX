@@ -92,7 +92,7 @@ Arguments to be modified in testScript.sh to get the following output:
 - STEP=3
 - STRIDE=5
 
-![video_reader.png](./samples/video_reader.png)
+![video_reader.png](samples/video_reader.png)
 
 To test with VideoReaderResize pass reader_case as 2:
 > ./testScript.sh <path_to_video_file/folder> 2
@@ -105,7 +105,7 @@ Also RESIZE_WIDTH and RESIZE_HEIGHT can be changed in testScript.sh
 
 > ./testScript.sh <[path/to/sequence_folder](https://github.com/ROCm/MIVisionX-data/tree/main/rocal_data/video_and_sequence_samples/sequence)> 3 
 
-![sequence_reader.png](./samples/sequence_reader.png)
+![sequence_reader.png](samples/sequence_reader.png)
 
 NOTE :
 
@@ -123,7 +123,7 @@ Arguments to be modified in testScript.sh to enable sequence rearrange:
 
 ENABLE_SEQUENCE_REARRANGE=1
 
-![sequence_rearrange.png](./samples/sequence_rearrange.png)
+![sequence_rearrange.png](samples/sequence_rearrange.png)
 
 New Sequence order : (2, 1, 1, 0), The order can be changed directly in rocAL_video_unittests.cpp file. The values specified in the order can only be in the range [0,sequence_length)
 

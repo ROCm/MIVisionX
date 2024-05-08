@@ -1869,7 +1869,7 @@ extern "C"
 	 * \ingroup group_amd_rpp
 	 * \param [in] graph The handle to the graph.
 	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_FLOAT32</tt> format data.
-	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input in xywh (w- samples, h - channels) format.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh (w- samples, h - channels) format.
 	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_FLOAT32</tt> format data.
 	 * \param [in] pPreemphCoeff The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the preEmphasis co-efficient.
 	 * \param [in] borderType The type of border <tt>\ref VX_TYPE_INT32</tt> which can be "zero", "clamp", "reflect".

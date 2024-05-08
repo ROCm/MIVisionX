@@ -106,46 +106,50 @@ static vx_status VX_CALLBACK processPreemphasisFilter(vx_node node, const vx_ref
 
 static vx_status VX_CALLBACK initializePreemphasisFilter(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     PreemphasisFilterLocalData *data = new PreemphasisFilterLocalData;
-    memset(data, 0, sizeof(PreemphasisFilterLocalData));
+    if (data) {
+        memset(data, 0, sizeof(PreemphasisFilterLocalData));
 
-    vx_enum input_tensor_datatype, output_tensor_datatype;
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->borderType));
+        vx_enum input_tensor_datatype, output_tensor_datatype;
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->borderType));
 
-    // Querying for input tensor
-    data->pSrcDesc = new RpptDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_datatype, sizeof(input_tensor_datatype)));
-    data->pSrcDesc->dataType = getRpptDataType(input_tensor_datatype);
-    data->pSrcDesc->offsetInBytes = 0;
-    fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims);
+        // Querying for input tensor
+        data->pSrcDesc = new RpptDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_datatype, sizeof(input_tensor_datatype)));
+        data->pSrcDesc->dataType = getRpptDataType(input_tensor_datatype);
+        data->pSrcDesc->offsetInBytes = 0;
+        fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims);
 
-    // Querying for output tensor
-    data->pDstDesc = new RpptDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_datatype, sizeof(output_tensor_datatype)));
-    data->pDstDesc->dataType = getRpptDataType(output_tensor_datatype);
-    data->pDstDesc->offsetInBytes = 0;
-    fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
+        // Querying for output tensor
+        data->pDstDesc = new RpptDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_datatype, sizeof(output_tensor_datatype)));
+        data->pDstDesc->dataType = getRpptDataType(output_tensor_datatype);
+        data->pDstDesc->offsetInBytes = 0;
+        fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
-    data->pSampleSize = new unsigned[data->pSrcDesc->n];
-    data->pPreemphCoeff = new float[data->pSrcDesc->n];
+        data->pSampleSize = new unsigned[data->pSrcDesc->n];
+        data->pPreemphCoeff = new float[data->pSrcDesc->n];
 
-    refreshPreemphasisFilter(node, parameters, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
-    STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    return VX_SUCCESS;
+        refreshPreemphasisFilter(node, parameters, data);
+        STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
+        STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+        return VX_SUCCESS;
+    } else {
+        return VX_FAILURE;
+    }
 }
 
 static vx_status VX_CALLBACK uninitializePreemphasisFilter(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     PreemphasisFilterLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pSampleSize;
-    delete[] data->pPreemphCoeff;
-    delete data->pSrcDesc;
-    delete data->pDstDesc;
+    if (data->pSampleSize) delete[] data->pSampleSize;
+    if (data->pPreemphCoeff) delete[] data->pPreemphCoeff;
+    if (data->pSrcDesc) delete data->pSrcDesc;
+    if (data->pDstDesc) delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
     return VX_SUCCESS;

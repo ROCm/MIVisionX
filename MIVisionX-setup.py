@@ -22,6 +22,7 @@ import os
 import sys
 import argparse
 import platform
+import traceback
 if sys.version_info[0] < 3:
     import commands
 else:
@@ -29,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -38,6 +39,7 @@ def ERROR_CHECK(call):
     status = call
     if(status != 0):
         print('ERROR_CHECK failed with status:'+str(status))
+        traceback.print_stack()
         exit(status)
 
 # Arguments
@@ -185,6 +187,8 @@ elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
             platfromInfo = platfromInfo+'-Ubuntu-20'
         elif "22" in platform.version():
             platfromInfo = platfromInfo+'-Ubuntu-22'
+        elif "24" in platform.version():
+            platfromInfo = platfromInfo+'-Ubuntu-24'
         else:
             platfromInfo = platfromInfo+'-Ubuntu-undefined-version'
 elif os.path.exists('/usr/bin/zypper'):
@@ -388,7 +392,7 @@ else:
                 ERROR_CHECK(os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)'))
                 ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make)'))
+                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc))'))
                 ERROR_CHECK(os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:

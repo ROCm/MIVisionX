@@ -22,6 +22,7 @@ import os
 import sys
 import argparse
 import platform
+import traceback
 if sys.version_info[0] < 3:
     import commands
 else:
@@ -29,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -38,6 +39,7 @@ def ERROR_CHECK(call):
     status = call
     if(status != 0):
         print('ERROR_CHECK failed with status:'+str(status))
+        traceback.print_stack()
         exit(status)
 
 # Arguments
@@ -170,13 +172,25 @@ if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/
         linuxCMake = 'cmake3'
         ERROR_CHECK(os.system(linuxSystemInstall+' install cmake3')) 
     if "centos" not in platfromInfo or "redhat" not in platfromInfo:
-        platfromInfo = platfromInfo+'-redhat'
+        if "8" in platform.version():
+            platfromInfo = platfromInfo+'-redhat-8'
+        elif "9" in platform.version():
+            platfromInfo = platfromInfo+'-redhat-9'
+        else:
+            platfromInfo = platfromInfo+'-redhat-centos-undefined-version'
 elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
     linuxSystemInstall = 'apt-get -y'
     linuxSystemInstall_check = '--allow-unauthenticated'
     linuxFlag = '-S'
     if "Ubuntu" not in platfromInfo:
-        platfromInfo = platfromInfo+'-Ubuntu'
+        if "20" in platform.version():
+            platfromInfo = platfromInfo+'-Ubuntu-20'
+        elif "22" in platform.version():
+            platfromInfo = platfromInfo+'-Ubuntu-22'
+        elif "24" in platform.version():
+            platfromInfo = platfromInfo+'-Ubuntu-24'
+        else:
+            platfromInfo = platfromInfo+'-Ubuntu-undefined-version'
 elif os.path.exists('/usr/bin/zypper'):
     linuxSystemInstall = 'zypper -n'
     linuxSystemInstall_check = '--no-gpg-checks'
@@ -336,11 +350,6 @@ else:
         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]))
 
-    # Get Installation Source
-    ERROR_CHECK(os.system(
-        '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )'))
-    ERROR_CHECK(os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )'))
-
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
         ERROR_CHECK(os.system('sudo -v'))
@@ -383,7 +392,7 @@ else:
                 ERROR_CHECK(os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)'))
                 ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make)'))
+                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc))'))
                 ERROR_CHECK(os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:
@@ -429,13 +438,13 @@ else:
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                         ' install ffmpeg ffmpeg-devel'))
         elif "centos-9" in platfromInfo or "redhat-9" in platfromInfo:
-            # el8 x86_64 packages
+            # el9 x86_64 packages
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install install https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm'))
+                ' install https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm'))
+                ' install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
@@ -467,6 +476,10 @@ else:
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ opencvRPMPackages[i]))
     # OpenCV 4.6.0
+    # Get Source and install
+    ERROR_CHECK(os.system(
+        '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )'))
+    ERROR_CHECK(os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
             ' -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; make -j$(nproc))'))

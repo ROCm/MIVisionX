@@ -274,7 +274,7 @@ Tested configurations
 * OpenCV - `4.6.0 <https://github.com/opencv/opencv/releases/tag/4.6.0>`_
 * FFMPEG - `n4.4.2 <https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2>`_
 * Dependencies for all the above packages
-* MIVisionX Setup Script - V2.7.0
+* MIVisionX Setup Script - V3.1.0
 
 Known issues
 -------------------

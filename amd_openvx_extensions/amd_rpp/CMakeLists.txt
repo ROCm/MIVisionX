@@ -147,6 +147,7 @@ list(APPEND SOURCES
         source/tensor/Nop.cpp
         source/tensor/Rotate.cpp
         source/tensor/Pixelate.cpp
+        source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
         source/tensor/Resize.cpp
         source/tensor/ResizeCrop.cpp
@@ -160,7 +161,6 @@ list(APPEND SOURCES
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
         source/tensor/SequenceRearrange.cpp
-        source/tensor/PreemphasisFilter.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )

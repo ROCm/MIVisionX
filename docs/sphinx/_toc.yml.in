@@ -1,128 +1,49 @@
 # Anywhere {branch} is used, the branch name will be substituted.
 # These comments will also be removed.
-root: README
+root: index
 subtrees:
-  - numbered: False
-    entries:
-    - file: doxygen/html/modules
-      title: MIVisionX APIs
-    - file: doxygen/html/files
-      title: MIVisionX Header Files
-    - file: amd_openvx/README
-      subtrees:
-        - entries:
-          - file: amd_openvx/openvx/README
-    - file: amd_openvx_extensions/README
-      subtrees:
-        - entries:
-          - file: amd_openvx_extensions/amd_custom/README
-          - file: amd_openvx_extensions/amd_loomsl/README
-          - file: amd_openvx_extensions/amd_media/README
-          - file: amd_openvx_extensions/amd_migraphx/README
-          - file: amd_openvx_extensions/amd_nn/README
-          - file: amd_openvx_extensions/amd_opencv/README
-          - file: amd_openvx_extensions/amd_rpp/README
-          - file: amd_openvx_extensions/amd_winml/README
-            subtrees:
-              - entries:
-                - file: amd_openvx_extensions/amd_winml/samples/README
-                - file: amd_openvx_extensions/amd_winml/utilities/README
-                  subtrees:
-                    - entries:
-                      - file: amd_openvx_extensions/amd_winml/utilities/MIVisionX-WinML-Validate/README
-                      - file: amd_openvx_extensions/amd_winml/utilities/MIVisionX-WinML-Validate/sample/README
-    - file: apps/README
-      subtrees:
-        - entries:
-          - file: apps/bubble_pop/README
-          - file: apps/cloud_inference/README
-            subtrees:
-              - entries:
-                - file: apps/cloud_inference/client_app/README
-                - file: apps/cloud_inference/server_app/README
-          - file: apps/dg_test/README
-          - file: apps/image_augmentation/README
-          - file: apps/mivisionx_inference_analyzer/README
-          - file: apps/mivisionx_openvx_classifier/README
-          - file: apps/mivisionx_validation_tool/README
-          - file: apps/mivisionx_winml_classifier/README
-          - file: apps/mivisionx_winml_yolov2/README
-          - file: apps/optical_flow/README
-    - file: model_compiler/README
-    - file: rocAL/README
-      subtrees:
-        - entries:
-          - file: rocAL/docs/README
-          - file: rocAL/docs/examples/pytorch/README
-          - file: rocAL/rocAL_pybind/README
-            subtrees:
-              - entries:
-                - file: rocAL/rocAL_pybind/examples/README
-                  subtrees:
-                  - entries:
-                    - file: rocAL/rocAL_pybind/examples/prefetch_queue_depth/README
-                    - file: rocAL/rocAL_pybind/examples/tf_petsTrainingExample/README
-                - file: rocAL/tools/README
-    - file: samples/README
-      subtrees:
-        - entries:
-          - file: samples/c_samples/README
-          - file: samples/gdf/README
-          - file: samples/mv_objdetect/README
-          - file: samples/loom_360_stitch/README
-          - file: samples/model_compiler_samples/README
-            subtrees:
-            - entries:
-              - file: samples/model_compiler_samples/module_files/README
-    - file: tests/README
-      subtrees:
-        - entries:
-          - file: tests/amd_media_tests/README
-          - file: tests/amd_migraphx_tests/gdf/README
-            subtrees:
-              - entries:
-                - file: tests/amd_migraphx_tests/mnist/README
-                - file: tests/amd_migraphx_tests/resnet50/README
-                - file: tests/amd_migraphx_tests/runMIGraphXTests/README
-          - file: tests/amd_opencv_tests/README
-          - file: tests/conformance_tests/README
-          - file: tests/library_tests/README
-          - file: tests/neural_network_tests/README
-          - file: tests/openvx_node_tests/README
-          - file: tests/vision_tests/README
-          - file: tests/zen_dnn_tests/README
-    - file: toolkit/README
-      subtrees:
-        - entries:
-          - file: toolkit/amd_data_analysis_toolkit/README
-            subtrees:
-              - entries:
-                - file: toolkit/amd_data_analysis_toolkit/classification/README
-          - file: toolkit/amd_data_generation_toolkit/README
-    - file: utilities/README
-      subtrees:
-        - entries:
-          - file: utilities/inference_generator/README
-          - file: utilities/loom_shell/README
-          - file: utilities/mv_deploy/README
-          - file: utilities/rocAL/README
-            subtrees:
-              - entries:
-                - file: utilities/rocAL/rocAL_dataloader/README
-                - file: utilities/rocAL/rocAL_dataloader_mt/README
-                - file: utilities/rocAL/rocAL_dataloader_tf/README
-                - file: utilities/rocAL/rocAL_performance_tests/README
-                - file: utilities/rocAL/rocAL_performance_tests_with_depth/README
-                - file: utilities/rocAL/rocAL_unittests/README
-                - file: utilities/rocAL/rocAL_video_unittests/README
-          - file: utilities/runcl/README
-          - file: utilities/runvx/README
-    - file: docker/README
-      subtrees:
-        - entries:
-          - file: docker/pytorch/README
-          - file: docker/tensorflow/README
-    - file: CHANGELOG
-  - caption: About
-    entries:
-      - file: license
+- entries:
+  - file: what-is-mivisionx.rst
+    title: What is MIVisionX?
+
+- caption: Install
+  entries:
+  - file: install/installation.rst
+    title: Installation
+  - file: install/amd_openvx-install.rst
+    title: AMD OpenVX Installation
+  - file: install/model-compiler-install.rst
+    title: Model Compiler Installation
+
+- caption: How to
+  entries:
+  - file: how-to/amd_openvx.rst
+    title: Using AMD OpenVX
+  - file: how-to/model-compiler.rst
+    title: Working with model compiler
+  - file: how-to/mivisionx-docker.rst
+    title: Using Docker
+
+- caption: API reference
+  entries:
+  - file: doxygen/html/modules
+    title: MIVisionX APIs
+  - file: doxygen/html/files
+    title: MIVisionX Header Files
+  - file: reference/toolkit.rst
+    title: Toolkit
+  - file: reference/utilities.rst
+    title: Utilities
+
+- caption: Tutorials
+  entries:
+  - file: tutorials/mivisionx-apps.rst     
+    title: Example applications
+  - file: tutorials/mivisionx-samples.rst     
+    title: Samples
+  - file: tutorials/mivisionx-tests.rst     
+    title: Installation and functionality tests
+
+- caption: About
+  entries:
+  - file: license.rst

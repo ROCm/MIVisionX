@@ -81,6 +81,7 @@ vx_status releaseRPPHandle(vx_node node, vxRppHandle * handle, Rpp32u deviceType
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims);
 void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims, vxTensorLayout layout = vxTensorLayout::VX_NHW);
 RpptDataType getRpptDataType(vx_enum dataType);
+RpptLayout getRpptLayout(vxTensorLayout layout);
 
 class Kernellist
 {

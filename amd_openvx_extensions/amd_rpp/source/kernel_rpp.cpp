@@ -2653,7 +2653,7 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, siz
     }
 }
 
-void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
+void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims, vxTensorLayout layout) {
     descPtr->n = tensorDims[0];
     descPtr->h = tensorDims[1];
     descPtr->w = tensorDims[2];
@@ -2663,6 +2663,23 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
     descPtr->strides.wStride = descPtr->c;
     descPtr->strides.cStride = 1;
     descPtr->numDims = 4;
+    switch(layout) {
+        case vxTensorLayout::VX_NHW: {
+            descPtr->layout = RpptLayout::NHW;
+            break;
+        }
+        case vxTensorLayout::VX_NFT: {
+            descPtr->layout = RpptLayout::NFT;
+            break;
+        }
+        case vxTensorLayout::VX_NTF: {
+            descPtr->layout = RpptLayout::NTF;
+            break;
+        }
+        default: {
+            throw std::runtime_error("Invalid Audio layout value in fillAudioDescriptionPtrFromDims.");
+        }
+    } 
 }
 
 // utility functions

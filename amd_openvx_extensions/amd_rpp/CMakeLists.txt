@@ -155,6 +155,7 @@ list(APPEND SOURCES
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/Snow.cpp
+        source/tensor/Spectrogram.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
         source/tensor/SequenceRearrange.cpp

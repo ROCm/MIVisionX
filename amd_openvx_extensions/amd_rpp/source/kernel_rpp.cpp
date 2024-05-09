@@ -2653,10 +2653,10 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, siz
     }
 }
 
-void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims, vxTensorLayout layout) {
-    descPtr->n = tensorDims[0];
-    descPtr->h = tensorDims[1];
-    descPtr->w = tensorDims[2];
+void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims, vxTensorLayout layout) {
+    descPtr->n = maxTensorDims[0];
+    descPtr->h = maxTensorDims[1];
+    descPtr->w = maxTensorDims[2];
     descPtr->c = 1;
     descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
     descPtr->strides.hStride = descPtr->c * descPtr->w;

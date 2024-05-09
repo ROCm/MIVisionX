@@ -47,10 +47,10 @@ void updateDstRoi(SpectrogramLocalData *data, RpptROI *src_roi, RpptROI *dst_roi
     const Rpp32s num_frames = ((data->nfft / 2) + 1);
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         data->pSrcLength[i] = static_cast<int>(src_roi[i].xywhROI.roiWidth);
-        if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
+        if (data->spectrogramLayout == RpptSpectrogramLayout::TF) {
             dst_roi[i].xywhROI.roiWidth = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
             dst_roi[i].xywhROI.roiHeight = num_frames;
-        } else if (data->spectrogramLayout == RpptSpectrogramLayout::TF) {
+        } else if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
             dst_roi[i].xywhROI.roiWidth = num_frames;
             dst_roi[i].xywhROI.roiHeight = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
         }
@@ -198,6 +198,8 @@ static vx_status VX_CALLBACK uninitializeSpectrogram(vx_node node, const vx_refe
     return VX_SUCCESS;
 }
 
+//! \brief The kernel target support callback.
+// TODO::currently the node is setting the same affinity as context. This needs to change when we have hybrid modes in the same graph
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
                                                   vx_bool use_opencl_1_2,               // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
                                                   vx_uint32 &supported_target_affinity  // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)

@@ -159,7 +159,6 @@ list(APPEND SOURCES
         source/tensor/ResizeMirrorNormalize.cpp
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
-        source/tensor/Slice.cpp
         source/tensor/Snow.cpp
         source/tensor/Spectrogram.cpp
         source/tensor/TensorAddTensor.cpp
@@ -167,6 +166,7 @@ list(APPEND SOURCES
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
+        source/tensor/Slice.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )

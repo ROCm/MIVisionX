@@ -69,9 +69,9 @@ enum vxTensorLayout {
     VX_NCHW = 1,
     VX_NFHWC = 2,
     VX_NFCHW = 3,
-    VX_NHW = 4,
-    VX_NFT = 5,
-    VX_NTF = 6
+    VX_NHW = 4,     // Audio/2D layout
+    VX_NFT = 5,     // Frequency major, Used for Spectrogram/MelFilterBank
+    VX_NTF = 6      // Time major, Used for Spectrogram/MelFilterBank
 };
 
 //! Brief The utility functions

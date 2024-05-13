@@ -25,3 +25,6 @@ _templates/
 _toc.yml
 docBin/
 _doxygen/
+doxygen/html/
+doxygen/latex/
+doxygen/xml/

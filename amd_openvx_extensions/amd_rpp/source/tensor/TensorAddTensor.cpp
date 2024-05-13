@@ -139,27 +139,31 @@ static vx_status VX_CALLBACK processTensorAddTensor(vx_node node, const vx_refer
 
 static vx_status VX_CALLBACK initializeTensorAddTensor(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     TensorAddTensorLocalData *data = new TensorAddTensorLocalData;
-    memset(data, 0, sizeof(TensorAddTensorLocalData));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if (data) {
+        memset(data, 0, sizeof(TensorAddTensorLocalData));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
-    vx_size num_of_dims1, num_of_dims2;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims1, sizeof(vx_size)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims1, sizeof(vx_size) * num_of_dims1));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &data->inTensorType, sizeof(data->inTensorType)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims2, sizeof(vx_size)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, &data->inputTensorDims2, sizeof(vx_size) * num_of_dims2));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &data->inTensorType, sizeof(data->inTensorType)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &data->outTensorType, sizeof(data->outTensorType)));
+        vx_size num_of_dims1, num_of_dims2;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims1, sizeof(vx_size)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims1, sizeof(vx_size) * num_of_dims1));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &data->inTensorType, sizeof(data->inTensorType)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims2, sizeof(vx_size)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, &data->inputTensorDims2, sizeof(vx_size) * num_of_dims2));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &data->inTensorType, sizeof(data->inTensorType)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &data->outTensorType, sizeof(data->outTensorType)));
 
-    refreshTensorAddTensor(node, parameters, num, data);
-    STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    return VX_SUCCESS;
+        refreshTensorAddTensor(node, parameters, num, data);
+        STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+        return VX_SUCCESS;
+    } else {
+        return VX_FAILURE;
+    }    
 }
 
 static vx_status VX_CALLBACK uninitializeTensorAddTensor(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     TensorAddTensorLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete data;
+    if (data) delete data;
     return VX_SUCCESS;
 }
 

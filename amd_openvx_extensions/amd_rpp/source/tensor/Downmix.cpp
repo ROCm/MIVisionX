@@ -37,20 +37,22 @@ struct DownmixLocalData {
 
 static vx_status VX_CALLBACK refreshDownmix(vx_node node, const vx_reference *parameters, vx_uint32 num, DownmixLocalData *data) {
     vx_status status = VX_SUCCESS;
-    void *roi_tensor_ptr_src;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    }
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        void *roi_tensor_ptr_src;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
-    }
-    RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
-    for (int n = 0; n < data->inputTensorDims[0]; n++) {
-        data->psrcRoi[n * 2] = src_roi[n].xywhROI.roiWidth;
-        data->psrcRoi[n * 2 + 1] = src_roi[n].xywhROI.roiHeight;
+        RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
+        for (int n = 0; n < data->inputTensorDims[0]; n++) {
+            data->psrcRoi[n * 2] = src_roi[n].xywhROI.roiWidth;
+            data->psrcRoi[n * 2 + 1] = src_roi[n].xywhROI.roiHeight;
+        }
+        return status;
     }
     return status;
 }
@@ -94,7 +96,8 @@ static vx_status VX_CALLBACK processDownmix(vx_node node, const vx_reference *pa
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    }
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshDownmix(node, parameters, num, data);
         rpp_status = rppt_down_mixing_host((float *)data->pSrc, data->pSrcDesc, (float *)data->pDst, data->pDstDesc, (Rpp32s *)data->psrcRoi, false, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;

@@ -49,7 +49,7 @@ inline double hann(double x) {
 
 // initialization function used for filling the values in Resampling window (RpptResamplingWindow)
 // using the coeffs and lobes value this function generates a LUT (look up table) which is further used in Resample audio augmentation
-inline void windowed_sinc(RpptResamplingWindow &window, int coeffs, int lobes) {
+inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t lobes) {
     float scale = 2.0f * lobes / (coeffs - 1);
     float scale_envelope = 2.0f / coeffs;
     window.coeffs = coeffs;
@@ -57,40 +57,40 @@ inline void windowed_sinc(RpptResamplingWindow &window, int coeffs, int lobes) {
     window.lookup.clear();
     window.lookup.resize(coeffs + 5);
     window.lookupSize = window.lookup.size();
-    int center = (coeffs - 1) * 0.5f;
-    for (int i = 0; i < coeffs; i++) {
+    int32_t center = (coeffs - 1) * 0.5f;
+    for (int32_t i = 0; i < coeffs; i++) {
         float x = (i - center) * scale;
         float y = (i - center) * scale_envelope;
         float w = sinc(x) * hann(y);
         window.lookup[i + 1] = w;
     }
     window.center = center + 1;
-    window.scale = 1 / scale;
+    window.scale = 1.0f / scale;
     window.pCenter = _mm_set1_ps(window.center);
     window.pScale = _mm_set1_ps(window.scale);
 }
 
 void update_destination_roi(ResampleLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
     float scale_ratio;
-    for (unsigned i = 0; i < data->pSrcDesc->n; i++) {
+    for (uint32_t i = 0; i < data->pSrcDesc->n; i++) {
         scale_ratio = (data->pInRateTensor[i] != 0) ? (data->pOutRateTensor[i] / static_cast<float>(data->pInRateTensor[i])) : 0;
-        dst_roi[i].xywhROI.roiWidth = static_cast<int>(std::ceil(scale_ratio * src_roi[i].xywhROI.roiWidth));
+        dst_roi[i].xywhROI.roiWidth = static_cast<int32_t>(std::ceil(scale_ratio * src_roi[i].xywhROI.roiWidth));
         dst_roi[i].xywhROI.roiHeight = src_roi[i].xywhROI.roiHeight;
     }
 }
 
 static vx_status VX_CALLBACK refreshResample(vx_node node, const vx_reference *parameters, vx_uint32 num, ResampleLocalData *data) {
     vx_status status = VX_SUCCESS;
-    int nDim = 2;  // Num dimensions for audio tensor
+    int32_t nDim = 2;  // Num dimensions for audio tensor
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->pSrcDesc->n, sizeof(float), data->pInRateTensor, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HOST, &data->pOutRateTensor, sizeof(data->pOutRateTensor)));
-    void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
@@ -98,13 +98,14 @@ static vx_status VX_CALLBACK refreshResample(vx_node node, const vx_reference *p
         if (!data->pSrcRoi) {
             data->pSrcRoi = new Rpp32s[data->pSrcDesc->n * nDim];
         }
-    }
-    RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
-    RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
-    update_destination_roi(data, src_roi, dst_roi);
-    for (unsigned i = 0; i < data->pSrcDesc->n; i++) {
-        data->pSrcRoi[i * nDim] = src_roi[i].xywhROI.roiWidth;
-        data->pSrcRoi[i * nDim + 1] = src_roi[i].xywhROI.roiHeight;
+        RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
+        RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
+        update_destination_roi(data, src_roi, dst_roi);
+        for (uint32_t i = 0; i < data->pSrcDesc->n; i++) {
+            data->pSrcRoi[i * nDim] = src_roi[i].xywhROI.roiWidth;
+            data->pSrcRoi[i * nDim + 1] = src_roi[i].xywhROI.roiHeight;
+        }
+        return status;
     }
     return status;
 }
@@ -190,8 +191,8 @@ static vx_status VX_CALLBACK initializeResample(vx_node node, const vx_reference
         fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
         data->pInRateTensor = new float[data->pSrcDesc->n];
-        int lobes = std::round(0.007 * data->quality * data->quality - 0.09 * data->quality + 3);
-        int lookupSize = lobes * 64 + 1;
+        int32_t lobes = std::round(0.007 * data->quality * data->quality - 0.09 * data->quality + 3);
+        int32_t lookupSize = lobes * 64 + 1;
         windowed_sinc(data->window, lookupSize, lobes);
         refreshResample(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));

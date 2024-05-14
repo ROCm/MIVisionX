@@ -44,12 +44,13 @@ struct TensorAddTensorLocalData {
 
 static vx_status VX_CALLBACK refreshTensorAddTensor(vx_node node, const vx_reference *parameters, vx_uint32 num, TensorAddTensorLocalData *data) {
     vx_status status = VX_SUCCESS;
-    void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    }
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc1, sizeof(data->pSrc1)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pSrc2, sizeof(data->pSrc2)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
@@ -61,6 +62,7 @@ static vx_status VX_CALLBACK refreshTensorAddTensor(vx_node node, const vx_refer
             data->pDstRoi[i].xywhROI.roiWidth = data->pSrcRoi[i].xywhROI.roiWidth;
             data->pDstRoi[i].xywhROI.roiHeight = data->pSrcRoi[i].xywhROI.roiHeight;
         }
+        return status;
     }
     return status;
 }
@@ -101,7 +103,8 @@ static vx_status VX_CALLBACK processTensorAddTensor(vx_node node, const vx_refer
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    }
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshTensorAddTensor(node, parameters, num, data);
         // Currently supports adding audio tensors and distribution node tensors - (BS, samples, 1) and (BS, 1) - will be extended to include all tensors of supported layouts
         if (data->inTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outTensorType == vx_type_e::VX_TYPE_FLOAT32) {
@@ -112,7 +115,7 @@ static vx_status VX_CALLBACK processTensorAddTensor(vx_node node, const vx_refer
                 float *dstTemp = static_cast<float *>(data->pDst) + i * nStride;
                 uint height = data->pSrcRoi[i].xywhROI.roiHeight;
                 uint width = data->pSrcRoi[i].xywhROI.roiWidth;
-                uint alignedWidth = (width / 8) * 8;
+                uint alignedWidth = width & ~7;
                 float additionFactor = src2Temp[0];
                 __m256 pSrc2 = _mm256_set1_ps(additionFactor);
                 for (uint row = 0; row < height; row++) {
@@ -152,7 +155,6 @@ static vx_status VX_CALLBACK initializeTensorAddTensor(vx_node node, const vx_re
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &data->inTensorType, sizeof(data->inTensorType)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &data->outTensorType, sizeof(data->outTensorType)));
 
-        refreshTensorAddTensor(node, parameters, num, data);
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
         return VX_SUCCESS;
     } else {

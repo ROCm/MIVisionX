@@ -28,7 +28,7 @@ struct DownmixLocalData {
     Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    vx_int32 *psrcRoi;
+    vx_int32 *pSrcRoi;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
@@ -49,8 +49,8 @@ static vx_status VX_CALLBACK refreshDownmix(vx_node node, const vx_reference *pa
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
         for (int n = 0; n < data->inputTensorDims[0]; n++) {
-            data->psrcRoi[n * 2] = src_roi[n].xywhROI.roiWidth;
-            data->psrcRoi[n * 2 + 1] = src_roi[n].xywhROI.roiHeight;
+            data->pSrcRoi[n * 2] = src_roi[n].xywhROI.roiWidth;
+            data->pSrcRoi[n * 2 + 1] = src_roi[n].xywhROI.roiHeight;
         }
         return status;
     }
@@ -99,7 +99,7 @@ static vx_status VX_CALLBACK processDownmix(vx_node node, const vx_reference *pa
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshDownmix(node, parameters, num, data);
-        rpp_status = rppt_down_mixing_host((float *)data->pSrc, data->pSrcDesc, (float *)data->pDst, data->pDstDesc, (Rpp32s *)data->psrcRoi, false, data->handle->rppHandle);
+        rpp_status = rppt_down_mixing_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, (Rpp32s *)data->pSrcRoi, false, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -131,8 +131,7 @@ static vx_status VX_CALLBACK initializeDownmix(vx_node node, const vx_reference 
         data->pDstDesc->offsetInBytes = 0;
         fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
-        data->psrcRoi = new vx_int32[data->pSrcDesc->n * 2];
-
+        data->pSrcRoi = new vx_int32[data->pSrcDesc->n * 2];
         refreshDownmix(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -145,7 +144,7 @@ static vx_status VX_CALLBACK initializeDownmix(vx_node node, const vx_reference 
 static vx_status VX_CALLBACK uninitializeDownmix(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     DownmixLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if (data->psrcRoi) delete[] data->psrcRoi;
+    if (data->pSrcRoi) delete[] data->pSrcRoi;
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

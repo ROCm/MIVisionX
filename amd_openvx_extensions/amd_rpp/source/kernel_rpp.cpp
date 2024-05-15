@@ -2720,8 +2720,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tens
 }
 
 VX_API_ENTRY vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi,
-                                                   vx_scalar axis_mask, vx_array pMean, vx_array pStddev, vx_scalar computeMean,
-                                                   vx_scalar computeStddev, vx_scalar scale, vx_scalar shift, vx_scalar inputLayout, vx_scalar roiType) {
+                                                   vx_scalar axis_mask, vx_array pMean, vx_array pStddev, vx_scalar computeMeanAndStdDev,
+                                                   vx_scalar scale, vx_scalar shift, vx_scalar inputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2735,14 +2735,13 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSr
             (vx_reference)axis_mask,
             (vx_reference)pMean,
             (vx_reference)pStddev,
-            (vx_reference)computeMean,
-            (vx_reference)computeStddev,
+            (vx_reference)computeMeanAndStdDev,
             (vx_reference)scale,
             (vx_reference)shift,
             (vx_reference)inputLayout,
             (vx_reference)roiType,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_NORMALIZE, params, 14);
+        node = createNode(graph, VX_KERNEL_RPP_NORMALIZE, params, 13);
     }
     return node;
 }
@@ -2859,7 +2858,9 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
 
 void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims) {
     switch(layout) {
-        case vxTensorLayout::VX_NONE: {
+        case vxTensorLayout::VX_NFT:
+        case vxTensorLayout::VX_NTF: 
+        case vxTensorLayout::VX_NHW: {
             genericDescPtr->dims[0] = maxTensorDims[0];
             genericDescPtr->dims[1] = maxTensorDims[1];
             genericDescPtr->dims[2] = maxTensorDims[2];
@@ -2872,7 +2873,11 @@ void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTen
             genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
             genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
             genericDescPtr->strides[2] = genericDescPtr->dims[3];
-            genericDescPtr->layout = RpptLayout::NONE;
+            if(TENSOR_LAYOUT_MAPPING.find(layout) != TENSOR_LAYOUT_MAPPING.end()) {
+                genericDescPtr->layout = TENSOR_LAYOUT_MAPPING.at(layout);
+            } else {
+                throw std::runtime_error("Invalid layout");
+            }
             break;
         }
         default: {

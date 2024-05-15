@@ -72,7 +72,8 @@ enum vxTensorLayout {
     VX_NFCHW = 3,
     VX_NHW = 4,     // Audio/2D layout
     VX_NFT = 5,     // Frequency major, Used for Spectrogram/MelFilterBank
-    VX_NTF = 6      // Time major, Used for Spectrogram/MelFilterBank
+    VX_NTF = 6,     // Time major, Used for Spectrogram/MelFilterBank
+    VX_NONE
 };
 
 const std::map<vxTensorLayout, RpptLayout> TENSOR_LAYOUT_MAPPING = {
@@ -90,6 +91,7 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
 vx_status createRPPHandle(vx_node node, vxRppHandle ** pHandle, Rpp32u batchSize, Rpp32u deviceType);
 vx_status releaseRPPHandle(vx_node node, vxRppHandle * handle, Rpp32u deviceType);
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims);
+void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims);
 void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims, vxTensorLayout layout = vxTensorLayout::VX_NHW);
 RpptDataType getRpptDataType(vx_enum dataType);
 

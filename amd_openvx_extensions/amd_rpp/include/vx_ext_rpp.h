@@ -1997,15 +1997,14 @@ extern "C"
 	 * \param [in] axisMask The input array in <tt>\ref VX_TYPE_INT32</tt> format containing axis along which normalization needs to be done
 	 * \param [in] pMean The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing values to be subtracted from input
 	 * \param [in] pStddev The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing standard deviation values to scale the input
-	 * \param [in] computeMean The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing flag to represent internal computation of mean
-	 * \param [in] computeStddev The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing flag to represent internal computation of stddev
+	 * \param [in] computeMeanAndStddev The input scalar in <tt>\ref VX_TYPE_UINT8</tt> format containing flag to represent internal computation of mean and std dev
 	 * \param [in] scale The input scalar in <tt>\ref VX_TYPE_FLOAT32</tt> format containing value to be multiplied with data after subtracting from mean
 	 * \param [in] shift The input scalar in <tt>\ref VX_TYPE_FLOAT32</tt> format containing value to be added finally
 	 * \param [in] inputLayout The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the layout of the input tensor.
 	 * \param [in] roiType The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the roi type which can be ltrb/xywh.
 	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	 */
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_scalar axis_mask, vx_array pMean, vx_array pStddev, vx_scalar computeMean, vx_scalar computeStddev, vx_scalar scale, vx_scalar shift, vx_scalar inputLayout, vx_scalar roiType);
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_scalar axis_mask, vx_array pMean, vx_array pStddev, vx_scalar computeMeanAndStddev, vx_scalar scale, vx_scalar shift, vx_scalar inputLayout, vx_scalar roiType);
 
 	/*! \brief [Graph] Produces a mel-spectrogram from spectrogram on applying a bank of triangular filters
 	 * \ingroup group_amd_rpp

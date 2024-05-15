@@ -36,6 +36,8 @@ struct MelFilterBankLocalData {
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     Rpp32s *pSrcDims;
+    vxTensorLayout inputLayout;
+    vxTensorLayout outputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
@@ -80,7 +82,7 @@ static vx_status VX_CALLBACK validateMelFilterBank(vx_node node, const vx_refere
     if (scalar_type != VX_TYPE_FLOAT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #5 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_UINT32)
+    if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #6 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
@@ -91,6 +93,12 @@ static vx_status VX_CALLBACK validateMelFilterBank(vx_node node, const vx_refere
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[9], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_FLOAT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #9 type=%d (must be size)\n", scalar_type);
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[10], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if (scalar_type != VX_TYPE_INT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #10 type=%d (must be size)\n", scalar_type);
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[11], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if (scalar_type != VX_TYPE_INT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #11 type=%d (must be size)\n", scalar_type);
 
     // Check for input parameters
     size_t num_tensor_dims;
@@ -138,15 +146,19 @@ static vx_status VX_CALLBACK initializeMelFilterBank(vx_node node, const vx_refe
     memset(data, 0, sizeof(MelFilterBankLocalData));
 
     vx_enum input_tensor_datatype, output_tensor_datatype;
-    int mel_formula;
+    vx_int32 mel_formula, input_layout, output_layout;
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->freqHigh));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[5], &data->freqLow));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &mel_formula));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[7], &data->nfilter));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[8], &data->normalize));
     STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[9], &data->sampleRate));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[10], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    data->melFormula = (mel_formula == 0) ? RpptMelScaleFormula::SLANEY : RpptMelScaleFormula::HTK;
+    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &input_layout));
+    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[11], &output_layout));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    data->melFormula = static_cast<RpptMelScaleFormula>(mel_formula);
+    data->inputLayout = static_cast<vxTensorLayout>(input_layout);
+    data->outputLayout = static_cast<vxTensorLayout>(output_layout);
 
     // Querying for input tensor
     data->pSrcDesc = new RpptDesc;
@@ -155,7 +167,7 @@ static vx_status VX_CALLBACK initializeMelFilterBank(vx_node node, const vx_refe
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_datatype, sizeof(input_tensor_datatype)));
     data->pSrcDesc->dataType = getRpptDataType(input_tensor_datatype);
     data->pSrcDesc->offsetInBytes = 0;
-    fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims);
+    fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims, data->inputLayout);
 
     // Querying for output tensor
     data->pDstDesc = new RpptDesc;
@@ -164,7 +176,7 @@ static vx_status VX_CALLBACK initializeMelFilterBank(vx_node node, const vx_refe
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_datatype, sizeof(output_tensor_datatype)));
     data->pDstDesc->dataType = getRpptDataType(output_tensor_datatype);
     data->pDstDesc->offsetInBytes = 0;
-    fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
+    fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims, data->outputLayout);
 
     data->pSrcDims = new Rpp32s[data->pSrcDesc->n * 2];
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -205,7 +217,7 @@ vx_status MelFilterBank_Register(vx_context context) {
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.MelFilterBank",
                                        VX_KERNEL_RPP_MELFILTERBANK,
                                        processMelFilterBank,
-                                       11,
+                                       13,
                                        validateMelFilterBank,
                                        initializeMelFilterBank,
                                        uninitializeMelFilterBank);
@@ -234,6 +246,8 @@ vx_status MelFilterBank_Register(vx_context context) {
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 10, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 11, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 12, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
     if (status != VX_SUCCESS) {

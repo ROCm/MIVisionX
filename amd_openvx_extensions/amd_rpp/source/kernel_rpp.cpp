@@ -2749,7 +2749,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppNormalize(vx_graph graph, vx_tensor pSr
 }
 
 VX_API_ENTRY vx_node VX_API_CALL vxExtRppMelFilterBank(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_scalar freqHigh, vx_scalar freqLow, vx_scalar melFormula,
-                                                       vx_scalar nfilter, vx_scalar normalize, vx_scalar sampleRate) {
+                                                       vx_scalar nfilter, vx_scalar normalize, vx_scalar sampleRate, vx_scalar inputLayout, vx_scalar outputLayout) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2766,8 +2766,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppMelFilterBank(vx_graph graph, vx_tensor
             (vx_reference)nfilter,
             (vx_reference)normalize,
             (vx_reference)sampleRate,
+            (vx_reference)inputLayout,
+            (vx_reference)outputLayout,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_MELFILTERBANK, params, 11);
+        node = createNode(graph, VX_KERNEL_RPP_MELFILTERBANK, params, 13);
     }
     return node;
 }

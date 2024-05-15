@@ -2687,27 +2687,6 @@ RpptDataType getRpptDataType(vx_enum vxDataType) {
     }
 }
 
-RpptLayout getRpptLayout(vxTensorLayout layout) {
-    switch(layout) {
-        case vxTensorLayout::VX_NHWC:
-            return RpptLayout::NHWC;
-        case vxTensorLayout::VX_NCHW:
-            return RpptLayout::NCHW;
-        case vxTensorLayout::VX_NFHWC:
-            return RpptLayout::NHWC;
-        case vxTensorLayout::VX_NFCHW:
-            return RpptLayout::NCHW;
-        case vxTensorLayout::VX_NHW:
-            return RpptLayout::NHW;
-        case vxTensorLayout::VX_NFT:
-            return RpptLayout::NFT;
-        case vxTensorLayout::VX_NTF:
-            return RpptLayout::NTF;
-        default:
-            throw std::runtime_error("Invalid layout");
-    }
-}
-
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims) {
     switch(layout) {
         case vxTensorLayout::VX_NHWC: {
@@ -2774,7 +2753,11 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
     descPtr->strides.wStride = descPtr->c;
     descPtr->strides.cStride = 1;
     descPtr->numDims = 4;
-    descPtr->layout = getRpptLayout(layout);
+    if(TENSOR_LAYOUT_MAPPING.find(layout) != TENSOR_LAYOUT_MAPPING.end()) {
+        descPtr->layout = TENSOR_LAYOUT_MAPPING.at(layout);
+    } else {
+        throw std::runtime_error("Invalid layout");
+    }
 }
 
 // utility functions

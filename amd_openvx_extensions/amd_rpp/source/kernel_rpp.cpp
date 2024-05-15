@@ -2645,7 +2645,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppDownmix(vx_graph graph, vx_tensor pSrc,
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar cutOffDB, vx_scalar multiplier, vx_scalar referenceMagnitude) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar cutOffDB, vx_scalar multiplier, vx_scalar referenceMagnitude, vx_scalar inputLayout, vx_scalar outputLayout) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2658,8 +2658,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pS
             (vx_reference)cutOffDB,
             (vx_reference)multiplier,
             (vx_reference)referenceMagnitude,
+            (vx_reference)inputLayout,
+            (vx_reference)outputLayout,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_TODECIBELS, params, 7);
+        node = createNode(graph, VX_KERNEL_RPP_TODECIBELS, params, 9);
     }
     return node;
 }

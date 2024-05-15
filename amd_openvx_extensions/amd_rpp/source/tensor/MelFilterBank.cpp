@@ -51,20 +51,22 @@ void copy_src_dims_and_update_dst_roi(MelFilterBankLocalData *data, RpptROI *src
 
 static vx_status VX_CALLBACK refreshMelFilterBank(vx_node node, const vx_reference *parameters, vx_uint32 num, MelFilterBankLocalData *data) {
     vx_status status = VX_SUCCESS;
-    void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    }
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
+        RpptROI *srcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
+        RpptROI *dstRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
+        copy_src_dims_and_update_dst_roi(data, srcRoi, dstRoi);
+        return status;
     }
-    RpptROI *srcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
-    RpptROI *dstRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
-    copy_src_dims_and_update_dst_roi(data, srcRoi, dstRoi);
     return status;
 }
 
@@ -122,7 +124,8 @@ static vx_status VX_CALLBACK processMelFilterBank(vx_node node, const vx_referen
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    }
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_mel_filter_bank_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->freqHigh, data->freqLow,
                                                data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;

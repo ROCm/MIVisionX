@@ -166,7 +166,8 @@ static vx_status VX_CALLBACK processNormalize(vx_node node, const vx_reference *
         rpp_status = rppt_normalize_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMean, data->computeStddev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    }
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_normalize_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMean, data->computeStddev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
@@ -233,10 +234,10 @@ static vx_status VX_CALLBACK uninitializeNormalize(vx_node node, const vx_refere
         if (data->pMean) delete[] data->pMean;
         if (data->pStddev) delete[] data->pStddev;
     }
-    delete[] data->pSrcDims;
-    delete data->pSrcGenericDesc;
-    delete data->pDstGenericDesc;
-    delete data;
+    if (data->pSrcDims) delete[] data->pSrcDims;
+    if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;
+    if (data->pDstGenericDesc) delete data->pDstGenericDesc;
+    if (data) delete data;
     return VX_SUCCESS;
 }
 

@@ -143,55 +143,59 @@ static vx_status VX_CALLBACK processMelFilterBank(vx_node node, const vx_referen
 
 static vx_status VX_CALLBACK initializeMelFilterBank(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     MelFilterBankLocalData *data = new MelFilterBankLocalData;
-    memset(data, 0, sizeof(MelFilterBankLocalData));
+    if (data) {
+        memset(data, 0, sizeof(MelFilterBankLocalData));
 
-    vx_enum input_tensor_datatype, output_tensor_datatype;
-    vx_int32 mel_formula, input_layout, output_layout;
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->freqHigh));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[5], &data->freqLow));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &mel_formula));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[7], &data->nfilter));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[8], &data->normalize));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[9], &data->sampleRate));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &input_layout));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[11], &output_layout));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    data->melFormula = static_cast<RpptMelScaleFormula>(mel_formula);
-    data->inputLayout = static_cast<vxTensorLayout>(input_layout);
-    data->outputLayout = static_cast<vxTensorLayout>(output_layout);
+        vx_enum input_tensor_datatype, output_tensor_datatype;
+        vx_int32 mel_formula, input_layout, output_layout;
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->freqHigh));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[5], &data->freqLow));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &mel_formula));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[7], &data->nfilter));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[8], &data->normalize));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[9], &data->sampleRate));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &input_layout));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[11], &output_layout));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        data->melFormula = static_cast<RpptMelScaleFormula>(mel_formula);
+        data->inputLayout = static_cast<vxTensorLayout>(input_layout);
+        data->outputLayout = static_cast<vxTensorLayout>(output_layout);
 
-    // Querying for input tensor
-    data->pSrcDesc = new RpptDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_datatype, sizeof(input_tensor_datatype)));
-    data->pSrcDesc->dataType = getRpptDataType(input_tensor_datatype);
-    data->pSrcDesc->offsetInBytes = 0;
-    fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims, data->inputLayout);
+        // Querying for input tensor
+        data->pSrcDesc = new RpptDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_datatype, sizeof(input_tensor_datatype)));
+        data->pSrcDesc->dataType = getRpptDataType(input_tensor_datatype);
+        data->pSrcDesc->offsetInBytes = 0;
+        fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims, data->inputLayout);
 
-    // Querying for output tensor
-    data->pDstDesc = new RpptDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_datatype, sizeof(output_tensor_datatype)));
-    data->pDstDesc->dataType = getRpptDataType(output_tensor_datatype);
-    data->pDstDesc->offsetInBytes = 0;
-    fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims, data->outputLayout);
+        // Querying for output tensor
+        data->pDstDesc = new RpptDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_datatype, sizeof(output_tensor_datatype)));
+        data->pDstDesc->dataType = getRpptDataType(output_tensor_datatype);
+        data->pDstDesc->offsetInBytes = 0;
+        fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims, data->outputLayout);
 
-    data->pSrcDims = new Rpp32s[data->pSrcDesc->n * 2];
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
-    STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    return VX_SUCCESS;
+        data->pSrcDims = new Rpp32s[data->pSrcDesc->n * 2];
+        STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
+        STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+        return VX_SUCCESS;
+    } else {
+        return VX_FAILURE;
+    }
 }
 
 static vx_status VX_CALLBACK uninitializeMelFilterBank(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     MelFilterBankLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+    if (data->pSrcDims) delete[] data->pSrcDims;
+    if (data->pSrcDesc) delete data->pSrcDesc;
+    if (data->pDstDesc) delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
-    delete[] data->pSrcDims;
-    delete data->pSrcDesc;
-    delete data->pDstDesc;
-    delete data;
+    if (data) delete data;
     return VX_SUCCESS;
 }
 

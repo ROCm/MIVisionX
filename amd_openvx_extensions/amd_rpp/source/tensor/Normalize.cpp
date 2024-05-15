@@ -186,43 +186,47 @@ static vx_status VX_CALLBACK processNormalize(vx_node node, const vx_reference *
 
 static vx_status VX_CALLBACK initializeNormalize(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     NormalizeLocalData *data = new NormalizeLocalData;
-    memset(data, 0, sizeof(NormalizeLocalData));
+    if (data) {
+        memset(data, 0, sizeof(NormalizeLocalData));
 
-    vx_enum input_tensor_dtype, output_tensor_dtype;
-    vx_int32 roi_type, input_layout;
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->axis_mask));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->computeMeanAndStdDev, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->scale, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &data->shift, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[10], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[11], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    data->roiType = static_cast<RpptRoiType>(roi_type);
-    data->inputLayout = static_cast<vxTensorLayout>(input_layout);
+        vx_enum input_tensor_dtype, output_tensor_dtype;
+        vx_int32 roi_type, input_layout;
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->axis_mask));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->computeMeanAndStdDev, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->scale, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &data->shift, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[10], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[11], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        data->roiType = static_cast<RpptRoiType>(roi_type);
+        data->inputLayout = static_cast<vxTensorLayout>(input_layout);
 
-    // Querying for input tensor
-    data->pSrcGenericDesc = new RpptGenericDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcGenericDesc->numDims, sizeof(data->pSrcGenericDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcGenericDesc->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
-    data->pSrcGenericDesc->dataType = getRpptDataType(input_tensor_dtype);
-    data->pSrcGenericDesc->offsetInBytes = 0;
-    fillGenericDescriptionPtrfromDims(data->pSrcGenericDesc, data->inputLayout, data->inputTensorDims);
+        // Querying for input tensor
+        data->pSrcGenericDesc = new RpptGenericDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcGenericDesc->numDims, sizeof(data->pSrcGenericDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcGenericDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
+        data->pSrcGenericDesc->dataType = getRpptDataType(input_tensor_dtype);
+        data->pSrcGenericDesc->offsetInBytes = 0;
+        fillGenericDescriptionPtrfromDims(data->pSrcGenericDesc, data->inputLayout, data->inputTensorDims);
 
-    // Querying for output tensor
-    data->pDstGenericDesc = new RpptGenericDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstGenericDesc->numDims, sizeof(data->pDstGenericDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstGenericDesc->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
-    data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
-    data->pDstGenericDesc->offsetInBytes = 0;
-    fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->inputLayout, data->outputTensorDims);
+        // Querying for output tensor
+        data->pDstGenericDesc = new RpptGenericDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstGenericDesc->numDims, sizeof(data->pDstGenericDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstGenericDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
+        data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
+        data->pDstGenericDesc->offsetInBytes = 0;
+        fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->inputLayout, data->outputTensorDims);
 
-    data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
-    refreshNormalize(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
-    STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    return VX_SUCCESS;
+        data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
+        refreshNormalize(node, parameters, num, data);
+        STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
+        STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+        return VX_SUCCESS;
+    } else {
+        return VX_FAILURE;
+    }
 }
 
 static vx_status VX_CALLBACK uninitializeNormalize(vx_node node, const vx_reference *parameters, vx_uint32 num) {

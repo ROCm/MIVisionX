@@ -2840,7 +2840,7 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, siz
     }
 }
 
-void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims) {
+void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims, vxTensorLayout layout) {
     descPtr->n = maxTensorDims[0];
     descPtr->h = maxTensorDims[1];
     descPtr->w = maxTensorDims[2];
@@ -2850,6 +2850,11 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
     descPtr->strides.wStride = descPtr->c;
     descPtr->strides.cStride = 1;
     descPtr->numDims = 4;
+    if(TENSOR_LAYOUT_MAPPING.find(layout) != TENSOR_LAYOUT_MAPPING.end()) {
+        descPtr->layout = TENSOR_LAYOUT_MAPPING.at(layout);
+    } else {
+        throw std::runtime_error("Invalid layout");
+    }
 }
 
 void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims) {

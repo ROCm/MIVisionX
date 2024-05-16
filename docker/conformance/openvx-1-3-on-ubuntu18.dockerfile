@@ -12,7 +12,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         wget https://repo.radeon.com/amdgpu-install/22.20/ubuntu/bionic/amdgpu-install_22.20.50200-1_all.deb && \
         sudo apt-get -y install ./amdgpu-install_22.20.50200-1_all.deb && \
         sudo apt-get update -y && \
-        sudo amdgpu-install -y --usecase=graphics,rocm
+        sudo amdgpu-install -y --usecase=rocm
 
 WORKDIR /workspace
 

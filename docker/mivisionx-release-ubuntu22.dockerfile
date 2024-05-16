@@ -16,11 +16,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         wget ${ROCM_INSTALLER_REPO} && \
         sudo apt-get install -y ./${ROCM_INSTALLER_PACKAGE} && \
         sudo apt-get update -y && \
-        sudo amdgpu-install -y --usecase=graphics,rocm
+        sudo amdgpu-install -y --usecase=rocm
 
 # install mivisionx package dependencies
 # VX_NN & VX_MIGraphX
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install half miopen-hip-dev rocblas-dev migraphx migraphx-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install half rocblas-dev miopen-hip-dev migraphx-dev rocdecode-dev
 # VX_MEDIA
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
 # VX_openCV

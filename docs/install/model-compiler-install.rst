@@ -10,7 +10,7 @@ Model compiler installation and configuration
 
 The following describes installing and setting up the model compiler & optimizer and neural net models for Linux. 
 
-Pre-requisites
+Prerequisites
 ==============
 
 * Linux

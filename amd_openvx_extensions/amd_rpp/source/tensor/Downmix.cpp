@@ -42,17 +42,14 @@ static vx_status VX_CALLBACK refreshDownmix(vx_node node, const vx_reference *pa
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     }
-    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        void *roi_tensor_ptr_src;
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
-        RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
-        for (int n = 0; n < data->inputTensorDims[0]; n++) {
-            data->pSrcRoi[n * 2] = src_roi[n].xywhROI.roiWidth;
-            data->pSrcRoi[n * 2 + 1] = src_roi[n].xywhROI.roiHeight;
-        }
-        return status;
+    void *roi_tensor_ptr_src;
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
+    RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
+    for (int n = 0; n < data->inputTensorDims[0]; n++) {
+        data->pSrcRoi[n * 2] = src_roi[n].xywhROI.roiWidth;
+        data->pSrcRoi[n * 2 + 1] = src_roi[n].xywhROI.roiHeight;
     }
     return status;
 }

@@ -2597,27 +2597,6 @@ RpptDataType getRpptDataType(vx_enum vxDataType) {
     }
 }
 
-RpptLayout getRpptLayout(vxTensorLayout layout) {
-    switch(layout) {
-        case vxTensorLayout::VX_NHWC:
-            return RpptLayout::NHWC;
-        case vxTensorLayout::VX_NCHW:
-            return RpptLayout::NCHW;
-        case vxTensorLayout::VX_NFHWC:
-            return RpptLayout::NHWC;
-        case vxTensorLayout::VX_NFCHW:
-            return RpptLayout::NCHW;
-        case vxTensorLayout::VX_NHW:
-            return RpptLayout::NHW;
-        case vxTensorLayout::VX_NFT:
-            return RpptLayout::NFT;
-        case vxTensorLayout::VX_NTF:
-            return RpptLayout::NTF;
-        default:
-            throw std::runtime_error("Invalid layout");
-    }
-}
-
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims) {
     switch(layout) {
         case vxTensorLayout::VX_NHWC: {
@@ -2674,7 +2653,7 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, siz
     }
 }
 
-void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims, vxTensorLayout layout) {
+void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims) {
     descPtr->n = maxTensorDims[0];
     descPtr->h = maxTensorDims[1];
     descPtr->w = maxTensorDims[2];
@@ -2684,7 +2663,6 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
     descPtr->strides.wStride = descPtr->c;
     descPtr->strides.cStride = 1;
     descPtr->numDims = 4;
-    descPtr->layout = getRpptLayout(layout);
 }
 
 // utility functions

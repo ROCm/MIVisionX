@@ -53,7 +53,6 @@ option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
-option(BUILD_WITH_AMD_ADVANCE "Build MIVisionX for advanced AMD GPU Architecture"    OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")
@@ -136,9 +135,6 @@ endif()
 if(HIP_FOUND)
   message("-- ${BoldBlue}ROCm Version -- ${HIP_VERSION}${ColourReset}")
   set(LOOM OFF)
-  if(HIP_VERSION  VERSION_GREATER 5.7.50701)
-    set(BUILD_WITH_AMD_ADVANCE ON)
-  endif()
 endif()
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
@@ -196,12 +192,22 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
 # Set the dependent packages
-set(MIVISIONX_DEBIAN_PACKAGE_LIST  "rocm-hip-runtime, half, rpp, rocblas, miopen-hip, migraphx, rocdecode")
-set(MIVISIONX_RPM_PACKAGE_LIST     "rocm-hip-runtime, half, rpp, rocblas, miopen-hip, migraphx, rocdecode")
+set(MIVISIONX_DEBIAN_PACKAGE_LIST  "rocm-hip-runtime, half, rpp, rocblas, miopen-hip, migraphx")
+set(MIVISIONX_RPM_PACKAGE_LIST     "rocm-hip-runtime, half, rpp, rocblas, miopen-hip, migraphx")
 # Set the dev dependent packages
-set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, rpp-dev, rocdecode-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev")
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev")
 # TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel
-set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "rocm-hip-runtime-devel, rpp-devel, rocdecode-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
+set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
+
+# Add rocDecode Deps - Exclude centos-7
+file(READ "/etc/os-release" OS_RELEASE)
+string(REGEX MATCH "CentOS-7" CENTOS_7_FOUND ${OS_RELEASE})
+if(NOT CENTOS_7_FOUND)
+  set(MIVISIONX_DEBIAN_PACKAGE_LIST  "${MIVISIONX_DEBIAN_PACKAGE_LIST}, rocdecode")
+  set(MIVISIONX_RPM_PACKAGE_LIST     "${MIVISIONX_RPM_PACKAGE_LIST}, rocdecode")
+  set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, rocdecode-dev")
+  set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "${MIVISIONX_RPM_DEV_PACKAGE_LIST}, rocdecode-devel")
+endif()
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(

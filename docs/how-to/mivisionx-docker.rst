@@ -18,7 +18,7 @@ Prerequisites
 
 * Ubuntu 20.04/22.04
 * `ROCm supported hardware <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html>`_
-* `Install ROCm <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/>`_ with ``--usecase=graphics,rocm``
+* `Install ROCm <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/>`_ with ``--usecase=rocm``
 * `Docker <https://docs.docker.com/engine/install/ubuntu/>`_
 
 

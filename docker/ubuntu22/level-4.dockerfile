@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
-ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.6.1/ubuntu/jammy/amdgpu-install_5.6.50601-1_all.deb
-ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.6.50601-1_all.deb
+ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/6.1.1/ubuntu/jammy/amdgpu-install_6.1.60101-1_all.deb
+ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_6.1.60101-1_all.deb
 
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
@@ -16,7 +16,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         wget ${ROCM_INSTALLER_REPO} && \
         sudo apt-get install -y ./${ROCM_INSTALLER_PACKAGE} && \
         sudo apt-get update -y && \
-        sudo amdgpu-install -y --usecase=graphics,rocm
+        sudo amdgpu-install -y --usecase=rocm
 
 # install OpenCV & FFMPEG - Level 3
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"
@@ -32,7 +32,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
         make -j8 && sudo make install && cd
 
 # install MIVisionX neural net dependency - Level 4
-RUN apt-get -y install rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx
+RUN apt-get -y install half rocblas-dev miopen-hip-dev migraphx-dev rocdecode-dev
 
 ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE

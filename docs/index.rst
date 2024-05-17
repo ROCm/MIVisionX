@@ -8,7 +8,7 @@
 MIVisionX documentation
 ******************************************
 
-AMD MIVisionX toolkit is a comprehensive set of computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. MIVisionX delivers AMD's implementation of `Khronos OpenVX <https://www.khronos.org/openvx/>`_, and a Convolutional Neural Net model compiler & optimizer supporting `ONNX <https://onnx.ai/>`_ and `Khronos NNEF <https://www.khronos.org/nnef>`_ exchange formats. The MIVisionX toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers. For more information refer to :ref:`what-is-mivisionx`.
+AMD MIVisionX toolkit is a comprehensive set of computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. MIVisionX delivers AMD's implementation of `Khronos OpenVX <https://www.khronos.org/openvx/>`_, and a Convolutional Neural Net model compiler & optimizer supporting `ONNX <https://onnx.ai/>`_ and `Khronos NNEF <https://www.khronos.org/nnef>`_ exchange formats. The MIVisionX toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers. For more information, refer to :ref:`what-is-mivisionx`.
 
 You can access MIVisionX on `GitHub repository <https://github.com/ROCm/MIVisionX>`_.
 
@@ -32,15 +32,15 @@ The documentation is structured as follows:
   .. grid-item-card:: API reference
 
     * :doc:`MIVisionX APIs <doxygen/html/modules>`
-    * :doc:`MIVisionX header files <doxygen/html/files>`
-    * :doc:`Toolkit <./reference/toolkit>`
-    * :doc:`Utilities <./reference/utilities>`
+    * :doc:`MIVisionX Files <doxygen/html/files>`
+    * :doc:`MIVisionX toolkit documentation <./reference/toolkit>`
+    * :doc:`MIVisionX utilities documentation <./reference/utilities>`
 
   .. grid-item-card:: Tutorials
 
-    * :doc:`Example applications <./tutorials/mivisionx-apps>`
-    * :doc:`Samples <./tutorials/mivisionx-samples>`
-    * :doc:`Installation and functionality tests <./tutorials/mivisionx-tests>`
+    * :doc:`MIVisionX applications <./tutorials/mivisionx-apps>`
+    * :doc:`MIVisionX samples documentation <./tutorials/mivisionx-samples>`
+    * :doc:`MIVisionX tests <./tutorials/mivisionx-tests>`
 
 
 To contribute to the documentation, refer to

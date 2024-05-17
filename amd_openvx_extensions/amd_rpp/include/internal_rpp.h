@@ -84,7 +84,6 @@ const std::map<vxTensorLayout, RpptLayout> TENSOR_LAYOUT_MAPPING = {
     {vxTensorLayout::VX_NHW, RpptLayout::NHW},
     {vxTensorLayout::VX_NFT, RpptLayout::NFT},
     {vxTensorLayout::VX_NTF, RpptLayout::NTF}
->>>>>>> origin/swbs_m5/audio/pr8
 };
 
 //! Brief The utility functions

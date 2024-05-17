@@ -36,15 +36,6 @@ elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     find_package(HIP REQUIRED)
 endif()
 
-# Audio features for VX_RPP
-if((${RPP_VERSION_MAJOR} GREATER_EQUAL 1) AND (${RPP_VERSION_MINOR} GREATER EQUAL 8) AND (${RPP_VERSION_PATCH} GREATER_EQUAL 0))
-    message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
-    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=1)
-else()
-    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=0)
-    message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
-endif()
-
 include_directories(../../amd_openvx/openvx/include/ include)
 # AMD RPP
 include_directories(${AMDRPP_INCLUDE_DIRS})
@@ -201,6 +192,16 @@ else()
     add_library(vx_rpp SHARED ${SOURCES})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" ) # Currently used by rpp. To be removed.
 endif()
+
+# Audio features for VX_RPP
+if((${RPP_VERSION_MAJOR} GREATER EQUAL 1) AND (${RPP_VERSION_MINOR} GREATER EQUAL 8) AND (${RPP_VERSION_PATCH} GREATER EQUAL 0))
+    message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
+    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=1)
+else()
+    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=0)
+    message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
+endif()
+
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenVX)

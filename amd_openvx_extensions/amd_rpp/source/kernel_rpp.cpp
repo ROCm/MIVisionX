@@ -2861,32 +2861,21 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
 }
 
 void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims) {
-    switch(layout) {
-        case vxTensorLayout::VX_NFT:
-        case vxTensorLayout::VX_NTF: 
-        case vxTensorLayout::VX_NHW: {
-            genericDescPtr->dims[0] = maxTensorDims[0];
-            genericDescPtr->dims[1] = maxTensorDims[1];
-            genericDescPtr->dims[2] = maxTensorDims[2];
-            genericDescPtr->dims[3] = 1;
-            if(genericDescPtr->dims[2] == 1)
-                genericDescPtr->numDims = 2;
-            else
-                genericDescPtr->numDims = 3;
-
-            genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
-            genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
-            genericDescPtr->strides[2] = genericDescPtr->dims[3];
-            if(TENSOR_LAYOUT_MAPPING.find(layout) != TENSOR_LAYOUT_MAPPING.end()) {
-                genericDescPtr->layout = TENSOR_LAYOUT_MAPPING.at(layout);
-            } else {
-                throw std::runtime_error("Invalid layout");
-            }
-            break;
-        }
-        default: {
-            throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims.");
-        }
+    genericDescPtr->dims[0] = maxTensorDims[0];
+    genericDescPtr->dims[1] = maxTensorDims[1];
+    genericDescPtr->dims[2] = maxTensorDims[2];
+    genericDescPtr->dims[3] = 1;
+    if(genericDescPtr->dims[2] == 1)
+        genericDescPtr->numDims = 2;
+    else
+        genericDescPtr->numDims = 3;
+    genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
+    genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
+    genericDescPtr->strides[2] = genericDescPtr->dims[3];
+    if(TENSOR_LAYOUT_MAPPING.find(layout) != TENSOR_LAYOUT_MAPPING.end()) {
+        genericDescPtr->layout = TENSOR_LAYOUT_MAPPING.at(layout);
+    } else {
+        throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims");
     }
 }
 

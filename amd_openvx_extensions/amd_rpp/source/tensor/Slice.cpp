@@ -198,7 +198,7 @@ static vx_status VX_CALLBACK initializeSlice(vx_node node, const vx_reference *p
         data->roiType = static_cast<RpptRoiType>(roi_type);
         data->inputLayout = static_cast<vxTensorLayout>(input_layout);
 
-        if (data->inputLayout == vxTensorLayout::VX_NONE) {
+        if (data->inputLayout == vxTensorLayout::VX_NHW) {
             // Querying for input tensor
             data->pSrcGenericDesc = new RpptGenericDesc;
             STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcGenericDesc->numDims, sizeof(data->pSrcGenericDesc->numDims)));

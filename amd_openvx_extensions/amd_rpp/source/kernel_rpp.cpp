@@ -2558,32 +2558,6 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppPreemphasisFilter(vx_graph graph, vx_te
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_array windowFunction, vx_scalar centerWindows, vx_scalar reflectPadding, vx_scalar spectrogramLayout,
-                                                     vx_scalar power, vx_scalar nfft, vx_scalar windowLength, vx_scalar windowStep) {
-    vx_node node = NULL;
-    vx_context context = vxGetContext((vx_reference)graph);
-    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
-        vx_uint32 devtype = getGraphAffinity(graph);
-        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devtype);
-        vx_reference params[] = {
-            (vx_reference)pSrc,
-            (vx_reference)pSrcRoi,
-            (vx_reference)pDst,
-            (vx_reference)pDstRoi,
-            (vx_reference)windowFunction,
-            (vx_reference)centerWindows,
-            (vx_reference)reflectPadding,
-            (vx_reference)spectrogramLayout,
-            (vx_reference)power,
-            (vx_reference)nfft,
-            (vx_reference)windowLength,
-            (vx_reference)windowStep,
-            (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_SPECTROGRAM, params, 13);
-    }
-    return node;
-}
-
 RpptDataType getRpptDataType(vx_enum vxDataType) {
     switch(vxDataType) {
         case vx_type_e::VX_TYPE_FLOAT32:
@@ -2653,10 +2627,10 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, siz
     }
 }
 
-void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims) {
-    descPtr->n = maxTensorDims[0];
-    descPtr->h = maxTensorDims[1];
-    descPtr->w = maxTensorDims[2];
+void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims) {
+    descPtr->n = tensorDims[0];
+    descPtr->h = tensorDims[2];
+    descPtr->w = tensorDims[1];
     descPtr->c = 1;
     descPtr->strides.nStride = descPtr->c * descPtr->w * descPtr->h;
     descPtr->strides.hStride = descPtr->c * descPtr->w;

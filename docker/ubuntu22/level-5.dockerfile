@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
-ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.6.1/ubuntu/jammy/amdgpu-install_5.6.50601-1_all.deb
-ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.6.50601-1_all.deb
+ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/6.1.1/ubuntu/jammy/amdgpu-install_6.1.60101-1_all.deb
+ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_6.1.60101-1_all.deb
 
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
@@ -16,7 +16,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         wget ${ROCM_INSTALLER_REPO} && \
         sudo apt-get install -y ./${ROCM_INSTALLER_PACKAGE} && \
         sudo apt-get update -y && \
-        sudo amdgpu-install -y --usecase=graphics,rocm
+        sudo amdgpu-install -y --usecase=rocm
 
 # install OpenCV & FFMPEG - Level 3
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"
@@ -32,7 +32,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
         make -j8 && sudo make install && cd
 
 # install MIVisionX neural net dependency - Level 4
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install rocblas rocblas-dev miopen-hip miopen-hip-dev migraphx
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install half rocblas-dev miopen-hip-dev migraphx-dev rocdecode-dev
 
 # install MIVisionX rocAL dependency - Level 5
 ENV CUPY_INSTALL_USE_HIP=1
@@ -47,7 +47,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update -y && apt-get -y install autoc
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install sqlite3 libsqlite3-dev libtool build-essential
 RUN git clone -b v3.21.9 https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && \
         ./autogen.sh && ./configure && make -j8 && make check -j8 && sudo make install && sudo ldconfig && cd
-RUN git clone -b 1.4.0  https://github.com/ROCm/rpp.git && cd rpp && mkdir build && cd build && \
+RUN git clone -b rocm-6.1.1  https://github.com/ROCm/rpp.git && cd rpp && mkdir build && cd build && \
         cmake -DBACKEND=HIP ../ && make -j4 && sudo make install && cd
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3 python3-pip python3-dev && \
         git clone https://github.com/Tencent/rapidjson.git && cd rapidjson && mkdir build && cd build && \

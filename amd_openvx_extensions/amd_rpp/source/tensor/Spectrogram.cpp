@@ -29,7 +29,7 @@ struct SpectrogramLocalData {
     RppPtr_t pDst;
     bool centerWindows;
     bool reflectPadding;
-    vxTensorLayout spectrogramLayout;
+    RpptSpectrogramLayout spectrogramLayout;
     Rpp32s power;
     Rpp32s nfft;
     Rpp32s windowLength;
@@ -47,10 +47,10 @@ void updateDstRoi(SpectrogramLocalData *data, RpptROI *src_roi, RpptROI *dst_roi
     const Rpp32s num_frames = ((data->nfft / 2) + 1);
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         data->pSrcLength[i] = static_cast<int>(src_roi[i].xywhROI.roiWidth);
-        if (data->spectrogramLayout == vxTensorLayout::VX_NTF) {
+        if (data->spectrogramLayout == RpptSpectrogramLayout::TF) {
             dst_roi[i].xywhROI.roiWidth = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
             dst_roi[i].xywhROI.roiHeight = num_frames;
-        } else if (data->spectrogramLayout == vxTensorLayout::VX_NFT) {
+        } else if (data->spectrogramLayout == RpptSpectrogramLayout::FT) {
             dst_roi[i].xywhROI.roiWidth = num_frames;
             dst_roi[i].xywhROI.roiHeight = ((data->pSrcLength[i] - data->windowOffset) / data->windowStep) + 1;
         }
@@ -136,7 +136,7 @@ static vx_status VX_CALLBACK processSpectrogram(vx_node node, const vx_reference
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_spectrogram_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
-                                           data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->handle->rppHandle);
+                                           data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->spectrogramLayout, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -157,7 +157,7 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
         STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &data->windowLength));
         STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[11], &data->windowStep));
         STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        data->spectrogramLayout = static_cast<vxTensorLayout>(spectrogram_layout);
+        data->spectrogramLayout = (spectrogram_layout == 0) ? RpptSpectrogramLayout::FT : RpptSpectrogramLayout::TF;
         data->windowOffset = (!data->centerWindows) ? data->windowLength : 0;
 
         // Querying for input tensor
@@ -176,7 +176,7 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_datatype, sizeof(output_tensor_datatype)));
         data->pDstDesc->dataType = getRpptDataType(output_tensor_datatype);
         data->pDstDesc->offsetInBytes = 0;
-        fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims, data->spectrogramLayout);
+        fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
         data->pSrcLength = new int[data->pSrcDesc->n];
         data->pWindowFn = new float[data->windowLength];

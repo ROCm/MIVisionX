@@ -33,27 +33,28 @@ struct ToDecibelsLocalData {
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptImagePatch *pSrcDims;
+    vxTensorLayout inputLayout;
+    vxTensorLayout outputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
 static vx_status VX_CALLBACK refreshToDecibels(vx_node node, const vx_reference *parameters, vx_uint32 num, ToDecibelsLocalData *data) {
     vx_status status = VX_SUCCESS;
-    void *roi_tensor_ptr_src;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL || ENABLE_HIP
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
+    void *roi_tensor_ptr_src;
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
-    for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {  
-        data->pSrcDims[i].width = src_roi[i].xywhROI.roiWidth;  
-        data->pSrcDims[i].height = src_roi[i].xywhROI.roiHeight;  
-    }  
+    for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+        data->pSrcDims[i].width = src_roi[i].xywhROI.roiWidth;
+        data->pSrcDims[i].height = src_roi[i].xywhROI.roiHeight;
+    }
     return status;
 }
 
@@ -69,6 +70,12 @@ static vx_status VX_CALLBACK validateToDecibels(vx_node node, const vx_reference
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[5], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_FLOAT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #5 type=%d (must be size)\n", scalar_type);
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if (scalar_type != VX_TYPE_INT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #6 type=%d (must be size)\n", scalar_type);
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if (scalar_type != VX_TYPE_INT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #7 type=%d (must be size)\n", scalar_type);
 
     // Check for input parameters
     size_t num_tensor_dims;
@@ -102,7 +109,8 @@ static vx_status VX_CALLBACK processToDecibels(vx_node node, const vx_reference 
 #if ENABLE_OPENCL || ENABLE_HIP
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    }
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_to_decibels_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->cutOffDB, data->multiplier, data->referenceMagnitude, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
@@ -111,47 +119,56 @@ static vx_status VX_CALLBACK processToDecibels(vx_node node, const vx_reference 
 
 static vx_status VX_CALLBACK initializeToDecibels(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ToDecibelsLocalData *data = new ToDecibelsLocalData;
-    memset(data, 0, sizeof(ToDecibelsLocalData));
+    if (data) {
+        memset(data, 0, sizeof(ToDecibelsLocalData));
 
-    vx_enum input_tensor_datatype, output_tensor_datatype;
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[3], &data->cutOffDB));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->multiplier));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[5], &data->referenceMagnitude));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        vx_enum input_tensor_datatype, output_tensor_datatype;
+        vx_int32 input_layout, output_layout;
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[3], &data->cutOffDB));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[4], &data->multiplier));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[5], &data->referenceMagnitude));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &input_layout));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[7], &output_layout));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        data->inputLayout = static_cast<vxTensorLayout>(input_layout);
+        data->outputLayout = static_cast<vxTensorLayout>(output_layout);
 
-    // Querying for input tensor
-    data->pSrcDesc = new RpptDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_datatype, sizeof(input_tensor_datatype)));
-    data->pSrcDesc->dataType = getRpptDataType(input_tensor_datatype);
-    data->pSrcDesc->offsetInBytes = 0;
-    fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims);
+        // Querying for input tensor
+        data->pSrcDesc = new RpptDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_datatype, sizeof(input_tensor_datatype)));
+        data->pSrcDesc->dataType = getRpptDataType(input_tensor_datatype);
+        data->pSrcDesc->offsetInBytes = 0;
+        fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims);
 
-    // Querying for output tensor
-    data->pDstDesc = new RpptDesc;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_datatype, sizeof(output_tensor_datatype)));
-    data->pDstDesc->dataType = getRpptDataType(output_tensor_datatype);
-    data->pDstDesc->offsetInBytes = 0;
-    fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
+        // Querying for output tensor
+        data->pDstDesc = new RpptDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_datatype, sizeof(output_tensor_datatype)));
+        data->pDstDesc->dataType = getRpptDataType(output_tensor_datatype);
+        data->pDstDesc->offsetInBytes = 0;
+        fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
-    data->pSrcDims = new RpptImagePatch[data->pSrcDesc->n];
-    refreshToDecibels(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
-    STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    return VX_SUCCESS;
+        data->pSrcDims = new RpptImagePatch[data->pSrcDesc->n];
+        refreshToDecibels(node, parameters, num, data);
+        STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
+        STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+        return VX_SUCCESS;
+    } else {
+        return VX_FAILURE;
+    }
 }
 
 static vx_status VX_CALLBACK uninitializeToDecibels(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ToDecibelsLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pSrcDims;
-    delete data->pSrcDesc;
-    delete data->pDstDesc;
+    if (data->pSrcDims) delete[] data->pSrcDims;
+    if (data->pSrcDesc) delete data->pSrcDesc;
+    if (data->pDstDesc) delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
-    delete data;
+    if (data) delete data;
     return VX_SUCCESS;
 }
 
@@ -178,7 +195,7 @@ vx_status ToDecibels_Register(vx_context context) {
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.ToDecibels",
                                        VX_KERNEL_RPP_TODECIBELS,
                                        processToDecibels,
-                                       7,
+                                       9,
                                        validateToDecibels,
                                        initializeToDecibels,
                                        uninitializeToDecibels);
@@ -203,6 +220,8 @@ vx_status ToDecibels_Register(vx_context context) {
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
     if (status != VX_SUCCESS) {

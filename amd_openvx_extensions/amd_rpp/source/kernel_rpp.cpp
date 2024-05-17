@@ -2645,7 +2645,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppDownmix(vx_graph graph, vx_tensor pSrc,
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar cutOffDB, vx_scalar multiplier, vx_scalar referenceMagnitude) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar cutOffDB, vx_scalar multiplier, vx_scalar referenceMagnitude, vx_scalar inputLayout, vx_scalar outputLayout) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2658,8 +2658,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pS
             (vx_reference)cutOffDB,
             (vx_reference)multiplier,
             (vx_reference)referenceMagnitude,
+            (vx_reference)inputLayout,
+            (vx_reference)outputLayout,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_TODECIBELS, params, 7);
+        node = createNode(graph, VX_KERNEL_RPP_TODECIBELS, params, 9);
     }
     return node;
 }
@@ -2788,7 +2790,7 @@ void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, siz
     }
 }
 
-void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims) {
+void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims, vxTensorLayout layout) {
     descPtr->n = maxTensorDims[0];
     descPtr->h = maxTensorDims[1];
     descPtr->w = maxTensorDims[2];
@@ -2798,6 +2800,11 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
     descPtr->strides.wStride = descPtr->c;
     descPtr->strides.cStride = 1;
     descPtr->numDims = 4;
+    if(TENSOR_LAYOUT_MAPPING.find(layout) != TENSOR_LAYOUT_MAPPING.end()) {
+        descPtr->layout = TENSOR_LAYOUT_MAPPING.at(layout);
+    } else {
+        throw std::runtime_error("Invalid layout");
+    }
 }
 
 void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims) {

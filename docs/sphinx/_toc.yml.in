@@ -29,20 +29,20 @@ subtrees:
   - file: doxygen/html/modules
     title: MIVisionX APIs
   - file: doxygen/html/files
-    title: MIVisionX Header Files
+    title: MIVisionX Files
   - file: reference/toolkit.rst
-    title: Toolkit
+    title: MIVisionX toolkit documentation
   - file: reference/utilities.rst
-    title: Utilities
+    title: MIVisionX utilities documentation
 
 - caption: Tutorials
   entries:
   - file: tutorials/mivisionx-apps.rst     
-    title: Example applications
+    title: MIVisionX applications
   - file: tutorials/mivisionx-samples.rst     
-    title: Samples
+    title: MIVisionX samples documentation
   - file: tutorials/mivisionx-tests.rst     
-    title: Installation and functionality tests
+    title: MIVisionX tests
 
 - caption: About
   entries:

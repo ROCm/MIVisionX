@@ -194,7 +194,7 @@ else()
 endif()
 
 # Audio features for VX_RPP
-if((${RPP_VERSION_MAJOR} GREATER EQUAL "1") AND (${RPP_VERSION_MINOR} GREATER EQUAL "8") AND (${RPP_VERSION_PATCH} GREATER EQUAL "0"))
+if(${RPP_VERSION_MAJOR} VERSION_GREATER_EQUAL "1" AND ${RPP_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${RPP_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
     target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=1)
 else()

@@ -172,7 +172,6 @@ static vx_status VX_CALLBACK processSlice(vx_node node, const vx_reference *para
     SliceLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshSlice(node, parameters, data);
-#if RPP_AUDIO
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         rpp_status = rppt_slice_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAnchor, data->pShape, data->pFillValues, data->policy, data->pSrcRoi3D, data->handle->rppHandle);
@@ -182,9 +181,6 @@ static vx_status VX_CALLBACK processSlice(vx_node node, const vx_reference *para
         rpp_status = rppt_slice_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAnchor, data->pShape, data->pFillValues, data->policy, data->pSrcRoi3D, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
-#else
-    return_status = VX_ERROR_NOT_SUPPORTED;
-#endif
     return return_status;
 }
 
@@ -202,24 +198,22 @@ static vx_status VX_CALLBACK initializeSlice(vx_node node, const vx_reference *p
         data->roiType = static_cast<RpptRoiType>(roi_type);
         data->inputLayout = static_cast<vxTensorLayout>(input_layout);
 
-        if (data->inputLayout == vxTensorLayout::VX_NHW) {
-            // Querying for input tensor
-            data->pSrcGenericDesc = new RpptGenericDesc;
-            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcGenericDesc->numDims, sizeof(data->pSrcGenericDesc->numDims)));
-            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcGenericDesc->numDims));
-            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
-            data->pSrcGenericDesc->dataType = getRpptDataType(input_tensor_dtype);
-            data->pSrcGenericDesc->offsetInBytes = 0;
-            fillGenericDescriptionPtrfromDims(data->pSrcGenericDesc, data->inputLayout, data->inputTensorDims);
-            // Querying for output tensor
-            data->pDstGenericDesc = new RpptGenericDesc;
-            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstGenericDesc->numDims, sizeof(data->pDstGenericDesc->numDims)));
-            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstGenericDesc->numDims));
-            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
-            data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
-            data->pDstGenericDesc->offsetInBytes = 0;
-            fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->inputLayout, data->outputTensorDims);
-        }
+        // Querying for input tensor
+        data->pSrcGenericDesc = new RpptGenericDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcGenericDesc->numDims, sizeof(data->pSrcGenericDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcGenericDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
+        data->pSrcGenericDesc->dataType = getRpptDataType(input_tensor_dtype);
+        data->pSrcGenericDesc->offsetInBytes = 0;
+        fillGenericDescriptionPtrfromDims(data->pSrcGenericDesc, data->inputLayout, data->inputTensorDims);
+        // Querying for output tensor
+        data->pDstGenericDesc = new RpptGenericDesc;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstGenericDesc->numDims, sizeof(data->pDstGenericDesc->numDims)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstGenericDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
+        data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
+        data->pDstGenericDesc->offsetInBytes = 0;
+        fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->inputLayout, data->outputTensorDims);
 
         data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
 

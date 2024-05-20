@@ -202,6 +202,16 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" ) # Currently used by rpp. To be removed.
 endif()
 
+# Audio features for VX_RPP
+if(${RPP_VERSION_MAJOR} VERSION_GREATER_EQUAL "1" AND ${RPP_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${RPP_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
+    message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
+    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=1)
+else()
+    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=0)
+    message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
+endif()
+
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenVX)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
@@ -221,4 +231,4 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_ext_rpp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(FILES include/vx_ext_rpp.h include/vx_ext_rpp_version.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)

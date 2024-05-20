@@ -2607,12 +2607,19 @@ RpptLayout getRpptLayout(vxTensorLayout layout) {
             return RpptLayout::NHWC;
         case vxTensorLayout::VX_NFCHW:
             return RpptLayout::NCHW;
+#if RPP_AUDIO
         case vxTensorLayout::VX_NHW:
             return RpptLayout::NHW;
         case vxTensorLayout::VX_NFT:
             return RpptLayout::NFT;
         case vxTensorLayout::VX_NTF:
             return RpptLayout::NTF;
+#else
+        case vxTensorLayout::VX_NHW:
+        case vxTensorLayout::VX_NFT:
+        case vxTensorLayout::VX_NTF:
+            throw std::runtime_error("RPP_AUDIO flag disabled, Audio layouts are not supported");
+#endif
         default:
             throw std::runtime_error("Invalid layout");
     }

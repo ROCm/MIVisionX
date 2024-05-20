@@ -29,7 +29,9 @@ struct MelFilterBankLocalData {
     RppPtr_t pDst;
     Rpp32f freqHigh;
     Rpp32f freqLow;
+#if RPP_AUDIO
     RpptMelScaleFormula melFormula;
+#endif
     Rpp32s nfilter;
     bool normalize;
     Rpp32f sampleRate;
@@ -161,7 +163,9 @@ static vx_status VX_CALLBACK initializeMelFilterBank(vx_node node, const vx_refe
         STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[10], &input_layout));
         STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[11], &output_layout));
         STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+#if RPP_AUDIO
         data->melFormula = static_cast<RpptMelScaleFormula>(mel_formula);
+#endif
         data->inputLayout = static_cast<vxTensorLayout>(input_layout);
         data->outputLayout = static_cast<vxTensorLayout>(output_layout);
 

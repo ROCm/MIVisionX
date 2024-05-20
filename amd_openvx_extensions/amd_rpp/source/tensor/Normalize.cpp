@@ -171,7 +171,6 @@ static vx_status VX_CALLBACK processNormalize(vx_node node, const vx_reference *
     NormalizeLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshNormalize(node, parameters, num, data);
-#if RPP_AUDIO
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         rpp_status = rppt_normalize_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
@@ -182,9 +181,6 @@ static vx_status VX_CALLBACK processNormalize(vx_node node, const vx_reference *
         rpp_status = rppt_normalize_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
-#else
-    return_status = VX_ERROR_NOT_SUPPORTED;
-#endif
     return return_status;
 }
 

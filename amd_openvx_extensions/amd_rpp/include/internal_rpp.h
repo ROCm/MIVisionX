@@ -80,9 +80,11 @@ const std::map<vxTensorLayout, RpptLayout> TENSOR_LAYOUT_MAPPING = {
     {vxTensorLayout::VX_NCHW, RpptLayout::NCHW},
     {vxTensorLayout::VX_NFHWC, RpptLayout::NHWC},
     {vxTensorLayout::VX_NFCHW, RpptLayout::NCHW},
+#if RPP_AUDIO
     {vxTensorLayout::VX_NHW, RpptLayout::NHW},
     {vxTensorLayout::VX_NFT, RpptLayout::NFT},
     {vxTensorLayout::VX_NTF, RpptLayout::NTF}
+#endif
 };
 
 //! Brief The utility functions

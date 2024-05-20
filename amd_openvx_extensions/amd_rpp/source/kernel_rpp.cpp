@@ -2861,7 +2861,7 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
 }
 
 void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims) {
-    if (layout != vxTensorLayout::VX_NHW || layout != vxTensorLayout::VX_NFT || layout != vxTensorLayout::VX_NTF)
+    if (layout != vxTensorLayout::VX_NHW && layout != vxTensorLayout::VX_NFT && layout != vxTensorLayout::VX_NTF)
         throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims, currently supports only NHW/NFT/NTF layouts");
 
     genericDescPtr->dims[0] = maxTensorDims[0];

@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
-ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.6.1/ubuntu/focal/amdgpu-install_5.6.50601-1_all.deb
-ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.6.50601-1_all.deb
+ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/6.1.1/ubuntu/focal/amdgpu-install_6.1.60101-1_all.deb
+ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_6.1.60101-1_all.deb
 
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
@@ -15,7 +15,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         wget ${ROCM_INSTALLER_REPO} && \
         sudo apt-get install -y ./${ROCM_INSTALLER_PACKAGE} && \
         sudo apt-get update -y && \
-        sudo amdgpu-install -y --usecase=graphics,rocm
+        sudo amdgpu-install -y --usecase=rocm
 # install OpenCV & FFMPEG - Level 3
 ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \
@@ -29,9 +29,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install autoconf automake build-es
         ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree && \
         make -j8 && sudo make install && cd
 # install MIVisionX neural net dependency - Level 4
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install miopen-hip migraphx && \
-        mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
-        unzip half-1.12.0.zip -d half-files && sudo mkdir -p /usr/local/include/half && sudo cp half-files/include/half.hpp /usr/local/include/half && cd
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install half rocblas-dev miopen-hip-dev migraphx-dev rocdecode-dev
 # install MIVisionX AMD VX RPP dependency - Level 5
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install wget libbz2-dev libssl-dev python-dev python3-dev libgflags-dev libgoogle-glog-dev liblmdb-dev nasm yasm libjsoncpp-dev clang && \
         git clone -b 2.0.6.2 https://github.com/rrawther/libjpeg-turbo.git && cd libjpeg-turbo && mkdir build && cd build && \

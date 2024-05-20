@@ -26,7 +26,7 @@ Build this project to generate AMD OpenVX library
 * Refer to `openvx/include/VX <https://github.com/ROCm/MIVisionX/tree/master/amd_openvx/openvx/include>`_ for Khronos OpenVX standard header files.
 * Refer to `openvx/include/vx_ext_amd.h <https://github.com/ROCm/MIVisionX/tree/master/amd_openvx/openvx/include/vx_ext_amd.h>`_ for vendor extensions in AMD OpenVX library
 
-Build using `Visual Studio`
+Build using Microsoft Visual Studio
 ---------------------------
 
 * Optionally download and install `OpenCV <https://github.com/opencv/opencv/releases>`_ with or without `opencv_contrib modules <https://github.com/opencv/opencv_contrib>`_ to enable the ``RunVX`` tool to support camera capture and image display

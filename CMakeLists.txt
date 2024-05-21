@@ -131,6 +131,11 @@ else()
   message("-- ${Blue}MIVisionX Built with float16 Support OFF${ColourReset}")
 endif()
 
+# Turn off Loom for HIP backend
+if("${BACKEND}" STREQUAL "HIP")
+  set(LOOM OFF)
+endif()
+
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=${NEURAL_NET} [Turn ON/OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM OpenCL Modules (default:ON)]${ColourReset}")

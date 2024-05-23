@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
-ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/5.7/ubuntu/jammy/amdgpu-install_5.7.50700-1_all.deb
-ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_5.7.50700-1_all.deb
+ARG ROCM_INSTALLER_REPO=https://repo.radeon.com/amdgpu-install/6.0.2/ubuntu/focal/amdgpu-install_6.0.60002-1_all.deb
+ARG ROCM_INSTALLER_PACKAGE=amdgpu-install_6.0.60002-1_all.deb
 
 ENV MIVISIONX_DEPS_ROOT=/mivisionx-deps
 WORKDIR $MIVISIONX_DEPS_ROOT
@@ -16,21 +16,17 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y install initramfs-tools libnuma-de
         wget ${ROCM_INSTALLER_REPO} && \
         sudo apt-get install -y ./${ROCM_INSTALLER_PACKAGE} && \
         sudo apt-get update -y && \
-        sudo amdgpu-install -y --usecase=graphics,rocm
+        sudo amdgpu-install -y --usecase=rocm
 
 # install mivisionx package dependencies
 # VX_NN & VX_MIGraphX
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install half miopen-hip-dev rocblas-dev migraphx migraphx-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install half rocblas-dev miopen-hip-dev migraphx-dev rocdecode-dev
 # VX_MEDIA
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg libavcodec-dev libavformat-dev libswscale-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
 # VX_openCV
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libopencv-dev
 # RPP          
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang half rpp
-# rocAL
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install liblmdb-dev rapidjson-dev libturbojpeg0-dev libprotobuf-dev
-# rocAL PyBind
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install python3-dev python3-setuptools python3-pip python3-opencv pybind11-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install clang half rpp-dev
 
 ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE
@@ -40,4 +36,4 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 
 # Clone MIVisionX 
 RUN git clone https://github.com/ROCm/MIVisionX.git && \
-        mkdir build && cd build && cmake -D BACKEND=HIP -D ROCAL=OFF ../MIVisionX && make -j8 && make install
+        mkdir build && cd build && cmake -D BACKEND=HIP ../MIVisionX && make -j8 && make install

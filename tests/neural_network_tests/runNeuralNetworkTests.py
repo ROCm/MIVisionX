@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import sys
 import platform
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2023, AMD MIVisionX - Neural Net Test Full Report"
+__copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
 __version__ = "1.2.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
@@ -242,13 +242,13 @@ if not os.path.exists(modelCompilerDeps):
         if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
             linuxCMake = 'cmake3'
             os.system(linuxSystemInstall+' install cmake3')
-        if not "centos" in platfromInfo or not "redhat" in platfromInfo:
+        if "centos" not in platfromInfo or "redhat" not in platfromInfo:
             platfromInfo = platfromInfo+'-redhat'
     elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
         linuxSystemInstall = 'apt-get -y'
         linuxSystemInstall_check = '--allow-unauthenticated'
         linuxFlag = '-S'
-        if not "Ubuntu" in platfromInfo:
+        if "Ubuntu" not in platfromInfo:
             platfromInfo = platfromInfo+'-Ubuntu'
     elif os.path.exists('/usr/bin/zypper'):
         linuxSystemInstall = 'zypper -n'
@@ -279,7 +279,7 @@ if not os.path.exists(modelCompilerDeps):
     # Install CAFFE Deps
     os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
     # Install ONNX Deps
-    os.system('sudo pip3 install onnx==1.11.0')
+    os.system('sudo pip3 install onnx==1.12.0')
     # Install NNEF Deps
     os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
     os.system(
@@ -801,13 +801,13 @@ if profileMode == 0 or profileMode == 9:
 # get system data
 platform_name = platform.platform()
 if os.path.exists('/usr/bin/yum'):
-    if not "centos" in platform_name or not "redhat" in platform_name:
+    if "centos" not in platform_name or "redhat" not in platform_name:
         platfromInfo = platform_name+'-CentOS-RedHat'
 elif os.path.exists('/usr/bin/apt-get'):
-    if not "Ubuntu" in platform_name:
+    if "Ubuntu" not in platform_name:
         platform_name = platform_name+'-Ubuntu'
 elif os.path.exists('/usr/bin/zypper'):
-    if not "SLES" in platform_name:
+    if "SLES" not in platform_name:
         platform_name = platform_name+'-SLES'
 else:
     print("\nMIVisionX Neural Network Test on "+platform_name+" is unsupported")
@@ -904,7 +904,7 @@ with open(reportFilename, 'w') as f:
     write_formatted(lib_tree, f)
     f.write("\n")
 
-    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2023 -- runNeuralNetworkTests.py V-"+__version__+"**\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2024 -- runNeuralNetworkTests.py V-"+__version__+"**\n")
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)

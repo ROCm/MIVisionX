@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2024 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -143,6 +143,7 @@ vx_status LensCorrection_Register(vx_context);
 vx_status Noise_Register(vx_context);
 vx_status Nop_Register(vx_context);
 vx_status Pixelate_Register(vx_context);
+vx_status PreemphasisFilter_Register(vx_context);
 vx_status Rain_Register(vx_context);
 vx_status Resize_Register(vx_context);
 vx_status ResizeCrop_Register(vx_context);
@@ -155,11 +156,17 @@ vx_status Snow_Register(vx_context);
 vx_status Vignette_Register(vx_context);
 vx_status WarpAffine_Register(vx_context);
 vx_status SequenceRearrange_Register(vx_context);
-vx_status GaussianNoise_Register(vx_context);
+vx_status Spectrogram_Register(vx_context);
+vx_status Downmix_Register(vx_context);
+vx_status ToDecibels_Register(vx_context);
+vx_status Resample_Register(vx_context);
+vx_status TensorMulScalar_Register(vx_context);
+vx_status TensorAddTensor_Register(vx_context);
+vx_status NonSilentRegionDetection_Register(vx_context);
 vx_status Slice_Register(vx_context);
 vx_status Normalize_Register(vx_context);
+vx_status MelFilterBank_Register(vx_context);
 vx_status Transpose_Register(vx_context);
-vx_status Cast_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -284,10 +291,17 @@ vx_status Cast_Register(vx_context);
 #define VX_KERNEL_RPP_NOP_NAME                                  "org.rpp.Nop"
 #define VX_KERNEL_RPP_RESIZE_NAME                               "org.rpp.Resize"
 #define VX_KERNEL_RPP_SEQUENCEREARRANGE_NAME                    "org.rpp.SequenceRearrange"
-#define VX_KERNEL_RPP_GAUSSIAN_NOISE_NAME                       "org.rpp.GaussianNoise"
+#define VX_KERNEL_RPP_PREEMPHASISFILTER_NAME                    "org.rpp.PreemphasisFilter"
+#define VX_KERNEL_RPP_SPECTROGRAM_NAME                          "org.rpp.Spectrogram"
+#define VX_KERNEL_RPP_DOWNMIX_NAME                              "org.rpp.Downmix"
+#define VX_KERNEL_RPP_TODECIBELS_NAME                           "org.rpp.ToDecibels"
+#define VX_KERNEL_RPP_RESAMPLE_NAME                             "org.rpp.Resample"
+#define VX_KERNEL_RPP_TENSORMULSCALAR_NAME                      "org.rpp.TensorMulScalar"
+#define VX_KERNEL_RPP_TENSORADDTENSOR_NAME                      "org.rpp.TensorAddTensor"
+#define VX_KERNEL_RPP_NONSILENTREGIONDETECTION_NAME             "org.rpp.NonSilentRegionDetection"
 #define VX_KERNEL_RPP_SLICE_NAME                                "org.rpp.Slice"
 #define VX_KERNEL_RPP_NORMALIZE_NAME                            "org.rpp.Normalize"
+#define VX_KERNEL_RPP_MELFILTERBANK_NAME                        "org.rpp.MelFilterBank"
 #define VX_KERNEL_RPP_TRANSPOSE_NAME                            "org.rpp.Transpose"
-#define VX_KERNEL_RPP_CAST_NAME                                 "org.rpp.Cast"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

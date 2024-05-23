@@ -13,8 +13,6 @@ generatedGDFs*
 vision_report_Linux*
 amd_opencv_test_results*
 .DS_Store*
-rocal_unittest_output_folder_*
-rocal_unittest_log_file_*
 doxygen_output*
 
 # documentation artifacts
@@ -25,3 +23,6 @@ _templates/
 _toc.yml
 docBin/
 _doxygen/
+doxygen/html/
+doxygen/latex/
+doxygen/xml/

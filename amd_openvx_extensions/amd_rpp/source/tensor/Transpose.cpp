@@ -115,11 +115,11 @@ static vx_status VX_CALLBACK processTranspose(vx_node node, const vx_reference *
     refreshTranspose(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_transpose_generic_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->perm, data->pSrcRoi, data->handle->rppHandle);
+        rpp_status = rppt_transpose_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->perm, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_transpose_generic_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->perm, data->pSrcRoi, data->handle->rppHandle);
+        rpp_status = rppt_transpose_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->perm, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;

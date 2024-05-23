@@ -1,4 +1,4 @@
-# Copyright (c) 2019 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2019 - 2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -133,22 +133,26 @@ list(APPEND SOURCES
         source/tensor/Copy.cpp
         source/tensor/Crop.cpp
         source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Downmix.cpp
         source/tensor/Exposure.cpp
         source/tensor/FishEye.cpp
         source/tensor/Flip.cpp
         source/tensor/Fog.cpp
         source/tensor/GammaCorrection.cpp
-        source/tensor/GaussianNoise.cpp
-        source/tensor/Slice.cpp
         source/tensor/Glitch.cpp
         source/tensor/Hue.cpp
         source/tensor/Jitter.cpp
         source/tensor/LensCorrection.cpp
+        source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
+        source/tensor/NonSilentRegionDetection.cpp
         source/tensor/Nop.cpp
+        source/tensor/Normalize.cpp
         source/tensor/Rotate.cpp
         source/tensor/Pixelate.cpp
+        source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
+        source/tensor/Resample.cpp
         source/tensor/Resize.cpp
         source/tensor/ResizeCrop.cpp
         source/tensor/ResizeCropMirror.cpp
@@ -156,12 +160,14 @@ list(APPEND SOURCES
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/Snow.cpp
+        source/tensor/Spectrogram.cpp
+        source/tensor/TensorAddTensor.cpp
+        source/tensor/TensorMulScalar.cpp
+        source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
-        source/tensor/SequenceRearrange.cpp
-        source/tensor/Normalize.cpp
+        source/tensor/Slice.cpp
         source/tensor/Transpose.cpp
-        source/tensor/Cast.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )
@@ -197,13 +203,23 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" ) # Currently used by rpp. To be removed.
 endif()
 
+# Audio features for VX_RPP
+if(${RPP_VERSION_MAJOR} VERSION_GREATER_EQUAL "1" AND ${RPP_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${RPP_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
+    message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
+    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=1)
+else()
+    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=0)
+    message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
+endif()
+
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenVX)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14 -mavx2")
 endif()
 
 target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST})
@@ -216,4 +232,4 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_ext_rpp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(FILES include/vx_ext_rpp.h include/vx_ext_rpp_version.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)

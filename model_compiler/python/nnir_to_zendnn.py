@@ -1,4 +1,4 @@
-# Copyright (c) 2022 - 2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022 - 2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ def generateLicenseForScript(f):
 #
 # MIT License
 #
-# Copyright (c) 2022 - 2023 Advanced Micro Devices, Inc.
+# Copyright (c) 2022 - 2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,7 @@ def generateLicenseForCPP(f):
 #
 # MIT License
 #
-# Copyright (c) 2022 - 2023 Advanced Micro Devices, Inc.
+# Copyright (c) 2022 - 2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -850,7 +850,7 @@ int model_setup(engine::kind engine_kind, const char *binaryFilename, const char
 """%(i, node.outputs[0], i, layerNumber, layerNumber))
                 layerNumber += 1
             elif node.type == 'softmax':
-                axis = node.attr.get('axis');
+                axis = node.attr.get('axis')
                 f.write( \
 """
     // Start: Model Layer %d - softMax
@@ -1000,7 +1000,7 @@ def main():
 Usage: python nnir_to_zendnn.py <nnirInputFolder> <outputFolder>
 
 """
-    pos = 1;
+    pos = 1
     argmaxOutput = None
     while len(sys.argv[pos:]) >= 2 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] != '--help':

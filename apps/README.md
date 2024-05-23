@@ -3,7 +3,7 @@
 MIVisionX has several applications built on top of OpenVX and its modules, it uses AMD optimized libraries to build applications that can be used as prototypes or used as models to develop products.
 
 ## Prerequisites
-* [MIVisionX](https://github.com/ROCm/MIVisionX/README.md#build--install-mivisionx) installed
+* [MIVisionX](https://github.com/ROCm/MIVisionX/blob/master/README.md#prerequisites) installed
 
 ## Bubble Pop
 

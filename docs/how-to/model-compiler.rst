@@ -409,7 +409,7 @@ Operators
     Slice,,|blue-sq|,|blue-sq| 
     Split,|blue-sq|,,
     Softmax,|blue-sq|,|blue-sq|,|blue-sq| 
-    SoftmaxWithLoss||blue-sq| ||
+    SoftmaxWithLoss,|blue-sq|,,
     Squeeze,,|blue-sq|,|blue-sq| 
     Sub,,|blue-sq|,|blue-sq| 
     Sum,,|blue-sq|,

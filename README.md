@@ -70,7 +70,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 * **GPU**: [AMD Radeon&trade; Graphics](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) [optional]
 * **APU**: [AMD Radeon&trade; `Mobile`/`Embedded`](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) [optional]
 
-> [!NOTE]
+> [!IMPORTANT]
 > Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
 
 ### Operating System
@@ -79,7 +79,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 * Ubuntu - `20.04` / `22.04`
 * CentOS - `7`
 * RedHat - `8` / `9`
-* SLES - `15-SP4`
+* SLES - `15-SP5`
 
 #### Windows
 * Windows `10` / `11`
@@ -95,7 +95,7 @@ The installation process uses the following steps:
 
 * [ROCm-supported hardware](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) install verification
 
-* Install ROCm `6.0.0` or later with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) with `--usecase=rocm`
+* Install ROCm `6.1.0` or later with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) with `--usecase=rocm`
 
 * Use **either** [Package install](#package-install) **or** [Source install](#source-install) as described below.
 
@@ -301,7 +301,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7`
   + RHEL - `8` / `9`
-  + SLES - `15-SP4`
+  + SLES - `15-SP5`
 * ROCm: rocm-core - `6.1.0.60100`
 * RPP - `1.5.0.60100`
 * miopen-hip - `3.1.0.60100`

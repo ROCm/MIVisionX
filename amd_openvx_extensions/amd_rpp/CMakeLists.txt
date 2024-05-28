@@ -33,6 +33,8 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
 elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     SET(OpenCL_FOUND FALSE)
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
+    set(DEFAULT_AMDGPU_TARGETS "gfx908;gfx90a;gfx940;gfx941;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102")
+    set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
     find_package(HIP REQUIRED)
 endif()
 
@@ -202,6 +204,16 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" ) # Currently used by rpp. To be removed.
 endif()
 
+# Audio features for VX_RPP
+if(${RPP_VERSION_MAJOR} VERSION_GREATER_EQUAL "1" AND ${RPP_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${RPP_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
+    message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
+    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=1)
+else()
+    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=0)
+    message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
+endif()
+
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenVX)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
@@ -221,4 +233,4 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-install(FILES include/vx_ext_rpp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(FILES include/vx_ext_rpp.h include/vx_ext_rpp_version.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)

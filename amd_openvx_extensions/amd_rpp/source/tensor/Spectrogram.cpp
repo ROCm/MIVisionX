@@ -135,9 +135,13 @@ static vx_status VX_CALLBACK processSpectrogram(vx_node node, const vx_reference
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+#if RPP_AUDIO
         rpp_status = rppt_spectrogram_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
                                            data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#else
+        return_status = VX_ERROR_NOT_SUPPORTED; 
+#endif
     }
     return return_status;
 }

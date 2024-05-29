@@ -34,7 +34,7 @@ Documentation for MIVisionX is available at
   + Ubuntu - `20.04` / `22.04`
   + CentOS - `7`
   + RHEL - `8` / `9`
-  + SLES - `15-SP4`
+  + SLES - `15-SP5`
 * ROCm: rocm-core - `6.1.0.60100`
 * RPP - `1.5.0.60100`
 * miopen-hip - `3.1.0.60100`

@@ -43,6 +43,7 @@ THE SOFTWARE.
 #include<iostream>
 #include<algorithm>
 #include<functional>
+#include<map>
 
 using namespace std;
 
@@ -74,6 +75,18 @@ enum vxTensorLayout {
     VX_NTF = 6      // Time major, Used for Spectrogram/MelFilterBank
 };
 
+const std::map<vxTensorLayout, RpptLayout> tensorLayoutMapping = {
+    {vxTensorLayout::VX_NHWC, RpptLayout::NHWC},
+    {vxTensorLayout::VX_NCHW, RpptLayout::NCHW},
+    {vxTensorLayout::VX_NFHWC, RpptLayout::NHWC},
+    {vxTensorLayout::VX_NFCHW, RpptLayout::NCHW},
+#if RPP_AUDIO
+    {vxTensorLayout::VX_NHW, RpptLayout::NHW},
+    {vxTensorLayout::VX_NFT, RpptLayout::NFT},
+    {vxTensorLayout::VX_NTF, RpptLayout::NTF}
+#endif
+};
+
 //! Brief The utility functions
 vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx_uint32 num);
 vx_status createRPPHandle(vx_node node, vxRppHandle ** pHandle, Rpp32u batchSize, Rpp32u deviceType);
@@ -81,7 +94,6 @@ vx_status releaseRPPHandle(vx_node node, vxRppHandle * handle, Rpp32u deviceType
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims);
 void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *tensorDims, vxTensorLayout layout = vxTensorLayout::VX_NHW);
 RpptDataType getRpptDataType(vx_enum dataType);
-RpptLayout getRpptLayout(vxTensorLayout layout);
 
 class Kernellist
 {

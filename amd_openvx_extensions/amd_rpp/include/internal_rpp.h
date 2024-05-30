@@ -75,7 +75,7 @@ enum vxTensorLayout {
     VX_NTF = 6      // Time major, Used for Spectrogram/MelFilterBank
 };
 
-const std::map<vxTensorLayout, RpptLayout> TENSOR_LAYOUT_MAPPING = {
+const std::map<vxTensorLayout, RpptLayout> tensorLayoutMapping = {
     {vxTensorLayout::VX_NHWC, RpptLayout::NHWC},
     {vxTensorLayout::VX_NCHW, RpptLayout::NCHW},
     {vxTensorLayout::VX_NFHWC, RpptLayout::NHWC},

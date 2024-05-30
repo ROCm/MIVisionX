@@ -2755,8 +2755,8 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
     descPtr->strides.wStride = descPtr->c;
     descPtr->strides.cStride = 1;
     descPtr->numDims = 4;
-    if(TENSOR_LAYOUT_MAPPING.find(layout) != TENSOR_LAYOUT_MAPPING.end()) {
-        descPtr->layout = TENSOR_LAYOUT_MAPPING.at(layout);
+    if(tensorLayoutMapping.find(layout) != tensorLayoutMapping.end()) {
+        descPtr->layout = tensorLayoutMapping.at(layout);
     } else {
         throw std::runtime_error("Invalid layout");
     }

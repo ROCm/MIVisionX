@@ -2584,6 +2584,43 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor p
     return node;
 }
 
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppDownmix(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_tensor pSrcRoi) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pDst,
+            (vx_reference)pSrcRoi,
+            (vx_reference)deviceType};
+        node = createNode(graph, VX_KERNEL_RPP_DOWNMIX, params, 4);
+    }
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppToDecibels(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar cutOffDB, vx_scalar multiplier, vx_scalar referenceMagnitude, vx_scalar inputLayout, vx_scalar outputLayout) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pSrcRoi,
+            (vx_reference)pDst,
+            (vx_reference)cutOffDB,
+            (vx_reference)multiplier,
+            (vx_reference)referenceMagnitude,
+            (vx_reference)inputLayout,
+            (vx_reference)outputLayout,
+            (vx_reference)deviceType};
+        node = createNode(graph, VX_KERNEL_RPP_TODECIBELS, params, 9);
+    }
+    return node;
+}
+
 RpptDataType getRpptDataType(vx_enum vxDataType) {
     switch(vxDataType) {
         case vx_type_e::VX_TYPE_FLOAT32:
@@ -2594,34 +2631,6 @@ RpptDataType getRpptDataType(vx_enum vxDataType) {
             return RpptDataType::I8;
         default:
             return RpptDataType::U8;
-    }
-}
-
-RpptLayout getRpptLayout(vxTensorLayout layout) {
-    switch(layout) {
-        case vxTensorLayout::VX_NHWC:
-            return RpptLayout::NHWC;
-        case vxTensorLayout::VX_NCHW:
-            return RpptLayout::NCHW;
-        case vxTensorLayout::VX_NFHWC:
-            return RpptLayout::NHWC;
-        case vxTensorLayout::VX_NFCHW:
-            return RpptLayout::NCHW;
-#if RPP_AUDIO
-        case vxTensorLayout::VX_NHW:
-            return RpptLayout::NHW;
-        case vxTensorLayout::VX_NFT:
-            return RpptLayout::NFT;
-        case vxTensorLayout::VX_NTF:
-            return RpptLayout::NTF;
-#else
-        case vxTensorLayout::VX_NHW:
-        case vxTensorLayout::VX_NFT:
-        case vxTensorLayout::VX_NTF:
-            throw std::runtime_error("RPP_AUDIO flag disabled, Audio layouts are not supported");
-#endif
-        default:
-            throw std::runtime_error("Invalid layout");
     }
 }
 
@@ -2691,7 +2700,11 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
     descPtr->strides.wStride = descPtr->c;
     descPtr->strides.cStride = 1;
     descPtr->numDims = 4;
-    descPtr->layout = getRpptLayout(layout);
+    if(tensorLayoutMapping.find(layout) != tensorLayoutMapping.end()) {
+        descPtr->layout = tensorLayoutMapping.at(layout);
+    } else {
+        throw std::runtime_error("Invalid layout");
+    }
 }
 
 // utility functions

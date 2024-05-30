@@ -2822,8 +2822,8 @@ void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTen
     genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
     genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
     genericDescPtr->strides[2] = genericDescPtr->dims[3];
-    if(TENSOR_LAYOUT_MAPPING.find(layout) != TENSOR_LAYOUT_MAPPING.end()) {
-        genericDescPtr->layout = TENSOR_LAYOUT_MAPPING.at(layout);
+    if(tensorLayoutMapping.find(layout) != tensorLayoutMapping.end()) {
+        genericDescPtr->layout = tensorLayoutMapping.at(layout);
     } else {
         throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims");
     }

@@ -265,7 +265,7 @@ pipNumpyVersion = "numpy==1.23.0"
 with open('/etc/os-release') as f:
     if 'VERSION_ID="8' in f.read():
         pipNumpyVersion = "numpy==1.19.5"
-pip3InferencePackagesSLES = [
+pip3InferencePackagesRPM = [
     'future==0.18.2',
     'pytz==2022.1',
     str(pipNumpyVersion),
@@ -421,8 +421,8 @@ else:
                         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                                 ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
                     # Install base Deps
-                    for i in range(len(pip3InferencePackagesSLES)):
-                            ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesSLES[i]))
+                    for i in range(len(pip3InferencePackagesRPM)):
+                            ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesRPM[i]))
                 # Install NNEF Deps
                 ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
                 ERROR_CHECK(os.system(

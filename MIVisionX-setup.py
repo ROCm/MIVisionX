@@ -264,7 +264,7 @@ pip3InferencePackagesUbuntu = [
 pip3InferencePackagesSLES = [
     'future==0.18.2',
     'pytz==2022.1',
-    'numpy==1.22.0',
+    'numpy==1.23.0',
     'google==3.0.0',
     'protobuf==3.12.4',
     'onnx==1.11.0'

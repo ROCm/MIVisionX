@@ -33,7 +33,9 @@ struct ResampleLocalData {
     RpptDescPtr pDstDesc;
     Rpp32f *pInRateTensor;
     Rpp32f *pOutRateTensor;
+#if RPP_AUDIO
     RpptResamplingWindow window;
+#endif
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
@@ -49,6 +51,7 @@ inline double hann(double x) {
 
 // initialization function used for filling the values in Resampling window (RpptResamplingWindow)
 // using the coeffs and lobes value this function generates a LUT (look up table) which is further used in Resample audio augmentation
+#if RPP_AUDIO
 inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t lobes) {
     float scale = 2.0f * lobes / (coeffs - 1);
     float scale_envelope = 2.0f / coeffs;
@@ -69,6 +72,7 @@ inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t 
     window.pCenter = _mm_set1_ps(window.center);
     window.pScale = _mm_set1_ps(window.scale);
 }
+#endif
 
 void update_destination_roi(ResampleLocalData *data, RpptROI *src_roi, RpptROI *dst_roi) {
     float scale_ratio;
@@ -197,7 +201,9 @@ static vx_status VX_CALLBACK initializeResample(vx_node node, const vx_reference
         data->pInRateTensor = new float[data->pSrcDesc->n];
         int32_t lobes = std::round(0.007 * data->quality * data->quality - 0.09 * data->quality + 3);
         int32_t lookupSize = lobes * 64 + 1;
+#if RPP_AUDIO
         windowed_sinc(data->window, lookupSize, lobes);
+#endif
         refreshResample(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

@@ -85,7 +85,6 @@ const std::map<vxTensorLayout, RpptLayout> tensorLayoutMapping = {
     {vxTensorLayout::VX_NFT, RpptLayout::NFT},
     {vxTensorLayout::VX_NTF, RpptLayout::NTF}
 #endif
-
 };
 
 //! Brief The utility functions

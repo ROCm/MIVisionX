@@ -2863,6 +2863,8 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
 void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims) {
     if (layout != vxTensorLayout::VX_NHW && layout != vxTensorLayout::VX_NFT && layout != vxTensorLayout::VX_NTF)
         throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims, currently supports only NHW/NFT/NTF layouts");
+    else if(tensorLayoutMapping.find(layout) != tensorLayoutMapping.end())
+        genericDescPtr->layout = tensorLayoutMapping.at(layout);
 
     genericDescPtr->dims[0] = maxTensorDims[0];
     genericDescPtr->dims[1] = maxTensorDims[1];
@@ -2875,11 +2877,6 @@ void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTen
     genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
     genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
     genericDescPtr->strides[2] = genericDescPtr->dims[3];
-    if(tensorLayoutMapping.find(layout) != tensorLayoutMapping.end()) {
-        genericDescPtr->layout = tensorLayoutMapping.at(layout);
-    } else {
-        throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims");
-    }
 }
 
 // utility functions

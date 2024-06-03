@@ -96,8 +96,12 @@ static vx_status VX_CALLBACK processDownmix(vx_node node, const vx_reference *pa
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshDownmix(node, parameters, num, data);
+#if RPP_AUDIO
         rpp_status = rppt_down_mixing_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, (Rpp32s *)data->pSrcRoi, false, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#else
+        return_status = VX_ERROR_NOT_SUPPORTED;
+#endif
     }
     return return_status;
 }

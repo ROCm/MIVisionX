@@ -252,13 +252,22 @@ inferenceRPMPackages = [
     'python3-protobuf'
 ]
 
-pip3InferencePackages = [
+pip3InferencePackagesUbuntu = [
     'future==0.18.2',
     'pytz==2022.1',
     'numpy==1.21',
     'google==3.0.0',
     'protobuf==3.12.4',
     'onnx==1.12.0'
+]
+
+pip3InferencePackagesSLES = [
+    'future==0.18.2',
+    'pytz==2022.1',
+    'numpy==1.19',
+    'google==3.0.0',
+    'protobuf==3.12.4',
+    'onnx==1.11.0'
 ]
 
 ffmpegDebianPackages = [
@@ -400,13 +409,16 @@ else:
                     for i in range(len(inferenceDebianPackages)):
                         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                                 ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]))
+                    # Install base Deps
+                    for i in range(len(pip3InferencePackagesUbuntu)):
+                        ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesUbuntu[i]))
                 else:
                     for i in range(len(inferenceRPMPackages)):
                         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                                 ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
-                # Install base Deps
-                for i in range(len(pip3InferencePackages)):
-                        ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackages[i]))
+                    # Install base Deps
+                    for i in range(len(pip3InferencePackagesSLES)):
+                            ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesSLES[i]))
                 # Install NNEF Deps
                 ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
                 ERROR_CHECK(os.system(

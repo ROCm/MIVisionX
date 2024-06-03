@@ -122,7 +122,6 @@ message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 find_package(HALF QUIET)
-find_package(HIP QUIET)
 
 if(HALF_FOUND)
   add_definitions(-DAMD_FP16_SUPPORT)
@@ -132,8 +131,8 @@ else()
   message("-- ${Blue}MIVisionX Built with float16 Support OFF${ColourReset}")
 endif()
 
-if(HIP_FOUND)
-  message("-- ${BoldBlue}ROCm Version -- ${HIP_VERSION}${ColourReset}")
+# Turn off Loom for HIP backend
+if("${BACKEND}" STREQUAL "HIP")
   set(LOOM OFF)
 endif()
 
@@ -200,13 +199,15 @@ set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, rpp-dev, rocblas-d
 set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
 
 # Add rocDecode Deps - Exclude centos-7
-file(READ "/etc/os-release" OS_RELEASE)
-string(REGEX MATCH "CentOS-7" CENTOS_7_FOUND ${OS_RELEASE})
-if(NOT CENTOS_7_FOUND)
-  set(MIVISIONX_DEBIAN_PACKAGE_LIST  "${MIVISIONX_DEBIAN_PACKAGE_LIST}, rocdecode")
-  set(MIVISIONX_RPM_PACKAGE_LIST     "${MIVISIONX_RPM_PACKAGE_LIST}, rocdecode")
-  set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, rocdecode-dev")
-  set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "${MIVISIONX_RPM_DEV_PACKAGE_LIST}, rocdecode-devel")
+if (EXISTS "/etc/os-release")
+  file(READ "/etc/os-release" OS_RELEASE)
+  string(REGEX MATCH "CentOS-7" CENTOS_7_FOUND ${OS_RELEASE})
+  if(NOT CENTOS_7_FOUND)
+    set(MIVISIONX_DEBIAN_PACKAGE_LIST  "${MIVISIONX_DEBIAN_PACKAGE_LIST}, rocdecode")
+    set(MIVISIONX_RPM_PACKAGE_LIST     "${MIVISIONX_RPM_PACKAGE_LIST}, rocdecode")
+    set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, rocdecode-dev")
+    set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "${MIVISIONX_RPM_DEV_PACKAGE_LIST}, rocdecode-devel")
+  endif()
 endif()
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
@@ -279,10 +280,10 @@ set(CPACK_DEBIAN_PACKAGE_RELEASE "local")
 set(CPACK_RPM_PACKAGE_RELEASE "local")
 
 if(DEFINED ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
- set(CPACK_DEBIAN_PACKAGE_RELEASE $ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
+  set(CPACK_DEBIAN_PACKAGE_RELEASE $ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
 endif()
 if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
- set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
+  set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
 if(APPLE)

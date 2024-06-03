@@ -63,6 +63,8 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     endif()
 elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
+    set(DEFAULT_AMDGPU_TARGETS "gfx908;gfx90a;gfx940;gfx941;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102")
+    set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
     find_package(HIP QUIET)
     if(HIP_FOUND)
         message("-- ${White}runVX -- Using HIP -- Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION} "\tCompiler:" ${HIP_COMPILER} ${ColourReset})
@@ -108,9 +110,9 @@ if(WIN32)
 else()
     target_link_libraries(runvx pthread)
     find_path(SSL_INCLUDE
-              NAMES openssl/hmac.h openssl/md5.h
-              HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include
-             )
+            NAMES openssl/hmac.h openssl/md5.h
+            HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include
+    )
     if(NOT "${SSL_INCLUDE}" STREQUAL "SSL_INCLUDE-NOTFOUND")
         include_directories(${SSL_INCLUDE})
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")

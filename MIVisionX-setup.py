@@ -255,7 +255,7 @@ inferenceRPMPackages = [
 pip3InferencePackagesUbuntu = [
     'future==0.18.2',
     'pytz==2022.1',
-    'numpy==1.21',
+    'numpy==1.22',
     'google==3.0.0',
     'protobuf==3.12.4',
     'onnx==1.12.0'
@@ -264,7 +264,7 @@ pip3InferencePackagesUbuntu = [
 pip3InferencePackagesSLES = [
     'future==0.18.2',
     'pytz==2022.1',
-    'numpy==1.19',
+    'numpy==1.23.0',
     'google==3.0.0',
     'protobuf==3.12.4',
     'onnx==1.11.0'
@@ -422,9 +422,9 @@ else:
                 # Install NNEF Deps
                 ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
                 ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)'))
+                    '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
                 ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc))'))
+                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
                 ERROR_CHECK(os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:

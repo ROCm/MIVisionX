@@ -422,9 +422,9 @@ else:
                 # Install NNEF Deps
                 ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
                 ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)'))
+                    '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
                 ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc))'))
+                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
                 ERROR_CHECK(os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:

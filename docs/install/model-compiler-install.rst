@@ -85,11 +85,12 @@ NNEF
 
   .. code-block:: shell
 
-    git clone https://github.com/KhronosGroup/NNEF-Tools.git
+    git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git
     cd NNEF-Tools/parser/cpp
     mkdir -p build && cd build
     cmake ../
     make
+    sudo make install
     cd ../../../python
     sudo python3 setup.py install
 

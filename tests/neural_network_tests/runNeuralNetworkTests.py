@@ -29,7 +29,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -217,8 +217,7 @@ linuxCMake = 'cmake'
 if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
     os.system('sudo -v')
     os.system('sudo rm -rf '+modelCompilerDeps)
-    print("\nMIVisionX runNeuralNetworkTests: Removing Previous Install -- " +
-          modelCompilerDeps+"\n")
+    print("\nMIVisionX runNeuralNetworkTests: Removing Previous Install -- " +modelCompilerDeps+"\n")
 
 if not os.path.exists(modelCompilerDeps):
     print("STATUS: Model Compiler Deps Install - "+modelCompilerDeps+"\n")
@@ -256,7 +255,7 @@ if not os.path.exists(modelCompilerDeps):
         platfromInfo = platfromInfo+'-SLES'
     else:
         print("\nMIVisionX runNeuralNetworkTests.py on " +
-              platfromInfo+" is unsupported\n")
+            platfromInfo+" is unsupported\n")
         print("\nMIVisionX runNeuralNetworkTests.py Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP4\n")
         exit()
 
@@ -283,9 +282,9 @@ if not os.path.exists(modelCompilerDeps):
     # Install NNEF Deps
     os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
     os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)')
+        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)')
     os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make)')
+        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)')
     os.system(
         '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
 else:
@@ -316,18 +315,18 @@ if profileMode == 0 or profileMode == 1:
             x = str(x)
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
-                      '; mkdir -p nnir_build_'+x+')')
+                    '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/model.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                    modelName+'/model.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
+                    modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+                    modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log')
+                    currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log)')
+                    ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_no_fuse_output.log)')
             annTestResults = shell(
                 '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
@@ -371,18 +370,18 @@ if profileMode == 0 or profileMode == 2:
             x = str(x)
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
-                      '; mkdir -p nnir_build_'+x+')')
+                    '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/model.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                    modelName+'/model.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
+                    modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+                    modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log')
+                    currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log)')
+                    ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fuse_output.log)')
             annTestResults = shell(
                 '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
@@ -426,18 +425,18 @@ if profileMode == 0 or profileMode == 3:
             x = str(x)
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
-                      '; mkdir -p nnir_build_'+x+')')
+                    '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/model.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                    modelName+'/model.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
+                    modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+                    modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log')
+                    currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log)')
+                    ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/caffe_fp16_output.log)')
             annTestResults = shell(
                 '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
@@ -481,18 +480,18 @@ if profileMode == 0 or profileMode == 4:
             x = str(x)
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
-                      '; mkdir -p nnir_build_'+x+')')
+                    '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/onnx_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                    modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
+                    modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+                    modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log')
+                    currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log)')
+                    ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_no_fuse_output.log)')
             annTestResults = shell(
                 '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
@@ -536,18 +535,18 @@ if profileMode == 0 or profileMode == 5:
             x = str(x)
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
-                      '; mkdir -p nnir_build_'+x+')')
+                    '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/onnx_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                    modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
+                    modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+                    modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log')
+                    currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log)')
+                    ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fuse_output.log)')
             annTestResults = shell(
                 '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
@@ -591,18 +590,18 @@ if profileMode == 0 or profileMode == 6:
             x = str(x)
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
-                      '; mkdir -p nnir_build_'+x+')')
+                    '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/onnx_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                    modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
+                    modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+                    modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log')
+                    currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log)')
+                    ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/onnx_fp16_output.log)')
             annTestResults = shell(
                 '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
@@ -646,18 +645,18 @@ if profileMode == 0 or profileMode == 7:
             x = str(x)
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
-                      '; mkdir -p nnir_build_'+x+')')
+                    '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/nnef_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+' . )')
+                    modelName+' . )')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
+                    modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+                    modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log')
+                    currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log)')
+                    ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_no_fuse_output.log)')
             annTestResults = shell(
                 '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
@@ -701,18 +700,18 @@ if profileMode == 0 or profileMode == 8:
             x = str(x)
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
-                      '; mkdir -p nnir_build_'+x+')')
+                    '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/nnef_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+' . )')
+                    modelName+' . )')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
+                    modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+                    modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log')
+                    currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log)')
+                    ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fuse_output.log)')
             annTestResults = shell(
                 '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()
@@ -756,18 +755,18 @@ if profileMode == 0 or profileMode == 9:
             x = str(x)
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
-                      '; mkdir -p nnir_build_'+x+')')
+                    '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/nnef_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+' . )')
+                    modelName+' . )')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
+                    modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
-                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+                    modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; '+linuxCMake+' .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log')
+                    currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log)')
+                    ' ./anntest weights.bin | tee -a '+currentWorkingDirectory+'/vx_nn_test/nnef_fp16_output.log)')
             annTestResults = shell(
                 '(cd '+modelBuildDir+x+'; ./anntest weights.bin)')
             annTestResults = annTestResults.decode()

@@ -48,7 +48,7 @@ ENV CUPY_INSTALL_USE_HIP=1
 ENV ROCM_HOME=/opt/rocm
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install git g++ hipblas hipsparse rocrand hipfft rocfft rocthrust-dev hipcub-dev python3 python3-pip python3-dev && \
         git clone -b v12.2.0 https://github.com/ROCmSoftwarePlatform/cupy.git && \
-        git submodule update --init && pip install -e . --no-cache-dir -vvvv && pip install numpy==1.21 && cd
+        git submodule update --init && pip install -e . --no-cache-dir -vvvv && pip install numpy==1.22 && cd
 
 ENV MIVISIONX_WORKSPACE=/workspace
 WORKDIR $MIVISIONX_WORKSPACE

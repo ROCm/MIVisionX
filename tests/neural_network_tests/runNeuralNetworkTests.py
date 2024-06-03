@@ -274,7 +274,7 @@ if not os.path.exists(modelCompilerDeps):
             'sudo '+linuxSystemInstall+' ' +
             linuxSystemInstall_check+' install git inxi python-devel python3-devel python3-pip protobuf-devel python3-protobuf')
     # Install base Deps
-    os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21')
+    os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.22')
     # Install CAFFE Deps
     os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
     # Install ONNX Deps

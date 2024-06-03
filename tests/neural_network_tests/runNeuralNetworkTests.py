@@ -18,26 +18,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from datetime import datetime
-from subprocess import Popen, PIPE
 import argparse
 import os
 import shutil
 import sys
+import traceback
 import platform
-
-__author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Neural Net Test Full Report"
-__license__ = "MIT"
-__version__ = "1.3.0"
-__maintainer__ = "Kiriti Nagesh Gowda"
-__email__ = "mivisionx.support@amd.com"
-__status__ = "Shipping"
-
 if sys.version_info[0] < 3:
     import commands
 else:
     import subprocess
+from datetime import datetime
+from subprocess import Popen, PIPE
+
+__copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Neural Net Test Full Report"
+__license__ = "MIT"
+__version__ = "1.5.0"
+__email__ = "mivisionx.support@amd.com"
+__status__ = "Shipping"
+    
+# error check calls
+def ERROR_CHECK(call):
+    status = call
+    if(status != 0):
+        print('ERROR_CHECK failed with status:'+str(status))
+        traceback.print_stack()
+        exit(status)
 
 
 def shell(cmd):
@@ -103,6 +109,41 @@ onnxModelConfig = [
 
 nnefModelConfig = [
     ('nnef-mnist', 1, 28, 28)
+]
+
+# Linux Packages
+inferenceDebianPackages = [
+    'inxi',
+    'python3-dev',
+    'python3-pip',
+    'protobuf-compiler',
+    'libprotoc-dev'
+]
+
+inferenceRPMPackages = [
+    'inxi',
+    'python3-devel',
+    'python3-pip',
+    'protobuf-devel',
+    'python3-protobuf'
+]
+
+pip3InferencePackagesDebian = [
+    'future==0.18.2',
+    'pytz==2022.1',
+    'numpy==1.22',
+    'google==3.0.0',
+    'protobuf==3.12.4',
+    'onnx==1.12.0'
+]
+
+pip3InferencePackagesRPM = [
+    'future==0.18.2',
+    'pytz==2022.1',
+    'numpy==1.19',
+    'google==3.0.0',
+    'protobuf==3.12.4',
+    'onnx==1.11.0'
 ]
 
 # REPORT
@@ -240,7 +281,7 @@ if not os.path.exists(modelCompilerDeps):
         linuxSystemInstall_check = '--nogpgcheck'
         if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
             linuxCMake = 'cmake3'
-            os.system(linuxSystemInstall+' install cmake3')
+            ERROR_CHECK(os.system(linuxSystemInstall+' install cmake3'))
         if "centos" not in platfromInfo or "redhat" not in platfromInfo:
             platfromInfo = platfromInfo+'-redhat'
     elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
@@ -260,33 +301,31 @@ if not os.path.exists(modelCompilerDeps):
         exit()
 
     if userName == 'root':
-        os.system(linuxSystemInstall+' update')
-        os.system(linuxSystemInstall+' install sudo')
+        ERROR_CHECK(os.system(linuxSystemInstall+' update'))
+        ERROR_CHECK(os.system(linuxSystemInstall+' install sudo'))
 
     os.makedirs(modelCompilerDeps)
     os.system('sudo -v')
     if "Ubuntu" in platfromInfo:
-        os.system(
-            'sudo '+linuxSystemInstall+' ' +
-            linuxSystemInstall_check+' install git inxi python3-dev python3-pip protobuf-compiler libprotoc-dev')
+        for i in range(len(inferenceDebianPackages)):
+            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]))
+        for i in range(len(pip3InferencePackagesDebian)):
+                            ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesDebian[i]))
     else:
-        os.system(
-            'sudo '+linuxSystemInstall+' ' +
-            linuxSystemInstall_check+' install git inxi python-devel python3-devel python3-pip protobuf-devel python3-protobuf')
-    # Install base Deps
-    os.system('sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.22')
-    # Install CAFFE Deps
-    os.system('sudo pip3 install google==3.0.0 protobuf==3.12.4')
-    # Install ONNX Deps
-    os.system('sudo pip3 install onnx==1.12.0')
+        for i in range(len(inferenceRPMPackages)):
+            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
+        for i in range(len(pip3InferencePackagesRPM)):
+                            ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesRPM[i]))
     # Install NNEF Deps
-    os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
-    os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)')
-    os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)')
-    os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
+    ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
+    ERROR_CHECK(os.system(
+        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
+    ERROR_CHECK(os.system(
+        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
+    ERROR_CHECK(os.system(
+        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
     if "centos-7" in platfromInfo:

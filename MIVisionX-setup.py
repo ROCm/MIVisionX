@@ -261,10 +261,14 @@ pip3InferencePackagesUbuntu = [
     'onnx==1.12.0'
 ]
 
+pipNumpyVersion = "numpy==1.23.0"
+with open('/etc/os-release') as f:
+    if 'VERSION_ID="8' in f.read():
+        pipNumpyVersion = "numpy==1.19.5"
 pip3InferencePackagesSLES = [
     'future==0.18.2',
     'pytz==2022.1',
-    'numpy==1.23.0',
+    str(pipNumpyVersion),
     'google==3.0.0',
     'protobuf==3.12.4',
     'onnx==1.11.0'

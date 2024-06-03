@@ -276,6 +276,7 @@ if not os.path.exists(modelCompilerDeps):
 
     linuxSystemInstall = ''
     linuxSystemInstall_check = ''
+    linuxFlag = ''
     if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/bin/yum'):
         linuxSystemInstall = 'yum -y'
         linuxSystemInstall_check = '--nogpgcheck'

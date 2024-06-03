@@ -424,8 +424,7 @@ else:
                 ERROR_CHECK(os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
                 ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make # The code you provided seems to be a comment in a Python script. The `#` symbol is used to indicate a comment in Python, which means that the line starting with `#` will be ignored by the Python interpreter.
-                    -j$(nproc); sudo make install)'))
+                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
                 ERROR_CHECK(os.system(
                     '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:

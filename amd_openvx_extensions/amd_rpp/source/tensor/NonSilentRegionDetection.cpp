@@ -222,7 +222,6 @@ vx_status NonSilentRegionDetection_Register(vx_context context) {
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
     if (status != VX_SUCCESS) {
-    exit:
         vxRemoveKernel(kernel);
         return VX_FAILURE;
     }

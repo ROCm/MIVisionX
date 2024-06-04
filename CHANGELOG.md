@@ -14,6 +14,7 @@ Documentation for MIVisionX is available at
 * Support for Spectrogram augmentation in openVX extensions
 * Support for Downmix and ToDecibels augmentations in openVX extensions
 * Support for Resample augmentation and Operator overloading nodes in openVX extensions
+* Support for NonSilentRegion and Slice augmentations in openVX extensions
 
 ### Optimizations
 

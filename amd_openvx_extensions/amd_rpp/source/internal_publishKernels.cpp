@@ -167,7 +167,8 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(Resample_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(TensorMulScalar_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(TensorAddTensor_Register));
-
+    STATUS_ERROR_CHECK(ADD_KERNEL(NonSilentRegionDetection_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Slice_Register));
     return status;
 }
 

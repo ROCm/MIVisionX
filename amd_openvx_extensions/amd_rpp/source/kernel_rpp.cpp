@@ -2584,6 +2584,51 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppSpectrogram(vx_graph graph, vx_tensor p
     return node;
 }
 
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonSilentRegionDetection(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pBegin, vx_tensor pLength, vx_scalar cutOffDB, vx_scalar referencePower, vx_scalar windowLength, vx_scalar resetInterval) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pSrcRoi,
+            (vx_reference)pBegin,
+            (vx_reference)pLength,
+            (vx_reference)cutOffDB,
+            (vx_reference)referencePower,
+            (vx_reference)windowLength,
+            (vx_reference)resetInterval,
+            (vx_reference)deviceType};
+        node = createNode(graph, VX_KERNEL_RPP_NONSILENTREGIONDETECTION, params, 9);
+    }
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppSlice(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pDstRoi, vx_tensor pAnchor, vx_tensor pShape,
+                                               vx_array pFillValue, vx_scalar policy, vx_scalar inputLayout, vx_scalar roiType) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pSrcRoi,
+            (vx_reference)pDst,
+            (vx_reference)pDstRoi,
+            (vx_reference)pAnchor,
+            (vx_reference)pShape,
+            (vx_reference)pFillValue,
+            (vx_reference)policy,
+            (vx_reference)inputLayout,
+            (vx_reference)roiType,
+            (vx_reference)deviceType};
+        node = createNode(graph, VX_KERNEL_RPP_SLICE, params, 11);
+    }
+    return node;
+}
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtRppDownmix(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_tensor pSrcRoi) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -2760,6 +2805,25 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
     } else {
         throw std::runtime_error("Invalid layout");
     }
+}
+
+void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims) {
+    if (layout != vxTensorLayout::VX_NHW && layout != vxTensorLayout::VX_NFT && layout != vxTensorLayout::VX_NTF)
+        throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims, currently supports only NHW/NFT/NTF layouts");
+    else if(tensorLayoutMapping.find(layout) != tensorLayoutMapping.end())
+        genericDescPtr->layout = tensorLayoutMapping.at(layout);
+
+    genericDescPtr->dims[0] = maxTensorDims[0];
+    genericDescPtr->dims[1] = maxTensorDims[1];
+    genericDescPtr->dims[2] = maxTensorDims[2];
+    genericDescPtr->dims[3] = 1;
+    if(genericDescPtr->dims[2] == 1)
+        genericDescPtr->numDims = 2;
+    else
+        genericDescPtr->numDims = 3;
+    genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
+    genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
+    genericDescPtr->strides[2] = genericDescPtr->dims[3];
 }
 
 // utility functions

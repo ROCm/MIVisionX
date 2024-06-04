@@ -30,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.2.0"
+__version__ = "3.3.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -170,7 +170,6 @@ if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/
     linuxSystemInstall_check = '--nogpgcheck'
     if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
         linuxCMake = 'cmake3'
-        ERROR_CHECK(os.system(linuxSystemInstall+' install cmake3')) 
     if "centos" not in platfromInfo or "redhat" not in platfromInfo:
         if "8" in platform.version():
             platfromInfo = platfromInfo+'-redhat-8'
@@ -327,6 +326,9 @@ opencvRPMPackages = [
     'unzip'
 ]
 
+# update
+ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +' '+linuxSystemInstall_check+' update'))
+
 # Re-Install
 if os.path.exists(deps_dir):
     print("\nMIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
@@ -335,6 +337,9 @@ if os.path.exists(deps_dir):
     for i in range(len(commonPackages)):
         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]))
+    if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
+        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install cmake3'))
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
@@ -382,6 +387,9 @@ else:
     for i in range(len(commonPackages)):
         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]))
+    if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
+        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install cmake3'))
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':

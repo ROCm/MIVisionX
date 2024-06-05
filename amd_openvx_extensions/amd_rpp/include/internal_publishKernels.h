@@ -164,6 +164,8 @@ vx_status TensorMulScalar_Register(vx_context);
 vx_status TensorAddTensor_Register(vx_context);
 vx_status NonSilentRegionDetection_Register(vx_context);
 vx_status Slice_Register(vx_context);
+vx_status Normalize_Register(vx_context);
+vx_status MelFilterBank_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -297,5 +299,7 @@ vx_status Slice_Register(vx_context);
 #define VX_KERNEL_RPP_TENSORADDTENSOR_NAME                      "org.rpp.TensorAddTensor"
 #define VX_KERNEL_RPP_NONSILENTREGIONDETECTION_NAME             "org.rpp.NonSilentRegionDetection"
 #define VX_KERNEL_RPP_SLICE_NAME                                "org.rpp.Slice"
+#define VX_KERNEL_RPP_NORMALIZE_NAME                            "org.rpp.Normalize"
+#define VX_KERNEL_RPP_MELFILTERBANK_NAME                        "org.rpp.MelFilterBank"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

@@ -54,7 +54,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
   ```
 * PIP3 Packages
   ```
-  sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.21
+  sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.22
   ```
 
 **Note:** MIVisionX installs model compiler scripts at `/opt/rocm/libexec/mivisionx/model_compiler/python/`
@@ -81,11 +81,12 @@ sudo pip3 install protobuf==3.12.4 onnx==1.12.0
 
 * [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools) - Build the nnef python module
 ```
-git clone https://github.com/KhronosGroup/NNEF-Tools.git
+git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git
 cd NNEF-Tools/parser/cpp
 mkdir -p build && cd build
 cmake ../
 make
+sudo make install
 cd ../../../python
 sudo python3 setup.py install
 ```

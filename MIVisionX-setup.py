@@ -30,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.2.0"
+__version__ = "3.3.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -133,7 +133,6 @@ else:
         print("\nSTATUS: CPU Backend Install\n")
     neuralNetInstall = 'OFF'
     inferenceInstall = 'OFF'
-    ffmpegInstall = 'OFF'
 
 # get platfrom info
 platfromInfo = platform.platform()
@@ -160,44 +159,49 @@ else:
 deps_dir = os.path.expanduser(setupDir_deps)
 deps_dir = os.path.abspath(deps_dir)
 
+# check os version
+os_info_data = 'NOT Supported'
+if os.path.exists('/etc/os-release'):
+    with open('/etc/os-release', 'r') as os_file:
+        os_info_data = os_file.read().replace('\n', ' ')
+        os_info_data = os_info_data.replace('"', '')
+
 # setup for Linux
 linuxSystemInstall = ''
 linuxCMake = 'cmake'
 linuxSystemInstall_check = ''
 linuxFlag = ''
-if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/bin/yum'):
+if "centos" in os_info_data or "redhat" in os_info_data or os.path.exists('/usr/bin/yum'):
     linuxSystemInstall = 'yum -y'
     linuxSystemInstall_check = '--nogpgcheck'
-    if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
+    if "VERSION_ID=7" in os_info_data:
         linuxCMake = 'cmake3'
-        ERROR_CHECK(os.system(linuxSystemInstall+' install cmake3')) 
-    if "centos" not in platfromInfo or "redhat" not in platfromInfo:
-        if "8" in platform.version():
-            platfromInfo = platfromInfo+'-redhat-8'
-        elif "9" in platform.version():
-            platfromInfo = platfromInfo+'-redhat-9'
-        else:
-            platfromInfo = platfromInfo+'-redhat-centos-undefined-version'
-elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
+        platfromInfo = platfromInfo+'-redhat-7'
+    elif "VERSION_ID=8" in os_info_data:
+        platfromInfo = platfromInfo+'-redhat-8'
+    elif "VERSION_ID=9" in os_info_data:
+        platfromInfo = platfromInfo+'-redhat-9'
+    else:
+        platfromInfo = platfromInfo+'-redhat-centos-undefined-version'
+elif "Ubuntu" in os_info_data or os.path.exists('/usr/bin/apt-get'):
     linuxSystemInstall = 'apt-get -y'
     linuxSystemInstall_check = '--allow-unauthenticated'
     linuxFlag = '-S'
-    if "Ubuntu" not in platfromInfo:
-        if "20" in platform.version():
-            platfromInfo = platfromInfo+'-Ubuntu-20'
-        elif "22" in platform.version():
-            platfromInfo = platfromInfo+'-Ubuntu-22'
-        elif "24" in platform.version():
-            platfromInfo = platfromInfo+'-Ubuntu-24'
-        else:
-            platfromInfo = platfromInfo+'-Ubuntu-undefined-version'
-elif os.path.exists('/usr/bin/zypper'):
+    if "VERSION_ID=20" in os_info_data:
+        platfromInfo = platfromInfo+'-Ubuntu-20'
+    elif "VERSION_ID=22" in os_info_data:
+        platfromInfo = platfromInfo+'-Ubuntu-22'
+    elif "VERSION_ID=24" in os_info_data:
+        platfromInfo = platfromInfo+'-Ubuntu-24'
+    else:
+        platfromInfo = platfromInfo+'-Ubuntu-undefined-version'
+elif "SLES" in os_info_data or os.path.exists('/usr/bin/zypper'):
     linuxSystemInstall = 'zypper -n'
     linuxSystemInstall_check = '--no-gpg-checks'
     platfromInfo = platfromInfo+'-SLES'
 else:
     print("\nMIVisionX Setup on "+platfromInfo+" is unsupported\n")
-    print("\nMIVisionX Setup Supported on: Ubuntu 20/22, CentOS 7, RedHat 8/9, & SLES 15\n")
+    print("\nMIVisionX Setup Supported on: Ubuntu 20/22, RedHat 8/9, & SLES 15\n")
     exit()
 
 # MIVisionX Setup
@@ -255,7 +259,7 @@ inferenceRPMPackages = [
 pip3InferencePackagesUbuntu = [
     'future==0.18.2',
     'pytz==2022.1',
-    'numpy==1.22',
+    'numpy==1.23.0',
     'google==3.0.0',
     'protobuf==3.12.4',
     'onnx==1.12.0'
@@ -327,6 +331,9 @@ opencvRPMPackages = [
     'unzip'
 ]
 
+# update
+ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +' '+linuxSystemInstall_check+' update'))
+
 # Re-Install
 if os.path.exists(deps_dir):
     print("\nMIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
@@ -335,6 +342,9 @@ if os.path.exists(deps_dir):
     for i in range(len(commonPackages)):
         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]))
+    if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
+        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install cmake3'))
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
@@ -382,6 +392,9 @@ else:
     for i in range(len(commonPackages)):
         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ commonPackages[i]))
+    if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
+        ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install cmake3'))
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':

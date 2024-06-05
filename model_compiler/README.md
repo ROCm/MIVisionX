@@ -54,7 +54,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
   ```
 * PIP3 Packages
   ```
-  sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.22
+  sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.23.0
   ```
 
 **Note:** MIVisionX installs model compiler scripts at `/opt/rocm/libexec/mivisionx/model_compiler/python/`

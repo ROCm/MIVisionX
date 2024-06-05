@@ -145,9 +145,11 @@ list(APPEND SOURCES
         source/tensor/Hue.cpp
         source/tensor/Jitter.cpp
         source/tensor/LensCorrection.cpp
+        source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
         source/tensor/NonSilentRegionDetection.cpp
         source/tensor/Nop.cpp
+        source/tensor/Normalize.cpp
         source/tensor/Rotate.cpp
         source/tensor/Pixelate.cpp
         source/tensor/PreemphasisFilter.cpp

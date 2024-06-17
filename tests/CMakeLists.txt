@@ -35,16 +35,28 @@ include(CTest)
 if(DEFINED ENV{ROCM_PATH})
   set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
 elseif(ROCM_PATH)
-  message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
+  message("-- ${PROJECT_NAME}: ROCM_PATH Set -- ${ROCM_PATH}")
 else()
   set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 endif()
 
-# set GPU HIP support on by default for Test Package
-set(GPU_SUPPORT ON)
-set(BACKEND "HIP")
+# set defaults for test
+if(NOT DEFINED BACKEND)
+  set(GPU_SUPPORT ON)
+endif()
+if(NOT DEFINED BACKEND)
+  set(BACKEND "HIP")
+endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests")
   set(NEURAL_NET ON)
+endif()
+if(NOT DEFINED ENHANCED_MESSAGE)
+  string(ASCII 27 Esc)
+  set(ColourReset "${Esc}[m")
+  set(Red         "${Esc}[31m")
+  set(Green       "${Esc}[32m")
+  set(Yellow      "${Esc}[33m")
+  set(White       "${Esc}[37m")
 endif()
 
 # find OpenVX
@@ -56,10 +68,11 @@ if(OPENVX_LIBRARY AND OPENVXU_LIBRARY AND OPENVX_INCLUDE_DIR)
   set(OPENVX_FOUND TRUE)
   message("-- ${White}${PROJECT_NAME}: Using OpenVX -- \n\tLibraries:${OPENVX_LIBRARY} \n\tIncludes:${OPENVX_INCLUDE_DIR}${ColourReset}")
 else()
-    message("-- ${Yellow}${PROJECT_NAME} OpenVX Libraries Not Found")
+  message("-- ${Yellow}${PROJECT_NAME}: Install MIVisionX before running CTests")
+  message("-- ${Yellow}${PROJECT_NAME}: OpenVX Libraries Not Found")
 endif()
 
-# default run
+# OpenVX default tests - Vision Nodes
 # canny
 add_test(
   NAME
@@ -96,7 +109,7 @@ add_test(
             --test-command "openvx_color_convert"
 )
 
-# CPU Tests
+# OpenVX CPU Tests
 add_test(NAME openvx_canny_CPU 
               COMMAND openvx_canny 
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/canny)
@@ -121,6 +134,26 @@ if(Python3_FOUND)
             --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(Python3_FOUND)
+
+# find vx_opencv
+find_library(VX_OPENCV_LIBRARY NAMES vx_opencv HINTS ${ROCM_PATH}/lib)
+find_path(VX_OPENCV_INCLUDE_DIR NAMES vx_ext_opencv.h PATHS ${ROCM_PATH}/include/mivisionx)
+if(VX_OPENCV_LIBRARY AND VX_OPENCV_INCLUDE_DIR)
+  set(VX_OPENCV_FOUND TRUE)
+  message("-- ${White}${PROJECT_NAME}: Using VX_OpenCV -- \n\tLibraries:${VX_OPENCV_LIBRARY}${ColourReset}")
+else()
+  message("-- ${Yellow}${PROJECT_NAME}: VX_OpenCV Libraries Not Found")
+endif()
+
+# find vx_rpp
+find_library(VX_RPP_LIBRARY NAMES vx_rpp HINTS ${ROCM_PATH}/lib)
+find_path(VX_RPP_INCLUDE_DIR NAMES vx_ext_rpp.h PATHS ${ROCM_PATH}/include/mivisionx)
+if(VX_RPP_LIBRARY AND VX_RPP_INCLUDE_DIR)
+  set(VX_RPP_FOUND TRUE)
+  message("-- ${White}${PROJECT_NAME}: Using VX_RPP -- \n\tLibraries:${VX_RPP_LIBRARY}${ColourReset}")
+else()
+  message("-- ${Yellow}${PROJECT_NAME}: VX_RPP Libraries Not Found")
+endif()
 
 # GPU Tests
 if(GPU_SUPPORT)

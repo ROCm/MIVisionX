@@ -151,6 +151,7 @@ add_subdirectory(utilities)
 install(FILES tests/CMakeLists.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 install(DIRECTORY tests/openvx_api_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 install(DIRECTORY tests/vision_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+install(DIRECTORY tests/amd_opencv_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 # CTests
 enable_testing()
 include(CTest)

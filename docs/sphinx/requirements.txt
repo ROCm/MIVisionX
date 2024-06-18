@@ -155,7 +155,7 @@ tqdm==4.66.3
     # via mpire
 typing-extensions==4.5.0
     # via pydata-sphinx-theme
-urllib3==1.26.18
+urllib3==1.26.19
     # via requests
 wrapt==1.15.0
     # via deprecated

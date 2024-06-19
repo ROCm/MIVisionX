@@ -19,7 +19,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 ## AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below listed OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
+The hlo framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below listed OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
 
 <p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 

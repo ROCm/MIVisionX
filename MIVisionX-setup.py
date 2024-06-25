@@ -575,4 +575,4 @@ else:
         ERROR_CHECK(os.system(
             '(cd '+deps_dir+'/gdb-12.1; ./configure --with-python3; make CXXFLAGS="-static-libstdc++" -j$(nproc); sudo make install)'))
 
-    print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")
+    print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+" on "+platfromInfo+"\n")

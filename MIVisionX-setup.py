@@ -258,11 +258,14 @@ neuralNetRPMPackages = [
     'migraphx-devel'
 ]
 
+libPythonProto = "python3-protobuf"
+if "centos" in os_info_data and "VERSION_ID=7" in os_info_data:
+    libPythonProto = "protobuf-python"
 inferenceRPMPackages = [
     'python3-devel',
     'python3-pip',
     'protobuf-devel',
-    'python3-protobuf'
+    str(libPythonProto)
 ]
 
 pip3InferencePackagesUbuntu = [

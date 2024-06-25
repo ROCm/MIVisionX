@@ -388,7 +388,7 @@ if os.path.exists(deps_dir):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
 
-    print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
+    print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+" on "+platfromInfo+"\n")
     exit()
 
 # Clean Install

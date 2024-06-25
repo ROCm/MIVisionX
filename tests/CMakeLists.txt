@@ -40,6 +40,13 @@ else()
   set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+set(Python3_FIND_VIRTUALENV FIRST)
+find_package(Python3 QUIET)
+find_package(OpenCV QUIET)
+find_package(MIVISIONX QUIET)
+
 # set defaults for test
 if(NOT DEFINED BACKEND)
   set(GPU_SUPPORT ON)
@@ -122,10 +129,6 @@ add_test(NAME openvx_color_convert_CPU
               COMMAND openvx_color_convert 
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/color_convert)
 set_property(TEST openvx_color_convert_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
-
-set(Python3_FIND_VIRTUALENV FIRST)
-find_package(Python3 QUIET)
-find_package(OpenCV QUIET)
 
 # OpenVX Tests
 if(Python3_FOUND)

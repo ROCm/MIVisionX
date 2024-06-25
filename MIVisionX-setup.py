@@ -381,7 +381,7 @@ if os.path.exists(deps_dir):
         for i in range(len(rocdecodeDebianPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
-    else:
+    elif "redhat-7" not in platfromInfo:
         for i in range(len(rocdecodeRPMPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
@@ -476,7 +476,7 @@ else:
         for i in range(len(rocdecodeDebianPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
-    else:
+    elif "redhat-7" not in platfromInfo:
         for i in range(len(rocdecodeRPMPackages)):
                 ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))

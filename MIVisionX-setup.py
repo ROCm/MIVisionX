@@ -224,13 +224,16 @@ if os.path.exists(deps_dir) and reinstall == 'ON':
     print("\nMIVisionX Setup: Removing Previous Install -- "+deps_dir+"\n")
 
 # source install - package dependencies
+libpkgConfig = "pkg-config"
+if "centos" in os_info_data and "VERSION_ID=7" in os_info_data:
+    libpkgConfig = "pkgconfig"
 commonPackages = [
     'gcc',
     'cmake',
     'git',
     'wget',
     'unzip',
-    'pkg-config',
+    str(libpkgConfig),
     'inxi'
 ]
 

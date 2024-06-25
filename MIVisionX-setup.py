@@ -278,9 +278,8 @@ pip3InferencePackagesUbuntu = [
 ]
 
 pipNumpyVersion = "numpy==1.23.0"
-with open('/etc/os-release') as f:
-    if 'VERSION_ID="8' in f.read():
-        pipNumpyVersion = "numpy==1.19.5"
+if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
+    pipNumpyVersion = "numpy==1.19.5"
 pip3InferencePackagesRPM = [
     'future==0.18.2',
     'pytz==2022.1',

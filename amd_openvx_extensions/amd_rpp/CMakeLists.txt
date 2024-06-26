@@ -204,6 +204,14 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" ) # Currently used by rpp. To be removed.
 endif()
 
+option(RPP_AUDIO_SUPPORT      "Build MIVisionX with RPP audio support"         ON)
+if (RPP_AUDIO_SUPPORT)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAUDIO_SUPPORT=1")
+    message("-- ${Green}RPP_AUDIO_SUPPORT set to ON ${ColourReset}")
+else()
+    message("-- ${Yellow}RPP_AUDIO_SUPPORT (default=ON) was overrided. Skipping RPP audio support.${ColourReset}")
+endif()
+
 # Audio features for VX_RPP
 if(${RPP_VERSION_MAJOR} VERSION_GREATER_EQUAL "1" AND ${RPP_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${RPP_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")

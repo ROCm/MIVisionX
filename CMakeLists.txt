@@ -53,7 +53,7 @@ option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
-option(BUILD_WITH_AMD_ADVANCE "Build RPP for advanced AMD GPU Architecture" OFF)
+option(BUILD_WITH_AMD_ADVANCE "Build MIVisionX for advanced AMD GPU Architecture" OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")

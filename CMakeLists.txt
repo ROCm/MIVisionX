@@ -53,6 +53,7 @@ option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
+option(BUILD_WITH_AMD_ADVANCE "Build RPP for advanced AMD GPU Architecture" OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")
@@ -131,9 +132,24 @@ else()
   message("-- ${Blue}MIVisionX Built with float16 Support OFF${ColourReset}")
 endif()
 
-# Turn off Loom for HIP backend
+# HIP backend defaults
 if("${BACKEND}" STREQUAL "HIP")
   set(LOOM OFF)
+  # Set supported GPU Targets
+  set(DEFAULT_AMDGPU_TARGETS "gfx908;gfx90a;gfx940;gfx941;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102")
+  if (BUILD_WITH_AMD_ADVANCE)
+      set(DEFAULT_AMDGPU_TARGETS ${DEFAULT_AMDGPU_TARGETS} "gfx1200;gfx1201")
+  endif()
+
+  # Set AMDGPU_TARGETS
+  if(DEFINED ENV{AMDGPU_TARGETS})
+      set(AMDGPU_TARGETS $ENV{AMDGPU_TARGETS} CACHE STRING "List of specific machine types for library to target")
+  elseif(AMDGPU_TARGETS)
+      message("-- ${White}${PROJECT_NAME} -- AMDGPU_TARGETS set with -D option${ColourReset}")
+  else()
+      set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
+  endif()
+  message("-- ${White}${PROJECT_NAME} -- AMDGPU_TARGETS: ${AMDGPU_TARGETS}${ColourReset}")
 endif()
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
@@ -142,6 +158,7 @@ message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM OpenCL Modules (defaul
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
+message("-- ${Cyan}     -D BUILD_WITH_AMD_ADVANCE=${BUILD_WITH_AMD_ADVANCE} [Turn ON/OFF Build for AMD advanced GPUs(default:OFF)]${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

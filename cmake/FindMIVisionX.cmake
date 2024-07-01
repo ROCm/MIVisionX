@@ -23,70 +23,53 @@
 # SOFTWARE.
 # 
 ################################################################################
-if(APPLE)
-    set(SHARED_LIB_TYPE ".dylib")
+
+include(FindPackageHandleStandardArgs)
+
+find_package_handle_standard_args( MIVISIONX 
+    FOUND_VAR  MIVISIONX_FOUND 
+    REQUIRED_VARS
+        OPENVX_LIBRARY
+        VX_RPP_LIBRARY  
+        MIVISIONX_INCLUDE_DIR
+        MIVISIONX_LIBRARIES
+)
+
+# find OpenVX
+find_library(OPENVX_LIBRARY NAMES openvx HINTS ${ROCM_PATH}/lib)
+find_library(OPENVXU_LIBRARY NAMES vxu HINTS ${ROCM_PATH}/lib)
+find_path(OPENVX_INCLUDE_DIR NAMES VX/vx.h PATHS ${ROCM_PATH}/include/mivisionx)
+
+if(OPENVX_LIBRARY AND OPENVXU_LIBRARY AND OPENVX_INCLUDE_DIR)
+    set(OPENVX_FOUND TRUE)
+    set(MIVISIONX_FOUND TRUE CACHE INTERNAL "")
+    set(MIVISIONX_INCLUDE_DIR ${OPENVX_INCLUDE_DIR} CACHE INTERNAL "")
+    message("-- ${White}FindMIVISIONX: Using OpenVX -- \n\tLibraries:${OPENVX_LIBRARY} \n\tIncludes:${OPENVX_INCLUDE_DIR}${ColourReset}")
 else()
-    set(SHARED_LIB_TYPE ".so")
+    message("-- ${Yellow}FindMIVISIONX: OpenVX Libraries Not Found")
 endif()
 
-find_path(MIVisionX_INCLUDE_DIRS
-    NAMES vx_ext_amd.h
-    HINTS
-    $ENV{MIVisionX_PATH}/include/mivisionx
-    PATHS
-    ${MIVisionX_PATH}/include/mivisionx
-    /usr/include
-    ${ROCM_PATH}/include/mivisionx
-)
-mark_as_advanced(MIVisionX_INCLUDE_DIRS)
+# find VX_RPP
+find_library(VX_RPP_LIBRARY NAMES vx_rpp HINTS ${ROCM_PATH}/lib)
+find_path(VX_RPP_INCLUDE_DIR NAMES vx_ext_rpp.h PATHS ${ROCM_PATH}/include/mivisionx)
 
-# OpenVX
-find_library(OPENVX_LIBRARIES
-    NAMES libopenvx${SHARED_LIB_TYPE}
-    HINTS
-    $ENV{MIVisionX_PATH}/lib
-    PATHS
-    ${MIVisionX_PATH}/lib
-    /usr/lib
-    ${ROCM_PATH}/lib
-)
-mark_as_advanced(OPENVX_LIBRARIES)
+if(VX_RPP_LIBRARY AND VX_RPP_INCLUDE_DIR)
+    set(VX_RPP_FOUND TRUE)
+    message("-- ${White}FindMIVISIONX: Using VX_RPP -- \n\tLibraries:${VX_RPP_LIBRARY}${ColourReset}")
+else()
+    message("-- ${Yellow}FindMIVISIONX: VX_RPP Libraries Not Found")
+endif()
 
-# VX_RPP
-find_library(VXRPP_LIBRARIES
-    NAMES libvx_rpp${SHARED_LIB_TYPE}
-    HINTS
-    $ENV{MIVisionX_PATH}/lib
-    PATHS
-    ${MIVisionX_PATH}/lib
-    /usr/lib
-    ${ROCM_PATH}/lib
-)
-mark_as_advanced(VXRPP_LIBRARIES)
-
-if(OPENVX_LIBRARIES AND MIVisionX_INCLUDE_DIRS)
-    set(MIVisionX_FOUND TRUE)
-endif( )
-
-include( FindPackageHandleStandardArgs )
-find_package_handle_standard_args( MIVisionX 
-    FOUND_VAR  MIVisionX_FOUND 
-    REQUIRED_VARS
-        OPENVX_LIBRARIES
-        VXRPP_LIBRARIES  
-        MIVisionX_INCLUDE_DIRS
-)
-
-set(MIVisionX_FOUND ${MIVisionX_FOUND} CACHE INTERNAL "")
+set(MIVISIONX_FOUND ${MIVISIONX_FOUND} CACHE INTERNAL "")
 set(OPENVX_LIBRARIES ${OPENVX_LIBRARIES} CACHE INTERNAL "")
 set(VXRPP_LIBRARIES ${VXRPP_LIBRARIES} CACHE INTERNAL "")
-set(MIVisionX_INCLUDE_DIRS ${MIVisionX_INCLUDE_DIRS} CACHE INTERNAL "")
+set(MIVISIONX_INCLUDE_DIRS ${MIVISIONX_INCLUDE_DIRS} CACHE INTERNAL "")
 
-if(MIVisionX_FOUND)
-    message("-- ${White}Using MIVisionX -- \n\tLibraries:${OPENVX_LIBRARIES} \n\tIncludes:${MIVisionX_INCLUDE_DIRS}${ColourReset}")    
+if(MIVISIONX_FOUND)
+    message("-- ${White}Using MIVISIONX -- \n\tLibraries:${OPENVX_LIBRARIES} \n\tIncludes:${MIVISIONX_INCLUDE_DIRS}${ColourReset}")    
 else()
-    if(MIVisionX_FIND_REQUIRED)
-        message(FATAL_ERROR "{Red}FindMIVisionX -- NOT FOUND${ColourReset}")
+    if(MIVISIONX_FIND_REQUIRED)
+        message(FATAL_ERROR "{Red}FindMIVISIONX -- NOT FOUND${ColourReset}")
     endif()
-    message( "-- ${Yellow}NOTE: FindMIVisionX failed to find -- openvx${ColourReset}" )
+    message( "-- ${Yellow}NOTE: FindMIVISIONX failed to find -- openvx${ColourReset}" )
 endif()

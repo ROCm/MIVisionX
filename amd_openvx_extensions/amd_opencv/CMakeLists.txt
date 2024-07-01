@@ -28,7 +28,7 @@ find_package(OpenCV QUIET)
 
 include_directories(../../amd_openvx/openvx/include
 					include
-				   )
+				)
 
 list(APPEND SOURCES
 	source/internal_dataTranslator.cpp
@@ -102,9 +102,9 @@ if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
     include_directories(${OpenCV_INCLUDE_DIRS})
     target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
     if(${OpenCV_VERSION_MAJOR} EQUAL 4)
-	    target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=1)
+		target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=1)
     else()
-	    target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=0)
+		target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_4=0)
     endif()
 else()
     message(FATAL_ERROR "OpenCV -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported")
@@ -120,6 +120,7 @@ install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT 
 install(TARGETS vx_opencv LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_ext_opencv.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/amd_opencv_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 
 if(WIN32)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

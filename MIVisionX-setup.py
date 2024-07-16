@@ -30,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.3.0"
+__version__ = "3.5.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -171,11 +171,13 @@ linuxSystemInstall = ''
 linuxCMake = 'cmake'
 linuxSystemInstall_check = ''
 linuxFlag = ''
-if "centos" in os_info_data or "redhat" in os_info_data or os.path.exists('/usr/bin/yum'):
+sudoValidate = 'sudo -v'
+if "centos" in os_info_data or "redhat" in os_info_data:
     linuxSystemInstall = 'yum -y'
     linuxSystemInstall_check = '--nogpgcheck'
     if "VERSION_ID=7" in os_info_data:
         linuxCMake = 'cmake3'
+        sudoValidate = 'sudo -k'
         platfromInfo = platfromInfo+'-redhat-7'
     elif "VERSION_ID=8" in os_info_data:
         platfromInfo = platfromInfo+'-redhat-8'
@@ -183,7 +185,7 @@ if "centos" in os_info_data or "redhat" in os_info_data or os.path.exists('/usr/
         platfromInfo = platfromInfo+'-redhat-9'
     else:
         platfromInfo = platfromInfo+'-redhat-centos-undefined-version'
-elif "Ubuntu" in os_info_data or os.path.exists('/usr/bin/apt-get'):
+elif "Ubuntu" in os_info_data:
     linuxSystemInstall = 'apt-get -y'
     linuxSystemInstall_check = '--allow-unauthenticated'
     linuxFlag = '-S'
@@ -195,10 +197,14 @@ elif "Ubuntu" in os_info_data or os.path.exists('/usr/bin/apt-get'):
         platfromInfo = platfromInfo+'-Ubuntu-24'
     else:
         platfromInfo = platfromInfo+'-Ubuntu-undefined-version'
-elif "SLES" in os_info_data or os.path.exists('/usr/bin/zypper'):
+elif "SLES" in os_info_data:
     linuxSystemInstall = 'zypper -n'
     linuxSystemInstall_check = '--no-gpg-checks'
     platfromInfo = platfromInfo+'-SLES'
+elif "Mariner" in os_info_data:
+    linuxSystemInstall = 'tdnf -y'
+    linuxSystemInstall_check = '--nogpgcheck'
+    platfromInfo = platfromInfo+'-Mariner'
 else:
     print("\nMIVisionX Setup on "+platfromInfo+" is unsupported\n")
     print("\nMIVisionX Setup Supported on: Ubuntu 20/22, RedHat 8/9, & SLES 15\n")
@@ -213,18 +219,21 @@ if userName == 'root':
 
 # Delete previous install
 if os.path.exists(deps_dir) and reinstall == 'ON':
-    ERROR_CHECK(os.system('sudo -v'))
+    ERROR_CHECK(os.system(sudoValidate))
     ERROR_CHECK(os.system('sudo rm -rf '+deps_dir))
     print("\nMIVisionX Setup: Removing Previous Install -- "+deps_dir+"\n")
 
 # source install - package dependencies
+libpkgConfig = "pkg-config"
+if "centos" in os_info_data and "VERSION_ID=7" in os_info_data:
+    libpkgConfig = "pkgconfig"
 commonPackages = [
     'gcc',
     'cmake',
     'git',
     'wget',
     'unzip',
-    'pkg-config',
+    str(libpkgConfig),
     'inxi'
 ]
 
@@ -249,26 +258,35 @@ neuralNetRPMPackages = [
     'migraphx-devel'
 ]
 
+libPythonProto = "python3-protobuf"
+if "centos" in os_info_data and "VERSION_ID=7" in os_info_data:
+    libPythonProto = "protobuf-python"
 inferenceRPMPackages = [
     'python3-devel',
     'python3-pip',
     'protobuf-devel',
-    'python3-protobuf'
-]
-
-pip3InferencePackagesUbuntu = [
-    'future==0.18.2',
-    'pytz==2022.1',
-    'numpy==1.23.0',
-    'google==3.0.0',
-    'protobuf==3.12.4',
-    'onnx==1.12.0'
+    str(libPythonProto)
 ]
 
 pipNumpyVersion = "numpy==1.23.0"
-with open('/etc/os-release') as f:
-    if 'VERSION_ID="8' in f.read():
-        pipNumpyVersion = "numpy==1.19.5"
+pipONNXVersion = "onnx==1.12.0"
+pipProtoVersion= "protobuf==3.12.4"
+
+if "VERSION_ID=24" in os_info_data:
+    pipNumpyVersion = "numpy==2.0.0"
+    pipONNXVersion = "onnx==1.16.0"
+    pipProtoVersion= "protobuf==3.20.2"
+pip3InferencePackagesUbuntu = [
+    'future==0.18.2',
+    'pytz==2022.1',
+    str(pipNumpyVersion),
+    'google==3.0.0',
+    str(pipProtoVersion),
+    str(pipONNXVersion),
+]
+
+if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
+    pipNumpyVersion = "numpy==1.19.5"
 pip3InferencePackagesRPM = [
     'future==0.18.2',
     'pytz==2022.1',
@@ -313,7 +331,6 @@ opencvDebianPackages = [
     'libavcodec-dev',
     'libavformat-dev',
     'libswscale-dev',
-    'libtbb2',
     'libtbb-dev',
     'libjpeg-dev',
     'libpng-dev',
@@ -348,7 +365,7 @@ if os.path.exists(deps_dir):
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
-        ERROR_CHECK(os.system('sudo -v'))
+        ERROR_CHECK(os.system(sudoValidate))
         if "Ubuntu" in platfromInfo:
             for i in range(len(neuralNetDebianPackages)):
                 ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -372,12 +389,12 @@ if os.path.exists(deps_dir):
         for i in range(len(rocdecodeDebianPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
-    else:
+    elif "redhat-7" not in platfromInfo:
         for i in range(len(rocdecodeRPMPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
 
-    print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
+    print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+" on "+platfromInfo+"\n")
     exit()
 
 # Clean Install
@@ -387,7 +404,7 @@ else:
     # Create Build folder
     ERROR_CHECK(os.system('(cd '+deps_dir+'; mkdir build )'))
     # install pre-reqs
-    ERROR_CHECK(os.system('sudo -v'))
+    ERROR_CHECK(os.system(sudoValidate))
     # common packages
     for i in range(len(commonPackages)):
         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -398,7 +415,7 @@ else:
 
     # neural net packages
     if neuralNetInstall == 'ON' and backend == 'HIP':
-        ERROR_CHECK(os.system('sudo -v'))
+        ERROR_CHECK(os.system(sudoValidate))
         if "Ubuntu" in platfromInfo:
             for i in range(len(neuralNetDebianPackages)):
                 ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -414,28 +431,28 @@ else:
 
             # Delete previous install
             if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
-                ERROR_CHECK(os.system('sudo -v'))
+                ERROR_CHECK(os.system(sudoValidate))
                 ERROR_CHECK(os.system('sudo rm -rf '+modelCompilerDeps))
                 print("\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
 
             if not os.path.exists(modelCompilerDeps):
                 print("STATUS: Model Compiler Deps Install - " +modelCompilerDeps+"\n")
                 os.makedirs(modelCompilerDeps)
-                ERROR_CHECK(os.system('sudo -v'))
+                ERROR_CHECK(os.system(sudoValidate))
                 if "Ubuntu" in platfromInfo:
                     for i in range(len(inferenceDebianPackages)):
                         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                                 ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]))
                     # Install base Deps
                     for i in range(len(pip3InferencePackagesUbuntu)):
-                        ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesUbuntu[i]))
+                        ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesUbuntu[i]))
                 else:
                     for i in range(len(inferenceRPMPackages)):
                         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                                 ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
                     # Install base Deps
                     for i in range(len(pip3InferencePackagesRPM)):
-                            ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesRPM[i]))
+                            ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
                 # Install NNEF Deps
                 ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
                 ERROR_CHECK(os.system(
@@ -467,7 +484,7 @@ else:
         for i in range(len(rocdecodeDebianPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
-    else:
+    elif "redhat-7" not in platfromInfo:
         for i in range(len(rocdecodeRPMPackages)):
                 ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
@@ -519,7 +536,7 @@ else:
     # Install OpenCV -- TBD cleanup
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build; mkdir OpenCV )'))
     # Install pre-reqs
-    ERROR_CHECK(os.system('sudo -v'))
+    ERROR_CHECK(os.system(sudoValidate))
     if "Ubuntu" in platfromInfo:
         for i in range(len(opencvDebianPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -542,12 +559,12 @@ else:
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
             ' -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; make -j$(nproc))'))
-    ERROR_CHECK(os.system('sudo -v'))
+    ERROR_CHECK(os.system(sudoValidate))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo make install)'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo ldconfig)'))
 
     if developerInstall == 'ON':
-        ERROR_CHECK(os.system('sudo -v'))
+        ERROR_CHECK(os.system(sudoValidate))
         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install autoconf texinfo wget'))
         if "Ubuntu" in platfromInfo:
@@ -564,4 +581,4 @@ else:
         ERROR_CHECK(os.system(
             '(cd '+deps_dir+'/gdb-12.1; ./configure --with-python3; make CXXFLAGS="-static-libstdc++" -j$(nproc); sudo make install)'))
 
-    print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")
+    print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+" on "+platfromInfo+"\n")

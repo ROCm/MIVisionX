@@ -20,6 +20,7 @@ Documentation for MIVisionX is available at
 ### Optimizations
 
 * Readme
+* Setup - CentOS 7 support
 
 ### Changes
 
@@ -44,7 +45,7 @@ Documentation for MIVisionX is available at
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V3.3.0`
+* MIVisionX Setup Script - `V3.5.0`
 
 ### Known issues
 

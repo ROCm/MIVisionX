@@ -16,7 +16,7 @@ beautifulsoup4==4.12.0
     # via pydata-sphinx-theme
 breathe==4.34.0
     # via rocm-docs-core
-certifi==2023.7.22
+certifi==2024.7.4
     # via requests
 cffi==1.15.1
     # via
@@ -110,7 +110,7 @@ requests==2.32.0
     # via
     #   pygithub
     #   sphinx
-rocm-docs-core[api-reference]==1.1.2
+rocm-docs-core[api-reference]==1.5.0
     # via -r requirements.in
 smmap==5.0.0
     # via gitdb
@@ -155,7 +155,7 @@ tqdm==4.66.3
     # via mpire
 typing-extensions==4.5.0
     # via pydata-sphinx-theme
-urllib3==1.26.18
+urllib3==1.26.19
     # via requests
 wrapt==1.15.0
     # via deprecated

@@ -268,13 +268,21 @@ inferenceRPMPackages = [
     str(libPythonProto)
 ]
 
+pipNumpyVersion = "numpy==1.23.0"
+pipONNXVersion = "onnx==1.12.0"
+pipProtoVersion= "protobuf==3.12.4"
+
+if "VERSION_ID=24" in os_info_data:
+    pipNumpyVersion = "numpy==2.0.0"
+    pipONNXVersion = "onnx==1.16.0"
+    pipProtoVersion= "protobuf==3.20.2"
 pip3InferencePackagesUbuntu = [
     'future==0.18.2',
     'pytz==2022.1',
-    'numpy==1.23.0',
+    str(pipNumpyVersion),
     'google==3.0.0',
-    'protobuf==3.12.4',
-    'onnx==1.12.0'
+    str(pipProtoVersion),
+    str(pipONNXVersion),
 ]
 
 pipNumpyVersion = "numpy==1.23.0"
@@ -328,7 +336,6 @@ opencvDebianPackages = [
     'libavcodec-dev',
     'libavformat-dev',
     'libswscale-dev',
-    'libtbb2',
     'libtbb-dev',
     'libjpeg-dev',
     'libpng-dev',
@@ -443,14 +450,14 @@ else:
                                 ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]))
                     # Install base Deps
                     for i in range(len(pip3InferencePackagesUbuntu)):
-                        ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesUbuntu[i]))
+                        ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesUbuntu[i]))
                 else:
                     for i in range(len(inferenceRPMPackages)):
                         ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                                 ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
                     # Install base Deps
                     for i in range(len(pip3InferencePackagesRPM)):
-                            ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesRPM[i]))
+                            ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
                 # Install NNEF Deps
                 ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
                 ERROR_CHECK(os.system(

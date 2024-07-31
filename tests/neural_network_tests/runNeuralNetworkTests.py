@@ -33,7 +33,7 @@ from subprocess import Popen, PIPE
 
 __copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
-__version__ = "1.5.0"
+__version__ = "2.0.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
     
@@ -109,45 +109,6 @@ onnxModelConfig = [
 
 nnefModelConfig = [
     ('nnef-mnist', 1, 28, 28)
-]
-
-# Linux Packages
-inferenceDebianPackages = [
-    'inxi',
-    'python3-dev',
-    'python3-pip',
-    'protobuf-compiler',
-    'libprotoc-dev'
-]
-
-inferenceRPMPackages = [
-    'inxi',
-    'python3-devel',
-    'python3-pip',
-    'protobuf-devel',
-    'python3-protobuf'
-]
-
-pip3InferencePackagesDebian = [
-    'future==0.18.2',
-    'pytz==2022.1',
-    'numpy==1.23.0',
-    'google==3.0.0',
-    'protobuf==3.12.4',
-    'onnx==1.12.0'
-]
-
-pipNumpyVersion = "numpy==1.23.0"
-with open('/etc/os-release') as f:
-    if 'VERSION_ID="8' in f.read():
-        pipNumpyVersion = "numpy==1.19.5"
-pip3InferencePackagesRPM = [
-    'future==0.18.2',
-    'pytz==2022.1',
-    str(pipNumpyVersion),
-    'google==3.0.0',
-    'protobuf==3.12.4',
-    'onnx==1.11.0'
 ]
 
 # REPORT
@@ -258,6 +219,57 @@ else:
 modelCompilerDeps = os.path.expanduser('~/.mivisionx-model-compiler-deps')
 linuxCMake = 'cmake'
 
+# check os version
+os_info_data = 'NOT Supported'
+if os.path.exists('/etc/os-release'):
+    with open('/etc/os-release', 'r') as os_file:
+        os_info_data = os_file.read().replace('\n', ' ')
+        os_info_data = os_info_data.replace('"', '')
+        
+# Linux Packages
+inferenceDebianPackages = [
+    'inxi',
+    'python3-dev',
+    'python3-pip',
+    'protobuf-compiler',
+    'libprotoc-dev'
+]
+
+inferenceRPMPackages = [
+    'inxi',
+    'python3-devel',
+    'python3-pip',
+    'protobuf-devel',
+    'python3-protobuf'
+]
+
+pipNumpyVersion = "numpy==1.23.0"
+pipONNXVersion = "onnx==1.12.0"
+pipProtoVersion= "protobuf==3.12.4"
+if "VERSION_ID=24" in os_info_data:
+    pipNumpyVersion = "numpy==2.0.0"
+    pipONNXVersion = "onnx==1.16.0"
+    pipProtoVersion= "protobuf==3.20.2"
+pip3InferencePackagesUbuntu = [
+    'future==0.18.2',
+    'pytz==2022.1',
+    str(pipNumpyVersion),
+    'google==3.0.0',
+    str(pipProtoVersion),
+    str(pipONNXVersion),
+]
+
+if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
+    pipNumpyVersion = "numpy==1.19.5"
+pip3InferencePackagesRPM = [
+    'future==0.18.2',
+    'pytz==2022.1',
+    str(pipNumpyVersion),
+    'google==3.0.0',
+    'protobuf==3.12.4',
+    'onnx==1.11.0'
+]
+
 # Delete previous install
 if os.path.exists(modelCompilerDeps) and reinstall == 'ON':
     os.system('sudo -v')
@@ -277,32 +289,49 @@ if not os.path.exists(modelCompilerDeps):
         status, sudoLocation = subprocess.getstatusoutput("which sudo")
         if sudoLocation != '/usr/bin/sudo':
             status, userName = subprocess.getstatusoutput("whoami")
-
+    
+    # setup for Linux
     linuxSystemInstall = ''
+    linuxCMake = 'cmake'
     linuxSystemInstall_check = ''
     linuxFlag = ''
-    if "centos" in platfromInfo or "redhat" in platfromInfo or os.path.exists('/usr/bin/yum'):
+    sudoValidate = 'sudo -v'
+    if "centos" in os_info_data or "redhat" in os_info_data:
         linuxSystemInstall = 'yum -y'
         linuxSystemInstall_check = '--nogpgcheck'
-        if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
+        if "VERSION_ID=7" in os_info_data:
             linuxCMake = 'cmake3'
-            ERROR_CHECK(os.system(linuxSystemInstall+' install cmake3'))
-        if "centos" not in platfromInfo or "redhat" not in platfromInfo:
-            platfromInfo = platfromInfo+'-redhat'
-    elif "Ubuntu" in platfromInfo or os.path.exists('/usr/bin/apt-get'):
+            sudoValidate = 'sudo -k'
+            platfromInfo = platfromInfo+'-redhat-7'
+        elif "VERSION_ID=8" in os_info_data:
+            platfromInfo = platfromInfo+'-redhat-8'
+        elif "VERSION_ID=9" in os_info_data:
+            platfromInfo = platfromInfo+'-redhat-9'
+        else:
+            platfromInfo = platfromInfo+'-redhat-centos-undefined-version'
+    elif "Ubuntu" in os_info_data:
         linuxSystemInstall = 'apt-get -y'
         linuxSystemInstall_check = '--allow-unauthenticated'
         linuxFlag = '-S'
-        if "Ubuntu" not in platfromInfo:
-            platfromInfo = platfromInfo+'-Ubuntu'
-    elif os.path.exists('/usr/bin/zypper'):
+        if "VERSION_ID=20" in os_info_data:
+            platfromInfo = platfromInfo+'-Ubuntu-20'
+        elif "VERSION_ID=22" in os_info_data:
+            platfromInfo = platfromInfo+'-Ubuntu-22'
+        elif "VERSION_ID=24" in os_info_data:
+            platfromInfo = platfromInfo+'-Ubuntu-24'
+        else:
+            platfromInfo = platfromInfo+'-Ubuntu-undefined-version'
+    elif "SLES" in os_info_data:
         linuxSystemInstall = 'zypper -n'
         linuxSystemInstall_check = '--no-gpg-checks'
         platfromInfo = platfromInfo+'-SLES'
+    elif "Mariner" in os_info_data:
+        linuxSystemInstall = 'tdnf -y'
+        linuxSystemInstall_check = '--nogpgcheck'
+        platfromInfo = platfromInfo+'-Mariner'
     else:
-        print("\nMIVisionX runNeuralNetworkTests.py on " +
-            platfromInfo+" is unsupported\n")
-        print("\nMIVisionX runNeuralNetworkTests.py Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP4\n")
+        print("\nMIVisionX runNeuralNetworkTests.py on "+platfromInfo+" is unsupported\n")
+        print("\nMIVisionX Setup Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP5\n")
         exit()
 
     if userName == 'root':
@@ -315,14 +344,14 @@ if not os.path.exists(modelCompilerDeps):
         for i in range(len(inferenceDebianPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]))
-        for i in range(len(pip3InferencePackagesDebian)):
-                            ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesDebian[i]))
+        for i in range(len(pip3InferencePackagesUbuntu)):
+                            ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesUbuntu[i]))
     else:
         for i in range(len(inferenceRPMPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
         for i in range(len(pip3InferencePackagesRPM)):
-                            ERROR_CHECK(os.system('sudo pip3 install '+ pip3InferencePackagesRPM[i]))
+                            ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
     # Install NNEF Deps
     ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
     ERROR_CHECK(os.system(

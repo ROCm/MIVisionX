@@ -111,6 +111,49 @@ nnefModelConfig = [
     ('nnef-mnist', 1, 28, 28)
 ]
 
+# Linux Packages
+inferenceDebianPackages = [
+    'inxi',
+    'python3-dev',
+    'python3-pip',
+    'protobuf-compiler',
+    'libprotoc-dev'
+]
+
+inferenceRPMPackages = [
+    'inxi',
+    'python3-devel',
+    'python3-pip',
+    'protobuf-devel',
+    'python3-protobuf'
+]
+
+pip3InferencePackagesDebian = [
+    'future==0.18.2',
+    'pytz==2022.1',
+    'numpy==1.23.0',
+    'google==3.0.0',
+    'protobuf==3.12.4',
+    'onnx==1.12.0'
+]
+
+pipNumpyVersion = "numpy==1.23.0"
+pipONNXversion = "onnx==1.11.0"
+with open('/etc/os-release') as f:
+    if 'VERSION_ID="7' in f.read() or 'VERSION_ID="8' in f.read():
+        pipNumpyVersion = "numpy==1.19.5"
+    if "NAME=SLES" in f.read():
+        pipNumpyVersion = "numpy==2.0.1"
+        pipONNXversion = "onnx==1.16.0"
+pip3InferencePackagesRPM = [
+    'future==0.18.2',
+    'pytz==2022.1',
+    str(pipNumpyVersion),
+    'google==3.0.0',
+    'protobuf==3.12.4',
+    str(pipONNXversion)
+]
+
 # REPORT
 reportConfig = [
     ('CAFFE no fused OPs', 'caffe2nnir2openvx_noFuse_profile.md'),

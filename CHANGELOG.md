@@ -21,6 +21,7 @@ Documentation for MIVisionX is available at
 
 * Readme
 * Setup - CentOS 7 support
+* Setup - SLES 15 SP5 support
 
 ### Changes
 
@@ -45,7 +46,7 @@ Documentation for MIVisionX is available at
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V3.4.0`
+* MIVisionX Setup Script - `V3.5.0`
 
 ### Known issues
 

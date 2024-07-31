@@ -30,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.4.0"
+__version__ = "3.5.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 

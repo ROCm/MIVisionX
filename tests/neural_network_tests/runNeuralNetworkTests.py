@@ -128,29 +128,40 @@ inferenceRPMPackages = [
     'python3-protobuf'
 ]
 
-pip3InferencePackagesDebian = [
+# Debian based
+pipNumpyVersion = "numpy==1.23.0"
+pipProtoVersion= "protobuf==3.12.4"
+pipONNXVersion = "onnx==1.12.0"
+with open('/etc/os-release') as f:
+    if "VERSION_ID=24" in f.read():
+        pipNumpyVersion = "numpy==2.0.0"
+        pipONNXVersion = "onnx==1.16.0"
+        pipProtoVersion= "protobuf==3.20.2"
+pip3InferencePackagesUbuntu = [
     'future==0.18.2',
     'pytz==2022.1',
-    'numpy==1.23.0',
     'google==3.0.0',
-    'protobuf==3.12.4',
-    'onnx==1.12.0'
+    str(pipNumpyVersion),
+    str(pipProtoVersion),
+    str(pipONNXVersion),
 ]
 
-pipNumpyVersion = "numpy==1.23.0"
+# RPM based
 pipONNXversion = "onnx==1.11.0"
-with open('/etc/os-release') as f:
-    if 'VERSION_ID="7' in f.read() or 'VERSION_ID="8' in f.read():
+with open('/etc/os-release') as f:  
+    if "VERSION_ID=7" in f.read() or "VERSION_ID=8" in f.read():
         pipNumpyVersion = "numpy==1.19.5"
-    if "NAME=SLES" in f.read():
+    elif "NAME=SLES" in f.read():
         pipNumpyVersion = "numpy==2.0.1"
         pipONNXversion = "onnx==1.16.0"
+        pipProtoVersion= "protobuf==3.20.2"
+
 pip3InferencePackagesRPM = [
     'future==0.18.2',
     'pytz==2022.1',
-    str(pipNumpyVersion),
     'google==3.0.0',
-    'protobuf==3.12.4',
+    str(pipNumpyVersion),
+    str(pipProtoVersion),
     str(pipONNXversion)
 ]
 

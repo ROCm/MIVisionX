@@ -269,8 +269,8 @@ inferenceRPMPackages = [
 ]
 
 pipNumpyVersion = "numpy==1.23.0"
-pipONNXVersion = "onnx==1.12.0"
 pipProtoVersion= "protobuf==3.12.4"
+pipONNXVersion = "onnx==1.12.0"
 
 if "VERSION_ID=24" in os_info_data:
     pipNumpyVersion = "numpy==2.0.0"
@@ -279,21 +279,26 @@ if "VERSION_ID=24" in os_info_data:
 pip3InferencePackagesUbuntu = [
     'future==0.18.2',
     'pytz==2022.1',
-    str(pipNumpyVersion),
     'google==3.0.0',
+    str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXVersion),
 ]
 
+pipONNXversion = "onnx==1.11.0"
 if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
+if "NAME=SLES" in os_info_data:
+    pipNumpyVersion = "numpy==2.0.1"
+    pipONNXversion = "onnx==1.16.0"
+    pipProtoVersion= "protobuf==3.20.2"
 pip3InferencePackagesRPM = [
     'future==0.18.2',
     'pytz==2022.1',
-    str(pipNumpyVersion),
     'google==3.0.0',
-    'protobuf==3.12.4',
-    'onnx==1.11.0'
+    str(pipNumpyVersion),
+    str(pipProtoVersion),
+    str(pipONNXversion)
 ]
 
 ffmpegDebianPackages = [
@@ -557,7 +562,7 @@ else:
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
-            ' -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )'))
+            ' -D WITH_EIGEN=OFF -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; make -j$(nproc))'))
     ERROR_CHECK(os.system(sudoValidate))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo make install)'))

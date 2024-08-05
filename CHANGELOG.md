@@ -21,6 +21,7 @@ Documentation for MIVisionX is available at
 
 * Readme
 * Setup - CentOS 7 support
+* Setup - SLES 15 SP5 support
 
 ### Changes
 

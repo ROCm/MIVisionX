@@ -243,9 +243,10 @@ inferenceRPMPackages = [
     'python3-protobuf'
 ]
 
+# Debian based
 pipNumpyVersion = "numpy==1.23.0"
-pipONNXVersion = "onnx==1.12.0"
 pipProtoVersion= "protobuf==3.12.4"
+pipONNXVersion = "onnx==1.12.0"
 if "VERSION_ID=24" in os_info_data:
     pipNumpyVersion = "numpy==2.0.0"
     pipONNXVersion = "onnx==1.16.0"
@@ -253,21 +254,28 @@ if "VERSION_ID=24" in os_info_data:
 pip3InferencePackagesUbuntu = [
     'future==0.18.2',
     'pytz==2022.1',
-    str(pipNumpyVersion),
     'google==3.0.0',
+    str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXVersion),
 ]
 
+# RPM based
+pipONNXversion = "onnx==1.11.0" 
 if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
+if "NAME=SLES" in os_info_data:
+    pipNumpyVersion = "numpy==2.0.1"
+    pipONNXversion = "onnx==1.16.0"
+    pipProtoVersion= "protobuf==3.20.2"
+
 pip3InferencePackagesRPM = [
     'future==0.18.2',
     'pytz==2022.1',
-    str(pipNumpyVersion),
     'google==3.0.0',
-    'protobuf==3.12.4',
-    'onnx==1.11.0'
+    str(pipNumpyVersion),
+    str(pipProtoVersion),
+    str(pipONNXversion)
 ]
 
 # Delete previous install

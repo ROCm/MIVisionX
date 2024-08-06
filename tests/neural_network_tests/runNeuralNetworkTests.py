@@ -266,7 +266,6 @@ if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
 if "NAME=SLES" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
-    pipONNXversion = "onnx==1.14.0"
     pipProtoVersion= "protobuf==3.19.5"
 
 pip3InferencePackagesRPM = [

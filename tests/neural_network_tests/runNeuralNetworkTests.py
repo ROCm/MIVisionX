@@ -265,9 +265,8 @@ pipONNXversion = "onnx==1.11.0"
 if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
 if "NAME=SLES" in os_info_data:
-    pipNumpyVersion = "numpy==2.0.1"
-    pipONNXversion = "onnx==1.16.0"
-    pipProtoVersion= "protobuf==3.20.2"
+    pipNumpyVersion = "numpy==1.19.5"
+    pipProtoVersion= "protobuf==3.19.5"
 
 pip3InferencePackagesRPM = [
     'future==0.18.2',

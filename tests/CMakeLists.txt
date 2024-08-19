@@ -126,6 +126,15 @@ if(Python3_FOUND)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(Python3_FOUND)
 
+# OpenVX Tests
+if(VX_RPP_LIBRARY)
+  find_program(RUNVX NAMES runvx PATHS ${ROCM_PATH}/bin)
+  add_test(NAME vx_rpp_test
+            COMMAND ${RUNVX}
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vx_rpp/gdf/test_vx_rpp.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif(VX_RPP_LIBRARY)
+
 # HIP Tests
 if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
   # API tests

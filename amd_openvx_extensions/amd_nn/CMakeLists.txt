@@ -123,15 +123,17 @@ install(TARGETS vx_nn LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_amd_nn.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
 # install MIVisionX scripts -- {ROCM_PATH}/libexec/mivisionx/
-install(DIRECTORY ../../model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx COMPONENT dev)
-install(DIRECTORY ../../toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/model_compiler DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/toolkit DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/mivisionx COMPONENT dev)
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
-install(DIRECTORY ../../apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
-install(DIRECTORY ../../apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
-install(DIRECTORY ../../apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
-install(DIRECTORY ../../samples/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
-install(DIRECTORY ../../samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/apps/cloud_inference DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/apps/dg_test DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/apps/mivisionx_inference_analyzer DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/apps/mivisionx_openvx_classifier DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/samples/mv_objdetect DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/samples/model_compiler_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+# install MIVisionX tests -- {ROCM_PATH}/share/mivisionx/test
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/neural_network_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")

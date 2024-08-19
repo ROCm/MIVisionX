@@ -165,7 +165,7 @@ set(MIVISIONX_BACKEND ${MIVISIONX_BACKEND} CACHE INTERNAL "")
 
 if(MIVISIONX_FOUND)
     if(MIVISIONX_FIND_REQUIRED)
-        message("-- ${White}Using MIVISIONX -- \n\tMIVisionX Libraries:${MIVISIONX_LIBRARIES} \n\ttMIVisionX Includes:${MIVISIONX_INCLUDE_DIRS}${ColourReset}")
+        message("-- ${White}Using MIVISIONX -- \n\tMIVisionX Libraries:${MIVISIONX_LIBRARIES} \n\tMIVisionX Includes:${MIVISIONX_INCLUDE_DIR}${ColourReset}")
     endif()
 else()
     if(MIVISIONX_FIND_REQUIRED)

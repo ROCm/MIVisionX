@@ -31,32 +31,6 @@ project(mivisionx-test)
 enable_testing()
 include(CTest)
 
-# ROCM Path
-if(DEFINED ENV{ROCM_PATH})
-  set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
-elseif(ROCM_PATH)
-  message("-- ${PROJECT_NAME}: ROCM_PATH Set -- ${ROCM_PATH}")
-else()
-  set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
-endif()
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
-set(Python3_FIND_VIRTUALENV FIRST)
-find_package(Python3 QUIET)
-find_package(OpenCV QUIET)
-find_package(MIVISIONX QUIET)
-
-# set defaults for test
-if(NOT DEFINED BACKEND)
-  set(GPU_SUPPORT ON)
-endif()
-if(NOT DEFINED BACKEND)
-  set(BACKEND "HIP")
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests")
-  set(NEURAL_NET ON)
-endif()
 if(NOT DEFINED ENHANCED_MESSAGE)
   string(ASCII 27 Esc)
   set(ColourReset "${Esc}[m")
@@ -66,17 +40,33 @@ if(NOT DEFINED ENHANCED_MESSAGE)
   set(White       "${Esc}[37m")
 endif()
 
-# find OpenVX
-find_library(OPENVX_LIBRARY NAMES openvx HINTS ${ROCM_PATH}/lib)
-find_library(OPENVXU_LIBRARY NAMES vxu HINTS ${ROCM_PATH}/lib)
-find_path(OPENVX_INCLUDE_DIR NAMES VX/vx.h PATHS ${ROCM_PATH}/include/mivisionx)
-
-if(OPENVX_LIBRARY AND OPENVXU_LIBRARY AND OPENVX_INCLUDE_DIR)
-  set(OPENVX_FOUND TRUE)
-  message("-- ${White}${PROJECT_NAME}: Using OpenVX -- \n\tLibraries:${OPENVX_LIBRARY} \n\tIncludes:${OPENVX_INCLUDE_DIR}${ColourReset}")
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+  set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+  message("-- ${PROJECT_NAME}: ROCM_PATH Set -- ${ROCM_PATH}")
 else()
-  message("-- ${Yellow}${PROJECT_NAME}: Install MIVisionX before running CTests")
-  message("-- ${Yellow}${PROJECT_NAME}: OpenVX Libraries Not Found")
+  set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
+
+# add find modules
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# find required libraries
+set(Python3_FIND_VIRTUALENV FIRST)
+find_package(Python3 QUIET)
+find_package(OpenCV QUIET)
+
+if(BUILT_WITH_SOURCE)
+  find_package(MIVISIONX QUIET)
+  set(MIVISIONX_BACKEND BACKEND)
+else()
+  find_package(MIVISIONX REQUIRED)
+endif()
+
+# set nn test status
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests")
+  set(NEURAL_NET ON)
 endif()
 
 # OpenVX default tests - Vision Nodes
@@ -138,28 +128,8 @@ if(Python3_FOUND)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(Python3_FOUND)
 
-# find vx_opencv
-find_library(VX_OPENCV_LIBRARY NAMES vx_opencv HINTS ${ROCM_PATH}/lib)
-find_path(VX_OPENCV_INCLUDE_DIR NAMES vx_ext_opencv.h PATHS ${ROCM_PATH}/include/mivisionx)
-if(VX_OPENCV_LIBRARY AND VX_OPENCV_INCLUDE_DIR)
-  set(VX_OPENCV_FOUND TRUE)
-  message("-- ${White}${PROJECT_NAME}: Using VX_OpenCV -- \n\tLibraries:${VX_OPENCV_LIBRARY}${ColourReset}")
-else()
-  message("-- ${Yellow}${PROJECT_NAME}: VX_OpenCV Libraries Not Found")
-endif()
-
-# find vx_rpp
-find_library(VX_RPP_LIBRARY NAMES vx_rpp HINTS ${ROCM_PATH}/lib)
-find_path(VX_RPP_INCLUDE_DIR NAMES vx_ext_rpp.h PATHS ${ROCM_PATH}/include/mivisionx)
-if(VX_RPP_LIBRARY AND VX_RPP_INCLUDE_DIR)
-  set(VX_RPP_FOUND TRUE)
-  message("-- ${White}${PROJECT_NAME}: Using VX_RPP -- \n\tLibraries:${VX_RPP_LIBRARY}${ColourReset}")
-else()
-  message("-- ${Yellow}${PROJECT_NAME}: VX_RPP Libraries Not Found")
-endif()
-
-# GPU Tests
-if(GPU_SUPPORT)
+# HIP Tests
+if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
   # API tests
   add_test(NAME openvx_canny_GPU 
               COMMAND openvx_canny 
@@ -232,4 +202,8 @@ if(GPU_SUPPORT)
 
   endif(NEURAL_NET AND Python3_FOUND)
 
-endif(GPU_SUPPORT)
+endif("${MIVISIONX_BACKEND}" STREQUAL "HIP")
+
+if("${MIVISIONX_BACKEND}" STREQUAL "OPENCL")
+  message( "-- ${Yellow}${PROJECT_NAME}:NOTE: NO OpenCL Tests${ColourReset}" )
+endif("${MIVISIONX_BACKEND}" STREQUAL "OPENCL")

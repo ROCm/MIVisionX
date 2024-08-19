@@ -24,49 +24,156 @@
 # 
 ################################################################################
 
+# Set ROCM Path if not defined
+if(DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+    message("-- ${PROJECT_NAME}: ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+    set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
+
+# find OpenVX - Core MIVisionX library
+find_path(OPENVX_INCLUDE_DIR NAMES VX/vx.h PATHS ${ROCM_PATH}/include/mivisionx)
+find_library(OPENVX_LIBRARY NAMES openvx HINTS ${ROCM_PATH}/lib)
+find_library(OPENVXU_LIBRARY NAMES vxu HINTS ${ROCM_PATH}/lib)
+mark_as_advanced(OPENVX_INCLUDE_DIR)
+mark_as_advanced(OPENVX_LIBRARY)
+mark_as_advanced(OPENVXU_LIBRARY)
+
+if(OPENVX_INCLUDE_DIR AND OPENVX_LIBRARY AND OPENVXU_LIBRARY)
+    if(MIVISIONX_FIND_REQUIRED)
+        message("-- ${White}FindMIVisionX: Using OpenVX -- \n\tIncludes:${OPENVX_INCLUDE_DIR}\n\tLib:${OPENVX_LIBRARY}${ColourReset}")
+    endif()
+    set(MIVISIONX_FOUND TRUE)
+    set(MIVISIONX_INCLUDE_DIR ${OPENVX_INCLUDE_DIR})
+    set(MIVISIONX_LIBRARIES ${OPENVX_LIBRARY} ${OPENVXU_LIBRARY})
+else()
+    if(MIVISIONX_FIND_REQUIRED)
+        message(FATAL_ERROR "{Red}FindMIVisionX -- Failed to find OPENVX${ColourReset}")
+    endif()
+    message( "-- ${Yellow}NOTE: FindMIVisionX failed to find OpenVX -- Install MIVisionX${ColourReset}" )
+endif()
+
+# find vx_amd_media
+find_path(VX_AMD_MEDIA_INCLUDE_DIR NAMES vx_amd_media.h PATHS ${ROCM_PATH}/include/mivisionx)
+find_library(VX_AMD_MEDIA_LIBRARY NAMES vx_amd_media HINTS ${ROCM_PATH}/lib)
+mark_as_advanced(VX_AMD_MEDIA_LIBRARY)
+if(VX_AMD_MEDIA_INCLUDE_DIR AND VX_AMD_MEDIA_LIBRARY)
+    if(MIVISIONX_FIND_REQUIRED)
+        message("-- ${White}FindMIVisionX: Using VX_AMD_MEDIA -- \n\tLib:${VX_AMD_MEDIA_LIBRARY}${ColourReset}")
+    endif()
+    set(MIVISIONX_LIBRARIES ${MIVISIONX_LIBRARIES} ${VX_AMD_MEDIA_LIBRARY})
+else()
+    message( "-- ${Yellow}NOTE: FindMIVisionX failed to find VX_AMD_MEDIA${ColourReset}" )
+endif()
+
+# find vx_nn
+find_path(VX_NN_INCLUDE_DIR NAMES vx_amd_nn.h PATHS ${ROCM_PATH}/include/mivisionx)
+find_library(VX_NN_LIBRARY NAMES vx_nn HINTS ${ROCM_PATH}/lib)
+mark_as_advanced(VX_NN_LIBRARY)
+if(VX_NN_INCLUDE_DIR AND VX_NN_LIBRARY)
+    if(MIVISIONX_FIND_REQUIRED)
+        message("-- ${White}FindMIVisionX: Using VX_NN -- \n\tLib:${VX_NN_LIBRARY}${ColourReset}")
+    endif()
+    set(MIVISIONX_LIBRARIES ${MIVISIONX_LIBRARIES} ${VX_NN_LIBRARY})
+else()
+    message( "-- ${Yellow}NOTE: FindMIVisionX failed to find VX_NN${ColourReset}" )
+endif()
+
+# find vx_rpp
+find_path(VX_RPP_INCLUDE_DIR NAMES vx_ext_rpp.h PATHS ${ROCM_PATH}/include/mivisionx)
+find_library(VX_RPP_LIBRARY NAMES vx_rpp HINTS ${ROCM_PATH}/lib)
+mark_as_advanced(VX_RPP_LIBRARY)
+if(VX_RPP_INCLUDE_DIR AND VX_RPP_LIBRARY)
+    if(MIVISIONX_FIND_REQUIRED)
+        message("-- ${White}FindMIVisionX: Using VX_RPP -- \n\tLib:${VX_RPP_LIBRARY}${ColourReset}")
+    endif()
+    set(MIVISIONX_LIBRARIES ${MIVISIONX_LIBRARIES} ${VX_RPP_LIBRARY})
+else()
+    message( "-- ${Yellow}NOTE: FindMIVisionX failed to find VX_RPP${ColourReset}" )
+endif()
+
+# find vx_opencv
+find_path(VX_OPENCV_INCLUDE_DIR NAMES vx_ext_opencv.h PATHS ${ROCM_PATH}/include/mivisionx)
+find_library(VX_OPENCV_LIBRARY NAMES vx_opencv HINTS ${ROCM_PATH}/lib)
+mark_as_advanced(VX_OPENCV_LIBRARY)
+if(VX_OPENCV_LIBRARY AND VX_OPENCV_INCLUDE_DIR)
+    if(MIVISIONX_FIND_REQUIRED)
+        message("-- ${White}FindMIVisionX: Using VX_OPENCV -- \n\tLib:${VX_OPENCV_LIBRARY}${ColourReset}")
+    endif()
+    set(MIVISIONX_LIBRARIES ${MIVISIONX_LIBRARIES} ${VX_OPENCV_LIBRARY})
+else()
+    message( "-- ${Yellow}NOTE: FindMIVisionX failed to find VX_OPENCV${ColourReset}" )
+endif()
+
+# find vx_amd_migraphx
+find_path(VX_AMD_MIGRAPHX_INCLUDE_DIR NAMES vx_amd_migraphx.h PATHS ${ROCM_PATH}/include/mivisionx)
+find_library(VX_AMD_MIGRAPHX_LIBRARY NAMES vx_amd_migraphx HINTS ${ROCM_PATH}/lib)
+mark_as_advanced(VX_AMD_MIGRAPHX_LIBRARY)
+if(VX_AMD_MIGRAPHX_LIBRARY AND VX_AMD_MIGRAPHX_INCLUDE_DIR)
+    if(MIVISIONX_FIND_REQUIRED)
+        message("-- ${White}FindMIVisionX: Using VX_AMD_MIGRAPHX -- \n\tLib:${VX_AMD_MIGRAPHX_LIBRARY}${ColourReset}")
+    endif()
+    set(MIVISIONX_LIBRARIES ${MIVISIONX_LIBRARIES} ${VX_AMD_MIGRAPHX_LIBRARY})
+else()
+    message( "-- ${Yellow}NOTE: FindMIVisionX failed to find VX_AMD_MIGRAPHX${ColourReset}" )
+endif()
+
+# find backend
+if(MIVISIONX_FOUND)
+    if (EXISTS "${MIVISIONX_INCLUDE_DIR}/openvx_backend.h")
+        file(READ "${MIVISIONX_INCLUDE_DIR}/openvx_backend.h" MIVISIONX_BACKEND_FILE)
+        string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${MIVISIONX_BACKEND_FILE})
+        set(MIVISIONX_OPENCL_BACKEND ${CMAKE_MATCH_1} CACHE INTERNAL "")
+        string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${RPP_VERSION_FILE})
+        set(MIVISIONX_HIP_BACKEND ${CMAKE_MATCH_1} CACHE INTERNAL "")
+    endif()
+    if(MIVISIONX_HIP_BACKEND)
+        set(MIVISIONX_BACKEND "HIP")
+    elseif()(MIVISIONX_OPENCL_BACKEND)
+        set(MIVISIONX_BACKEND "OPENCL")
+    else()
+        set(MIVISIONX_BACKEND "CPU")
+    endif()
+    if(MIVISIONX_FIND_REQUIRED)
+        message("-- ${White}FindMIVisionX: MIVISIONX_BACKEND -- ${MIVISIONX_BACKEND}${ColourReset}")
+    endif()
+endif()
+
 include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args( MIVISIONX 
     FOUND_VAR  MIVISIONX_FOUND 
     REQUIRED_VARS
+        OPENVX_INCLUDE_DIR
         OPENVX_LIBRARY
-        VX_RPP_LIBRARY  
+        VX_AMD_MEDIA_LIBRARY
+        VX_NN_LIBRARY
+        VX_RPP_LIBRARY
+        VX_OPENCV_LIBRARY
+        VX_AMD_MIGRAPHX_LIBRARY 
         MIVISIONX_INCLUDE_DIR
         MIVISIONX_LIBRARIES
+        MIVISIONX_BACKEND
 )
 
-# find OpenVX
-find_library(OPENVX_LIBRARY NAMES openvx HINTS ${ROCM_PATH}/lib)
-find_library(OPENVXU_LIBRARY NAMES vxu HINTS ${ROCM_PATH}/lib)
-find_path(OPENVX_INCLUDE_DIR NAMES VX/vx.h PATHS ${ROCM_PATH}/include/mivisionx)
-
-if(OPENVX_LIBRARY AND OPENVXU_LIBRARY AND OPENVX_INCLUDE_DIR)
-    set(OPENVX_FOUND TRUE)
-    set(MIVISIONX_FOUND TRUE CACHE INTERNAL "")
-    set(MIVISIONX_INCLUDE_DIR ${OPENVX_INCLUDE_DIR} CACHE INTERNAL "")
-    message("-- ${White}FindMIVISIONX: Using OpenVX -- \n\tLibraries:${OPENVX_LIBRARY} \n\tIncludes:${OPENVX_INCLUDE_DIR}${ColourReset}")
-else()
-    message("-- ${Yellow}FindMIVISIONX: OpenVX Libraries Not Found")
-endif()
-
-# find VX_RPP
-find_library(VX_RPP_LIBRARY NAMES vx_rpp HINTS ${ROCM_PATH}/lib)
-find_path(VX_RPP_INCLUDE_DIR NAMES vx_ext_rpp.h PATHS ${ROCM_PATH}/include/mivisionx)
-
-if(VX_RPP_LIBRARY AND VX_RPP_INCLUDE_DIR)
-    set(VX_RPP_FOUND TRUE)
-    message("-- ${White}FindMIVISIONX: Using VX_RPP -- \n\tLibraries:${VX_RPP_LIBRARY}${ColourReset}")
-else()
-    message("-- ${Yellow}FindMIVISIONX: VX_RPP Libraries Not Found")
-endif()
-
 set(MIVISIONX_FOUND ${MIVISIONX_FOUND} CACHE INTERNAL "")
+set(OPENVX_INCLUDE_DIR ${OPENVX_INCLUDE_DIR} CACHE INTERNAL "")
 set(OPENVX_LIBRARIES ${OPENVX_LIBRARIES} CACHE INTERNAL "")
-set(VXRPP_LIBRARIES ${VXRPP_LIBRARIES} CACHE INTERNAL "")
-set(MIVISIONX_INCLUDE_DIRS ${MIVISIONX_INCLUDE_DIRS} CACHE INTERNAL "")
+set(VX_AMD_MEDIA_LIBRARY ${VX_AMD_MEDIA_LIBRARY} CACHE INTERNAL "")
+set(VX_NN_LIBRARY ${VXRPP_LIBVX_NN_LIBRARYRARIES} CACHE INTERNAL "")
+set(VX_RPP_LIBRARY ${VX_RPP_LIBRARY} CACHE INTERNAL "")
+set(VX_OPENCV_LIBRARY ${VX_OPENCV_LIBRARY} CACHE INTERNAL "")
+set(VX_AMD_MIGRAPHX_LIBRARY ${VX_AMD_MIGRAPHX_LIBRARY} CACHE INTERNAL "")
+set(MIVISIONX_INCLUDE_DIR ${MIVISIONX_INCLUDE_DIR} CACHE INTERNAL "")
+set(MIVISIONX_LIBRARIES ${MIVISIONX_LIBRARIES} CACHE INTERNAL "")
+set(MIVISIONX_BACKEND ${MIVISIONX_BACKEND} CACHE INTERNAL "")
 
 if(MIVISIONX_FOUND)
-    message("-- ${White}Using MIVISIONX -- \n\tLibraries:${OPENVX_LIBRARIES} \n\tIncludes:${MIVISIONX_INCLUDE_DIRS}${ColourReset}")    
+    if(MIVISIONX_FIND_REQUIRED)
+        message("-- ${White}Using MIVISIONX -- \n\tMIVisionX Libraries:${MIVISIONX_LIBRARIES} \n\ttMIVisionX Includes:${MIVISIONX_INCLUDE_DIRS}${ColourReset}")
+    endif()
 else()
     if(MIVISIONX_FIND_REQUIRED)
         message(FATAL_ERROR "{Red}FindMIVISIONX -- NOT FOUND${ColourReset}")

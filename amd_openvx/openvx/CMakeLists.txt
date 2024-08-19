@@ -148,7 +148,7 @@ install(FILES
             include/VX/vx_types.h
             include/VX/vx_vendors.h
             include/VX/vxu.h
-	    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX COMPONENT dev)
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX COMPONENT dev)
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
 install(DIRECTORY ../../apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
 install(DIRECTORY ../../apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)

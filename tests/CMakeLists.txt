@@ -50,7 +50,7 @@ else()
 endif()
 
 # add find modules
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${ROCM_PATH}/share/mivisionx/test/cmake)
 
 # find required libraries
 set(Python3_FIND_VIRTUALENV FIRST)

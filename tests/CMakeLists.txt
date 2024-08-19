@@ -64,11 +64,6 @@ else()
   find_package(MIVISIONX REQUIRED)
 endif()
 
-# set nn test status
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests")
-  set(NEURAL_NET ON)
-endif()
-
 # OpenVX default tests - Vision Nodes
 # canny
 add_test(
@@ -148,12 +143,12 @@ if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
   if(Python3_FOUND)
     add_test(NAME openvx_tests_runVisionPython_GPU 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
-          --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no --hardware_mode GPU --backend_type ${BACKEND}
+          --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no --hardware_mode GPU --backend_type ${MIVISIONX_BACKEND}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   endif(Python3_FOUND)
 
   # Neural Network tests
-  if(NEURAL_NET AND Python3_FOUND)
+  if(VX_NN_LIBRARY AND Python3_FOUND)
     # caffe2nnir2openvx No Fuse flow
     add_test(NAME caffe2nnir2openvx_no_fuse
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
@@ -200,8 +195,7 @@ if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
           --profiler_mode 9 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-  endif(NEURAL_NET AND Python3_FOUND)
-
+  endif(VX_NN_LIBRARY AND Python3_FOUND)
 endif("${MIVISIONX_BACKEND}" STREQUAL "HIP")
 
 if("${MIVISIONX_BACKEND}" STREQUAL "OPENCL")

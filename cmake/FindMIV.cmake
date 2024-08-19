@@ -24,15 +24,6 @@
 # 
 ################################################################################
 
-# Set ROCM Path if not defined
-if(DEFINED ENV{ROCM_PATH})
-    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
-elseif(ROCM_PATH)
-    message("-- ${PROJECT_NAME}: ROCM_PATH Set -- ${ROCM_PATH}")
-else()
-    set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
-endif()
-
 # find OpenVX - Core MIVisionX library
 find_path(OPENVX_INCLUDE_DIR NAMES VX/vx.h PATHS ${ROCM_PATH}/include/mivisionx)
 find_library(OPENVX_LIBRARY NAMES openvx HINTS ${ROCM_PATH}/lib)

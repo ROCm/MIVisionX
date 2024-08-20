@@ -44,7 +44,7 @@ endif()
 if(DEFINED ENV{ROCM_PATH})
   set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
 elseif(ROCM_PATH)
-  message("-- ${PROJECT_NAME}: ROCM_PATH Set -- ${ROCM_PATH}")
+  message("-- ${White}${PROJECT_NAME}: ROCM_PATH Set -- ${ROCM_PATH}${ColourReset}")
 else()
   set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 endif()
@@ -65,6 +65,60 @@ if(BUILT_WITH_SOURCE)
 else()
   find_package(MIVISIONX REQUIRED)
 endif()
+
+# vx_core test
+add_test(NAME vx_core_test
+COMMAND ${RUNVX_EXECUTABLE}
+-dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/gdfs/00_absDiff_test.gdf
+WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+# vx_amd_media Tests
+if(VX_AMD_MEDIA_LIBRARY)
+  add_test(NAME vx_amd_media_test
+            COMMAND ${RUNVX_EXECUTABLE}
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_media_tests/gdf/decoder_test.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif(VX_AMD_MEDIA_LIBRARY)
+
+# vx_amd_migraphx Tests
+if(VX_AMD_MIGRAPHX_LIBRARY)
+  add_test(NAME vx_amd_migraphx_test
+            COMMAND ${RUNVX_EXECUTABLE}
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_migraphx_tests/gdf/vx_migraphx_test.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif(VX_AMD_MIGRAPHX_LIBRARY)
+
+# VX_NN_LIBRARY Tests
+if(VX_NN_LIBRARY)
+  add_test(NAME vx_nn_test
+            COMMAND ${RUNVX_EXECUTABLE}
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/gdf/test_vx_nn.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif(VX_NN_LIBRARY)
+
+# vx_opencv Tests
+if(VX_OPENCV_LIBRARY)
+  add_test(NAME vx_opencv_test
+            COMMAND ${RUNVX_EXECUTABLE}
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_opencv_tests/gdfs/absdiff_test.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif(VX_OPENCV_LIBRARY)
+
+# vx_rpp Tests
+if(VX_RPP_LIBRARY)
+  add_test(NAME vx_rpp_test
+            COMMAND ${RUNVX_EXECUTABLE}
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vx_rpp_tests/gdf/test_vx_rpp.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif(VX_RPP_LIBRARY)
+
+# runvx Tests
+if(RUNVX_EXECUTABLE)
+  add_test(NAME runvx_test
+            COMMAND ${RUNVX_EXECUTABLE}
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/gdfs/00_harrisCorners_test.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif(RUNVX_EXECUTABLE)
 
 # OpenVX default tests - Vision Nodes
 # canny
@@ -124,30 +178,6 @@ if(Python3_FOUND)
             --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(Python3_FOUND)
-
-# vx_amd_media Tests
-if(VX_AMD_MEDIA_LIBRARY)
-  add_test(NAME vx_amd_media_test
-            COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_media_tests/gdf/decoder_test.gdf
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-endif(VX_AMD_MEDIA_LIBRARY)
-
-# vx_opencv Tests
-if(VX_OPENCV_LIBRARY)
-  add_test(NAME vx_opencv_test
-            COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_opencv_tests/gdfs/absdiff_test.gdf
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-endif(VX_OPENCV_LIBRARY)
-
-# vx_rpp Tests
-if(VX_RPP_LIBRARY)
-  add_test(NAME vx_rpp_test
-            COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vx_rpp_tests/gdf/test_vx_rpp.gdf
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-endif(VX_RPP_LIBRARY)
 
 # HIP Tests
 if("${MIVISIONX_BACKEND}" STREQUAL "HIP")

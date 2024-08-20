@@ -86,6 +86,7 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_amd_media.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+# install - test
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/amd_media_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

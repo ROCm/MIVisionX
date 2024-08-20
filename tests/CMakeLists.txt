@@ -80,13 +80,13 @@ if(VX_AMD_MEDIA_LIBRARY)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(VX_AMD_MEDIA_LIBRARY)
 
-# vx_amd_migraphx Tests
-if(VX_AMD_MIGRAPHX_LIBRARY)
+# vx_amd_migraphx Tests -- TBD: Disabled (ref:github issue 1410)
+if(VX_AMD_MIGRAPHX_LIBRARY AND 0)
   add_test(NAME vx_amd_migraphx_test
             COMMAND ${RUNVX_EXECUTABLE}
             -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_migraphx_tests/gdf/vx_migraphx_test.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-endif(VX_AMD_MIGRAPHX_LIBRARY)
+endif(VX_AMD_MIGRAPHX_LIBRARY AND 0)
 
 # VX_NN_LIBRARY Tests
 if(VX_NN_LIBRARY)

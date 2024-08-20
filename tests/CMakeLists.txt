@@ -56,7 +56,6 @@ list(APPEND CMAKE_MODULE_PATH ${ROCM_PATH}/share/mivisionx/test/cmake)
 set(Python3_FIND_VIRTUALENV FIRST)
 find_package(Python3 QUIET)
 find_package(OpenCV QUIET)
-
 if(BUILT_WITH_SOURCE)
   set(MIVISIONX_BACKEND ${BACKEND})
   find_package(MIVISIONX QUIET)
@@ -66,6 +65,7 @@ if(BUILT_WITH_SOURCE)
 else()
   find_package(MIVISIONX REQUIRED)
 endif()
+find_program(RUNVX NAMES runvx PATHS ${ROCM_PATH}/bin)
 
 # OpenVX default tests - Vision Nodes
 # canny
@@ -126,12 +126,19 @@ if(Python3_FOUND)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(Python3_FOUND)
 
-# OpenVX Tests
+# vx_amd_media Tests
+if(VX_AMD_MEDIA_LIBRARY)
+  add_test(NAME vx_amd_media_test
+            COMMAND ${RUNVX}
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_media_tests/gdf/decoder_test.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif(VX_AMD_MEDIA_LIBRARY)
+
+# vx_rpp Tests
 if(VX_RPP_LIBRARY)
-  find_program(RUNVX NAMES runvx PATHS ${ROCM_PATH}/bin)
   add_test(NAME vx_rpp_test
             COMMAND ${RUNVX}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vx_rpp/gdf/test_vx_rpp.gdf
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vx_rpp_tests/gdf/test_vx_rpp.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(VX_RPP_LIBRARY)
 

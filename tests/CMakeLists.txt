@@ -133,6 +133,14 @@ if(VX_AMD_MEDIA_LIBRARY)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif(VX_AMD_MEDIA_LIBRARY)
 
+# vx_opencv Tests
+if(VX_OPENCV_LIBRARY)
+  add_test(NAME vx_opencv_test
+            COMMAND ${RUNVX_EXECUTABLE}
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_opencv_tests/gdfs/absdiff_test.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif(VX_OPENCV_LIBRARY)
+
 # vx_rpp Tests
 if(VX_RPP_LIBRARY)
   add_test(NAME vx_rpp_test

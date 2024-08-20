@@ -33,7 +33,8 @@
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig")
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(FFmpeg
+find_package_handle_standard_args(
+  FFmpeg
   FOUND_VAR 
     FFMPEG_FOUND
   REQUIRED_VARS

@@ -65,7 +65,8 @@ if(AMDRPP_LIBRARIES AND AMDRPP_INCLUDE_DIRS)
 endif( )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(AMDRPP 
+find_package_handle_standard_args(
+    AMDRPP 
     FOUND_VAR
         AMDRPP_FOUND 
     REQUIRED_VARS

@@ -128,6 +128,20 @@ else()
     endif()
 endif()
 
+
+# find runvx exe
+find_program(RUNVX_EXECUTABLE NAMES runvx PATHS ${ROCM_PATH}/bin)
+mark_as_advanced(RUNVX_EXECUTABLE)
+if(RUNVX_EXECUTABLE)
+    if(MIVISIONX_FIND_REQUIRED)
+        message("-- ${White}FindMIVISIONX -- Using RunVX: \n\tEXE:${RUNVX_EXECUTABLE}${ColourReset}")
+    endif()
+else()
+    if(MIVISIONX_FIND_REQUIRED)
+        message( "-- ${Yellow}NOTE: FindMIVISIONX failed to find RUNVX_EXECUTABLE${ColourReset}" )
+    endif()
+endif()
+
 # find backend
 if(MIVISIONX_FOUND)
     if (EXISTS "${MIVISIONX_INCLUDE_DIR}/openvx_backend.h")
@@ -152,17 +166,15 @@ if(MIVISIONX_FOUND)
 endif()
 
 include(FindPackageHandleStandardArgs)
-
-find_package_handle_standard_args( MIVISIONX 
-    FOUND_VAR  MIVISIONX_FOUND 
+find_package_handle_standard_args(
+    MIVISIONX
+    FOUND_VAR  
+        MIVISIONX_FOUND 
     REQUIRED_VARS
         OPENVX_INCLUDE_DIR
         OPENVX_LIBRARY
-        VX_AMD_MEDIA_LIBRARY
-        VX_NN_LIBRARY
         VX_RPP_LIBRARY
-        VX_OPENCV_LIBRARY
-        VX_AMD_MIGRAPHX_LIBRARY 
+        RUNVX_EXECUTABLE
         MIVISIONX_INCLUDE_DIR
         MIVISIONX_LIBRARIES
         MIVISIONX_BACKEND
@@ -176,6 +188,7 @@ set(VX_NN_LIBRARY ${VX_NN_LIBRARY} CACHE INTERNAL "")
 set(VX_RPP_LIBRARY ${VX_RPP_LIBRARY} CACHE INTERNAL "")
 set(VX_OPENCV_LIBRARY ${VX_OPENCV_LIBRARY} CACHE INTERNAL "")
 set(VX_AMD_MIGRAPHX_LIBRARY ${VX_AMD_MIGRAPHX_LIBRARY} CACHE INTERNAL "")
+set(RUNVX_EXECUTABLE ${RUNVX_EXECUTABLE} CACHE INTERNAL "")
 set(MIVISIONX_INCLUDE_DIR ${MIVISIONX_INCLUDE_DIR} CACHE INTERNAL "")
 set(MIVISIONX_LIBRARIES ${MIVISIONX_LIBRARIES} CACHE INTERNAL "")
 set(MIVISIONX_BACKEND ${MIVISIONX_BACKEND} CACHE INTERNAL "")

@@ -40,9 +40,11 @@ if(HALF_INCLUDE_DIRS)
     set(HALF_FOUND TRUE)
 endif( )
 
-include( FindPackageHandleStandardArgs )
-find_package_handle_standard_args( HALF 
-    FOUND_VAR  HALF_FOUND 
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+    HALF 
+    FOUND_VAR  
+        HALF_FOUND 
     REQUIRED_VARS
         HALF_INCLUDE_DIRS 
 )

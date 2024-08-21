@@ -295,6 +295,7 @@ pipONNXversion = "onnx==1.11.0"
 pipNNEFversion = "nnef==1.0.7"
 if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
+    pipNNEFversion = "protobuf==3.12.4" # TBD: NO NNEF Package for SLES
 if "NAME=SLES" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
     pipProtoVersion= "protobuf==3.19.5"
@@ -467,7 +468,7 @@ else:
                     # Install base Deps
                     for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-                if "SLES" in platfromInfo or "Mariner" in platfromInfo:
+                if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
                     ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
                     ERROR_CHECK(os.system(
                         '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))

@@ -262,12 +262,14 @@ pip3InferencePackagesUbuntu = [
 ]
 
 # RPM based
-pipONNXversion = "onnx==1.11.0" 
+pipONNXversion = "onnx==1.11.0"
+pipNNEFversion = "nnef==1.0.7"
 if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
 if "NAME=SLES" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
     pipProtoVersion= "protobuf==3.19.5"
+    pipNNEFversion = "protobuf==3.19.5" # TBD: NO NNEF Package for SLES
 
 pip3InferencePackagesRPM = [
     'future==0.18.2',
@@ -276,7 +278,7 @@ pip3InferencePackagesRPM = [
     str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXversion),
-    'nnef==1.0.7'
+    str(pipNNEFversion)
 ]
 
 # Delete previous install

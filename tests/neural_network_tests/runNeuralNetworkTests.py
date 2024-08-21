@@ -33,7 +33,7 @@ from subprocess import Popen, PIPE
 
 __copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
     
@@ -258,6 +258,7 @@ pip3InferencePackagesUbuntu = [
     str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXVersion),
+    'nnef==1.0'
 ]
 
 # RPM based
@@ -274,7 +275,8 @@ pip3InferencePackagesRPM = [
     'google==3.0.0',
     str(pipNumpyVersion),
     str(pipProtoVersion),
-    str(pipONNXversion)
+    str(pipONNXversion),
+    'nnef==1.0'
 ]
 
 # Delete previous install
@@ -359,14 +361,6 @@ if not os.path.exists(modelCompilerDeps):
                         ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
         for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-    # Install NNEF Deps
-    ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
-    ERROR_CHECK(os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
-    ERROR_CHECK(os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
-    ERROR_CHECK(os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
     if "centos-7" in platfromInfo:

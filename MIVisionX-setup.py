@@ -467,6 +467,14 @@ else:
                     # Install base Deps
                     for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
+                if "SLES" in platfromInfo or "Mariner" in platfromInfo:
+                    ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
+                    ERROR_CHECK(os.system(
+                        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
+                    ERROR_CHECK(os.system(
+                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
+                    ERROR_CHECK(os.system(
+                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:
                 print("STATUS: Model Compiler Deps Pre-Installed - " +modelCompilerDeps+"\n")
     else:

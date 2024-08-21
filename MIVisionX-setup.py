@@ -30,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.5.0"
+__version__ = "3.6.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -172,9 +172,11 @@ linuxCMake = 'cmake'
 linuxSystemInstall_check = ''
 linuxFlag = ''
 sudoValidate = 'sudo -v'
+osUpdate = ''
 if "centos" in os_info_data or "redhat" in os_info_data:
     linuxSystemInstall = 'yum -y'
     linuxSystemInstall_check = '--nogpgcheck'
+    osUpdate = 'makecache'
     if "VERSION_ID=7" in os_info_data:
         linuxCMake = 'cmake3'
         sudoValidate = 'sudo -k'
@@ -188,6 +190,7 @@ if "centos" in os_info_data or "redhat" in os_info_data:
 elif "Ubuntu" in os_info_data:
     linuxSystemInstall = 'apt-get -y'
     linuxSystemInstall_check = '--allow-unauthenticated'
+    osUpdate = 'update'
     linuxFlag = '-S'
     if "VERSION_ID=20" in os_info_data:
         platfromInfo = platfromInfo+'-Ubuntu-20'
@@ -200,11 +203,13 @@ elif "Ubuntu" in os_info_data:
 elif "SLES" in os_info_data:
     linuxSystemInstall = 'zypper -n'
     linuxSystemInstall_check = '--no-gpg-checks'
+    osUpdate = 'refresh'
     platfromInfo = platfromInfo+'-SLES'
 elif "Mariner" in os_info_data:
     linuxSystemInstall = 'tdnf -y'
     linuxSystemInstall_check = '--nogpgcheck'
     platfromInfo = platfromInfo+'-Mariner'
+    osUpdate = 'makecache'
 else:
     print("\nMIVisionX Setup on "+platfromInfo+" is unsupported\n")
     print("\nMIVisionX Setup Supported on: Ubuntu 20/22, RedHat 8/9, & SLES 15\n")
@@ -214,7 +219,7 @@ else:
 print("\nMIVisionX Setup on: "+platfromInfo+"\n")
 
 if userName == 'root':
-    ERROR_CHECK(os.system(linuxSystemInstall+' update'))
+    ERROR_CHECK(os.system(linuxSystemInstall+' '+osUpdate))
     ERROR_CHECK(os.system(linuxSystemInstall+' install sudo'))
 
 # Delete previous install
@@ -283,21 +288,27 @@ pip3InferencePackagesUbuntu = [
     str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXVersion),
+    'nnef==1.0.7'
 ]
 
 pipONNXversion = "onnx==1.11.0"
+pipNNEFversion = "nnef==1.0.7"
 if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
+    pipNNEFversion = "protobuf==3.12.4" # TBD: NO NNEF Package for SLES
 if "NAME=SLES" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
     pipProtoVersion= "protobuf==3.19.5"
+    pipNNEFversion = "protobuf==3.19.5" # TBD: NO NNEF Package for SLES
+
 pip3InferencePackagesRPM = [
     'future==0.18.2',
     'pytz==2022.1',
     'google==3.0.0',
     str(pipNumpyVersion),
     str(pipProtoVersion),
-    str(pipONNXversion)
+    str(pipONNXversion),
+    str(pipNNEFversion)
 ]
 
 ffmpegDebianPackages = [
@@ -353,7 +364,7 @@ opencvRPMPackages = [
 ]
 
 # update
-ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +' '+linuxSystemInstall_check+' update'))
+ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +' '+linuxSystemInstall_check+' '+osUpdate))
 
 # Re-Install
 if os.path.exists(deps_dir):
@@ -457,14 +468,14 @@ else:
                     # Install base Deps
                     for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-                # Install NNEF Deps
-                ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
-                ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
-                ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
-                ERROR_CHECK(os.system(
-                    '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
+                if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
+                    ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
+                    ERROR_CHECK(os.system(
+                        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
+                    ERROR_CHECK(os.system(
+                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
+                    ERROR_CHECK(os.system(
+                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:
                 print("STATUS: Model Compiler Deps Pre-Installed - " +modelCompilerDeps+"\n")
     else:
@@ -561,7 +572,19 @@ else:
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
-            ' -D WITH_EIGEN=OFF -D WITH_GTK=ON -D WITH_JPEG=ON -D BUILD_JPEG=ON -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )'))
+                        ' -D WITH_EIGEN=OFF \
+                        -D WITH_GTK=ON \
+                        -D WITH_JPEG=ON \
+                        -D BUILD_JPEG=ON \
+                        -D WITH_OPENCL=OFF \
+                        -D WITH_OPENCLAMDFFT=OFF \
+                        -D WITH_OPENCLAMDBLAS=OFF \
+                        -D WITH_VA_INTEL=OFF \
+                        -D WITH_OPENCL_SVM=OFF  \
+                        -D CMAKE_INSTALL_PREFIX=/usr/local \
+                        -D BUILD_LIST=core,features2d,highgui,imgcodecs,imgproc,photo,video,videoio  \
+                        -D CMAKE_PLATFORM_NO_VERSIONED_SONAME=ON \
+                        ../../opencv-'+opencvVersion+' )'))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; make -j$(nproc))'))
     ERROR_CHECK(os.system(sudoValidate))
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo make install)'))

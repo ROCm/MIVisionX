@@ -47,7 +47,7 @@ include_directories(${OPENVX_INCLUDES})
 
 set(SHARED_LIB_TYPE so)
 if(APPLE)
-  set(SHARED_LIB_TYPE dylib)
+	set(SHARED_LIB_TYPE dylib)
 endif()
 
 if(DEFINED OPENVX_LIBRARIES)
@@ -57,13 +57,13 @@ else()
 	message(STATUS "BUBBLE POP - OPENVX_LIBRARIES: \t<empty> \tDefault:${OPENVX_LIBRARIES}")
 endif()
 
-list    (APPEND SOURCES
+list(APPEND SOURCES
 		source/AMD_VX_Pop_Bubble.cpp
         source/AMD_VX_Pop_Donut.cpp
 		source/internal_dataTranslator.cpp
 		source/internal_publishKernels.cpp
 		source/internal_vxNodes.cpp
-	    )
+)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES})

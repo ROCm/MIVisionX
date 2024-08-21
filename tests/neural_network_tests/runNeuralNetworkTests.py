@@ -258,7 +258,7 @@ pip3InferencePackagesUbuntu = [
     str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXVersion),
-    'nnef==1.0'
+    'nnef==1.0.7'
 ]
 
 # RPM based
@@ -276,7 +276,7 @@ pip3InferencePackagesRPM = [
     str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXversion),
-    'nnef==1.0'
+    'nnef==1.0.7'
 ]
 
 # Delete previous install

@@ -225,6 +225,15 @@ static vx_status VX_CALLBACK uninitializeResample(vx_node node, const vx_referen
     if (data->pSrcRoi) delete[] data->pSrcRoi;
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;
+#if RPP_AUDIO
+    if (data->window.lookup) {
+    #if ENABLE_HIP
+        hipFree(data->window.lookup);
+    #else
+        free(data->window.lookup)
+    #endif
+    }
+#endif
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     if (data) delete data;
     return VX_SUCCESS;

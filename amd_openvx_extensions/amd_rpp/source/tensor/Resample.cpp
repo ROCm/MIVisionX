@@ -40,31 +40,36 @@ struct ResampleLocalData {
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-inline float sinc(float x) {
-    x *= M_PI;
-    return (std::abs(x) < 1e-5f) ? (1.0f - x * x * (1.0f / 6)) : std::sin(x) / x;
-}
-
-inline double hann(double x) {
-    return 0.5 * (1 + std::cos(x * M_PI));
-}
 
 // initialization function used for filling the values in Resampling window (RpptResamplingWindow)
 // using the coeffs and lobes value this function generates a LUT (look up table) which is further used in Resample audio augmentation
 #if RPP_AUDIO
-inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t lobes) {
-    float scale = 2.0f * lobes / (coeffs - 1);
-    float scale_envelope = 2.0f / coeffs;
+inline float sincFunc(float x) {
+    x *= M_PI;
+    return (std::abs(x) < 1e-5f) ? (1.0f - x * x * (1.0f / 6)) : std::sin(x) / x;
+}
+
+inline double hannFunc(double x) {
+    return 0.5 * (1 + std::cos(x * M_PI));
+}
+
+inline void windowedSinc(RpptResamplingWindow &window, int32_t coeffs, int32_t lobes) {
+
+    Rpp32f scale = 2.0f * lobes / (coeffs - 1);
+    Rpp32f scale_envelope = 2.0f / coeffs;
     window.coeffs = coeffs;
     window.lobes = lobes;
-    window.lookup.clear();
-    window.lookup.resize(coeffs + 5);
-    window.lookupSize = window.lookup.size();
+    window.lookupSize = coeffs + 5;
+#if ENABLE_HIP
+    CHECK_RETURN_STATUS(hipHostMalloc(&(window.lookup), window.lookupSize * sizeof(Rpp32f)));
+#else
+    window.lookup = static_cast<Rpp32f *>(malloc(window.lookupSize * sizeof(Rpp32f)));
+#endif
     int32_t center = (coeffs - 1) * 0.5f;
     for (int32_t i = 0; i < coeffs; i++) {
         float x = (i - center) * scale;
         float y = (i - center) * scale_envelope;
-        float w = sinc(x) * hann(y);
+        float w = sincFunc(x) * hannFunc(y);
         window.lookup[i + 1] = w;
     }
     window.center = center + 1;
@@ -202,7 +207,7 @@ static vx_status VX_CALLBACK initializeResample(vx_node node, const vx_reference
         int32_t lobes = std::round(0.007 * data->quality * data->quality - 0.09 * data->quality + 3);
         int32_t lookupSize = lobes * 64 + 1;
 #if RPP_AUDIO
-        windowed_sinc(data->window, lookupSize, lobes);
+        windowedSinc(data->window, lookupSize, lobes);
 #endif
         refreshResample(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));

@@ -7,19 +7,23 @@ Documentation for MIVisionX is available at
 
 ## MIVisionX 3.1.0 (unreleased)
 
-### Additions
-
-
-### Optimizations
-
-
 ### Changes
-
 * Setup: rocdecode install disabled
 * Package: rocdecode dependency removed
 
-### Fixes
-
+### Removals
+ 
+### Optimizations
+ 
+### Resolved issues
+ 
+### Known issues
+* Package install requires `OpenCV` manual install
+* CentOS/RedHat/SLES requires `FFMPEG Dev` package manual install
+* Hardware decode requires rocm usecase `graphics`
+ 
+### Upcoming changes
+* Optimized audio augmentations support for VX_RPP
 
 ### Tested configurations
 
@@ -38,16 +42,10 @@ Documentation for MIVisionX is available at
 * Dependencies for all the above packages
 * MIVisionX Setup Script - `V3.7.0`
 
-### Known issues
-
-* Package install requires `OpenCV` manual install
-* CentOS/RedHat/SLES requires `FFMPEG Dev` package manual install
-* Hardware decode requires rocm usecase `graphics`
-
-## MIVisionX 3.0.0
-
-### Additions
-
+## MIVisionX 3.0.0 for ROCm 6.3.0
+ 
+### Changes
+ 
 * Support for advanced GPUs
 * Support for PreEmphasis Filter augmentation in openVX extensions
 * Support for Spectrogram augmentation in openVX extensions
@@ -57,21 +55,31 @@ Documentation for MIVisionX is available at
 * Support for Mel-Filter bank and Normalize augmentations in openVX extensions
 * Tests - New Tests for all modules
 
+### Removals
+ 
+* rocAL: Deprecated with V3.0.0, rocAL will be available at https://github.com/ROCm/rocAL
+ 
 ### Optimizations
-
+ 
 * Readme
 * Setup - CentOS 7 support
 * Setup - SLES 15 SP5 support
 * FindPackage modules updated - FindMIVisionX
+ 
+### Resolved issues
+ 
+* MIVisionX compatibility fix - Resample and pre-emphasis filter
+* Docs - fix broken image links
+ 
+### Known issues
 
-### Changes
-
-* rocAL: Deprecated with V3.0.0, rocAL will be available at https://github.com/ROCm/rocAL
-
-### Fixes
-
-* Dependencies
-* Setup bugfix
+* Package install requires `OpenCV` manual install
+* CentOS/RedHat/SLES requires `FFMPEG Dev` package manual install
+* Hardware decode requires rocm usecase `graphics`
+ 
+### Upcoming changes
+ 
+* Optimized audio augmentations support for VX_RPP
 
 ### Tested configurations
 
@@ -89,11 +97,6 @@ Documentation for MIVisionX is available at
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
 * MIVisionX Setup Script - `V3.6.0`
-
-### Known issues
-
-* Package install requires `OpenCV V4.6` manual install
-* CentOS/RedHat/SLES requires `FFMPEG Dev` package manual install
 
 ## MIVisionX 2.5.0
 

@@ -1,8 +1,6 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=openvx-1.0.1)](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
-[![codecov](https://codecov.io/gh/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/branch/openvx-1.0.1/graph/badge.svg)](https://codecov.io/gh/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/branch/openvx-1.0.1)
 
-<p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX.png" /></p>
 
 **MIVisionX Lite** toolkit is a set of comprehensive computer vision, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™ 1.0.1</a>. The toolkit allows for rapid prototyping and deployment of optimized computer vision workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
@@ -24,7 +22,7 @@
 
 ## AMD OpenVX
 
-<p align="center"><img width="30%" src="https://raw.githubusercontent.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/master/docs/images/OpenVX_logo.png" /></p>
+<p align="center"><img width="30%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/OpenVX_logo.png" /></p>
 
 [AMD OpenVX 1.0.1](amd_openvx#amd-openvx-amd_openvx) is a highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 

@@ -5,6 +5,45 @@
 Documentation for MIVisionX is available at
 [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
+## MIVisionX 3.1.0 (unreleased)
+
+### Additions
+
+
+### Optimizations
+
+
+### Changes
+
+* Setup: rocdecode install disabled
+* Package: rocdecode dependency removed
+
+### Fixes
+
+
+### Tested configurations
+
+* Windows `10` / `11`
+* Linux distribution
+  + Ubuntu - `20.04` / `22.04`
+  + CentOS - `7`
+  + RHEL - `8` / `9`
+  + SLES - `15-SP5`
+* ROCm: rocm-core - `6.3.0.60300`
+* RPP - `1.9.0.60300`
+* miopen-hip - `3.2.0.60300`
+* migraphx - `2.11.0.60300`
+* OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
+* FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
+* Dependencies for all the above packages
+* MIVisionX Setup Script - `V3.7.0`
+
+### Known issues
+
+* Package install requires `OpenCV` manual install
+* CentOS/RedHat/SLES requires `FFMPEG Dev` package manual install
+* Hardware decode requires rocm usecase `graphics`
+
 ## MIVisionX 3.0.0
 
 ### Additions

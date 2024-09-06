@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 cmake_minimum_required(VERSION 3.5)
-set(VERSION "3.0.0")
+set(VERSION "3.1.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
@@ -217,23 +217,22 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
 # Set the dependent packages
-set(MIVISIONX_DEBIAN_PACKAGE_LIST  "rocm-hip-runtime, rpp, rocblas, miopen-hip, migraphx")
-set(MIVISIONX_RPM_PACKAGE_LIST     "rocm-hip-runtime, rpp, rocblas, miopen-hip, migraphx")
+set(MIVISIONX_RUNTIME_PACKAGE_LIST  "rocm-hip-runtime, rpp, rocblas, miopen-hip, migraphx")
+
 # Set the dev dependent packages
-set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, half, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev")
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev")
 # TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel
-set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "rocm-hip-runtime-devel, half, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
+set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
 
 # Add rocDecode Deps - Exclude centos-7
 if (EXISTS "/etc/os-release")
   file(READ "/etc/os-release" OS_RELEASE)
   string(REGEX MATCH "CentOS-7" CENTOS_7_FOUND ${OS_RELEASE})
-  if(NOT CENTOS_7_FOUND)
-    set(MIVISIONX_DEBIAN_PACKAGE_LIST  "${MIVISIONX_DEBIAN_PACKAGE_LIST}, rocdecode")
-    set(MIVISIONX_RPM_PACKAGE_LIST     "${MIVISIONX_RPM_PACKAGE_LIST}, rocdecode")
-    set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, rocdecode-dev")
-    set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "${MIVISIONX_RPM_DEV_PACKAGE_LIST}, rocdecode-devel")
-  endif()
+  #if(NOT CENTOS_7_FOUND) - Disable TBD: Turn on with package update
+    #set(MIVISIONX_RUNTIME_PACKAGE_LIST  "${MIVISIONX_RUNTIME_PACKAGE_LIST}, rocdecode")
+    #set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, rocdecode-dev")
+    #set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "${MIVISIONX_RPM_DEV_PACKAGE_LIST}, rocdecode-devel")
+  #endif()
 endif()
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
@@ -255,25 +254,25 @@ set(CPACK_RPM_PACKAGE_AUTOREQPROV "no")
 # Debian package - COMPONENT
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 set(CPACK_DEBIAN_RUNTIME_PACKAGE_NAME "${PROJECT_NAME}")
-set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "rocm-core, ${MIVISIONX_DEBIAN_PACKAGE_LIST}")
+set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "rocm-core, ${MIVISIONX_RUNTIME_PACKAGE_LIST}")
 set(CPACK_DEBIAN_DEV_PACKAGE_NAME "${PROJECT_NAME}-dev")
 set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS 
   "rocm-core, ${CPACK_DEBIAN_RUNTIME_PACKAGE_NAME}, ${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}")
 # Debian package - specific variable for ASAN
 set(CPACK_DEBIAN_ASAN_PACKAGE_NAME "${PROJECT_NAME}-asan" )
-set(CPACK_DEBIAN_ASAN_PACKAGE_DEPENDS "rocm-core-asan, ${MIVISIONX_DEBIAN_PACKAGE_LIST}" )
+set(CPACK_DEBIAN_ASAN_PACKAGE_DEPENDS "rocm-core-asan, ${MIVISIONX_RUNTIME_PACKAGE_LIST}" )
 # Debian package - Test
 set(CPACK_DEBIAN_TEST_PACKAGE_NAME "${PROJECT_NAME}-test" )
 set(CPACK_DEBIAN_TEST_PACKAGE_DEPENDS "rocm-core, ${CPACK_DEBIAN_DEV_PACKAGE_NAME}" )
 # RPM package - COMPONENT
 set(CPACK_RPM_COMPONENT_INSTALL ON)
 set(CPACK_RPM_RUNTIME_PACKAGE_NAME "${PROJECT_NAME}")
-set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "rocm-core, ${MIVISIONX_RPM_PACKAGE_LIST}")
+set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "rocm-core, ${MIVISIONX_RUNTIME_PACKAGE_LIST}")
 set(CPACK_RPM_DEV_PACKAGE_NAME "${PROJECT_NAME}-devel")
 set(CPACK_RPM_DEV_PACKAGE_REQUIRES "rocm-core, ${CPACK_RPM_RUNTIME_PACKAGE_NAME}, ${MIVISIONX_RPM_DEV_PACKAGE_LIST}")
 # RPM package - specific variable for ASAN
 set(CPACK_RPM_ASAN_PACKAGE_NAME "${PROJECT_NAME}-asan" )
-set(CPACK_RPM_ASAN_PACKAGE_REQUIRES "rocm-core-asan, ${MIVISIONX_RPM_PACKAGE_LIST}" )
+set(CPACK_RPM_ASAN_PACKAGE_REQUIRES "rocm-core-asan, ${MIVISIONX_RUNTIME_PACKAGE_LIST}" )
 # RPM package specific variable for ASAN
 set(CPACK_RPM_TEST_PACKAGE_NAME "${PROJECT_NAME}-test" )
 set(CPACK_RPM_TEST_PACKAGE_REQUIRES "rocm-core, ${CPACK_RPM_DEV_PACKAGE_NAME}" )

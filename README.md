@@ -309,12 +309,12 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V3.6.0`
+* MIVisionX Setup Script - `V3.7.0`
 
 ### Known issues
 
-* OpenCV 4.X support for some apps missing
-* MIVisionX Package install requires manual prerequisites installation 
+* Package install `OpenCV` manual install
+* Package install in `RHEL`/`SLES`/`CentOS` requires manual `FFMPEG Dev` install
 
 ## MIVisionX dependency map
 

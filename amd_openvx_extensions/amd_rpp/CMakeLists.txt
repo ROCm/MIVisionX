@@ -242,3 +242,4 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_ext_rpp.h include/vx_ext_rpp_version.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/vx_rpp_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)

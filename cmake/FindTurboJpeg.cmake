@@ -73,8 +73,10 @@ if(TurboJpeg_LIBRARIES AND TurboJpeg_INCLUDE_DIRS)
 endif( )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args( TurboJpeg 
-    FOUND_VAR  TurboJpeg_FOUND 
+find_package_handle_standard_args(
+    TurboJpeg 
+    FOUND_VAR  
+        TurboJpeg_FOUND 
     REQUIRED_VARS
         TurboJpeg_LIBRARIES 
         TurboJpeg_INCLUDE_DIRS

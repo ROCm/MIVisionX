@@ -302,19 +302,19 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + CentOS - `7`
   + RHEL - `8` / `9`
   + SLES - `15-SP5`
-* ROCm: rocm-core - `6.1.0.60100`
-* RPP - `1.5.0.60100`
-* miopen-hip - `3.1.0.60100`
-* migraphx - `2.9.0.60100`
+* ROCm: rocm-core - `6.3.0.60300`
+* RPP - `1.9.0.60300`
+* miopen-hip - `3.2.0.60300`
+* migraphx - `2.11.0.60300`
 * OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V3.5.0`
+* MIVisionX Setup Script - `V3.7.0`
 
 ### Known issues
 
-* OpenCV 4.X support for some apps missing
-* MIVisionX Package install requires manual prerequisites installation 
+* Package install `OpenCV` manual install
+* Package install in `RHEL`/`SLES`/`CentOS` requires manual `FFMPEG Dev` install
 
 ## MIVisionX dependency map
 

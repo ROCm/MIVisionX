@@ -33,7 +33,7 @@ from subprocess import Popen, PIPE
 
 __copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
     
@@ -243,9 +243,10 @@ inferenceRPMPackages = [
     'python3-protobuf'
 ]
 
+# Debian based
 pipNumpyVersion = "numpy==1.23.0"
-pipONNXVersion = "onnx==1.12.0"
 pipProtoVersion= "protobuf==3.12.4"
+pipONNXVersion = "onnx==1.12.0"
 if "VERSION_ID=24" in os_info_data:
     pipNumpyVersion = "numpy==2.0.0"
     pipONNXVersion = "onnx==1.16.0"
@@ -253,21 +254,32 @@ if "VERSION_ID=24" in os_info_data:
 pip3InferencePackagesUbuntu = [
     'future==0.18.2',
     'pytz==2022.1',
-    str(pipNumpyVersion),
     'google==3.0.0',
+    str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXVersion),
+    'nnef==1.0.7'
 ]
 
+# RPM based
+pipONNXversion = "onnx==1.11.0"
+pipNNEFversion = "nnef==1.0.7"
 if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
+    pipNNEFversion = "protobuf==3.12.4" # TBD: NO NNEF Package for SLES
+if "NAME=SLES" in os_info_data:
+    pipNumpyVersion = "numpy==1.19.5"
+    pipProtoVersion= "protobuf==3.19.5"
+    pipNNEFversion = "protobuf==3.19.5" # TBD: NO NNEF Package for SLES
+
 pip3InferencePackagesRPM = [
     'future==0.18.2',
     'pytz==2022.1',
-    str(pipNumpyVersion),
     'google==3.0.0',
-    'protobuf==3.12.4',
-    'onnx==1.11.0'
+    str(pipNumpyVersion),
+    str(pipProtoVersion),
+    str(pipONNXversion),
+    str(pipNNEFversion)
 ]
 
 # Delete previous install
@@ -352,14 +364,14 @@ if not os.path.exists(modelCompilerDeps):
                         ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
         for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-    # Install NNEF Deps
-    ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
-    ERROR_CHECK(os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
-    ERROR_CHECK(os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
-    ERROR_CHECK(os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
+    if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
+        ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
+        ERROR_CHECK(os.system(
+            '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
+        ERROR_CHECK(os.system(
+            '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
+        ERROR_CHECK(os.system(
+            '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
     if "centos-7" in platfromInfo:

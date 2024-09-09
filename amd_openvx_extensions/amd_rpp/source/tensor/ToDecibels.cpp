@@ -52,8 +52,8 @@ static vx_status VX_CALLBACK refreshToDecibels(vx_node node, const vx_reference 
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcDims[i].width = src_roi[i].xywhROI.roiWidth;
-        data->pSrcDims[i].height = src_roi[i].xywhROI.roiHeight;
+        data->pSrcDims[i].width = src_roi[i].xywhROI.roiHeight;
+        data->pSrcDims[i].height = src_roi[i].xywhROI.roiWidth;
     }
     return status;
 }

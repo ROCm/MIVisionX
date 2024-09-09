@@ -49,7 +49,7 @@ include_directories(${OPENVX_INCLUDES})
 
 set(SHARED_LIB_TYPE so)
 if(APPLE)
-  set(SHARED_LIB_TYPE dylib)
+    set(SHARED_LIB_TYPE dylib)
 endif()
 
 if(DEFINED OPENVX_LIBRARIES)

@@ -30,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.3.0"
+__version__ = "3.3.1"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -366,16 +366,6 @@ if os.path.exists(deps_dir):
         for i in range(len(rppRPMPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rppRPMPackages[i]))
-    
-    # rocDecode
-    if "Ubuntu" in platfromInfo:
-        for i in range(len(rocdecodeDebianPackages)):
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
-    else:
-        for i in range(len(rocdecodeRPMPackages)):
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+"\n")
     exit()
@@ -462,15 +452,6 @@ else:
     else:
         print("\nSTATUS: MIVisionX Setup: AMD VX RPP only supported with HIP backend\n")
         
-    # rocDecode
-    if "Ubuntu" in platfromInfo:
-        for i in range(len(rocdecodeDebianPackages)):
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
-    else:
-        for i in range(len(rocdecodeRPMPackages)):
-                ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
 
     # Install ffmpeg
     if ffmpegInstall == 'ON':

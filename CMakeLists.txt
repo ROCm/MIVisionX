@@ -198,17 +198,6 @@ set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, rpp-dev, rocblas-d
 # TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel
 set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
 
-# Add rocDecode Deps - Exclude centos-7
-if (EXISTS "/etc/os-release")
-  file(READ "/etc/os-release" OS_RELEASE)
-  string(REGEX MATCH "CentOS-7" CENTOS_7_FOUND ${OS_RELEASE})
-  if(NOT CENTOS_7_FOUND)
-    set(MIVISIONX_DEBIAN_PACKAGE_LIST  "${MIVISIONX_DEBIAN_PACKAGE_LIST}, rocdecode")
-    set(MIVISIONX_RPM_PACKAGE_LIST     "${MIVISIONX_RPM_PACKAGE_LIST}, rocdecode")
-    set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, rocdecode-dev")
-    set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "${MIVISIONX_RPM_DEV_PACKAGE_LIST}, rocdecode-devel")
-  endif()
-endif()
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides
 execute_process(

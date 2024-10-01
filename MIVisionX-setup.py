@@ -30,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.6.0"
+__version__ = "3.7.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -295,7 +295,7 @@ pipONNXversion = "onnx==1.11.0"
 pipNNEFversion = "nnef==1.0.7"
 if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
-    pipNNEFversion = "protobuf==3.12.4" # TBD: NO NNEF Package for SLES
+    pipNNEFversion = "protobuf==3.12.4" # TBD: NO NNEF Package for RHEL 7/8
 if "NAME=SLES" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
     pipProtoVersion= "protobuf==3.19.5"
@@ -399,15 +399,15 @@ if os.path.exists(deps_dir):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ rppRPMPackages[i]))
     
-    # rocDecode
-    if "Ubuntu" in platfromInfo:
-        for i in range(len(rocdecodeDebianPackages)):
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
-    elif "redhat-7" not in platfromInfo:
-        for i in range(len(rocdecodeRPMPackages)):
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
+    # rocDecode - Disable -- TBD: Turn on with package update
+    # if "Ubuntu" in platfromInfo:
+        # for i in range(len(rocdecodeDebianPackages)):
+            # ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        # ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
+    # elif "redhat-7" not in platfromInfo:
+        # for i in range(len(rocdecodeRPMPackages)):
+            # ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        # ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
 
     print("\nMIVisionX Dependencies Re-Installed with MIVisionX-setup.py V-"+__version__+" on "+platfromInfo+"\n")
     exit()
@@ -494,15 +494,15 @@ else:
     else:
         print("\nSTATUS: MIVisionX Setup: AMD VX RPP only supported with HIP backend\n")
         
-    # rocDecode
-    if "Ubuntu" in platfromInfo:
-        for i in range(len(rocdecodeDebianPackages)):
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
-    elif "redhat-7" not in platfromInfo:
-        for i in range(len(rocdecodeRPMPackages)):
-                ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                        ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
+    # rocDecode - Disable TBD: Turn on with package update
+    # if "Ubuntu" in platfromInfo:
+        # for i in range(len(rocdecodeDebianPackages)):
+            # ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        # ' '+linuxSystemInstall_check+' install -y '+ rocdecodeDebianPackages[i]))
+    # elif "redhat-7" not in platfromInfo:
+        # for i in range(len(rocdecodeRPMPackages)):
+                # ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        # ' '+linuxSystemInstall_check+' install -y '+ rocdecodeRPMPackages[i]))
 
     # Install ffmpeg
     if ffmpegInstall == 'ON':

@@ -195,7 +195,7 @@ endif(Python3_FOUND)
 # HIP Tests
 if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
   # 15 - canny - vision graph force to GPU
-  add_test(NAME openvx_canny_CPU 
+  add_test(NAME openvx_canny_GPU 
             COMMAND openvx_canny 
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/canny
   )

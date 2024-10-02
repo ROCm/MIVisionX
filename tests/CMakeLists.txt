@@ -79,7 +79,7 @@ if(VX_AMD_MEDIA_LIBRARY)
             COMMAND ${RUNVX_EXECUTABLE}
             -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_media_tests/gdf/decoder_test.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+)
 endif(VX_AMD_MEDIA_LIBRARY)
 
 # 3 - vx_amd_migraphx Tests -- TBD: Disabled (ref:github issue 1410)
@@ -88,7 +88,7 @@ if(VX_AMD_MIGRAPHX_LIBRARY AND 0)
             COMMAND ${RUNVX_EXECUTABLE}
             -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_migraphx_tests/gdf/vx_migraphx_test.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+)
 endif(VX_AMD_MIGRAPHX_LIBRARY AND 0)
 
 # 4 - VX_NN_LIBRARY Tests
@@ -97,7 +97,7 @@ if(VX_NN_LIBRARY)
             COMMAND ${RUNVX_EXECUTABLE}
             -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/gdf/test_vx_nn.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+)
 endif(VX_NN_LIBRARY)
 
 # 5 - vx_opencv Tests
@@ -106,7 +106,7 @@ if(VX_OPENCV_LIBRARY)
             COMMAND ${RUNVX_EXECUTABLE}
             -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_opencv_tests/gdfs/absdiff_test.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+)
 endif(VX_OPENCV_LIBRARY)
 
 # 6 - vx_rpp Tests
@@ -115,7 +115,7 @@ if(VX_RPP_LIBRARY)
             COMMAND ${RUNVX_EXECUTABLE}
             -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vx_rpp_tests/gdf/test_vx_rpp.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+)
 endif(VX_RPP_LIBRARY)
 
 # 7 - runvx Tests
@@ -124,14 +124,19 @@ if(RUNVX_EXECUTABLE)
             COMMAND ${RUNVX_EXECUTABLE}
             -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/gdfs/00_harrisCorners_test.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+)
 endif(RUNVX_EXECUTABLE)
 
 # 8 - canny - vision graph
-add_test(NAME openvx_canny
-          COMMAND ${RUNVX_EXECUTABLE}
-          -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/gdfs/00_canny.gdf
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+add_test(
+  NAME
+    openvx_canny
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/canny"
+                              "${CMAKE_CURRENT_BINARY_DIR}/canny"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_canny"
 )
 
 # 9 - channel extract - vision graph
@@ -160,20 +165,21 @@ add_test(
 
 # 11 - canny - vision graph force to CPU
 add_test(NAME openvx_canny_CPU 
-          COMMAND ${RUNVX_EXECUTABLE}
-          -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/gdfs/00_canny.gdf
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+              COMMAND openvx_canny 
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/canny
 )
 set_property(TEST openvx_canny_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 # 12 - channel extract - vision graph force to CPU
 add_test(NAME openvx_channel_extract_CPU 
               COMMAND openvx_channel_extract 
-              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/channel_extract)
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/channel_extract
+)
 set_property(TEST openvx_channel_extract_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 # 13 - color convert - vision graph force to CPU
 add_test(NAME openvx_color_convert_CPU 
               COMMAND openvx_color_convert 
-              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/color_convert)
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/color_convert
+)
 set_property(TEST openvx_color_convert_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 
 # OpenVX Tests
@@ -182,27 +188,29 @@ if(Python3_FOUND)
   add_test(NAME openvx_tests_runVisionPython_CPU 
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
             --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
 endif(Python3_FOUND)
 
 # HIP Tests
 if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
   # 15 - canny - vision graph force to GPU
-  add_test(NAME openvx_canny_GPU 
-            COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/gdfs/00_canny.gdf
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  add_test(NAME openvx_canny_CPU 
+            COMMAND openvx_canny 
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/canny
   )
   set_property(TEST openvx_canny_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
   # 16 - channel extract - vision graph force to GPU
   add_test(NAME openvx_channel_extract_GPU 
               COMMAND openvx_channel_extract 
-              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/channel_extract)
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/channel_extract
+  )
   set_property(TEST openvx_channel_extract_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
   # 17 - color convert - vision graph force to GPU
   add_test(NAME openvx_color_convert_GPU 
               COMMAND openvx_color_convert 
-              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/color_convert)
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/color_convert
+  )
   set_property(TEST openvx_color_convert_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
 
   # OpenVX Tests
@@ -211,7 +219,8 @@ if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
     add_test(NAME openvx_tests_runVisionPython_GPU 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
           --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no --hardware_mode GPU --backend_type ${MIVISIONX_BACKEND}
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
   endif(Python3_FOUND)
 
   # Neural Network tests
@@ -220,48 +229,56 @@ if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
     add_test(NAME caffe2nnir2openvx_no_fuse
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 1
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
     # 20 - caffe2nnir2openvx Fuse flow
     add_test(NAME caffe2nnir2openvx_fuse 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 2 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
     # 21 - caffe2nnir2openvx FP16 flow
     add_test(NAME caffe2nnir2openvx_fp16
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 3 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
     # 22 - onnx2nnir2openvx No Fuse flow
     add_test(NAME onnx2nnir2openvxx_no_fuse 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 4 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})    
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )    
     # 23 - onnx2nnir2openvx Fuse flow
     add_test(NAME onnx2nnir2openvxx_fuse 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 5 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
     # 24 - onnx2nnir2openvx FP16 flow
     add_test(NAME onnx2nnir2openvxx_fp16 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 6 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
     # 25 - nnef2nnir2openvx No Fuse flow
     add_test(NAME nnef2nnir2openvxx_no_fuse 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 7 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})    
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )    
     # 26 - nnef2nnir2openvx Fuse flow
     add_test(NAME nnef2nnir2openvxx_fuse 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 8 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
     # 27 - nnef2nnir2openvx FP16 flow
     add_test(NAME nnef2nnir2openvxx_fp16 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 9 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
   endif(VX_NN_LIBRARY AND Python3_FOUND)
 endif("${MIVISIONX_BACKEND}" STREQUAL "HIP")
 

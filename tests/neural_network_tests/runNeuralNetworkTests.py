@@ -252,7 +252,7 @@ if "VERSION_ID=24" in os_info_data:
     pipONNXVersion = "onnx==1.16.0"
     pipProtoVersion= "protobuf==3.20.2"
 pip3InferencePackagesUbuntu = [
-    'future==0.18.2',
+    'future==1.0.0',
     'pytz==2022.1',
     'google==3.0.0',
     str(pipNumpyVersion),
@@ -273,7 +273,7 @@ if "NAME=SLES" in os_info_data:
     pipNNEFversion = "protobuf==3.19.5" # TBD: NO NNEF Package for SLES
 
 pip3InferencePackagesRPM = [
-    'future==0.18.2',
+    'future==1.0.0',
     'pytz==2022.1',
     'google==3.0.0',
     str(pipNumpyVersion),

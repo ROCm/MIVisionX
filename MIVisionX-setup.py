@@ -302,7 +302,7 @@ if "NAME=SLES" in os_info_data:
     pipNNEFversion = "protobuf==3.19.5" # TBD: NO NNEF Package for SLES
 
 pip3InferencePackagesRPM = [
-    'future==1.0.0',
+    'future==0.18.2',
     'pytz==2022.1',
     'google==3.0.0',
     str(pipNumpyVersion),

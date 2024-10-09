@@ -40,7 +40,7 @@ Prerequisites
 
   .. code-block:: shell
     
-      sudo pip3 install future==0.18.2 pytz==2022.1 numpy==1.23.0
+      sudo pip3 install future==1.0.0 pytz==2022.1 numpy==1.23.0
 
 
 .. note::

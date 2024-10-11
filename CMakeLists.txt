@@ -142,6 +142,15 @@ if("${BACKEND}" STREQUAL "HIP")
   endif()
 
   # Set AMD GPU_TARGETS
+  if((AMDGPU_TARGETS OR DEFINED ENV{AMDGPU_TARGETS}) AND (NOT GPU_TARGETS))
+    message("-- ${Red}${PROJECT_NAME} DEPRECATION -- AMDGPU_TARGETS use is deprecated. Use GPU_TARGETS${ColourReset}")
+    if(DEFINED ENV{AMDGPU_TARGETS})
+      set(GPU_TARGETS $ENV{AMDGPU_TARGETS} CACHE STRING "List of specific machine types for library to target")
+    else()
+      set(GPU_TARGETS ${AMDGPU_TARGETS})
+    endif()
+  endif()
+
   if(DEFINED ENV{GPU_ARCHS})
       set(GPU_TARGETS $ENV{GPU_ARCHS} CACHE STRING "List of specific machine types for library to target")
   elseif(GPU_TARGETS)

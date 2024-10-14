@@ -33,7 +33,7 @@ If available, this project uses OpenCV for camera capture and image display.
       -frames:[<start>:]<end>|eof|live
           Run the graph/node for specified frames or until eof or just as live.
           Use live to indicate that input is live until aborted by user.
-          Use -frames:[amount of frames]:ignore-eof when you want to run on the same image multiple times.
+          Use -frames:[number of frames]:ignore-eof when you want to run on the same image multiple times.
       -affinity:CPU|GPU[<device-index>]
           Set context affinity to CPU or GPU.
       -dump-profile

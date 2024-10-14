@@ -60,9 +60,10 @@ void show_usage(const char * program, bool detail)
 	printf("  -root:<directory>\n");
 	printf("      Replace ~ in filenames with <directory> in the command-line and\n");
 	printf("      GDF file. The default value of '~' is current working directory.\n");
-	printf("  -frames:[<start>:]<end>|eof|live\n");
+	printf("  -frames:[<start>:]<end>|eof|ignore-eof|live\n");
 	printf("      Run the graph/node for specified frames or until eof or just as live.\n");
 	printf("      Use live to indicate that input is live until aborted by user.\n");
+	printf("      Use <number of frames>:ignore-eof to indicate that input should be looped the amount of times stated with number of frames.\n");
 	printf("  -affinity:CPU|GPU[<device-index>]\n");
 	printf("      Set context affinity to CPU or GPU.\n");
 	printf("  -dump-profile\n");

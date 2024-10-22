@@ -30,9 +30,10 @@ If available, this project uses OpenCV for camera capture and image display.
       -root:<directory>
           Replace ~ in filenames with <directory> in the command-line and
           GDF file. The default value of '~' is current working directory.
-      -frames:[<start>:]<end>|eof|live
+      -frames:[<start>:]<end>|eof|loop|live
           Run the graph/node for specified frames or until eof or just as live.
           Use live to indicate that input is live until aborted by user.
+          Use -frames:[number of frames]:loop when you want to run on the same image the amount of times specified by the number of frames.
       -affinity:CPU|GPU[<device-index>]
           Set context affinity to CPU or GPU.
       -dump-profile

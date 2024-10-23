@@ -1934,7 +1934,6 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                 vx_size size = dataToSync->size;
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
                     cl_int err = clEnqueueWriteBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
-                    // cl_int err = clEnqueueWriteImage(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, origin, region, 256, 0, dataToSync->buffer, 0, NULL, NULL);
                     if (err) {
                         agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueWriteBuffer(lut) => %d\n", err);
                         return -1;
@@ -1965,7 +1964,6 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                     int64_t stime = agoGetClockCounter();
                     vx_size size = dataToSync->size;
                     cl_int err = clEnqueueReadBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
-                    // cl_int err = clEnqueueReadImage(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, origin, region, 256, 0, dataToSync->buffer, 0, NULL, NULL);
                     if (err) {
                         agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueReadBuffer(lut) => %d\n", err);
                         return -1;

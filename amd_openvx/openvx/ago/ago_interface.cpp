@@ -1931,12 +1931,12 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
         if (node->flags & AGO_KERNEL_FLAG_DEVICE_GPU) {
             if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
                 int64_t stime = agoGetClockCounter();
+                vx_size size = dataToSync->size;
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
-                    size_t origin[3] = { 0, 0, 0 };
-                    size_t region[3] = { 256, 1, 1 };
-                    cl_int err = clEnqueueWriteImage(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, origin, region, 256, 0, dataToSync->buffer, 0, NULL, NULL);
+                    cl_int err = clEnqueueWriteBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
+                    // cl_int err = clEnqueueWriteImage(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, origin, region, 256, 0, dataToSync->buffer, 0, NULL, NULL);
                     if (err) {
-                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueWriteImage(lut) => %d\n", err);
+                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueWriteBuffer(lut) => %d\n", err);
                         return -1;
                     }
                 }
@@ -1963,11 +1963,11 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
             if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
                     int64_t stime = agoGetClockCounter();
-                    size_t origin[3] = { 0, 0, 0 };
-                    size_t region[3] = { 256, 1, 1 };
-                    cl_int err = clEnqueueReadImage(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, origin, region, 256, 0, dataToSync->buffer, 0, NULL, NULL);
+                    vx_size size = dataToSync->size;
+                    cl_int err = clEnqueueReadBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
+                    // cl_int err = clEnqueueReadImage(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, origin, region, 256, 0, dataToSync->buffer, 0, NULL, NULL);
                     if (err) {
-                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueReadImage(lut) => %d\n", err);
+                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueReadBuffer(lut) => %d\n", err);
                         return -1;
                     }
                     dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
@@ -2589,21 +2589,10 @@ vx_status agoDirective(vx_reference reference, vx_enum directive)
                     auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
                     if (dataToSync->ref.type == VX_TYPE_LUT) {
                         if (dataToSync->opencl_buffer) {
-                            if (dataToSync->u.lut.type == VX_TYPE_UINT8) {
-                                size_t origin[3] = { 0, 0, 0 };
-                                size_t region[3] = { 256, 1, 1 };
-                                cl_int err = clEnqueueWriteImage(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, origin, region, 256, 0, dataToSync->buffer, 0, NULL, NULL);
-                                if (err) {
-                                    agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clEnqueueWriteImage(lut) => %d\n", err);
-                                    return VX_FAILURE;
-                                }
-                            }
-                            else if (dataToSync->u.lut.type == VX_TYPE_INT16) {
-                                cl_int err = clEnqueueWriteBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-                                if (err) {
-                                    agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clEnqueueWriteImage(lut) => %d\n", err);
-                                    return VX_FAILURE;
-                                }
+                            cl_int err = clEnqueueWriteBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                            if (err) {
+                                agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clEnqueueWriteImage(lut) => %d\n", err);
+                                return VX_FAILURE;
                             }
                             dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                             status = VX_SUCCESS;

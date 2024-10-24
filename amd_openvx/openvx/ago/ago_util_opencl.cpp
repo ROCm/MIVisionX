@@ -485,16 +485,13 @@ int agoGpuOclAllocBuffer(AgoData * data)
     else if (data->ref.type == VX_TYPE_LUT) {
         if (!data->opencl_buffer) {
             if (data->u.lut.type == VX_TYPE_UINT8) {
-                // allocal OpenCL image
                 cl_int err = -1;
-                cl_image_format format = { CL_INTENSITY, CL_UNORM_INT8 };
-                cl_image_desc desc = { CL_MEM_OBJECT_IMAGE1D, 256, 0, 0, 1, 0, 0, 0, 0, NULL };
-                data->opencl_buffer = data->opencl_buffer_allocated = agoGpuOclCreateImage(context, CL_MEM_READ_WRITE, &format, &desc, NULL, &err);
+                data->gpu_buffer_offset = 0;
+                data->opencl_buffer = data->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, data->size + data->gpu_buffer_offset, NULL, &err);
                 if (err) {
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateImage(%p,CL_MEM_READ_WRITE,1D/U8,256,0,*) => %d (for LUT)\n", context->opencl_context, err);
                     return -1;
                 }
-                data->gpu_buffer_offset = 0;
             }
             else {
                 // normal opencl_buffer allocation
@@ -832,21 +829,20 @@ static int agoGpuOclSetKernelArgs(cl_kernel opencl_kernel, vx_uint32& kernelArgI
         if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
             return -1;
         kernelArgIndex++;
-        if (data->u.lut.type != VX_TYPE_UINT8) {
-            // count and offset parameters
-            err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.lut.count);
-            if (err) {
-                agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,lut:count) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-                return -1;
-            }
-            kernelArgIndex++;
-            err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.lut.offset);
-            if (err) {
-                agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,lut:offset) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-                return -1;
-            }
-            kernelArgIndex++;
+        
+        // count and offset parameters
+        err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.lut.count);
+        if (err) {
+            agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,lut:count) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
+            return -1;
         }
+        kernelArgIndex++;
+        err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.lut.offset);
+        if (err) {
+            agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,lut:offset) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
+            return -1;
+        }
+        kernelArgIndex++;
     }
     else if (data->ref.type == VX_TYPE_REMAP) {
         if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
@@ -1119,24 +1115,12 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
                 if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
                     return -1;
             }
-            kernelArgIndex += 1;
-            if (data->u.lut.type != VX_TYPE_UINT8) {
-                kernelArgIndex += 2;
-            }
+            kernelArgIndex += 3;
             if (need_read_access) {
                 if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
                         int64_t stime = agoGetClockCounter();
-                        if (data->u.lut.type == VX_TYPE_UINT8) {
-                            size_t origin[3] = { 0, 0, 0 };
-                            size_t region[3] = { 256, 1, 1 };
-                            err = clEnqueueWriteImage(opencl_cmdq, data->opencl_buffer, CL_TRUE, origin, region, 256, 0, data->buffer, 0, NULL, NULL);
-                            if (err) {
-                                agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clEnqueueWriteImage(lut) => %d\n", err);
-                                return -1;
-                            }
-                        }
-                        else if (data->u.lut.type == VX_TYPE_INT16) {
+                        if (data->u.lut.type == VX_TYPE_UINT8 || data->u.lut.type == VX_TYPE_INT16) {
                             cl_int err = clEnqueueWriteBuffer(opencl_cmdq, data->opencl_buffer, CL_TRUE, data->gpu_buffer_offset, data->size, data->buffer, 0, NULL, NULL);
                             if (err) {
                                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGpuOclDataInputSync: clEnqueueWriteBuffer() => %d (for LUT)\n", err);
@@ -1390,7 +1374,7 @@ static std::string agoGpuOclData2Decl(AgoData * data, vx_uint32 index, vx_uint32
     }
     else if (data->ref.type == VX_TYPE_LUT) {
         if (data->u.lut.type == VX_TYPE_UINT8) {
-            snprintf(item, sizeof(item), "__read_only image1d_t p%d", index);
+            snprintf(item, sizeof(item), "__global uchar * p%d_buf, uint p%d_count, uint p%d_offset", index, index, index);
             code += item;
         }
         else if (data->u.lut.type == VX_TYPE_INT16) {
@@ -2069,7 +2053,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
                         snprintf(item, sizeof(item), ", p%d_buf, p%d_stride", (int)data_index, (int)data_index);
                         code += item;
                     }
-                    else if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_INT16) {
+                    else if (data->ref.type == VX_TYPE_LUT) {
                         snprintf(item, sizeof(item), ", p%d_buf, p%d_count, p%d_offset", (int)data_index, (int)data_index, (int)data_index);
                         code += item;
                     }			

@@ -4,18 +4,12 @@
 
 The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
-## (Unreleased) MIVisionX 3.1.0 
+##  MIVisionX 3.1.0 for ROCm 6.3.0
 
 ### Changed
 
 * Setup: rocdecode install disabled
 * Package: rocdecode dependency removed
-
-### Removed
-
-### Optimized
-
-### Resolved issues
 
 ### Known issues
 
@@ -27,7 +21,7 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 
 * Optimized audio augmentations support for VX_RPP
 
-## MIVisionX 3.0.0 for ROCm 6.3.0
+## MIVisionX 3.0.0 for ROCm 6.2.0
 
 ### Added
 

@@ -11,12 +11,6 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 * Setup: rocdecode install disabled
 * Package: rocdecode dependency removed
 
-### Removed
-
-### Optimized
-
-### Resolved issues
-
 ### Known issues
 
 * Package installation requires the manual installation of OpenCV.

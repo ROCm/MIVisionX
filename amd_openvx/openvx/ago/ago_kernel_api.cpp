@@ -17576,12 +17576,12 @@ int agoKernel_CannySobel_U16_U8_3x3_L1NORM(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        // if (HipExec_CannySobel_U16_U8_3x3_L1NORM(
-        //     node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
-        //     (vx_uint16 *) (oImg->hip_memory + oImg->gpu_buffer_offset), oImg->u.img.stride_in_bytes,
-        //     iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
-        //     status = VX_FAILURE;
-        // }
+        if (HipExec_CannySobel_U16_U8_3x3_L1NORM(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            (vx_uint16 *) (oImg->hip_memory + oImg->gpu_buffer_offset), oImg->u.img.stride_in_bytes,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
     }
 #endif
     return status;

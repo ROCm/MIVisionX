@@ -41,7 +41,7 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
     int ly = hipThreadIdx_y;
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        printf("goffset called\n");
+        // printf("goffset called\n");
         int goffset = y > 0 ?  (y - 1) * srcImageStrideInBytes + x - 4 : x-4;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
@@ -3255,7 +3255,7 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
         int loffset = ly * 136 + (lx << 3);
         // int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
         int goffset = y > 0 ?  (y - 1) * srcImageStrideInBytes + (x << 3) - 4 : (x << 3) - 4;
-        printf("goffset called 3\n");
+        // printf("goffset called 3\n");
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {

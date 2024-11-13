@@ -9,7 +9,7 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 ### Changed
 
 * Setup: rocDecode installation has been disabled.
-* Package: rocdecode dependency removed
+* The dependency on rocDecode has been removed.
 
 ### Known issues
 

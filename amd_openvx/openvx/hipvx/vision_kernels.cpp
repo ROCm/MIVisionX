@@ -3253,7 +3253,9 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
 
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
+        // int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
+        int goffset = y > 0 ?  (y - 1) * srcImageStrideInBytes + (x << 3) - 4 : (x << 3) - 4;
+        printf("goffset called 3\n");
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -3717,7 +3719,9 @@ Hip_HarrisSobel_HG3_U8_3x3(uint dstWidth, uint dstHeight,
     int ly = hipThreadIdx_y;
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        // int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        int goffset = y > 0 ?  (y - 1) * srcImageStrideInBytes + x - 4 : x-4;
+        printf("goffest called 4\n");
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {

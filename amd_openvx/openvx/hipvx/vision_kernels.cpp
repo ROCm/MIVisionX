@@ -45,9 +45,9 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
 
-        // if ((goffset >= 0) && goffset < (dstHeight * srcImageStrideInBytes) - sizeof(uint2)) {
+        if ((goffset >= 0) && goffset < (dstHeight * srcImageStrideInBytes) - sizeof(uint2)) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        // }
+        }
         
         bool doExtraLoad = false;
         if (ly < 2) {

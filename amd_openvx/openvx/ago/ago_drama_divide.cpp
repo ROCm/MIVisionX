@@ -1645,12 +1645,15 @@ int agoDramaDivideCannyEdgeDetectorNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[3] = paramList[1];
 	anode->paramCount = 4;
 	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
+	printf("sobel supp threshold\n");
 	if (norm_type == VX_NORM_L1) {
+		printf("sobel supp threshold l1%d\n", gradient_size);
 		if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_3x3_L1NORM;
 		else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_5x5_L1NORM;
 		else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_7x7_L1NORM;
 	}
 	else if (norm_type == VX_NORM_L2) {
+		printf("sobel supp threshold l2%d\n", gradient_size);
 		if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_3x3_L2NORM;
 		else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_5x5_L2NORM;
 		else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_7x7_L2NORM;
@@ -1669,11 +1672,13 @@ int agoDramaDivideCannyEdgeDetectorNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramCount = 2;
 	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
 	if (norm_type == VX_NORM_L1) {
+		printf("sobel not threshold l1%d\n", gradient_size);
 		if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_3x3_L1NORM;
 		else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_5x5_L1NORM;
 		else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM;
 	}
 	else if (norm_type == VX_NORM_L2) {
+		printf("sobel not threshold l2%d\n", gradient_size);
 		if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_3x3_L2NORM;
 		else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_5x5_L2NORM;
 		else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L2NORM;

@@ -136,7 +136,7 @@ endif()
 if("${BACKEND}" STREQUAL "HIP")
   set(LOOM OFF)
   # Set supported GPU Targets
-  set(DEFAULT_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102")
+  set(DEFAULT_GPU_TARGETS "gfx908;gfx90a;gfx940;gfx941;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102")
   if (BUILD_WITH_AMD_ADVANCE)
       set(DEFAULT_GPU_TARGETS ${DEFAULT_GPU_TARGETS} "gfx1200;gfx1201")
   endif()

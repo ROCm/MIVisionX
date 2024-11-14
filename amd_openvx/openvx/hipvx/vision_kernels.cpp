@@ -42,11 +42,15 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
-
-        if (goffset >= 0) {
+        int imageSize = dstHeight * srcImageStrideInBytes;
+        // printf("%d %d %d %d %d %d %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImageStrideInBytes, loffset, goffset);
+        if (goffset >= 0 && goffset + sizeof(uint2) <= imageSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            lbuf[loffset] = 0;
+            lbuf[loffset + 1] = 0;
         }
-        
+
         bool doExtraLoad = false;
         if (ly < 2) {
             loffset += 16 * 136;
@@ -58,7 +62,7 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad && goffset >= 0 && goffset + sizeof(uint2) <= imageSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -253,6 +257,8 @@ int HipExec_CannySobel_U16_U8_3x3_L1NORM(hipStream_t stream, vx_uint32 dstWidth,
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes);
 
+    hipDeviceSynchronize();
+    // printf("kernel dones\n");
     return VX_SUCCESS;
 }
 
@@ -3265,9 +3271,9 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
-        if (goffset >= 0) {
+        // if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        // }
         bool doExtraLoad = false;
         if (ly < 2) {
             loffset += 16 * 136;

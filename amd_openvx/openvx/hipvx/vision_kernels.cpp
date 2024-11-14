@@ -42,13 +42,8 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
-        int imageSize = dstHeight * srcImageStrideInBytes;
-        // printf("%d %d %d %d %d %d %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImageStrideInBytes, loffset, goffset);
-        if (goffset >= 0 && goffset + sizeof(uint2) <= imageSize) {
+        if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        } else {
-            lbuf[loffset] = 0;
-            lbuf[loffset + 1] = 0;
         }
 
         bool doExtraLoad = false;
@@ -62,7 +57,7 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0 && goffset + sizeof(uint2) <= imageSize) {
+        if (doExtraLoad && goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();

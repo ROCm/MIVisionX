@@ -3264,14 +3264,10 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
-        // if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        // }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
-        if (ly < 2) {
-            loffset += 16 * 136;
-            goffset += 16 * srcImageStrideInBytes;
-            doExtraLoad = true;
+        if (ly < 2) {        // }
+
         } else {
             int id = (ly - 2) * 16 + lx;
             loffset = id * 136 + 128;

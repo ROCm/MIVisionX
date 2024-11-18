@@ -30,10 +30,9 @@ Operating System
 
 * Linux
 
-    * Ubuntu - 20.04 or 22.04
-    * CentOS - 7
+    * Ubuntu - 22.04 or 24.04
     * RedHat - 8 or 9
-    * SLES - 15-SP4
+    * SLES - 15-SP5
 
 * Windows 10 or 11
 * macOS Ventura 13 or Sonoma 14
@@ -82,8 +81,7 @@ SLES
 
 
 * Package install supports HIP backend
-* Package install requires OpenCV V4.6 manual install
-* CentOS/RedHat/SLES requires FFMPEG Dev package manual install
+* CentOS/RedHat/SLES requires FFMPEG & OpenCV Dev packages manual install
 
 
 Installation from source files
@@ -262,25 +260,26 @@ Tested configurations
 * Windows 10 or 11
 * Linux distribution
 
-  + Ubuntu - 20.04 or 22.04
-  + CentOS - 7
+  + Ubuntu - 22.04 or 24.04
   + RHEL - 8 or 9
-  + SLES - 15-SP4
+  + SLES - 15-SP5
 
-* ROCm: rocm-core - 6.1.0.60100
-* RPP - 1.5.0.60100
+* ROCm: 6.3.0
+* RPP - 1.9.0
 * miopen-hip - 3.1.0.60100
 * migraphx - 2.9.0.60100
 * OpenCV - `4.6.0 <https://github.com/opencv/opencv/releases/tag/4.6.0>`_
 * FFMPEG - `n4.4.2 <https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2>`_
 * Dependencies for all the above packages
-* MIVisionX Setup Script - V3.1.0
+* MIVisionX Setup Script - V3.7.0
 
 Known issues
 -------------------
 
 * OpenCV 4.X support for some apps missing
-* MIVisionX Package install requires manual prerequisites installation 
+* MIVisionX Package install requires manual prerequisites installation
+    * FFMPEG
+    * OpenCV
 
 MIVisionX dependency map
 ====================================

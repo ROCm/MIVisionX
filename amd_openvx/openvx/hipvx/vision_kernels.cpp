@@ -252,8 +252,6 @@ int HipExec_CannySobel_U16_U8_3x3_L1NORM(hipStream_t stream, vx_uint32 dstWidth,
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes);
 
-    hipDeviceSynchronize();
-    // printf("kernel dones\n");
     return VX_SUCCESS;
 }
 

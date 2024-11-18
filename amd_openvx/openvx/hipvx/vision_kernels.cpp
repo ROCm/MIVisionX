@@ -3266,8 +3266,10 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
         int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
-        if (ly < 2) {        // }
-
+        if (ly < 2) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
         } else {
             int id = (ly - 2) * 16 + lx;
             loffset = id * 136 + 128;

@@ -165,15 +165,11 @@ int agoGpuAllocBuffers(AgoGraph * graph)
     // get data groups (Gd)
     auto getMemObjectType = [=](AgoData * data) -> cl_mem_object_type {
         cl_mem_object_type obj_type = CL_MEM_OBJECT_BUFFER;
-        if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_UINT8)
-            obj_type = CL_MEM_OBJECT_IMAGE1D;
         return (vx_uint32)obj_type;
     };
 #elif ENABLE_HIP
     auto getMemObjectType = [=](AgoData * data) -> vx_uint32 {
         vx_uint32 obj_type = HIP_MEM_KIND_BUFFER;
-        if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_UINT8)
-            obj_type = HIP_MEM_KIND_IMAGE1D;
         return (vx_uint32)obj_type;
     };
 #endif

@@ -4,6 +4,22 @@
 
 The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
+##  (unreleased) MIVisionX 3.2.0
+
+### Changed
+
+* Setup: OpenCV package install for Ubuntu
+
+### Known issues
+
+* Installation on CentOS/RedHat/SLES requires the manual installation of the `FFMPEG` & `OpenCV` dev packages.
+* Hardware decode requires the ROCm `graphics` usecase.
+
+### Upcoming changes
+
+* Optimized audio augmentations support for VX_RPP
+
+
 ##  MIVisionX 3.1.0 for ROCm 6.3.0
 
 ### Changed

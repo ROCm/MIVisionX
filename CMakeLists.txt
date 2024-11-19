@@ -17,8 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-cmake_minimum_required(VERSION 3.5)
-set(VERSION "3.1.0")
+cmake_minimum_required(VERSION 3.10)
+set(VERSION "3.2.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
@@ -136,10 +136,7 @@ endif()
 if("${BACKEND}" STREQUAL "HIP")
   set(LOOM OFF)
   # Set supported GPU Targets
-  set(DEFAULT_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102")
-  if (BUILD_WITH_AMD_ADVANCE)
-      set(DEFAULT_GPU_TARGETS ${DEFAULT_GPU_TARGETS} "gfx1200;gfx1201")
-  endif()
+  set(DEFAULT_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102;gfx1200;gfx1201")
 
   # Set AMD GPU_TARGETS
   if((AMDGPU_TARGETS OR DEFINED ENV{AMDGPU_TARGETS}) AND (NOT GPU_TARGETS))
@@ -229,8 +226,8 @@ endif()
 set(MIVISIONX_RUNTIME_PACKAGE_LIST  "rocm-hip-runtime, rpp, rocblas, miopen-hip, migraphx")
 
 # Set the dev dependent packages
-set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev")
-# TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, libopencv-dev")
+# TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel, libopencv
 set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
 
 # Add rocDecode Deps - Exclude centos-7

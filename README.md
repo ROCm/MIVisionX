@@ -46,12 +46,6 @@ MIVisionX has several [applications](apps/README.md#applications) built on top o
 
 [Neural net model compiler and optimizer](model_compiler/README.md#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
-## rocAL
-
-The ROCm Augmentation Library - [rocAL](rocAL/README.md) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user.
-
-rocAL is now available as an independent module at [https://github.com/ROCm/rocAL](https://github.com/ROCm/rocAL). rocAL is deprecated in MIVisionX.
-
 ## Toolkit
 
 [MIVisionX Toolkit](toolkit/README.md) is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides useful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit has been designed to help you deploy your work on any AMD or 3rd party hardware, from embedded to servers.
@@ -76,11 +70,10 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 > [!IMPORTANT]
 > Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
 
-### Operating System
+### Operating Systems
 
 #### Linux
-* Ubuntu - `20.04` / `22.04`
-* CentOS - `7`
+* Ubuntu - `22.04` / `24.04`
 * RedHat - `8` / `9`
 * SLES - `15-SP5`
 
@@ -88,7 +81,51 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 * Windows `10` / `11`
 
 #### macOS
-* macOS - Ventura `13` / Sonoma `14`
+* macOS - Ventura `13` / Sonoma `14` / Sequoia `15`
+
+### Libraries
+* CMake - Version `3.10` and above
+  ```shell
+  sudo apt install cmake
+  ```
+* Half-precision floating-point(half) library - Version `1.12.0`
+  ```shell
+  sudo apt install half
+  ```
+* MIOpen
+  ```shell
+  sudo apt install miopen-hip-dev
+  ```
+* MIGraphX
+  ```shell
+  sudo apt install migraphx-dev
+  ```
+* RPP
+  ```shell
+  sudo apt install rpp-dev
+  ```
+* OpenCV - Version `3.X`/`4.X`
+  ```shell
+  sudo apt install libopencv-dev
+  ```
+* pkg-config
+  ```shell
+  sudo apt install pkg-config
+  ```
+* FFmpeg - Version `4.X`
+  ```shell
+  sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
+  ```
+
+> [!IMPORTANT] 
+> * On `Ubuntu 22.04` - Additional package required: `libstdc++-12-dev`
+>
+>  ```shell
+>  sudo apt install libstdc++-12-dev
+>  ```
+
+>[!NOTE]
+> All package installs are shown with the `apt` package manager. Use the appropriate package manager for your operating system.
 
 ## Installation instructions
 
@@ -100,7 +137,8 @@ The installation process uses the following steps:
 
 * Install ROCm `6.1.0` or later with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) with `--usecase=rocm`
 
-* Use **either** [Package install](#package-install) **or** [Source install](#source-install) as described below.
+>[!IMPORTANT]
+> Use **either** [package install](#package-install) **or** [source install](#source-install) as described below.
 
 #### Package install
 
@@ -123,9 +161,8 @@ Install MIVisionX runtime, development, and test packages.
   ```
 
 > [!IMPORTANT]
->  * Package install supports `HIP` backend
->  * Package install requires `OpenCV V4.6` manual install
->  * `CentOS`/`RedHat`/`SLES` requires `FFMPEG Dev` package manual install
+>  * Package install supports `HIP` backend. For OpenCL backend build from source.
+>  * `CentOS`/`RedHat`/`SLES` requires `OpenCV` & `FFMPEG` development packages manually installed
 
 #### Source install
 
@@ -210,7 +247,7 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
 macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions)
 
 > [!IMPORTANT]
-> macOS only supports MIVisionX CPU backend
+> macOS only supports MIVisionX CPU backend on `x86` processors
 
 ## Verify installation
 
@@ -301,18 +338,17 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 
 * Windows `10` / `11`
 * Linux distribution
-  + Ubuntu - `20.04` / `22.04`
-  + CentOS - `7`
+  + Ubuntu - `22.04` / `24.04`
   + RHEL - `8` / `9`
   + SLES - `15-SP5`
-* ROCm: rocm-core - `6.3.0.60300`
+* ROCm: `6.3.0`
 * RPP - `1.9.0.60300`
 * miopen-hip - `3.2.0.60300`
 * migraphx - `2.11.0.60300`
-* OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
+* OpenCV - `4.6`
 * FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V3.7.0`
+* MIVisionX Setup Script - `V3.8.0`
 
 ### Known issues
 

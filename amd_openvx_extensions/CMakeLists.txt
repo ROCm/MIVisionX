@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(amd_openvx_extensions)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
@@ -76,8 +76,13 @@ endif()
 if(GPU_SUPPORT)
     find_package(FFmpeg QUIET)
     if(FFMPEG_FOUND)
-        add_subdirectory(amd_media)
-        message("-- ${Green}AMD OpenVX Media Extension -- amd_media module added${ColourReset}")
+        # TBD: FFMPEG multi-version support
+        if(_FFMPEG_AVCODEC_VERSION VERSION_LESS_EQUAL 58.134.100)
+            add_subdirectory(amd_media)
+            message("-- ${Green}AMD OpenVX Media Extension -- amd_media module added${ColourReset}")
+        else()
+            message("-- ${Red}WARNING: FFMPEG Version Not Supported -- amd_media module excluded${ColourReset}")
+        endif()
     else()
         message("-- ${Red}WARNING: FFMPEG Not Found -- amd_media module excluded${ColourReset}")
     endif(FFMPEG_FOUND)
@@ -94,7 +99,7 @@ if(GPU_SUPPORT)
         add_subdirectory(amd_custom)
         message("-- ${Green}AMD Custom Extension -- amd_custom module added${ColourReset}")
     else()
-      message("-- ${Red}WARNING: GPU Support OpenCL/HIP Not Found -- amd_openvx_extensions modules for GPU excluded${ColourReset}")
+        message("-- ${Red}WARNING: GPU Support OpenCL/HIP Not Found -- amd_openvx_extensions modules for GPU excluded${ColourReset}")
     endif()
 endif(GPU_SUPPORT)
 

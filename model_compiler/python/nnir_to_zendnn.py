@@ -91,7 +91,7 @@ def generateCMakeFiles(graph,outputFolder):
         generateLicenseForScript(f)
         f.write( \
 """
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 # Set Default Compiler & Standard
 # aocc-linux-compiler -- ENV:ZENDNN_AOCC_COMP_PATH

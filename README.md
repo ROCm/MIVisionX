@@ -108,6 +108,10 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   ```shell
   sudo apt install libopencv-dev
   ```
+* OpenMP
+  ```
+  sudo apt install libomp-dev
+  ```
 * pkg-config
   ```shell
   sudo apt install pkg-config

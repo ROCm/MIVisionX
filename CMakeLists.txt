@@ -18,6 +18,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 cmake_minimum_required(VERSION 3.10)
+
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+  set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+  message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+  set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
+# Set AMD Clang as default compiler
+if (NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}//bin/amdclang++")
+  set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
+endif()
+
 set(VERSION "3.2.0")
 
 # Set Project Version and Language
@@ -34,14 +48,6 @@ find_program(MAKE_NSIS_EXE makensis)
 find_program(RPMBUILD_EXE rpmbuild)
 find_program(DPKG_EXE dpkg)
 
-# ROCM Path
-if(DEFINED ENV{ROCM_PATH})
-  set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
-elseif(ROCM_PATH)
-  message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
-else()
-  set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
-endif()
 # avoid setting the default installation path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)

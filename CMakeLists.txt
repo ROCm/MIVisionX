@@ -117,8 +117,7 @@ endif()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   # -O0  -- Don't Optimize output file
   # -g -- generate debugging information
-  # -Og -- Optimize for debugging experience rather than speed or size
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Og")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 else()
   # -O3 -- Optimize output file
   # -DNDEBUG -- turn off asserts

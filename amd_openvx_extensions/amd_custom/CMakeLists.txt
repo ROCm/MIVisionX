@@ -24,12 +24,11 @@ project(vx_amd_custom VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
-list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 
 # OpenMP
 find_package(OpenMP QUIET)
-
-if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND OpenMP_FOUND)
+if("${BACKEND}" STREQUAL "HIP")
     if(NOT DEFINED HIP_PATH)
         if(NOT DEFINED ENV{HIP_PATH})
             set(HIP_PATH ${ROCM_PATH})
@@ -39,44 +38,25 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND OpenMP_FOUND)
     endif()
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     find_package(HIP QUIET)
+endif()
+
+list(APPEND SOURCES source/custom_kernels.cpp source/custom_layer.cpp)
+include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include ./custom_lib)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
+
+if(GPU_SUPPORT AND HIP_FOUND AND OpenMP_FOUND)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenMP::OpenMP_CXX)
-
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -msse4.2")
-    endif()
-
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
-
-    include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include ./custom_lib)
-
-    list(APPEND SOURCES
-            source/custom_kernels.cpp
-            source/custom_layer.cpp
-        )
-
-    if (HIP_FOUND)
-        message("-- ${Green}${PROJECT_NAME} -- Building with HIP backend${ColourReset}")
-        set(ENABLE_HIP 1)
-        add_definitions(-DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)
-        link_directories(${HIP_PATH}/lib)
-        add_subdirectory(custom_lib)
-        add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
-        target_link_libraries(${PROJECT_NAME} openvx hip::host ${LINK_LIBRARY_LIST})
-        set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
-        # install MIVisionX libs -- {ROCM_PATH}/lib -- TBD: Remove duplicate install 
-        install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
-        install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
-        install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
-        # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
-        install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
-    else()
-        message("-- ${Red}WARNING: HIP Not Found -- ${PROJECT_NAME} module excluded${ColourReset}")
-    endif()
+    message("-- ${Green}${PROJECT_NAME} -- Building with HIP backend${ColourReset}")
+    set(ENABLE_HIP 1)
+    add_definitions(-DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)
+    link_directories(${HIP_PATH}/lib)
+    add_subdirectory(custom_lib)
+    add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
+    target_link_libraries(${PROJECT_NAME} openvx hip::host ${LINK_LIBRARY_LIST})
+    set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 else()
     set(ENABLE_HIP 0)
     add_definitions(-DENABLE_HIP=${ENABLE_HIP})
@@ -85,10 +65,10 @@ else()
     add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
     target_link_libraries(${PROJECT_NAME} openvx hip::host)
     set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
-    # install MIVisionX libs -- {ROCM_PATH}/lib
-    install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
-    install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
-    install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
-    # install include files -- {ROCM_PATH}/include/mivisionx/
-    install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
 endif()
+# install MIVisionX libs -- {ROCM_PATH}/lib -- TBD: Remove duplicate install 
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+# install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
+install(FILES include/vx_amd_custom.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)

@@ -25,7 +25,7 @@ Hardware
 .. note::
     Some modules in MIVisionX can be built for CPU only. To take advantage of advanced features and modules we recommend using AMD GPUs or APUs.
 
-Operating System
+Operating Systems
 ------------------
 
 * Linux
@@ -37,6 +37,17 @@ Operating System
 * Windows 10 or 11
 * macOS Ventura 13 or Sonoma 14
 
+Libraries
+------------------
+* CMake - Version 3.10 and above
+* Half-precision floating-point(half) library - Version `1.12.0`
+* MIOpen
+* MIGraphX
+* RPP
+* OpenCV - Version 3.X or 4.X
+* OpenMP
+* pkg-config
+* FFmpeg - Version 4.X
 
 Linux installation
 ===========================

@@ -42,5 +42,5 @@ Build using Microsoft Visual Studio
 Build using CMake
 -----------------
 
-* Install CMake 3.5 or later
+* Install CMake 3.10 or later
 * Use CMake to configure and generate Makefile

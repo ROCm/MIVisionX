@@ -19,6 +19,7 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
+
 set(VERSION "1.0.1")
 project(vx_amd_custom VERSION ${VERSION} LANGUAGES CXX)
 
@@ -54,7 +55,6 @@ if(HIP_FOUND AND OpenMP_FOUND)
     add_subdirectory(custom_lib)
     add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
     target_link_libraries(${PROJECT_NAME} openvx hip::host ${LINK_LIBRARY_LIST})
-    set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 else()
     set(ENABLE_HIP 0)
     add_definitions(-DENABLE_HIP=${ENABLE_HIP})
@@ -62,8 +62,8 @@ else()
     add_subdirectory(custom_lib)
     add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
     target_link_libraries(${PROJECT_NAME} openvx hip::host)
-    set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 endif()
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 # install MIVisionX libs -- {ROCM_PATH}/lib -- TBD: Remove duplicate install 
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)

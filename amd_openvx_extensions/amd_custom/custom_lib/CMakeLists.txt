@@ -37,9 +37,9 @@ include(GNUInstallDirs)
 
 # Find Modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
+set(CUSTOM_LIB_SOURCES custom_api.cpp custom_copy_impl.cpp)
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND OpenMP_FOUND)
-
   if(NOT DEFINED ENV{HIP_PATH})
     set(HIP_PATH ${ROCM_PATH} CACHE PATH "Path to which HIP has been installed")
   else()
@@ -49,11 +49,6 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND OpenMP_FOUND)
   find_package(HIP QUIET)
   list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
   include_directories(${ROCM_PATH}/include)
-  set(CUSTOM_LIB_SOURCES
-          custom_api.cpp
-          custom_copy_impl.cpp
-      )
-
   if (HIP_FOUND)
     set(ENABLE_HIP 1)
     add_definitions(-DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)

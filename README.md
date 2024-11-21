@@ -85,7 +85,56 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 * Windows `10` / `11`
 
 #### macOS
-* macOS - Ventura `13` / Sonoma `14`
+* macOS - Ventura `13` / Sonoma `14` / Sequoia `15`
+
+### Libraries
+* AMD Clang++ Version `18.0.0` or later - installed with ROCm
+* CMake - Version `3.5` and above
+  ```shell
+  sudo apt install cmake
+  ```
+* Half-precision floating-point(half) library - Version `1.12.0`
+  ```shell
+  sudo apt install half
+  ```
+* MIOpen
+  ```shell
+  sudo apt install miopen-hip-dev
+  ```
+* MIGraphX
+  ```shell
+  sudo apt install migraphx-dev
+  ```
+* RPP
+  ```shell
+  sudo apt install rpp-dev
+  ```
+* OpenCV - Version `3.X`/`4.X`
+  ```shell
+  sudo apt install libopencv-dev
+  ```
+* OpenMP
+  ```
+  sudo apt install libomp-dev
+  ```
+* pkg-config
+  ```shell
+  sudo apt install pkg-config
+  ```
+* FFmpeg - Version `4.X`
+  ```shell
+  sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
+  ```
+
+> [!IMPORTANT] 
+> * On `Ubuntu 22.04` - Additional package required: `libstdc++-12-dev`
+>
+>  ```shell
+>  sudo apt install libstdc++-12-dev
+>  ```
+
+>[!NOTE]
+> All package installs are shown with the `apt` package manager. Use the appropriate package manager for your operating system.
 
 ## Installation instructions
 

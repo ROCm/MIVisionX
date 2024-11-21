@@ -25,6 +25,15 @@ project(vx_amd_custom VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+    message("-- ${PROJECT_NAME}INFO:ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+    set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
+
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 
 # Find Packages
@@ -60,22 +69,21 @@ include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
 
 if(HIP_FOUND AND OpenMP_FOUND)
-    message("-- ${Green}${PROJECT_NAME} -- Building with HIP backend${ColourReset}")
+    message("-- ${Green}${PROJECT_NAME} -- Building HIP backend${ColourReset}")
     set(ENABLE_HIP 1)
-    add_definitions(-DENABLE_HIP=${ENABLE_HIP} -D__HIP_PLATFORM_AMD__)
     link_directories(${HIP_PATH}/lib)
     list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
     add_subdirectory(custom_lib)
     add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
     target_link_libraries(${PROJECT_NAME} openvx hip::host ${LINK_LIBRARY_LIST})
 else()
     set(ENABLE_HIP 0)
-    add_definitions(-DENABLE_HIP=${ENABLE_HIP})
-    message("-- ${Red}WARNING: GPU Support Turned OFF -- ${PROJECT_NAME} built for CPU only${ColourReset}")
-    add_subdirectory(custom_lib)
+    message("-- ${Yellow}WARNING:${PROJECT_NAME} -- Building CPU backend${ColourReset}")
     add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
     target_link_libraries(${PROJECT_NAME} openvx hip::host)
 endif()
+target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=${ENABLE_HIP})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 # install MIVisionX libs -- {ROCM_PATH}/lib -- TBD: Remove duplicate install 
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)

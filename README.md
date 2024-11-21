@@ -84,6 +84,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 * macOS - Ventura `13` / Sonoma `14` / Sequoia `15`
 
 ### Libraries
+* AMD Clang++ Version `18.0.0` or later - installed with ROCm
 * CMake - Version `3.10` and above
   ```shell
   sudo apt install cmake

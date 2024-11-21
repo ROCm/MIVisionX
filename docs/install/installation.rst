@@ -39,6 +39,7 @@ Operating Systems
 
 Libraries
 ------------------
+* AMD Clang++
 * CMake - Version 3.10 and above
 * Half-precision floating-point(half) library - Version `1.12.0`
 * MIOpen

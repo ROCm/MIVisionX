@@ -294,7 +294,7 @@ int agoGpuAllocBuffers(AgoGraph * graph)
                 else {
                     Gd[j][i]->hip_memory = Gd[j][k]->hip_memory;
                 }
-                // Gd[j][i]->gpu_buffer_offset = Gd[j][k]->gpu_buffer_offset;
+                Gd[j][i]->gpu_buffer_offset = Gd[j][k]->gpu_buffer_offset;
             }
         }
 #endif

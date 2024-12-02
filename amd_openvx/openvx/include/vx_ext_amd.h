@@ -321,18 +321,6 @@ enum vx_df_image_amd_e
     VX_DF_IMAGE_F32x3_AMD = VX_DF_IMAGE('F', '3', '3', '2'),
 };
 
-/*! \brief An indication of how a kernel will treat the given parameter.
- * \ingroup group_parameter
- */
-enum vx_direction_e {
-    /*! \brief The parameter is an input only. */
-    VX_INPUT = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTION) + 0x0,
-    /*! \brief The parameter is an output only. */
-    VX_OUTPUT = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTION) + 0x1,
-    /*! \brief The parameter is bidirectional. */
-    VX_BIDIRECTIONAL = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTION) + 0x2
-};
-
 /*! \brief scalar data attributes.
  * \ingroup group_scalar
  * \ingroup group_amd

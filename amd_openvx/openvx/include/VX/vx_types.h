@@ -613,8 +613,6 @@ enum vx_direction_e {
     VX_INPUT = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTION) + 0x0,
     /*! \brief The parameter is an output only. */
     VX_OUTPUT = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTION) + 0x1,
-    /*! \brief The parameter is bidirectional. */
-    VX_BIDIRECTIONAL = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTION) + 0x2
 };
 
 /*! \brief These enumerations are given to the <tt>\ref vxHint</tt> API to enable/disable platform

@@ -23,7 +23,7 @@ Documentation for MIVisionX is available at
 
 ## MIVisionX 3.1.0 for ROCm 6.3.1
 
-### Changes
+### Changed
 * AMD Clang is now the default CXX and C compiler.
 * Setup: rocdecode install disabled
 * Package: rocdecode dependency removed

@@ -2243,7 +2243,7 @@ int agoExecuteGraph(AgoGraph * graph)
                 for (vx_uint32 i = 0; i < node->paramCount; i++) {
                     AgoData * data = node->paramList[i];
                     if (data &&
-                        (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                        (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                     {
                         auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT) &&
@@ -2294,7 +2294,7 @@ int agoExecuteGraph(AgoGraph * graph)
                 for (vx_uint32 i = 0; i < node->paramCount; i++) {
                     AgoData * data = node->paramList[i];
                     if (data &&
-                        (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                        (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                     {
                         auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT) &&
@@ -2373,7 +2373,7 @@ int agoExecuteGraph(AgoGraph * graph)
                     for (vx_uint32 i = 0; i < node->paramCount; i++) {
                         AgoData * data = node->paramList[i];
                         if (data &&
-                            (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                            (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                         {
                             auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
                             if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT) &&
@@ -2402,7 +2402,7 @@ int agoExecuteGraph(AgoGraph * graph)
                 else {
                     for (vx_uint32 i = 0; i < node->paramCount; i++) {
                         AgoData * data = node->paramList[i];
-                        if (data && (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL)) {
+                        if (data && (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL)) {
                             auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
                             status = agoDataSyncFromGpuToCpu(graph, node, dataToSync);
                             for (vx_uint32 j = 0; !status && j < dataToSync->numChildren; j++) {
@@ -2446,7 +2446,7 @@ int agoExecuteGraph(AgoGraph * graph)
 #if ENABLE_OPENCL
                     AgoData * data = node->paramList[i];
                     if (data && data->opencl_buffer &&
-                        (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                        (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                     {
                         auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
                         dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
@@ -2458,7 +2458,7 @@ int agoExecuteGraph(AgoGraph * graph)
 #elif ENABLE_HIP
                     AgoData * data = node->paramList[i];
                     if (data && data->hip_memory &&
-                            (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                            (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                     {
                         auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
                         dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;

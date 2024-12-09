@@ -768,10 +768,10 @@ static int agoOptimizeDramaAllocMergeSuperNodes(AgoGraph * graph)
                 auto data = node->paramList[i];
                 if (data) {
                     auto it = std::find(superNodeInfo->inputList.begin(), superNodeInfo->inputList.end(), data);
-                    if (it == superNodeInfo->inputList.end() && (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                    if (it == superNodeInfo->inputList.end() && (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                         superNodeInfo->inputList.push_back(data);
                     it = std::find(superNodeInfo->outputList.begin(), superNodeInfo->outputList.end(), data);
-                    if (it == superNodeInfo->outputList.end() && (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                    if (it == superNodeInfo->outputList.end() && (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                         superNodeInfo->outputList.push_back(data);
                 }
             }

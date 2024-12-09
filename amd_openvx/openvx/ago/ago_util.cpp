@@ -1105,6 +1105,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         }
         else if (data->u.img.planes == 1) {
             data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width , data));
+            vx_uint32 byte = data->u.img.stride_in_bytes;
             data->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
         }
         // sanity check and update

@@ -173,8 +173,10 @@ int agoGpuAllocBuffers(AgoGraph * graph)
         return (vx_uint32)obj_type;
     };
 #endif
-
+#include<iostream>
     auto getMemObjectSize = [=](AgoData * data) -> size_t {
+        size_t val = data->gpu_buffer_offset + data->size;
+        std::cout << data->name << "with " <<  data->gpu_buffer_offset << " and "<< data->size << std::endl;;
         return data->gpu_buffer_offset + data->size;
     };
     auto isMergePossible = [=](std::vector<AgoData *>& G, AgoData * data) -> bool {
@@ -294,6 +296,7 @@ int agoGpuAllocBuffers(AgoGraph * graph)
                 else {
                     Gd[j][i]->hip_memory = Gd[j][k]->hip_memory;
                 }
+                std::cout << Gd[j][i]->name << " with " << Gd[j][i]->gpu_buffer_offset << " updated with " << Gd[j][k]->name << " of " << Gd[j][k]->gpu_buffer_offset << std::endl;
                 Gd[j][i]->gpu_buffer_offset = Gd[j][k]->gpu_buffer_offset;
             }
         }

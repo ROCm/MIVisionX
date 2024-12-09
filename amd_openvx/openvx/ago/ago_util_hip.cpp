@@ -150,12 +150,16 @@ int agoGpuHipAllocBuffer(AgoData * data) {
             {
                 // allocate hip_memory
                 dataMaster->hip_memory = nullptr;
-                agoGpuHipCreateBuffer(context, (void **)&dataMaster->hip_memory, dataMaster->size + dataMaster->gpu_buffer_offset, err);
+                size_t data_size = dataMaster->size;
+                int offset = dataMaster->gpu_buffer_offset;
+                size_t size = dataMaster->size + dataMaster->gpu_buffer_offset;
+                
+                agoGpuHipCreateBuffer(context, (void **)&dataMaster->hip_memory, dataMaster->size + dataMaster->gpu_buffer_offset*3, err);
                 dataMaster->hip_memory_allocated = dataMaster->hip_memory;
             }
             if (!dataMaster->hip_memory || err) {
                 agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED with status <%p, %d>\n",
-                        (int)dataMaster->size + dataMaster->gpu_buffer_offset, dataMaster->hip_memory, err);
+                        (int)dataMaster->size + dataMaster->gpu_buffer_offset*3, dataMaster->hip_memory, err);
                 return -1;
             }
             if (dataMaster->u.img.isUniform) {
@@ -166,7 +170,7 @@ int agoGpuHipAllocBuffer(AgoData * data) {
                     }
                 }
                 // copy the uniform image into HIP memory because there won't be any commits happening to this buffer
-                hipError_t err = hipMemcpyHtoD((void *)(dataMaster->hip_memory + dataMaster->gpu_buffer_offset), dataMaster->buffer, dataMaster->size);
+                hipError_t err = hipMemcpyHtoD((void *)(dataMaster->hip_memory + dataMaster->gpu_buffer_offset*3), dataMaster->buffer, dataMaster->size);
                 if (err != hipSuccess) {
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer: hipMemcpyHtoD() => %d\n", err);
                     return -1;
@@ -179,7 +183,7 @@ int agoGpuHipAllocBuffer(AgoData * data) {
             data->hip_memory = dataMaster->hip_memory;
             if((dataMaster->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_BY_WRITE)) {
                 // copy the image into HIP buffer because commits aren't done to this buffer
-                hipError_t err = hipMemcpyHtoD((void *)(dataMaster->hip_memory + dataMaster->gpu_buffer_offset), dataMaster->buffer, dataMaster->size);
+                hipError_t err = hipMemcpyHtoD((void *)(dataMaster->hip_memory + dataMaster->gpu_buffer_offset*3), dataMaster->buffer, dataMaster->size);
                 if (err != hipSuccess) {
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer: hipMemcpyHtoD() => %d\n", err);
                 }
@@ -195,6 +199,9 @@ int agoGpuHipAllocBuffer(AgoData * data) {
             {
                 // normal hip buffer allocation
                 data->hip_memory = 0;
+                size_t data_size = data->size;
+                int offset = data->gpu_buffer_offset;
+                size_t size = data->size + data->gpu_buffer_offset;
                 agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->gpu_buffer_offset, err);
                 data->hip_memory_allocated = data->hip_memory;
                 if (data->hip_memory) {

@@ -78,6 +78,11 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     target_link_libraries(${PROJECT_NAME} hip::host)
 endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+if (FFMPEG_VERSION_4)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC WITH_FFMPEG_VERSION_4=1)
+else()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC WITH_FFMPEG_VERSION_4=0)
+endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)

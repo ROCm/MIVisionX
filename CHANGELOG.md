@@ -5,42 +5,39 @@
 Documentation for MIVisionX is available at
 [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
-## MIVisionX 3.1.0 (unreleased)
+## (Unreleased) MIVisionX 3.2.0
 
-### Changes
+### Changed
+
+* Setup: OpenCV package install for Ubuntu
+
+### Known issues
+
+* Installation on CentOS/RedHat/SLES requires the manual installation of the `FFMPEG` & `OpenCV` dev packages.
+* Hardware decode requires the ROCm `graphics` usecase.
+
+### Upcoming changes
+
+* Optimized audio augmentations support for VX_RPP
+
+
+## MIVisionX 3.1.0 for ROCm 6.3.1
+
+### Changed
+* AMD Clang is now the default CXX and C compiler.
 * Setup: rocdecode install disabled
 * Package: rocdecode dependency removed
 
-### Removals
- 
-### Optimizations
- 
 ### Resolved issues
- 
+* Canny failure on MI300 - Fixed
+* Ubuntu 24.04 CTest Failures - Fixed
+
 ### Known issues
-* Package install requires `OpenCV` manual install
-* CentOS/RedHat/SLES requires `FFMPEG Dev` package manual install
+* CentOS/RedHat/SLES requires `OpenCV` & `FFMPEG` dev package manual install
 * Hardware decode requires rocm usecase `graphics`
- 
+
 ### Upcoming changes
 * Optimized audio augmentations support for VX_RPP
-
-### Tested configurations
-
-* Windows `10` / `11`
-* Linux distribution
-  + Ubuntu - `20.04` / `22.04`
-  + CentOS - `7`
-  + RHEL - `8` / `9`
-  + SLES - `15-SP5`
-* ROCm: rocm-core - `6.3.0.60300`
-* RPP - `1.9.0.60300`
-* miopen-hip - `3.2.0.60300`
-* migraphx - `2.11.0.60300`
-* OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
-* Dependencies for all the above packages
-* MIVisionX Setup Script - `V3.7.0`
 
 ## MIVisionX 3.0.0 for ROCm 6.3.0
  

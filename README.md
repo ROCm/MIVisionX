@@ -171,7 +171,7 @@ Install MIVisionX runtime, development, and test packages.
 
 > [!IMPORTANT]
 >  * Package install supports `HIP` backend. For OpenCL backend build from source.
->  * f`RedHat`/`SLES` requires `OpenCV` & `FFMPEG` development packages manually installed
+>  * `RedHat`/`SLES` requires `OpenCV` & `FFMPEG` development packages manually installed
 
 #### Source install
 

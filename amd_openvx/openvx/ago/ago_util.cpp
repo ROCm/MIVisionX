@@ -1105,7 +1105,6 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         }
         else if (data->u.img.planes == 1) {
             data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width , data));
-            vx_uint32 byte = data->u.img.stride_in_bytes;
             data->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
         }
         // sanity check and update
@@ -1169,12 +1168,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                     data->children[child]->u.img.maxValue = (vx_int32)data->children[child]->u.img.uniform[0];
                 }
                 data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-                data->children[child]->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
+                data->children[child]->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes;
             }
         }
         else if (data->u.img.planes == 1) {
             data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width, data));
-            data->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
+            data->gpu_buffer_offset = GPU_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes;
         }
         // set min/max values as uniform value
         if (data->u.img.format == VX_DF_IMAGE_U8 ||

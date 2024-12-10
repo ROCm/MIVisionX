@@ -1,5 +1,5 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
+[![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/)
 
 <p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX.png" /></p>
 
@@ -64,7 +64,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 ### Hardware
 
 * **CPU**: [AMD64](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html)
-* **GPU**: [AMD Radeon&trade; Graphics](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) [optional]
+* **GPU**: [AMD Radeon&trade; Graphics](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) / [AMD Instinct&trade; Accelerators](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) [optional]
 * **APU**: [AMD Radeon&trade; `Mobile`/`Embedded`](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) [optional]
 
 > [!IMPORTANT]
@@ -83,8 +83,12 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 #### macOS
 * macOS - Ventura `13` / Sonoma `14` / Sequoia `15`
 
-### Libraries
+### Compiler
 * AMD Clang++ Version `18.0.0` or later - installed with ROCm
+>[!NOTE]
+> AMD Clang++ is the preferred compiler, users can change this with the `CMAKE_CXX_COMPILER` variable
+
+### Libraries
 * CMake - Version `3.10` and above
   ```shell
   sudo apt install cmake
@@ -117,7 +121,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   ```shell
   sudo apt install pkg-config
   ```
-* FFmpeg - Version `4.X`
+* FFmpeg - Version `4.4.2` and above
   ```shell
   sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
   ```
@@ -167,7 +171,7 @@ Install MIVisionX runtime, development, and test packages.
 
 > [!IMPORTANT]
 >  * Package install supports `HIP` backend. For OpenCL backend build from source.
->  * `CentOS`/`RedHat`/`SLES` requires `OpenCV` & `FFMPEG` development packages manually installed
+>  * f`RedHat`/`SLES` requires `OpenCV` & `FFMPEG` development packages manually installed
 
 #### Source install
 
@@ -177,7 +181,7 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
 
   ```shell
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                            --opencv    [OpenCV Version - optional (default:4.6.0)]
+                            --opencv    [OpenCV Version - optional (default for non Ubuntu:4.6.0)]
                             --ffmpeg    [FFMPEG Installation - optional (default:ON) [options:ON/OFF]]
                             --amd_rpp   [MIVisionX VX RPP Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]]
@@ -301,12 +305,11 @@ ctest -VV
 
 ## Docker
 
-MIVisionX provides developers with docker images for Ubuntu `20.04` / `22.04`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
+MIVisionX provides developers with docker images for Ubuntu `22.04`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
 Docker files to build MIVisionX containers and suggested workflow are [available](docker/README.md#mivisionx-docker)
 
 ### MIVisionX docker
-* [Ubuntu 20.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-20.04)
 * [Ubuntu 22.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-22.04)
 
 ## Documentation
@@ -356,9 +359,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * MIVisionX Setup Script - `V3.8.0`
 
 ### Known issues
-
-* Package install `OpenCV` manual install
-* Package install in `RHEL`/`SLES`/`CentOS` requires manual `FFMPEG Dev` install
+* MIVisionX Package install in `RHEL`/`SLES` requires manual `OpenCV` and `FFMPEG` development packages installed
 
 ## MIVisionX dependency map
 
@@ -374,8 +375,8 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 | `Level_1`   | cmake <br> gcc <br> g++                            | amd_openvx  <br> utilities                                                | ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libopenvx.so` - OpenVX&trade; Lib - CPU <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib - CPU <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `runvx` - OpenVX&trade; Graph Executor - CPU with Display OFF                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-1?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
 | `Level_2`   | ROCm HIP <br> +Level 1                             | amd_openvx <br> amd_openvx_extensions <br> utilities                      | ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libopenvx.so`  - OpenVX&trade; Lib - CPU/GPU <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib - CPU/GPU <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `runvx` - OpenVX&trade; Graph Executor - Display OFF                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-2?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
 | `Level_3`   | OpenCV <br> FFMPEG <br> +Level 2                   | amd_openvx <br> amd_openvx_extensions <br> utilities                      | ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `mv_compile` - Neural Net Model Compile <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-3?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
-| `Level_4`   | MIOpen <br> MIGraphX <br> ProtoBuf <br> +Level 3 | amd_openvx <br>  amd_openvx_extensions <br> apps <br> utilities           | ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension                                                                                                                                                                                                                                                                                                                                                                                                                                           | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-4?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
-| `Level_5`   | AMD_RPP <br> RPP deps <br> +Level 4              | amd_openvx <br> amd_openvx_extensions <br> apps <br> AMD VX RPP <br> utilities | ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br>  ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_rpp.so` - OpenVX&trade; RPP Extension | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-5?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_4`   | MIOpen <br> MIGraphX <br> +Level 3 | amd_openvx <br>  amd_openvx_extensions <br> utilities           | ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_amd_migraphx.so` - OpenVX&trade; MIGraphX Extension <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension                                                                                                                                                                                                                                                                                                                                                                                                                                           | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-4?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_5`   | AMD_RPP <br> +Level 4              | amd_openvx <br> amd_openvx_extensions <br> utilities | ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br>  ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_rpp.so` - OpenVX&trade; RPP Extension | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-5?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
 
 > [!IMPORTANT]
 > OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

@@ -277,7 +277,6 @@ int agoGpuAllocBuffers(AgoGraph * graph)
                 else {
                     Gd[j][i]->opencl_buffer = Gd[j][k]->opencl_buffer;
                 }
-                // Gd[j][i]->gpu_buffer_offset = Gd[j][k]->gpu_buffer_offset;
             }
         }
 #else
@@ -293,8 +292,6 @@ int agoGpuAllocBuffers(AgoGraph * graph)
                 else {
                     Gd[j][i]->hip_memory = Gd[j][k]->hip_memory;
                 }
-                // std::cout << Gd[j][i]->name << " with " << Gd[j][i]->gpu_buffer_offset << " updated with " << Gd[j][k]->name << " of " << Gd[j][k]->gpu_buffer_offset << std::endl;
-                // Gd[j][i]->gpu_buffer_offset = Gd[j][k]->gpu_buffer_offset;
             }
         }
 #endif

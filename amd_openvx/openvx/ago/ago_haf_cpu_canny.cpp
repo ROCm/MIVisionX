@@ -887,7 +887,6 @@ int HafCpu_CannySobel_U16_U8_5x5_L2NORM
 		pSrcImage += srcImageStrideInBytes;
 		pDstImage += dstride;
 	}
-	
 	return AGO_SUCCESS;
 }
 

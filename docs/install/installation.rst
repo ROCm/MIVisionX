@@ -37,18 +37,21 @@ Operating Systems
 * Windows 10 or 11
 * macOS Ventura 13 or Sonoma 14
 
-Libraries
+Compiler
 ------------------
 * AMD Clang++
+
+Libraries
+------------------
 * CMake - Version 3.10 and above
 * Half-precision floating-point(half) library - Version `1.12.0`
 * MIOpen
 * MIGraphX
 * RPP
-* OpenCV - Version 3.X or 4.X
 * OpenMP
 * pkg-config
-* FFmpeg - Version 4.X
+* OpenCV - Version 3.X or 4.X
+* FFmpeg - Version 4.4.2 and above
 
 Linux installation
 ===========================
@@ -330,8 +333,8 @@ MIVisionX dependency map
     Level_1, cmake |br| gcc |br| g++, amd_openvx  |br| utilities, |green-sq| ``libopenvx.so`` - OpenVX Lib - CPU |br| |green-sq| ``libvxu.so`` - OpenVX immediate node Lib - CPU |br| |green-sq| ``runvx`` - OpenVX Graph Executor - CPU with Display OFF, |ub-lvl1|
     Level_2, ROCm HIP |br| +Level 1, amd_openvx |br| amd_openvx_extensions |br| utilities, |green-sq| ``libopenvx.so``  - OpenVX Lib - CPU/GPU |br| |green-sq| ``libvxu.so`` - OpenVX immediate node Lib - CPU/GPU |br| |green-sq| ``runvx`` - OpenVX Graph Executor - Display OFF, |ub-lvl2|
     Level_3, OpenCV |br| FFMPEG |br| +Level 2, amd_openvx |br| amd_openvx_extensions |br| utilities, |blue-sq| ``libopenvx.so`` - OpenVX Lib |br| |blue-sq| ``libvxu.so`` - OpenVX immediate node Lib |br| |green-sq| ``libvx_amd_media.so`` - OpenVX Media Extension |br| |green-sq| ``libvx_opencv.so`` - OpenVX OpenCV InterOp Extension |br| |green-sq| ``mv_compile`` - Neural Net Model Compile |br| |green-sq| ``runvx`` - OpenVX Graph Executor - Display ON, |ub-lvl3|
-    Level_4, MIOpen |br| MIGraphX |br| ProtoBuf |br| +Level 3, amd_openvx |br| amd_openvx_extensions |br| apps |br| utilities, |blue-sq| ``libopenvx.so`` - OpenVX Lib |br| |blue-sq| ``libvxu.so`` - OpenVX immediate node Lib |br| |blue-sq| ``libvx_amd_media.so`` - OpenVX Media Extension |br| |blue-sq| ``libvx_opencv.so`` - OpenVX OpenCV InterOp Extension |br| |blue-sq| ``mv_compile`` - Neural Net Model Compile |br| |blue-sq| ``runvx`` - OpenVX Graph Executor - Display ON |br| |green-sq| ``libvx_nn.so`` - OpenVX Neural Net Extension, |ub-lvl4|
-    Level_5, AMD_RPP |br| RPP deps |br| +Level 4, amd_openvx |br| amd_openvx_extensions |br| apps |br| AMD VX RPP |br| utilities, |blue-sq| ``libopenvx.so``  - OpenVX Lib |br| |blue-sq| ``libvxu.so`` - OpenVX immediate node Lib |br| |blue-sq| ``libvx_amd_media.so`` - OpenVX Media Extension |br| |blue-sq| ``libvx_opencv.so`` - OpenVX OpenCV InterOp Extension |br| |blue-sq| ``mv_compile`` - Neural Net Model Compile |br| |blue-sq| ``runvx`` - OpenVX Graph Executor - Display ON |br| |blue-sq| ``libvx_nn.so`` - OpenVX Neural Net Extension |br| |green-sq| ``libvx_rpp.so`` - OpenVX RPP Extension, |ub-lvl5|
+    Level_4, MIOpen |br| MIGraphX |br| +Level 3, amd_openvx |br| amd_openvx_extensions |br| utilities, |blue-sq| ``libopenvx.so`` - OpenVX Lib |br| |blue-sq| ``libvxu.so`` - OpenVX immediate node Lib |br| |blue-sq| ``libvx_amd_media.so`` - OpenVX Media Extension |br| |blue-sq| ``libvx_opencv.so`` - OpenVX OpenCV InterOp Extension |br| |blue-sq| ``mv_compile`` - Neural Net Model Compile |br| |blue-sq| ``runvx`` - OpenVX Graph Executor - Display ON |br| |green-sq| ``libvx_nn.so`` - OpenVX Neural Net Extension |br| |green-sq| ``libvx_amd_migraphx.so`` - OpenVX MIGraphX Extension, |ub-lvl4|
+    Level_5, AMD RPP |br| +Level 4, amd_openvx |br| amd_openvx_extensions |br| utilities, |blue-sq| ``libopenvx.so``  - OpenVX Lib |br| |blue-sq| ``libvxu.so`` - OpenVX immediate node Lib |br| |blue-sq| ``libvx_amd_media.so`` - OpenVX Media Extension |br| |blue-sq| ``libvx_opencv.so`` - OpenVX OpenCV InterOp Extension |br| |blue-sq| ``mv_compile`` - Neural Net Model Compile |br| |blue-sq| ``runvx`` - OpenVX Graph Executor - Display ON |br| |blue-sq| ``libvx_nn.so`` - OpenVX Neural Net Extension |br| |green-sq| ``libvx_rpp.so`` - OpenVX RPP Extension, |ub-lvl5|
 
 
 .. note::

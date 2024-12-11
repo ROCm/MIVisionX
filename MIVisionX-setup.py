@@ -30,7 +30,7 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.8.0"
+__version__ = "3.8.1"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
@@ -250,9 +250,7 @@ neuralNetDebianPackages = [
 
 inferenceDebianPackages = [
     'python3-dev',
-    'python3-pip',
-    'protobuf-compiler',
-    'libprotoc-dev'
+    'python3-pip'
 ]
 
 neuralNetRPMPackages = [
@@ -262,14 +260,9 @@ neuralNetRPMPackages = [
     'migraphx-devel'
 ]
 
-libPythonProto = "python3-protobuf"
-if "centos" in os_info_data and "VERSION_ID=7" in os_info_data:
-    libPythonProto = "protobuf-python"
 inferenceRPMPackages = [
     'python3-devel',
-    'python3-pip',
-    'protobuf-devel',
-    str(libPythonProto)
+    'python3-pip'
 ]
 
 pipNumpyVersion = "numpy==1.23.0"
@@ -311,7 +304,6 @@ pip3InferencePackagesRPM = [
 ]
 
 ffmpegDebianPackages = [
-    'ffmpeg',
     'libavcodec-dev',
     'libavformat-dev',
     'libavutil-dev',
@@ -347,8 +339,7 @@ opencvRPMPackages = [
     'libjpeg-devel',
     'libpng-devel',
     'libtiff-devel',
-    'libavc1394',
-    'unzip'
+    'libavc1394'
 ]
 
 # update
@@ -456,14 +447,15 @@ else:
                     # Install base Deps
                     for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-                if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
-                    ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
-                    ERROR_CHECK(os.system(
-                        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
-                    ERROR_CHECK(os.system(
-                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
-                    ERROR_CHECK(os.system(
-                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
+                    # NNEF Manual Install
+                    if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
+                        ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
+                        ERROR_CHECK(os.system(
+                            '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
+                        ERROR_CHECK(os.system(
+                            '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
+                        ERROR_CHECK(os.system(
+                            '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:
                 print("STATUS: Model Compiler Deps Pre-Installed - " +modelCompilerDeps+"\n")
     else:

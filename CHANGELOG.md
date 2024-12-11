@@ -28,11 +28,13 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 * Setup: rocdecode install disabled
 * Package: rocdecode dependency removed
 
+### Optimizations
+
+* Setup: only core dependency packages installed
+
 ### Known issues
 
-* Package installation requires the manual installation of OpenCV.
-* Installation on CentOS/RedHat/SLES requires the manual installation of the `FFMPEG Dev` package.
-* Hardware decode requires the ROCm `graphics` usecase.
+* MIVisionX package installation on RedHat/SLES requires the manual installation of the `OpenCV` and `FFMPEG` development package.
 
 ### Upcoming changes
 
@@ -66,7 +68,7 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 ### Known issues
 
 * Package install requires manually installing OpenCV
-* Installationon CentOS/RedHat/SLES requires manually installing the `FFMPEG Dev` package
+* Installation CentOS/RedHat/SLES requires manually installing the `FFMPEG Dev` package
 * Hardware decode requires the ROCm `graphics` usecase.
 
 ### Upcoming changes

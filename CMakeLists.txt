@@ -230,19 +230,17 @@ endif()
 set(MIVISIONX_RUNTIME_PACKAGE_LIST  "rocm-hip-runtime, rpp, rocblas, miopen-hip, migraphx")
 
 # Set the dev dependent packages
-set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, libopencv-dev")
-# TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel, libopencv
-set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, pkg-config, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, libopencv-dev, libomp-dev")
+# TBD - Some RPM packages need Fusion Packages - libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel, libopencv
+set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel, pkg-config, libomp-devel")
 
-# Add rocDecode Deps - Exclude centos-7
-if (EXISTS "/etc/os-release")
+# Add OS specific dependencies
+if(EXISTS "/etc/os-release")
   file(READ "/etc/os-release" OS_RELEASE)
-  string(REGEX MATCH "CentOS-7" CENTOS_7_FOUND ${OS_RELEASE})
-  #if(NOT CENTOS_7_FOUND) - Disable TBD: Turn on with package update
-    #set(MIVISIONX_RUNTIME_PACKAGE_LIST  "${MIVISIONX_RUNTIME_PACKAGE_LIST}, rocdecode")
-    #set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, rocdecode-dev")
-    #set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "${MIVISIONX_RPM_DEV_PACKAGE_LIST}, rocdecode-devel")
-  #endif()
+  string(REGEX MATCH "22.04" UBUNTU_22_FOUND ${OS_RELEASE})
+  if(UBUNTU_22_FOUND)
+    set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, libstdc++-12-dev")
+  endif()
 endif()
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides

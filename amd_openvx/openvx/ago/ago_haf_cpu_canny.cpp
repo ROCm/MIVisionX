@@ -616,12 +616,14 @@ int HafCpu_CannyEdgeTrace_U8_U8XY
 			const ago_coord2d_short_t offs = dir_offsets[i];
 			vx_int16 x1 = x + offs.x;
 			vx_int16 y1 = y + offs.y;
-			vx_uint8 *pDst = pDstImage + y1*dstImageStrideInBytes + x1;
-			if (*pDst == 127)
-			{
-				*pDst |= 0x80;		// *pDst = 255
-				*((unsigned *)pxyStack) = (y1<<16)|x1;
-				pxyStack++;
+			if(x1 >= 0 && x1 < dstWidth && y1 >= 0 && y1 < dstHeight) {
+				vx_uint8 *pDst = pDstImage + y1*dstImageStrideInBytes + x1;
+				if (*pDst == 127)
+				{
+					*pDst |= 0x80;		// *pDst = 255
+					*((unsigned *)pxyStack) = (y1<<16)|x1;
+					pxyStack++;
+				}
 			}
 		}
 	}

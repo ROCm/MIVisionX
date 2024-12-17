@@ -359,7 +359,8 @@ typedef struct
 {
     vx_uint32 device_type; // shall be AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU
     vx_uint32 device_info; // reserved -- shall be initialized to ZERO and shall not be modified
-    vx_uint32 reserved[2]; // reserved -- shall be initialized to ZERO and shall not be modified
+    vx_uint32 group; // reserved -- shall be initialized to ZERO and shall not be modified
+    vx_uint32 reserved; // reserved -- shall be initialized to ZERO and shall not be modified
 } AgoTargetAffinityInfo;
 
 /*! \brief AMD data structure to set a text macro.

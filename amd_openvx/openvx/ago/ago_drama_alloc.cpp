@@ -173,7 +173,6 @@ int agoGpuAllocBuffers(AgoGraph * graph)
         return (vx_uint32)obj_type;
     };
 #endif
-
     auto getMemObjectSize = [=](AgoData * data) -> size_t {
         return data->gpu_buffer_offset + data->size;
     };
@@ -278,7 +277,6 @@ int agoGpuAllocBuffers(AgoGraph * graph)
                 else {
                     Gd[j][i]->opencl_buffer = Gd[j][k]->opencl_buffer;
                 }
-                Gd[j][i]->gpu_buffer_offset = Gd[j][k]->gpu_buffer_offset;
             }
         }
 #else
@@ -294,7 +292,6 @@ int agoGpuAllocBuffers(AgoGraph * graph)
                 else {
                     Gd[j][i]->hip_memory = Gd[j][k]->hip_memory;
                 }
-                Gd[j][i]->gpu_buffer_offset = Gd[j][k]->gpu_buffer_offset;
             }
         }
 #endif

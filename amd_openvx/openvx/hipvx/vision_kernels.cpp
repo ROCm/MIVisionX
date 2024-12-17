@@ -42,9 +42,7 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
 
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -57,7 +55,7 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -270,9 +268,7 @@ Hip_CannySobel_U16_U8_5x5_L1NORM(uint dstWidth, uint dstHeight,
     { // load 136x20 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 4) {
             loffset += 16 * 136;
@@ -284,7 +280,7 @@ Hip_CannySobel_U16_U8_5x5_L1NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -764,9 +760,7 @@ Hip_CannySobel_U16_U8_7x7_L1NORM(uint dstWidth, uint dstHeight,
     { // load 136x22 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 6) {
             loffset += 16 * 136;
@@ -778,7 +772,7 @@ Hip_CannySobel_U16_U8_7x7_L1NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -1653,9 +1647,7 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
             loffset += 16 * 136;
@@ -1667,7 +1659,7 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -1880,9 +1872,7 @@ Hip_CannySobel_U16_U8_5x5_L2NORM(uint dstWidth, uint dstHeight,
     { // load 136x20 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 4) {
             loffset += 16 * 136;
@@ -1894,7 +1884,7 @@ Hip_CannySobel_U16_U8_5x5_L2NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -2372,9 +2362,7 @@ Hip_CannySobel_U16_U8_7x7_L2NORM(uint dstWidth, uint dstHeight,
     { // load 136x22 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 6) {
             loffset += 16 * 136;
@@ -2386,7 +2374,7 @@ Hip_CannySobel_U16_U8_7x7_L2NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -3276,7 +3264,7 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + ((x - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -3728,9 +3716,7 @@ Hip_HarrisSobel_HG3_U8_3x3(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
             loffset += 16 * 136;
@@ -3742,7 +3728,7 @@ Hip_HarrisSobel_HG3_U8_3x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -3948,9 +3934,7 @@ Hip_HarrisSobel_HG3_U8_5x5(uint dstWidth, uint dstHeight,
     { // load 136x20 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 4) {
             loffset += 16 * 136;
@@ -3962,7 +3946,7 @@ Hip_HarrisSobel_HG3_U8_5x5(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -4429,9 +4413,7 @@ Hip_HarrisSobel_HG3_U8_7x7(uint dstWidth, uint dstHeight,
     { // load 136x22 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 6) {
             loffset += 16 * 136;
@@ -4443,7 +4425,7 @@ Hip_HarrisSobel_HG3_U8_7x7(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -6316,9 +6298,7 @@ Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint dstListOffset, uint capacityOfLis
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (gy - 1) * srcImageStrideInBytes + (gx << 3) - 4;
-        if (goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
             loffset += 16 * 136;
@@ -6330,7 +6310,7 @@ Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint dstListOffset, uint capacityOfLis
             goffset = (gy - ly + id - 1) * srcImageStrideInBytes + ((gx  - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
+        if (doExtraLoad) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();

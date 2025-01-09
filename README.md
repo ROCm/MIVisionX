@@ -113,10 +113,6 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   ```shell
   sudo apt install libopencv-dev
   ```
-* OpenMP
-  ```
-  sudo apt install libomp-dev
-  ```
 * pkg-config
   ```shell
   sudo apt install pkg-config
@@ -126,7 +122,12 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
   ```
 
-> [!IMPORTANT] 
+> [!IMPORTANT]
+> * Required compiler support
+>    * C++17
+>    * OpenMP
+>    * Threads
+>
 > * On `Ubuntu 22.04` - Additional package required: `libstdc++-12-dev`
 >
 >  ```shell

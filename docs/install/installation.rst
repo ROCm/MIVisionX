@@ -48,7 +48,6 @@ Libraries
 * MIOpen
 * MIGraphX
 * RPP
-* OpenMP
 * pkg-config
 * OpenCV - Version 3.X or 4.X
 * FFmpeg - Version 4.4.2 and above

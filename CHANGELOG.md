@@ -9,7 +9,8 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 ### Changed
 
 * Setup: OpenCV package install for Ubuntu
-* AMD Clang is now the default CXX and C compiler.
+* AMD Clang is now the default CXX and C compiler
+* The version of OpenMP included in the ROCm LLVM project is now used instead of `libomp-dev/devel`
 
 ### Known issues
 

@@ -86,7 +86,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 ### Compiler
 * AMD Clang++ Version `18.0.0` or later - installed with ROCm
 >[!NOTE]
-> AMD Clang++ is the preferred compiler, users can change this with the `CMAKE_CXX_COMPILER` variable
+> AMD Clang++ is the preferred cxx compiler, users can change this with the `CMAKE_CXX_COMPILER` variable
 
 ### Libraries
 * CMake - Version `3.10` and above
@@ -119,7 +119,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   ```
 * FFmpeg - Version `4.4.2` and above
   ```shell
-  sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
+  sudo apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
   ```
 
 > [!IMPORTANT]

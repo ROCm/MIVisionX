@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(nn_hip CXX)
 
 set(NN_HIP_SOURCES
@@ -27,8 +27,6 @@ set(NN_HIP_SOURCES
 
     set_source_files_properties(${NN_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
     set(HIP_CXX_FLAGS -std=gnu++14)
-    set(COMPILER_FOR_HIP ${ROCM_PATH}/llvm/bin/clang++)
-    set(CMAKE_CXX_COMPILER ${COMPILER_FOR_HIP})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")
 
     add_library(${PROJECT_NAME} OBJECT ${NN_HIP_SOURCES})

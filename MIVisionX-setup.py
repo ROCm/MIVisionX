@@ -30,16 +30,17 @@ else:
 
 __copyright__ = "Copyright 2018 - 2024, AMD ROCm MIVisionX"
 __license__ = "MIT"
-__version__ = "3.7.0"
+__version__ = "3.8.1"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
 
+
 # error check calls
-def ERROR_CHECK(call):
-    status = call
-    if(status != 0):
-        print('ERROR_CHECK failed with status:'+str(status))
+def ERROR_CHECK(waitval):
+    if(waitval != 0): # return code and signal flags
+        print('ERROR_CHECK failed with status:'+str(waitval))
         traceback.print_stack()
+        status = ((waitval >> 8) | waitval) & 255 # combine exit code and wait flags into single non-zero byte
         exit(status)
 
 # Arguments
@@ -47,7 +48,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
                     help='Setup home directory - optional (default:~/)')
 parser.add_argument('--opencv',    	type=str, default='4.6.0',
-                    help='OpenCV Version - optional (default:4.6.0)')
+                    help='OpenCV Version - optional (default for non Ubuntu OS:4.6.0)')
 parser.add_argument('--ffmpeg',    	type=str, default='OFF',
                     help='FFMPEG Installation - optional (default:OFF) [options:ON/OFF]')
 parser.add_argument('--neural_net',	type=str, default='ON',
@@ -233,9 +234,7 @@ libpkgConfig = "pkg-config"
 if "centos" in os_info_data and "VERSION_ID=7" in os_info_data:
     libpkgConfig = "pkgconfig"
 commonPackages = [
-    'gcc',
     'cmake',
-    'git',
     'wget',
     'unzip',
     str(libpkgConfig),
@@ -251,9 +250,7 @@ neuralNetDebianPackages = [
 
 inferenceDebianPackages = [
     'python3-dev',
-    'python3-pip',
-    'protobuf-compiler',
-    'libprotoc-dev'
+    'python3-pip'
 ]
 
 neuralNetRPMPackages = [
@@ -263,14 +260,9 @@ neuralNetRPMPackages = [
     'migraphx-devel'
 ]
 
-libPythonProto = "python3-protobuf"
-if "centos" in os_info_data and "VERSION_ID=7" in os_info_data:
-    libPythonProto = "protobuf-python"
 inferenceRPMPackages = [
     'python3-devel',
-    'python3-pip',
-    'protobuf-devel',
-    str(libPythonProto)
+    'python3-pip'
 ]
 
 pipNumpyVersion = "numpy==1.23.0"
@@ -282,7 +274,7 @@ if "VERSION_ID=24" in os_info_data:
     pipONNXVersion = "onnx==1.16.0"
     pipProtoVersion= "protobuf==3.20.2"
 pip3InferencePackagesUbuntu = [
-    'future==0.18.2',
+    'future==1.0.0',
     'pytz==2022.1',
     'google==3.0.0',
     str(pipNumpyVersion),
@@ -312,7 +304,6 @@ pip3InferencePackagesRPM = [
 ]
 
 ffmpegDebianPackages = [
-    'ffmpeg',
     'libavcodec-dev',
     'libavformat-dev',
     'libavutil-dev',
@@ -340,18 +331,7 @@ rocdecodeRPMPackages = [
 ]
 
 opencvDebianPackages = [
-    'build-essential',
-    'pkg-config',
-    'libgtk2.0-dev',
-    'libavcodec-dev',
-    'libavformat-dev',
-    'libswscale-dev',
-    'libtbb-dev',
-    'libjpeg-dev',
-    'libpng-dev',
-    'libtiff-dev',
-    'libdc1394-dev',
-    'unzip'
+    'libopencv-dev'
 ]
 
 opencvRPMPackages = [
@@ -359,8 +339,7 @@ opencvRPMPackages = [
     'libjpeg-devel',
     'libpng-devel',
     'libtiff-devel',
-    'libavc1394',
-    'unzip'
+    'libavc1394'
 ]
 
 # update
@@ -468,14 +447,15 @@ else:
                     # Install base Deps
                     for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-                if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
-                    ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
-                    ERROR_CHECK(os.system(
-                        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
-                    ERROR_CHECK(os.system(
-                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
-                    ERROR_CHECK(os.system(
-                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
+                    # NNEF Manual Install
+                    if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
+                        ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
+                        ERROR_CHECK(os.system(
+                            '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
+                        ERROR_CHECK(os.system(
+                            '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
+                        ERROR_CHECK(os.system(
+                            '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
             else:
                 print("STATUS: Model Compiler Deps Pre-Installed - " +modelCompilerDeps+"\n")
     else:
@@ -550,7 +530,7 @@ else:
 
     # Install OpenCV -- TBD cleanup
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build; mkdir OpenCV )'))
-    # Install pre-reqs
+    # Install
     ERROR_CHECK(os.system(sudoValidate))
     if "Ubuntu" in platfromInfo:
         for i in range(len(opencvDebianPackages)):
@@ -566,12 +546,12 @@ else:
         for i in range(len(opencvRPMPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ opencvRPMPackages[i]))
-    # OpenCV 4.6.0
-    # Get Source and install
-    ERROR_CHECK(os.system(
-        '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )'))
-    ERROR_CHECK(os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )'))
-    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
+        # OpenCV 4.6.0
+        # Get Source and install
+        ERROR_CHECK(os.system(
+            '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )'))
+        ERROR_CHECK(os.system('(cd '+deps_dir+'; unzip '+opencvVersion+'.zip )'))
+        ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
                         ' -D WITH_EIGEN=OFF \
                         -D WITH_GTK=ON \
                         -D WITH_JPEG=ON \
@@ -585,10 +565,10 @@ else:
                         -D BUILD_LIST=core,features2d,highgui,imgcodecs,imgproc,photo,video,videoio  \
                         -D CMAKE_PLATFORM_NO_VERSIONED_SONAME=ON \
                         ../../opencv-'+opencvVersion+' )'))
-    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; make -j$(nproc))'))
-    ERROR_CHECK(os.system(sudoValidate))
-    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo make install)'))
-    ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo ldconfig)'))
+        ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; make -j$(nproc))'))
+        ERROR_CHECK(os.system(sudoValidate))
+        ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo make install)'))
+        ERROR_CHECK(os.system('(cd '+deps_dir+'/build/OpenCV; sudo ldconfig)'))
 
     if developerInstall == 'ON':
         ERROR_CHECK(os.system(sudoValidate))

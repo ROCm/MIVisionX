@@ -359,7 +359,8 @@ typedef struct
 {
     vx_uint32 device_type; // shall be AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU
     vx_uint32 device_info; // reserved -- shall be initialized to ZERO and shall not be modified
-    vx_uint32 reserved[2]; // reserved -- shall be initialized to ZERO and shall not be modified
+    vx_uint32 group; // reserved -- shall be initialized to ZERO and shall not be modified
+    vx_uint32 reserved; // reserved -- shall be initialized to ZERO and shall not be modified
 } AgoTargetAffinityInfo;
 
 /*! \brief AMD data structure to set a text macro.
@@ -448,7 +449,7 @@ typedef vx_status(VX_CALLBACK *amd_kernel_query_target_support_f)(vx_graph graph
  *     vx_convolution: float convolution[<ROWS>*<COLS>]
  *     vx_threshold:   int value or int2 value
  *     vx_remap:       __global short2 * buf, uint stride_in_bytes
- *     vx_lut:         __read_only image1d_t lut
+ *     vx_lut:         __global uchar * lut, uint count, uint offset
  */
 typedef vx_status(VX_CALLBACK *amd_kernel_opencl_codegen_callback_f)(
     vx_node node,                                // [input] node

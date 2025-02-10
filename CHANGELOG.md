@@ -2,101 +2,79 @@
 
 # Changelog for MIVisionX
 
-Documentation for MIVisionX is available at
-[https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
+The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
-## MIVisionX 3.1.0 (unreleased)
+##  (unreleased) MIVisionX 3.2.0
 
-### Changes
+### Changed
+
+* Setup: OpenCV package install for Ubuntu
+* AMD Clang is now the default CXX and C compiler
+* The version of OpenMP included in the ROCm LLVM project is now used instead of `libomp-dev/devel`
+
+### Known issues
+
+* Installation on CentOS/RedHat/SLES requires the manual installation of the `FFMPEG` & `OpenCV` dev packages.
+* Hardware decode requires the ROCm `graphics` usecase.
+
+### Upcoming changes
+
+* Optimized audio augmentations support for VX_RPP
+
+
+##  MIVisionX 3.1.0 for ROCm 6.3.0
+
+### Changed
+
 * Setup: rocdecode install disabled
 * Package: rocdecode dependency removed
 
-### Removals
- 
 ### Optimizations
- 
-### Resolved issues
- 
-### Known issues
-* Package install requires `OpenCV` manual install
-* CentOS/RedHat/SLES requires `FFMPEG Dev` package manual install
-* Hardware decode requires rocm usecase `graphics`
- 
-### Upcoming changes
-* Optimized audio augmentations support for VX_RPP
 
-### Tested configurations
+* Setup: only core dependency packages installed
 
-* Windows `10` / `11`
-* Linux distribution
-  + Ubuntu - `20.04` / `22.04`
-  + CentOS - `7`
-  + RHEL - `8` / `9`
-  + SLES - `15-SP5`
-* ROCm: rocm-core - `6.3.0.60300`
-* RPP - `1.9.0.60300`
-* miopen-hip - `3.2.0.60300`
-* migraphx - `2.11.0.60300`
-* OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
-* Dependencies for all the above packages
-* MIVisionX Setup Script - `V3.7.0`
-
-## MIVisionX 3.0.0 for ROCm 6.3.0
- 
-### Changes
- 
-* Support for advanced GPUs
-* Support for PreEmphasis Filter augmentation in openVX extensions
-* Support for Spectrogram augmentation in openVX extensions
-* Support for Downmix and ToDecibels augmentations in openVX extensions
-* Support for Resample augmentation and Operator overloading nodes in openVX extensions
-* Support for NonSilentRegion and Slice augmentations in openVX extensions
-* Support for Mel-Filter bank and Normalize augmentations in openVX extensions
-* Tests - New Tests for all modules
-
-### Removals
- 
-* rocAL: Deprecated with V3.0.0, rocAL will be available at https://github.com/ROCm/rocAL
- 
-### Optimizations
- 
-* Readme
-* Setup - CentOS 7 support
-* Setup - SLES 15 SP5 support
-* FindPackage modules updated - FindMIVisionX
- 
-### Resolved issues
- 
-* MIVisionX compatibility fix - Resample and pre-emphasis filter
-* Docs - fix broken image links
- 
 ### Known issues
 
-* Package install requires `OpenCV` manual install
-* CentOS/RedHat/SLES requires `FFMPEG Dev` package manual install
-* Hardware decode requires rocm usecase `graphics`
- 
+* MIVisionX package installation on RedHat/SLES requires the manual installation of the `OpenCV` and `FFMPEG` development package.
+
 ### Upcoming changes
- 
+
 * Optimized audio augmentations support for VX_RPP
 
-### Tested configurations
+## MIVisionX 3.0.0 for ROCm 6.2.0
 
-* Windows `10` / `11`
-* Linux distribution
-  + Ubuntu - `20.04` / `22.04`
-  + CentOS - `7`
-  + RHEL - `8` / `9`
-  + SLES - `15-SP5`
-* ROCm: rocm-core - `6.3.0.60300`
-* RPP - `1.9.0.60300`
-* miopen-hip - `3.2.0.60300`
-* migraphx - `2.11.0.60300`
-* OpenCV - [4.6.0](https://github.com/opencv/opencv/releases/tag/4.6.0)
-* FFMPEG - [n4.4.2](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.4.2)
-* Dependencies for all the above packages
-* MIVisionX Setup Script - `V3.6.0`
+### Added
+
+* Support has been added for the following:
+  * Advanced GPUs
+  * PreEmphasis Filter augmentation in openVX extensions
+  * Spectrogram augmentation in openVX extensions
+  * Downmix and ToDecibels augmentations in openVX extensions
+  * Resample augmentation and Operator overloading nodes in openVX extensions
+  * NonSilentRegion and Slice augmentations in openVX extensions
+  * Mel-Filter bank and Normalize augmentations in openVX extensions
+* CentOS 7 and SLES 15 SP5 support has been added to the setup script.
+* The `FindPackage` modules have been updated with `FindMIVision`.
+* New tests have been added for all modules.
+
+### Changed
+
+* rocAL is no longer installed with MIVisionX and must be installed separately.
+
+### Resolved issues
+
+* MIVisionX compatibility fix: Resample and pre-emphasis filter.
+* Broken image links have been fixed in the documentation.
+
+### Known issues
+
+* Package install requires manually installing OpenCV
+* Installation CentOS/RedHat/SLES requires manually installing the `FFMPEG Dev` package
+* Hardware decode requires the ROCm `graphics` usecase.
+
+### Upcoming changes
+
+* Optimized audio augmentations support for VX_RPP.
 
 ## MIVisionX 2.5.0
 

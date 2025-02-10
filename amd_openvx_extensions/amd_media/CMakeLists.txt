@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 set(VERSION "1.1.0")
 project(vx_amd_media VERSION ${VERSION} LANGUAGES CXX)
 
@@ -78,6 +78,11 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     target_link_libraries(${PROJECT_NAME} hip::host)
 endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+if(FFMPEG_VERSION_4)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC WITH_FFMPEG_VERSION_4=1)
+else()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC WITH_FFMPEG_VERSION_4=0)
+endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)

@@ -230,17 +230,13 @@ if os.path.exists('/etc/os-release'):
 inferenceDebianPackages = [
     'inxi',
     'python3-dev',
-    'python3-pip',
-    'protobuf-compiler',
-    'libprotoc-dev'
+    'python3-pip'
 ]
 
 inferenceRPMPackages = [
     'inxi',
     'python3-devel',
-    'python3-pip',
-    'protobuf-devel',
-    'python3-protobuf'
+    'python3-pip'
 ]
 
 # Debian based
@@ -252,7 +248,7 @@ if "VERSION_ID=24" in os_info_data:
     pipONNXVersion = "onnx==1.16.0"
     pipProtoVersion= "protobuf==3.20.2"
 pip3InferencePackagesUbuntu = [
-    'future==0.18.2',
+    'future==1.0.0',
     'pytz==2022.1',
     'google==3.0.0',
     str(pipNumpyVersion),
@@ -364,14 +360,14 @@ if not os.path.exists(modelCompilerDeps):
                         ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
         for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-    if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
-        ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
-        ERROR_CHECK(os.system(
-            '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
-        ERROR_CHECK(os.system(
-            '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
-        ERROR_CHECK(os.system(
-            '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
+        if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
+            ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
+            ERROR_CHECK(os.system(
+                '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
+            ERROR_CHECK(os.system(
+                '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
+            ERROR_CHECK(os.system(
+                '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
     if "centos-7" in platfromInfo:

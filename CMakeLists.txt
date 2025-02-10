@@ -17,8 +17,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-cmake_minimum_required(VERSION 3.5)
-set(VERSION "3.1.0")
+cmake_minimum_required(VERSION 3.10)
+
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+  set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+  message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+  set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
+# Set AMD Clang as default compiler
+if (NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
+  set(CMAKE_C_COMPILER ${ROCM_PATH}/bin/amdclang)
+  set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
+endif()
+
+set(VERSION "3.2.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
@@ -34,14 +49,6 @@ find_program(MAKE_NSIS_EXE makensis)
 find_program(RPMBUILD_EXE rpmbuild)
 find_program(DPKG_EXE dpkg)
 
-# ROCM Path
-if(DEFINED ENV{ROCM_PATH})
-  set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
-elseif(ROCM_PATH)
-  message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
-else()
-  set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
-endif()
 # avoid setting the default installation path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
@@ -53,7 +60,6 @@ option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
 option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
-option(BUILD_WITH_AMD_ADVANCE "Build MIVisionX for advanced AMD GPU Architecture" OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")
@@ -110,8 +116,7 @@ endif()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   # -O0  -- Don't Optimize output file
   # -g -- generate debugging information
-  # -Og -- Optimize for debugging experience rather than speed or size
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -Og")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 else()
   # -O3 -- Optimize output file
   # -DNDEBUG -- turn off asserts
@@ -136,20 +141,26 @@ endif()
 if("${BACKEND}" STREQUAL "HIP")
   set(LOOM OFF)
   # Set supported GPU Targets
-  set(DEFAULT_AMDGPU_TARGETS "gfx908;gfx90a;gfx940;gfx941;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102")
-  if (BUILD_WITH_AMD_ADVANCE)
-      set(DEFAULT_AMDGPU_TARGETS ${DEFAULT_AMDGPU_TARGETS} "gfx1200;gfx1201")
+  set(DEFAULT_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102;gfx1200;gfx1201")
+
+  # Set AMD GPU_TARGETS
+  if((AMDGPU_TARGETS OR DEFINED ENV{AMDGPU_TARGETS}) AND (NOT GPU_TARGETS))
+    message("-- ${Red}${PROJECT_NAME} DEPRECATION -- AMDGPU_TARGETS use is deprecated. Use GPU_TARGETS${ColourReset}")
+    if(DEFINED ENV{AMDGPU_TARGETS})
+      set(GPU_TARGETS $ENV{AMDGPU_TARGETS} CACHE STRING "List of specific machine types for library to target")
+    else()
+      set(GPU_TARGETS ${AMDGPU_TARGETS})
+    endif()
   endif()
 
-  # Set AMDGPU_TARGETS
-  if(DEFINED ENV{AMDGPU_TARGETS})
-      set(AMDGPU_TARGETS $ENV{AMDGPU_TARGETS} CACHE STRING "List of specific machine types for library to target")
-  elseif(AMDGPU_TARGETS)
-      message("-- ${White}${PROJECT_NAME} -- AMDGPU_TARGETS set with -D option${ColourReset}")
+  if(DEFINED ENV{GPU_ARCHS})
+      set(GPU_TARGETS $ENV{GPU_ARCHS} CACHE STRING "List of specific machine types for library to target")
+  elseif(GPU_TARGETS)
+      message("-- ${White}${PROJECT_NAME} -- GPU_TARGETS set with -D option${ColourReset}")
   else()
-      set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
+      set(GPU_TARGETS "${DEFAULT_GPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
   endif()
-  message("-- ${White}${PROJECT_NAME} -- AMDGPU_TARGETS: ${AMDGPU_TARGETS}${ColourReset}")
+  message("-- ${White}${PROJECT_NAME} -- AMD GPU_TARGETS: ${GPU_TARGETS}${ColourReset}")
 endif()
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
@@ -158,7 +169,6 @@ message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM OpenCL Modules (defaul
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
-message("-- ${Cyan}     -D BUILD_WITH_AMD_ADVANCE=${BUILD_WITH_AMD_ADVANCE} [Turn ON/OFF Build for AMD advanced GPUs(default:OFF)]${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
@@ -217,22 +227,20 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
 # Set the dependent packages
-set(MIVISIONX_RUNTIME_PACKAGE_LIST  "rocm-hip-runtime, rpp, rocblas, miopen-hip, migraphx")
+set(MIVISIONX_RUNTIME_PACKAGE_LIST  "rocm-hip-runtime, openmp-extras-runtime, rpp, rocblas, miopen-hip, migraphx")
 
 # Set the dev dependent packages
-set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev")
-# TBD - Some RPM packages need Fusion Packages - ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel
-set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel")
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-dev, openmp-extras-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, pkg-config, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, libopencv-dev")
+# TBD - Some RPM packages need Fusion Packages - libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel, libopencv
+set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, rocm-hip-runtime-devel, openmp-extras-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel, pkg-config")
 
-# Add rocDecode Deps - Exclude centos-7
-if (EXISTS "/etc/os-release")
+# Add OS specific dependencies
+if(EXISTS "/etc/os-release")
   file(READ "/etc/os-release" OS_RELEASE)
-  string(REGEX MATCH "CentOS-7" CENTOS_7_FOUND ${OS_RELEASE})
-  #if(NOT CENTOS_7_FOUND) - Disable TBD: Turn on with package update
-    #set(MIVISIONX_RUNTIME_PACKAGE_LIST  "${MIVISIONX_RUNTIME_PACKAGE_LIST}, rocdecode")
-    #set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, rocdecode-dev")
-    #set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "${MIVISIONX_RPM_DEV_PACKAGE_LIST}, rocdecode-devel")
-  #endif()
+  string(REGEX MATCH "22.04" UBUNTU_22_FOUND ${OS_RELEASE})
+  if(UBUNTU_22_FOUND)
+    set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST "${MIVISIONX_DEBIAN_DEV_PACKAGE_LIST}, libstdc++-12-dev")
+  endif()
 endif()
 
 # '%{?dist}' breaks manual builds on debian systems due to empty Provides

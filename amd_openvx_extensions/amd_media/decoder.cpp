@@ -459,10 +459,14 @@ vx_status CLoomIoMediaDecoder::Initialize()
         const char * mediaFileName = inputMediaFileName[mediaIndex].c_str();
         AVFormatContext * formatContext = nullptr;
         AVInputFormat * inputFormat = nullptr;
-        AVCodec *decoder = NULL;
-        AVStream *video = NULL;
+#if WITH_FFMPEG_VERSION_4
+        AVCodec *decoder = nullptr;
+#else
+        const AVCodec *decoder = nullptr;
+#endif
+        AVStream *video = nullptr;
         AVCodecContext * codecContext = nullptr;
-        AVBufferRef *hw_device_ctx = NULL;
+        AVBufferRef *hw_device_ctx = nullptr;
         int videostream;
 
         // find if hardware decode is available
@@ -497,32 +501,9 @@ vx_status CLoomIoMediaDecoder::Initialize()
         }
         videostream = err;
 
-        if (!useVaapi[mediaIndex]) {
-            unsigned int streamIndex = -1;
-            for (unsigned int si = 0; si < formatContext->nb_streams; si++) {
-                AVCodecContext * vcc = formatContext->streams[si]->codec;
-                if (vcc->codec_type == AVMEDIA_TYPE_VIDEO) {
-                    // pick video stream index with larger dimensions
-                    if (!codecContext) {
-                        codecContext = vcc;
-                        streamIndex = si;
-                    }
-                    else if ((vcc->width > codecContext->width) && (vcc->height > codecContext->height)) {
-                        codecContext = vcc;
-                        streamIndex = si;
-                    }
-                }
-            }
-            if (!codecContext) {
-                vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_VALUE, "ERROR: no video found in %s", mediaFileName);
-                return VX_ERROR_INVALID_VALUE;
-            }
-        } else
-        {
-            if (!(codecContext = avcodec_alloc_context3(decoder))){
-                vxAddLogEntry((vx_reference)node, VX_ERROR_NO_MEMORY, "ERROR: can't alloc codec context\n");
-                return VX_ERROR_NO_MEMORY;
-            }
+        if (!(codecContext = avcodec_alloc_context3(decoder))){
+            vxAddLogEntry((vx_reference)node, VX_ERROR_NO_MEMORY, "ERROR: can't alloc codec context\n");
+            return VX_ERROR_NO_MEMORY;
         }
         videoCodecContext[mediaIndex] = codecContext;
         videoStreamIndex[mediaIndex] = videostream;

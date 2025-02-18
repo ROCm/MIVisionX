@@ -64,7 +64,32 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
         if (!data->perm) data->perm = new unsigned[nDim];
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->perm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
-    data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
+    RppSize_t numDims;
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
+    if (numDims == 4) {
+        RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
+        data->pSrcRoi = new unsigned[data->inputTensorDims[0] * 3 * 2];
+        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+            unsigned index = i * 3 * 2;
+            if (data->inputLayout == vxTensorLayout::VX_NHWC) {
+                data->pSrcRoi[index + 0] = src_roi[i].xywhROI.xy.y;
+                data->pSrcRoi[index + 1] = src_roi[i].xywhROI.xy.x;
+                data->pSrcRoi[index + 2] = 0;
+                data->pSrcRoi[index + 3] = src_roi[i].xywhROI.roiHeight;
+                data->pSrcRoi[index + 4] = src_roi[i].xywhROI.roiWidth;
+                data->pSrcRoi[index + 5] = data->inputTensorDims[3];
+            } else if (data->inputLayout == vxTensorLayout::VX_NCHW) {
+                data->pSrcRoi[index + 0] = 0;
+                data->pSrcRoi[index + 1] = src_roi[i].xywhROI.xy.y;
+                data->pSrcRoi[index + 2] = src_roi[i].xywhROI.xy.x;
+                data->pSrcRoi[index + 3] = data->inputTensorDims[3];
+                data->pSrcRoi[index + 4] = src_roi[i].xywhROI.roiHeight;
+                data->pSrcRoi[index + 5] = src_roi[i].xywhROI.roiWidth;
+            }
+        }
+    } else {
+        data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
+    }
     return status;
 }
 
@@ -192,6 +217,7 @@ static vx_status VX_CALLBACK uninitializeTranspose(vx_node node, const vx_refere
 #endif
     } else {
         if (data->perm) delete[] data->perm;
+        if (data->pSrcRoi) delete[] data->pSrcRoi;
         delete data->pSrcGenericDesc;
         delete data->pDstGenericDesc;
     }

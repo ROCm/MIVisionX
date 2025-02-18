@@ -69,11 +69,43 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
 
     // For Identifying if the input Tensor is 1D (excluding the Nth dimension) [ even if 2nd dim is 1 - The tensor is considered 1D ]
     if ((numDims == 3) && (data->inputTensorDims[2] == 1)) {
+        if(!data->pSrcDims) {
+            data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
+        }
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
         for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 2) {
             data->pSrcDims[j] = src_roi[i].xywhROI.xy.x;
             data->pSrcDims[j + 1] = src_roi[i].xywhROI.roiWidth;
+            dst_roi[i].xywhROI.roiWidth = src_roi[i].xywhROI.roiWidth;
+            dst_roi[i].xywhROI.roiHeight = src_roi[i].xywhROI.roiHeight;
+        }
+        data->pSrcRoi = static_cast<unsigned *>(data->pSrcDims);
+    } else if (numDims == 4) {
+        RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
+        RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
+        if(!data->pSrcDims) {
+            data->pSrcDims = new unsigned[data->inputTensorDims[0] * 3 * 2];
+        }
+        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+            unsigned index = i * 3 * 2;
+            if (data->inputLayout == vxTensorLayout::VX_NHWC) {
+                data->pSrcDims[index + 0] = src_roi[i].xywhROI.xy.y;
+                data->pSrcDims[index + 1] = src_roi[i].xywhROI.xy.x;
+                data->pSrcDims[index + 2] = 0;
+                data->pSrcDims[index + 3] = src_roi[i].xywhROI.roiHeight;
+                data->pSrcDims[index + 4] = src_roi[i].xywhROI.roiWidth;
+                data->pSrcDims[index + 5] = data->inputTensorDims[3];
+            } else if (data->inputLayout == vxTensorLayout::VX_NCHW) {
+                data->pSrcDims[index + 0] = 0;
+                data->pSrcDims[index + 1] = src_roi[i].xywhROI.xy.y;
+                data->pSrcDims[index + 2] = src_roi[i].xywhROI.xy.x;
+                data->pSrcDims[index + 3] = data->inputTensorDims[3];
+                data->pSrcDims[index + 4] = src_roi[i].xywhROI.roiHeight;
+                data->pSrcDims[index + 5] = src_roi[i].xywhROI.roiWidth;
+            }
+            dst_roi[i].xywhROI.xy.x = src_roi[i].xywhROI.xy.x;
+            dst_roi[i].xywhROI.xy.y = src_roi[i].xywhROI.xy.y;
             dst_roi[i].xywhROI.roiWidth = src_roi[i].xywhROI.roiWidth;
             dst_roi[i].xywhROI.roiHeight = src_roi[i].xywhROI.roiHeight;
         }
@@ -228,7 +260,6 @@ static vx_status VX_CALLBACK initializeNormalize(vx_node node, const vx_referenc
         data->pDstGenericDesc->offsetInBytes = 0;
         fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->inputLayout, data->outputTensorDims);
 
-        data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
         refreshNormalize(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

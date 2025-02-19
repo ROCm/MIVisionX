@@ -47,6 +47,8 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr, *roi_tensor_ptr_dst;
     int mean_stddev_array_size = 1;
+    RppSize_t numDims;
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return VX_ERROR_NOT_IMPLEMENTED;
@@ -55,23 +57,28 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
+        if ((numDims == 4) && (!data->pSrcDims)) {
+            hipError_t err = hipHostMalloc(&data->pSrcDims, data->inputTensorDims[0] * 3 * 2, hipHostMallocDefault);
+            if (err != hipSuccess)
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * 3 * 2);
+        }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
+        if ((numDims == 3) && (data->inputTensorDims[2] == 1) && (!data->pSrcDims)) {
+                data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
+        } else if ((numDims == 4) && (!data->pSrcDims)) {
+            data->pSrcDims = new unsigned[data->inputTensorDims[0] * 3 * 2];
+        }
     }
-    RppSize_t numDims;
     int nDim = data->pSrcGenericDesc->numDims - 1;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * numDims));
 
     // For Identifying if the input Tensor is 1D (excluding the Nth dimension) [ even if 2nd dim is 1 - The tensor is considered 1D ]
     if ((numDims == 3) && (data->inputTensorDims[2] == 1)) {
-        if(!data->pSrcDims) {
-            data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
-        }
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
         for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 2) {
@@ -84,9 +91,6 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     } else if (numDims == 4) {
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
-        if(!data->pSrcDims) {
-            data->pSrcDims = new unsigned[data->inputTensorDims[0] * 3 * 2];
-        }
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
             unsigned index = i * 3 * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
@@ -285,12 +289,17 @@ static vx_status VX_CALLBACK uninitializeNormalize(vx_node node, const vx_refere
             if (err != hipSuccess)
                 std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
         }
+        if (data->pSrcDims) {
+            hipError_t err = hipHostFree(data->pSrcDims);
+            if (err != hipSuccess)
+                std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
+        }
 #endif
     } else {
         if (data->pMean) delete[] data->pMean;
         if (data->pStddev) delete[] data->pStddev;
+        if (data->pSrcDims) delete[] data->pSrcDims;
     }
-    if (data->pSrcDims) delete[] data->pSrcDims;
     if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;
     if (data->pDstGenericDesc) delete data->pDstGenericDesc;
     if (data) delete data;

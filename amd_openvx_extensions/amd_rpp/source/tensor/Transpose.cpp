@@ -43,6 +43,8 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
     void *roi_tensor_ptr;
     int nDim = data->pSrcGenericDesc->numDims - 1;
     
+    RppSize_t numDims;
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return VX_ERROR_NOT_IMPLEMENTED;
@@ -55,6 +57,11 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", nDim * sizeof(unsigned));
         }
+        if (!data->pSrcRoi && (numDims == 4)) {
+            hipError_t err = hipHostMalloc(&data->pSrcRoi, data->inputTensorDims[0] * 3 * 2, hipHostMallocDefault);
+            if (err != hipSuccess)
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * 3 * 2);
+        }
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->perm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
@@ -62,13 +69,13 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         if (!data->perm) data->perm = new unsigned[nDim];
+        if (!data->pSrcRoi && (numDims == 4)) {
+            data->pSrcRoi = new unsigned[data->inputTensorDims[0] * 3 * 2];
+        }
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->perm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    }
-    RppSize_t numDims;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
+    }    
     if (numDims == 4) {
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
-        data->pSrcRoi = new unsigned[data->inputTensorDims[0] * 3 * 2];
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
             unsigned index = i * 3 * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
@@ -212,6 +219,9 @@ static vx_status VX_CALLBACK uninitializeTranspose(vx_node node, const vx_refere
         if (err != hipSuccess)
             std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
         err = hipHostFree(data->perm);
+        if (err != hipSuccess)
+            std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
+        err = hipHostFree(data->pSrcRoi);
         if (err != hipSuccess)
             std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
 #endif

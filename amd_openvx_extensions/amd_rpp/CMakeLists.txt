@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
-set(VERSION "1.0.0")
+set(VERSION "2.0.0")
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)

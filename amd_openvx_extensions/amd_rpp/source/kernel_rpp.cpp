@@ -3026,13 +3026,13 @@ vx_status createRPPHandle(vx_node node, vxRppHandle **pHandle, Rpp32u batchSize,
         if (deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
             STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &handle->cmdq, sizeof(handle->cmdq)));
-            rppCreateWithStreamAndBatchSize(&handle->rppHandle, handle->cmdq, batchSize);
+            rppCreate(&handle->rppHandle, batchSize, 0, handle->cmdq, RppBackend::RPP_OCL_BACKEND);
 #elif ENABLE_HIP
             STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &handle->hipstream, sizeof(handle->hipstream)));
-            rppCreateWithStreamAndBatchSize(&handle->rppHandle, handle->hipstream, batchSize);
+            rppCreate(&handle->rppHandle, batchSize, 0, handle->hipstream, RppBackend::RPP_HIP_BACKEND);
 #endif
         } else if (deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rppCreateWithBatchSize(&handle->rppHandle, batchSize, cpu_num_threads);
+            rppCreate(&handle->rppHandle, batchSize, cpu_num_threads, NULL, RppBackend::RPP_HOST_BACKEND);
         }
         
         STATUS_ERROR_CHECK(vxSetModuleHandle(node, OPENVX_KHR_RPP, handle));
@@ -3046,10 +3046,10 @@ vx_status releaseRPPHandle(vx_node node, vxRppHandle *handle, Rpp32u deviceType)
     if (handle->count == 0) {
         if(deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL || ENABLE_HIP
-            rppDestroyGPU(handle->rppHandle);
+            rppDestroy(handle->rppHandle);
 #endif   
         } else if (deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rppDestroyHost(handle->rppHandle);
+            rppDestroy(handle->rppHandle);
         }
 
         delete handle;

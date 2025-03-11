@@ -330,6 +330,14 @@ rocdecodeRPMPackages = [
     'rocdecode-devel'
 ]
 
+openclDebianPackages = [
+    'ocl-icd-opencl-dev'
+]
+
+openclRPMPackages = [
+    'ocl-icd-devel'
+]
+
 opencvDebianPackages = [
     'libopencv-dev'
 ]
@@ -588,4 +596,15 @@ else:
         ERROR_CHECK(os.system(
             '(cd '+deps_dir+'/gdb-12.1; ./configure --with-python3; make CXXFLAGS="-static-libstdc++" -j$(nproc); sudo make install)'))
 
+    # Install OpenCL ICD Loader
+    if backend == 'OCL':
+        if "Ubuntu" in platfromInfo:
+            for i in range(len(openclDebianPackages)):
+                ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ openclDebianPackages[i]))
+        else:
+            for i in range(len(openclRPMPackages)):
+                ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
+                        ' '+linuxSystemInstall_check+' install -y '+ openclRPMPackages[i]))
+                        
     print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+" on "+platfromInfo+"\n")

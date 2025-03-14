@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ struct TransposeLocalData {
     Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    Rpp32u *perm;
+    Rpp32u *pPerm;
     RpptGenericDescPtr pSrcGenericDesc;
     RpptGenericDescPtr pDstGenericDesc;
     Rpp32u *pSrcRoi;
@@ -52,8 +52,8 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
-        if (!data->perm) {
-            hipError_t err = hipHostMalloc(&data->perm, nDim * sizeof(unsigned), hipHostMallocDefault);
+        if (!data->pPerm) {
+            hipError_t err = hipHostMalloc(&data->pPerm, nDim * sizeof(unsigned), hipHostMallocDefault);
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", nDim * sizeof(unsigned));
         }
@@ -62,21 +62,22 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * 3 * 2);
         }
-        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->perm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->pPerm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        if (!data->perm) data->perm = new unsigned[nDim];
+        if (!data->pPerm) data->pPerm = new unsigned[nDim];
         if (!data->pSrcRoi && (numDims == 4)) {
             data->pSrcRoi = new unsigned[data->inputTensorDims[0] * 3 * 2];
         }
-        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->perm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->pPerm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }    
     if (numDims == 4) {
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+            // rocAL ROI for image formats is stored in XYWH format. Transpose kernel needs ROI for all dims so adding the channel ROI here
             unsigned index = i * 3 * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
                 data->pSrcRoi[index + 0] = src_roi[i].xywhROI.xy.y;
@@ -120,14 +121,14 @@ static vx_status VX_CALLBACK validateTranspose(vx_node node, const vx_reference 
     // Check for input parameters
     size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if(num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Transpose: tensor: #0 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+    if(num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Transpose: tensor: #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
 
     // Check for output parameters
     vx_uint8 tensor_fixed_point_position;
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_datatype;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if(num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Transpose: tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+    if(num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Transpose: tensor: #2 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
 
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &tensor_datatype, sizeof(tensor_datatype)));
@@ -147,11 +148,11 @@ static vx_status VX_CALLBACK processTranspose(vx_node node, const vx_reference *
     refreshTranspose(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_transpose_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->perm, data->pSrcRoi, data->handle->rppHandle);
+        rpp_status = rppt_transpose_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pPerm, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_transpose_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->perm, data->pSrcRoi, data->handle->rppHandle);
+        rpp_status = rppt_transpose_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pPerm, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -218,7 +219,7 @@ static vx_status VX_CALLBACK uninitializeTranspose(vx_node node, const vx_refere
         err = hipHostFree(data->pDstGenericDesc);
         if (err != hipSuccess)
             std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
-        err = hipHostFree(data->perm);
+        err = hipHostFree(data->pPerm);
         if (err != hipSuccess)
             std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
         err = hipHostFree(data->pSrcRoi);
@@ -226,7 +227,7 @@ static vx_status VX_CALLBACK uninitializeTranspose(vx_node node, const vx_refere
             std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
 #endif
     } else {
-        if (data->perm) delete[] data->perm;
+        if (data->pPerm) delete[] data->pPerm;
         if (data->pSrcRoi) delete[] data->pSrcRoi;
         delete data->pSrcGenericDesc;
         delete data->pDstGenericDesc;

@@ -2775,7 +2775,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppMelFilterBank(vx_graph graph, vx_tensor
 }
 
 VX_API_ENTRY vx_node VX_API_CALL vxExtRppTranspose(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
-                                                   vx_array perm, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+                                                   vx_array pPerm, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2785,7 +2785,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppTranspose(vx_graph graph, vx_tensor pSr
             (vx_reference)pSrc,
             (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)perm,
+            (vx_reference)pPerm,
             (vx_reference)inputLayout,
             (vx_reference)outputLayout,
             (vx_reference)roiType,
@@ -2882,20 +2882,12 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
 }
 
 void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *tensorDims) {
+    if(tensorLayoutMapping.find(layout) != tensorLayoutMapping.end())
+        genericDescPtr->layout = tensorLayoutMapping.at(layout);
+    else
+        throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims");
     switch(layout) {
-        case vxTensorLayout::VX_NHWC: {
-            genericDescPtr->numDims = 4;
-            genericDescPtr->dims[0] = tensorDims[0];
-            genericDescPtr->dims[1] = tensorDims[1];
-            genericDescPtr->dims[2] = tensorDims[2];
-            genericDescPtr->dims[3] = tensorDims[3];
-            genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
-            genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
-            genericDescPtr->strides[2] = genericDescPtr->dims[3];
-            genericDescPtr->strides[3] = 1;
-            genericDescPtr->layout = RpptLayout::NHWC;
-            break; 
-        }
+        case vxTensorLayout::VX_NHWC:
         case vxTensorLayout::VX_NCHW: {
             genericDescPtr->numDims = 4;
             genericDescPtr->dims[0] = tensorDims[0];
@@ -2906,38 +2898,11 @@ void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTen
             genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
             genericDescPtr->strides[2] = genericDescPtr->dims[3];
             genericDescPtr->strides[3] = 1;
-            genericDescPtr->layout = RpptLayout::NCHW;
-            break;
-        }
-        case vxTensorLayout::VX_NFHWC: {
-            genericDescPtr->numDims = 4;
-            genericDescPtr->dims[0] = tensorDims[0] * tensorDims[1];
-            genericDescPtr->dims[1] = tensorDims[2];
-            genericDescPtr->dims[2] = tensorDims[3];
-            genericDescPtr->dims[3] = tensorDims[4];
-            genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
-            genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
-            genericDescPtr->strides[2] = genericDescPtr->dims[3];
-            genericDescPtr->strides[3] = 1;
-            genericDescPtr->layout = RpptLayout::NHWC;
-            break;
-        }
-        case vxTensorLayout::VX_NFCHW: {
-            genericDescPtr->numDims = 4;
-            genericDescPtr->dims[0]= tensorDims[0] * tensorDims[1];
-            genericDescPtr->dims[1] = tensorDims[3];
-            genericDescPtr->dims[2] = tensorDims[4];
-            genericDescPtr->dims[3] = tensorDims[2];
-            genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
-            genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
-            genericDescPtr->strides[2] = genericDescPtr->dims[3];
-            genericDescPtr->strides[3] = 1;
-            genericDescPtr->layout = RpptLayout::NCHW;
             break;
         }
         case vxTensorLayout::VX_NHW:
         case vxTensorLayout::VX_NFT:
-        case vxTensorLayout::VX_NTF: {}
+        case vxTensorLayout::VX_NTF: {
             genericDescPtr->dims[0] = tensorDims[0];
             genericDescPtr->dims[1] = tensorDims[1];
             genericDescPtr->dims[2] = tensorDims[2];
@@ -2949,12 +2914,8 @@ void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTen
             genericDescPtr->strides[0] = genericDescPtr->dims[1] * genericDescPtr->dims[2] * genericDescPtr->dims[3];
             genericDescPtr->strides[1] = genericDescPtr->dims[2] * genericDescPtr->dims[3];
             genericDescPtr->strides[2] = genericDescPtr->dims[3];
-            if(tensorLayoutMapping.find(layout) != tensorLayoutMapping.end()) {
-                genericDescPtr->layout = tensorLayoutMapping.at(layout);
-            } else {
-                throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims");
-            }
             break;
+        }
         default: {
             throw std::runtime_error("Invalid layout value in fillGenericDescriptionPtrfromDims.");
         }

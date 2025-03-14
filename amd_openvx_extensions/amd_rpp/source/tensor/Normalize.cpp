@@ -92,6 +92,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+            // rocAL ROI for image formats is stored in XYWH format. Transpose kernel needs ROI for all dims so adding the channel ROI here
             unsigned index = i * 3 * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
                 data->pSrcDims[index + 0] = src_roi[i].xywhROI.xy.y;

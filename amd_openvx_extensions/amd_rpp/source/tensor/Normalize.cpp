@@ -217,7 +217,9 @@ static vx_status VX_CALLBACK processNormalize(vx_node node, const vx_reference *
     refreshNormalize(node, parameters, num, data);
 #if RPP_AUDIO
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
+#if ENABLE_OPENCL
+        return_status = VX_ERROR_NOT_IMPLEMENTED;
+#elif ENABLE_HIP
         rpp_status = rppt_normalize_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif

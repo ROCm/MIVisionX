@@ -48,6 +48,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     void *roi_tensor_ptr, *roi_tensor_ptr_dst;
     int mean_stddev_array_size = 1;
     RppSize_t numDims;
+    int nDim = data->pSrcGenericDesc->numDims - 1;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -58,9 +59,9 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
         if ((numDims == 4) && (!data->pSrcDims)) {
-            hipError_t err = hipHostMalloc(&data->pSrcDims, data->inputTensorDims[0] * 3 * 2, hipHostMallocDefault);
+            hipError_t err = hipHostMalloc(&data->pSrcDims, data->inputTensorDims[0] * nDim * 2, hipHostMallocDefault);
             if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * 3 * 2);
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * nDim * 2);
         }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
@@ -69,12 +70,11 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
         if ((numDims == 3) && (data->inputTensorDims[2] == 1) && (!data->pSrcDims)) {
-                data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
+            data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
         } else if ((numDims == 4) && (!data->pSrcDims)) {
-            data->pSrcDims = new unsigned[data->inputTensorDims[0] * 3 * 2];
+            data->pSrcDims = new unsigned[data->inputTensorDims[0] * nDim * 2];
         }
     }
-    int nDim = data->pSrcGenericDesc->numDims - 1;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * numDims));
 
     // For Identifying if the input Tensor is 1D (excluding the Nth dimension) [ even if 2nd dim is 1 - The tensor is considered 1D ]
@@ -93,7 +93,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
             // rocAL ROI for image formats is stored in XYWH format. Transpose kernel needs ROI for all dims so adding the channel ROI here
-            unsigned index = i * 3 * 2;
+            unsigned index = i * nDim * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
                 data->pSrcDims[index + 0] = src_roi[i].xywhROI.xy.y;
                 data->pSrcDims[index + 1] = src_roi[i].xywhROI.xy.x;
@@ -109,10 +109,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
                 data->pSrcDims[index + 4] = src_roi[i].xywhROI.roiHeight;
                 data->pSrcDims[index + 5] = src_roi[i].xywhROI.roiWidth;
             }
-            dst_roi[i].xywhROI.xy.x = src_roi[i].xywhROI.xy.x;
-            dst_roi[i].xywhROI.xy.y = src_roi[i].xywhROI.xy.y;
-            dst_roi[i].xywhROI.roiWidth = src_roi[i].xywhROI.roiWidth;
-            dst_roi[i].xywhROI.roiHeight = src_roi[i].xywhROI.roiHeight;
+            dst_roi[i].xywhROI = src_roi[i].xywhROI;
         }
         data->pSrcRoi = static_cast<unsigned *>(data->pSrcDims);
     } else {

@@ -105,7 +105,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
                 data->pSrcDims[index + 0] = 0;
                 data->pSrcDims[index + 1] = src_roi[i].xywhROI.xy.y;
                 data->pSrcDims[index + 2] = src_roi[i].xywhROI.xy.x;
-                data->pSrcDims[index + 3] = data->inputTensorDims[3];
+                data->pSrcDims[index + 3] = data->inputTensorDims[1];
                 data->pSrcDims[index + 4] = src_roi[i].xywhROI.roiHeight;
                 data->pSrcDims[index + 5] = src_roi[i].xywhROI.roiWidth;
             }

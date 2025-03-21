@@ -54,7 +54,7 @@ add_executable(${PROJECT_NAME} source/classifier.cpp)
 # Link Libraries & Set CXX Flags
 target_link_libraries(${PROJECT_NAME} openvx vx_nn caffeModels pthread)
 # -mf16c -- Support F16C built-in functions and code generation.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++17")
 
 # OpenCV 3/4 Support
 if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)

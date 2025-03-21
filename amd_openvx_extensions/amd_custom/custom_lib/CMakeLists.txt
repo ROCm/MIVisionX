@@ -19,9 +19,11 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
-project(custom_lib)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+
+project(custom_lib)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
@@ -29,7 +31,7 @@ set(CUSTOM_LIB_SOURCES custom_api.cpp custom_copy_impl.cpp)
 include_directories(${ROCM_PATH}/include)
 link_directories(${HIP_PATH}/lib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
 
 add_library(${PROJECT_NAME} OBJECT ${CUSTOM_LIB_SOURCES})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=${ENABLE_HIP})

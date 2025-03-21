@@ -20,9 +20,10 @@
 
 cmake_minimum_required(VERSION 3.10)
 set(VERSION "1.0.0")
-project(vx_amd_migraphx VERSION ${VERSION} LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
 
-set(CMAKE_CXX_STANDARD 14)
+project(vx_amd_migraphx VERSION ${VERSION} LANGUAGES CXX)
 
 list (APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 
@@ -75,7 +76,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++17")
     endif()
 endif()
 

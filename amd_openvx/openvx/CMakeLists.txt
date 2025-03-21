@@ -20,9 +20,11 @@
 
 cmake_minimum_required(VERSION 3.10)
 set(VERSION "1.3.0")
-project(openvx VERSION ${VERSION} LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+
+project(openvx VERSION ${VERSION} LANGUAGES CXX)
 
 include_directories(include ago api)
 
@@ -159,7 +161,7 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /DVX_API_ENTRY=__declspec(dllexport)")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++17")
     target_link_libraries(openvx dl m)
 endif()
 

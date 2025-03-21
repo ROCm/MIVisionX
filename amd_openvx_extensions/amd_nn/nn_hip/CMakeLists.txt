@@ -26,7 +26,7 @@ set(NN_HIP_SOURCES
     )
 
     set_source_files_properties(${NN_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-    set(HIP_CXX_FLAGS -std=gnu++14)
+    set(HIP_CXX_FLAGS -std=gnu++17)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")
 
     add_library(${PROJECT_NAME} OBJECT ${NN_HIP_SOURCES})

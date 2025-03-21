@@ -20,9 +20,10 @@
 
 cmake_minimum_required(VERSION 3.10)
 set(VERSION "2.0.0")
-project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
 
-set(CMAKE_CXX_STANDARD 14)
+project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
@@ -228,7 +229,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14 -mavx2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++17 -mavx2")
 endif()
 
 target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST})

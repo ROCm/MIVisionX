@@ -49,7 +49,8 @@ if(NOT DEFINED ZENDNN_AOCC_COMP_PATH)
 endif()
 set(CMAKE_C_COMPILER ${ZENDNN_AOCC_COMP_PATH}/bin/clang)
 set(CMAKE_CXX_COMPILER ${ZENDNN_AOCC_COMP_PATH}/bin/clang++)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
 
 project(zendnn_mnist_app)
 
@@ -83,9 +84,9 @@ endif()
 # -fPIC -- Generate position-independent code if possible.
 # -march -- Generate code for given CPU. [znver2 -- Zen Version 2]
 # -Wreturn-type -- Warn whenever a function's return type defaults to "int" (C), or about inconsistent return types (C++).
-# -std=gnu++14 -- Conform to the ISO 2014 C++ standard with GNU extensions.
+# -std=gnu++17 -- Conform to the ISO 2014 C++ standard with GNU extensions.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLIBM_ENABLE=1 -DBIAS_ENABLED=1 -DZENDNN_ENABLE=1 -DZENDNN_X64=1")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC -march=znver2 -Wreturn-type -std=gnu++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC -march=znver2 -Wreturn-type -std=gnu++17")
 
 # INCLUDE FILES
 # ZENDNN_GIT_ROOT includes

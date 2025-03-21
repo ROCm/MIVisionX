@@ -19,9 +19,10 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
-project(runcl)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
 
-set(CMAKE_CXX_STANDARD 14)
+project(runcl)
 
 find_package(OpenCL QUIET)
 
@@ -44,7 +45,7 @@ if(WIN32)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
 	find_package(OpenSSL QUIET)
 	if(OPENSSL_FOUND)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")

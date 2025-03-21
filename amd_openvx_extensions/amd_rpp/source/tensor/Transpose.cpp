@@ -41,8 +41,8 @@ struct TransposeLocalData {
 static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *parameters, vx_uint32 num, TransposeLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr;
-    int nDim = data->pSrcGenericDesc->numDims - 1;
-    
+    int nDim = data->pSrcGenericDesc->numDims - 1;  // nDim corresponds to tensor dimensions without batch dimension
+
     RppSize_t numDims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
@@ -57,7 +57,7 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", nDim * sizeof(unsigned));
         }
-        if (!data->pSrcRoi && (numDims == 4)) {
+        if (!data->pSrcRoi && (numDims == 4)) {  // For NHWC/NCHW layouts, allocate pSrcRoi pinned memory buffer to store ROI for all dims
             hipError_t err = hipHostMalloc(&data->pSrcRoi, data->inputTensorDims[0] * nDim * 2, hipHostMallocDefault);
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * nDim * 2);
@@ -69,33 +69,33 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         if (!data->pPerm) data->pPerm = new unsigned[nDim];
-        if (!data->pSrcRoi && (numDims == 4)) {
+        if (!data->pSrcRoi && (numDims == 4)) {  // For NHWC/NCHW layouts, allocate pSrcRoi host buffer to store ROI for all dims
             data->pSrcRoi = new unsigned[data->inputTensorDims[0] * nDim * 2];
         }
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->pPerm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    }    
-    if (numDims == 4) {
+    }
+    if (numDims == 4) {  // For NHWC/NCHW layouts
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
             // rocAL ROI for image formats is stored in XYWH format. Transpose kernel needs ROI for all dims so adding the channel ROI here
             unsigned index = i * nDim * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
-                data->pSrcRoi[index + 0] = src_roi[i].xywhROI.xy.y;
-                data->pSrcRoi[index + 1] = src_roi[i].xywhROI.xy.x;
-                data->pSrcRoi[index + 2] = 0;
-                data->pSrcRoi[index + 3] = src_roi[i].xywhROI.roiHeight;
-                data->pSrcRoi[index + 4] = src_roi[i].xywhROI.roiWidth;
-                data->pSrcRoi[index + 5] = data->inputTensorDims[3];
+                data->pSrcRoi[index + 0] = src_roi[i].xywhROI.xy.y;       // StartH
+                data->pSrcRoi[index + 1] = src_roi[i].xywhROI.xy.x;       // StartW
+                data->pSrcRoi[index + 2] = 0;                             // StartC
+                data->pSrcRoi[index + 3] = src_roi[i].xywhROI.roiHeight;  // EndH
+                data->pSrcRoi[index + 4] = src_roi[i].xywhROI.roiWidth;   // EndW
+                data->pSrcRoi[index + 5] = data->inputTensorDims[3];      // EndC - assign channel value from input dims
             } else if (data->inputLayout == vxTensorLayout::VX_NCHW) {
-                data->pSrcRoi[index + 0] = 0;
-                data->pSrcRoi[index + 1] = src_roi[i].xywhROI.xy.y;
-                data->pSrcRoi[index + 2] = src_roi[i].xywhROI.xy.x;
-                data->pSrcRoi[index + 3] = data->inputTensorDims[3];
-                data->pSrcRoi[index + 4] = src_roi[i].xywhROI.roiHeight;
-                data->pSrcRoi[index + 5] = src_roi[i].xywhROI.roiWidth;
+                data->pSrcRoi[index + 0] = 0;                             // StartC
+                data->pSrcRoi[index + 1] = src_roi[i].xywhROI.xy.y;       // StartH
+                data->pSrcRoi[index + 2] = src_roi[i].xywhROI.xy.x;       // StartW
+                data->pSrcRoi[index + 3] = data->inputTensorDims[1];      // EndC - assign channel value from input dims
+                data->pSrcRoi[index + 4] = src_roi[i].xywhROI.roiHeight;  // EndH
+                data->pSrcRoi[index + 5] = src_roi[i].xywhROI.roiWidth;   // EndW
             }
         }
-    } else {
+    } else {  // For other layouts which already has generic ROI
         data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
     }
     return status;
@@ -121,14 +121,14 @@ static vx_status VX_CALLBACK validateTranspose(vx_node node, const vx_reference 
     // Check for input parameters
     size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if(num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Transpose: tensor: #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
+    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Transpose: tensor: #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
 
     // Check for output parameters
     vx_uint8 tensor_fixed_point_position;
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_datatype;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if(num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Transpose: tensor: #2 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
+    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Transpose: tensor: #2 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
 
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &tensor_datatype, sizeof(tensor_datatype)));
@@ -201,8 +201,8 @@ static vx_status VX_CALLBACK initializeTranspose(vx_node node, const vx_referenc
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
     data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
     data->pDstGenericDesc->offsetInBytes = 0;
-    fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->outputTensorDims); 
-    
+    fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->outputTensorDims);
+
     refreshTranspose(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -241,8 +241,8 @@ static vx_status VX_CALLBACK uninitializeTranspose(vx_node node, const vx_refere
 //! \brief The kernel target support callback.
 // TODO::currently the node is setting the same affinity as context. This needs to change when we have hubrid modes in the same graph
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
-                                                  vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
-                                                  vx_uint32 &supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+                                                  vx_bool use_opencl_1_2,               // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
+                                                  vx_uint32 &supported_target_affinity  // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
 ) {
     vx_context context = vxGetContext((vx_reference)graph);
     AgoTargetAffinityInfo affinity;
@@ -279,14 +279,14 @@ vx_status Transpose_Register(vx_context context) {
 
     if (kernel) {
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0,  VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1,  VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2,  VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3,  VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4,  VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5,  VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6,  VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7,  VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
     if (status != VX_SUCCESS) {

@@ -48,7 +48,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     void *roi_tensor_ptr, *roi_tensor_ptr_dst;
     int mean_stddev_array_size = 1;
     RppSize_t numDims;
-    int nDim = data->pSrcGenericDesc->numDims - 1;
+    int nDim = data->pSrcGenericDesc->numDims - 1;  // nDim corresponds to tensor dimensions without batch dimension
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -58,7 +58,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
-        if ((numDims == 4) && (!data->pSrcDims)) {
+        if ((numDims == 4) && (!data->pSrcDims)) {  // For NHWC/NCHW layouts, allocate pSrcDims pinned memory buffer to store ROI for all dims
             hipError_t err = hipHostMalloc(&data->pSrcDims, data->inputTensorDims[0] * nDim * 2, hipHostMallocDefault);
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * nDim * 2);
@@ -69,16 +69,16 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
-        if ((numDims == 3) && (data->inputTensorDims[2] == 1) && (!data->pSrcDims)) {
+        if ((numDims == 3) && (data->inputTensorDims[2] == 1) && (!data->pSrcDims)) {  // For NHW/NTF/NFT layouts
             data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
-        } else if ((numDims == 4) && (!data->pSrcDims)) {
+        } else if ((numDims == 4) && (!data->pSrcDims)) {  // For NHWC/NCHW layouts, allocate pSrcDims host buffer to store ROI for all dims
             data->pSrcDims = new unsigned[data->inputTensorDims[0] * nDim * 2];
         }
     }
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * numDims));
 
     // For Identifying if the input Tensor is 1D (excluding the Nth dimension) [ even if 2nd dim is 1 - The tensor is considered 1D ]
-    if ((numDims == 3) && (data->inputTensorDims[2] == 1)) {
+    if ((numDims == 3) && (data->inputTensorDims[2] == 1)) {  // For NHW/NFT/NTF layouts
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
         for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 2) {
@@ -88,31 +88,31 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
             dst_roi[i].xywhROI.roiHeight = src_roi[i].xywhROI.roiHeight;
         }
         data->pSrcRoi = static_cast<unsigned *>(data->pSrcDims);
-    } else if (numDims == 4) {
+    } else if (numDims == 4) {  // For NHWC/NCHW layouts
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
             // rocAL ROI for image formats is stored in XYWH format. Transpose kernel needs ROI for all dims so adding the channel ROI here
             unsigned index = i * nDim * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
-                data->pSrcDims[index + 0] = src_roi[i].xywhROI.xy.y;
-                data->pSrcDims[index + 1] = src_roi[i].xywhROI.xy.x;
-                data->pSrcDims[index + 2] = 0;
-                data->pSrcDims[index + 3] = src_roi[i].xywhROI.roiHeight;
-                data->pSrcDims[index + 4] = src_roi[i].xywhROI.roiWidth;
-                data->pSrcDims[index + 5] = data->inputTensorDims[3];
+                data->pSrcDims[index + 0] = src_roi[i].xywhROI.xy.y;       // StartH
+                data->pSrcDims[index + 1] = src_roi[i].xywhROI.xy.x;       // StartW
+                data->pSrcDims[index + 2] = 0;                             // StartC
+                data->pSrcDims[index + 3] = src_roi[i].xywhROI.roiHeight;  // EndH
+                data->pSrcDims[index + 4] = src_roi[i].xywhROI.roiWidth;   // EndW
+                data->pSrcDims[index + 5] = data->inputTensorDims[3];      // EndC - assign channel value from input dims
             } else if (data->inputLayout == vxTensorLayout::VX_NCHW) {
-                data->pSrcDims[index + 0] = 0;
-                data->pSrcDims[index + 1] = src_roi[i].xywhROI.xy.y;
-                data->pSrcDims[index + 2] = src_roi[i].xywhROI.xy.x;
-                data->pSrcDims[index + 3] = data->inputTensorDims[1];
-                data->pSrcDims[index + 4] = src_roi[i].xywhROI.roiHeight;
-                data->pSrcDims[index + 5] = src_roi[i].xywhROI.roiWidth;
+                data->pSrcDims[index + 0] = 0;                             // StartC
+                data->pSrcDims[index + 1] = src_roi[i].xywhROI.xy.y;       // StartH
+                data->pSrcDims[index + 2] = src_roi[i].xywhROI.xy.x;       // StartW
+                data->pSrcDims[index + 3] = data->inputTensorDims[1];      // EndC - assign channel value from input dims
+                data->pSrcDims[index + 4] = src_roi[i].xywhROI.roiHeight;  // EndH
+                data->pSrcDims[index + 5] = src_roi[i].xywhROI.roiWidth;   // EndW
             }
             dst_roi[i].xywhROI = src_roi[i].xywhROI;
         }
         data->pSrcRoi = static_cast<unsigned *>(data->pSrcDims);
-    } else {
+    } else {  // For other layouts which already has generic ROI
         data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
         Rpp32u *dst_roi = static_cast<unsigned *>(roi_tensor_ptr_dst);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
@@ -123,6 +123,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         }
     }
     Rpp32u axis[nDim];
+    // Calculate mean_stddev_array_size to calculate the size of mean and stddev buffer passed from user
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         unsigned index = i * nDim * 2;
         int totalElements = 1;

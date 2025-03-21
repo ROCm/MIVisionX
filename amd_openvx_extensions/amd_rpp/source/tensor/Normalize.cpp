@@ -48,7 +48,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     void *roi_tensor_ptr, *roi_tensor_ptr_dst;
     int mean_stddev_array_size = 1;
     RppSize_t numDims;
-    int nDim = data->pSrcGenericDesc->numDims - 1;  // nDim corresponds to tensor dimensions without batch dimension
+    int roiDims = data->pSrcGenericDesc->numDims - 1;  // roiDims corresponds to tensor dimensions without batch dimension
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -59,9 +59,9 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
         if ((numDims == 4) && (!data->pSrcDims)) {  // For NHWC/NCHW layouts, allocate pSrcDims pinned memory buffer to store ROI for all dims
-            hipError_t err = hipHostMalloc(&data->pSrcDims, data->inputTensorDims[0] * nDim * 2, hipHostMallocDefault);
+            hipError_t err = hipHostMalloc(&data->pSrcDims, data->inputTensorDims[0] * roiDims * 2, hipHostMallocDefault);
             if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * nDim * 2);
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * roiDims * 2);
         }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
@@ -72,7 +72,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         if ((numDims == 3) && (data->inputTensorDims[2] == 1) && (!data->pSrcDims)) {  // For NHW/NTF/NFT layouts
             data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
         } else if ((numDims == 4) && (!data->pSrcDims)) {  // For NHWC/NCHW layouts, allocate pSrcDims host buffer to store ROI for all dims
-            data->pSrcDims = new unsigned[data->inputTensorDims[0] * nDim * 2];
+            data->pSrcDims = new unsigned[data->inputTensorDims[0] * roiDims * 2];
         }
     }
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * numDims));
@@ -93,7 +93,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
             // rocAL ROI for image formats is stored in XYWH format. Transpose kernel needs ROI for all dims so adding the channel ROI here
-            unsigned index = i * nDim * 2;
+            unsigned index = i * roiDims * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
                 data->pSrcDims[index + 0] = src_roi[i].xywhROI.xy.y;       // StartH
                 data->pSrcDims[index + 1] = src_roi[i].xywhROI.xy.x;       // StartW
@@ -116,20 +116,20 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
         Rpp32u *dst_roi = static_cast<unsigned *>(roi_tensor_ptr_dst);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-            unsigned index = i * nDim * 2;
-            for (Rpp32u j = 0; j < nDim; j++) {
-                dst_roi[index + j + nDim] = data->pSrcRoi[index + j + nDim];
+            unsigned index = i * roiDims * 2;
+            for (Rpp32u j = 0; j < roiDims; j++) {
+                dst_roi[index + j + roiDims] = data->pSrcRoi[index + j + roiDims];
             }
         }
     }
-    Rpp32u axis[nDim];
+    Rpp32u axis[roiDims];
     // Calculate mean_stddev_array_size to calculate the size of mean and stddev buffer passed from user
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        unsigned index = i * nDim * 2;
+        unsigned index = i * roiDims * 2;
         int totalElements = 1;
-        for (Rpp32u j = 0; j < nDim; j++) {
+        for (Rpp32u j = 0; j < roiDims; j++) {
             axis[j] = ((data->axis_mask & (int)(pow(2, j))) >= 1) ? 1 : 0;
-            totalElements *= !axis[j] ? data->pSrcRoi[index + j + nDim] : 1;
+            totalElements *= !axis[j] ? data->pSrcRoi[index + j + roiDims] : 1;
         }
         mean_stddev_array_size = std::max(mean_stddev_array_size, totalElements);
     }

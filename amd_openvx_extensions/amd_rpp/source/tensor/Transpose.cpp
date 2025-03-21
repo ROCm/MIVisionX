@@ -41,7 +41,7 @@ struct TransposeLocalData {
 static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *parameters, vx_uint32 num, TransposeLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr;
-    int nDim = data->pSrcGenericDesc->numDims - 1;  // nDim corresponds to tensor dimensions without batch dimension
+    int roiDims = data->pSrcGenericDesc->numDims - 1;  // roiDims corresponds to tensor dimensions without batch dimension
 
     RppSize_t numDims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
@@ -53,32 +53,32 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         if (!data->pPerm) {
-            hipError_t err = hipHostMalloc(&data->pPerm, nDim * sizeof(unsigned), hipHostMallocDefault);
+            hipError_t err = hipHostMalloc(&data->pPerm, roiDims * sizeof(unsigned), hipHostMallocDefault);
             if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", nDim * sizeof(unsigned));
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", roiDims * sizeof(unsigned));
         }
         if (!data->pSrcRoi && (numDims == 4)) {  // For NHWC/NCHW layouts, allocate pSrcRoi pinned memory buffer to store ROI for all dims
-            hipError_t err = hipHostMalloc(&data->pSrcRoi, data->inputTensorDims[0] * nDim * 2, hipHostMallocDefault);
+            hipError_t err = hipHostMalloc(&data->pSrcRoi, data->inputTensorDims[0] * roiDims * 2, hipHostMallocDefault);
             if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * nDim * 2);
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * roiDims * 2);
         }
-        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->pPerm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, roiDims, sizeof(unsigned), data->pPerm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        if (!data->pPerm) data->pPerm = new unsigned[nDim];
+        if (!data->pPerm) data->pPerm = new unsigned[roiDims];
         if (!data->pSrcRoi && (numDims == 4)) {  // For NHWC/NCHW layouts, allocate pSrcRoi host buffer to store ROI for all dims
-            data->pSrcRoi = new unsigned[data->inputTensorDims[0] * nDim * 2];
+            data->pSrcRoi = new unsigned[data->inputTensorDims[0] * roiDims * 2];
         }
-        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, nDim, sizeof(unsigned), data->pPerm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, roiDims, sizeof(unsigned), data->pPerm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
     if (numDims == 4) {  // For NHWC/NCHW layouts
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
             // rocAL ROI for image formats is stored in XYWH format. Transpose kernel needs ROI for all dims so adding the channel ROI here
-            unsigned index = i * nDim * 2;
+            unsigned index = i * roiDims * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
                 data->pSrcRoi[index + 0] = src_roi[i].xywhROI.xy.y;       // StartH
                 data->pSrcRoi[index + 1] = src_roi[i].xywhROI.xy.x;       // StartW

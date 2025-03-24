@@ -57,7 +57,7 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", roiDims * sizeof(unsigned));
         }
-        if (!data->pSrcRoi && (numDims == 4)) {  // For NHWC/NCHW layouts, allocate pSrcRoi pinned memory buffer to store ROI for all dims
+        if (!data->pSrcRoi && (numDims == 4)) {  // For NHWC/NCHW layouts, allocate pSrcRoi pinned memory buffer to store ROI for HWC/CHW dims
             hipError_t err = hipHostMalloc(&data->pSrcRoi, data->inputTensorDims[0] * roiDims * 2, hipHostMallocDefault);
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * roiDims * 2);
@@ -69,14 +69,14 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         if (!data->pPerm) data->pPerm = new unsigned[roiDims];
-        if (!data->pSrcRoi && (numDims == 4)) {  // For NHWC/NCHW layouts, allocate pSrcRoi host buffer to store ROI for all dims
+        if (!data->pSrcRoi && (numDims == 4)) {  // For NHWC/NCHW layouts, allocate pSrcRoi host buffer to store ROI for HWC/CHW dims
             data->pSrcRoi = new unsigned[data->inputTensorDims[0] * roiDims * 2];
         }
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, roiDims, sizeof(unsigned), data->pPerm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
     if (numDims == 4) {  // For NHWC/NCHW layouts
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
-        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {  // data->inputTensorDims[0] corresponds to batch size
             // rocAL ROI for image formats is stored in XYWH format. Transpose kernel needs ROI for all dims so adding the channel ROI here
             unsigned index = i * roiDims * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {

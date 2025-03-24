@@ -48,8 +48,8 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     void *roi_tensor_ptr, *roi_tensor_ptr_dst;
     int mean_stddev_array_size = 1;
     RppSize_t numDims;
-    int roiDims = data->pSrcGenericDesc->numDims - 1;  // roiDims corresponds to tensor dimensions without batch dimension
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
+    int roiDims = ((numDims == 3) && (data->inputTensorDims[2] == 1)) ? 1 : data->pSrcGenericDesc->numDims - 1;  // roiDims - For how many dims the ROI (start, end) values are needed
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return VX_ERROR_NOT_IMPLEMENTED;
@@ -58,7 +58,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
-        if ((numDims == 4) && (!data->pSrcDims)) {  // For NHWC/NCHW layouts, allocate pSrcDims pinned memory buffer to store ROI for all dims
+        if (!data->pSrcDims) {
             hipError_t err = hipHostMalloc(&data->pSrcDims, data->inputTensorDims[0] * roiDims * 2, hipHostMallocDefault);
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * roiDims * 2);
@@ -69,9 +69,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
-        if ((numDims == 3) && (data->inputTensorDims[2] == 1) && (!data->pSrcDims)) {  // For NHW/NTF/NFT layouts
-            data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
-        } else if ((numDims == 4) && (!data->pSrcDims)) {  // For NHWC/NCHW layouts, allocate pSrcDims host buffer to store ROI for all dims
+        if (!data->pSrcDims) {
             data->pSrcDims = new unsigned[data->inputTensorDims[0] * roiDims * 2];
         }
     }
@@ -91,7 +89,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     } else if (numDims == 4) {  // For NHWC/NCHW layouts
         RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         RpptROI *dst_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
-        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {  // data->inputTensorDims[0] corresponds to batch size
             // rocAL ROI for image formats is stored in XYWH format. Transpose kernel needs ROI for all dims so adding the channel ROI here
             unsigned index = i * roiDims * 2;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
@@ -115,7 +113,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     } else {  // For other layouts which already has generic ROI
         data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
         Rpp32u *dst_roi = static_cast<unsigned *>(roi_tensor_ptr_dst);
-        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
+        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {  // data->inputTensorDims[0] corresponds to batch size
             unsigned index = i * roiDims * 2;
             for (Rpp32u j = 0; j < roiDims; j++) {
                 dst_roi[index + j + roiDims] = data->pSrcRoi[index + j + roiDims];

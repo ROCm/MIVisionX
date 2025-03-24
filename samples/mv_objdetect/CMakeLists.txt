@@ -25,8 +25,12 @@
 ################################################################################
 
 cmake_minimum_required(VERSION 3.10)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+
 project (mvobjdetect)
-set (CMAKE_CXX_STANDARD 14)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenCV QUIET)
@@ -82,6 +86,6 @@ if (USE_POSTPROC)
   add_subdirectory (mv_extras)
   set(EXTRA_LIBS ${EXTRA_LIBS} mv_extras)
 endif (USE_POSTPROC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17 -msse4.2 -mf16c")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c")
 target_compile_definitions (mvobjdetect PRIVATE ENABLE_MVDEPLOY=1)
 target_link_libraries(mvobjdetect openvx vx_nn vx_amd_media pthread mv_deploy ${EXTRA_LIBS} ${CMAKE_DL_LIBS})

@@ -19,8 +19,10 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 project(inference_server_app)
 
@@ -69,7 +71,7 @@ add_executable(${PROJECT_NAME} ${My_Source_Files})
 # Link Libraries & Set CXX Flags
 target_link_libraries(${PROJECT_NAME} vx_nn openvx pthread dl)
 # -mf16c -- Support F16C built-in functions and code generation.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c")
 
 # Link OpenCL/HIP
 set(ENABLE_OPENCL 0)

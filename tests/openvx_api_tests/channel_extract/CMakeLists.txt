@@ -25,9 +25,13 @@
 ################################################################################
 
 cmake_minimum_required(VERSION 3.10)
-project (openvx_channel_extract)
 
-set (CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+
+project(openvx_channel_extract)
+
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 
 include_directories (${ROCM_PATH}/include/mivisionx)

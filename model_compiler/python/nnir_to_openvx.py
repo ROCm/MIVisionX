@@ -112,7 +112,7 @@ def generateCMakeFiles(graph,outputFolder):
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
-
+set(CMAKE_CXX_EXTENSIONS ON)
 project (annmodule)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
@@ -152,7 +152,7 @@ link_directories(${ROCM_PATH}/lib)
 
 list(APPEND SOURCES annmodule.cpp)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c")
 
 if (OPENVX_BACKEND_OPENCL_FOUND)
     target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})
@@ -186,7 +186,7 @@ else()
 endif()
 
 add_library(annpython SHARED annpython.cpp)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c")
 
 if (OPENVX_BACKEND_OPENCL_FOUND)
     target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread ${OpenCL_LIBRARIES})

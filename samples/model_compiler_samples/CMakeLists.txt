@@ -24,8 +24,10 @@
 #
 ################################################################################
 cmake_minimum_required(VERSION 3.10)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 project(classification)
 
@@ -83,4 +85,3 @@ else()
 endif()
 
 target_link_libraries(classifier openvx vx_nn neuralNetModels pthread)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")

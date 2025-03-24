@@ -25,8 +25,10 @@
 ################################################################################
 
 cmake_minimum_required(VERSION 3.10)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 project(migraphx_node_test)
 set(ROCM_PATH /opt/rocm CACHE PATH "default ROCm installation path")

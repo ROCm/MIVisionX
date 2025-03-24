@@ -19,17 +19,20 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+
 project(nn_hip CXX)
 
 set(NN_HIP_SOURCES
     nn_hip_kernels.cpp
     )
 
-    set_source_files_properties(${NN_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-    set(HIP_CXX_FLAGS -std=gnu++17)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HIP_CXX_FLAGS}")
+set_source_files_properties(${NN_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
 
-    add_library(${PROJECT_NAME} OBJECT ${NN_HIP_SOURCES})
-    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
-    target_link_libraries(${PROJECT_NAME} hip::device)
+add_library(${PROJECT_NAME} OBJECT ${NN_HIP_SOURCES})
+set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
+target_link_libraries(${PROJECT_NAME} hip::device)

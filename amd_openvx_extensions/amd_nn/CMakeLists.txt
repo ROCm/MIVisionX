@@ -19,9 +19,11 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
+
 set(VERSION "1.3.1")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 project(amd_nn VERSION ${VERSION} LANGUAGES CXX)
 
@@ -141,7 +143,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++17")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
 endif()
 
 message("-- ${White}amd_nn -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

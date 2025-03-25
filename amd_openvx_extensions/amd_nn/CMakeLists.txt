@@ -20,10 +20,15 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-set(VERSION "1.3.1")
+# Set AMD Clang as default compiler
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_EXTENSIONS ON)
+if (NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
+endif()
+set(VERSION "1.3.1")
 
 project(amd_nn VERSION ${VERSION} LANGUAGES CXX)
 

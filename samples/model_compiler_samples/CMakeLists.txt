@@ -25,31 +25,39 @@
 ################################################################################
 cmake_minimum_required(VERSION 3.10)
 
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
+endif()
+
 project(classification)
 
-set(CMAKE_CXX_STANDARD 14)
 set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(OpenCV REQUIRED)
 
- #find the OPENVX backend type - TBD: ADD FindMIVisionX.cmake
- set(OPENVX_BACKEND_OPENCL_FOUND 0)
- set(OPENVX_BACKEND_HIP_FOUND 0)
- if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)
-     file(READ ${ROCM_PATH}/include/mivisionx/openvx_backend.h OPENVX_BACKEND_FILE)
-     string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-     set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
-     string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
-     set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
- else()
-     message("-- WARNING: ${ROCM_PATH}/include/mivisionx/openvx_backend.h file Not Found. please install the latest mivisionx!")
- endif()
+#find the OPENVX backend type - TBD: ADD FindMIVisionX.cmake
+set(OPENVX_BACKEND_OPENCL_FOUND 0)
+set(OPENVX_BACKEND_HIP_FOUND 0)
+if(EXISTS ${ROCM_PATH}/include/mivisionx/openvx_backend.h)
+    file(READ ${ROCM_PATH}/include/mivisionx/openvx_backend.h OPENVX_BACKEND_FILE)
+    string(REGEX MATCH "ENABLE_OPENCL ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+    set(OPENVX_BACKEND_OPENCL_FOUND ${CMAKE_MATCH_1})
+    string(REGEX MATCH "ENABLE_HIP ([0-9]*)" _ ${OPENVX_BACKEND_FILE})
+    set(OPENVX_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
+else()
+    message("-- WARNING: ${ROCM_PATH}/include/mivisionx/openvx_backend.h file Not Found. please install the latest mivisionx!")
+endif()
 
- if (OPENVX_BACKEND_OPENCL_FOUND)
-     find_package(OpenCL REQUIRED)
-     include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
- endif()
+if (OPENVX_BACKEND_OPENCL_FOUND)
+    find_package(OpenCL REQUIRED)
+    include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
+endif()
 
 include_directories(${ROCM_PATH}/include/mivisionx)
 include_directories(include)
@@ -82,4 +90,3 @@ else()
 endif()
 
 target_link_libraries(classifier openvx vx_nn neuralNetModels pthread)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")

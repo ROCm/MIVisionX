@@ -125,14 +125,29 @@ def generateCMakeFiles(graph, outputFolder):
         f.write(
             """
 cmake_minimum_required(VERSION 3.10)
-project (mvdeploy)
 
-set (CMAKE_CXX_STANDARD 14)
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+    message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+    set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
+endif()
+
+project (mvdeploy)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 # avoid setting the default installation path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "mivisionx default installation path" FORCE)
@@ -166,7 +181,7 @@ include_directories (${PROJECT_SOURCE_DIR}/lib)
 link_directories    (${ROCM_PATH}/lib)
 list(APPEND SOURCES mvmodule.cpp)
 add_library(mv_deploy SHARED ${SOURCES})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
 target_compile_definitions(mv_deploy PRIVATE ENABLE_MVDEPLOY=1)
 target_link_libraries(mv_deploy openvx vx_nn pthread ${CMAKE_DL_LIBS})
 install(TARGETS mv_deploy DESTINATION lib)
@@ -274,8 +289,13 @@ def generateCMakeExtras(graph, outputFolder):
         f.write(
             """
 cmake_minimum_required(VERSION 3.10)
-project (mv_extras)
-set (CMAKE_CXX_STANDARD 14)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+
+project(mv_extras)
+
 list(APPEND CMAKE_MODULE_PATH ../cmake)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "ROCm Installation Path")
@@ -301,7 +321,7 @@ find_package(OpenCV QUIET)
 include_directories (${ROCM_PATH}/include ${ROCM_PATH}/include/mivisionx)
 link_directories    (${ROCM_PATH}/lib)
 add_library(${PROJECT_NAME} SHARED mv_extras_postproc.cpp)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
 
 if(OpenCV_FOUND)
     if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)

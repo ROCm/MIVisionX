@@ -102,7 +102,7 @@ else()
     set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 endif()
 # Set AMD Clang as default compiler
-if (NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
     set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
 endif()
 
@@ -115,9 +115,11 @@ if(NOT DEFINED ZENDNN_AOCC_COMP_PATH)
         set(ZENDNN_AOCC_COMP_PATH $ENV{ZENDNN_AOCC_COMP_PATH} CACHE PATH "Path to which ZENDNN_AOCC_COMP_PATH has been installed")
     endif()
 endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_C_COMPILER ${ZENDNN_AOCC_COMP_PATH}/bin/clang)
 set(CMAKE_CXX_COMPILER ${ZENDNN_AOCC_COMP_PATH}/bin/clang++)
-set(CMAKE_CXX_STANDARD 14)
 
 project(zendnn_app)
 
@@ -151,9 +153,8 @@ endif()
 # -fPIC -- Generate position-independent code if possible.
 # -march -- Generate code for given CPU. [znver2 -- Zen Version 2]
 # -Wreturn-type -- Warn whenever a function's return type defaults to "int" (C), or about inconsistent return types (C++).
-# -std=gnu++14 -- Conform to the ISO 2014 C++ standard with GNU extensions.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLIBM_ENABLE=1 -DBIAS_ENABLED=1 -DZENDNN_ENABLE=1 -DZENDNN_X64=1")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC -march=znver2 -Wreturn-type -std=gnu++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC -march=znver2 -Wreturn-type")
 
 # INCLUDE FILES
 # ZENDNN_GIT_ROOT includes

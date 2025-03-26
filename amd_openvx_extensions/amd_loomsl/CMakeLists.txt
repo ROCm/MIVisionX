@@ -19,17 +19,26 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
-set(VERSION "1.0.0")
-project(amd_loomsl VERSION ${VERSION} LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
+endif()
+
+set(VERSION "1.0.0")
+
+project(amd_loomsl VERSION ${VERSION} LANGUAGES CXX)
 
 find_package(OpenCL REQUIRED)
 
 include_directories(${OpenCL_INCLUDE_DIRS} 
-		    ${OpenCL_INCLUDE_DIRS}/Headers 
-		    ../../amd_openvx/openvx/include
-		   )
+		${OpenCL_INCLUDE_DIRS}/Headers 
+		../../amd_openvx/openvx/include
+)
 
 list(APPEND SOURCES
 	kernels/alpha_blend.cpp
@@ -69,7 +78,7 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
 endif()
 
 message("-- ${White}amd_loom -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

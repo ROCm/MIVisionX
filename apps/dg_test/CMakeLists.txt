@@ -19,9 +19,17 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
-project(DGTest)
 
-set(CMAKE_CXX_STANDARD 14)
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
+endif()
+
+project(DGTest)
 
 # ROCm Path
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")

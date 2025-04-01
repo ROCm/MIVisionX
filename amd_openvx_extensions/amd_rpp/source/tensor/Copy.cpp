@@ -106,15 +106,10 @@ static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *pa
     for (unsigned i = 0; i < num_of_dims; i++)
         data->tensorSize *= tensor_dims[i];
 
-    if (input_tensor_dtype == vx_type_e::VX_TYPE_FLOAT32 && output_tensor_dtype == vx_type_e::VX_TYPE_FLOAT32) {
-        data->tensorSize *= sizeof(vx_float32);
-    } else if (input_tensor_dtype == vx_type_e::VX_TYPE_FLOAT16 && output_tensor_dtype == vx_type_e::VX_TYPE_FLOAT16) {
-#if defined(AMD_FP16_SUPPORT)
-        data->tensorSize *= sizeof(vx_float16);
-#else
-        data->tensorSize *= sizeof(vx_uint16);
-#endif
-    }
+    if (input_tensor_dtype == output_tensor_dtype)
+        data->tensorSize *= getDataTypeSize(input_tensor_dtype);
+    else
+        return VX_ERROR_NOT_SUPPORTED;
     refreshCopy(node, parameters, num, data);
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;

@@ -71,7 +71,9 @@ endif()
 
 list(APPEND SOURCES source/custom_kernels.cpp source/custom_layer.cpp)
 include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include ./custom_lib)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
+
+# -fPIC -- Generate position-independent code if possible
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -msse4.2")
 
 if(HIP_FOUND AND OpenMP_FOUND)
     message("-- ${Green}${PROJECT_NAME} -- Building HIP backend${ColourReset}")

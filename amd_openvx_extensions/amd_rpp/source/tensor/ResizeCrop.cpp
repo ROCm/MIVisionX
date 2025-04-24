@@ -141,7 +141,7 @@ static vx_status VX_CALLBACK processResizeCrop(vx_node node, const vx_reference 
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
     vx_int32 output_format_toggle = 0;
-
+#if RPP_LEGACY_SUPPORT
     ResizeCropLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshResizeCrop(node, parameters, num, data);
@@ -164,6 +164,7 @@ static vx_status VX_CALLBACK processResizeCrop(vx_node node, const vx_reference 
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
+#endif
     return return_status;
 }
 

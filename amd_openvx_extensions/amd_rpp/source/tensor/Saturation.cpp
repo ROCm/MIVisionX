@@ -118,6 +118,7 @@ static vx_status VX_CALLBACK validateSaturation(vx_node node, const vx_reference
 static vx_status VX_CALLBACK processSaturation(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
+#if RPP_LEGACY_SUPPORT
     SaturationLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshSaturation(node, parameters, num, data);
@@ -135,6 +136,7 @@ static vx_status VX_CALLBACK processSaturation(vx_node node, const vx_reference 
         rpp_status = rppi_saturationRGB_u8_pkd3_batchPD_host(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pSaturationFactor, data->inputTensorDims[0], data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
+#endif
     return return_status;
 }
 

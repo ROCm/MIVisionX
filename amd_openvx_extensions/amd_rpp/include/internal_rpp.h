@@ -30,7 +30,9 @@ THE SOFTWARE.
 
 #include "rpp.h"
 #include "rppdefs.h"
+#if RPP_LEGACY_SUPPORT
 #include "rppi.h"
+#endif
 
 #if ENABLE_OPENCL
 #include <CL/cl.h>

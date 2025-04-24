@@ -34,6 +34,7 @@ vx_uint32 getGraphAffinity(vx_graph graph)
     return affinity.device_type;
 }
 
+#if RPP_LEGACY_SUPPORT
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPD(vx_graph graph, vx_image pSrc, vx_array srcImgWidth, vx_array srcImgHeight, vx_image pDst, vx_array alpha, vx_array beta, vx_uint32 nbatchSize)
 {
     vx_node node = NULL;
@@ -1875,6 +1876,7 @@ VX_API_CALL vx_node VX_API_CALL vxExtrppNode_SequenceRearrangebatchPD(vx_graph g
     }
     return node;
 }
+#endif
 
 //tensor
 

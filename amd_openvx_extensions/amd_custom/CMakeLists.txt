@@ -73,6 +73,7 @@ list(APPEND SOURCES source/custom_kernels.cpp source/custom_layer.cpp)
 include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include ./custom_lib)
 
 # -fPIC -- Generate position-independent code if possible
+# -msse4.2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 built-in functions and code generation.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -msse4.2")
 
 if(HIP_FOUND AND OpenMP_FOUND)

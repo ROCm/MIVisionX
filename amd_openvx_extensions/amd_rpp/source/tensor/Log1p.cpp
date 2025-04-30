@@ -47,7 +47,7 @@ static vx_status VX_CALLBACK refreshLog1p(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         if (!data->pSrcRoi) {
-            hipHostMalloc(&data->pSrcRoi, sizeof(data->inputTensorDims[0] * nDim * 2 * sizeof(Rpp32u)));
+            hipHostMalloc(&data->pSrcRoi, data->inputTensorDims[0] * nDim * 2 * sizeof(Rpp32u));
         }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {

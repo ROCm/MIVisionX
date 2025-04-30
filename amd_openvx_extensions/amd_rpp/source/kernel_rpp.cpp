@@ -2795,7 +2795,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppTranspose(vx_graph graph, vx_tensor pSr
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorLog1p(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar inputLayout) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppLog1p(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar inputLayout) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2807,7 +2807,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorLog1p(vx_graph graph, vx_tensor p
             (vx_reference)pDst,
             (vx_reference)inputLayout,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_TENSORLOG1P, params, 5);
+        node = createNode(graph, VX_KERNEL_RPP_LOG1P, params, 5);
     }
     return node;
 }

@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-struct TensorLog1pLocalData {
+struct Log1pLocalData {
     vxRppHandle *handle;
     Rpp32u deviceType;
     RppPtr_t pSrc;
@@ -35,7 +35,7 @@ struct TensorLog1pLocalData {
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-static vx_status VX_CALLBACK refreshTensorLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num, TensorLog1pLocalData *data) {
+static vx_status VX_CALLBACK refreshLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num, Log1pLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr;
     auto nDim = data->pSrcGenericDesc->numDims - 1;
@@ -71,7 +71,7 @@ static vx_status VX_CALLBACK refreshTensorLog1p(vx_node node, const vx_reference
     return status;
 }
 
-static vx_status VX_CALLBACK validateTensorLog1p(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
+static vx_status VX_CALLBACK validateLog1p(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
 
@@ -85,14 +85,14 @@ static vx_status VX_CALLBACK validateTensorLog1p(vx_node node, const vx_referenc
     // Check for input parameters
     size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: TensorLog1p: tensor: #0 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Log1p: tensor: #0 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
 
     // Check for output parameters
     vx_uint8 tensor_fixed_point_position;
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_datatype;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: TensorLog1p: tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Log1p: tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
 
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &tensor_datatype, sizeof(tensor_datatype)));
@@ -104,12 +104,12 @@ static vx_status VX_CALLBACK validateTensorLog1p(vx_node node, const vx_referenc
     return status;
 }
 
-static vx_status VX_CALLBACK processTensorLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num) {
+static vx_status VX_CALLBACK processLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
-    TensorLog1pLocalData *data = NULL;
+    Log1pLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshTensorLog1p(node, parameters, num, data);
+    refreshLog1p(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
@@ -125,10 +125,10 @@ static vx_status VX_CALLBACK processTensorLog1p(vx_node node, const vx_reference
     return return_status;
 }
 
-static vx_status VX_CALLBACK initializeTensorLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    TensorLog1pLocalData *data = new TensorLog1pLocalData;
+static vx_status VX_CALLBACK initializeLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num) {
+    Log1pLocalData *data = new Log1pLocalData;
     if (data) {
-        memset(data, 0, sizeof(TensorLog1pLocalData));
+        memset(data, 0, sizeof(Log1pLocalData));
 
         vx_enum input_tensor_dtype, output_tensor_dtype;
         vx_int32 input_layout;
@@ -161,7 +161,7 @@ static vx_status VX_CALLBACK initializeTensorLog1p(vx_node node, const vx_refere
         data->pDstGenericDesc->offsetInBytes = 0;
         fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->inputLayout, data->outputTensorDims);
 
-        refreshTensorLog1p(node, parameters, num, data);
+        refreshLog1p(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
         return VX_SUCCESS;
@@ -170,8 +170,8 @@ static vx_status VX_CALLBACK initializeTensorLog1p(vx_node node, const vx_refere
     }
 }
 
-static vx_status VX_CALLBACK uninitializeTensorLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    TensorLog1pLocalData *data;
+static vx_status VX_CALLBACK uninitializeLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num) {
+    Log1pLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
@@ -217,16 +217,16 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
-vx_status TensorLog1p_Register(vx_context context) {
+vx_status Log1p_Register(vx_context context) {
     vx_status status = VX_SUCCESS;
     // Add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.TensorLog1p",
-                                       VX_KERNEL_RPP_TENSORLOG1P,
-                                       processTensorLog1p,
+    vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Log1p",
+                                       VX_KERNEL_RPP_LOG1P,
+                                       processLog1p,
                                        5,
-                                       validateTensorLog1p,
-                                       initializeTensorLog1p,
-                                       uninitializeTensorLog1p);
+                                       validateLog1p,
+                                       initializeLog1p,
+                                       uninitializeLog1p);
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));

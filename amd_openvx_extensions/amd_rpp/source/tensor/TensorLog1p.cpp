@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,6 @@ struct TensorLog1pLocalData {
     RpptGenericDescPtr pSrcGenericDesc;
     RpptGenericDescPtr pDstGenericDesc;
     Rpp32u *pSrcRoi;
-    Rpp32u *pSrcDims;
     vxTensorLayout inputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
@@ -38,7 +37,8 @@ struct TensorLog1pLocalData {
 
 static vx_status VX_CALLBACK refreshTensorLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num, TensorLog1pLocalData *data) {
     vx_status status = VX_SUCCESS;
-    void *roi_tensor_ptr, *roi_tensor_ptr_dst;
+    void *roi_tensor_ptr;
+    auto nDim = data->pSrcGenericDesc->numDims - 1;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return VX_ERROR_NOT_IMPLEMENTED;
@@ -46,39 +46,27 @@ static vx_status VX_CALLBACK refreshTensorLog1p(vx_node node, const vx_reference
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
+        if (!data->pSrcRoi) {
+            hipHostMalloc(&data->pSrcRoi, sizeof(data->inputTensorDims[0] * nDim * 2 * sizeof(Rpp32u)));
+        }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
-    RppSize_t numDims;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * numDims));
 
-    // For Identifying if the input Tensor is 1D (excluding the Nth dimension) [ even if 2nd dim is 1 - The tensor is considered 1D ]
-    if ((numDims == 3) && (data->inputTensorDims[2] == 1)) {
-        RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
-        for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 2) {
-            data->pSrcDims[j] = src_roi[i].xywhROI.xy.x;
-            data->pSrcDims[j + 1] = src_roi[i].xywhROI.roiWidth;
-        }
-        data->pSrcRoi = static_cast<unsigned *>(data->pSrcDims);
-    } else {
-        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-            auto nDim = numDims - 1;
-            hipHostMalloc(&data->pSrcRoi, sizeof(data->inputTensorDims[0] * nDim * 2 * sizeof(Rpp32u)));
-            unsigned *src_roi = reinterpret_cast<unsigned *>(roi_tensor_ptr);
-            for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 8) {
-                for (unsigned j = 0; j < nDim; j++) {
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        unsigned *src_roi = reinterpret_cast<unsigned *>(roi_tensor_ptr);
+        for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 8) {
+            for (unsigned j = 0; j < nDim; j++) {
                 auto index = i * nDim * 2;
                 data->pSrcRoi[index + j] = src_roi[index + j];
                 data->pSrcRoi[index + j + nDim] = src_roi[index + j + nDim];
-                }
             }
-        } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-            data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
         }
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
     }
     return status;
 }
@@ -123,7 +111,9 @@ static vx_status VX_CALLBACK processTensorLog1p(vx_node node, const vx_reference
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshTensorLog1p(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
+#if ENABLE_OPENCL
+        return_status = VX_ERROR_NOT_IMPLEMENTED;
+#elif ENABLE_HIP
         rpp_status = rppt_log1p_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pSrcRoi, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
@@ -149,12 +139,10 @@ static vx_status VX_CALLBACK initializeTensorLog1p(vx_node node, const vx_refere
         if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
             data->pSrcGenericDesc = new RpptGenericDesc;
             data->pDstGenericDesc = new RpptGenericDesc;
-            data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
         } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
             hipHostMalloc(&data->pSrcGenericDesc, sizeof(RpptGenericDesc));
             hipHostMalloc(&data->pDstGenericDesc, sizeof(RpptGenericDesc));
-            hipHostMalloc(&data->pSrcDims, sizeof(data->inputTensorDims[0] * 2 * sizeof(uint)));
 #endif
         }
         // Querying for input tensor
@@ -166,7 +154,6 @@ static vx_status VX_CALLBACK initializeTensorLog1p(vx_node node, const vx_refere
         fillGenericDescriptionPtrfromDims(data->pSrcGenericDesc, data->inputLayout, data->inputTensorDims);
 
         // Querying for output tensor
-        
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstGenericDesc->numDims, sizeof(data->pDstGenericDesc->numDims)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstGenericDesc->numDims));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
@@ -204,16 +191,10 @@ static vx_status VX_CALLBACK uninitializeTensorLog1p(vx_node node, const vx_refe
             if (err != hipSuccess)
                 std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
         }
-        if (data->pSrcDims) {
-            hipError_t err = hipHostFree(data->pSrcDims);
-            if (err != hipSuccess)
-                std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
-        }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;
         if (data->pDstGenericDesc) delete data->pDstGenericDesc;
-        if (data->pSrcDims) delete[] data->pSrcDims;
     }
     if (data) delete data;
     return VX_SUCCESS;

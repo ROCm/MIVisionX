@@ -38,7 +38,6 @@ struct Log1pLocalData {
 static vx_status VX_CALLBACK refreshLog1p(vx_node node, const vx_reference *parameters, vx_uint32 num, Log1pLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr;
-    auto nDim = data->pSrcGenericDesc->numDims - 1;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return VX_ERROR_NOT_IMPLEMENTED;
@@ -46,28 +45,13 @@ static vx_status VX_CALLBACK refreshLog1p(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
-        if (!data->pSrcRoi) {
-            hipHostMalloc(&data->pSrcRoi, data->inputTensorDims[0] * nDim * 2 * sizeof(Rpp32u));
-        }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
-
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-        unsigned *src_roi = reinterpret_cast<unsigned *>(roi_tensor_ptr);
-        for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 8) {
-            for (unsigned j = 0; j < nDim; j++) {
-                auto index = i * nDim * 2;
-                data->pSrcRoi[index + j] = src_roi[index + j];
-                data->pSrcRoi[index + j + nDim] = src_roi[index + j + nDim];
-            }
-        }
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
-    }
+    data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
     return status;
 }
 
@@ -80,19 +64,19 @@ static vx_status VX_CALLBACK validateLog1p(vx_node node, const vx_reference para
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #3 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[4], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #4 type=%d (must be size)\n", scalar_type);
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #4 type=%d (must be size)\n", scalar_type);
 
     // Check for input parameters
     size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Log1p: tensor: #0 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Log1p: tensor: #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
 
     // Check for output parameters
     vx_uint8 tensor_fixed_point_position;
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_datatype;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Log1p: tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Log1p: tensor: #2 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
 
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &tensor_datatype, sizeof(tensor_datatype)));

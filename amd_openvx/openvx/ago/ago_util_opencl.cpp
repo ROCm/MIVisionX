@@ -266,18 +266,32 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
 #else
     agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device - %d: %s [%s] [%d]\n", device_id, deviceName, deviceVersion, context->opencl_config_flags);
 #endif
-    memset(context->opencl_extensions, 0, sizeof(context->opencl_extensions));
-    status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_EXTENSIONS, sizeof(context->opencl_extensions), context->opencl_extensions, NULL);
-    if (status) { 
-        agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_EXTENSIONS) => %d\n", context->opencl_device_list[device_id], status);
-        return -1; 
+
+    size_t cl_ext_size = 0;
+    status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_EXTENSIONS, 0, NULL, &cl_ext_size);
+    if (status) {
+        agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_EXTENSIONS) for getting the value size => %d\n", context->opencl_device_list[device_id], status);
+        return -1;
     }
+
+    char *temp_ext_str = (char *) calloc(cl_ext_size, 1);
+
+    status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_EXTENSIONS, cl_ext_size, temp_ext_str, NULL);
+
+    if (status != CL_SUCCESS) {
+        agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_EXTENSIONS) => %d\n", context->opencl_device_list[device_id], status);
+        return -1;
+    }
+
+    context->opencl_extensions = std::string(temp_ext_str);
+    free (temp_ext_str);
+
 #if defined(CL_VERSION_2_0)
     context->opencl_svmcaps = 0;
     status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_SVM_CAPABILITIES, sizeof(context->opencl_svmcaps), &context->opencl_svmcaps, NULL);
-    if (status) { 
+    if (status != CL_SUCCESS) {
         agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_SVM_CAPABILITIES) => %d\n", context->opencl_device_list[device_id], status);
-        return -1; 
+        return -1;
     }
 #endif
     // get default OpenCL build options

@@ -295,7 +295,7 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
     }
 #endif
     // get default OpenCL build options
-    strcpy(context->opencl_build_options, (context->opencl_config_flags & CONFIG_OPENCL_USE_1_2) ? "-cl-std=CL1.2" : "-cl-std=CL2.0");
+    strcpy(context->opencl_build_options, (context->opencl_config_flags & CONFIG_OPENCL_USE_1_2) ? "-cl-std=CL1.2" : "");
     // override build options with environment variable
     agoGetEnvironmentVariable("AGO_OPENCL_BUILD_OPTIONS", context->opencl_build_options, sizeof(context->opencl_build_options));
     // override affinity device_info

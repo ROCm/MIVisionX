@@ -208,8 +208,13 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
         // create context
         context->opencl_context_imported = false;
         context->opencl_context = clCreateContextFromType(ctxprop, CL_DEVICE_TYPE_GPU, NULL, NULL, &status);
+        if (status == CL_DEVICE_NOT_FOUND) {
+          // try again, but this time any device type will do
+          context->opencl_context =
+            clCreateContextFromType(ctxprop, CL_DEVICE_TYPE_ALL, NULL, NULL, &status);
+        }
         if (!context || status != CL_SUCCESS) {
-            agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clCreateContextFromType(CL_DEVICE_TYPE_GPU) => %d (failed)\n", status);
+            agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clCreateContextFromType() => %d (failed)\n", status);
             return -1;
         }
     }

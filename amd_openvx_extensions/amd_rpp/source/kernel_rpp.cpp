@@ -1996,7 +1996,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppBlend(vx_graph graph, vx_tensor pSrc1, 
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppBlur(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pKernelSize, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppBlur(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2006,12 +2006,11 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppBlur(vx_graph graph, vx_tensor pSrc, vx
             (vx_reference)pSrc,
             (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)pKernelSize,
             (vx_reference)inputLayout,
             (vx_reference)outputLayout,
             (vx_reference)roiType,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_BLUR, params, 8);
+        node = createNode(graph, VX_KERNEL_RPP_BLUR, params, 7);
     }
     return node;
 }
@@ -2159,7 +2158,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppFlip(vx_graph graph, vx_tensor pSrc, vx
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppFog(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pFogValue, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppFog(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pIntensityFactor, vx_array pGrayFactor, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2169,12 +2168,13 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppFog(vx_graph graph, vx_tensor pSrc, vx_
             (vx_reference)pSrc,
             (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)pFogValue,
+            (vx_reference)pIntensityFactor,
+            (vx_reference)pGrayFactor,
             (vx_reference)inputLayout,
             (vx_reference)outputLayout,
             (vx_reference)roiType,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_FOG, params, 8);
+        node = createNode(graph, VX_KERNEL_RPP_FOG, params, 9);
     }
     return node;
 }
@@ -2265,7 +2265,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppJitter(vx_graph graph, vx_tensor pSrc, 
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppLensCorrection(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pStrength, vx_array pZoom, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppLensCorrection(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pCameraMatrix, vx_array pDistortionCoeffs, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2275,8 +2275,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppLensCorrection(vx_graph graph, vx_tenso
             (vx_reference)pSrc,
             (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)pStrength,
-            (vx_reference)pZoom,
+            (vx_reference)pCameraMatrix,
+            (vx_reference)pDistortionCoeffs,
             (vx_reference)inputLayout,
             (vx_reference)outputLayout,
             (vx_reference)roiType,
@@ -2329,7 +2329,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppPixelate(vx_graph graph, vx_tensor pSrc
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppRain(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pRainValue, vx_array pRainWidth, vx_array pRainHeight, vx_array pRainTransperancy, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppRain(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar rainPercentage, vx_scalar rainWidth, vx_scalar rainHeight, vx_scalar rainSlantAngle, vx_array pRainTransperancy, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2339,20 +2339,21 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppRain(vx_graph graph, vx_tensor pSrc, vx
             (vx_reference)pSrc,
             (vx_reference)pSrcRoi,
             (vx_reference)pDst,
-            (vx_reference)pRainValue,
-            (vx_reference)pRainWidth,
-            (vx_reference)pRainHeight,
+            (vx_reference)rainPercentage,
+            (vx_reference)rainWidth,
+            (vx_reference)rainHeight,
+            (vx_reference)rainSlantAngle,
             (vx_reference)pRainTransperancy,
             (vx_reference)inputLayout,
             (vx_reference)outputLayout,
             (vx_reference)roiType,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_RAIN, params, 11);
+        node = createNode(graph, VX_KERNEL_RPP_RAIN, params, 12);
     }
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppResizeCrop(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi,vx_tensor pCropTensor, vx_tensor pDst, vx_array pDstWidth, vx_array pDstHeight, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppResizeCrop(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pDstWidth, vx_array pDstHeight,vx_scalar interpolationType, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -2361,10 +2362,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppResizeCrop(vx_graph graph, vx_tensor pS
         vx_reference params[] = {
             (vx_reference)pSrc,
             (vx_reference)pSrcRoi,
-            (vx_reference)pCropTensor,
             (vx_reference)pDst,
             (vx_reference)pDstWidth,
             (vx_reference)pDstHeight,
+            (vx_reference)interpolationType,
             (vx_reference)inputLayout,
             (vx_reference)outputLayout,
             (vx_reference)roiType,

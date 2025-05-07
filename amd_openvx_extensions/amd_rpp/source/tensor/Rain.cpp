@@ -27,9 +27,10 @@ struct RainLocalData {
     vx_uint32 deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    vx_float32 *pRainValue;
-    vx_uint32 *pRainWidth;
-    vx_uint32 *pRainHeight;
+    vx_float32 rainPercentage;
+    vx_uint32 rainWidth;
+    vx_uint32 rainHeight;
+    vx_float32 rainSlantAngle;
     vx_float32 *pRainTransperancy;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
@@ -39,16 +40,11 @@ struct RainLocalData {
     vxTensorLayout outputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t ouputTensorDims[RPP_MAX_TENSOR_DIMS];
-    RppiSize *pSrcDimensions;
-    RppiSize maxSrcDimensions;
 };
 
 static vx_status VX_CALLBACK refreshRain(vx_node node, const vx_reference *parameters, vx_uint32 num, RainLocalData *data) {
     vx_status status = VX_SUCCESS;
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pRainValue, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0], sizeof(vx_uint32), data->pRainWidth, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->inputTensorDims[0], sizeof(vx_uint32), data->pRainHeight, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[6], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pRainTransperancy, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[7], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pRainTransperancy, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
@@ -65,21 +61,12 @@ static vx_status VX_CALLBACK refreshRain(vx_node node, const vx_reference *param
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
     data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
-    // Fill width and height array with ROI data required by RPP batchPD kernels
-    for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcDimensions[i].width = data->pSrcRoi[i].xywhROI.roiWidth;
-        data->pSrcDimensions[i].height = data->pSrcRoi[i].xywhROI.roiHeight;
-    }
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; f++) {
-                data->pRainValue[index + f] = data->pRainValue[n];
-                data->pRainWidth[index + f] = data->pRainWidth[n];
-                data->pRainHeight[index + f] = data->pRainHeight[n];
                 data->pRainTransperancy[index + f] = data->pRainTransperancy[n];
-                data->pSrcDimensions[index + f] = data->pSrcDimensions[n];
             }
         }
     }
@@ -89,9 +76,6 @@ static vx_status VX_CALLBACK refreshRain(vx_node node, const vx_reference *param
 static vx_status VX_CALLBACK validateRain(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
-    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_INT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #7 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[8], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #8 type=%d (must be size)\n", scalar_type);
@@ -99,8 +83,11 @@ static vx_status VX_CALLBACK validateRain(vx_node node, const vx_reference param
     if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #9 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[10], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_UINT32)
+    if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #10 type=%d (must be size)\n", scalar_type);
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[11], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if (scalar_type != VX_TYPE_UINT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #11 type=%d (must be size)\n", scalar_type);
 
     // Check for input tensor
     size_t num_tensor_dims;
@@ -127,7 +114,6 @@ static vx_status VX_CALLBACK validateRain(vx_node node, const vx_reference param
 static vx_status VX_CALLBACK processRain(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
-#if RPP_LEGACY_SUPPORT
     RainLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshRain(node, parameters, num, data);
@@ -135,22 +121,13 @@ static vx_status VX_CALLBACK processRain(vx_node node, const vx_reference *param
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        if (data->pSrcDesc->c == 1) {
-            rpp_status = rppi_rain_u8_pln1_batchPD_gpu(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pRainValue, data->pRainWidth, data->pRainHeight, data->pRainTransperancy, data->pSrcDesc->n, data->handle->rppHandle);
-        } else {
-            rpp_status = rppi_rain_u8_pkd3_batchPD_gpu(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pRainValue, data->pRainWidth, data->pRainHeight, data->pRainTransperancy, data->pSrcDesc->n, data->handle->rppHandle);
-        }
+        rpp_status = rppt_rain_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->rainPercentage, data->rainWidth, data->rainHeight, data->rainSlantAngle, data->pRainTransperancy, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        if (data->pSrcDesc->c == 1) {
-            rpp_status = rppi_rain_u8_pln1_batchPD_host(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pRainValue, data->pRainWidth, data->pRainHeight, data->pRainTransperancy, data->pSrcDesc->n, data->handle->rppHandle);
-        } else {
-            rpp_status = rppi_rain_u8_pkd3_batchPD_host(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pRainValue, data->pRainWidth, data->pRainHeight, data->pRainTransperancy, data->pSrcDesc->n, data->handle->rppHandle);
-        }
+        rpp_status = rppt_rain_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->rainPercentage, data->rainWidth, data->rainHeight, data->rainSlantAngle, data->pRainTransperancy, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
-#endif
     return return_status;
 }
 
@@ -160,10 +137,13 @@ static vx_status VX_CALLBACK initializeRain(vx_node node, const vx_reference *pa
 
     vx_enum input_tensor_dtype, output_tensor_dtype;
     vx_int32 roi_type, input_layout, output_layout;
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[10], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->rainPercentage, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &data->rainWidth, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->rainHeight, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->rainSlantAngle, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[10], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[11], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     data->roiType = static_cast<RpptRoiType>(roi_type);
     data->inputLayout = static_cast<vxTensorLayout>(input_layout);
     data->outputLayout = static_cast<vxTensorLayout>(output_layout);
@@ -186,14 +166,12 @@ static vx_status VX_CALLBACK initializeRain(vx_node node, const vx_reference *pa
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pRainValue = new vx_float32[data->pSrcDesc->n];
-    data->pRainWidth = new vx_uint32[data->pSrcDesc->n];
-    data->pRainHeight = new vx_uint32[data->pSrcDesc->n];
     data->pRainTransperancy = new vx_float32[data->pSrcDesc->n];
-    data->pSrcDimensions = new RppiSize[data->pSrcDesc->n];
-
-    data->maxSrcDimensions.height = data->pSrcDesc->h;
-    data->maxSrcDimensions.width = data->pSrcDesc->w;
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        data->pRainTransperancy = new vx_float32[data->pSrcDesc->n];
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        hipHostMalloc(&data->pRainTransperancy, data->pSrcDesc->n * sizeof(vx_float32));
+    }
     refreshRain(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -203,11 +181,11 @@ static vx_status VX_CALLBACK initializeRain(vx_node node, const vx_reference *pa
 static vx_status VX_CALLBACK uninitializeRain(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RainLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pRainHeight;
-    delete[] data->pRainWidth;
-    delete[] data->pRainTransperancy;
-    delete[] data->pRainValue;
-    delete[] data->pSrcDimensions;
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        delete[] data->pRainTransperancy;
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        hipHostFree(data->pRainTransperancy);
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
@@ -238,7 +216,7 @@ vx_status Rain_Register(vx_context context) {
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Rain",
                                        VX_KERNEL_RPP_RAIN,
                                        processRain,
-                                       11,
+                                       12,
                                        validateRain,
                                        initializeRain,
                                        uninitializeRain);
@@ -259,14 +237,15 @@ vx_status Rain_Register(vx_context context) {
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 10, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 11, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
     if (status != VX_SUCCESS) {

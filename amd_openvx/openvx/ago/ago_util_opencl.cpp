@@ -1433,10 +1433,11 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
         // a mismatching declaration.
         std::string clmediaopscode = OPENCL_FORMAT(
             "inline uint amd_pack_emu(float4 src){\n"
-            "	uint dst =  ((uint)(clamp (src.s0,0.0f,255.0f))     )\n"
-            "			  + ((uint)(clamp (src.s1,0.0f,255.0f))<< 8 ) \n"
-            "			  + ((uint)(clamp (src.s2,0.0f,255.0f))<< 16) \n"
-            "			  + ((uint)(clamp (src.s3,0.0f,255.0f))<< 24); \n"
+            " int4 rounded = convert_int4_rte(src);\n"
+            "	uint dst =  ((uint)(clamp (rounded.s0, 0, 255))     )\n"
+            "			  + ((uint)(clamp (rounded.s1, 0, 255))<< 8 ) \n"
+            "			  + ((uint)(clamp (rounded.s2, 0, 255))<< 16) \n"
+            "			  + ((uint)(clamp (rounded.s3, 0, 255))<< 24); \n"
             "	return dst;\n"
             "}\n"
             "#define amd_pack amd_pack_emu\n"

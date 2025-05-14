@@ -8,20 +8,20 @@
 MIVisionX documentation
 ******************************************
 
-AMD MIVisionX toolkit is a comprehensive set of computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. MIVisionX delivers AMD's implementation of `Khronos OpenVX <https://www.khronos.org/openvx/>`_, and a Convolutional Neural Net model compiler & optimizer supporting `ONNX <https://onnx.ai/>`_ and `Khronos NNEF <https://www.khronos.org/nnef>`_ exchange formats. The MIVisionX toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers. For more information, refer to :ref:`what-is-mivisionx`.
+MIVisionX is a comprehensive machine intelligence and computer vision toolkit. MIVisionX includes AMD's implementation of `Khronos OpenVX <https://www.khronos.org/openvx/>`_, as well as a Convolutional Neural Net model compiler and optimizer supporting the `ONNX <https://onnx.ai/>`_ and `Khronos NNEF <https://www.khronos.org/nnef>`_ exchange formats. The MIVisionX toolkit is used for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including on small embedded CPUs, APUs, discrete GPUs, and heterogeneous servers. For more information, refer to :ref:`what-is-mivisionx`.
 
-You can access MIVisionX on `GitHub repository <https://github.com/ROCm/MIVisionX>`_.
-
-The documentation is structured as follows:
+The MIVisionX public repository is located at `https://github.com/ROCm/MIVisionX <https://github.com/ROCm/MIVisionX>`_.
 
 .. grid:: 2
   :gutter: 3
 
   .. grid-item-card:: Installation
 
-    * :ref:`installation`
-    * :ref:`amd-openvx-install`
-    * :ref:`model-compiler-install`
+    * :doc:`MIVisionX prerequisites <./install/MIVisionX-prerequisites>`
+    * :doc:`Build and install MIVisionX for Linux <./install/MIVisionX-linux-build-and-install>`
+    * :doc:`Install MIVisionX using the package installer on Linux <./install/MIVisionX-package-install>`
+    * :doc:`Install MIVisionX on Windows <./install/MIVisionX-windows-install>`
+    * :doc:`Build and install MIVisionX on macOS <./install/MIVisionX-macOS-install>`
 
   .. grid-item-card:: How to
 

@@ -170,11 +170,6 @@ static vx_status VX_CALLBACK uninitializeLog1p(vx_node node, const vx_reference 
             if (err != hipSuccess)
                 std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
         }
-        if (data->pSrcRoi) {
-            hipError_t err = hipHostFree(data->pSrcRoi);
-            if (err != hipSuccess)
-                std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
-        }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;

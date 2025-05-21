@@ -118,7 +118,6 @@ static vx_status VX_CALLBACK validateSnow(vx_node node, const vx_reference param
 static vx_status VX_CALLBACK processSnow(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
-#if RPP_LEGACY_SUPPORT
     SnowLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshSnow(node, parameters, num, data);
@@ -141,7 +140,6 @@ static vx_status VX_CALLBACK processSnow(vx_node node, const vx_reference *param
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
-#endif
     return return_status;
 }
 

@@ -117,7 +117,7 @@ static vx_status VX_CALLBACK validateHue(vx_node node, const vx_reference parame
 static vx_status VX_CALLBACK processHue(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
-#if RPP_LEGACY_SUPPORT
+
     HueLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshHue(node, parameters, num, data);
@@ -135,7 +135,6 @@ static vx_status VX_CALLBACK processHue(vx_node node, const vx_reference *parame
         rpp_status = rppi_hueRGB_u8_pkd3_batchPD_host(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pHueShift, data->pSrcDesc->n, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
-#endif
     return return_status;
 }
 

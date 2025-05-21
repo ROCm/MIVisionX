@@ -2812,6 +2812,29 @@ RpptDataType getRpptDataType(vx_enum vxDataType) {
     }
 }
 
+size_t getDataTypeSize(vx_enum vxDataType) {
+    switch (vxDataType) {
+#if defined(AMD_FP16_SUPPORT)
+        case vx_type_e::VX_TYPE_FLOAT16:
+            return sizeof(vx_float16);
+#endif
+        case vx_type_e::VX_TYPE_FLOAT32:
+            return sizeof(vx_float32);
+        case vx_type_e::VX_TYPE_INT8:
+            return sizeof(vx_int8);
+        case vx_type_e::VX_TYPE_INT16:
+            return sizeof(vx_int16);
+        case vx_type_e::VX_TYPE_INT32:
+            return sizeof(vx_int32);
+        case vx_type_e::VX_TYPE_UINT8:
+            return sizeof(vx_uint8);
+        case vx_type_e::VX_TYPE_UINT32:
+            return sizeof(vx_uint32);
+        default:
+            throw std::runtime_error("Invalid datatype.");
+    }
+}
+
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims) {
     switch(layout) {
         case vxTensorLayout::VX_NHWC: {

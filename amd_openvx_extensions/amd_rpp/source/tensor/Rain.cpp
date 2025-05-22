@@ -113,7 +113,7 @@ static vx_status VX_CALLBACK validateRain(vx_node node, const vx_reference param
 
 static vx_status VX_CALLBACK processRain(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_SUCCESS;
+    vx_status return_status = VX_ERROR_NOT_IMPLEMENTED;
     RainLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshRain(node, parameters, num, data);
@@ -141,6 +141,7 @@ static vx_status VX_CALLBACK initializeRain(vx_node node, const vx_reference *pa
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &data->rainWidth, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->rainHeight, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->rainSlantAngle, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[10], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[11], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));

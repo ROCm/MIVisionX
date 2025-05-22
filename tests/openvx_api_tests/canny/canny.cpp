@@ -118,11 +118,11 @@ int main(int argc, char **argv)
     elapsed_seconds = (end-start)/100;
     std::cout << "STATUS: vxProcessGraph() took " << (elapsed_seconds.count()*1000.0f) << "msec (AVG)\n";
 
-    ERROR_CHECK_STATUS(vxReleaseGraph(&graph));
     ERROR_CHECK_STATUS(vxReleaseImage(&yuv_image));
     ERROR_CHECK_STATUS(vxReleaseImage(&luma_image));
     ERROR_CHECK_STATUS(vxReleaseImage(&input_rgb_image));
     ERROR_CHECK_STATUS(vxReleaseImage(&output_filtered_image));
+    ERROR_CHECK_STATUS(vxReleaseGraph(&graph));
     ERROR_CHECK_STATUS(vxReleaseContext(&context));
 
     return 0;

@@ -1591,8 +1591,8 @@ extern "C"
 	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> format data.
 	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh/ltrb format.
 	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> format data.
-	 * \param [in] pIntensityFactor The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the fog value data.
-	 * \param [in] pGrayFactor The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the fog value data.
+	 * \param [in] pIntensityFactor The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the intensity factor values for fog calculation.
+	 * \param [in] pGrayFactor The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the gray factor values to introduce grayness in the image for fog calculation.
 	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
 	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.
 	 * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32</tt> denotes whether source roi is of XYWH/LTRB type.
@@ -1668,8 +1668,8 @@ extern "C"
 	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> format data.
 	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh/ltrb format.
 	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> format data.
-	 * \param [in] pStrength The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the strength value data.
-	 * \param [in] pZoom The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the zoom value data.
+	 * \param [in] pCameraMatrix The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing camera intrinsic parameters required to compute lens corrected image.
+	 * \param [in] pDistortionCoeffs The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the distortion coefficients required to compute lens corrected image.
 	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
 	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.
 	 * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32</tt> denotes whether source roi is of XYWH/LTRB type.
@@ -1701,10 +1701,10 @@ extern "C"
 	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
 	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh/ltrb format.
 	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	 * \param [in] rainPercentage The input value in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the rain value data.
-	 * \param [in] pRainWidth The input array in <tt>\ref VX_TYPE_UINT32</tt> format containing the rain width data.
-	 * \param [in] pRainHeight The input array in <tt>\ref VX_TYPE_UINT32</tt> format containing the rain height data.
-	 * \param [in] rainSlantAngle Slant angle of the rain drops (positive value for right slant, negative for left slant)
+	 * \param [in] rainPercentage The input value in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the percentage of the rain effect to be applied.
+	 * \param [in] rainWidth The input value in <tt>\ref VX_TYPE_UINT32</tt> format containing the width of the rain drops in pixels.
+	 * \param [in] rainHeight The input value in <tt>\ref VX_TYPE_UINT32</tt> format containing the height of the rain drops in pixels.
+	 * \param [in] rainSlantAngle The input value in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the slant angle of the rain drops (positive value for right slant, negative for left slant)
 	 * \param [in] pRainTransperancy The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the rain transparency data.
 	 * \param [in] seed The input scalar in <tt>\ref VX_TYPE_UINT32</tt> contains the seed value.
 	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
@@ -1815,7 +1815,7 @@ extern "C"
 	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
 	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh/ltrb format.
 	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	 * \param [in] pixelationPercentage The variable controls how much pixelation is applied to images.(pixelationPercentage value ranges from 0 to 100).
+	 * \param [in] pixelationPercentage The input value in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the variable controling how much pixelation is applied to images.(pixelationPercentage value ranges from 0 to 100).
 	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
 	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.
 	 * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32</tt> denotes whether source roi is of XYWH/LTRB type.

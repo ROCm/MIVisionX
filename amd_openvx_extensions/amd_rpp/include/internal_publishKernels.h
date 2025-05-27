@@ -167,6 +167,7 @@ vx_status Slice_Register(vx_context);
 vx_status Normalize_Register(vx_context);
 vx_status MelFilterBank_Register(vx_context);
 vx_status Transpose_Register(vx_context);
+vx_status Log1p_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -303,5 +304,6 @@ vx_status Transpose_Register(vx_context);
 #define VX_KERNEL_RPP_NORMALIZE_NAME                            "org.rpp.Normalize"
 #define VX_KERNEL_RPP_MELFILTERBANK_NAME                        "org.rpp.MelFilterBank"
 #define VX_KERNEL_RPP_TRANSPOSE_NAME                            "org.rpp.Transpose"
+#define VX_KERNEL_RPP_LOG1P_NAME                                "org.rpp.Log1p"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

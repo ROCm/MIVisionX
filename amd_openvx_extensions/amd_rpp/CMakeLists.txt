@@ -176,6 +176,7 @@ list(APPEND SOURCES
         source/tensor/WarpAffine.cpp
         source/tensor/Slice.cpp
         source/tensor/Transpose.cpp
+        source/tensor/Log1p.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )

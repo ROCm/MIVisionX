@@ -50,6 +50,64 @@ include_directories(${AMDRPP_INCLUDE_DIRS})
 set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})
 
 list(APPEND SOURCES
+        source/tensor/Blend.cpp
+        source/tensor/Blur.cpp
+        source/tensor/Brightness.cpp
+        source/tensor/ColorTemperature.cpp
+        source/tensor/ColorTwist.cpp
+        source/tensor/Contrast.cpp
+        source/tensor/Copy.cpp
+        source/tensor/Crop.cpp
+        source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Downmix.cpp
+        source/tensor/Exposure.cpp
+        source/tensor/FishEye.cpp
+        source/tensor/Flip.cpp
+        source/tensor/Fog.cpp
+        source/tensor/GammaCorrection.cpp
+        source/tensor/Glitch.cpp
+        source/tensor/Hue.cpp
+        source/tensor/Jitter.cpp
+        source/tensor/LensCorrection.cpp
+        source/tensor/MelFilterBank.cpp
+        source/tensor/Noise.cpp
+        source/tensor/NonSilentRegionDetection.cpp
+        source/tensor/Nop.cpp
+        source/tensor/Normalize.cpp
+        source/tensor/Rotate.cpp
+        source/tensor/Pixelate.cpp
+        source/tensor/PreemphasisFilter.cpp
+        source/tensor/Rain.cpp
+        source/tensor/Resample.cpp
+        source/tensor/Resize.cpp
+        source/tensor/ResizeCrop.cpp
+        source/tensor/ResizeCropMirror.cpp
+        source/tensor/ResizeMirrorNormalize.cpp
+        source/tensor/Saturation.cpp
+        source/tensor/SequenceRearrange.cpp
+        source/tensor/Snow.cpp
+        source/tensor/Spectrogram.cpp
+        source/tensor/TensorAddTensor.cpp
+        source/tensor/TensorMulScalar.cpp
+        source/tensor/ToDecibels.cpp
+        source/tensor/Vignette.cpp
+        source/tensor/WarpAffine.cpp
+        source/tensor/Slice.cpp
+        source/tensor/Transpose.cpp
+        source/kernel_rpp.cpp
+        source/internal_publishKernels.cpp
+    )
+
+set(RPP_LEGACY_SUPPORT_FOUND 0)
+find_path(RPP_INCLUDE_DIR NAMES rpp.h PATHS ${ROCM_PATH}/include/rpp)
+if(EXISTS ${RPP_INCLUDE_DIR}/rpp_legacy_support.h)
+    file(READ ${RPP_INCLUDE_DIR}/rpp_legacy_support.h RPP_LEGACY_SUPPORT_FILE)
+    string(REGEX MATCH "RPP_LEGACY_SUPPORT ([0-1]*)" _ ${RPP_LEGACY_SUPPORT_FILE})
+    set(RPP_LEGACY_SUPPORT_FOUND ${CMAKE_MATCH_1})
+endif()
+
+if(RPP_LEGACY_SUPPORT_FOUND)
+    list(APPEND SOURCES
         source/image/AbsoluteDifferencebatchPD.cpp
         source/image/AccumulatebatchPD.cpp
         source/image/AccumulateSquaredbatchPD.cpp
@@ -132,54 +190,8 @@ list(APPEND SOURCES
         source/image/VignettebatchPD.cpp
         source/image/WarpAffinebatchPD.cpp
         source/image/WarpPerspectivebatchPD.cpp
-        source/tensor/Blend.cpp
-        source/tensor/Blur.cpp
-        source/tensor/Brightness.cpp
-        source/tensor/ColorTemperature.cpp
-        source/tensor/ColorTwist.cpp
-        source/tensor/Contrast.cpp
-        source/tensor/Copy.cpp
-        source/tensor/Crop.cpp
-        source/tensor/CropMirrorNormalize.cpp
-        source/tensor/Downmix.cpp
-        source/tensor/Exposure.cpp
-        source/tensor/FishEye.cpp
-        source/tensor/Flip.cpp
-        source/tensor/Fog.cpp
-        source/tensor/GammaCorrection.cpp
-        source/tensor/Glitch.cpp
-        source/tensor/Hue.cpp
-        source/tensor/Jitter.cpp
-        source/tensor/LensCorrection.cpp
-        source/tensor/MelFilterBank.cpp
-        source/tensor/Noise.cpp
-        source/tensor/NonSilentRegionDetection.cpp
-        source/tensor/Nop.cpp
-        source/tensor/Normalize.cpp
-        source/tensor/Rotate.cpp
-        source/tensor/Pixelate.cpp
-        source/tensor/PreemphasisFilter.cpp
-        source/tensor/Rain.cpp
-        source/tensor/Resample.cpp
-        source/tensor/Resize.cpp
-        source/tensor/ResizeCrop.cpp
-        source/tensor/ResizeCropMirror.cpp
-        source/tensor/ResizeMirrorNormalize.cpp
-        source/tensor/Saturation.cpp
-        source/tensor/SequenceRearrange.cpp
-        source/tensor/Snow.cpp
-        source/tensor/Spectrogram.cpp
-        source/tensor/TensorAddTensor.cpp
-        source/tensor/TensorMulScalar.cpp
-        source/tensor/ToDecibels.cpp
-        source/tensor/Vignette.cpp
-        source/tensor/WarpAffine.cpp
-        source/tensor/Slice.cpp
-        source/tensor/Transpose.cpp
-        source/tensor/Log1p.cpp
-        source/kernel_rpp.cpp
-        source/internal_publishKernels.cpp
     )
+endif()
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
     message("-- ${Green}vx_rpp -- Building with OpenCL${ColourReset}")
@@ -213,7 +225,6 @@ else()
 endif()
 
 set(RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND 0)
-find_path(RPP_INCLUDE_DIR NAMES rpp.h PATHS ${ROCM_PATH}/include/rpp)
 if(EXISTS ${RPP_INCLUDE_DIR}/rpp_audio_augmentations_support.h)
     file(READ ${RPP_INCLUDE_DIR}/rpp_audio_augmentations_support.h RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE)
     string(REGEX MATCH "RPP_AUDIO_AUGMENTATIONS_SUPPORT ([0-9]*)" _ ${RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE})
@@ -231,6 +242,14 @@ else()
     message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
 endif()
 
+if(RPP_LEGACY_SUPPORT_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEGACY_SUPPORT=1")
+    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=1)
+    message("-- ${White}vx_rpp BatchPD augmentations included${ColourReset}")
+else()
+    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=0)
+    message("-- ${Yellow}vx_rpp BatchPD augmentations excluded${ColourReset}")
+endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenVX)

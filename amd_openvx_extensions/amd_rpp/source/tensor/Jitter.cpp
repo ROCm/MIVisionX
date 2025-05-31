@@ -115,16 +115,17 @@ static vx_status VX_CALLBACK processJitter(vx_node node, const vx_reference *par
     JitterLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshJitter(node, parameters, num, data);
-    // rppt_jitter is not available in RPP TOT, will be enabled once support is added
-    /* if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        rpp_status = rppt_jitter_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pKernelSize, data->seed, data->roiPtr, data->roiType, data->handle->rppHandle);
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_OPENCL
+        return_status = VX_ERROR_NOT_IMPLEMENTED;
+#elif ENABLE_HIP
+        rpp_status = rppt_jitter_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pKernelSize, data->seed, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_jitter_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pKernelSize, data->seed, data->roiPtr, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_jitter_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pKernelSize, data->seed, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    } */
+    }
     return return_status;
 }
 
@@ -161,7 +162,11 @@ static vx_status VX_CALLBACK initializeJitter(vx_node node, const vx_reference *
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pKernelSize = new vx_uint32[data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        hipHostMalloc(&data->pKernelSize, data->pSrcDesc->n * sizeof(vx_uint32));
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        data->pKernelSize = new vx_uint32[data->pSrcDesc->n];
+    }
     refreshJitter(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -171,7 +176,11 @@ static vx_status VX_CALLBACK initializeJitter(vx_node node, const vx_reference *
 static vx_status VX_CALLBACK uninitializeJitter(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     JitterLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pKernelSize;
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        delete[] data->pKernelSize;
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        hipHostFree(data->pKernelSize);
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

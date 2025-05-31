@@ -39,6 +39,7 @@ extern "C" SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context conte
 vx_status ADD_KERNEL(std::function<vx_status(vx_context)>);
 vx_status get_kernels_to_publish();
 
+#if RPP_LEGACY_SUPPORT
 vx_status AbsoluteDifferencebatchPD_Register(vx_context);
 vx_status AccumulatebatchPD_Register(vx_context);
 vx_status AccumulateSquaredbatchPD_Register(vx_context);
@@ -121,6 +122,7 @@ vx_status ThresholdingbatchPD_Register(vx_context);
 vx_status VignettebatchPD_Register(vx_context);
 vx_status WarpAffinebatchPD_Register(vx_context);
 vx_status WarpPerspectivebatchPD_Register(vx_context);
+#endif
 
 vx_status Blend_Register(vx_context);
 vx_status Blur_Register(vx_context);

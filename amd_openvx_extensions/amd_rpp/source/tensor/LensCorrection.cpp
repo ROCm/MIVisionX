@@ -27,24 +27,27 @@ struct LensCorrectionLocalData {
     vx_uint32 deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    vx_float32 *pStrength;
-    vx_float32 *pZoom;
+    vx_float32 *pCameraMatrix;
+    vx_float32 *pDistortionCoeffs;
+    vx_float32 *pRowRemapTable;
+    vx_float32 *pColRemapTable;
+    void *d_pRowRemapTable;
+    void *d_pColRemapTable;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
+    RpptDescPtr pTableDesc;
     RpptROI *pSrcRoi;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t ouputTensorDims[RPP_MAX_TENSOR_DIMS];
-    RppiSize *pSrcDimensions;
-    RppiSize maxSrcDimensions;
 };
 
 static vx_status VX_CALLBACK refreshLensCorrection(vx_node node, const vx_reference *parameters, vx_uint32 num, LensCorrectionLocalData *data) {
     vx_status status = VX_SUCCESS;
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pStrength, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pZoom, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0] * 9, sizeof(vx_float32), data->pCameraMatrix, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0] * 8, sizeof(vx_float32), data->pDistortionCoeffs, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
@@ -61,19 +64,13 @@ static vx_status VX_CALLBACK refreshLensCorrection(vx_node node, const vx_refere
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
     data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
-    // Fill width and height array with ROI data required by RPP batchPD kernels
-    for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcDimensions[i].width = data->pSrcRoi[i].xywhROI.roiWidth;
-        data->pSrcDimensions[i].height = data->pSrcRoi[i].xywhROI.roiHeight;
-    }
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; f++) {
-                data->pStrength[index + f] = data->pStrength[n];
-                data->pZoom[index + f] = data->pZoom[n];
-                data->pSrcDimensions[index + f] = data->pSrcDimensions[n];
+                data->pCameraMatrix[index + f] = data->pCameraMatrix[n];
+                data->pDistortionCoeffs[index + f] = data->pDistortionCoeffs[n];
             }
         }
     }
@@ -121,7 +118,6 @@ static vx_status VX_CALLBACK validateLensCorrection(vx_node node, const vx_refer
 static vx_status VX_CALLBACK processLensCorrection(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
-
     LensCorrectionLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshLensCorrection(node, parameters, num, data);
@@ -129,19 +125,11 @@ static vx_status VX_CALLBACK processLensCorrection(vx_node node, const vx_refere
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        if (data->pSrcDesc->c == 1) {
-            rpp_status = rppi_lens_correction_u8_pln1_batchPD_gpu(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pStrength, data->pZoom, data->pSrcDesc->n, data->handle->rppHandle);
-        } else {
-            rpp_status = rppi_lens_correction_u8_pkd3_batchPD_gpu(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pStrength, data->pZoom, data->pSrcDesc->n, data->handle->rppHandle);
-        }
+        rpp_status = rppt_lens_correction_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, static_cast<Rpp32f *>(data->d_pRowRemapTable), static_cast<Rpp32f *>(data->d_pColRemapTable), data->pTableDesc, data->pCameraMatrix, data->pDistortionCoeffs, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        if (data->pSrcDesc->c == 1) {
-            rpp_status = rppi_lens_correction_u8_pln1_batchPD_host(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pStrength, data->pZoom, data->pSrcDesc->n, data->handle->rppHandle);
-        } else { 
-            rpp_status = rppi_lens_correction_u8_pkd3_batchPD_host(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pStrength, data->pZoom, data->pSrcDesc->n, data->handle->rppHandle);
-        }
+        rpp_status = rppt_lens_correction_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pRowRemapTable, data->pColRemapTable, data->pTableDesc, data->pCameraMatrix, data->pDistortionCoeffs, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -179,11 +167,26 @@ static vx_status VX_CALLBACK initializeLensCorrection(vx_node node, const vx_ref
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->maxSrcDimensions.height = data->pSrcDesc->h;
-    data->maxSrcDimensions.width = data->pSrcDesc->w;
-    data->pSrcDimensions = new RppiSize[data->pSrcDesc->n];
-    data->pStrength = new vx_float32[data->pSrcDesc->n];
-    data->pZoom = new vx_float32[data->pSrcDesc->n];
+    data->pTableDesc = new RpptDesc;
+    data->pTableDesc->c = 1;
+    data->pTableDesc->strides.nStride = data->pSrcDesc->h * data->pSrcDesc->w;
+    data->pTableDesc->strides.hStride = data->pSrcDesc->w;
+    data->pTableDesc->strides.wStride = data->pTableDesc->strides.cStride = 1;
+
+    auto ioBufferSize = (Rpp64u)data->pSrcDesc->h * (Rpp64u)data->pSrcDesc->w * (Rpp64u)data->pSrcDesc->c * (Rpp64u)data->pSrcDesc->n;
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        data->pRowRemapTable = static_cast<Rpp32f *>(calloc(ioBufferSize, sizeof(Rpp32f)));
+        data->pColRemapTable = static_cast<Rpp32f *>(calloc(ioBufferSize, sizeof(Rpp32f)));
+        data->pCameraMatrix = new vx_float32[data->pSrcDesc->n * 9];
+        data->pDistortionCoeffs = new vx_float32[data->pSrcDesc->n * 8];
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        hipMalloc(&data->d_pRowRemapTable, ioBufferSize * sizeof(Rpp32f));
+        hipMalloc(&data->d_pColRemapTable, ioBufferSize * sizeof(Rpp32f));
+        hipMemset(data->d_pRowRemapTable, 0, ioBufferSize * sizeof(Rpp32u));
+        hipMemset(data->d_pColRemapTable, 0, ioBufferSize * sizeof(Rpp32u));
+        hipHostMalloc(&data->pCameraMatrix, data->pSrcDesc->n * sizeof(vx_float32) * 9);
+        hipHostMalloc(&data->pDistortionCoeffs, data->pSrcDesc->n * sizeof(vx_float32) * 8);
+    }
     refreshLensCorrection(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -193,11 +196,20 @@ static vx_status VX_CALLBACK initializeLensCorrection(vx_node node, const vx_ref
 static vx_status VX_CALLBACK uninitializeLensCorrection(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     LensCorrectionLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pStrength;
-    delete[] data->pZoom;
-    delete[] data->pSrcDimensions;
     delete data->pSrcDesc;
     delete data->pDstDesc;
+    delete data->pTableDesc;
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        delete[] data->pRowRemapTable;
+        delete[] data->pColRemapTable;
+        delete[] data->pCameraMatrix;
+        delete[] data->pDistortionCoeffs;
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        hipFree(data->d_pRowRemapTable);
+        hipFree(data->d_pColRemapTable);
+        hipHostFree(data->pCameraMatrix);
+        hipHostFree(data->pDistortionCoeffs);
+    }
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
     return VX_SUCCESS;

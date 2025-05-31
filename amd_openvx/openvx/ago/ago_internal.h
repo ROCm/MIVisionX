@@ -755,7 +755,7 @@ struct AgoContext {
     cl_context   opencl_context;
     cl_command_queue opencl_cmdq;
     vx_uint32 opencl_config_flags;
-    char opencl_extensions[1024];
+    std::string opencl_extensions;
 #if defined(CL_VERSION_2_0)
     cl_device_svm_capabilities opencl_svmcaps;
 #endif

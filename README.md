@@ -351,7 +351,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
   + RHEL - `8` / `9`
   + SLES - `15-SP5`
 * ROCm: `6.3.0`
-* RPP - `1.9.0.60300`
+* RPP - `2.0.0`
 * miopen-hip - `3.2.0.60300`
 * migraphx - `2.11.0.60300`
 * OpenCV - `4.6`

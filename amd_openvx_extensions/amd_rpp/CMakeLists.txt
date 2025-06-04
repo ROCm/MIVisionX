@@ -69,6 +69,7 @@ list(APPEND SOURCES
         source/tensor/Hue.cpp
         source/tensor/Jitter.cpp
         source/tensor/LensCorrection.cpp
+        source/tensor/Log1p.cpp
         source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
         source/tensor/NonSilentRegionDetection.cpp

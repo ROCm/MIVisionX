@@ -114,8 +114,7 @@ static vx_status VX_CALLBACK processVignette(vx_node node, const vx_reference *p
     VignetteLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshVignette(node, parameters, num, data);
-    // rppt_vignette is not available in RPP TOT, will be enabled once support is added
-    /* if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
@@ -125,7 +124,7 @@ static vx_status VX_CALLBACK processVignette(vx_node node, const vx_reference *p
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_vignette_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pStdDev, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    } */
+    }
     return return_status;
 }
 
@@ -161,7 +160,11 @@ static vx_status VX_CALLBACK initializeVignette(vx_node node, const vx_reference
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pStdDev = new vx_float32[data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        hipHostMalloc(&data->pStdDev, data->pSrcDesc->n * sizeof(float));
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        data->pStdDev = new float[data->pSrcDesc->n];
+    }
     refreshVignette(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -171,7 +174,11 @@ static vx_status VX_CALLBACK initializeVignette(vx_node node, const vx_reference
 static vx_status VX_CALLBACK uninitializeVignette(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     VignetteLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pStdDev;
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        delete[] data->pStdDev;
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        hipHostFree(data->pStdDev);
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

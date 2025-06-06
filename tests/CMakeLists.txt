@@ -283,37 +283,37 @@ if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     # 25 - onnx2nnir2openvx No Fuse flow
-    add_test(NAME onnx2nnir2openvxx_no_fuse 
+    add_test(NAME onnx2nnir2openvx_no_fuse
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 4 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )    
     # 26 - onnx2nnir2openvx Fuse flow
-    add_test(NAME onnx2nnir2openvxx_fuse 
+    add_test(NAME onnx2nnir2openvx_fuse
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 5 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     # 27 - onnx2nnir2openvx FP16 flow
-    add_test(NAME onnx2nnir2openvxx_fp16 
+    add_test(NAME onnx2nnir2openvx_fp16
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 6 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     # 28 - nnef2nnir2openvx No Fuse flow
-    add_test(NAME nnef2nnir2openvxx_no_fuse 
+    add_test(NAME nnef2nnir2openvx_no_fuse
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 7 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )    
     # 29 - nnef2nnir2openvx Fuse flow
-    add_test(NAME nnef2nnir2openvxx_fuse 
+    add_test(NAME nnef2nnir2openvx_fuse
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 8 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     # 30 - nnef2nnir2openvx FP16 flow
-    add_test(NAME nnef2nnir2openvxx_fp16 
+    add_test(NAME nnef2nnir2openvx_fp16
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
           --profiler_mode 9 --reinstall off
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

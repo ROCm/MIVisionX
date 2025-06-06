@@ -438,7 +438,7 @@ else:
     if neuralNetInstall == 'ON' and backend == 'HIP' and inferenceInstall == 'ON':
         if not os.path.exists(modelCompilerDeps):
             info("STATUS: Model Compiler Deps Install - " +modelCompilerDeps+"\n")
-            ERROR_CHECK(os.makedirs(modelCompilerDeps))
+            os.makedirs(modelCompilerDeps)
             if "SLES" in platformInfo or "Mariner" in platformInfo or "redhat-8" in platformInfo:
                 ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
                 ERROR_CHECK(os.system(

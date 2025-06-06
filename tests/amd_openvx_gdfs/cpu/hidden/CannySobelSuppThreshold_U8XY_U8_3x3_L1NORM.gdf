@@ -1,0 +1,13 @@
+# agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
+data output = image:1920,1080,U008
+type canny-stack userstruct:256
+data stack = array:canny-stack,256
+data input = image:1920,1080,U008
+data value = threshold:RANGE,U008,U008:INIT,80,100
+#node com.amd.openvx.CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM output NULL input value
+
+data inter_luma = image:1280,720,U008
+data input_hyst = threshold:RANGE,U008,U008:INIT,80,100
+data input_gradient_size = scalar:INT32,3
+data output_canny_edge = image:1280,720,U008
+node org.khronos.openvx.canny_edge_detector inter_luma input_hyst input_gradient_size !NORM_L1 output_canny_edge

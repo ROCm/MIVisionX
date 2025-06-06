@@ -1,0 +1,5 @@
+# agoKernel_LinearFilter_ANY_ANY
+data output = image:1920,1080,U008
+data input = image:1920,1080,U008
+data input_matrix = convolution:9,9
+node com.amd.openvx.LinearFilter_ANY_ANY output input input_matrix

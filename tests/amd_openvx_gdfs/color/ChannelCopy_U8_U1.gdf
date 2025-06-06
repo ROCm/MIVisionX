@@ -1,0 +1,4 @@
+# agoKernel_ChannelCopy_U8_U1
+data input = image:1920,1080,U001
+data output = image:1920,1080,U008
+node com.amd.openvx.ChannelCopy_U8_U1 output input

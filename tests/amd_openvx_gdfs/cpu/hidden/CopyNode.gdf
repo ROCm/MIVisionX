@@ -1,0 +1,5 @@
+# ovxKernel_Copy - com.amd.openvx.Copy_DATA_DATA not supported yet
+data input = image:480,360,U008
+data output = image:480,360,U008
+node org.khronos.openvx.copy input output
+

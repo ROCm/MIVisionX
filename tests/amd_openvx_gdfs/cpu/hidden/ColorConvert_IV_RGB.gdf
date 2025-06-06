@@ -1,0 +1,4 @@
+# agoKernel_ColorConvert_IV_RGB
+data output = image:1920,1080,U008
+data input = image:1920,1080,RGB2
+node com.amd.openvx.ColorConvert_IV_RGB output input

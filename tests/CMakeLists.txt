@@ -223,7 +223,7 @@ if(Python3_FOUND)
 endif(Python3_FOUND)
 
 # HIP Tests
-if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
+if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "OPENCL"))
   # 17 - canny - vision graph force to GPU
   add_test(NAME openvx_canny_GPU 
             COMMAND openvx_canny 
@@ -235,7 +235,7 @@ if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
               COMMAND openvx_channel_extract 
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/channel_extract
   )
-  set_property(TEST openvx_channel_extract_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+  set_property(TEST openvx_channel_extract_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
   # 19 - color convert - vision graph force to GPU
   add_test(NAME openvx_color_convert_GPU 
               COMMAND openvx_color_convert 
@@ -259,7 +259,9 @@ if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
     )
     set_property(TEST openvx_gdf_tests_GPU PROPERTY ENVIRONMENT "PATH=$PATH:${ROCM_PATH}/bin")
   endif(Python3_FOUND)
+endif(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "OPENCL"))
 
+if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
   # Neural Network tests
   if(VX_NN_LIBRARY AND Python3_FOUND)
     # 22 - caffe2nnir2openvx No Fuse flow

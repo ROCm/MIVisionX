@@ -30,6 +30,8 @@ subtrees:
     title: MIVisionX APIs
   - file: doxygen/html/files
     title: MIVisionX Files
+  - file: reference/env-variables.rst
+    title: MIVisionX environment variables
   - file: reference/toolkit.rst
     title: MIVisionX toolkit documentation
   - file: reference/utilities.rst
@@ -37,11 +39,11 @@ subtrees:
 
 - caption: Tutorials
   entries:
-  - file: tutorials/mivisionx-apps.rst     
+  - file: tutorials/mivisionx-apps.rst
     title: MIVisionX applications
-  - file: tutorials/mivisionx-samples.rst     
+  - file: tutorials/mivisionx-samples.rst
     title: MIVisionX samples documentation
-  - file: tutorials/mivisionx-tests.rst     
+  - file: tutorials/mivisionx-tests.rst
     title: MIVisionX tests
 
 - caption: About

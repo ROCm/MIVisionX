@@ -257,7 +257,7 @@ if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
             --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --backend_type GPU --hidden yes 
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
-    set_property(TEST openvx_gdf_tests_CPU PROPERTY ENVIRONMENT "PATH=$PATH:${ROCM_PATH}/bin")
+    set_property(TEST openvx_gdf_tests_GPU PROPERTY ENVIRONMENT "PATH=$PATH:${ROCM_PATH}/bin")
   endif(Python3_FOUND)
 
   # Neural Network tests

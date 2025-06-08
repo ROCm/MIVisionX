@@ -1,0 +1,6 @@
+# agoKernel_HistogramMerge_DATA_DATA
+
+data input_1 = distribution:2,0,512
+data input_2 = distribution:2,0,512
+data output_histogram_dist = distribution:2,0,1024
+node com.amd.openvx.HistogramMerge_DATA_DATA output_histogram_dist input_1 input_2

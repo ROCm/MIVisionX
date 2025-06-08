@@ -1,0 +1,10 @@
+# agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Max_Count_Max
+
+data inter_luma = image:1280,720,S016
+data output_minval = scalar:INT16,0
+data output_maxval = scalar:INT16,0
+data output_minloc = array:COORDINATES2D,1000
+data output_maxloc = array:COORDINATES2D,1000
+data output_mincount = scalar:UINT32,0
+data output_maxcount = scalar:UINT32,0
+node org.khronos.openvx.minmaxloc inter_luma output_minval output_maxval NULL output_maxloc NULL output_maxcount

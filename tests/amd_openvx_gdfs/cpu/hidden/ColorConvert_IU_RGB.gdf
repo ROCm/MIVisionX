@@ -1,0 +1,5 @@
+# agoKernel_ColorConvert_IU_RGB
+data output = image:960,540,U008
+data input = image:1920,1080,RGB2
+#node com.amd.openvx.ColorConvert_IU_RGB output input
+node org.khronos.openvx.color_convert input output

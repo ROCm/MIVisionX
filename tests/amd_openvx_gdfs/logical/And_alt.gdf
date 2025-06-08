@@ -1,0 +1,96 @@
+# create input and output images
+data input  = image:480,360,RGB2
+data output = image:480,360,U008
+
+# threshold objects
+data thr95  = threshold:BINARY,U008,U008:INIT,95 # threshold for computing R > 95
+data thr40  = threshold:BINARY,U008,U008:INIT,40 # threshold for computing G > 40
+data thr20  = threshold:BINARY,U008,U008:INIT,20 # threshold for computing B > 20
+data thr15  = threshold:BINARY,U008,U008:INIT,15 # threshold for computing R-G > 15
+data thr0   = threshold:BINARY,U008,U008:INIT,0  # threshold for computing R-B > 0
+
+# virtual image objects for intermediate results
+data R      = image-virtual:0,0,U008
+data G      = image-virtual:0,0,U008
+data B      = image-virtual:0,0,U008
+data RmG    = image-virtual:0,0,U008
+data RmB    = image-virtual:0,0,U008
+data R95    = image-virtual:0,0,U008
+data G40    = image-virtual:0,0,U008
+data B20    = image-virtual:0,0,U008
+data RmG15  = image-virtual:0,0,U008
+data RmB0   = image-virtual:0,0,U008
+data and1   = image-virtual:0,0,U008
+data and2   = image-virtual:0,0,U008
+data and3   = image-virtual:0,0,U008
+
+# extract R,G,B channels and compute R-G and R-B
+node org.khronos.openvx.channel_extract input !CHANNEL_R R # extract R channel
+node org.khronos.openvx.channel_extract input !CHANNEL_G G # extract G channel
+node org.khronos.openvx.channel_extract input !CHANNEL_B B # extract B channel
+node org.khronos.openvx.subtract R   G   !SATURATE RmG  # compute R-G
+node org.khronos.openvx.subtract R   B   !SATURATE RmB  # compute R-B
+
+# compute threshold
+node org.khronos.openvx.threshold R   thr95 R95         # compute R > 95
+node org.khronos.openvx.threshold G   thr40 G40         # compute G > 40
+node org.khronos.openvx.threshold B   thr20 B20         # compute B > 20
+node org.khronos.openvx.threshold RmG thr15 RmG15       # compute RmG > 15
+node org.khronos.openvx.threshold RmB thr0  RmB0        # compute RmB > 0
+
+data R9_N    = image-virtual:0,0,U008
+data and2_NOT   = image-virtual:0,0,U008
+data output_2 = image:480,360,U008
+data output_3 = image:480,360,U008
+data output_4 = image:480,360,U008
+data and_image = image:480,360,U008
+data G40_u8 = image:480,360,U008
+data and4   = image-virtual:0,0,U008
+data R9_NN   = image-virtual:0,0,U008
+data and_image_out = image:480,360,U008
+
+node org.khronos.openvx.not R95 R9_N
+node org.khronos.openvx.not R9_N R9_NN  
+node org.khronos.openvx.and R9_N G40 and1           # compute R95 & G40
+node org.khronos.openvx.and R9_NN G40_u8 and4       # compute R95 & G40
+node org.khronos.openvx.and and1 B20 and2           # compute B20 & and1
+node org.khronos.openvx.not and2 and2_NOT
+node org.khronos.openvx.and RmG15 RmB0 and3        # compute RmG15 & RmB0
+node org.khronos.openvx.and and4 and3 output        # compute and2 & and3 as output
+node org.khronos.openvx.and and2_NOT and_image output_2            # compute and2 & and3 as output
+node org.khronos.openvx.and and_image and2_NOT output_3           # compute and2 & and3 as output
+node org.khronos.openvx.and output_2 output_3 output_4           # compute and2 & and3 as output
+node org.khronos.openvx.and R9_N G40 and_image_out           # compute R95 & G40
+
+data R95_out = image:480,360,U008
+data G40_out = image:480,360,U008
+data and_u1_out   = image-virtual:0,0,U008
+data not_u1_out   = image-virtual:0,0,U008
+data or_image_out = image:480,360,U008
+node org.khronos.openvx.threshold R thr95 R95_out         # compute R > 95
+node org.khronos.openvx.threshold G thr40 G40_out         # compute G > 40
+node org.khronos.openvx.and R95_out G40_out and_u1_out    # compute R95 & G40
+node org.khronos.openvx.not and_u1_out not_u1_out
+node org.khronos.openvx.or and_u1_out and1 or_image_out
+
+data R_in_1 = image:480,360,U008
+data R_out_1 = image:480,360,U008
+data R_in_2 = image:480,360,U008
+data R_out_2 = image:480,360,U008
+data and_virt_1   = image-virtual:0,0,U008
+node org.khronos.openvx.threshold R_in_1 thr95 R_out_1
+node org.khronos.openvx.threshold R_in_2 thr95 R_out_2
+node org.khronos.openvx.and R_out_1 R_out_2 and_virt_1
+data R_in_3 = image:480,360,U008
+data R_out_3 = image:480,360,U008
+data R_in_4 = image:480,360,U008
+data R_out_4 = image:480,360,U008
+data and_virt_2   = image-virtual:0,0,U008
+node org.khronos.openvx.threshold R_in_3 thr95 R_out_3
+node org.khronos.openvx.threshold R_in_4 thr95 R_out_4
+node org.khronos.openvx.and R_out_3 R_out_4 and_virt_2
+
+data and_out_u8 = image:480,360,U008
+data not_out_u8 = image:480,360,U008
+node org.khronos.openvx.and and_virt_1 and_virt_2 and_out_u8
+node org.khronos.openvx.not and_out_u8 not_out_u8

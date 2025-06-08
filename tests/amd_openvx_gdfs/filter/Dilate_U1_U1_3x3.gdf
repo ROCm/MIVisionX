@@ -1,0 +1,4 @@
+# agoKernel_Dilate_U1_U1_3x3
+data input = image:1920,1080,U001
+data output = image:1920,1080,U001
+node com.amd.openvx.Dilate_U1_U1_3x3 output input

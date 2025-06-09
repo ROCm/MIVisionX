@@ -11,7 +11,7 @@ The sample demonstrates the use of mv_compile utility to do video decoding and i
 
 ## Prerequisites
 
-* Ubuntu `20.04`/`22.04` or CentOS `7`/`8`
+* Ubuntu `22.04`/`24.04` or CentOS `8`
 * [ROCm supported hardware](https://rocm.github.io/ROCmInstall.html#hardware-support) 
 	* AMD Radeon GPU or APU required
 * [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)

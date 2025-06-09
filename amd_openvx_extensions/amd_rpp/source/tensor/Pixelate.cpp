@@ -161,7 +161,9 @@ static vx_status VX_CALLBACK initializePixelate(vx_node node, const vx_reference
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
         hipHostMalloc(&data->interDstPtr, data->pSrcDesc->strides.nStride * data->pSrcDesc->n * sizeof(Rpp32f));
+#endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         data->interDstPtr = static_cast<Rpp32f *>(calloc(data->pSrcDesc->strides.nStride * data->pSrcDesc->n , sizeof(Rpp32f)));
     }
@@ -179,7 +181,9 @@ static vx_status VX_CALLBACK uninitializePixelate(vx_node node, const vx_referen
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         free(data->interDstPtr);
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
         hipHostFree(data->interDstPtr);
+#endif
     }
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;

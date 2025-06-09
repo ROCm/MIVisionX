@@ -180,12 +180,14 @@ static vx_status VX_CALLBACK initializeLensCorrection(vx_node node, const vx_ref
         data->pCameraMatrix = new vx_float32[data->pSrcDesc->n * 9];
         data->pDistortionCoeffs = new vx_float32[data->pSrcDesc->n * 8];
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
         hipMalloc(&data->d_pRowRemapTable, ioBufferSize * sizeof(Rpp32f));
         hipMalloc(&data->d_pColRemapTable, ioBufferSize * sizeof(Rpp32f));
         hipMemset(data->d_pRowRemapTable, 0, ioBufferSize * sizeof(Rpp32u));
         hipMemset(data->d_pColRemapTable, 0, ioBufferSize * sizeof(Rpp32u));
         hipHostMalloc(&data->pCameraMatrix, data->pSrcDesc->n * sizeof(vx_float32) * 9);
         hipHostMalloc(&data->pDistortionCoeffs, data->pSrcDesc->n * sizeof(vx_float32) * 8);
+#endif
     }
     refreshLensCorrection(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -205,10 +207,12 @@ static vx_status VX_CALLBACK uninitializeLensCorrection(vx_node node, const vx_r
         delete[] data->pCameraMatrix;
         delete[] data->pDistortionCoeffs;
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
         hipFree(data->d_pRowRemapTable);
         hipFree(data->d_pColRemapTable);
         hipHostFree(data->pCameraMatrix);
         hipHostFree(data->pDistortionCoeffs);
+#endif
     }
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;

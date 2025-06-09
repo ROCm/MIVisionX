@@ -1,0 +1,4 @@
+# agoKernel_Erode_U8_U1_3x3
+data input_1 = uniform-image:1920,1080,U001
+data output_1 = image:1920,1080,U008
+node com.amd.openvx.Erode_U8_U1_3x3 output_1 input_1

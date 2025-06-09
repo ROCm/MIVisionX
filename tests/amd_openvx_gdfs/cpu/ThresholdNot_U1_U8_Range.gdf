@@ -1,0 +1,7 @@
+# agoKernel_ThresholdNot_U1_U8_Range
+data input = image:480,360,U008
+data output = image:480,360,U001
+data value = threshold:RANGE,U008,U008:INIT,100,200
+node com.amd.openvx.ThresholdNot_U1_U8_Range output input value
+
+

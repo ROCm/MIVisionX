@@ -1,0 +1,13 @@
+# agoKernel_ScaleImage_U8_U8_Area_Constant
+data input_nearest = image:960,540,U008
+data output_nearest = image:1920,1080,U008
+
+data input = uniform-image:1920,1080,U008,125
+data output_replicate = image:960,540,U008
+data output_constant = image:960,540,U008
+
+node com.amd.openvx.ScaleImage_U8_U8_Area output_nearest input_nearest
+
+# NOT in flow - ago_haf_cpu_geometric.cpp 2 functions
+node com.amd.openvx.ScaleImage_U8_U8_Area_Constant output_constant input
+node com.amd.openvx.ScaleImage_U8_U8_Area_Replicate output_replicate input

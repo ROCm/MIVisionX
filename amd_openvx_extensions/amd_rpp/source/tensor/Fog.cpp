@@ -166,8 +166,10 @@ static vx_status VX_CALLBACK initializeFog(vx_node node, const vx_reference *par
         data->pIntensityFactor = new vx_float32[data->pSrcDesc->n];
         data->pGrayFactor = new vx_float32[data->pSrcDesc->n];
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
         hipHostMalloc(&data->pIntensityFactor, data->pSrcDesc->n * sizeof(vx_float32));
         hipHostMalloc(&data->pGrayFactor, data->pSrcDesc->n * sizeof(vx_float32));
+#endif
     }
     refreshFog(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -182,8 +184,10 @@ static vx_status VX_CALLBACK uninitializeFog(vx_node node, const vx_reference *p
         delete[] data->pIntensityFactor;
         delete[] data->pGrayFactor;
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
         hipHostFree(data->pIntensityFactor);
         hipHostFree(data->pGrayFactor);
+#endif
     }
     delete data->pSrcDesc;
     delete data->pDstDesc;

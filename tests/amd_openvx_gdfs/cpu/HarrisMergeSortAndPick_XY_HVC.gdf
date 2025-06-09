@@ -1,0 +1,7 @@
+# agoKernel_HarrisMergeSortAndPick_XY_HVC
+data input_min_distance = scalar:FLOAT32,20.0
+data input = image:1920,1080,F032
+data output_1 = array:KEYPOINT,1000
+data output_2 = scalar:SIZE,0
+
+node com.amd.openvx.HarrisMergeSortAndPick_XY_HVC output_1 output_2 input input_min_distance

@@ -1,0 +1,14 @@
+# agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Min_Count_MinMax
+#data input = image:480,360,U008
+#data output_maxcount = scalar:UINT32,0
+#node com.amd.openvx.MinMaxLoc_DATA_U8DATA_Loc_Min_Count_MinMax output_maxcount input
+
+data inter_luma = image:1280,720,U008
+data output_minval = scalar:UINT8,0
+data output_maxval = scalar:UINT8,0
+data output_minloc = array:COORDINATES2D,1000
+data output_maxloc = array:COORDINATES2D,1000
+data output_mincount = scalar:UINT32,0
+data output_maxcount = scalar:UINT32,0
+node org.khronos.openvx.minmaxloc inter_luma output_minval output_maxval output_minloc NULL output_mincount output_maxcount
+#node org.khronos.openvx.minmaxloc inter_luma output_minval output_maxval output_minloc output_maxloc output_mincount output_maxcount

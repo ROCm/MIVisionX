@@ -391,13 +391,13 @@ openvxNodes = [
     # ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
     # vision kernels
     ('FastCorners_XY_U8_NoSupression',            'org.khronos.openvx.fast_corners uniform-image:' + str(width) + ',' + str(height) + \
-     ',U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
+    ',U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
     ('FastCorners_XY_U8_Supression',              'org.khronos.openvx.fast_corners uniform-image:' + str(width) + ',' + str(height) + \
-     ',U008 scalar:FLOAT32,80.0 scalar:BOOL,0 array:KEYPOINT,1000 scalar:SIZE,0'),
+    ',U008 scalar:FLOAT32,80.0 scalar:BOOL,0 array:KEYPOINT,1000 scalar:SIZE,0'),
     ('Canny_3x3_L1Norm',                          'org.khronos.openvx.canny_edge_detector uniform-image:' + str(width) + ',' + str(height) + \
-     ',U008,0xab threshold:RANGE,U008,U008:INIT,80,100 scalar:INT32,3 !NORM_L1 image:' + str(width) + ',' + str(height) + ',U008'),
+    ',U008,0xab threshold:RANGE,U008,U008:INIT,80,100 scalar:INT32,3 !NORM_L1 image:' + str(width) + ',' + str(height) + ',U008'),
     ('Canny_3x3_L2Norm',                          'org.khronos.openvx.canny_edge_detector uniform-image:' + str(width) + ',' + str(height) + \
-     ',U008,0xab threshold:RANGE,U008,U008:INIT,80,100 scalar:INT32,3 !NORM_L2 image:' + str(width) + ',' + str(height) + ',U008'),
+    ',U008,0xab threshold:RANGE,U008,U008:INIT,80,100 scalar:INT32,3 !NORM_L2 image:' + str(width) + ',' + str(height) + ',U008'),
 ]
 
 #  Popular Video Sizes
@@ -439,15 +439,12 @@ if backendType not in ('CPU', 'HIP', 'OCL'):
 if profilingOption not in ('no', 'yes'):
     print("ERROR: Profiling options supported - [no or yes]")
     exit()
-
 if perfCounters not in ('no', 'yes'):
     print("ERROR: perf_counters options supported - [no or yes]")
     exit()
-
 if profilingOption == "no" and perfCounters == "yes":
     print("ERROR: To collect Performance counters both profiling and perfCounters must be yes")
     exit()
-
 if not 0 <= testFilter <= len(openvxNodes):
     print(
         "\nERROR: Vision Performance Filter not in range - [1 - %d]\n" % (len(openvxNodes)))
@@ -455,11 +452,9 @@ if not 0 <= testFilter <= len(openvxNodes):
 if not 1 <= numFrames <= 10000:
     print("\nERROR: Vision Test Number of Frames not in range - [1 - 10000]\n")
     exit()
-
 if not 1 <= width <= 7680:
     print("\nERROR: image width not in range - [1 - 7680]\n")
     exit()
-
 if not 1 <= height <= 7680:
     print("\nERROR: image width not in range - [1 - 7680]\n")
     exit()
@@ -507,20 +502,15 @@ else:
 cwd = os.getcwd()
 
 # OpenVX Vision Functionality Tests
-
 if testFilter == 0 and functionalityTests == 'yes':
-    # create directory to store vision accurarcy test results
-    os.system('(cd '+scriptPath+'/gdfs; mkdir -p openvx_test_results)')
     print("\nrunVisionTests - OpenVX Vision Functionality Tests\n")
     for i in range(len(visionTestConfig)):
         testFileName = visionTestConfig[i]
         print("Running Test Script: "+testFileName)
         os.system('echo '+testFileName)
         os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-                  hardwareMode+' -dump-profile file '+scriptPath+'/gdfs/'+testFileName+' | tee -a '+scriptPath+'/gdfs/openvx_test_results/VisionOutput.log')
+                hardwareMode+' -dump-profile file '+scriptPath+'/gdfs/'+testFileName)
         print("\n")
-    print("\nSTATUS: Vision Accuracy Results - " +
-          scriptPath+"/gdfs/openvx_test_results\n")
 
 # OpenVX Performance Tests
 print("\nrunVisionTests - OpenVX Node Performance\n")
@@ -543,7 +533,7 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
-                  ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
         if perfCounters == "yes":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
@@ -585,7 +575,7 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
 
     new_file.close()
     os.system('chown $USER:$USER '+RESULTS_DIR +
-              '/consolidated_results.stats.csv')
+            '/consolidated_results.stats.csv')
 
     try:
         import pandas as pd
@@ -607,7 +597,7 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
-                  ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
         if perfCounters == "yes":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
@@ -648,7 +638,7 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
 
     new_file.close()
     os.system('chown $USER:$USER '+RESULTS_DIR +
-              '/consolidated_results.stats.csv')
+            '/consolidated_results.stats.csv')
 
     try:
         import pandas as pd
@@ -689,11 +679,11 @@ else:
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
-                  ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-              hardwareMode+' -dump-profile node '+nodeFormat)
+            hardwareMode+' -dump-profile node '+nodeFormat)
         os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode +
-                  ' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
+                ' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print("\n")
     orig_stdout = sys.stdout
     sys.stdout = open('openvx_node_results/nodePerformance.md', 'a')

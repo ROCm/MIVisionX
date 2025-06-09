@@ -69,6 +69,8 @@ def install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, pa
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
                     help='Setup home directory - optional (default:~/)')
+parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
+                    help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
 parser.add_argument('--opencv',    	type=str, default='4.6.0',
                     help='OpenCV Version - optional (default for non Ubuntu OS:4.6.0)')
 parser.add_argument('--ffmpeg',    	type=str, default='OFF',
@@ -77,16 +79,12 @@ parser.add_argument('--neural_net',	type=str, default='ON',
                     help='MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]')
 parser.add_argument('--inference',	type=str, default='ON',
                     help='MIVisionX Neural Net Inference Dependency Install - optional (default:ON) [options:ON/OFF]')
-parser.add_argument('--amd_rpp',	 	type=str, default='ON',
-                    help='MIVisionX amd_rpp Dependency Install - optional (default:ON) [options:ON/OFF]')
 parser.add_argument('--developer', 	type=str, default='OFF',
                     help='Setup Developer Options - optional (default:OFF) [options:ON/OFF]')
 parser.add_argument('--reinstall', 	type=str, default='OFF',
                     help='Remove previous setup and reinstall - optional (default:OFF) [options:ON/OFF]')
 parser.add_argument('--backend', 	type=str, default='HIP',
                     help='MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/CPU/OCL]')
-parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
-                    help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
 args = parser.parse_args()
 
 setupDir = args.directory
@@ -94,7 +92,6 @@ opencvVersion = args.opencv
 ffmpegInstall = args.ffmpeg.upper()
 neuralNetInstall = args.neural_net.upper()
 inferenceInstall = args.inference.upper()
-amdRPPInstall = args.amd_rpp.upper()
 developerInstall = args.developer.upper()
 reinstall = args.reinstall.upper()
 backend = args.backend.upper()
@@ -139,12 +136,12 @@ if backend not in ('OCL', 'HIP', 'CPU'):
 # override default path if env path set 
 if "ROCM_PATH" in os.environ:
     ROCM_PATH = os.environ.get('ROCM_PATH')
-info("\nROCm PATH set to -- "+ROCM_PATH+"\n")
+info("ROCm PATH set to -- "+ROCM_PATH+"\n")
 
 
 # check ROCm installation
 if os.path.exists(ROCM_PATH) and backend != 'CPU':
-    info("\nROCm Installation Found -- "+ROCM_PATH+"\n")
+    info("ROCm Installation Found -- "+ROCM_PATH+"\n")
     os.system('echo ROCm Info -- && '+ROCM_PATH+'/bin/rocminfo')
 else:
     if backend != 'CPU':
@@ -154,7 +151,7 @@ else:
         warn("WARNING: Limited dependencies will be installed\n")
         backend = 'CPU'
     else:
-        info("\nSTATUS: CPU Backend Install\n")
+        info("STATUS: CPU Backend Install\n")
     neuralNetInstall = 'OFF'
     inferenceInstall = 'OFF'
 
@@ -230,8 +227,8 @@ elif "Mariner" in os_info_data:
     platformInfo = platformInfo+'-mariner'
     osUpdate = 'makecache'
 else:
-    error("\nMIVisionX Setup on "+platformInfo+" is unsupported\n")
-    error("\nMIVisionX Setup Supported on: Ubuntu 22/24, RedHat 8/9, & SLES 15\n")
+    error("MIVisionX Setup on "+platformInfo+" is unsupported\n")
+    error("MIVisionX Setup Supported on: Ubuntu 22/24, RedHat 8/9, & SLES 15\n")
     exit(-1)
 
 # MIVisionX Setup
@@ -247,10 +244,10 @@ if reinstall == 'ON':
     ERROR_CHECK(os.system(sudoValidate))
     if os.path.exists(deps_dir):
         ERROR_CHECK(os.system('sudo rm -rf '+deps_dir))
-        info("\nMIVisionX Setup: Removing Previous Install -- "+deps_dir+"\n")
+        info("MIVisionX Setup: Removing Previous Install -- "+deps_dir+"\n")
     if os.path.exists(modelCompilerDeps):
         ERROR_CHECK(os.system('sudo rm -rf '+modelCompilerDeps))
-        info("\nMIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
+        info("MIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
 
 # common packages
 coreCommonPackages = [
@@ -408,7 +405,7 @@ if backend == 'HIP':
     else:
         install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, rppRPMPackages)
         
-    if(("Mariner" not in platformInfo) and ("ubuntu" not in platformInfo)):
+    if(("mariner" not in platformInfo) and ("ubuntu" not in platformInfo)):
         install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, rocdecodeRPMPackages)
 
 # Install OpenCL ICD Loader
@@ -426,10 +423,10 @@ if ffmpegInstall == 'ON':
         install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, ffmpegDebianPackages)
 
 if os.path.exists(deps_dir):
-    info("\nMIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
+    info("MIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
 # Clean Install
 else:
-    info("\nMIVisionX Dependencies Clean Installation with MIVisionX-setup.py V-"+__version__+"\n")
+    info("MIVisionX Dependencies Clean Installation with MIVisionX-setup.py V-"+__version__+"\n")
     ERROR_CHECK(os.system(sudoValidate))
     # Create deps & build folder
     ERROR_CHECK(os.system('mkdir '+deps_dir))
@@ -439,7 +436,7 @@ else:
         if not os.path.exists(modelCompilerDeps):
             info("STATUS: Model Compiler Deps Install - " +modelCompilerDeps+"\n")
             os.makedirs(modelCompilerDeps)
-            if "SLES" in platformInfo or "Mariner" in platformInfo or "redhat-8" in platformInfo:
+            if "sles" in platformInfo or "mariner" in platformInfo or "centos-8" in platformInfo:
                 ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
                 ERROR_CHECK(os.system(
                         '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
@@ -448,11 +445,11 @@ else:
                 ERROR_CHECK(os.system(
                         '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
     else:
-        info("\nSTATUS: MIVisionX Setup: Neural Network only supported with HIP backend and NN turned ON\n")
+        info("STATUS: MIVisionX Setup: Neural Network only supported with HIP backend and NN turned ON\n")
 
     # Install ffmpeg
     if ffmpegInstall == 'ON':
-        if "centos-8" in platformInfo or "redhat-8" in platformInfo:
+        if "centos-8" in platformInfo:
             # el8 x86_64 packages
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                         ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm'))
@@ -462,7 +459,7 @@ else:
                         ' install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                         ' install ffmpeg ffmpeg-devel'))
-        elif "centos-9" in platformInfo or "redhat-9" in platformInfo:
+        elif "centos-9" in platformInfo:
             # el9 x86_64 packages
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm'))
@@ -474,7 +471,7 @@ else:
                 ' install https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm'))
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install ffmpeg ffmpeg-free-devel'))
-        elif "SLES" in platformInfo:
+        elif "sles" in platformInfo:
             # FFMPEG-4 packages
             ERROR_CHECK(os.system(
                     'sudo zypper ar -cfp 90 \'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_$releasever/Essentials\' packman-essentials'))
@@ -485,12 +482,12 @@ else:
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build; mkdir OpenCV )'))
     # Install
     if "ubuntu" in platformInfo:
-        info("\nSTATUS: MIVisionX Setup: OpenCV Package install supported for Ubuntu\n")
+        info("STATUS: MIVisionX Setup: OpenCV Package install supported for Ubuntu\n")
     else:
-        if "centos" in platformInfo or "redhat" in platformInfo:
+        if "centos" in platformInfo:
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' groupinstall \'Development Tools\''))
-        elif "SLES" in platformInfo:
+        elif "sles" in platformInfo:
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                 ' install -t pattern devel_basis'))
 

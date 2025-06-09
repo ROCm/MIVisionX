@@ -184,7 +184,6 @@ For your convenience, we provide the setup script, `MIVisionX-setup.py`, which i
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --opencv    [OpenCV Version - optional (default for non Ubuntu:4.6.0)]
                             --ffmpeg    [FFMPEG Installation - optional (default:ON) [options:ON/OFF]]
-                            --amd_rpp   [MIVisionX VX RPP Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --neural_net[MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --inference [MIVisionX Inference Dependency Install - optional (default:ON) [options:ON/OFF]]
                             --developer [Setup Developer Options - optional (default:OFF) [options:ON/OFF]]

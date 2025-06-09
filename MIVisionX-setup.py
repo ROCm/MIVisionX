@@ -113,11 +113,6 @@ if inferenceInstall not in ('OFF', 'ON'):
         "ERROR: Inference Install Option Not Supported - [Supported Options: OFF or ON]\n")
     parser.print_help()
     exit(-1)
-if amdRPPInstall not in ('OFF', 'ON'):
-    error(
-        "ERROR: Neural Net Install Option Not Supported - [Supported Options: OFF or ON]\n")
-    parser.print_help()
-    exit(-1)
 if developerInstall not in ('OFF', 'ON'):
     error(
         "ERROR: Developer Option Not Supported - [Supported Options: OFF or ON]\n")

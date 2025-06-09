@@ -4,21 +4,21 @@
 
 The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
-##  (unreleased) MIVisionX 3.2.0
+## MIVisionX 3.2.0 for ROCm 7.0.0
 
 ### Changed
 
 * Setup: OpenCV package install for Ubuntu
 * AMD Clang is now the default CXX and C compiler
 * The version of OpenMP included in the ROCm LLVM project is now used instead of `libomp-dev/devel`
-* VX_RPP extension : Update to version 3.1.0
+* VX_RPP extension : Version 2.0.0 release
 * Add support to enable/disable BatchPD code in VX_RPP extensions by checking the RPP_LEGACY_SUPPORT flag.
 * Update parameters and kernel API of Blur, Fog, Jitter, LensCorrection, Rain, Pixelate, Vignette and ResizeCrop wrt tensor kernels replacing the legacy BatchPD API calls in VX_RPP extensions.
+* Setup script for developers - Upgrades and bugfix
 
 ### Known issues
 
 * Installation on CentOS/RedHat/SLES requires the manual installation of the `FFMPEG` & `OpenCV` dev packages.
-* Hardware decode requires the ROCm `graphics` usecase.
 
 ### Upcoming changes
 

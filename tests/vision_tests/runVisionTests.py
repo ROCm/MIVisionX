@@ -713,7 +713,7 @@ else:
             platform_name = platform_name+'-SLES'
     else:
         print("\nMIVisionX Vision Test on "+platform_name+" is unsupported")
-        print("MIVisionX Vision Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+        print("MIVisionX Vision Test Supported on: Ubuntu 22/24; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
         print("\nMIVisionX Vision Test on "+platform_name+" is unreliable")
 
     platform_name_fq = shell('hostname --all-fqdns')

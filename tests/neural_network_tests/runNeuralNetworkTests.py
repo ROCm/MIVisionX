@@ -345,7 +345,7 @@ if not os.path.exists(modelCompilerDeps):
         platformInfo = platformInfo+'-Mariner'
     else:
         print("\nMIVisionX runNeuralNetworkTests.py on "+platformInfo+" is unsupported\n")
-        print("\nMIVisionX Setup Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP5\n")
+        print("\nMIVisionX Setup Supported on: Ubuntu 22/24; CentOS 7/8; RedHat 8/9; & SLES 15 SP5\n")
         exit()
 
     if userName == 'root':
@@ -897,7 +897,7 @@ elif os.path.exists('/usr/bin/zypper'):
         platform_name = platform_name+'-SLES'
 else:
     print("\nMIVisionX Neural Network Test on "+platform_name+" is unsupported")
-    print("MIVisionX Neural Network Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+    print("MIVisionX Neural Network Test Supported on: Ubuntu 22/24; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
     print("\nMIVisionX Neural Network Test on "+platform_name+" is unreliable")
 
 platform_name_fq = shell('hostname --all-fqdns')

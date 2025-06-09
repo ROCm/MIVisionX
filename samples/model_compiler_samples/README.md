@@ -40,13 +40,12 @@ MIVisionX provides developers with docker images for Ubuntu `20.04` / `22.04`. U
 Docker files to build MIVisionX containers are [available](docker#mivisionx-docker)
 
 ### MIVisionX Docker
-* [Ubuntu 20.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-20.04)
 * [Ubuntu 22.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-22.04)
 
 ### Docker Workflow on Ubuntu `20.04`/`22.04`
 
 #### Prerequisites
-* Ubuntu `20.04`/`22.04`
+* Ubuntu `22.04`
 * [ROCm supported hardware](https://docs.amd.com)
 * [ROCm](https://docs.amd.com)
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)

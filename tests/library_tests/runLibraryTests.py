@@ -77,7 +77,7 @@ platform_name = platform.platform()
 
 if os.path.exists('/usr/bin/yum'):
     if "centos" not in platform_name or "redhat" not in platform_name:
-        platfromInfo = platform_name+'-CentOS-RedHat'
+        platformInfo = platform_name+'-CentOS-RedHat'
 elif os.path.exists('/usr/bin/apt-get'):
     if "Ubuntu" not in platform_name:
         platform_name = platform_name+'-Ubuntu'
@@ -92,7 +92,7 @@ else:
 # TBD - Install inxi package
 
 print("\nMIVisionX Library Test V:"+__version__ +
-      " on "+platform_name+" is supported")
+    " on "+platform_name+" is supported")
 
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space

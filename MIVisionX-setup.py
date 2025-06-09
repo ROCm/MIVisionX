@@ -287,7 +287,7 @@ pipGoogleVersion = "google~=3.0.0"
 pipNNEFVersion = "nnef~=1.0.7"
 
 # Debian pip3 packages
-if "VERSION_ID=24" in os_info_data:
+if "ubuntu-24" in platformInfo:
     pipNumpyVersion = "numpy~=2.0.0"
     pipONNXVersion = "onnx~=1.16.0"
     pipProtoVersion= "protobuf~=3.20.2"
@@ -304,13 +304,13 @@ pip3InferencePackagesDebian = [
 
 # RPM pip3 packages
 pipONNXversion = "onnx~=1.11.0"
-if "VERSION_ID=8" in os_info_data:
+if "centos-8" in platformInfo:
     pipNumpyVersion = "numpy==1.19.5"
-    pipNNEFversion = "protobuf==3.12.4" # TBD: NO NNEF Package for RHEL 8
-if "NAME=SLES" in os_info_data:
+    pipNNEFVersion = "numpy==1.19.5" # TBD: NO NNEF Package for RHEL 8
+if "sles" in platformInfo:
     pipNumpyVersion = "numpy==1.19.5"
     pipProtoVersion= "protobuf==3.19.5"
-    pipNNEFversion = "protobuf==3.19.5" # TBD: NO NNEF Package for SLES
+    pipNNEFVersion = "numpy==1.19.5" # TBD: NO NNEF Package for SLES
 
 pip3InferencePackagesRPM = [
     str(pipFutureVersion),

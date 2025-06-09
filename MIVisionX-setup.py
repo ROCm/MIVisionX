@@ -73,8 +73,6 @@ parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
                     help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
 parser.add_argument('--opencv',    	type=str, default='4.6.0',
                     help='OpenCV Version - optional (default for non Ubuntu OS:4.6.0)')
-parser.add_argument('--ffmpeg',    	type=str, default='OFF',
-                    help='FFMPEG Installation - optional (default:OFF) [options:ON/OFF]')
 parser.add_argument('--neural_net',	type=str, default='ON',
                     help='MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]')
 parser.add_argument('--inference',	type=str, default='ON',
@@ -89,7 +87,6 @@ args = parser.parse_args()
 
 setupDir = args.directory
 opencvVersion = args.opencv
-ffmpegInstall = args.ffmpeg.upper()
 neuralNetInstall = args.neural_net.upper()
 inferenceInstall = args.inference.upper()
 developerInstall = args.developer.upper()
@@ -98,11 +95,6 @@ backend = args.backend.upper()
 ROCM_PATH = args.rocm_path
 
 # check inputs
-if ffmpegInstall not in ('OFF', 'ON'):
-    error(
-        "ERROR: FFMPEG Install Option Not Supported - [Supported Options: OFF or ON]\n")
-    parser.print_help()
-    exit(-1)
 if neuralNetInstall not in ('OFF', 'ON'):
     error(
         "ERROR: Neural Net Install Option Not Supported - [Supported Options: OFF or ON]\n")
@@ -322,13 +314,6 @@ pip3InferencePackagesRPM = [
     str(pipNNEFVersion)
 ]
 
-ffmpegDebianPackages = [
-    'libavcodec-dev',
-    'libavformat-dev',
-    'libavutil-dev',
-    'libswscale-dev'
-]
-
 rppDebianPackages = [
     'rpp',
     'rpp-dev'
@@ -410,12 +395,9 @@ if backend == 'OCL':
     else:
         install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, openclRPMPackages)
 
-# FFMPEG & OpenCV
+# OpenCV
 if "ubuntu" in platformInfo:
     install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, opencvDebianPackages)
-if ffmpegInstall == 'ON':
-    if "ubuntu" in platformInfo:
-        install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, ffmpegDebianPackages)
 
 if os.path.exists(deps_dir):
     info("MIVisionX Setup: Re-Installing Libraries from -- "+deps_dir+"\n")
@@ -441,37 +423,6 @@ else:
                         '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
     else:
         info("STATUS: MIVisionX Setup: Neural Network only supported with HIP backend and NN turned ON\n")
-
-    # Install ffmpeg
-    if ffmpegInstall == 'ON':
-        if "centos-8" in platformInfo:
-            # el8 x86_64 packages
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                        ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm'))
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                        ' install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm'))
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                        ' install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm'))
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                        ' install ffmpeg ffmpeg-devel'))
-        elif "centos-9" in platformInfo:
-            # el9 x86_64 packages
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm'))
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm'))
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm'))
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm'))
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                ' install ffmpeg ffmpeg-free-devel'))
-        elif "sles" in platformInfo:
-            # FFMPEG-4 packages
-            ERROR_CHECK(os.system(
-                    'sudo zypper ar -cfp 90 \'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_$releasever/Essentials\' packman-essentials'))
-            ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
-                    ' install ffmpeg-4'))
 
     # Install OpenCV -- TBD cleanup
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build; mkdir OpenCV )'))

@@ -161,7 +161,9 @@ static vx_status VX_CALLBACK initializeVignette(vx_node node, const vx_reference
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
         hipHostMalloc(&data->pStdDev, data->pSrcDesc->n * sizeof(float));
+#endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         data->pStdDev = new float[data->pSrcDesc->n];
     }
@@ -177,7 +179,9 @@ static vx_status VX_CALLBACK uninitializeVignette(vx_node node, const vx_referen
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         delete[] data->pStdDev;
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
         hipHostFree(data->pStdDev);
+#endif
     }
     delete data->pSrcDesc;
     delete data->pDstDesc;

@@ -150,7 +150,7 @@ backendType = args.backend_type
 installDir = args.install_directory
 reinstall = args.reinstall.upper()
 
-platfromInfo = platform.platform()
+platformInfo = platform.platform()
 
 returnStatus = 0
 
@@ -208,7 +208,7 @@ modelCompilerDir = os.path.expanduser(
 pythonScript = modelCompilerDir+'/caffe_to_nnir.py'
 modelCompilerScript = os.path.abspath(pythonScript)
 if (os.path.isfile(modelCompilerScript)):
-    print("\nMIVisionX Neural Net Tests on "+platfromInfo+"\n")
+    print("\nMIVisionX Neural Net Tests on "+platformInfo+"\n")
     print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir+"\n")
 else:
     print("ERROR: Model Compiler Scripts Not Found at - "+modelCompilerDir)
@@ -239,43 +239,49 @@ inferenceRPMPackages = [
     'python3-pip'
 ]
 
-# Debian based
-pipNumpyVersion = "numpy==1.23.0"
-pipProtoVersion= "protobuf==3.12.4"
-pipONNXVersion = "onnx==1.12.0"
+# pip3 versions
+pipNumpyVersion = "numpy~=1.23.0"
+pipProtoVersion= "protobuf~=3.12.4"
+pipONNXVersion = "onnx~=1.12.0"
+pipFutureVersion = "future~=1.0.0"
+pipPytzVersion = "pytz~=2022.1"
+pipGoogleVersion = "google~=3.0.0"
+pipNNEFVersion = "nnef~=1.0.7"
+
+# Debian pip3 packages
 if "VERSION_ID=24" in os_info_data:
-    pipNumpyVersion = "numpy==2.0.0"
-    pipONNXVersion = "onnx==1.16.0"
-    pipProtoVersion= "protobuf==3.20.2"
-pip3InferencePackagesUbuntu = [
-    'future==1.0.0',
-    'pytz==2022.1',
-    'google==3.0.0',
+    pipNumpyVersion = "numpy~=2.0.0"
+    pipONNXVersion = "onnx~=1.16.0"
+    pipProtoVersion= "protobuf~=3.20.2"
+
+pip3InferencePackagesDebian = [
+    str(pipFutureVersion),
+    str(pipPytzVersion),
+    str(pipGoogleVersion),
     str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXVersion),
-    'nnef==1.0.7'
+    str(pipNNEFVersion)
 ]
 
-# RPM based
-pipONNXversion = "onnx==1.11.0"
-pipNNEFversion = "nnef==1.0.7"
-if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
+# RPM pip3 packages
+pipONNXversion = "onnx~=1.11.0"
+if "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
-    pipNNEFversion = "protobuf==3.12.4" # TBD: NO NNEF Package for SLES
+    pipNNEFversion = "protobuf==3.12.4" # TBD: NO NNEF Package for RHEL 8
 if "NAME=SLES" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
     pipProtoVersion= "protobuf==3.19.5"
     pipNNEFversion = "protobuf==3.19.5" # TBD: NO NNEF Package for SLES
 
 pip3InferencePackagesRPM = [
-    'future==0.18.2',
-    'pytz==2022.1',
-    'google==3.0.0',
+    str(pipFutureVersion),
+    str(pipPytzVersion),
+    str(pipGoogleVersion),
     str(pipNumpyVersion),
     str(pipProtoVersion),
-    str(pipONNXversion),
-    str(pipNNEFversion)
+    str(pipONNXVersion),
+    str(pipNNEFVersion)
 ]
 
 # Delete previous install
@@ -310,36 +316,36 @@ if not os.path.exists(modelCompilerDeps):
         if "VERSION_ID=7" in os_info_data:
             linuxCMake = 'cmake3'
             sudoValidate = 'sudo -k'
-            platfromInfo = platfromInfo+'-redhat-7'
+            platformInfo = platformInfo+'-redhat-7'
         elif "VERSION_ID=8" in os_info_data:
-            platfromInfo = platfromInfo+'-redhat-8'
+            platformInfo = platformInfo+'-redhat-8'
         elif "VERSION_ID=9" in os_info_data:
-            platfromInfo = platfromInfo+'-redhat-9'
+            platformInfo = platformInfo+'-redhat-9'
         else:
-            platfromInfo = platfromInfo+'-redhat-centos-undefined-version'
+            platformInfo = platformInfo+'-redhat-centos-undefined-version'
     elif "Ubuntu" in os_info_data:
         linuxSystemInstall = 'apt-get -y'
         linuxSystemInstall_check = '--allow-unauthenticated'
         linuxFlag = '-S'
         if "VERSION_ID=20" in os_info_data:
-            platfromInfo = platfromInfo+'-Ubuntu-20'
+            platformInfo = platformInfo+'-Ubuntu-20'
         elif "VERSION_ID=22" in os_info_data:
-            platfromInfo = platfromInfo+'-Ubuntu-22'
+            platformInfo = platformInfo+'-Ubuntu-22'
         elif "VERSION_ID=24" in os_info_data:
-            platfromInfo = platfromInfo+'-Ubuntu-24'
+            platformInfo = platformInfo+'-Ubuntu-24'
         else:
-            platfromInfo = platfromInfo+'-Ubuntu-undefined-version'
+            platformInfo = platformInfo+'-Ubuntu-undefined-version'
     elif "SLES" in os_info_data:
         linuxSystemInstall = 'zypper -n'
         linuxSystemInstall_check = '--no-gpg-checks'
-        platfromInfo = platfromInfo+'-SLES'
+        platformInfo = platformInfo+'-SLES'
     elif "Mariner" in os_info_data:
         linuxSystemInstall = 'tdnf -y'
         linuxSystemInstall_check = '--nogpgcheck'
-        platfromInfo = platfromInfo+'-Mariner'
+        platformInfo = platformInfo+'-Mariner'
     else:
-        print("\nMIVisionX runNeuralNetworkTests.py on "+platfromInfo+" is unsupported\n")
-        print("\nMIVisionX Setup Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP5\n")
+        print("\nMIVisionX runNeuralNetworkTests.py on "+platformInfo+" is unsupported\n")
+        print("\nMIVisionX Setup Supported on: Ubuntu 22/24; CentOS 7/8; RedHat 8/9; & SLES 15 SP5\n")
         exit()
 
     if userName == 'root':
@@ -348,19 +354,19 @@ if not os.path.exists(modelCompilerDeps):
 
     os.makedirs(modelCompilerDeps)
     os.system('sudo -v')
-    if "Ubuntu" in platfromInfo:
+    if "Ubuntu" in platformInfo:
         for i in range(len(inferenceDebianPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]))
-        for i in range(len(pip3InferencePackagesUbuntu)):
-                            ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesUbuntu[i]))
+        for i in range(len(pip3InferencePackagesDebian)):
+                            ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesDebian[i]))
     else:
         for i in range(len(inferenceRPMPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
         for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-        if "SLES" in platfromInfo or "Mariner" in platfromInfo or "redhat-8" in platfromInfo:
+        if "SLES" in platformInfo or "Mariner" in platformInfo or "redhat-8" in platformInfo:
             ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
             ERROR_CHECK(os.system(
                 '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
@@ -370,7 +376,7 @@ if not os.path.exists(modelCompilerDeps):
                 '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
-    if "centos-7" in platfromInfo:
+    if "centos-7" in platformInfo:
         linuxCMake = 'cmake3'
 
 currentWorkingDirectory = os.getcwd()
@@ -882,7 +888,7 @@ if profileMode == 0 or profileMode == 9:
 platform_name = platform.platform()
 if os.path.exists('/usr/bin/yum'):
     if "centos" not in platform_name or "redhat" not in platform_name:
-        platfromInfo = platform_name+'-CentOS-RedHat'
+        platformInfo = platform_name+'-CentOS-RedHat'
 elif os.path.exists('/usr/bin/apt-get'):
     if "Ubuntu" not in platform_name:
         platform_name = platform_name+'-Ubuntu'
@@ -891,7 +897,7 @@ elif os.path.exists('/usr/bin/zypper'):
         platform_name = platform_name+'-SLES'
 else:
     print("\nMIVisionX Neural Network Test on "+platform_name+" is unsupported")
-    print("MIVisionX Neural Network Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+    print("MIVisionX Neural Network Test Supported on: Ubuntu 22/24; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
     print("\nMIVisionX Neural Network Test on "+platform_name+" is unreliable")
 
 platform_name_fq = shell('hostname --all-fqdns')

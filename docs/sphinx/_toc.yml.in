@@ -8,12 +8,16 @@ subtrees:
 
 - caption: Install
   entries:
-  - file: install/installation.rst
-    title: Installation
-  - file: install/amd_openvx-install.rst
-    title: AMD OpenVX Installation
-  - file: install/model-compiler-install.rst
-    title: Model Compiler Installation
+  - file: install/MIVisionX-prerequisites.rst
+    title: MIVisionX prerequisites
+  - file: install/MIVisionX-linux-build-and-install.rst
+    title: Build and install MIVisionX on Linux
+  - file: install/MIVisionX-package-install.rst
+    title: Install MIVisionX on Linux  
+  - file: install/MIVisionX-windows-install.rst
+    title: Install MIVisionX on Windows  
+  - file: install/MIVisionX-macOS-install.rst
+    title: Install MIVisionX on macOS
 
 - caption: How to
   entries:

@@ -77,8 +77,8 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *param
         status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
         refreshCopy(node, parameters, num, data);
-        hipMemcpyAsync(data->pDst, data->pSrc, data->tensorSize, hipMemcpyDeviceToDevice, data->handle.hipstream);
-        hipStreamSynchronize(data->handle.hipstream);
+        CHECK_HIP_RETURN_STATUS(hipMemcpyAsync(data->pDst, data->pSrc, data->tensorSize, hipMemcpyDeviceToDevice, data->handle.hipstream));
+        CHECK_HIP_RETURN_STATUS(hipStreamSynchronize(data->handle.hipstream));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         refreshCopy(node, parameters, num, data);

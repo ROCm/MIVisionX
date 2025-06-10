@@ -195,7 +195,7 @@ static vx_status VX_CALLBACK initializeResizeMirrorNormalize(vx_node node, const
     data->pStdDev = new vx_float32[data->pSrcDesc->n * data->pSrcDesc->c];
     data->pMirror = new vx_uint32[data->pSrcDesc->n];
 #if ENABLE_HIP
-    hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch));
+    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch)));
 #else
     data->pDstImgSize = new RpptImagePatch[data->pSrcDesc->n];
 #endif    
@@ -215,7 +215,7 @@ static vx_status VX_CALLBACK uninitializeResizeMirrorNormalize(vx_node node, con
     delete[] data->pStdDev;
     delete[] data->pMirror;
 #if ENABLE_HIP
-    if (data->pDstImgSize != nullptr) hipHostFree(data->pDstImgSize);
+    if (data->pDstImgSize != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
 #else
     delete[] data->pDstImgSize;
 #endif

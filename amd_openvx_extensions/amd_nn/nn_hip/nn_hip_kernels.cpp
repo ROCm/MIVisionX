@@ -570,8 +570,8 @@ Hip_permute_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* order_buf, 
     int idx = i;
     for(int k = num_axis - 1, j = 0; k >= 0; k--, j++) {
         int order = 3 - ((int *)(order_buf + order_offset))[j];
-        old_idx += (idx / out_stride.data[k]) * (in_stride.data[order]);
-        idx %= (out_stride.data[k]);
+        old_idx += (idx / get_native_vector(out_stride)[k]) * (get_native_vector(in_stride)[order]);
+        idx %= (get_native_vector(out_stride)[k]);
     }
     out += out_offset + i;
     in += in_offset + old_idx;

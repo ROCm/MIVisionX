@@ -2,10 +2,10 @@
 
 Docker is a set of platform as a service (PaaS) products that use OS-level virtualization to deliver software in packages called containers. [Read More](https://github.com/ROCm/MIVisionX/wiki/Docker)
 
-### Docker workflow on Ubuntu 20.04/22.04
+### Docker workflow on Ubuntu 22.04/24.04
 
 #### Prerequisites
-* Ubuntu `20.04`/`22.04`
+* Ubuntu `22.04`/`24.04`
 * [ROCm supported hardware](https://rocm.docs.amd.com/en/latest/release/gpu_os_support.html)
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/deploy/linux/installer/install.html) with `--usecase=rocm`
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)

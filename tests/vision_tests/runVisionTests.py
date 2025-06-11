@@ -704,7 +704,7 @@ else:
     platform_name = platform.platform()
     if os.path.exists('/usr/bin/yum'):
         if not "centos" in platform_name or not "redhat" in platform_name:
-            platfromInfo = platform_name+'-CentOS-RedHat'
+            platform_name = platform_name+'-CentOS-RedHat'
     elif os.path.exists('/usr/bin/apt-get'):
         if not "Ubuntu" in platform_name:
             platform_name = platform_name+'-Ubuntu'
@@ -713,7 +713,7 @@ else:
             platform_name = platform_name+'-SLES'
     else:
         print("\nMIVisionX Vision Test on "+platform_name+" is unsupported")
-        print("MIVisionX Vision Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+        print("MIVisionX Vision Test Supported on: Ubuntu 22/24; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
         print("\nMIVisionX Vision Test on "+platform_name+" is unreliable")
 
     platform_name_fq = shell('hostname --all-fqdns')

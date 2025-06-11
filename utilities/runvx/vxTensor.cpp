@@ -91,16 +91,19 @@ int CVxParamTensor::Shutdown(void)
 	}
 #elif ENABLE_HIP
     else if (m_memory_type == VX_MEMORY_TYPE_HIP) {
+		int hipFreeError = 0;
 		for (vx_size active_handle = 0; active_handle < m_num_handles; active_handle++) {
 			if (m_memory_handle[active_handle]) {
 				if (m_memory_handle[active_handle]) {
 				    if(hipFree(m_memory_handle[active_handle])){
-						return -1;
+						hipFreeError++;
 					}
 				}
 				m_memory_handle[active_handle] = nullptr;
 			}
 		}
+		if(hipFreeError)
+			return -1;
 	}
 #endif
     return 0;

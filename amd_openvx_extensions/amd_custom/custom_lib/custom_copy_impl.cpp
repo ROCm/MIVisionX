@@ -63,9 +63,8 @@ customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputde
             unsigned char *src, *dst;
             src = (unsigned char *)input_handle + size*i;
             dst = (unsigned char *)output_handle + size*i;
-            if(hipMemcpy(dst, src, size, hipMemcpyDeviceToDevice))
-            {
-                return (customStatusInvalidValue);
+            if(hipMemcpy(dst, src, size, hipMemcpyDeviceToDevice)){
+                return customStatusInvalidValue;
             }
         }
 #endif

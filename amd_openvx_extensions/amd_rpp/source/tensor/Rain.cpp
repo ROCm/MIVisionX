@@ -172,7 +172,7 @@ static vx_status VX_CALLBACK initializeRain(vx_node node, const vx_reference *pa
         data->pRainTransperancy = new vx_float32[data->pSrcDesc->n];
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        hipHostMalloc(&data->pRainTransperancy, data->pSrcDesc->n * sizeof(vx_float32));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pRainTransperancy, data->pSrcDesc->n * sizeof(vx_float32)));
 #endif
     }
     refreshRain(node, parameters, num, data);
@@ -188,7 +188,7 @@ static vx_status VX_CALLBACK uninitializeRain(vx_node node, const vx_reference *
         delete[] data->pRainTransperancy;
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        hipHostFree(data->pRainTransperancy);
+        CHECK_HIP_RETURN_STATUS(hipHostFree(data->pRainTransperancy));
 #endif
     }
     delete data->pSrcDesc;

@@ -94,7 +94,9 @@ int CVxParamTensor::Shutdown(void)
 		for (vx_size active_handle = 0; active_handle < m_num_handles; active_handle++) {
 			if (m_memory_handle[active_handle]) {
 				if (m_memory_handle[active_handle]) {
-				    hipFree(m_memory_handle[active_handle]);
+				    if(hipFree(m_memory_handle[active_handle])){
+						return -1;
+					}
 				}
 				m_memory_handle[active_handle] = nullptr;
 			}

@@ -411,6 +411,7 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
         hipError_t syncError = hipStreamSynchronize(data->hip_stream);
         if(syncError != hipSuccess) {
             printf("ERROR: hipStreamSynchronize failed with error: %s\n", hipGetErrorString(syncError));
+            return VX_FAILURE;
         }
     }
 

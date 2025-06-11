@@ -69,7 +69,7 @@ customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputde
         }
 #endif
     }
-    return (customStatusSuccess);
+    return customStatusSuccess;
 }
 
 customStatus_t customCopy::Shutdown()

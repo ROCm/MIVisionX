@@ -125,8 +125,8 @@ static vx_status VX_CALLBACK initializeLog1p(vx_node node, const vx_reference *p
             data->pDstGenericDesc = new RpptGenericDesc;
         } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-            hipHostMalloc(&data->pSrcGenericDesc, sizeof(RpptGenericDesc));
-            hipHostMalloc(&data->pDstGenericDesc, sizeof(RpptGenericDesc));
+            CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSrcGenericDesc, sizeof(RpptGenericDesc)));
+            CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDstGenericDesc, sizeof(RpptGenericDesc)));
 #endif
         }
         // Querying for input tensor

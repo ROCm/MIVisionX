@@ -38,6 +38,12 @@ set(NN_HIP_SOURCES
 set_source_files_properties(${NN_HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
 
 add_library(${PROJECT_NAME} OBJECT ${NN_HIP_SOURCES})
+if(${HIP_VERSION_MAJOR} GREATER_EQUAL 7)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_HIP_VERSION_7=1)
+else()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_HIP_VERSION_7=0)
+endif()
+message("-- ${White}${PROJECT_NAME}: Using HIP -- Version-${HIP_VERSION}${ColourReset}")
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
 target_link_libraries(${PROJECT_NAME} hip::device)

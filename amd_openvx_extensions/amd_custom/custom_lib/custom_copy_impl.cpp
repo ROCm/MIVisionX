@@ -21,6 +21,8 @@ THE SOFTWARE.
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <thread>
+#include <cstring>
 #include "custom_copy_impl.h"
 #if ENABLE_HIP
 #include "hip/hip_runtime_api.h"

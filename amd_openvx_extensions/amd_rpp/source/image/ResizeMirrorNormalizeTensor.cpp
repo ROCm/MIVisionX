@@ -74,8 +74,8 @@ static vx_status VX_CALLBACK refreshResizeMirrorNormalizeTensor(vx_node node, co
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
-		hipMemcpy(data->d_dstImgSize, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice);
-		hipMemcpy(data->d_roiTensorPtrSrc, data->roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI), hipMemcpyHostToDevice);
+		CHECK_HIP_RETURN_STATUS(hipMemcpy(data->d_dstImgSize, data->dstImgSize, data->nbatchSize * sizeof(RpptImagePatch), hipMemcpyHostToDevice));
+		CHECK_HIP_RETURN_STATUS(hipMemcpy(data->d_roiTensorPtrSrc, data->roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI), hipMemcpyHostToDevice));
 	}
 #endif
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -219,8 +219,8 @@ static vx_status VX_CALLBACK initializeResizeMirrorNormalizeTensor(vx_node node,
 	// Set ROI tensors types for src/dst
 	data->roiType = RpptRoiType::XYWH;
 #if ENABLE_HIP
-	hipMalloc(&data->d_dstImgSize, data->nbatchSize * sizeof(RpptImagePatch));
-	hipMalloc(&data->d_roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI));
+	CHECK_HIP_RETURN_STATUS(hipMalloc(&data->d_dstImgSize, data->nbatchSize * sizeof(RpptImagePatch)));
+	CHECK_HIP_RETURN_STATUS(hipMalloc(&data->d_roiTensorPtrSrc, data->nbatchSize * sizeof(RpptROI)));
 #endif
 	refreshResizeMirrorNormalizeTensor(node, parameters, num, data);
 	STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->nbatchSize, data->device_type));
@@ -234,8 +234,8 @@ static vx_status VX_CALLBACK uninitializeResizeMirrorNormalizeTensor(vx_node nod
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
 #if ENABLE_HIP
-	hipFree(data->d_dstImgSize);
-	hipFree(data->d_roiTensorPtrSrc);
+	CHECK_HIP_RETURN_STATUS(hipFree(data->d_dstImgSize));
+	CHECK_HIP_RETURN_STATUS(hipFree(data->d_roiTensorPtrSrc));
 #endif
 	STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->device_type));
 	free(data->mean);

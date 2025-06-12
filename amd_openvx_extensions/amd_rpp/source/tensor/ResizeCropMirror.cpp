@@ -177,7 +177,7 @@ static vx_status VX_CALLBACK initializeResizeCropMirror(vx_node node, const vx_r
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
 #if ENABLE_HIP
-    hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch));
+    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch)));
 #else
     data->pDstImgSize = new RpptImagePatch[data->pSrcDesc->n];
 #endif    
@@ -197,7 +197,7 @@ static vx_status VX_CALLBACK uninitializeResizeCropMirror(vx_node node, const vx
     delete[] data->pResizeHeight;
     delete[] data->pMirror;
 #if ENABLE_HIP
-    if (data->pDstImgSize != nullptr) hipHostFree(data->pDstImgSize);
+    if (data->pDstImgSize != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
 #else
     delete[] data->pDstImgSize;
 #endif

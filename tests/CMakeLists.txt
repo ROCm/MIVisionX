@@ -248,7 +248,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
     # 20 - group vision nodes on GPU
     add_test(NAME openvx_tests_runVisionPython_GPU 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
-          --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no --hardware_mode GPU --backend_type ${MIVISIONX_BACKEND}
+          --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --hardware_mode GPU --backend_type ${MIVISIONX_BACKEND}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     # 21 - openvx gdfs tests on GPU

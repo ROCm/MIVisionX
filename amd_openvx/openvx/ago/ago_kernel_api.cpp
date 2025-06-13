@@ -15493,7 +15493,9 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        hipMemset(oImg->hip_memory, 0, oImg->size + oImg->gpu_buffer_offset);
+        if(hipMemset(oImg->hip_memory, 0, oImg->size + oImg->gpu_buffer_offset)){
+            return VX_FAILURE;
+        }
         if (HipExec_ScaleGaussianHalf_U8_U8_5x5(
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height - 1,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,

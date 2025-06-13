@@ -195,7 +195,11 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
     #if ENABLE_OPENCL
         if (cmdq) clReleaseCommandQueue(cmdq);
     #elif ENABLE_HIP
-        if (hostBuffer) hipHostFree((void *)hostBuffer);
+        if (hostBuffer){
+            if(hipHostFree((void *)hostBuffer)){
+               std::cerr << "Error: hipHostFree failed" << std::endl;
+            }
+        }
     #endif
     }
 

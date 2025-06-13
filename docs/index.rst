@@ -33,6 +33,7 @@ The documentation is structured as follows:
 
     * :doc:`MIVisionX APIs <doxygen/html/modules>`
     * :doc:`MIVisionX Files <doxygen/html/files>`
+    * :doc:`MIVisionX environment variables <./reference/env-variables>`
     * :doc:`MIVisionX toolkit documentation <./reference/toolkit>`
     * :doc:`MIVisionX utilities documentation <./reference/utilities>`
 

@@ -224,61 +224,61 @@ for i in range(len(arithmeticNodes)):
     testFileName = arithmeticNodes[i]
     print("Running GDF: "+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/arithmetic/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/arithmetic/'+testFileName))
     print("\n")
 for i in range(len(colorNodes)):
     testFileName = colorNodes[i]
     print("Running GDF: "+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/color/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/color/'+testFileName))
     print("\n")
 for i in range(len(filterNodes)):
     testFileName = filterNodes[i]
     print("Running GDF: "+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/filter/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/filter/'+testFileName))
     print("\n")
 for i in range(len(geometricNodes)):
     testFileName = geometricNodes[i]
     print("Running GDF: "+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/geometric/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/geometric/'+testFileName))
     print("\n")
 for i in range(len(logicalNodes)):
     testFileName = logicalNodes[i]
     print("Running GDF: "+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/logical/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/logical/'+testFileName))
     print("\n")
 for i in range(len(statisticalNodes)):
     testFileName = statisticalNodes[i]
     print("Running GDF: "+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/statistical/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/statistical/'+testFileName))
     print("\n")
 for i in range(len(visionNodes)):
     testFileName = visionNodes[i]
     print("Running GDF: "+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/vision/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/vision/'+testFileName))
     print("\n")
 for i in range(len(visionProfileNodes)):
     testFileName = visionProfileNodes[i]
     print("Running GDF: "+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/vision_profile/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/vision_profile/'+testFileName))
     print("\n")
 for i in range(len(cpuNodes)):
     testFileName = cpuNodes[i]
     print("Running GDF: "+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/'+testFileName))
     print("\n")
 for i in range(len(hiddenNodes)):
     testFileName = hiddenNodes[i]
     print("Running GDF: "+testFileName)
-    (os.system('echo '+testFileName))
-    (os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/hidden/'+testFileName))
+    ERROR_CHECK(os.system('echo '+testFileName))
+    (os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/hidden/'+testFileName))
     print("\n")
 
 print("\nrunOpenVX.py completed - V:"+__version__+"\n")

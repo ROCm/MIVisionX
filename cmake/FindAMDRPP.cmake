@@ -91,11 +91,11 @@ if(AMDRPP_FOUND)
         set(RPP_VERSION_PATCH ${CMAKE_MATCH_1} CACHE INTERNAL "")
 
         # Check for RPP 2.0.0
+        message("-- ${White}Found RPP Version: ${RPP_VERSION_MAJOR}.${RPP_VERSION_MINOR}.${RPP_VERSION_PATCH}${ColourReset}")
         if(RPP_VERSION_MAJOR EQUAL 2 AND RPP_VERSION_MINOR GREATER_EQUAL 0 AND RPP_VERSION_PATCH GREATER_EQUAL 0)
-            message("-- ${White}Found RPP Version: ${RPP_VERSION_MAJOR}.${RPP_VERSION_MINOR}.${RPP_VERSION_PATCH}${ColourReset}")
             message("-- ${White}Using AMD RPP -- \n\tLibraries:${AMDRPP_LIBRARIES} \n\tIncludes:${AMDRPP_INCLUDE_DIRS}${ColourReset}")
         else()
-            message("-- ${Yellow}NOTE: FindAMDRPP failed to find -- rpp2.0.0${ColourReset}")
+            message("-- ${Yellow}NOTE: FindAMDRPP failed to find -- rpp min required V2.0.0${ColourReset}")
             set(AMDRPP_FOUND 0)
         endif()
     else()

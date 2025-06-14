@@ -78,7 +78,7 @@ endif()
 # 1 - vx_core test
 add_test(NAME vx_core_test
           COMMAND ${RUNVX_EXECUTABLE}
-          -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/tests/amd_openvx_gdfs/vision_profile/43_feature_tracker.gdf
+          -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/vision_profile/43_feature_tracker.gdf
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 

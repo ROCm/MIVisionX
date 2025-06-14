@@ -89,6 +89,7 @@ message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${Colour
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
+  set(BUILD_WITH_INSTALL_RPATH ON)
   set(GPU_SUPPORT OFF)
   set(BACKEND "CPU")
   message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")

@@ -78,7 +78,7 @@ endif()
 # 1 - vx_core test
 add_test(NAME vx_core_test
           COMMAND ${RUNVX_EXECUTABLE}
-          -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/gdfs/00_absDiff_test.gdf
+          -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/vision_profile/43_feature_tracker.gdf
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -131,7 +131,7 @@ endif(VX_RPP_LIBRARY)
 if(RUNVX_EXECUTABLE)
   add_test(NAME runvx_test
             COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/gdfs/00_harrisCorners_test.gdf
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/logical/And_alt.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 endif(RUNVX_EXECUTABLE)
@@ -185,6 +185,19 @@ add_test(
 )
 set_property(TEST openvx_accumulate PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1")
 
+# 11_a - graph - graph test
+add_test(
+  NAME
+    openvx_graph
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/graph"
+                              "${CMAKE_CURRENT_BINARY_DIR}/graph"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_graph"
+)
+set_property(TEST openvx_graph PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1")
+
 # 12 - canny - vision graph force to CPU
 add_test(NAME openvx_canny_CPU 
               COMMAND openvx_canny 
@@ -213,6 +226,20 @@ if(Python3_FOUND)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
   set_property(TEST openvx_tests_runVisionPython_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+  # 15_a - vision node group tests on CPU
+  add_test(NAME openvx_tests_runVisionPython_CPU_5X3 
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
+            --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --width 5 --height 3
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  set_property(TEST openvx_tests_runVisionPython_CPU_5X3 PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+  # 15_b - vision node group tests on CPU
+  add_test(NAME openvx_tests_runVisionPython_CPU_10X10 
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
+            --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --width 10 --height 10
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  set_property(TEST openvx_tests_runVisionPython_CPU_5X3 PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
   # 16 - openvx gdfs tests on CPU
   add_test(NAME openvx_gdf_tests_CPU 
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/runOpenVX.py
@@ -248,7 +275,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
     # 20 - group vision nodes on GPU
     add_test(NAME openvx_tests_runVisionPython_GPU 
           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
-          --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --functionality no --hardware_mode GPU --backend_type ${MIVISIONX_BACKEND}
+          --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --hardware_mode GPU --backend_type ${MIVISIONX_BACKEND}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     # 21 - openvx gdfs tests on GPU

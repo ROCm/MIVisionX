@@ -185,6 +185,19 @@ add_test(
 )
 set_property(TEST openvx_accumulate PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1")
 
+# 11_a - graph - graph test
+add_test(
+  NAME
+    openvx_graph
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/graph"
+                              "${CMAKE_CURRENT_BINARY_DIR}/graph"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_graph"
+)
+set_property(TEST openvx_graph PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1")
+
 # 12 - canny - vision graph force to CPU
 add_test(NAME openvx_canny_CPU 
               COMMAND openvx_canny 
@@ -213,6 +226,20 @@ if(Python3_FOUND)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
   set_property(TEST openvx_tests_runVisionPython_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+  # 15_a - vision node group tests on CPU
+  add_test(NAME openvx_tests_runVisionPython_CPU_5X3 
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
+            --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --width 5 --height 3
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  set_property(TEST openvx_tests_runVisionPython_CPU_5X3 PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+  # 15_b - vision node group tests on CPU
+  add_test(NAME openvx_tests_runVisionPython_CPU_10X10 
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/vision_tests/runVisionTests.py
+            --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --width 10 --height 10
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  set_property(TEST openvx_tests_runVisionPython_CPU_5X3 PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
   # 16 - openvx gdfs tests on CPU
   add_test(NAME openvx_gdf_tests_CPU 
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/runOpenVX.py

@@ -35,12 +35,12 @@ if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
     set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
 endif()
 
-project(openvx_logical)
+project(openvx_graph_api)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "Deafult ROCm Installation Path")
 
 include_directories (${ROCM_PATH}/include/mivisionx)
 link_directories    (${ROCM_PATH}/lib)
 
-add_executable(${PROJECT_NAME} logical.cpp)
+add_executable(${PROJECT_NAME} graph_api.cpp)
 target_link_libraries(${PROJECT_NAME} openvx)

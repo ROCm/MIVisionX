@@ -10,6 +10,6 @@ data input_min_distance = scalar:FLOAT32,20.0
 data input_sensitivity = scalar:FLOAT32,0.10
 data input_grad_size = scalar:INT32,3
 data input_block_size = scalar:INT32,3
-data output_1 = array:KEYPOINT,1000
+data output_1 = array:KEYPOINT,10
 data output_2 = scalar:SIZE,0
 node org.khronos.openvx.harris_corners inter_luma input_strength_thresh input_min_distance input_sensitivity input_grad_size input_block_size output_1 output_2

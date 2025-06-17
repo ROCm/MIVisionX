@@ -29,7 +29,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Vision Test Full Report"
 __license__ = "MIT"
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -57,87 +57,40 @@ parser.add_argument('--runvx_directory',    type=str, default='/opt/rocm/bin',
                     help='RunVX Executable Directory - optional (default:/opt/rocm/bin)')
 parser.add_argument('--hardware_mode',      type=str, default='CPU',
                     help='OpenVX Vision Function Target - optional (default:CPU [options:CPU/GPU])')
-parser.add_argument('--list_tests',         type=str, default='no',
-                    help='List Vision Performance Tests - optional (default:no [options:no/yes])')
+parser.add_argument('--list_tests',         type=str, default='NO',
+                    help='List Vision Performance Tests - optional (default:NO [options:NO/Yes])')
 parser.add_argument('--test_filter',        type=int, default=0,
                     help='Vision Performance Test Filter - optional (default:0 [range:1 - N])')
 parser.add_argument('--num_frames',         type=int, default=1000,
                     help='Run Test for X number of frames - optional (default:1000 [range:1 - N])')
-parser.add_argument('--functionality',      type=str, default='yes',
-                    help='Vision Functionality Tests Enabled - optional (default:yes [options:no/yes])')
+parser.add_argument('--functionality',      type=str, default='Yes',
+                    help='Vision Functionality Tests Enabled - optional (default:YES [options:NO/YES])')
 parser.add_argument('--backend_type',       type=str, default='CPU',
                     help='Backend type - optional (default:CPU [options:CPU/HIP/OCL])')
-parser.add_argument('--profiling',          type=str, default='no',
-                    help='GPU profiling with rocprof - optional (default:no [options:yes/no])')
+parser.add_argument('--profiling',          type=str, default='NO',
+                    help='GPU profiling with rocprof - optional (default:NO [options:YES/NO])')
 parser.add_argument('--width',              type=int, default='1920',
                     help='Image width for Vision Performance tests - optional (default:1920) [range: 1 - 7680]')
 parser.add_argument('--height',             type=int, default='1080',
                     help='Image height for Vision Performance tests - optional (default:1080) [range: 1 - 7680]')
-parser.add_argument('--perf_counters',        type=str, default='no',
-                    help='Collect performance counters with rocprof - optional (default:no [options:yes/no])')
+parser.add_argument('--perf_counters',        type=str, default='NO',
+                    help='Collect performance counters with rocprof - optional (default:NO [options:YES/NO])')
 
 
 args = parser.parse_args()
 
 runvxDir = args.runvx_directory
-hardwareMode = args.hardware_mode
-listTest = args.list_tests
+hardwareMode = args.hardware_mode.upper()
+listTest = args.list_tests.upper()
 testFilter = args.test_filter
 numFrames = args.num_frames
-functionalityTests = args.functionality
-backendType = args.backend_type
-profilingOption = args.profiling
+backendType = args.backend_type.upper()
+profilingOption = args.profiling.upper()
 width = args.width
 height = args.height
 widthDiv2 = int(width / 2)
 heightDiv2 = int(height / 2)
-perfCounters = args.perf_counters
-
-# Vision Accuracy Tests
-visionTestConfig = [
-    '01_absDiff.gdf',
-    '02_accumulate.gdf',
-    '03_accumulateSquared.gdf',
-    '04_accumulateWeighted.gdf',
-    '05_add.gdf',
-    '06_and.gdf',
-    '07_box.gdf',
-    '08_canny.gdf',
-    '09_channelCombine.gdf',
-    '10_channelExtract.gdf',
-    '11_colorConvert.gdf',
-    '12_convertDepth.gdf',
-    '13_convolve.gdf',
-    '14_dilate.gdf',
-    '15_equalizeHistogram.gdf',
-    '16_erode.gdf',
-    '17_fastCorners.gdf',
-    '18_gaussian.gdf',
-    '19_harrisCorners.gdf',
-    '20_halfScaleGaussian.gdf',
-    '21_histogram.gdf',
-    '22_integralImage.gdf',
-    '23_magnitude.gdf',
-    '24_meanStdDev.gdf',
-    '25_median.gdf',
-    '26_minMaxLoc.gdf',
-    '27_multiply.gdf',
-    '28_not.gdf',
-    '29_opticalFlowLK.gdf',
-    '30_or.gdf',
-    '31_phase.gdf',
-    '32_gaussianPyramid.gdf',
-    '33_remap.gdf',
-    '34_scaleImage.gdf',
-    '35_sobel.gdf',
-    '36_subtract.gdf',
-    '37_tableLookup.gdf',
-    '38_threshold.gdf',
-    '39_warpAffine.gdf',
-    '40_warpPerspective.gdf',
-    '41_xor.gdf',
-    '42_scale_nv12_to_rgb.gdf'
-]
+perfCounters = args.perf_counters.upper()
 
 # OpenVX Vision Functions 1080P
 openvxNodes = [
@@ -425,48 +378,45 @@ openvxNodeTestConfig = [
 # check arguments
 if hardwareMode not in ('CPU', 'GPU'):
     print("ERROR: OpenVX Hardware supported - CPU or GPU]")
-    exit()
-if listTest not in ('no', 'yes'):
+    exit(-1)
+if listTest not in ('NO', 'YES'):
     print(
-        "ERROR: List Vision Performance Tests options supported - [no or yes]")
-    exit()
-if functionalityTests not in ('no', 'yes'):
-    print("ERROR: Vision functionality Tests option supported - [no or yes]")
-    exit()
+        "ERROR: List Vision Performance Tests options supported - [NO or YES]")
+    exit(-1)
 if backendType not in ('CPU', 'HIP', 'OCL'):
     print("ERROR: OpenVX Backends supported - CPU or HIP or OCL]")
-    exit()
-if profilingOption not in ('no', 'yes'):
-    print("ERROR: Profiling options supported - [no or yes]")
-    exit()
-if perfCounters not in ('no', 'yes'):
-    print("ERROR: perf_counters options supported - [no or yes]")
-    exit()
-if profilingOption == "no" and perfCounters == "yes":
-    print("ERROR: To collect Performance counters both profiling and perfCounters must be yes")
-    exit()
+    exit(-1)
+if profilingOption not in ('NO', 'YES'):
+    print("ERROR: Profiling options supported - [NO or YES]")
+    exit(-1)
+if perfCounters not in ('NO', 'YES'):
+    print("ERROR: perf_counters options supported - [NO or YES]")
+    exit(-1)
+if profilingOption == "NO" and perfCounters == "YES":
+    print("ERROR: To collect Performance counters both profiling and perfCounters must be YES")
+    exit(-1)
 if not 0 <= testFilter <= len(openvxNodes):
     print(
         "\nERROR: Vision Performance Filter not in range - [1 - %d]\n" % (len(openvxNodes)))
-    exit()
+    exit(-1)
 if not 1 <= numFrames <= 10000:
     print("\nERROR: Vision Test Number of Frames not in range - [1 - 10000]\n")
-    exit()
+    exit(-1)
 if not 1 <= width <= 7680:
     print("\nERROR: image width not in range - [1 - 7680]\n")
-    exit()
+    exit(-1)
 if not 1 <= height <= 7680:
     print("\nERROR: image width not in range - [1 - 7680]\n")
-    exit()
+    exit(-1)
 
 if hardwareMode == "CPU":
-    if backendType != "CPU" or profilingOption != "no":
-        print("For hardware_mode=CPU, the backend_type must be 'CPU' and profiling must be 'no'")
-        exit()
+    if backendType != "CPU" or profilingOption != "NO":
+        print("For hardware_mode=CPU, the backend_type must be 'CPU' and profiling must be 'NO'")
+        exit(-1)
 if hardwareMode == "GPU":
     if backendType == "CPU":
         print("For hardware_mode=GPU, the backend_type must be either 'HIP' or 'OCL'")
-        exit()
+        exit(-1)
 
 backendTypeValue = 0
 if backendType == "OCL":
@@ -475,16 +425,12 @@ elif backendType == "HIP":
     backendTypeValue = 1
 
 # List Vision Functionality tests
-if listTest == 'yes':
+if listTest == 'YES':
     print(" %-5s - %-30s\n" % ('Test ID', 'Test Name'))
     for i in range(len(openvxNodes)):
         nodeName, nodeFormat = openvxNodes[i]
         print("   %-5d - %-30s\n" % ((i+1), nodeName))
-    exit()
-if runvxDir == '':
-    print("\nERROR: RunVX Executable Directory Required\n")
-    print("USAGE: python runVisionTests.py --help\n")
-    exit()
+    exit(0)
 
 print("\nMIVisionX runVisionTests V-"+__version__+"\n")
 
@@ -496,21 +442,10 @@ if(os.path.isfile(RunVXapp)):
     print("STATUS: RunVX path - "+RunVXapp)
 else:
     print("\nERROR: RunVX Executable Not Found\n")
-    exit()
+    exit(-1)
 
 # Get cwd
 cwd = os.getcwd()
-
-# OpenVX Vision Functionality Tests
-if testFilter == 0 and functionalityTests == 'yes':
-    print("\nrunVisionTests - OpenVX Vision Functionality Tests\n")
-    for i in range(len(visionTestConfig)):
-        testFileName = visionTestConfig[i]
-        print("Running Test Script: "+testFileName)
-        os.system('echo '+testFileName)
-        os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-                hardwareMode+' -dump-profile file '+scriptPath+'/gdfs/'+testFileName)
-        print("\n")
 
 # OpenVX Performance Tests
 print("\nrunVisionTests - OpenVX Node Performance\n")
@@ -528,14 +463,13 @@ case_num_list = []
 
 
 def multiCaseProfilerOCL(nodeList, case_num_list):
-
     for i in nodeList:
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
-        if perfCounters == "yes":
+        if perfCounters == "YES":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
             os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
@@ -592,14 +526,13 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
 
 
 def multiCaseProfilerHIP(nodeList, case_num_list):
-
     for i in nodeList:
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
-        if perfCounters == "yes":
+        if perfCounters == "YES":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
             os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
@@ -663,7 +596,7 @@ else:
     nodeList = range((totalCount - 1), totalCount, 1)
     case_num_list = range(totalCount, totalCount + 1, 1)
 
-if profilingOption == "yes":
+if profilingOption == "YES":
 
     os.system('rm -rvf '+cwd+'/rocprof_vision_tests_outputs')
     os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')
@@ -677,13 +610,13 @@ if profilingOption == "yes":
 else:
     for i in nodeList:
         nodeName, nodeFormat = openvxNodes[i]
-        echo1 = 'Running OpenVX Node - '+nodeName
+        echo1 = 'Running OpenVX Node - '+str(i+1)+':'+nodeName
         os.system('echo '+echo1 +
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-            hardwareMode+' -dump-profile node '+nodeFormat)
+            hardwareMode+' -dump-gdf -dump-profile node '+nodeFormat)
         os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode +
-                ' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
+                ' -dump-gdf -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print("\n")
     orig_stdout = sys.stdout
     sys.stdout = open('openvx_node_results/nodePerformance.md', 'a')

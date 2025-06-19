@@ -194,7 +194,7 @@ if listTest == 'YES':
         print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(cpuNodes)):
             print("   %-5d - %-30s" % ((i+1), cpuNodes[i]))
-    if hiddenNodes:
+    if hiddenTests == 'YES' and hiddenNodes:
         print("\nHidden CPU Node Tests\n")
         print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(hiddenNodes)):
@@ -274,11 +274,13 @@ for i in range(len(cpuNodes)):
     ERROR_CHECK(os.system('echo '+testFileName))
     ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/'+testFileName))
     print("\n")
-for i in range(len(hiddenNodes)):
-    testFileName = hiddenNodes[i]
-    print("Failures: Running GDF - "+str(i+1)+':'+testFileName)
-    ERROR_CHECK(os.system('echo '+testFileName))
-    (os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/hidden/'+testFileName))
-    print("\n")
+if hiddenTests == 'YES':
+    for i in range(len(hiddenNodes)):
+        testFileName = hiddenNodes[i]
+        print("Failures: Running GDF - "+str(i+1)+':'+testFileName)
+        ERROR_CHECK(os.system('echo '+testFileName))
+        # Tests are not error checked -- Expected failures
+        (os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/hidden/'+testFileName))
+        print("\n")
 
 print("\nrunOpenVX.py completed - V:"+__version__+"\n")

@@ -28,7 +28,10 @@ if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
     set(CMAKE_C_COMPILER ${ROCM_PATH}/bin/amdclang)
     set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
 endif()
-set(VERSION "2.0.0")
+
+# VX_RPP Version
+# * must match with include/vx_ext_rpp_version.h
+set(VERSION "3.1.0")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 

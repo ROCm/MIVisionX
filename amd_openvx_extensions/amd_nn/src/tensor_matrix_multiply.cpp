@@ -408,7 +408,11 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
             data->ldc, data->c_offset, data->tI)) {
             return VX_FAILURE;
         }
-        hipStreamSynchronize(data->hip_stream);
+        hipError_t syncError = hipStreamSynchronize(data->hip_stream);
+        if(syncError != hipSuccess) {
+            printf("ERROR: hipStreamSynchronize failed with error: %s\n", hipGetErrorString(syncError));
+            return VX_FAILURE;
+        }
     }
 
     data->alpha = 1.0f;

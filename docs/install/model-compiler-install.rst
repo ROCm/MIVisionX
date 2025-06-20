@@ -15,8 +15,8 @@ Prerequisites
 
 * Linux
 
-  + Ubuntu 20.04 / 22.04
-  + CentOS 7 / 8
+  + Ubuntu 22.04 / 24.04
+  + CentOS 8
   + RHEL 8 / 9
 
 * MIVisionX installed as described in :ref:`installation`

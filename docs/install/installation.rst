@@ -258,7 +258,7 @@ Windows
 Docker
 =====================
 
-MIVisionX provides developers with docker images for Ubuntu 20.04 / 22.04. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
+MIVisionX provides developers with docker images for Ubuntu 22.04 / 24.04. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
 For more information about the Docker files used to build MIVisionX containers and a suggested workflow, see `MIVisionX Docker documentation <../how-to/mivisionx-docker.html>`_.
 
@@ -266,7 +266,6 @@ MIVisionX docker
 ---------------------------
 
 * `Ubuntu 22.04 <https://cloud.docker.com/repository/docker/mivisionx/ubuntu-22.04>`_
-* `Ubuntu 20.04 <https://cloud.docker.com/repository/docker/mivisionx/ubuntu-20.04>`_
 
 Tested configurations
 --------------------------------

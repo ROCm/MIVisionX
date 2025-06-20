@@ -164,7 +164,7 @@ static vx_status VX_CALLBACK initializeJitter(vx_node node, const vx_reference *
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        hipHostMalloc(&data->pKernelSize, data->pSrcDesc->n * sizeof(vx_uint32));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pKernelSize, data->pSrcDesc->n * sizeof(vx_uint32)));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         data->pKernelSize = new vx_uint32[data->pSrcDesc->n];
@@ -182,7 +182,7 @@ static vx_status VX_CALLBACK uninitializeJitter(vx_node node, const vx_reference
         delete[] data->pKernelSize;
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        hipHostFree(data->pKernelSize);
+        CHECK_HIP_RETURN_STATUS(hipHostFree(data->pKernelSize));
 #endif
     }
     delete data->pSrcDesc;

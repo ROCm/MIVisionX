@@ -1,3 +1,0 @@
-data input_iyuv = image:1280,720,IYUV:READ,inputs/stm_1280x720.yuv
-data output_rgb = image:1280,720,RGB2
-node org.khronos.openvx.color_convert input_iyuv output_rgb

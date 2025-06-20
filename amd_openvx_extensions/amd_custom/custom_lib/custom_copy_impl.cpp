@@ -21,6 +21,8 @@ THE SOFTWARE.
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <thread>
+#include <cstring>
 #include "custom_copy_impl.h"
 #if ENABLE_HIP
 #include "hip/hip_runtime_api.h"
@@ -63,7 +65,9 @@ customStatus_t customCopy::Execute(void *input_handle, customTensorDesc &inputde
             unsigned char *src, *dst;
             src = (unsigned char *)input_handle + size*i;
             dst = (unsigned char *)output_handle + size*i;
-            hipMemcpy(dst, src, size, hipMemcpyDeviceToDevice);
+            if(hipMemcpy(dst, src, size, hipMemcpyDeviceToDevice)){
+                return customStatusInvalidValue;
+            }
         }
 #endif
     }

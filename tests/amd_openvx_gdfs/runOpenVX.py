@@ -150,55 +150,55 @@ hiddenNodes.sort()
 # List tests
 if listTest == 'YES':
     if arithmeticNodes:
-        print("Arithmetic Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+        print("\nArithmetic Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(arithmeticNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), arithmeticNodes[i]))
+            print("   %-5d - %-30s" % ((i+1), arithmeticNodes[i]))
     if colorNodes:
-        print("Color Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+        print("\nColor Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(colorNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), colorNodes[i]))
+            print("   %-5d - %-30s" % ((i+1), colorNodes[i]))
     if filterNodes:
-        print("Filter Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+        print("\nFilter Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(filterNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), filterNodes[i]))
+            print("   %-5d - %-30s" % ((i+1), filterNodes[i]))
     if geometricNodes:
-        print("Geometric Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+        print("\nGeometric Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(geometricNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), geometricNodes[i]))
+            print("   %-5d - %-30s" % ((i+1), geometricNodes[i]))
     if logicalNodes:
-        print("Logical Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+        print("\nLogical Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(logicalNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), logicalNodes[i]))
+            print("   %-5d - %-30s" % ((i+1), logicalNodes[i]))
     if statisticalNodes:
-        print("Statistical Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+        print("\nStatistical Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(statisticalNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), statisticalNodes[i]))
+            print("   %-5d - %-30s" % ((i+1), statisticalNodes[i]))
     if visionNodes:
-        print("Vision Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+        print("\nVision Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(visionNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), visionNodes[i]))
+            print("   %-5d - %-30s" % ((i+1), visionNodes[i]))
     if visionProfileNodes:
-        print("Vision Profile Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+        print("\nVision Profile Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(visionProfileNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), visionProfileNodes[i]))
+            print("   %-5d - %-30s" % ((i+1), visionProfileNodes[i]))
     if cpuNodes:
-        print("CPU Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+        print("\nCPU Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(cpuNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), cpuNodes[i]))
-    if hiddenNodes:
-        print("Hidden CPU Node Tests:")
-        print(" %-5s - %-30s\n" % ('Test ID', 'GDF Name'))
+            print("   %-5d - %-30s" % ((i+1), cpuNodes[i]))
+    if hiddenTests == 'YES' and hiddenNodes:
+        print("\nHidden CPU Node Tests\n")
+        print(" %-5s - %-30s" % ('Test ID', 'GDF Name'))
         for i in range(len(hiddenNodes)):
-            print("   %-5d - %-30s\n" % ((i+1), hiddenNodes[i]))
+            print("   %-5d - %-30s" % ((i+1), hiddenNodes[i]))
     exit()
 
 if runvxDir == '':
@@ -222,63 +222,65 @@ print("\nrunOpenVX - OpenVX Vision GDF Tests\n")
 
 for i in range(len(arithmeticNodes)):
     testFileName = arithmeticNodes[i]
-    print("Running GDF: "+testFileName)
+    print("Arithmetic: Running GDF - "+str(i+1)+':'+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/arithmetic/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/arithmetic/'+testFileName))
     print("\n")
 for i in range(len(colorNodes)):
     testFileName = colorNodes[i]
-    print("Running GDF: "+testFileName)
+    print("Color:  Running GDF - "+str(i+1)+':'+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/color/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/color/'+testFileName))
     print("\n")
 for i in range(len(filterNodes)):
     testFileName = filterNodes[i]
-    print("Running GDF: "+testFileName)
+    print("Filter: Running GDF - "+str(i+1)+':'+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/filter/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/filter/'+testFileName))
     print("\n")
 for i in range(len(geometricNodes)):
     testFileName = geometricNodes[i]
-    print("Running GDF: "+testFileName)
+    print("Geometric: Running GDF - "+str(i+1)+':'+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/geometric/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/geometric/'+testFileName))
     print("\n")
 for i in range(len(logicalNodes)):
     testFileName = logicalNodes[i]
-    print("Running GDF: "+testFileName)
+    print("Logical: Running GDF - "+str(i+1)+':'+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/logical/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/logical/'+testFileName))
     print("\n")
 for i in range(len(statisticalNodes)):
     testFileName = statisticalNodes[i]
-    print("Running GDF: "+testFileName)
+    print("Statistical: Running GDF - "+str(i+1)+':'+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/statistical/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/statistical/'+testFileName))
     print("\n")
 for i in range(len(visionNodes)):
     testFileName = visionNodes[i]
-    print("Running GDF: "+testFileName)
+    print("Vision: Running GDF - "+str(i+1)+':'+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/vision/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/vision/'+testFileName))
     print("\n")
 for i in range(len(visionProfileNodes)):
     testFileName = visionProfileNodes[i]
-    print("Running GDF: "+testFileName)
+    print("Vision Apps: Running GDF - "+str(i+1)+':'+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/vision_profile/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/vision_profile/'+testFileName))
     print("\n")
 for i in range(len(cpuNodes)):
     testFileName = cpuNodes[i]
-    print("Running GDF: "+testFileName)
+    print("CPU Only: Running GDF - "+str(i+1)+':'+testFileName)
     ERROR_CHECK(os.system('echo '+testFileName))
-    ERROR_CHECK(os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/'+testFileName))
+    ERROR_CHECK(os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/'+testFileName))
     print("\n")
-for i in range(len(hiddenNodes)):
-    testFileName = hiddenNodes[i]
-    print("Running GDF: "+testFileName)
-    (os.system('echo '+testFileName))
-    (os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/hidden/'+testFileName))
-    print("\n")
+if hiddenTests == 'YES':
+    for i in range(len(hiddenNodes)):
+        testFileName = hiddenNodes[i]
+        print("Failures: Running GDF - "+str(i+1)+':'+testFileName)
+        ERROR_CHECK(os.system('echo '+testFileName))
+        # Tests are not error checked -- Expected failures
+        (os.system(RunVXapp+' -dump-gdf -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile file '+scriptPath+'/cpu/hidden/'+testFileName))
+        print("\n")
 
 print("\nrunOpenVX.py completed - V:"+__version__+"\n")

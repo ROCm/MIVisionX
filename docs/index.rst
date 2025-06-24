@@ -25,12 +25,12 @@ The MIVisionX public repository is located at `https://github.com/ROCm/MIVisionX
 
   .. grid-item-card:: How to
 
-    * :doc:`Using AMD OpenVX <./how-to/amd_openvx>`
     * :doc:`Working with model compiler <./how-to/model-compiler>`
     * :doc:`Using MIVisionX with Docker <./how-to/mivisionx-docker>`
 
-  .. grid-item-card:: API reference
+  .. grid-item-card:: Reference
 
+    * :doc:`AMD OpenVX <./reference/MIVisionX-AMD-Openvx>`
     * :doc:`MIVisionX APIs <doxygen/html/modules>`
     * :doc:`MIVisionX Files <doxygen/html/files>`
     * :doc:`MIVisionX toolkit documentation <./reference/toolkit>`

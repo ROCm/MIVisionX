@@ -509,7 +509,11 @@ typedef struct
 #if defined(AMD_FP16_SUPPORT)
 /*! \brief A 16-bit float value.
  */
-#include <half/half.hpp>
+#if __has_include(<half/half.hpp>)
+    #include <half/half.hpp>
+#else
+    #include <half.hpp>
+#endif
 typedef half_float::half vx_float16;
 #endif
 #endif

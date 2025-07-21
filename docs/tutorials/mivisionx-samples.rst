@@ -21,7 +21,7 @@ MIVisionX samples using OpenVX and OpenVX extensions. In the samples below you w
 GDF - Graph Description Format
 ==============================
 
-MIVisionX samples using `RunVX <https://github.com/ROCm/MIVisionX/tree/master/utilities/runvx/README.md>`_
+MIVisionX samples using `RunVX <https://github.com/ROCm/MIVisionX/tree/develop/utilities/runvx/README.md>`_
 
 To run the samples you need to put MIVisionX executables and libraries into the system path:
 
@@ -40,7 +40,7 @@ To get help on the ``runvx`` utility use the ``-h`` option:
 skintonedetect.gdf
 ------------------
 
-.. image:: https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/skinToneDetect_image.PNG
+.. image:: https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/skinToneDetect_image.PNG
   :alt: Image of face on left, and skin area highlighted on right
 
 .. code-block:: shell
@@ -58,7 +58,7 @@ Or, when using a live camera:
 canny.gdf
 ---------
 
-.. image:: https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/canny_image.PNG
+.. image:: https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/canny_image.PNG
   :alt: Image of person on left and highlighted edges on right
 
 .. code-block:: shell
@@ -118,9 +118,9 @@ Orb Detect
 Radeon Loom 360 Stitch Samples
 ==============================
 
-MIVisionX samples using `LoomShell <https://github.com/ROCm/MIVisionX/tree/master/utilities/loom_shell/README.md>`_
+MIVisionX samples using `LoomShell <https://github.com/ROCm/MIVisionX/tree/develop/utilities/loom_shell/README.md>`_
 
-.. image:: https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/loom-4.png
+.. image:: https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/loom-4.png
   :alt: Image of video display
   :target: https://youtu.be/E8pPU04iZjw
 
@@ -238,12 +238,12 @@ Model Compiler Efficient Inference
 .. image:: ../data/modelCompilerWorkflow.png
   :alt: Image of pretrained neural net models going into model compiler and moving into MIVisionX runtime
 
-The sample applications available in `samples/model_compiler_samples <https://github.com/ROCm/MIVisionX/blob/master/samples/model_compiler_samples/README.md>`_, demonstrate how to run inference efficiently using AMD's open source implementation of OpenVX and OpenVX extensions. The samples review each step required to convert a pre-trained neural net model into an OpenVX graph and run this graph efficiently on the target hardware. 
+The sample applications available in `samples/model_compiler_samples <https://github.com/ROCm/MIVisionX/blob/develop/samples/model_compiler_samples/README.md>`_, demonstrate how to run inference efficiently using AMD's open source implementation of OpenVX and OpenVX extensions. The samples review each step required to convert a pre-trained neural net model into an OpenVX graph and run this graph efficiently on the target hardware. 
 
-* `Sample-1: Classification Using Pre-Trained ONNX Model <https://github.com/ROCm/MIVisionX/blob/master/samples/model_compiler_samples/README.md#sample-1---classification-using-pre-trained-onnx-model>`_
-* `Sample-2: Detection Using Pre-Trained Caffe Model <https://github.com/ROCm/MIVisionX/blob/master/samples/model_compiler_samples/README.md#sample-2---detection-using-pre-trained-caffe-model>`_ 
-* `Sample-3: Classification Using Pre-Trained NNEF Model <https://github.com/ROCm/MIVisionX/blob/master/samples/model_compiler_samples/README.md#sample-3---classification-using-pre-trained-nnef-model>`_
-* `Sample-4: Classification Using Pre-Trained Caffe Model <https://github.com/ROCm/MIVisionX/blob/master/samples/model_compiler_samples/README.md#sample-4---classification-using-pre-trained-caffe-model>`_
+* `Sample-1: Classification Using Pre-Trained ONNX Model <https://github.com/ROCm/MIVisionX/blob/develop/samples/model_compiler_samples/README.md#sample-1---classification-using-pre-trained-onnx-model>`_
+* `Sample-2: Detection Using Pre-Trained Caffe Model <https://github.com/ROCm/MIVisionX/blob/develop/samples/model_compiler_samples/README.md#sample-2---detection-using-pre-trained-caffe-model>`_ 
+* `Sample-3: Classification Using Pre-Trained NNEF Model <https://github.com/ROCm/MIVisionX/blob/develop/samples/model_compiler_samples/README.md#sample-3---classification-using-pre-trained-nnef-model>`_
+* `Sample-4: Classification Using Pre-Trained Caffe Model <https://github.com/ROCm/MIVisionX/blob/develop/samples/model_compiler_samples/README.md#sample-4---classification-using-pre-trained-caffe-model>`_
 
 
 .. _mv-samples:
@@ -251,8 +251,8 @@ The sample applications available in `samples/model_compiler_samples <https://gi
 MV Object Detect Sample
 ========================
 
-The `mv_objdetect sample <https://github.com/ROCm/MIVisionX/blob/master/samples/mv_objdetect/README.md>`_ shows how to run video decoding and object detection using a pre-trained `YoloV2` Caffe model. 
+The `mv_objdetect sample <https://github.com/ROCm/MIVisionX/blob/develop/samples/mv_objdetect/README.md>`_ shows how to run video decoding and object detection using a pre-trained `YoloV2` Caffe model. 
 The sample demonstrates the use of ``mv_compile`` utility to do video decoding and inference.
 
-.. image:: https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/mv_objdetect/data/images/Video_4_screenshot.png
+.. image:: https://raw.githubusercontent.com/ROCm/MIVisionX/master/develop/mv_objdetect/data/images/Video_4_screenshot.png
   :alt: Street scene with cars and trucks highlighted in boxes

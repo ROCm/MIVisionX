@@ -22,6 +22,7 @@ The MIVisionX public repository is located at `https://github.com/ROCm/MIVisionX
     * :doc:`Install MIVisionX using the package installer on Linux <./install/MIVisionX-package-install>`
     * :doc:`Install MIVisionX on Windows <./install/MIVisionX-windows-install>`
     * :doc:`Build and install MIVisionX on macOS <./install/MIVisionX-macOS-install>`
+    * :doc:`Test the MIVisionX installation <./install/MIVisionX-test-install>`
 
   .. grid-item-card:: How to
 

@@ -39,6 +39,14 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
 find_package(AMDRPP REQUIRED)
 
+# Find Python
+set(PYTHON_VERSION_SUGGESTED "" CACHE STRING "Python version to build with, e.g., 3.8")
+if(PYTHON_VERSION_SUGGESTED)
+    find_package(Python3 ${PYTHON_VERSION_SUGGESTED} EXACT QUIET COMPONENTS Interpreter Development)
+else()
+    find_package(Python3 QUIET COMPONENTS Interpreter Development)
+endif()
+
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(OpenCL REQUIRED)
 elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
@@ -50,6 +58,7 @@ endif()
 include_directories(../../amd_openvx/openvx/include/ include)
 # AMD RPP
 include_directories(${AMDRPP_INCLUDE_DIRS})
+include_directories(${Python3_INCLUDE_DIRS})
 set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})
 
 list(APPEND SOURCES
@@ -98,6 +107,7 @@ list(APPEND SOURCES
         source/tensor/WarpAffine.cpp
         source/tensor/Slice.cpp
         source/tensor/Transpose.cpp
+        source/tensor/ExternalSource.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )
@@ -265,8 +275,9 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
 endif()
 
-target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST})
+target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST}  ${Python3_LIBRARIES})
 message("-- ${White}vx_rpp -- Link Libraries:${LINK_LIBRARY_LIST}${ColourReset}")
+message("-- ${White}Python3 -- Link Libraries:${Python3_LIBRARIES}${ColourReset}")
 message("-- ${White}vx_rpp -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 

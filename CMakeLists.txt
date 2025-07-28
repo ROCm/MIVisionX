@@ -37,7 +37,7 @@ if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
 endif()
 
 ## MIVisionX package version
-set(VERSION "3.3.0")
+set(VERSION "3.4.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)

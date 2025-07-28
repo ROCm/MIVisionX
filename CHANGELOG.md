@@ -4,6 +4,18 @@
 
 The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
+## (Unreleased) MIVisionX 3.4.0
+
+### Changed
+
+
+### Known issues
+
+* Installation on CentOS/RedHat/SLES requires the manual installation of the `FFMPEG` & `OpenCV` dev packages.
+
+### Upcoming changes
+
+
 ## MIVisionX 3.3.0 for ROCm 7.0.0
 
 ### Changed

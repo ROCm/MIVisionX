@@ -34,14 +34,11 @@ The MIVisionX public repository is located at `https://github.com/ROCm/MIVisionX
     * :doc:`AMD OpenVX <./reference/MIVisionX-AMD-Openvx>`
     * :doc:`MIVisionX APIs <doxygen/html/modules>`
     * :doc:`MIVisionX Files <doxygen/html/files>`
-    * :doc:`MIVisionX toolkit documentation <./reference/toolkit>`
-    * :doc:`MIVisionX utilities documentation <./reference/utilities>`
+    * :doc:`MIVisionX toolkits <./reference/MIVisionX-toolkits>`
 
-  .. grid-item-card:: Tutorials
+  .. grid-item-card:: Examples
 
-    * :doc:`MIVisionX applications <./tutorials/mivisionx-apps>`
-    * :doc:`MIVisionX samples documentation <./tutorials/mivisionx-samples>`
-    * :doc:`MIVisionX tests <./tutorials/mivisionx-tests>`
+    * :doc:`MIVisionX sample applications <./tutorials/MIVisionX-apps-samples>`
 
 
 To contribute to the documentation, refer to

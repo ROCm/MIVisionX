@@ -9,15 +9,17 @@ subtrees:
 - caption: Install
   entries:
   - file: install/MIVisionX-prerequisites.rst
-    title: MIVisionX prerequisites
+    title: Prerequisites
   - file: install/MIVisionX-linux-build-and-install.rst
-    title: Build and install MIVisionX on Linux
+    title: Build and install on Linux
   - file: install/MIVisionX-package-install.rst
-    title: Install MIVisionX on Linux  
+    title: Install using the package installer on Linux  
   - file: install/MIVisionX-windows-install.rst
-    title: Install MIVisionX on Windows  
+    title: Install on Windows  
   - file: install/MIVisionX-macOS-install.rst
-    title: Install MIVisionX on macOS
+    title: Install on macOS
+  - file: install/MIVisionX-test-install.rst
+    title: Test the installation
 
 - caption: How to
   entries:
@@ -39,14 +41,10 @@ subtrees:
   - file: reference/utilities.rst
     title: MIVisionX utilities documentation
 
-- caption: Tutorials
+- caption: Examples
   entries:
-  - file: tutorials/mivisionx-apps.rst     
-    title: MIVisionX applications
-  - file: tutorials/mivisionx-samples.rst     
-    title: MIVisionX samples documentation
-  - file: tutorials/mivisionx-tests.rst     
-    title: MIVisionX tests
+  - file: tutorials/mivisionx-apps-samples.rst     
+    title: Sample applications
 
 - caption: About
   entries:

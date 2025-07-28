@@ -43,14 +43,16 @@ Compiler
 
 Libraries
 ------------------
-* CMake - Version 3.10 and above
+* CMake - Version 3.10 or later
+* HIP
+* OpenMP
 * Half-precision floating-point(half) library - Version `1.12.0`
 * MIOpen
 * MIGraphX
 * RPP
 * pkg-config
 * OpenCV - Version 3.X or 4.X
-* FFmpeg - Version 4.4.2 and above
+* FFmpeg - Version 4.4.2 or later
 
 Linux installation
 ===========================

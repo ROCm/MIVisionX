@@ -60,11 +60,9 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     endif()
 endif()
 # OpenMP
-find_package(OpenMP QUIET)
-if(OpenMP_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${OpenMP_CXX_LIBRARIES})
-    message("-- ${White}${PROJECT_NAME}: Using OpenMP -- \n\tOpenMP_CXX_FLAGS:${OpenMP_CXX_FLAGS}\n\tOpenMP_CXX_LIBRARIES:${OpenMP_CXX_LIBRARIES}${ColourReset}")
+find_package(OpenMP COMPONENTS CXX QUIET)
+if(OpenMP_CXX_FOUND)
+    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenMP::OpenMP_CXX)
 else()
     message("-- ${Yellow}WARNING: ${PROJECT_NAME} -- OpenMP Not FOUND${ColourReset}")
 endif()
@@ -76,7 +74,7 @@ include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include
 # -msse4.2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 built-in functions and code generation.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -msse4.2")
 
-if(HIP_FOUND AND OpenMP_FOUND)
+if(HIP_FOUND AND OpenMP_CXX_FOUND)
     message("-- ${Green}${PROJECT_NAME} -- Building HIP backend${ColourReset}")
     message("-- ${White}${PROJECT_NAME} -- Using HIP - Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION} "\tCompiler:" ${HIP_COMPILER}${ColourReset})
     set(ENABLE_HIP 1)

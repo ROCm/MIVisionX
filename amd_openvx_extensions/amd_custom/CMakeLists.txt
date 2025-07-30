@@ -41,6 +41,8 @@ set(VERSION "1.0.1")
 
 project(vx_amd_custom VERSION ${VERSION} LANGUAGES CXX)
 
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
+
 # Find Packages
 # HIP
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")

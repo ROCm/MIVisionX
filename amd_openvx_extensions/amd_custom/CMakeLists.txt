@@ -20,6 +20,14 @@
 
 cmake_minimum_required(VERSION 3.10)
 
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+    message("-- INFO:ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+    set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
 # Set AMD Clang as default compiler
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
@@ -28,20 +36,10 @@ if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
     set(CMAKE_C_COMPILER ${ROCM_PATH}/bin/amdclang)
     set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
 endif()
+
 set(VERSION "1.0.1")
 
 project(vx_amd_custom VERSION ${VERSION} LANGUAGES CXX)
-
-# ROCM Path
-if(DEFINED ENV{ROCM_PATH})
-    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
-elseif(ROCM_PATH)
-    message("-- ${PROJECT_NAME}: INFO -- ROCM_PATH Set -- ${ROCM_PATH}")
-else()
-    set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
-endif()
-
-list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
 
 # Find Packages
 # HIP
@@ -78,14 +76,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -msse4.2")
 
 if(HIP_FOUND AND OpenMP_FOUND)
     message("-- ${Green}${PROJECT_NAME} -- Building HIP backend${ColourReset}")
+    message("-- ${White}${PROJECT_NAME} -- Using HIP - Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION} "\tCompiler:" ${HIP_COMPILER}${ColourReset})
     set(ENABLE_HIP 1)
     link_directories(${HIP_PATH}/lib)
-    list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
     add_subdirectory(custom_lib)
     add_library(${PROJECT_NAME} SHARED ${SOURCES} $<TARGET_OBJECTS:custom_lib>)
     target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
     target_link_libraries(${PROJECT_NAME} openvx hip::host ${LINK_LIBRARY_LIST})
     target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=${ENABLE_HIP})
+    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
     set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
     # install MIVisionX libs -- {ROCM_PATH}/lib -- TBD: Remove duplicate install 
     install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)

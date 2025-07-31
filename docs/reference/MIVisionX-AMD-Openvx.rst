@@ -10,7 +10,7 @@ AMD OpenVX
 
 AMD OpenVX is an open-source implementation of the |openvx|_ computer vision specification. 
 
-AMD OpenVX can be found in the MIVisionX GitHub repository at `https://github.com/ROCm/MIVisionX/blob/master/amd_openvx <https://github.com/ROCm/MIVisionX/blob/master/amd_openvx>`_.
+AMD OpenVX can be found in the MIVisionX GitHub repository at `https://github.com/ROCm/MIVisionX/blob/develop/amd_openvx <https://github.com/ROCm/MIVisionX/blob/master/amd_openvx>`_.
 
 `RunVX <https://github.com/ROCm/MIVisionX/tree/master/utilities/runvx>`_ provides a means for rapid prototyping without re-compiling.
 

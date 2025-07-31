@@ -8,7 +8,11 @@ MIVisionX prerequisites
 
 MIVisionX can be used with or without ROCm.
 
-MIVisionX on ROCm requires ROCm running on an `accelerators based on the CDNA architecture <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html>`_ installed with the `AMDGPU installer <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html>`_.
+MIVisionX on ROCm requires ROCm running on an `accelerators based on the CDNA architecture <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html>`_ installed with the AMDGPU installer and the ``rocm`` usecase:
+
+.. code:: shell
+
+    sudo amdgpu-install --usecase=rocm
 
 MIVisionX can be installed on the following operating systems:
 
@@ -18,7 +22,7 @@ MIVisionX can be installed on the following operating systems:
 * Microsoft Windows 10 or 11
 * macOS 13 Ventura and later
 
-:doc:`Building MIVisionX from source on Linux <./MIVisionX-build-and-install>` requires CMake Version 3.10 or later, AMD Clang++ Version 18.0.0 or later, and the following compiler support:
+:Building MIVisionX from source on Linux requires CMake Version 3.10 or later, AMD Clang++ Version 18.0.0 or later, and the following compiler support:
 
 * C++17
 * OpenMP
@@ -30,13 +34,13 @@ When building MIVisionX from source on Linux, the |setup|_ Python script can be 
 
   MIVisionX-setup.py [-h]   [--directory DIRECTORY; default: ~/]
                             [--opencv OpenCV_VERSION; default: 4.6.0]
-                            [--ffmpeg ON|OFF; default: ON]
-                            [--amd_rpp ON|OFF; default: ON]
-                            [--neural_net ON|OFF; default: ON]
-                            [--inference ON|OFF; default: ON]
-                            [--developer ON|OFF; default:OFF]
-                            [--reinstall ON|OFF; default:OFF]
-                            [--backend HIP/OCL/CPU]
+                            [--ffmpeg {ON|OFF}; default: ON]
+                            [--amd_rpp {ON|OFF}; default: ON]
+                            [--neural_net {ON|OFF}; default: ON]
+                            [--inference {ON|OFF}; default: ON]
+                            [--developer {ON|OFF}; default:OFF]
+                            [--reinstall {ON|OFF}; default:OFF]
+                            [--backend {HIP|OCL|CPU}]
                             [--rocm_path ROCM_PATH; default: /opt/rocm]
 
 | ``directory``: The user home directory.
@@ -68,7 +72,7 @@ The following prerequisites are required and are installed with both the Linux p
 * `RapidJSON <https://github.com/Tencent/rapidjson>`_
 * `OpenCV <https://docs.opencv.org/4.6.0/index.html>`_ version 4.6
 * `Python3 <https://www.python.org/>`_
-* libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev
+* libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev version 4.4.2 or later
 
 
 .. note::

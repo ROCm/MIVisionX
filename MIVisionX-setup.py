@@ -182,7 +182,7 @@ linuxSystemInstall_check = ''
 linuxFlag = ''
 sudoValidate = 'sudo -v'
 osUpdate = ''
-if "centos" in os_info_data or "redhat" in os_info_data:
+if "centos" in os_info_data or "redhat" in os_info_data or "Oracle" in os_info_data:
     linuxSystemInstall = 'yum -y'
     linuxSystemInstall_check = '--nogpgcheck'
     osUpdate = 'makecache'

@@ -107,9 +107,9 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   sudo apt install rocm-hip-runtime-dev
   ```
 * OpenMP
-   ```shell
-   sudo apt install openmp-extras-dev
-   ```
+  ```shell
+  sudo apt install openmp-extras-dev
+  ```
 * Half-precision floating-point(half) library - Version `1.12.0`
   ```shell
   sudo apt install half

@@ -106,6 +106,10 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   ```shell
   sudo apt install rocm-hip-runtime-dev
   ```
+* OpenMP
+   ```shell
+   sudo apt install openmp-extras-dev
+   ```
 * Half-precision floating-point(half) library - Version `1.12.0`
   ```shell
   sudo apt install half
@@ -138,6 +142,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 > [!IMPORTANT]
 > * Required compiler support
 >    * C++17
+>    * OpenMP
 >    * Threads
 >
 > * On `Ubuntu 22.04` - Additional package required: `libstdc++-12-dev`

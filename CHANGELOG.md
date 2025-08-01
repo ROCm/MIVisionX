@@ -7,7 +7,7 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 ## (Unreleased) MIVisionX 3.4.0
 
 ### Changed
-* OpenMP dependencies for AMD Custom extension is removed
+* AMD Custom V1.1.0 - OpenMP updates
 
 ### Known issues
 

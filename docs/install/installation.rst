@@ -45,7 +45,6 @@ Libraries
 ------------------
 * CMake - Version 3.10 or later
 * HIP
-* OpenMP
 * Half-precision floating-point(half) library - Version `1.12.0`
 * MIOpen
 * MIGraphX

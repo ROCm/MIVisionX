@@ -37,7 +37,7 @@ if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
     set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
 endif()
 
-set(VERSION "1.0.1")
+set(VERSION "1.1.0")
 
 project(vx_amd_custom VERSION ${VERSION} LANGUAGES CXX)
 
@@ -59,13 +59,6 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         message("-- ${Red}${PROJECT_NAME} WARNING: HIP Not Found${ColourReset}")
     endif()
 endif()
-# OpenMP
-find_package(OpenMP COMPONENTS CXX QUIET)
-if(OpenMP_CXX_FOUND)
-    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenMP::OpenMP_CXX)
-else()
-    message("-- ${Yellow}WARNING: ${PROJECT_NAME} -- OpenMP Not FOUND${ColourReset}")
-endif()
 
 list(APPEND SOURCES source/custom_kernels.cpp source/custom_layer.cpp)
 include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include ./custom_lib)
@@ -74,7 +67,7 @@ include_directories(../../amd_openvx/openvx/include ${ROCM_PATH}/include include
 # -msse4.2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 built-in functions and code generation.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -msse4.2")
 
-if(HIP_FOUND AND OpenMP_CXX_FOUND)
+if(HIP_FOUND)
     message("-- ${Green}${PROJECT_NAME} -- Building HIP backend${ColourReset}")
     message("-- ${White}${PROJECT_NAME} -- Using HIP - Path:" ${HIP_PATH} "\tVersion:" ${HIP_VERSION} "\tCompiler:" ${HIP_COMPILER}${ColourReset})
     set(ENABLE_HIP 1)

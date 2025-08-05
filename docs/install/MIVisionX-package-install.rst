@@ -58,19 +58,19 @@ Use the following commands to install ``mivisionx``, ``mivisionx-dev``, and ``mi
 
     .. code:: shell
 
-      sudo apt-get install mivision mivisionx-dev mivisionx-test
+      sudo apt-get install mivisionx mivisionx-dev mivisionx-test
 
   .. tab-item:: RHEL
 
     .. code:: shell
 
-      sudo yum install mivision mivisionx-dev mivisionx-test
+      sudo yum install mivisionx mivisionx-dev mivisionx-test
 
   .. tab-item:: SLES
 
     .. code:: shell
 
-      sudo zypper install mivision mivisionx-dev mivisionx-test
+      sudo zypper install mivisionx mivisionx-dev mivisionx-test
 
 
 Th test package will install the ``ctest`` module to test MIVisionX. Use the following steps to test package install:

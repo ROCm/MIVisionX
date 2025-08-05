@@ -14,7 +14,7 @@ The steps to convert the models is:
 
 1. Convert the pre-trained models to Neural Net Intermediate Representation (NNIR), AMD's internal open format.
 2. Optimize the NNIR.
-3. Use the NNIR to generate the OPenVX C code.
+3. Use the NNIR to generate the OpenVX C code.
 4. Compile the C code into the ``libannmodule.so`` shared library.
 
 Model compiler examples and samples are available in the `MIVisionX GitHub repository <https://github.com/ROCm/MIVisionX/tree/develop/samples/model_compiler_samples>`_.
@@ -107,7 +107,7 @@ Use the ``nnir_to_openvx.py`` Python script to convert the NNIR model to OpenVX.
 ``--argmax`` can take one of the following:
 
 | ``UINT8``: adds an 8 bit argmax.
-| ``UINT6``: adds a 16 bit argmax.
+| ``UINT16``: adds a 16 bit argmax.
 | RGB color mapping look-up table (LUT). The LUT file name must be of the form ``PREFIXrgb.txt``. For example, ``MyLUTrgb.txt``.
 | RGBA color mapping look-up table (LUT). The LUT file name must be of the form ``PREFIXrgba.txt``. For example, ``MyLUTrgba.txt``.
 

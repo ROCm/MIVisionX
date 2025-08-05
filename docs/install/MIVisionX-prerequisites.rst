@@ -22,7 +22,7 @@ MIVisionX can be installed on the following operating systems:
 * Microsoft Windows 10 or 11
 * macOS 13 Ventura and later
 
-:Building MIVisionX from source on Linux requires CMake Version 3.10 or later, AMD Clang++ Version 18.0.0 or later, and the following compiler support:
+Building MIVisionX from source on Linux requires CMake Version 3.10 or later, AMD Clang++ Version 18.0.0 or later, and the following compiler support:
 
 * C++17
 * OpenMP

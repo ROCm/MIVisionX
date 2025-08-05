@@ -5,7 +5,7 @@
 .. _mivisionx-docker:
 
 ******************************************
-MIVisionX Docker documentation
+Using Docker with MIVisionX
 ******************************************
 
 Docker is a set of platform as a service (PaaS) products that use OS-level virtualization to deliver software in packages called containers. Refer to `Rocm Docker Wiki <https://github.com/ROCm/MIVisionX/wiki/Docker>`_ for additional information.
@@ -16,7 +16,7 @@ Docker workflow on Ubuntu 22.04/24.04
 Prerequisites
 -------------
 
-* Ubuntu 20.04/22.04
+* Ubuntu 22.04/24.04
 * `ROCm supported hardware <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html>`_
 * `Install ROCm <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/>`_ with ``--usecase=rocm``
 * `Docker <https://docs.docker.com/engine/install/ubuntu/>`_
@@ -29,7 +29,7 @@ Workflow
 
 .. code-block:: shell
 
-    sudo docker pull mivisionx/ubuntu-20.04:latest
+    sudo docker pull mivisionx/ubuntu-22.04:latest
 
 2.  Run docker image
 
@@ -79,7 +79,7 @@ Option 2: Display with docker
 .. code-block:: shell
 
   xhost +local:root
-  sudo docker run -it --privileged --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=$DISPLAY --volume="$HOME/.Xauthority:/root/.Xauthority:rw" --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-20.04:latest
+  sudo docker run -it --privileged --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=$DISPLAY --volume="$HOME/.Xauthority:/root/.Xauthority:rw" --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-22.04:latest
 
 
 * Test display with MIVisionX sample
@@ -94,7 +94,7 @@ Run docker image with display: Remote Server Machine
 
 .. code-block:: shell
 
-  sudo docker run -it --privileged --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=$DISPLAY --volume="$HOME/.Xauthority:/root/.Xauthority:rw" --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-20.04:latest
+  sudo docker run -it --privileged --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=$DISPLAY --volume="$HOME/.Xauthority:/root/.Xauthority:rw" --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-22.04:latest
 
 
 * Display with MIVisionX sample

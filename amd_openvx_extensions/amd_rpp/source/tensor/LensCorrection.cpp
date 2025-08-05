@@ -202,8 +202,8 @@ static vx_status VX_CALLBACK uninitializeLensCorrection(vx_node node, const vx_r
     delete data->pDstDesc;
     delete data->pTableDesc;
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        delete[] data->pRowRemapTable;
-        delete[] data->pColRemapTable;
+        free(data->pRowRemapTable);
+        free(data->pColRemapTable);
         delete[] data->pCameraMatrix;
         delete[] data->pDistortionCoeffs;
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {

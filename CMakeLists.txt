@@ -127,8 +127,8 @@ else()
   # -DNDEBUG -- turn off asserts
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 endif()
-# -fPIC -- Generate position-independent code if possible
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+# Generate position-independent code for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)

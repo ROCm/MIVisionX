@@ -62,8 +62,8 @@ When building MIVisionX from source on Linux, the |setup|_ Python script can be 
 The following prerequisites are required and are installed with both the Linux package installer and the setup script:
 
 * `MIOpen <https://rocm.docs.amd.com/projects/MIOpen/en/latest/>`_
-* `MIGraphX <https://rocm.docs.amd.com/projects/MIGraphX/en/latest/>`_
-* `RPP <https://rocm.docs.amd.com/projects/RPP/en/latest/>`_
+* `MIGraphX <https://rocm.docs.amd.com/projects/AMDMIGraphX/en/latest/>`_
+* `RPP <https://rocm.docs.amd.com/projects/rpp/en/latest/>`_
 * `The half-precision floating-point library <https://half.sourceforge.net>`_ version 1.12.0 or later
 * `Google Protobuf <https://developers.google.com/protocol-buffers>`_ version 3.12.4 or later
 * `LMBD Library <http://www.lmdb.tech/doc/>`_

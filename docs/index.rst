@@ -29,7 +29,7 @@ MIVisionX is a comprehensive machine intelligence and computer vision toolkit. M
   .. grid-item-card:: How to
 
     * :doc:`Use the model compiler <./how-to/MIVisionX-how-to-model-compiler>`
-    * :doc:`Use MIVisionX with Docker <./how-to/MIVisionX-docker>`
+    * :doc:`Use MIVisionX with Docker <./how-to/MIVisionX-use-docker>`
 
   .. grid-item-card:: Reference
 

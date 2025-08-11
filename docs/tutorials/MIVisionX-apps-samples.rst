@@ -16,4 +16,4 @@ Utilities that can be used to develop, prototype, and test sample applications a
 
 * `mv_deploy <https://github.com/ROCm/MIVisionX/tree/develop/utilities/mv_deploy>`_ is a utility that uses the model compiler to create and build applications.
 
-* `RunVX <https://github.com/ROCm/MIVisionX/tree/develop/utilities/runvxl>`_ is a command-line tool that runs OpenVX graphs.
+* `RunVX <https://github.com/ROCm/MIVisionX/tree/develop/utilities/runvx>`_ is a command-line tool that runs OpenVX graphs.

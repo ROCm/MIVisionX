@@ -35,9 +35,20 @@ set(VERSION "3.1.0")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
-find_package(AMDRPP REQUIRED)
+find_package(rpp 2.1.0 REQUIRED)
+
+message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
+message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
+message("-- \t${White}rpp_LIB_DIR -- ${rpp_LIB_DIR}${ColourReset}")
+message("-- \t${White}rpp_LIBRARY -- ${rpp_LIBRARY}${ColourReset}")
+message("-- \t${White}rpp_FOUND -- ${rpp_FOUND}${ColourReset}")
+message("-- \t${White}rpp_VERSION -- ${rpp_VERSION}${ColourReset}")
+message("-- \t${White}rpp_VERSION_MAJOR -- ${rpp_VERSION_MAJOR}${ColourReset}")
+message("-- \t${White}rpp_VERSION_MINOR -- ${rpp_VERSION_MINOR}${ColourReset}")
+message("-- \t${White}rpp_VERSION_PATCH -- ${rpp_VERSION_PATCH}${ColourReset}")
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(OpenCL REQUIRED)
@@ -49,8 +60,8 @@ endif()
 
 include_directories(../../amd_openvx/openvx/include/ include)
 # AMD RPP
-include_directories(${AMDRPP_INCLUDE_DIRS})
-set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})
+include_directories(${rpp_INCLUDE_DIR})
+set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES
         source/tensor/Blend.cpp
@@ -103,9 +114,8 @@ list(APPEND SOURCES
     )
 
 set(RPP_LEGACY_SUPPORT_FOUND 0)
-find_path(RPP_INCLUDE_DIR NAMES rpp.h PATHS ${ROCM_PATH}/include/rpp)
-if(EXISTS ${RPP_INCLUDE_DIR}/rpp_legacy_support.h)
-    file(READ ${RPP_INCLUDE_DIR}/rpp_legacy_support.h RPP_LEGACY_SUPPORT_FILE)
+if(EXISTS ${rpp_INCLUDE_DIR}/rpp_legacy_support.h)
+    file(READ ${rpp_INCLUDE_DIR}/rpp_legacy_support.h RPP_LEGACY_SUPPORT_FILE)
     string(REGEX MATCH "RPP_LEGACY_SUPPORT ([0-1]*)" _ ${RPP_LEGACY_SUPPORT_FILE})
     set(RPP_LEGACY_SUPPORT_FOUND ${CMAKE_MATCH_1})
 endif()
@@ -229,14 +239,14 @@ else()
 endif()
 
 set(RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND 0)
-if(EXISTS ${RPP_INCLUDE_DIR}/rpp_audio_augmentations_support.h)
-    file(READ ${RPP_INCLUDE_DIR}/rpp_audio_augmentations_support.h RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE)
+if(EXISTS ${rpp_INCLUDE_DIR}/rpp_audio_augmentations_support.h)
+    file(READ ${rpp_INCLUDE_DIR}/rpp_audio_augmentations_support.h RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE)
     string(REGEX MATCH "RPP_AUDIO_AUGMENTATIONS_SUPPORT ([0-9]*)" _ ${RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE})
     set(RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND ${CMAKE_MATCH_1})
 endif()
 
 # Audio features for VX_RPP
-if((${RPP_VERSION_MAJOR} VERSION_GREATER "1") OR (${RPP_VERSION_MAJOR} VERSION_EQUAL "1" AND ${RPP_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${RPP_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
+if((${rpp_VERSION_MAJOR} VERSION_GREATER "1") OR (${rpp_VERSION_MAJOR} VERSION_EQUAL "1" AND ${rpp_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${rpp_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
 AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAUDIO_SUPPORT=1")
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")

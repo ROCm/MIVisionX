@@ -44,13 +44,14 @@ set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
 
 # Find Modules
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # OpenCV -- Display Component
 find_package(OpenCV REQUIRED)
 
 # RPP
-find_package(AMDRPP QUIET)
+find_package(rpp QUIET)
 
 # Choose Backend - TBD: ADD FindMIVisionX.cmake
 set(MIVISIONX_BACKEND_OPENCL_FOUND 0)

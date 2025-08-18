@@ -24,7 +24,7 @@
 # 
 ################################################################################
 find_path(HALF_INCLUDE_DIRS
-    NAMES half/half.hpp
+    NAMES half/half.hpp half.hpp
     HINTS
     $ENV{ROCM_PATH}/include
     $ENV{HALF_DIR}

@@ -350,8 +350,8 @@ include(CPack)
 
 cpack_add_component(runtime
                   DISPLAY_NAME "MIVisionX Runtime Package"
-                  DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit. \
-MIVisionX runtime package provides MIVisionX libraries and license.txt")
+                  DESCRIPTION "Computer Vision and ML Inference Toolkit. \
+MIVisionX libraries and license.txt")
 
 cpack_add_component(dev
                   DISPLAY_NAME "MIVisionX Develop Package"

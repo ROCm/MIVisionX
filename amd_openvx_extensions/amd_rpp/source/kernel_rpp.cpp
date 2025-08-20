@@ -3068,11 +3068,13 @@ vx_status releaseRPPHandle(vx_node node, vxRppHandle *handle, Rpp32u deviceType)
     handle->count--;
     if (handle->count == 0) {
         if(deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL || ENABLE_HIP
-            rppDestroy(handle->rppHandle);
+#if ENABLE_OPENCL
+            rppDestroy(handle->rppHandle, RppBackend::RPP_OCL_BACKEND);
+#elif ENABLE_HIP
+            rppDestroy(handle->rppHandle, RppBackend::RPP_HIP_BACKEND);
 #endif   
         } else if (deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rppDestroy(handle->rppHandle);
+            rppDestroy(handle->rppHandle, RppBackend::RPP_HOST_BACKEND);
         }
 
         delete handle;

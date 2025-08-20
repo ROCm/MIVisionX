@@ -167,7 +167,6 @@ static vx_status VX_CALLBACK initializeRain(vx_node node, const vx_reference *pa
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pRainTransperancy = new vx_float32[data->pSrcDesc->n];
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         data->pRainTransperancy = new vx_float32[data->pSrcDesc->n];
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {

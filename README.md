@@ -27,12 +27,18 @@ The OpenVX framework provides a mechanism to add new vision functionality to Ope
 <p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl/README.md): AMD Loom stitching library for live 360 degree video applications
+
 * [amd_media](amd_openvx_extensions/amd_media/README.md): AMD media extension module is for encode and decode applications
-* [amd_migraphx](amd_openvx_extensions/amd_migraphx/README.md): AMD MIGraphX extension integrates the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> into an OpenVX graph. This extension allows developers to combine the vision funcions in OpenVX with the MIGraphX and build an end-to-end application for inference.
+
+* [amd_migraphx](amd_openvx_extensions/amd_migraphx/README.md): AMD MIGraphX extension integrates the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> into an OpenVX graph. This extension allows developers to combine the vision funcions in OpenVX with the MIGraphX and build an end-to-end application for inference
+
 * [amd_nn](amd_openvx_extensions/amd_nn/README.md): OpenVX neural network module
+
 * [amd_opencv](amd_openvx_extensions/amd_opencv/README.md): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
-* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): OpenVX extension providing an interface to some of the [ROCm Performance Primitives](https://github.com/ROCm/rpp) (RPP) functions. This extension enables [rocAL](https://github.com/ROCm/rocAL) to perform image augmentation.
-* [amd_winml](amd_openvx_extensions/amd_winml/README.md): AMD WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This extension aims to help developers to build an end to end application for inference.
+
+* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): OpenVX extension providing an interface to some of the [ROCm Performance Primitives](https://github.com/ROCm/rpp) (RPP) functions. This extension enables [rocAL](https://github.com/ROCm/rocAL) to perform image augmentation
+
+* [amd_winml](amd_openvx_extensions/amd_winml/README.md): AMD WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This extension aims to help developers to build an end to end application for inference
 
 ## Applications
 
@@ -55,8 +61,11 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 ## Utilities
 
 * [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
+
 * [mv_deploy](utilities/mv_deploy/README.md): consists of a model-compiler and necessary header/.cpp files which are required to run inference for a specific NeuralNet model
+
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
+
 * [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 
 ## Prerequisites
@@ -89,9 +98,17 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 > AMD Clang++ is the preferred cxx compiler, users can change this with the `CMAKE_CXX_COMPILER` variable
 
 ### Libraries
-* CMake - Version `3.10` and above
+* CMake - Version `3.10` or later
   ```shell
   sudo apt install cmake
+  ```
+* HIP
+  ```shell
+  sudo apt install rocm-hip-runtime-dev
+  ```
+* OpenMP
+  ```shell
+  sudo apt install openmp-extras-dev
   ```
 * Half-precision floating-point(half) library - Version `1.12.0`
   ```shell
@@ -117,7 +134,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   ```shell
   sudo apt install pkg-config
   ```
-* FFmpeg - Version `4.4.2` and above
+* FFmpeg - Version `4.4.2` or later
   ```shell
   sudo apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
   ```
@@ -145,7 +162,7 @@ The installation process uses the following steps:
 
 * [ROCm-supported hardware](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) install verification
 
-* Install ROCm `6.1.0` or later with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) with `--usecase=rocm`
+* Install ROCm `7.0.0` or later with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) with `--usecase=rocm`
 
 >[!IMPORTANT]
 > Use **either** [package install](#package-install) **or** [source install](#source-install) as described below.

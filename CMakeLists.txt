@@ -37,7 +37,7 @@ if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
 endif()
 
 ## MIVisionX package version
-set(VERSION "3.3.0")
+set(VERSION "3.4.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
@@ -125,9 +125,10 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 else()
   # -O3 -- Optimize output file
   # -DNDEBUG -- turn off asserts
-  # -fPIC -- Generate position-independent code if possible
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 endif()
+# Generate position-independent code for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -349,8 +350,8 @@ include(CPack)
 
 cpack_add_component(runtime
                   DISPLAY_NAME "MIVisionX Runtime Package"
-                  DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit. \
-MIVisionX runtime package provides MIVisionX libraries and license.txt")
+                  DESCRIPTION "Computer Vision and ML Inference Toolkit. \
+MIVisionX libraries and license.txt")
 
 cpack_add_component(dev
                   DISPLAY_NAME "MIVisionX Develop Package"

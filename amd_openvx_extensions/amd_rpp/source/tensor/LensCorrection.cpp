@@ -175,8 +175,8 @@ static vx_status VX_CALLBACK initializeLensCorrection(vx_node node, const vx_ref
 
     auto ioBufferSize = (Rpp64u)data->pSrcDesc->h * (Rpp64u)data->pSrcDesc->w * (Rpp64u)data->pSrcDesc->c * (Rpp64u)data->pSrcDesc->n;
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        data->pRowRemapTable = static_cast<Rpp32f *>(calloc(ioBufferSize, sizeof(Rpp32f)));
-        data->pColRemapTable = static_cast<Rpp32f *>(calloc(ioBufferSize, sizeof(Rpp32f)));
+        data->pRowRemapTable = new Rpp32f[ioBufferSize]();
+        data->pColRemapTable = new Rpp32f[ioBufferSize]();
         data->pCameraMatrix = new vx_float32[data->pSrcDesc->n * 9];
         data->pDistortionCoeffs = new vx_float32[data->pSrcDesc->n * 8];
     } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {

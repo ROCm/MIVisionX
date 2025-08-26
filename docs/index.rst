@@ -10,7 +10,7 @@ MIVisionX documentation
 
 MIVisionX is a comprehensive machine intelligence and computer vision toolkit. MIVisionX includes AMD's implementation of `Khronos OpenVX <https://www.khronos.org/openvx/>`_, as well as a Convolutional Neural Net model compiler and optimizer supporting the `ONNX <https://onnx.ai/>`_ and `Khronos NNEF <https://www.khronos.org/nnef>`_ exchange formats. The MIVisionX toolkit is used for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including on small embedded CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
- The MIVisionX public repository is located at `https://github.com/ROCm/MIVisionX <https://github.com/ROCm/MIVisionX>`_.
+The MIVisionX public repository is located at `https://github.com/ROCm/MIVisionX <https://github.com/ROCm/MIVisionX>`_.
 
 .. grid:: 2
   :gutter: 3

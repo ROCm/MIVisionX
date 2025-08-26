@@ -6,7 +6,7 @@
 Building and installing MIVisionX on Linux from source code
 *************************************************************
 
-Before building and installing MIVisionX, ensure that ROCm has been installed with the AMDGPU installer and the ``rocm`` usecase:
+Before building and installing MIVisionX, ensure that ROCm has been installed with the `AMDGPU installer <https://rocm.docs.amd.com/projects/install-on-linux/en/docs-6.4.1/install/install-methods/amdgpu-installer-index.html>`_ and the ``rocm`` usecase:
 
 .. code:: shell
 

@@ -52,7 +52,7 @@ using namespace std;
 #define OPENVX_KHR_RPP   "vx_khr_rpp"
 #define ERRMSG(status, format, ...) printf("ERROR: " format, __VA_ARGS__), status
 #define STATUS_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) return status;}
-#define PARAM_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) goto exit;}
+#define PARAM_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) return status;}
 #define ERROR_CHECK_OBJECT(obj)  { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS){ vxAddLogEntry((vx_reference)(obj), status, "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; }}
 #define CHECK_HIP_RETURN_STATUS(x)                                                                         \
     do {                                                                                               \

@@ -39,6 +39,7 @@ list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
 find_package(rpp 2.1.0 REQUIRED)
+find_package(pybind11 QUIET CONFIG)
 
 message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
 message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
@@ -70,6 +71,7 @@ include_directories(../../amd_openvx/openvx/include/ include)
 # AMD RPP
 include_directories(${rpp_INCLUDE_DIR})
 include_directories(${Python3_INCLUDE_DIRS})
+include_directories(${pybind11_INCLUDE_DIRS})
 set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES

@@ -121,6 +121,10 @@ static vx_status VX_CALLBACK processContrast(vx_node node, const vx_reference *p
     ContrastLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshContrast(node, parameters, num, data);
+    for (int i = 0; i < data->inputTensorDims[0]; i++) {
+        std::cerr << "data->pContrastFactor[i] : " << data->pContrastFactor[i] << "\n";
+        std::cerr << "data->pContrastCenter[i] : " << data->pContrastCenter[i] << "\n";
+    }
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;

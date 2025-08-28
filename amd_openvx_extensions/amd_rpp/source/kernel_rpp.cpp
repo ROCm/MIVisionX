@@ -1901,7 +1901,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppBrightness(vx_graph graph, vx_tensor pS
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtExternalSource(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar functionId, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType, vx_scalar dtype) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtPythonFunction(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar functionId, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType, vx_scalar dtype) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -1918,7 +1918,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtExternalSource(vx_graph graph, vx_tensor p
             (vx_reference)deviceType,
             (vx_reference)dtype
         };
-        node = createNode(graph, VX_KERNEL_EXTERNALSOURCE, params, 9);
+        node = createNode(graph, VX_KERNEL_PYTHONFUNCTION, params, 9);
     }
     return node;
 }
@@ -2060,7 +2060,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppColorTwist(vx_graph graph, vx_tensor pS
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppContrast(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pContrastFactor, vx_tensor pContrastCenter, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppContrast(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pContrastFactor, vx_array pContrastCenter, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {

@@ -72,6 +72,14 @@ struct PythonFunctionLocalData {
     vx_uint32 dtype;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
+
+    // Cached Python/NumPy handles and dtype itemsize
+    py::object numpy_module;
+    py::object ascontiguous_fn;
+    bool numpy_ready;
+    size_t in_itemsize;
+    size_t out_itemsize;
+
     py::object python_function;
 };
 
@@ -88,16 +96,6 @@ static vx_status VX_CALLBACK refreshPythonFunction(vx_node node, const vx_refere
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
 
-    data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
-    if (data->inputLayout == VX_NFHWC || data->inputLayout == VX_NFCHW) {
-        unsigned num_of_frames = data->inputTensorDims[1];
-        for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
-            unsigned index = n * num_of_frames;
-            for (unsigned f = 0; f < num_of_frames; f++) {
-                data->pSrcRoi[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
-            }
-        }
-    }
     return status;
 }
 
@@ -142,27 +140,25 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
         return VX_ERROR_NOT_IMPLEMENTED;
 
-    py::gil_scoped_acquire acquire;
+    {
+        py::gil_scoped_acquire acquire;
     try {
-        // Determine input numpy dtype and itemsize from RpptDesc
-        auto [in_format, in_itemsize] = get_numpy_type(getVxDataType(data->pSrcGenericDesc->dataType));
-
-        // Build batched shape [N, D1, D2, ...] and contiguous strides in bytes
+        // Determine input numpy dtype and use backend element strides × itemsize
+        auto [in_format, _ignored] = get_numpy_type(getVxDataType(data->pSrcGenericDesc->dataType));
         const size_t batch = data->inputTensorDims[0];
         std::vector<size_t> batched_shape;
         batched_shape.reserve(data->pSrcGenericDesc->numDims);
         for (size_t j = 0; j < data->pSrcGenericDesc->numDims; ++j) {
             batched_shape.push_back(data->inputTensorDims[j]);
         }
-        std::vector<size_t> batched_strides(batched_shape.size());
-        if (!batched_strides.empty()) {
-            batched_strides.back() = in_itemsize;
-            for (int j = (int)batched_strides.size() - 2; j >= 0; --j) {
-                batched_strides[j] = batched_strides[j+1] * batched_shape[j+1];
-            }
+
+        std::vector<size_t> batched_strides;
+        batched_strides.reserve(data->pSrcGenericDesc->numDims);
+        for (size_t j = 0; j < data->pSrcGenericDesc->numDims; ++j) {
+            batched_strides.push_back(static_cast<size_t>(data->pSrcGenericDesc->strides[j]) * data->in_itemsize);
         }
 
-        // Create a numpy view for the entire batch without copying
+        // Create a NumPy view for the entire batch without copying
         py::capsule owner((void*)data->pSrc, [](void*){ /* no-op */ });
         py::array numpy_batch(
             py::dtype(in_format),
@@ -175,10 +171,16 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
         // Call user python function with single batched array
         py::object result_obj = data->python_function(numpy_batch);
 
-        // Ensure contiguous numpy array for copying
+        // Ensure contiguous numpy array for copying (use cached numpy.ascontiguousarray)
         py::array result_array = py::cast<py::array>(result_obj);
-        py::object np = py::module::import("numpy");
-        py::array result_contig = np.attr("ascontiguousarray")(result_array);
+        bool is_c_contig = false;
+        try {
+            is_c_contig = py::cast<bool>(result_array.attr("flags").attr("c_contiguous"));
+        } catch (...) {
+            is_c_contig = false;
+        }
+        py::array result_contig = is_c_contig ? result_array
+                                              : data->ascontiguous_fn(result_array).cast<py::array>();
         py::buffer_info buf_info = result_contig.request();
 
         // Validations
@@ -200,17 +202,18 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
         }
 
         // Verify dtype / itemsize with expected output
-        auto [out_format, out_itemsize] = get_numpy_type(getVxDataType(data->pDstGenericDesc->dataType));
-        (void)out_format; // format string not needed for copying
-        if (static_cast<size_t>(buf_info.itemsize) != out_itemsize) {
+        if (static_cast<size_t>(buf_info.itemsize) != data->out_itemsize) {
             return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction wrong dtype itemsize: expected %zu, got %zu\n",
-                          out_itemsize, static_cast<size_t>(buf_info.itemsize));
+                          data->out_itemsize, static_cast<size_t>(buf_info.itemsize));
         }
 
         // Copy returned contiguous buffer to pDst
         size_t total_bytes = static_cast<size_t>(buf_info.itemsize);
         for (auto &d : buf_info.shape) total_bytes *= static_cast<size_t>(d);
         memcpy(data->pDst, buf_info.ptr, total_bytes);
+        // Drop Python array references before releasing GIL
+        result_contig = py::array();
+        result_array = py::array();
 
     } catch (const py::error_already_set &e) {
         vxAddLogEntry((vx_reference)node, VX_FAILURE, "PythonFunction error: %s\n", e.what());
@@ -219,12 +222,16 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
         vxAddLogEntry((vx_reference)node, VX_FAILURE, "PythonFunction std::exception: %s\n", e.what());
         return_status = VX_FAILURE;
     }
+    }
     return return_status;
 }
 
 static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     (void)num;
     auto *data = new PythonFunctionLocalData;
+    data->numpy_ready = false;
+    data->in_itemsize = 0;
+    data->out_itemsize = 0;
     vx_int32 roi_type = 0, input_layout = 0, output_layout = 0;
     vx_enum input_tensor_dtype = 0, output_tensor_dtype = 0;
 
@@ -263,10 +270,22 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
         py::gil_scoped_acquire acquire;
         py::handle h(reinterpret_cast<PyObject*>(function_id)); h.inc_ref();
         data->python_function = py::reinterpret_steal<py::object>(h.ptr());
+        // Cache NumPy references
+        data->numpy_module = py::module::import("numpy");
+        data->ascontiguous_fn = data->numpy_module.attr("ascontiguousarray");
+        data->numpy_ready = true;
     }
 
     // Output dtype enum
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->dtype, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+
+    // Cache input/output itemsize (bytes)
+    {
+        auto in_np = get_numpy_type(getVxDataType(data->pSrcGenericDesc->dataType));
+        data->in_itemsize = in_np.second;
+        auto out_np = get_numpy_type(getVxDataType(data->pDstGenericDesc->dataType));
+        data->out_itemsize = out_np.second;
+    }
 
     // Initial refresh and handle creation
     STATUS_ERROR_CHECK(refreshPythonFunction(node, parameters, num, data));
@@ -284,6 +303,8 @@ static vx_status VX_CALLBACK uninitializePythonFunction(vx_node node, const vx_r
     {
         py::gil_scoped_acquire acquire;
         data->python_function.release();
+        if (!data->numpy_module.is_none()) data->numpy_module.release();
+        if (!data->ascontiguous_fn.is_none()) data->ascontiguous_fn.release();
     }
     if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;
     if (data->pDstGenericDesc) delete data->pDstGenericDesc;

@@ -39,7 +39,6 @@ list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
 find_package(rpp 2.1.0 REQUIRED)
-find_package(pybind11 QUIET CONFIG)
 
 message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
 message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
@@ -50,14 +49,6 @@ message("-- \t${White}rpp_VERSION -- ${rpp_VERSION}${ColourReset}")
 message("-- \t${White}rpp_VERSION_MAJOR -- ${rpp_VERSION_MAJOR}${ColourReset}")
 message("-- \t${White}rpp_VERSION_MINOR -- ${rpp_VERSION_MINOR}${ColourReset}")
 message("-- \t${White}rpp_VERSION_PATCH -- ${rpp_VERSION_PATCH}${ColourReset}")
-
-# Find Python
-set(PYTHON_VERSION_SUGGESTED "" CACHE STRING "Python version to build with, e.g., 3.8")
-if(PYTHON_VERSION_SUGGESTED)
-    find_package(Python3 ${PYTHON_VERSION_SUGGESTED} EXACT QUIET COMPONENTS Interpreter Development)
-else()
-    find_package(Python3 QUIET COMPONENTS Interpreter Development)
-endif()
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(OpenCL REQUIRED)
@@ -70,8 +61,6 @@ endif()
 include_directories(../../amd_openvx/openvx/include/ include)
 # AMD RPP
 include_directories(${rpp_INCLUDE_DIR})
-include_directories(${Python3_INCLUDE_DIRS})
-include_directories(${pybind11_INCLUDE_DIRS})
 set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES
@@ -287,9 +276,9 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
 endif()
 
-target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST}  ${Python3_LIBRARIES})
+target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST} ${CMAKE_DL_LIBS})
 message("-- ${White}vx_rpp -- Link Libraries:${LINK_LIBRARY_LIST}${ColourReset}")
-message("-- ${White}Python3 -- Link Libraries:${Python3_LIBRARIES}${ColourReset}")
+message("-- ${White}vx_rpp -- Extra Link Libraries:${CMAKE_DL_LIBS}${ColourReset}")
 message("-- ${White}vx_rpp -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 

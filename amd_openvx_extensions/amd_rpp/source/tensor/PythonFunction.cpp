@@ -21,45 +21,73 @@ THE SOFTWARE.
 */
 
 #include "internal_publishKernels.h"
-#include <pybind11/embed.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
 
-namespace py = pybind11;
+#include <dlfcn.h>
+#include <stdint.h>
+
+#include <cstdio>
+#include <cstring>
+#include <stdexcept>
+
+// Local copy of rocAL Python bridge C ABI (keep in sync with rocAL)
+#ifndef ROCAL_PY_MAX_TENSOR_DIMS
+#define ROCAL_PY_MAX_TENSOR_DIMS 8
+#endif
+
+typedef struct RocalPyTensorDesc_ {
+    size_t num_dims;
+    size_t shape[ROCAL_PY_MAX_TENSOR_DIMS];
+    size_t strides[ROCAL_PY_MAX_TENSOR_DIMS];  // in elements
+    vx_enum dtype;
+    int layout;
+} RocalPyTensorDesc;
+
+typedef struct RocalPyExecParams_ {
+    uint64_t function_id;
+    RocalPyTensorDesc in_desc;
+    RocalPyTensorDesc out_desc;
+    int roi_type;
+    uint32_t device_type;
+} RocalPyExecParams;
+
+typedef vx_status (*rocal_process_python_function_fn)(void *src_ptr, void *dst_ptr, const RocalPyExecParams *params);
 
 // Map RpptDataType -> OpenVX type enum
 vx_enum getVxDataType(RpptDataType dataType) {
     switch (dataType) {
-        case RpptDataType::F32: return VX_TYPE_FLOAT32;
-        case RpptDataType::F16: return VX_TYPE_FLOAT16;
-        case RpptDataType::U8:  return VX_TYPE_UINT8;
-        case RpptDataType::I8:  return VX_TYPE_INT8;
-        default: throw std::runtime_error("Unsupported RpptDataType");
+        case RpptDataType::F32:
+            return VX_TYPE_FLOAT32;
+        case RpptDataType::F16:
+            return VX_TYPE_FLOAT16;
+        case RpptDataType::U8:
+            return VX_TYPE_UINT8;
+        case RpptDataType::I8:
+            return VX_TYPE_INT8;
+        case RpptDataType::I16:
+            return VX_TYPE_INT16;
+        default:
+            throw std::runtime_error("Unsupported RpptDataType");
     }
 }
 
-// Map OpenVX type enum -> NumPy dtype string and itemsize
-std::pair<std::string, size_t> get_numpy_type(vx_enum type) {
-    switch (type) {
-        case VX_TYPE_FLOAT32:
-            return {py::format_descriptor<float>::format(), sizeof(float)};
-        case VX_TYPE_FLOAT16:
-            return {"e", sizeof(vx_float16)};
-        case VX_TYPE_UINT8:
-            return {py::format_descriptor<uint8_t>::format(), sizeof(uint8_t)};
-        case VX_TYPE_INT8:
-            return {py::format_descriptor<int8_t>::format(), sizeof(int8_t)};
-        case VX_TYPE_UINT32:
-            return {py::format_descriptor<uint32_t>::format(), sizeof(uint32_t)};
-        case VX_TYPE_INT32:
-            return {py::format_descriptor<int32_t>::format(), sizeof(int32_t)};
+size_t getItemSize(RpptDataType dataType) {
+    switch (dataType) {
+        case RpptDataType::F32:
+            return sizeof(float);
+        case RpptDataType::F16:
+            return sizeof(vx_float16);
+        case RpptDataType::U8:
+            return sizeof(uint8_t);
+        case RpptDataType::I8:
+            return sizeof(int8_t);
+        case RpptDataType::I16:
+            return sizeof(int16_t);
         default:
-            throw std::runtime_error("Unsupported data type");
+            return 0;
     }
 }
 
 struct PythonFunctionLocalData {
-    vxRppHandle *handle;
     vx_uint32 deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
@@ -73,14 +101,9 @@ struct PythonFunctionLocalData {
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 
-    // Cached Python/NumPy handles and dtype itemsize
-    py::object numpy_module;
-    py::object ascontiguous_fn;
-    bool numpy_ready;
-    size_t in_itemsize;
-    size_t out_itemsize;
-
-    py::object python_function;
+    // Bridge info
+    uint64_t function_id;
+    rocal_process_python_function_fn bridge_fn;
 };
 
 static vx_status VX_CALLBACK refreshPythonFunction(vx_node node, const vx_reference *parameters, vx_uint32 /*num*/, PythonFunctionLocalData *data) {
@@ -102,10 +125,10 @@ static vx_status VX_CALLBACK refreshPythonFunction(vx_node node, const vx_refere
 static vx_status VX_CALLBACK validatePythonFunction(vx_node /*node*/, const vx_reference parameters[], vx_uint32 /*num*/, vx_meta_format metas[]) {
     // Scalars: 4=inputLayout(INT32), 5=outputLayout(INT32), 6=roiType(INT32), 7=deviceType(UINT32), 8=dtype(INT32 or UINT32 as encoded)
     vx_enum scalar_type;
-    for (int idx : {4,5,6}) {
+    for (int idx : {4, 5, 6}) {
         STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[idx], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
         if (scalar_type != VX_TYPE_INT32)
-            return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #%d must be INT32\n", idx+1);
+            return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #%d must be INT32\n", idx + 1);
     }
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
@@ -129,7 +152,6 @@ static vx_status VX_CALLBACK validatePythonFunction(vx_node /*node*/, const vx_r
 }
 
 static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    vx_status return_status = VX_SUCCESS;
     PythonFunctionLocalData *data = nullptr;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshPythonFunction(node, parameters, num, data));
@@ -140,98 +162,49 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
         return VX_ERROR_NOT_IMPLEMENTED;
 
-    {
-        py::gil_scoped_acquire acquire;
-    try {
-        // Determine input numpy dtype and use backend element strides × itemsize
-        auto [in_format, _ignored] = get_numpy_type(getVxDataType(data->pSrcGenericDesc->dataType));
-        const size_t batch = data->inputTensorDims[0];
-        std::vector<size_t> batched_shape;
-        batched_shape.reserve(data->pSrcGenericDesc->numDims);
-        for (size_t j = 0; j < data->pSrcGenericDesc->numDims; ++j) {
-            batched_shape.push_back(data->inputTensorDims[j]);
-        }
-
-        std::vector<size_t> batched_strides;
-        batched_strides.reserve(data->pSrcGenericDesc->numDims);
-        for (size_t j = 0; j < data->pSrcGenericDesc->numDims; ++j) {
-            batched_strides.push_back(static_cast<size_t>(data->pSrcGenericDesc->strides[j]) * data->in_itemsize);
-        }
-
-        // Create a NumPy view for the entire batch without copying
-        py::capsule owner((void*)data->pSrc, [](void*){ /* no-op */ });
-        py::array numpy_batch(
-            py::dtype(in_format),
-            batched_shape,
-            batched_strides,
-            data->pSrc,
-            owner
-        );
-
-        // Call user python function with single batched array
-        py::object result_obj = data->python_function(numpy_batch);
-
-        // Ensure contiguous numpy array for copying (use cached numpy.ascontiguousarray)
-        py::array result_array = py::cast<py::array>(result_obj);
-        bool is_c_contig = false;
-        try {
-            is_c_contig = py::cast<bool>(result_array.attr("flags").attr("c_contiguous"));
-        } catch (...) {
-            is_c_contig = false;
-        }
-        py::array result_contig = is_c_contig ? result_array
-                                              : data->ascontiguous_fn(result_array).cast<py::array>();
-        py::buffer_info buf_info = result_contig.request();
-
-        // Validations
-        if (buf_info.ndim != static_cast<int>(data->pDstGenericDesc->numDims)) {
-            return ERRMSG(VX_ERROR_INVALID_DIMENSION, "PythonFunction returned wrong ndim: expected %zu, got %zd\n",
-                          data->pDstGenericDesc->numDims, buf_info.ndim);
-        }
-        if (static_cast<size_t>(buf_info.shape[0]) != batch) {
-            return ERRMSG(VX_ERROR_INVALID_DIMENSION, "PythonFunction returned wrong batch size: expected %zu, got %zu\n",
-                          batch, static_cast<size_t>(buf_info.shape[0]));
-        }
-        for (size_t j = 1; j < data->pDstGenericDesc->numDims; ++j) {
-            size_t expected = data->outputTensorDims[j];
-            size_t got = static_cast<size_t>(buf_info.shape[j]);
-            if (expected != got) {
-                return ERRMSG(VX_ERROR_INVALID_DIMENSION, "PythonFunction mismatched output shape at dim %zu: expected %zu got %zu\n",
-                              j, expected, got);
-            }
-        }
-
-        // Verify dtype / itemsize with expected output
-        if (static_cast<size_t>(buf_info.itemsize) != data->out_itemsize) {
-            return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction wrong dtype itemsize: expected %zu, got %zu\n",
-                          data->out_itemsize, static_cast<size_t>(buf_info.itemsize));
-        }
-
-        // Copy returned contiguous buffer to pDst
-        size_t total_bytes = static_cast<size_t>(buf_info.itemsize);
-        for (auto &d : buf_info.shape) total_bytes *= static_cast<size_t>(d);
-        memcpy(data->pDst, buf_info.ptr, total_bytes);
-        // Drop Python array references before releasing GIL
-        result_contig = py::array();
-        result_array = py::array();
-
-    } catch (const py::error_already_set &e) {
-        vxAddLogEntry((vx_reference)node, VX_FAILURE, "PythonFunction error: %s\n", e.what());
-        return_status = VX_FAILURE;
-    } catch (const std::exception &e) {
-        vxAddLogEntry((vx_reference)node, VX_FAILURE, "PythonFunction std::exception: %s\n", e.what());
-        return_status = VX_FAILURE;
+    if (!data->bridge_fn) {
+        vxAddLogEntry((vx_reference)node, VX_ERROR_NOT_IMPLEMENTED, "PythonFunction bridge function not available. Build rocAL with Python bridge.\n");
+        return VX_ERROR_NOT_IMPLEMENTED;
     }
+
+    RocalPyExecParams p{};
+    p.function_id = data->function_id;
+    p.roi_type = static_cast<int>(data->roiType);
+    p.device_type = data->deviceType;
+
+    // in_desc
+    p.in_desc.num_dims = data->pSrcGenericDesc->numDims;
+    p.in_desc.dtype = getVxDataType(data->pSrcGenericDesc->dataType);
+    p.in_desc.layout = static_cast<int>(data->inputLayout);
+    size_t in_itemsize = getItemSize(data->pSrcGenericDesc->dataType);
+    if (in_itemsize == 0) return VX_ERROR_INVALID_TYPE;
+    for (size_t i = 0; i < p.in_desc.num_dims; ++i) {
+        p.in_desc.shape[i] = data->inputTensorDims[i];
+        p.in_desc.strides[i] = static_cast<size_t>(data->pSrcGenericDesc->strides[i]) / in_itemsize;
     }
-    return return_status;
+
+    // out_desc
+    p.out_desc.num_dims = data->pDstGenericDesc->numDims;
+    p.out_desc.dtype = getVxDataType(data->pDstGenericDesc->dataType);
+    p.out_desc.layout = static_cast<int>(data->outputLayout);
+    size_t out_itemsize = getItemSize(data->pDstGenericDesc->dataType);
+    if (out_itemsize == 0) return VX_ERROR_INVALID_TYPE;
+    for (size_t i = 0; i < p.out_desc.num_dims; ++i) {
+        p.out_desc.shape[i] = data->outputTensorDims[i];
+        p.out_desc.strides[i] = static_cast<size_t>(data->pDstGenericDesc->strides[i]) / out_itemsize;
+    }
+
+    vx_status st = data->bridge_fn(data->pSrc, data->pDst, &p);
+    if (st != VX_SUCCESS) {
+        vxAddLogEntry((vx_reference)node, st, "PythonFunction bridge returned error: %d\n", st);
+        return st;
+    }
+    return VX_SUCCESS;
 }
 
 static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     (void)num;
     auto *data = new PythonFunctionLocalData;
-    data->numpy_ready = false;
-    data->in_itemsize = 0;
-    data->out_itemsize = 0;
     vx_int32 roi_type = 0, input_layout = 0, output_layout = 0;
     vx_enum input_tensor_dtype = 0, output_tensor_dtype = 0;
 
@@ -263,34 +236,25 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
     data->pDstGenericDesc->offsetInBytes = 0;
     fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->outputTensorDims);
 
-    // Python function handle
+    // Python function id to be forwarded to rocAL bridge
     vx_int64 function_id = 0;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &function_id, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    {
-        py::gil_scoped_acquire acquire;
-        py::handle h(reinterpret_cast<PyObject*>(function_id)); h.inc_ref();
-        data->python_function = py::reinterpret_steal<py::object>(h.ptr());
-        // Cache NumPy references
-        data->numpy_module = py::module::import("numpy");
-        data->ascontiguous_fn = data->numpy_module.attr("ascontiguousarray");
-        data->numpy_ready = true;
-    }
+    data->function_id = static_cast<uint64_t>(function_id);
 
-    // Output dtype enum
+    // Output dtype enum (retained for compatibility; not needed by bridge directly)
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->dtype, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
-    // Cache input/output itemsize (bytes)
-    {
-        auto in_np = get_numpy_type(getVxDataType(data->pSrcGenericDesc->dataType));
-        data->in_itemsize = in_np.second;
-        auto out_np = get_numpy_type(getVxDataType(data->pDstGenericDesc->dataType));
-        data->out_itemsize = out_np.second;
-    }
-
-    // Initial refresh and handle creation
+    // Call refreshPythonFunction
     STATUS_ERROR_CHECK(refreshPythonFunction(node, parameters, num, data));
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+
+    // Resolve bridge symbol; process will fall back gracefully if missing
+    data->bridge_fn = reinterpret_cast<rocal_process_python_function_fn>(dlsym(RTLD_DEFAULT, "rocal_process_python_function"));
+    
+    if (!data->bridge_fn) {
+        vxAddLogEntry((vx_reference)node, VX_ERROR_NOT_IMPLEMENTED, "PythonFunction bridge function not available. Build rocAL with Python bridge.\n");
+        return VX_ERROR_NOT_IMPLEMENTED;
+    }
 
     return VX_SUCCESS;
 }
@@ -300,16 +264,9 @@ static vx_status VX_CALLBACK uninitializePythonFunction(vx_node node, const vx_r
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (!data) return VX_SUCCESS;
 
-    {
-        py::gil_scoped_acquire acquire;
-        data->python_function.release();
-        if (!data->numpy_module.is_none()) data->numpy_module.release();
-        if (!data->ascontiguous_fn.is_none()) data->ascontiguous_fn.release();
-    }
     if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;
     if (data->pDstGenericDesc) delete data->pDstGenericDesc;
 
-    STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
     return VX_SUCCESS;
 }
@@ -320,7 +277,8 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node /*node
     AgoTargetAffinityInfo affinity;
     vxQueryContext(vxGetContext((vx_reference)graph), VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
     supported_target_affinity = (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-        ? AGO_TARGET_AFFINITY_GPU : AGO_TARGET_AFFINITY_CPU;
+                                    ? AGO_TARGET_AFFINITY_GPU
+                                    : AGO_TARGET_AFFINITY_CPU;
     return VX_SUCCESS;
 }
 
@@ -356,6 +314,9 @@ vx_status PythonFunction_Register(vx_context context) {
     STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     STATUS_ERROR_CHECK(vxFinalizeKernel(kernel));
-    if (status != VX_SUCCESS) { vxRemoveKernel(kernel); return VX_FAILURE; }
+    if (status != VX_SUCCESS) {
+        vxRemoveKernel(kernel);
+        return VX_FAILURE;
+    }
     return status;
 }

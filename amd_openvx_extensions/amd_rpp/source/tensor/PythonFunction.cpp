@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-#include <dlfcn.h>
 #include <stdint.h>
 
 #include <cstdio>
@@ -123,14 +122,19 @@ static vx_status VX_CALLBACK refreshPythonFunction(vx_node node, const vx_refere
 }
 
 static vx_status VX_CALLBACK validatePythonFunction(vx_node /*node*/, const vx_reference parameters[], vx_uint32 /*num*/, vx_meta_format metas[]) {
-    // Scalars: 4=inputLayout(INT32), 5=outputLayout(INT32), 6=roiType(INT32), 7=deviceType(UINT32), 8=dtype(INT32 or UINT32 as encoded)
     vx_enum scalar_type;
-    for (int idx : {4, 5, 6}) {
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[3], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if (scalar_type != VX_TYPE_UINT64)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #4 (bridgeFnPtr) must be UINT64\n");
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[4], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if (scalar_type != VX_TYPE_UINT64)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #5 (functionId) must be UINT64\n");
+    for (int idx : {5, 6, 7}) {
         STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[idx], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
         if (scalar_type != VX_TYPE_INT32)
             return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #%d must be INT32\n", idx + 1);
     }
-    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[8], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #8 (deviceType) must be UINT32\n");
 
@@ -208,10 +212,10 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
     vx_int32 roi_type = 0, input_layout = 0, output_layout = 0;
     vx_enum input_tensor_dtype = 0, output_tensor_dtype = 0;
 
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     data->roiType = static_cast<RpptRoiType>(roi_type);
     data->inputLayout = static_cast<vxTensorLayout>(input_layout);
     data->outputLayout = static_cast<vxTensorLayout>(output_layout);
@@ -236,25 +240,25 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
     data->pDstGenericDesc->offsetInBytes = 0;
     fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->outputTensorDims);
 
+
+    // Get bridge function pointer from scalar
+    uint64_t bridge_fn_ptr = 0;
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &bridge_fn_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    data->bridge_fn = reinterpret_cast<rocal_process_python_function_fn>(static_cast<uintptr_t>(bridge_fn_ptr));
+
+    if (!data->bridge_fn) {
+        vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_REFERENCE, "PythonFunction bridge function pointer is null.\n");
+        return VX_ERROR_INVALID_REFERENCE;
+    }
+
     // Python function id to be forwarded to rocAL bridge
     vx_int64 function_id = 0;
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &function_id, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &function_id, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     data->function_id = static_cast<uint64_t>(function_id);
-
-    // Output dtype enum (retained for compatibility; not needed by bridge directly)
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->dtype, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     // Call refreshPythonFunction
     STATUS_ERROR_CHECK(refreshPythonFunction(node, parameters, num, data));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-
-    // Resolve bridge symbol; process will fall back gracefully if missing
-    data->bridge_fn = reinterpret_cast<rocal_process_python_function_fn>(dlsym(RTLD_DEFAULT, "rocal_process_python_function"));
-    
-    if (!data->bridge_fn) {
-        vxAddLogEntry((vx_reference)node, VX_ERROR_NOT_IMPLEMENTED, "PythonFunction bridge function not available. Build rocAL with Python bridge.\n");
-        return VX_ERROR_NOT_IMPLEMENTED;
-    }
 
     return VX_SUCCESS;
 }

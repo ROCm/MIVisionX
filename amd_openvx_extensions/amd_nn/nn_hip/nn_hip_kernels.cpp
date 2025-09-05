@@ -24,14 +24,6 @@ THE SOFTWARE.
 #include "../../../amd_openvx/openvx/hipvx/hip_common_funcs.h"
 #include "nn_hip_host_decls.h"
 
-#define HIP_CHECK(command) { \
-    hipError_t status = command; \
-    if (status != hipSuccess) { \
-        std::cerr << "AMD OpenVX NN Extension: HIP Error Reported -- " << hipGetErrorString(status) << std::endl; \
-        return status; \
-    } \
-}
-
 // ----------------------------------------------------------------------------
 // Neural Network kernels for hip backend
 // ----------------------------------------------------------------------------

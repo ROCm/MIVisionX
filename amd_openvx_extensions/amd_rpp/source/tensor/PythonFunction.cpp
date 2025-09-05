@@ -45,7 +45,6 @@ typedef struct RocalPyExecParams_ {
     uint64_t function_id;
     RocalPyTensorDesc in_desc;
     RocalPyTensorDesc out_desc;
-    int roi_type;
     uint32_t device_type;
 } RocalPyExecParams;
 
@@ -112,46 +111,43 @@ static vx_status VX_CALLBACK refreshPythonFunction(vx_node node, const vx_refere
     }
 
     vx_status status = VX_SUCCESS;
-    void *roi_tensor_ptr = nullptr;
-
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
 
     return status;
 }
 
 static vx_status VX_CALLBACK validatePythonFunction(vx_node /*node*/, const vx_reference parameters[], vx_uint32 /*num*/, vx_meta_format metas[]) {
     vx_enum scalar_type;
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[2], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if (scalar_type != VX_TYPE_UINT64)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #3 (bridgeFnPtr) must be UINT64\n");
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[3], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT64)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #4 (bridgeFnPtr) must be UINT64\n");
-    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[4], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_UINT64)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #5 (functionId) must be UINT64\n");
-    for (int idx : {5, 6, 7}) {
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #4 (functionId) must be UINT64\n");
+    for (int idx : {4, 5}) {
         STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[idx], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
         if (scalar_type != VX_TYPE_INT32)
             return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #%d must be INT32\n", idx + 1);
     }
-    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[8], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #8 (deviceType) must be UINT32\n");
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #7 (deviceType) must be UINT32\n");
 
     // Mirror output meta from provided output tensor (created by API with proper dims/dtype)
     size_t num_dims = 0;
     vx_uint8 fixed_point = 0;
     size_t dims[RPP_MAX_TENSOR_DIMS] = {0};
     vx_enum dtype = 0;
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &dims, sizeof(dims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &dtype, sizeof(dtype)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_FIXED_POINT_POSITION, &fixed_point, sizeof(fixed_point)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, &dims, sizeof(dims)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &dtype, sizeof(dtype)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_FIXED_POINT_POSITION, &fixed_point, sizeof(fixed_point)));
 
-    STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DIMS, &dims, sizeof(dims)));
-    STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DATA_TYPE, &dtype, sizeof(dtype)));
-    STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_FIXED_POINT_POSITION, &fixed_point, sizeof(fixed_point)));
+    STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+    STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DIMS, &dims, sizeof(dims)));
+    STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DATA_TYPE, &dtype, sizeof(dtype)));
+    STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_FIXED_POINT_POSITION, &fixed_point, sizeof(fixed_point)));
     return VX_SUCCESS;
 }
 
@@ -173,7 +169,6 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
 
     RocalPyExecParams p{};
     p.function_id = data->function_id;
-    p.roi_type = static_cast<int>(data->roiType);
     p.device_type = data->deviceType;
 
     // in_desc
@@ -209,14 +204,12 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
 static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     (void)num;
     auto *data = new PythonFunctionLocalData;
-    vx_int32 roi_type = 0, input_layout = 0, output_layout = 0;
+    vx_int32 input_layout = 0, output_layout = 0;
     vx_enum input_tensor_dtype = 0, output_tensor_dtype = 0;
 
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    data->roiType = static_cast<RpptRoiType>(roi_type);
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     data->inputLayout = static_cast<vxTensorLayout>(input_layout);
     data->outputLayout = static_cast<vxTensorLayout>(output_layout);
 
@@ -233,9 +226,9 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
     fillGenericDescriptionPtrfromDims(data->pSrcGenericDesc, data->inputLayout, data->inputTensorDims);
 
     // Output tensor info
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstGenericDesc->numDims, sizeof(data->pDstGenericDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstGenericDesc->numDims));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstGenericDesc->numDims, sizeof(data->pDstGenericDesc->numDims)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstGenericDesc->numDims));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
     data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
     data->pDstGenericDesc->offsetInBytes = 0;
     fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->outputTensorDims);
@@ -243,7 +236,7 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
 
     // Get bridge function pointer from scalar
     uint64_t bridge_fn_ptr = 0;
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &bridge_fn_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &bridge_fn_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     data->bridge_fn = reinterpret_cast<rocal_process_python_function_fn>(static_cast<uintptr_t>(bridge_fn_ptr));
 
     if (!data->bridge_fn) {
@@ -253,7 +246,7 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
 
     // Python function id to be forwarded to rocAL bridge
     vx_int64 function_id = 0;
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &function_id, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &function_id, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     data->function_id = static_cast<uint64_t>(function_id);
 
     // Call refreshPythonFunction
@@ -291,7 +284,7 @@ vx_status PythonFunction_Register(vx_context context) {
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.PythonFunction",
                                        VX_KERNEL_PYTHONFUNCTION,
                                        processPythonFunction,
-                                       9,
+                                       7,
                                        validatePythonFunction,
                                        initializePythonFunction,
                                        uninitializePythonFunction);
@@ -307,16 +300,14 @@ vx_status PythonFunction_Register(vx_context context) {
     amd_kernel_query_target_support_f query_f = query_target_support;
     STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_f, sizeof(query_f)));
 
-    // Parameters: pSrc, pSrcRoi, pDst, functionId, inputLayout, outputLayout, roiType, deviceType, dtype
+    // Parameters: pSrc, pDst, functionPtr, functionId, inputLayout, outputLayout, deviceType
     STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-    STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-    STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    STATUS_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     STATUS_ERROR_CHECK(vxFinalizeKernel(kernel));
     if (status != VX_SUCCESS) {
         vxRemoveKernel(kernel);

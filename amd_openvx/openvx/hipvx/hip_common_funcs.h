@@ -24,6 +24,7 @@ THE SOFTWARE.
 #ifndef MIVISIONX_HIP_COMMON_FUNCS_H
 #define MIVISIONX_HIP_COMMON_FUNCS_H
 
+#include <iostream>
 #include "hip/hip_runtime.h"
 
 #define HIP_CHECK(command) { \

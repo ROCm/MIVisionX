@@ -30,8 +30,8 @@ THE SOFTWARE.
 #define HIP_CHECK(command) { \
     hipError_t status = command; \
     if (status != hipSuccess) { \
-        std::cerr << "Error: HIP reports " << hipGetErrorString(status) << std::endl; \
-        std::abort(); \
+        std::cerr << "AMD OpenVX: HIP Error Reported -- " << hipGetErrorString(status) << std::endl; \
+        return status; \
     } \
 }
 

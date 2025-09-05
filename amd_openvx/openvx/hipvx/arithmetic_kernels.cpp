@@ -66,7 +66,7 @@ int HipExec_AbsDiff_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 ds
                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                        (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -115,7 +115,7 @@ int HipExec_AbsDiff_S16_S16S16_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                     dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                     (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar*)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -168,7 +168,7 @@ int HipExec_Add_U8_U8U8_Wrap(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 d
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -211,7 +211,7 @@ int HipExec_Add_U8_U8U8_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 ds
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -260,7 +260,7 @@ int HipExec_Add_S16_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHe
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -309,7 +309,7 @@ int HipExec_Add_S16_S16U8_Wrap(hipStream_t stream, vx_uint32 dstWidth, vx_uint32
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -358,7 +358,7 @@ int HipExec_Add_S16_S16U8_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -407,7 +407,7 @@ int HipExec_Add_S16_S16S16_Wrap(hipStream_t stream, vx_uint32 dstWidth, vx_uint3
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -456,7 +456,7 @@ int HipExec_Add_S16_S16S16_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uint32
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -509,7 +509,7 @@ int HipExec_Sub_U8_U8U8_Wrap(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 d
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -552,7 +552,7 @@ int HipExec_Sub_U8_U8U8_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 ds
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -601,7 +601,7 @@ int HipExec_Sub_S16_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHe
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -650,7 +650,7 @@ int HipExec_Sub_S16_S16U8_Wrap(hipStream_t stream, vx_uint32 dstWidth, vx_uint32
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -699,7 +699,7 @@ int HipExec_Sub_S16_S16U8_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -748,7 +748,7 @@ int HipExec_Sub_S16_U8S16_Wrap(hipStream_t stream, vx_uint32 dstWidth, vx_uint32
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -797,7 +797,7 @@ int HipExec_Sub_S16_U8S16_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -846,7 +846,7 @@ int HipExec_Sub_S16_S16S16_Wrap(hipStream_t stream, vx_uint32 dstWidth, vx_uint3
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -895,7 +895,7 @@ int HipExec_Sub_S16_S16S16_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uint32
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -951,7 +951,7 @@ int HipExec_Mul_U8_U8U8_Wrap_Trunc(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1003,7 +1003,7 @@ int HipExec_Mul_U8_U8U8_Wrap_Round(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1058,7 +1058,7 @@ int HipExec_Mul_U8_U8U8_Sat_Trunc(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1113,7 +1113,7 @@ int HipExec_Mul_U8_U8U8_Sat_Round(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1165,7 +1165,7 @@ int HipExec_Mul_S16_U8U8_Wrap_Trunc(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1217,7 +1217,7 @@ int HipExec_Mul_S16_U8U8_Wrap_Round(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1269,7 +1269,7 @@ int HipExec_Mul_S16_U8U8_Sat_Trunc(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1321,7 +1321,7 @@ int HipExec_Mul_S16_U8U8_Sat_Round(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1373,7 +1373,7 @@ int HipExec_Mul_S16_S16U8_Wrap_Trunc(hipStream_t stream, vx_uint32 dstWidth, vx_
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1425,7 +1425,7 @@ int HipExec_Mul_S16_S16U8_Wrap_Round(hipStream_t stream, vx_uint32 dstWidth, vx_
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1486,7 +1486,7 @@ int HipExec_Mul_S16_S16U8_Sat_Trunc(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1538,7 +1538,7 @@ int HipExec_Mul_S16_S16U8_Sat_Round(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1590,7 +1590,7 @@ int HipExec_Mul_S16_S16S16_Wrap_Trunc(hipStream_t stream, vx_uint32 dstWidth, vx
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1642,7 +1642,7 @@ int HipExec_Mul_S16_S16S16_Wrap_Round(hipStream_t stream, vx_uint32 dstWidth, vx
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1694,7 +1694,7 @@ int HipExec_Mul_S16_S16S16_Sat_Trunc(hipStream_t stream, vx_uint32 dstWidth, vx_
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1746,7 +1746,7 @@ int HipExec_Mul_S16_S16S16_Sat_Round(hipStream_t stream, vx_uint32 dstWidth, vx_
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         scale);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1801,7 +1801,7 @@ int HipExec_WeightedAverage_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes,
                         alpha_f4, invAlpha_f4);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -1911,7 +1911,7 @@ int HipExec_Magnitude_S16_S16S16(hipStream_t stream, vx_uint32 dstWidth, vx_uint
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }
 
@@ -2010,6 +2010,6 @@ int HipExec_Phase_U8_S16S16(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 ds
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
+    
     return VX_SUCCESS;
 }

@@ -26,6 +26,14 @@ THE SOFTWARE.
 
 #include "hip/hip_runtime.h"
 
+#define HIP_CHECK(command) { \
+    hipError_t status = command; \
+    if (status != hipSuccess) { \
+        std::cerr << "Error: HIP reports " << hipGetErrorString(status) << std::endl; \
+        std::abort(); \
+    } \
+}
+
 #define MASK_EARLY_EXIT 4369
 #define HIPSELECT(a, b, c)  (c ? b : a)
 

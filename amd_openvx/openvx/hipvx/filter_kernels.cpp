@@ -206,7 +206,8 @@ int HipExec_Box_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstH
     hipLaunchKernelGGL(Hip_Box_U8_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
     return VX_SUCCESS;
 }
 
@@ -351,7 +352,8 @@ int HipExec_Dilate_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 d
     hipLaunchKernelGGL(Hip_Dilate_U8_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
     return VX_SUCCESS;
 }
 
@@ -496,7 +498,8 @@ int HipExec_Erode_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 ds
     hipLaunchKernelGGL(Hip_Erode_U8_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
     return VX_SUCCESS;
 }
 
@@ -759,7 +762,8 @@ int HipExec_Median_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 d
     hipLaunchKernelGGL(Hip_Median_U8_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
     return VX_SUCCESS;
 }
 
@@ -946,7 +950,8 @@ int HipExec_Gaussian_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32
     hipLaunchKernelGGL(Hip_Gaussian_U8_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
     return VX_SUCCESS;
 }
 
@@ -3673,7 +3678,8 @@ int HipExec_Convolve_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dst
     } else {
         return VX_ERROR_NOT_IMPLEMENTED;
     }
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    HIP_CHECK(hipDeviceSynchronize()); // Check for execution error
     return VX_SUCCESS;
 }
 

@@ -24,7 +24,16 @@ THE SOFTWARE.
 #ifndef MIVISIONX_HIP_COMMON_FUNCS_H
 #define MIVISIONX_HIP_COMMON_FUNCS_H
 
+#include <iostream>
 #include "hip/hip_runtime.h"
+
+#define HIP_CHECK(command) { \
+    hipError_t status = command; \
+    if (status != hipSuccess) { \
+        std::cerr << "AMD OpenVX: HIP Error Reported -- " << hipGetErrorString(status) << std::endl; \
+        return status; \
+    } \
+}
 
 #define MASK_EARLY_EXIT 4369
 #define HIPSELECT(a, b, c)  (c ? b : a)

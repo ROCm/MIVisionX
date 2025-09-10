@@ -71,9 +71,9 @@ int HipExec_Lut_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeigh
 
     hipLaunchKernelGGL(Hip_Lut_U8_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                       (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                       lut);
-
+                       (const uchar *)pHipSrcImage, srcImageStrideInBytes, lut);
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -109,7 +109,8 @@ int HipExec_ChannelCopy_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 
     hipLaunchKernelGGL(Hip_ChannelCopy_U8_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -146,7 +147,8 @@ int HipExec_ChannelCopy_U8_U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 
     hipLaunchKernelGGL(Hip_ChannelCopy_U8_U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -183,7 +185,8 @@ int HipExec_ChannelCopy_U1_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 
     hipLaunchKernelGGL(Hip_ChannelCopy_U1_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -215,7 +218,8 @@ int HipExec_ChannelCopy_U1_U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 
     hipLaunchKernelGGL(Hip_ChannelCopy_U1_U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -267,7 +271,8 @@ int HipExec_ColorDepth_U8_S16_Wrap(hipStream_t stream, vx_uint32 dstWidth, vx_ui
     hipLaunchKernelGGL(Hip_ColorDepth_U8_S16_Wrap, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes, shift);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -318,7 +323,8 @@ int HipExec_ColorDepth_U8_S16_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     hipLaunchKernelGGL(Hip_ColorDepth_U8_S16_Sat, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes, shift);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -364,7 +370,8 @@ int HipExec_ColorDepth_S16_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 
     hipLaunchKernelGGL(Hip_ColorDepth_S16_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes, shift);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -405,7 +412,8 @@ int HipExec_ChannelExtract_U8_U16_Pos0(hipStream_t stream, vx_uint32 dstWidth, v
     hipLaunchKernelGGL(Hip_ChannelExtract_U8_U16_Pos0, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -442,7 +450,8 @@ int HipExec_ChannelExtract_U8_U16_Pos1(hipStream_t stream, vx_uint32 dstWidth, v
     hipLaunchKernelGGL(Hip_ChannelExtract_U8_U16_Pos1, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -480,7 +489,8 @@ int HipExec_ChannelExtract_U8_U24_Pos0(hipStream_t stream, vx_uint32 dstWidth, v
     hipLaunchKernelGGL(Hip_ChannelExtract_U8_U24_Pos0, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -518,7 +528,8 @@ int HipExec_ChannelExtract_U8_U24_Pos1(hipStream_t stream, vx_uint32 dstWidth, v
     hipLaunchKernelGGL(Hip_ChannelExtract_U8_U24_Pos1, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -556,7 +567,8 @@ int HipExec_ChannelExtract_U8_U24_Pos2(hipStream_t stream, vx_uint32 dstWidth, v
     hipLaunchKernelGGL(Hip_ChannelExtract_U8_U24_Pos2, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -633,7 +645,8 @@ int HipExec_ChannelExtract_U8_U32_Pos0(hipStream_t stream, vx_uint32 dstWidth, v
                             (const uchar *)pHipSrcImage1, srcImage1StrideInBytes,
                             dstWidthComp);
     }
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -710,7 +723,8 @@ int HipExec_ChannelExtract_U8_U32_Pos1(hipStream_t stream, vx_uint32 dstWidth, v
                             (const uchar *)pHipSrcImage1, srcImage1StrideInBytes,
                             dstWidthComp);
     }
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -787,7 +801,8 @@ int HipExec_ChannelExtract_U8_U32_Pos2(hipStream_t stream, vx_uint32 dstWidth, v
                             (const uchar *)pHipSrcImage1, srcImage1StrideInBytes,
                             dstWidthComp);
     }
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -864,7 +879,8 @@ int HipExec_ChannelExtract_U8_U32_Pos3(hipStream_t stream, vx_uint32 dstWidth, v
                             (const uchar *)pHipSrcImage1, srcImage1StrideInBytes,
                             dstWidthComp);
     }
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -908,7 +924,8 @@ int HipExec_ChannelExtract_U8U8U8_U24(hipStream_t stream, vx_uint32 dstWidth, vx
     hipLaunchKernelGGL(Hip_ChannelExtract_U8U8U8_U24, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage1, (uchar *)pHipDstImage2, (uchar *)pHipDstImage3, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -952,7 +969,8 @@ int HipExec_ChannelExtract_U8U8U8_U32(hipStream_t stream, vx_uint32 dstWidth, vx
     hipLaunchKernelGGL(Hip_ChannelExtract_U8U8U8_U32, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage1, (uchar *)pHipDstImage2, (uchar *)pHipDstImage3, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -999,7 +1017,8 @@ int HipExec_ChannelExtract_U8U8U8U8_U32(hipStream_t stream, vx_uint32 dstWidth, 
     hipLaunchKernelGGL(Hip_ChannelExtract_U8U8U8U8_U32, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage1, (uchar *)pHipDstImage2, (uchar *)pHipDstImage3, (uchar *)pHipDstImage4, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -1047,7 +1066,8 @@ int HipExec_ChannelCombine_U16_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_u
     hipLaunchKernelGGL(Hip_ChannelCombine_U16_U8U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -1097,7 +1117,8 @@ int HipExec_ChannelCombine_U24_U8U8U8_RGB(hipStream_t stream, vx_uint32 dstWidth
     hipLaunchKernelGGL(Hip_ChannelCombine_U24_U8U8U8_RGB, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes, (const uchar *)pHipSrcImage3, srcImage3StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -1147,7 +1168,8 @@ int HipExec_ChannelCombine_U32_U8U8U8_UYVY(hipStream_t stream, vx_uint32 dstWidt
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes, (const uchar *)pHipSrcImage3, srcImage3StrideInBytes,
                         dstWidthComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -1197,7 +1219,8 @@ int HipExec_ChannelCombine_U32_U8U8U8_YUYV(hipStream_t stream, vx_uint32 dstWidt
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes, (const uchar *)pHipSrcImage3, srcImage3StrideInBytes,
                         dstWidthComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -1253,7 +1276,8 @@ int HipExec_ChannelCombine_U32_U8U8U8U8_RGBX(hipStream_t stream, vx_uint32 dstWi
     hipLaunchKernelGGL(Hip_ChannelCombine_U32_U8U8U8U8_RGBX, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes, (const uchar *)pHipSrcImage3, srcImage3StrideInBytes, (const uchar *)pHipSrcImage4, srcImage4StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -1305,7 +1329,8 @@ int HipExec_ColorConvert_RGB_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     hipLaunchKernelGGL(Hip_ColorConvert_RGB_RGBX, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage1, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 __global__ void __attribute__((visibility("default")))
@@ -1539,7 +1564,8 @@ int HipExec_ColorConvert_RGB_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageStrideInBytesComp,
                         dstWidthComp, dstHeightComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -1775,7 +1801,8 @@ int HipExec_ColorConvert_RGB_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageStrideInBytesComp,
                         dstWidthComp, dstHeightComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -1825,7 +1852,8 @@ int HipExec_ColorConvert_RGBX_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     hipLaunchKernelGGL(Hip_ColorConvert_RGBX_RGB, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage1, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -2070,7 +2098,8 @@ int HipExec_ColorConvert_RGBX_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageStrideInBytesComp,
                         dstWidthComp, dstHeightComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -2315,7 +2344,8 @@ int HipExec_ColorConvert_RGBX_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageStrideInBytesComp,
                         dstWidthComp, dstHeightComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -2580,7 +2610,8 @@ int HipExec_ColorConvert_RGB_IYUV(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcYImage, srcYImageStrideInBytes, (const uchar *)pHipSrcUImage, srcUImageStrideInBytes, (const uchar *)pHipSrcVImage, srcVImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcYImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -2835,7 +2866,8 @@ int HipExec_ColorConvert_RGB_NV12(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcLumaImage, srcLumaImageStrideInBytes, (const uchar *)pHipSrcChromaImage, srcChromaImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcLumaImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -3090,7 +3122,8 @@ int HipExec_ColorConvert_RGB_NV21(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcLumaImage, srcLumaImageStrideInBytes, (const uchar *)pHipSrcChromaImage, srcChromaImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcLumaImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -3364,7 +3397,8 @@ int HipExec_ColorConvert_RGBX_IYUV(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcYImage, srcYImageStrideInBytes, (const uchar *)pHipSrcUImage, srcUImageStrideInBytes, (const uchar *)pHipSrcVImage, srcVImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcYImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -3628,7 +3662,8 @@ int HipExec_ColorConvert_RGBX_NV12(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcLumaImage, srcLumaImageStrideInBytes, (const uchar *)pHipSrcChromaImage, srcChromaImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcLumaImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -3892,7 +3927,8 @@ int HipExec_ColorConvert_RGBX_NV21(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes, dstImageStrideInBytesComp,
                         (const uchar *)pHipSrcLumaImage, srcLumaImageStrideInBytes, (const uchar *)pHipSrcChromaImage, srcChromaImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcLumaImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4025,7 +4061,8 @@ int HipExec_ColorConvert_IYUV_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstYImage, dstYImageStrideInBytes, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcImageStrideInBytesComp, dstYImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4152,7 +4189,8 @@ int HipExec_ColorConvert_IYUV_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstYImage, dstYImageStrideInBytes, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcImageStrideInBytesComp, dstYImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4214,7 +4252,8 @@ int HipExec_FormatConvert_IYUV_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstYImage, dstYImageStrideInBytes, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcImageStrideInBytesComp, dstYImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4276,7 +4315,8 @@ int HipExec_FormatConvert_IYUV_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstYImage, dstYImageStrideInBytes, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcImageStrideInBytesComp, dstYImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4418,7 +4458,8 @@ int HipExec_ColorConvert_NV12_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImageLuma, dstImageLumaStrideInBytes, (uchar *)pHipDstImageChroma, dstImageChromaStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcImageStrideInBytesComp, dstImageLumaStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4554,7 +4595,8 @@ int HipExec_ColorConvert_NV12_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImageLuma, dstImageLumaStrideInBytes, (uchar *)pHipDstImageChroma, dstImageChromaStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcImageStrideInBytesComp, dstImageLumaStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4612,7 +4654,8 @@ int HipExec_FormatConvert_NV12_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImageLuma, dstImageLumaStrideInBytes, (uchar *)pHipDstImageChroma, dstImageChromaStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcImageStrideInBytesComp, dstImageLumaStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4670,7 +4713,8 @@ int HipExec_FormatConvert_NV12_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImageLuma, dstImageLumaStrideInBytes, (uchar *)pHipDstImageChroma, dstImageChromaStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcImageStrideInBytesComp, dstImageLumaStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4752,7 +4796,8 @@ int HipExec_ColorConvert_YUV4_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     hipLaunchKernelGGL(Hip_ColorConvert_YUV4_RGB, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstYImage, dstYImageStrideInBytes, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4828,7 +4873,8 @@ int HipExec_ColorConvert_YUV4_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_ui
     hipLaunchKernelGGL(Hip_ColorConvert_YUV4_RGBX, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstYImage, dstYImageStrideInBytes, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4893,7 +4939,8 @@ int HipExec_FormatConvert_IUV_UV12(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
                         (const uchar *)pHipSrcChromaImage, srcChromaImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcChromaImageStrideInBytesComp, dstUImageStrideInBytesComp, dstVImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -4952,7 +4999,8 @@ int HipExec_FormatConvert_UV12_IUV(hipStream_t stream, vx_uint32 dstWidth, vx_ui
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstChromaImage, dstChromaImageStrideInBytes,
                         (const uchar *)pHipSrcUImage, srcUImageStrideInBytes, (const uchar *)pHipSrcVImage, srcVImageStrideInBytes,
                         dstWidthComp, dstHeightComp, srcUImageStrideInBytesComp, srcVImageStrideInBytesComp, dstChromaImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -5004,7 +5052,8 @@ int HipExec_FormatConvert_UV_UV12(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
                         (const uchar *)pHipSrcChromaImage, srcChromaImageStrideInBytes,
                         dstWidthComp, dstHeightComp, dstUImageStrideInBytesComp, dstVImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }
 
@@ -5048,6 +5097,7 @@ int HipExec_ScaleUp2x2_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 d
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         dstWidthComp, dstHeightComp, dstImageStrideInBytesComp);
-
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }

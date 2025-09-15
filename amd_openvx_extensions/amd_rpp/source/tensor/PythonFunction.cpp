@@ -34,18 +34,18 @@ THE SOFTWARE.
 #endif
 
 typedef struct RocalPyTensorDesc_ {
-    size_t num_dims;
-    size_t shape[ROCAL_PY_MAX_TENSOR_DIMS];
-    size_t strides[ROCAL_PY_MAX_TENSOR_DIMS];  // in elements
-    vx_enum dtype;
-    int layout;
+    size_t num_dims;                          /* e.g., 4 for [N,H,W,C] */
+    size_t shape[ROCAL_PY_MAX_TENSOR_DIMS];   /* lengths per dimension */
+    size_t strides[ROCAL_PY_MAX_TENSOR_DIMS]; /* strides in elements */
+    vx_enum dtype;                            /* OpenVX scalar type enum */
+    int layout;                               /* matches rocAL/vx tensor layout enums */
 } RocalPyTensorDesc;
 
 typedef struct RocalPyExecParams_ {
-    uint64_t function_id;
-    RocalPyTensorDesc in_desc;
-    RocalPyTensorDesc out_desc;
-    uint32_t device_type;
+    uint64_t function_id;        /* CPython id(function), provided by python front-end */
+    RocalPyTensorDesc in_desc;   /* Input tensor description */
+    RocalPyTensorDesc out_desc;  /* Output tensor description */
+    uint32_t device_type;        /* AGO_TARGET_AFFINITY_{CPU,GPU}; currently CPU-only */
 } RocalPyExecParams;
 
 typedef vx_status (*rocal_process_python_function_fn)(void *src_ptr, void *dst_ptr, const RocalPyExecParams *params);

@@ -364,7 +364,7 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release
 * Linux distribution
   + Ubuntu - `22.04` / `24.04`
   + RHEL - `8` / `9`
-  + SLES - `15 SP6` / `15 SP7`
+  + SLES - `15 SP7`
 * ROCm: `7.0.0`
 * RPP - `2.0.0`
 * miopen-hip - `3.4.0`

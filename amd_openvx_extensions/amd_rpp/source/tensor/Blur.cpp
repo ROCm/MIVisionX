@@ -28,6 +28,7 @@ struct BlurLocalData {
     RppPtr_t pSrc;
     RppPtr_t pDst;
     vx_uint32 kernelSize;
+    RpptImageBorderType borderType;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
@@ -106,11 +107,11 @@ static vx_status VX_CALLBACK processBlur(vx_node node, const vx_reference *param
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        rpp_status = rppt_box_filter_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, RpptImageBorderType::REPLICATE, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_box_filter_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->borderType, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_box_filter_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, RpptImageBorderType::REPLICATE, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_box_filter_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->borderType, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -130,6 +131,7 @@ static vx_status VX_CALLBACK initializeBlur(vx_node node, const vx_reference *pa
     data->inputLayout = static_cast<vxTensorLayout>(input_layout);
     data->outputLayout = static_cast<vxTensorLayout>(output_layout);
     data->kernelSize = 3;
+    data->borderType = RpptImageBorderType::REPLICATE;
 
     // Querying for input tensor
     data->pSrcDesc = new RpptDesc;

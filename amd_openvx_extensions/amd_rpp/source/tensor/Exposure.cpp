@@ -161,7 +161,11 @@ static vx_status VX_CALLBACK initializeExposure(vx_node node, const vx_reference
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
+#if ENABLE_HIP
+    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pExposureFactor, data->pSrcDesc->n * sizeof(vx_float32)));
+#else
     data->pExposureFactor = new vx_float32[data->pSrcDesc->n];
+#endif
     refreshExposure(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -171,7 +175,11 @@ static vx_status VX_CALLBACK initializeExposure(vx_node node, const vx_reference
 static vx_status VX_CALLBACK uninitializeExposure(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ExposureLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pExposureFactor;
+#if ENABLE_HIP
+    if (data->pExposureFactor != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pExposureFactor));
+#else
+    if (data->pExposureFactor) delete[] data->pExposureFactor;
+#endif
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

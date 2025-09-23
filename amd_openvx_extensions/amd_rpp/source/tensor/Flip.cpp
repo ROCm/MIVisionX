@@ -164,8 +164,13 @@ static vx_status VX_CALLBACK initializeFlip(vx_node node, const vx_reference *pa
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
+#if ENABLE_HIP
+    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pHorizontalFlag, data->pSrcDesc->n * sizeof(vx_uint32)));
+    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pVerticalFlag, data->pSrcDesc->n * sizeof(vx_uint32)));
+#else
     data->pHorizontalFlag = new vx_uint32[data->pSrcDesc->n];
     data->pVerticalFlag = new vx_uint32[data->pSrcDesc->n];
+#endif
     refreshFlip(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -175,8 +180,13 @@ static vx_status VX_CALLBACK initializeFlip(vx_node node, const vx_reference *pa
 static vx_status VX_CALLBACK uninitializeFlip(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     FlipLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pHorizontalFlag;
-    delete[] data->pVerticalFlag;
+#if ENABLE_HIP
+    if (data->pHorizontalFlag != nullptr)  CHECK_HIP_RETURN_STATUS(hipHostFree(data->pHorizontalFlag));
+    if (data->pVerticalFlag != nullptr)  CHECK_HIP_RETURN_STATUS(hipHostFree(data->pVerticalFlag));
+#else
+    if (data->pHorizontalFlag) delete[] data->pHorizontalFlag;
+    if (data->pVerticalFlag) delete[] data->pVerticalFlag;
+#endif
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

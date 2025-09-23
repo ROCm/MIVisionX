@@ -160,7 +160,11 @@ static vx_status VX_CALLBACK initializeColorTemperature(vx_node node, const vx_r
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
+#if ENABLE_HIP
+    CHECK_RETURN_STATUS(hipHostMalloc(&data->pAdjustmentValue, data->pSrcDesc->n * sizeof(vx_int32)));
+#else
     data->pAdjustmentValue = new vx_int32[data->pSrcDesc->n];
+#endif
     refreshColorTemperature(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -170,7 +174,11 @@ static vx_status VX_CALLBACK initializeColorTemperature(vx_node node, const vx_r
 static vx_status VX_CALLBACK uninitializeColorTemperature(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ColorTemperatureLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pAdjustmentValue;
+#if ENABLE_HIP
+    if (data->pAdjustmentValue != nullptr)  CHECK_RETURN_STATUS(hipHostFree(data->pAdjustmentValue));
+#else
+    if (data->pAdjustmentValue) delete[] data->pAdjustmentValue;
+#endif
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

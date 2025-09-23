@@ -217,7 +217,7 @@ static vx_status VX_CALLBACK uninitializeResizeMirrorNormalize(vx_node node, con
 #if ENABLE_HIP
     if (data->pDstImgSize != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
 #else
-    delete[] data->pDstImgSize;
+    if (data->pDstImgSize) delete[] data->pDstImgSize;
 #endif
     delete data->pSrcDesc;
     delete data->pDstDesc;

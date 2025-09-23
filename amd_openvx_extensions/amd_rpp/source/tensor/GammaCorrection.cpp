@@ -160,7 +160,11 @@ static vx_status VX_CALLBACK initializeGammaCorrection(vx_node node, const vx_re
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
+#if ENABLE_HIP
+    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pGamma, data->pSrcDesc->n * sizeof(vx_float32)));
+#else
     data->pGamma = new vx_float32[data->pSrcDesc->n];
+#endif
     refreshGammaCorrection(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -170,7 +174,11 @@ static vx_status VX_CALLBACK initializeGammaCorrection(vx_node node, const vx_re
 static vx_status VX_CALLBACK uninitializeGammaCorrection(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     GammaCorrectionLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pGamma;
+#if ENABLE_HIP
+    if (data->pGamma != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pGamma));
+#else
+    if (data->pGamma) delete[] data->pGamma;
+#endif
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

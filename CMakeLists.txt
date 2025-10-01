@@ -18,6 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 cmake_minimum_required(VERSION 3.10)
+include( utils.cmake )
+set( MIVISIONX "mivisionx" )
+set( BUILD_ENABLE_LINTIAN_OVERRIDES ON CACHE BOOL "Enable/Disable Lintian Overrides" )
+set( BUILD_DEBIAN_PKGING_FLAG ON CACHE BOOL "Internal Status Flag to indicate Debian Packaging Build" )
 
 # ROCM Path
 if(DEFINED ENV{ROCM_PATH})
@@ -197,12 +201,14 @@ option(BUILT_WITH_SOURCE "MIVisionX built with source"        ON)
 add_subdirectory(tests)
 
 # set package information
+set(PKG_MAINTAINER_NM  "MIVisionX Support")
+set(PKG_MAINTAINER_EMAIL  "mivisionx.support@amd.com")
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set(CPACK_PACKAGE_LICENSE       "MIT")
-set(CPACK_PACKAGE_CONTACT       "MIVisionX Support <mivisionx.support@amd.com>")
+set(CPACK_PACKAGE_CONTACT "${PKG_MAINTAINER_NM} <${PKG_MAINTAINER_EMAIL}>")
 set(CPACK_PACKAGE_VENDOR        "AMD ROCm")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://github.com/ROCm/MIVisionX")
@@ -210,9 +216,11 @@ set(CPACK_PACKAGE_HOMEPAGE      "https://github.com/ROCm/MIVisionX")
 if(ENABLE_ASAN_PACKAGING)
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "AMD MIVisionX address sanitizer libraries")
   set(CPACK_RPM_PACKAGE_SUMMARY "AMD MIVisionX address sanitizer libraries")
+  set( COMP_TYPE "asan" )
 else()
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
   set(CPACK_RPM_PACKAGE_SUMMARY "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+  set( COMP_TYPE "runtime" )
 endif()
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
@@ -345,6 +353,8 @@ else()
     message("-- ${White}AMD ROCm MIVisionX Dev Package -- ${CPACK_DEBIAN_DEV_PACKAGE_DEPENDS}${ColourReset}")
   endif()
 endif()
+
+configure_pkg( ${MIVISIONX} ${COMP_TYPE} ${CPACK_PACKAGE_VERSION} ${PKG_MAINTAINER_NM} ${PKG_MAINTAINER_EMAIL} )
 
 include(CPack)
 

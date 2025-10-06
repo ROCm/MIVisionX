@@ -104,7 +104,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   ```
 * HIP
   ```shell
-  sudo apt install rocm-hip-runtime-dev
+  sudo apt install hip-dev
   ```
 * OpenMP
   ```shell

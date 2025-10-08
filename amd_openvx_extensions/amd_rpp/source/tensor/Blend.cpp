@@ -163,11 +163,11 @@ static vx_status VX_CALLBACK initializeBlend(vx_node node, const vx_reference *p
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-#if ENABLE_HIP
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, data->pSrcDesc->n * sizeof(vx_float32)));
-#else
-    data->pAlpha = new vx_float32[data->pSrcDesc->n];
-#endif
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, data->pSrcDesc->n * sizeof(vx_float32)));
+    else
+        data->pAlpha = new vx_float32[data->pSrcDesc->n];
+
     refreshBlend(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -177,11 +177,11 @@ static vx_status VX_CALLBACK initializeBlend(vx_node node, const vx_reference *p
 static vx_status VX_CALLBACK uninitializeBlend(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     BlendLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_HIP
-    if (data->pAlpha != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAlpha));
-#else
-    if (data->pAlpha) delete[] data->pAlpha;
-#endif
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        if (data->pAlpha != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAlpha));
+    else
+        if (data->pAlpha) delete[] data->pAlpha;
+
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

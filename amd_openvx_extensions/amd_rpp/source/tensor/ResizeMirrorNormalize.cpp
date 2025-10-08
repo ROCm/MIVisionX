@@ -188,21 +188,24 @@ static vx_status VX_CALLBACK initializeResizeMirrorNormalize(vx_node node, const
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pResizeWidth, data->pSrcDesc->n * sizeof(vx_uint32)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pResizeHeight, data->pSrcDesc->n * sizeof(vx_uint32)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, data->pSrcDesc->n * sizeof(vx_float32)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_float32)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMirror, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_uint32)));
-#else
-    data->pDstImgSize = new RpptImagePatch[data->pSrcDesc->n];
-    data->pResizeWidth = new vx_uint32[data->pSrcDesc->n];
-    data->pResizeHeight = new vx_uint32[data->pSrcDesc->n];
-    data->pMean = new vx_float32[data->pSrcDesc->n * data->pSrcDesc->c];
-    data->pStdDev = new vx_float32[data->pSrcDesc->n * data->pSrcDesc->c];
-    data->pMirror = new vx_uint32[data->pSrcDesc->n];
-#endif    
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pResizeWidth, data->pSrcDesc->n * sizeof(vx_uint32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pResizeHeight, data->pSrcDesc->n * sizeof(vx_uint32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, data->pSrcDesc->n * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMirror, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_uint32)));
+#endif
+    } else {
+        data->pDstImgSize = new RpptImagePatch[data->pSrcDesc->n];
+        data->pResizeWidth = new vx_uint32[data->pSrcDesc->n];
+        data->pResizeHeight = new vx_uint32[data->pSrcDesc->n];
+        data->pMean = new vx_float32[data->pSrcDesc->n * data->pSrcDesc->c];
+        data->pStdDev = new vx_float32[data->pSrcDesc->n * data->pSrcDesc->c];
+        data->pMirror = new vx_uint32[data->pSrcDesc->n];
+    }
+
     refreshResizeMirrorNormalize(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -213,21 +216,23 @@ static vx_status VX_CALLBACK uninitializeResizeMirrorNormalize(vx_node node, con
 {
     ResizeMirrorNormalizeLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    if (data->pDstImgSize != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
-    if (data->pResizeWidth != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pResizeWidth));
-    if (data->pResizeHeight != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pResizeHeight));
-    if (data->pMean != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMean));
-    if (data->pStdDev != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pStdDev));
-    if (data->pMirror != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMirror));
-#else
-    if (data->pDstImgSize) delete[] data->pDstImgSize;
-    if (data->pResizeWidth) delete[] data->pResizeWidth;
-    if (data->pResizeHeight) delete[] data->pResizeHeight;
-    if (data->pMean) delete[] data->pMean;
-    if (data->pStdDev) delete[] data->pStdDev;
-    if (data->pMirror) delete[] data->pMirror;
+        if (data->pDstImgSize != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
+        if (data->pResizeWidth != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pResizeWidth));
+        if (data->pResizeHeight != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pResizeHeight));
+        if (data->pMean != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMean));
+        if (data->pStdDev != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pStdDev));
+        if (data->pMirror != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMirror));
 #endif
+    } else {
+        if (data->pDstImgSize) delete[] data->pDstImgSize;
+        if (data->pResizeWidth) delete[] data->pResizeWidth;
+        if (data->pResizeHeight) delete[] data->pResizeHeight;
+        if (data->pMean) delete[] data->pMean;
+        if (data->pStdDev) delete[] data->pStdDev;
+        if (data->pMirror) delete[] data->pMirror;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

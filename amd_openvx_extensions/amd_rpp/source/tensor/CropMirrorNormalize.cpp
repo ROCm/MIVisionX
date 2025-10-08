@@ -173,15 +173,18 @@ static vx_status VX_CALLBACK initializeCropMirrorNormalize(vx_node node, const v
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMultiplier, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_float32)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pOffset, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_float32)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMirror, data->pSrcDesc->n * sizeof(vx_uint32)));
-#else
-    data->pMultiplier = new vx_float32[data->pSrcDesc->n * data->pSrcDesc->c];
-    data->pOffset = new vx_float32[data->pSrcDesc->n * data->pSrcDesc->c];
-    data->pMirror = new vx_uint32[data->pSrcDesc->n];
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMultiplier, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pOffset, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMirror, data->pSrcDesc->n * sizeof(vx_uint32)));
 #endif
+    } else {
+        data->pMultiplier = new vx_float32[data->pSrcDesc->n * data->pSrcDesc->c];
+        data->pOffset = new vx_float32[data->pSrcDesc->n * data->pSrcDesc->c];
+        data->pMirror = new vx_uint32[data->pSrcDesc->n];
+    }
+
     refreshCropMirrorNormalize(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -191,15 +194,17 @@ static vx_status VX_CALLBACK initializeCropMirrorNormalize(vx_node node, const v
 static vx_status VX_CALLBACK uninitializeCropMirrorNormalize(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     CropMirrorNormalizeLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    if (data->pMultiplier != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMultiplier));
-    if (data->pOffset != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pOffset));
-    if (data->pMirror != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMirror));
-#else
-    if (data->pMultiplier) delete[] data->pMultiplier;
-    if (data->pOffset) delete[] data->pOffset;
-    if (data->pMirror) delete[] data->pMirror;
+        if (data->pMultiplier != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMultiplier));
+        if (data->pOffset != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pOffset));
+        if (data->pMirror != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMirror));
 #endif
+    } else {
+        if (data->pMultiplier) delete[] data->pMultiplier;
+        if (data->pOffset) delete[] data->pOffset;
+        if (data->pMirror) delete[] data->pMirror;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

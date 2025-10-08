@@ -177,17 +177,20 @@ static vx_status VX_CALLBACK initializeNoise(vx_node node, const vx_reference *p
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pNoiseProb, data->pSrcDesc->n * sizeof(vx_float32)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSaltProb, data->pSrcDesc->n * sizeof(vx_float32)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSaltValue, data->pSrcDesc->n * sizeof(vx_float32)));
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pPepperValue, data->pSrcDesc->n * sizeof(vx_float32)));
-#else
-    data->pNoiseProb = new vx_float32[data->pSrcDesc->n];
-    data->pSaltProb = new vx_float32[data->pSrcDesc->n];
-    data->pSaltValue = new vx_float32[data->pSrcDesc->n];
-    data->pPepperValue = new vx_float32[data->pSrcDesc->n];
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pNoiseProb, data->pSrcDesc->n * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSaltProb, data->pSrcDesc->n * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSaltValue, data->pSrcDesc->n * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pPepperValue, data->pSrcDesc->n * sizeof(vx_float32)));
 #endif
+    } else {
+        data->pNoiseProb = new vx_float32[data->pSrcDesc->n];
+        data->pSaltProb = new vx_float32[data->pSrcDesc->n];
+        data->pSaltValue = new vx_float32[data->pSrcDesc->n];
+        data->pPepperValue = new vx_float32[data->pSrcDesc->n];
+    }
+
     refreshNoise(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -197,17 +200,19 @@ static vx_status VX_CALLBACK initializeNoise(vx_node node, const vx_reference *p
 static vx_status VX_CALLBACK uninitializeNoise(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     NoiseLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    if (data->pNoiseProb != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pNoiseProb));
-    if (data->pSaltProb != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSaltProb));
-    if (data->pSaltValue != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSaltValue));
-    if (data->pPepperValue != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pPepperValue));
-#else
-    if (data->pNoiseProb) delete[] data->pNoiseProb;
-    if (data->pSaltProb) delete[] data->pSaltProb;
-    if (data->pSaltValue) delete[] data->pSaltValue;
-    if (data->pPepperValue) delete[] data->pPepperValue;
+        if (data->pNoiseProb != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pNoiseProb));
+        if (data->pSaltProb != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSaltProb));
+        if (data->pSaltValue != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSaltValue));
+        if (data->pPepperValue != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pPepperValue));
 #endif
+    } else {
+        if (data->pNoiseProb) delete[] data->pNoiseProb;
+        if (data->pSaltProb) delete[] data->pSaltProb;
+        if (data->pSaltValue) delete[] data->pSaltValue;
+        if (data->pPepperValue) delete[] data->pPepperValue;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

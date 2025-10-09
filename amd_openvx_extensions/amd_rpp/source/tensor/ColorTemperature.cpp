@@ -175,7 +175,7 @@ static vx_status VX_CALLBACK uninitializeColorTemperature(vx_node node, const vx
     ColorTemperatureLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_HIP
-    if (data->pAdjustmentValue != nullptr)  CHECK_RETURN_STATUS(hipHostFree(data->pAdjustmentValue));
+    if (data->pAdjustmentValue)  CHECK_RETURN_STATUS(hipHostFree(data->pAdjustmentValue));
 #else
     if (data->pAdjustmentValue) delete[] data->pAdjustmentValue;
 #endif

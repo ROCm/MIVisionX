@@ -182,7 +182,7 @@ static vx_status VX_CALLBACK uninitializeBlend(vx_node node, const vx_reference 
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pAlpha != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAlpha));
+        if (data->pAlpha) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAlpha));
 #endif
     } else {
         if (data->pAlpha) delete[] data->pAlpha;

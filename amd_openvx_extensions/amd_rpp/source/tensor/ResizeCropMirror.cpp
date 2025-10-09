@@ -201,10 +201,10 @@ static vx_status VX_CALLBACK uninitializeResizeCropMirror(vx_node node, const vx
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pDstImgSize != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
-        if (data->pResizeWidth != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pResizeWidth));
-        if (data->pResizeHeight != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pResizeHeight));
-        if (data->pMirror != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMirror));
+        if (data->pDstImgSize) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
+        if (data->pResizeWidth) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pResizeWidth));
+        if (data->pResizeHeight) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pResizeHeight));
+        if (data->pMirror) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMirror));
 #endif
     } else {
         if (data->pDstImgSize) delete[] data->pDstImgSize;

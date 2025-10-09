@@ -180,7 +180,7 @@ static vx_status VX_CALLBACK uninitializeExposure(vx_node node, const vx_referen
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pExposureFactor != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pExposureFactor));
+        if (data->pExposureFactor) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pExposureFactor));
 #endif
     } else {
         if (data->pExposureFactor) delete[] data->pExposureFactor;

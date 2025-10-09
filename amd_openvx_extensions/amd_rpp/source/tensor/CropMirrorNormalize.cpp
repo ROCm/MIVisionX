@@ -196,9 +196,9 @@ static vx_status VX_CALLBACK uninitializeCropMirrorNormalize(vx_node node, const
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pMultiplier != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMultiplier));
-        if (data->pOffset != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pOffset));
-        if (data->pMirror != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMirror));
+        if (data->pMultiplier) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMultiplier));
+        if (data->pOffset) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pOffset));
+        if (data->pMirror) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMirror));
 #endif
     } else {
         if (data->pMultiplier) delete[] data->pMultiplier;

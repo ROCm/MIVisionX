@@ -179,7 +179,7 @@ static vx_status VX_CALLBACK uninitializeGammaCorrection(vx_node node, const vx_
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pGamma != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pGamma));
+        if (data->pGamma) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pGamma));
 #endif
     } else {
         if (data->pGamma) delete[] data->pGamma;

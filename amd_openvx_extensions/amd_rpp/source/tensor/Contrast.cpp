@@ -184,8 +184,8 @@ static vx_status VX_CALLBACK uninitializeContrast(vx_node node, const vx_referen
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pContrastFactor != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pContrastFactor));
-        if (data->pContrastCenter != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pContrastCenter));
+        if (data->pContrastFactor) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pContrastFactor));
+        if (data->pContrastCenter) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pContrastCenter));
 #endif
     } else {
         if (data->pContrastFactor) delete[] data->pContrastFactor;

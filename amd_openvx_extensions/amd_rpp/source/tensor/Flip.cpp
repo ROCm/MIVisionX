@@ -181,8 +181,8 @@ static vx_status VX_CALLBACK uninitializeFlip(vx_node node, const vx_reference *
     FlipLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_HIP
-    if (data->pHorizontalFlag != nullptr)  CHECK_HIP_RETURN_STATUS(hipHostFree(data->pHorizontalFlag));
-    if (data->pVerticalFlag != nullptr)  CHECK_HIP_RETURN_STATUS(hipHostFree(data->pVerticalFlag));
+    if (data->pHorizontalFlag)  CHECK_HIP_RETURN_STATUS(hipHostFree(data->pHorizontalFlag));
+    if (data->pVerticalFlag)  CHECK_HIP_RETURN_STATUS(hipHostFree(data->pVerticalFlag));
 #else
     if (data->pHorizontalFlag) delete[] data->pHorizontalFlag;
     if (data->pVerticalFlag) delete[] data->pVerticalFlag;

@@ -202,10 +202,10 @@ static vx_status VX_CALLBACK uninitializeNoise(vx_node node, const vx_reference 
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pNoiseProb != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pNoiseProb));
-        if (data->pSaltProb != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSaltProb));
-        if (data->pSaltValue != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSaltValue));
-        if (data->pPepperValue != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pPepperValue));
+        if (data->pNoiseProb) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pNoiseProb));
+        if (data->pSaltProb) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSaltProb));
+        if (data->pSaltValue) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSaltValue));
+        if (data->pPepperValue) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pPepperValue));
 #endif
     } else {
         if (data->pNoiseProb) delete[] data->pNoiseProb;

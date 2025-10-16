@@ -8,7 +8,7 @@ MIVisionX prerequisites
 
 MIVisionX can be used with or without ROCm.
 
-MIVisionX on ROCm requires ROCm running on an `accelerators based on the CDNA architecture <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html>`_ installed with the AMDGPU installer and the ``rocm`` usecase:
+MIVisionX on ROCm requires ROCm running on an `GPUs based on the CDNA architecture <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html>`_ installed with the AMDGPU installer and the ``rocm`` usecase:
 
 .. code:: shell
 

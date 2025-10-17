@@ -129,6 +129,7 @@ vx_status Blur_Register(vx_context);
 vx_status Brightness_Register(vx_context);
 vx_status ColorTemperature_Register(vx_context);
 vx_status ColorTwist_Register(vx_context);
+vx_status ColorCast_Register(vx_context);
 vx_status Contrast_Register(vx_context);
 vx_status Copy_Register(vx_context);
 vx_status Crop_Register(vx_context);
@@ -261,6 +262,7 @@ vx_status Log1p_Register(vx_context);
 #define VX_KERNEL_RPP_BRIGHTNESS_NAME                           "org.rpp.Brightness"
 #define VX_KERNEL_RPP_COLORTEMPERATURE_NAME                     "org.rpp.ColorTemperature"
 #define VX_KERNEL_RPP_COLORTWIST_NAME                           "org.rpp.ColorTwist"
+#define VX_KERNEL_RPP_COLORCAST_NAME                            "org.rpp.ColorCast"
 #define VX_KERNEL_RPP_CONTRAST_NAME                             "org.rpp.Contrast"
 #define VX_KERNEL_RPP_COPY_NAME                                 "org.rpp.Copy"
 #define VX_KERNEL_RPP_CROP_NAME                                 "org.rpp.Crop"

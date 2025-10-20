@@ -147,7 +147,7 @@ profileLevel = args.profiler_level
 miopenFind = args.miopen_find
 testInfo = args.test_info
 backendType = args.backend_type
-installDir = args.install_directory
+ROCM_PATH = args.install_directory
 reinstall = args.reinstall.upper()
 
 platformInfo = platform.platform()
@@ -191,10 +191,15 @@ if reinstall not in ('OFF', 'ON'):
     parser.print_help()
     exit()
 
+# override default path if env path set 
+if "ROCM_PATH" in os.environ:
+    ROCM_PATH = os.environ.get('ROCM_PATH')
+print("ROCm PATH set to -- "+ROCM_PATH+"\n")
+
 # check install
-runVX_exe = installDir+'/bin/runvx'
+runVX_exe = ROCM_PATH+'/bin/runvx'
 if (os.path.isfile(runVX_exe)):
-    print("STATUS: MIVisionX Install Path Found - "+installDir)
+    print("STATUS: MIVisionX Install Path Found - "+ROCM_PATH)
 else:
     print("\nERROR: MIVisionX Install Path Not Found\n")
     exit()
@@ -204,7 +209,7 @@ print("\nMIVisionX runNeuralNetworkTests V-"+__version__+"\n")
 # check for Scripts
 scriptPath = os.path.dirname(os.path.realpath(__file__))
 modelCompilerDir = os.path.expanduser(
-    installDir+'/libexec/mivisionx/model_compiler/python')
+    ROCM_PATH+'/libexec/mivisionx/model_compiler/python')
 pythonScript = modelCompilerDir+'/caffe_to_nnir.py'
 modelCompilerScript = os.path.abspath(pythonScript)
 if (os.path.isfile(modelCompilerScript)):
@@ -918,7 +923,7 @@ gpu_info = gpu_info.rstrip()  # strip out X info
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
 
-lib_tree = shell('ldd -v '+installDir+'/lib/libvx_nn.so')
+lib_tree = shell('ldd -v '+ROCM_PATH+'/lib/libvx_nn.so')
 lib_tree = strip_libtree_addresses(lib_tree)
 
 vbios = shell('(cd /opt/rocm/bin/; ./rocm-smi -v)')

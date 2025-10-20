@@ -33,7 +33,6 @@ elseif(ROCM_PATH)
 else()
   set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 endif()
-
 # Set AMD Clang as default compiler
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
@@ -196,7 +195,7 @@ add_test(
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_graph"
 )
-set_property(TEST openvx_graph PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1")
+set_property(TEST openvx_graph PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1;ROCM_PATH=${ROCM_PATH}")
 
 # 11_b - graph API - graph API test
 add_test(

@@ -131,6 +131,7 @@ vx_status get_kernels_to_publish()
 
     //tensor 
     STATUS_ERROR_CHECK(ADD_KERNEL(Blend_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(NonLinearBlend_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Blur_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Brightness_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(ColorTemperature_Register));

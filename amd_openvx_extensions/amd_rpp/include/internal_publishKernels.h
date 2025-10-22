@@ -125,6 +125,7 @@ vx_status WarpPerspectivebatchPD_Register(vx_context);
 #endif
 
 vx_status Blend_Register(vx_context);
+vx_status NonLinearBlend_Register(vx_context);
 vx_status Blur_Register(vx_context);
 vx_status Brightness_Register(vx_context);
 vx_status ColorTemperature_Register(vx_context);
@@ -259,6 +260,7 @@ vx_status Log1p_Register(vx_context);
 
 //tensor
 #define VX_KERNEL_RPP_BLEND_NAME                                "org.rpp.Blend"
+#define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
 #define VX_KERNEL_RPP_BLUR_NAME                                 "org.rpp.Blur"
 #define VX_KERNEL_RPP_BRIGHTNESS_NAME                           "org.rpp.Brightness"
 #define VX_KERNEL_RPP_COLORTEMPERATURE_NAME                     "org.rpp.ColorTemperature"

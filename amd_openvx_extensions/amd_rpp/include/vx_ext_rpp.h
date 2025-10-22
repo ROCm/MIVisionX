@@ -1547,6 +1547,23 @@ extern "C"
 	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppGridMask(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar tileWidth, vx_scalar gridRatio, vx_scalar gridAngle, vx_scalar translateX, vx_scalar translateY, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+	/*!
+     * \brief [Graph] Creates a RPP NonLinearBlend node.
+     * \param [in] graph The handle to the graph.
+     * \param [in] pSrc1 The first input tensor of <tt>vx_tensor</tt>.
+     * \param [in] pSrc2 The second input tensor of <tt>vx_tensor</tt>.
+     * \param [in] pSrcRoi The input roi tensor of <tt>vx_tensor</tt>.
+     * \param [out] pDst The output tensor of <tt>vx_tensor</tt>.
+     * \param [in] pStdDev The input array in <tt>VX_TYPE_FLOAT32</tt> format containing per-sample standard deviation values for non-linear blending.
+     * \param [in] inputLayout The input layout of <tt>vx_scalar</tt>.
+     * \param [in] outputLayout The output layout of <tt>vx_scalar</tt>.
+     * \param [in] roiType The roi type of <tt>vx_scalar</tt>.
+     * \return <tt> vx_node</tt>.
+     * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+     */
+    SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNonLinearBlend(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pSrcRoi, vx_tensor pDst,
+                                                             vx_array pStdDev, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 	
 	/*! \brief [Graph] Creates a Contrast function node.
 	 * \ingroup group_amd_rpp

@@ -1564,6 +1564,18 @@ extern "C"
      */
     SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNonLinearBlend(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pSrcRoi, vx_tensor pDst,
                                                              vx_array pStdDev, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+    // Median Filter (tensor)
+    // Parameter order: [src, src_roi, dst, kernelSize, borderType, inputLayout, outputLayout, roiType]
+    SHARED_PUBLIC vx_node VX_API_CALL vxExtRppMedianFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
+                                                           vx_scalar kernelSize, vx_scalar borderType,
+                                                           vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+    // Gaussian Filter (tensor)
+    // Parameter order: [src, src_roi, dst, stdDev(array), kernelSize, inputLayout, outputLayout, roiType]
+    SHARED_PUBLIC vx_node VX_API_CALL vxExtRppGaussianFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
+                                                             vx_array pStdDev, vx_scalar kernelSize,
+                                                             vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 	
 	/*! \brief [Graph] Creates a Contrast function node.
 	 * \ingroup group_amd_rpp

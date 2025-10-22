@@ -30,10 +30,10 @@ THE SOFTWARE.
 
 // Local copy of rocAL Python bridge C ABI (keep in sync with rocAL)
 #ifndef ROCAL_PY_MAX_TENSOR_DIMS
-#define ROCAL_PY_MAX_TENSOR_DIMS 8
+#define ROCAL_PY_MAX_TENSOR_DIMS 5
 #endif
 
-typedef struct RocalPyTensorDesc_ {
+typedef struct {
     size_t num_dims;                          /* e.g., 4 for [N,H,W,C] */
     size_t shape[ROCAL_PY_MAX_TENSOR_DIMS];   /* lengths per dimension */
     size_t strides[ROCAL_PY_MAX_TENSOR_DIMS]; /* strides in elements */
@@ -41,13 +41,14 @@ typedef struct RocalPyTensorDesc_ {
     int layout;                               /* matches rocAL/vx tensor layout enums */
 } RocalPyTensorDesc;
 
-typedef struct RocalPyExecParams_ {
+typedef struct {
     uint64_t function_id;        /* CPython id(function), provided by python front-end */
     RocalPyTensorDesc in_desc;   /* Input tensor description */
     RocalPyTensorDesc out_desc;  /* Output tensor description */
     uint32_t device_type;        /* AGO_TARGET_AFFINITY_{CPU,GPU}; currently CPU-only */
 } RocalPyExecParams;
 
+// Function pointer type for the rocAL Python bridge function.
 typedef vx_status (*rocal_process_python_function_fn)(void *src_ptr, void *dst_ptr, const RocalPyExecParams *params);
 
 // Map RpptDataType -> OpenVX type enum
@@ -91,11 +92,8 @@ struct PythonFunctionLocalData {
     RppPtr_t pDst;
     RpptGenericDescPtr pSrcGenericDesc;
     RpptGenericDescPtr pDstGenericDesc;
-    RpptROI *pSrcRoi;
-    RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
-    vx_uint32 dtype;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 
@@ -104,7 +102,7 @@ struct PythonFunctionLocalData {
     rocal_process_python_function_fn bridge_fn;
 };
 
-static vx_status VX_CALLBACK refreshPythonFunction(vx_node node, const vx_reference *parameters, vx_uint32 /*num*/, PythonFunctionLocalData *data) {
+static vx_status VX_CALLBACK refreshPythonFunction(vx_node node, const vx_reference *parameters, vx_uint32 num, PythonFunctionLocalData *data) {
     // CPU-only initial implementation: GPU not supported yet
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
         return VX_ERROR_NOT_IMPLEMENTED;
@@ -117,7 +115,7 @@ static vx_status VX_CALLBACK refreshPythonFunction(vx_node node, const vx_refere
     return status;
 }
 
-static vx_status VX_CALLBACK validatePythonFunction(vx_node /*node*/, const vx_reference parameters[], vx_uint32 /*num*/, vx_meta_format metas[]) {
+static vx_status VX_CALLBACK validatePythonFunction(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[2], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT64)
@@ -163,37 +161,37 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
         return VX_ERROR_NOT_IMPLEMENTED;
 
     if (!data->bridge_fn) {
-        vxAddLogEntry((vx_reference)node, VX_ERROR_NOT_IMPLEMENTED, "PythonFunction bridge function not available. Build rocAL with Python bridge.\n");
+        vxAddLogEntry((vx_reference)node, VX_ERROR_NOT_IMPLEMENTED, "PythonFunction callback function is null.\n");
         return VX_ERROR_NOT_IMPLEMENTED;
     }
 
-    RocalPyExecParams p{};
-    p.function_id = data->function_id;
-    p.device_type = data->deviceType;
+    RocalPyExecParams params{};
+    params.function_id = data->function_id;
+    params.device_type = data->deviceType;
 
     // in_desc
-    p.in_desc.num_dims = data->pSrcGenericDesc->numDims;
-    p.in_desc.dtype = getVxDataType(data->pSrcGenericDesc->dataType);
-    p.in_desc.layout = static_cast<int>(data->inputLayout);
+    params.in_desc.num_dims = data->pSrcGenericDesc->numDims;
+    params.in_desc.dtype = getVxDataType(data->pSrcGenericDesc->dataType);
+    params.in_desc.layout = static_cast<int>(data->inputLayout);
     size_t in_itemsize = getItemSize(data->pSrcGenericDesc->dataType);
     if (in_itemsize == 0) return VX_ERROR_INVALID_TYPE;
-    for (size_t i = 0; i < p.in_desc.num_dims; ++i) {
-        p.in_desc.shape[i] = data->inputTensorDims[i];
-        p.in_desc.strides[i] = static_cast<size_t>(data->pSrcGenericDesc->strides[i]) / in_itemsize;
+    for (size_t i = 0; i < params.in_desc.num_dims; ++i) {
+        params.in_desc.shape[i] = data->inputTensorDims[i];
+        params.in_desc.strides[i] = static_cast<size_t>(data->pSrcGenericDesc->strides[i]) / in_itemsize;
     }
 
     // out_desc
-    p.out_desc.num_dims = data->pDstGenericDesc->numDims;
-    p.out_desc.dtype = getVxDataType(data->pDstGenericDesc->dataType);
-    p.out_desc.layout = static_cast<int>(data->outputLayout);
+    params.out_desc.num_dims = data->pDstGenericDesc->numDims;
+    params.out_desc.dtype = getVxDataType(data->pDstGenericDesc->dataType);
+    params.out_desc.layout = static_cast<int>(data->outputLayout);
     size_t out_itemsize = getItemSize(data->pDstGenericDesc->dataType);
     if (out_itemsize == 0) return VX_ERROR_INVALID_TYPE;
-    for (size_t i = 0; i < p.out_desc.num_dims; ++i) {
-        p.out_desc.shape[i] = data->outputTensorDims[i];
-        p.out_desc.strides[i] = static_cast<size_t>(data->pDstGenericDesc->strides[i]) / out_itemsize;
+    for (size_t i = 0; i < params.out_desc.num_dims; ++i) {
+        params.out_desc.shape[i] = data->outputTensorDims[i];
+        params.out_desc.strides[i] = static_cast<size_t>(data->pDstGenericDesc->strides[i]) / out_itemsize;
     }
 
-    vx_status st = data->bridge_fn(data->pSrc, data->pDst, &p);
+    vx_status st = data->bridge_fn(data->pSrc, data->pDst, &params);
     if (st != VX_SUCCESS) {
         vxAddLogEntry((vx_reference)node, st, "PythonFunction bridge returned error: %d\n", st);
         return st;
@@ -256,7 +254,7 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
     return VX_SUCCESS;
 }
 
-static vx_status VX_CALLBACK uninitializePythonFunction(vx_node node, const vx_reference * /*parameters*/, vx_uint32 /*num*/) {
+static vx_status VX_CALLBACK uninitializePythonFunction(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     PythonFunctionLocalData *data = nullptr;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (!data) return VX_SUCCESS;
@@ -268,8 +266,8 @@ static vx_status VX_CALLBACK uninitializePythonFunction(vx_node node, const vx_r
     return VX_SUCCESS;
 }
 
-static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node /*node*/,
-                                                  vx_bool /*use_opencl_1_2*/,
+static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
+                                                  vx_bool use_opencl_1_2,
                                                   vx_uint32 &supported_target_affinity) {
     AgoTargetAffinityInfo affinity;
     vxQueryContext(vxGetContext((vx_reference)graph), VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));

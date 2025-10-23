@@ -76,6 +76,7 @@ list(APPEND SOURCES
         source/tensor/CropMirrorNormalize.cpp
         source/tensor/Dilate.cpp
         source/tensor/Downmix.cpp
+        source/tensor/Erase.cpp
         source/tensor/Erode.cpp
         source/tensor/Exposure.cpp
         source/tensor/FishEye.cpp

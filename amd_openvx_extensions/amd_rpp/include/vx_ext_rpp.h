@@ -1614,6 +1614,22 @@ extern "C"
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppContrast(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pContrastFactor, vx_array pContrastCenter, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 	
+	/*!
+	* \brief [Graph] Creates a Threshold function node.
+	* \ingroup group_amd_rpp
+	* \param [in] graph The handle to the graph.
+	* \param [in] pSrc The input tensor in VX_TYPE_UINT8 or VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT8 format.
+	* \param [in] pSrcRoi The input tensor containing per-sample ROI values for the input in XYWH/LTRB format.
+	* \param [out] pDst The output tensor in VX_TYPE_UINT8 or VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT8 format.
+	* \param [in] pMin The input array in VX_TYPE_FLOAT32 format containing per-sample minimum threshold values.
+	* \param [in] pMax The input array in VX_TYPE_FLOAT32 format containing per-sample maximum threshold values.
+	* \param [in] inputLayout The input layout in VX_TYPE_INT32 denoting the layout of the input tensor.
+	* \param [in] outputLayout The output layout in VX_TYPE_INT32 denoting the layout of the output tensor.
+	* \param [in] roiType The ROI encoding type in VX_TYPE_INT32 denoting whether source ROI is XYWH or LTRB.
+	* \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using vxGetStatus.
+	*/
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppThreshold(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pMin, vx_array pMax, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
 	/*! \brief [Graph] Creates a Crop function node.
 	 * \ingroup group_amd_rpp
 	 * \param [in] graph The handle to the graph.

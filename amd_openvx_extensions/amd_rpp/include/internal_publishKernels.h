@@ -175,6 +175,7 @@ vx_status Transpose_Register(vx_context);
 vx_status Log1p_Register(vx_context);
 vx_status GaussianFilter_Register(vx_context);
 vx_status MedianFilter_Register(vx_context);
+vx_status WarpPerspective_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -317,5 +318,6 @@ vx_status MedianFilter_Register(vx_context);
 #define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
 #define VX_KERNEL_RPP_GAUSSIAN_FILTER_NAME                      "org.rpp.GaussianFilter"
 #define VX_KERNEL_RPP_MEDIAN_FILTER_NAME                        "org.rpp.MedianFilter"
+#define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

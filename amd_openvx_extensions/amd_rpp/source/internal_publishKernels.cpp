@@ -180,6 +180,7 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(Log1p_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(GaussianFilter_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(MedianFilter_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(WarpPerspective_Register));
     return status;
 }
 

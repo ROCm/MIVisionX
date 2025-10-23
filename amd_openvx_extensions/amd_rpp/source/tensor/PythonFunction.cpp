@@ -22,12 +22,6 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-#include <stdint.h>
-
-#include <cstdio>
-#include <cstring>
-#include <stdexcept>
-
 // Local copy of rocAL Python bridge C ABI (keep in sync with rocAL)
 #ifndef ROCAL_PY_MAX_TENSOR_DIMS
 #define ROCAL_PY_MAX_TENSOR_DIMS 5
@@ -230,7 +224,6 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
     data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
     data->pDstGenericDesc->offsetInBytes = 0;
     fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->outputTensorDims);
-
 
     // Get bridge function pointer from scalar
     uint64_t bridge_fn_ptr = 0;

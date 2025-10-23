@@ -1565,17 +1565,39 @@ extern "C"
     SHARED_PUBLIC vx_node VX_API_CALL vxExtRppNonLinearBlend(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pSrcRoi, vx_tensor pDst,
                                                              vx_array pStdDev, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 
-    // Median Filter (tensor)
-    // Parameter order: [src, src_roi, dst, kernelSize, borderType, inputLayout, outputLayout, roiType]
-    SHARED_PUBLIC vx_node VX_API_CALL vxExtRppMedianFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
-                                                           vx_scalar kernelSize, vx_scalar borderType,
-                                                           vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+	/*! \brief [Graph] Creates a Median Filter function node.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh/ltrb format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] kernelSize The input scalar in <tt>\ref VX_TYPE_UINT32</tt> format containing the kernel size for the median filter.
+	 * \param [in] borderType The input scalar in <tt>\ref VX_TYPE_INT32</tt> format containing the border type for handling edge pixels.
+	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
+	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.
+	 * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32</tt> denotes whether source roi is of XYWH/LTRB type.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppMedianFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
+	                                                       vx_scalar kernelSize, vx_scalar borderType,
+	                                                       vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 
-    // Gaussian Filter (tensor)
-    // Parameter order: [src, src_roi, dst, stdDev(array), kernelSize, inputLayout, outputLayout, roiType]
-    SHARED_PUBLIC vx_node VX_API_CALL vxExtRppGaussianFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
-                                                             vx_array pStdDev, vx_scalar kernelSize,
-                                                             vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+	/*! \brief [Graph] Creates a Gaussian Filter function node.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh/ltrb format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pStdDev The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the standard deviation values for Gaussian filter kernel generation.
+	 * \param [in] kernelSize The input scalar in <tt>\ref VX_TYPE_UINT32</tt> format containing the kernel size for the Gaussian filter.
+	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
+	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.
+	 * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32</tt> denotes whether source roi is of XYWH/LTRB type.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppGaussianFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
+	                                                         vx_array pStdDev, vx_scalar kernelSize,
+	                                                         vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 	
 	/*! \brief [Graph] Creates a Contrast function node.
 	 * \ingroup group_amd_rpp

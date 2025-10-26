@@ -179,6 +179,8 @@ vx_status WarpPerspective_Register(vx_context);
 vx_status Threshold_Register(vx_context);
 vx_status Erode_Register(vx_context);
 vx_status Dilate_Register(vx_context);
+vx_status Magnitude_Register(vx_context);
+vx_status Phase_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -325,5 +327,7 @@ vx_status Dilate_Register(vx_context);
 #define VX_KERNEL_RPP_THRESHOLD                                 "org.rpp.Threshold"
 #define VX_KERNEL_RPP_ERODE                                     "org.rpp.Erode"
 #define VX_KERNEL_RPP_DILATE                                    "org.rpp.Dilate"
+#define VX_KERNEL_RPP_MAGNITUDE                                 "org.rpp.Magnitude"
+#define VX_KERNEL_RPP_PHASE                                     "org.rpp.Phase"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

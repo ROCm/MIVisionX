@@ -28,7 +28,7 @@ struct WarpPerspectiveLocalData {
     vx_uint32 deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    vx_float32 *pPerspective;
+    Rpp32f *pPerspective;
     RpptInterpolationType interpolationType;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
@@ -42,13 +42,11 @@ struct WarpPerspectiveLocalData {
 
 static vx_status VX_CALLBACK refreshWarpPerspective(vx_node node, const vx_reference *parameters, vx_uint32 num, WarpPerspectiveLocalData *data) {
     vx_status status = VX_SUCCESS;
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0] * PERSPECTIVE_MATRIX_SIZE, sizeof(vx_float32), data->pPerspective, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0] * PERSPECTIVE_MATRIX_SIZE, sizeof(Rpp32f), data->pPerspective, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
@@ -130,9 +128,7 @@ static vx_status VX_CALLBACK processWarpPerspective(vx_node node, const vx_refer
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshWarpPerspective(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         rpp_status = rppt_warp_perspective_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,  data->pPerspective, data->interpolationType, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
@@ -177,7 +173,7 @@ static vx_status VX_CALLBACK initializeWarpPerspective(vx_node node, const vx_re
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pPerspective = new vx_float32[PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n];
+    data->pPerspective = new Rpp32f[PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n];
     refreshWarpPerspective(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));

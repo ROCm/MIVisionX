@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -173,7 +173,15 @@ static vx_status VX_CALLBACK initializeWarpPerspective(vx_node node, const vx_re
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pPerspective = new Rpp32f[PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        hipError_t err = hipHostMalloc(&data->pPerspective, PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n * sizeof(float), hipHostMallocDefault);
+        if (err != hipSuccess)
+            return ERRMSG(VX_ERROR_NOT_ALLOCATED, "initialize: hipHostMalloc of size %ld failed \n", PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n * sizeof(float));
+#endif
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        data->pPerspective = new Rpp32f[PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n];
+    }
     refreshWarpPerspective(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -183,7 +191,17 @@ static vx_status VX_CALLBACK initializeWarpPerspective(vx_node node, const vx_re
 static vx_status VX_CALLBACK uninitializeWarpPerspective(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     WarpPerspectiveLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pPerspective;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pPerspective) {
+            hipError_t err = hipHostFree(data->pPerspective);
+            if (err != hipSuccess)
+                std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
+        }
+#endif
+    } else {
+        if (data->pPerspective) delete[] data->pPerspective;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

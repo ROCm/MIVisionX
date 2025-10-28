@@ -25,8 +25,10 @@
 ################################################################################
 
 # ROCM Path
-if(ROCM_PATH)
-    message("-- FindMIVISIONX: ROCM_PATH Set -- ${ROCM_PATH}")
+if(DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+    message("-- amd_openvx_extensions:ROCM_PATH Set -- ${ROCM_PATH}")
 else()
     set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 endif()

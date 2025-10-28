@@ -84,7 +84,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 #### Linux
 * Ubuntu - `22.04` / `24.04`
 * RedHat - `8` / `9`
-* SLES - `15-SP5`
+* SLES - `15-SP7`
 
 #### Windows
 * Windows `10` / `11`
@@ -104,7 +104,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
   ```
 * HIP
   ```shell
-  sudo apt install rocm-hip-runtime-dev
+  sudo apt install hip-dev
   ```
 * OpenMP
   ```shell

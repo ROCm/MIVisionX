@@ -73,6 +73,7 @@ list(APPEND SOURCES
         source/tensor/Contrast.cpp
         source/tensor/Copy.cpp
         source/tensor/Crop.cpp
+        source/tensor/CropAndPatch.cpp
         source/tensor/CropMirrorNormalize.cpp
         source/tensor/Dilate.cpp
         source/tensor/Downmix.cpp

@@ -62,6 +62,30 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
     }
 }
 
+static int getEnvironmentVariable(const char * name, char * value, size_t valueSize)
+{
+#if _WIN32
+    char text[1024] = { 0 };
+    DWORD len = GetEnvironmentVariableA(name, text, (DWORD)sizeof(text));
+    if ( len > 1) {
+        value[len-1] = '\0';
+        if(isdigit(value[0]) != 0)
+            return atoi(value);
+        else return 1;
+    }
+#else
+    const char * text = getenv(name);
+    if (text) {
+        strncpy(value, text, valueSize);
+        value[strlen(text)+1] = '\0';
+        if(isdigit(value[0]) != 0)
+            return atoi(value);
+        else return 1;
+    }
+#endif
+    return -1;
+}
+
 int main(int argc, char **argv)
 {
 
@@ -74,9 +98,24 @@ int main(int argc, char **argv)
 
     AgoGraphImportInfo info = { 0 };
 
-    FILE *file = fopen("/opt/rocm/share/mivisionx/samples/gdf/read-gdf-sample.gdf", "rb");
+    // Get ROCM_PATH and set file to load
+    const char * searchEnvName = "ROCM_PATH";
+    char rocmLocation[1024];
+    int isEnvSet = getEnvironmentVariable(searchEnvName, rocmLocation, sizeof(rocmLocation));
+    if(isEnvSet)
+        printf("\nROCM PATH:%s\n", rocmLocation);
+    else{
+        printf("\nROCM PATH: NOT SET\n");
+        return -1;
+    }
+    char gdfFile[2048];
+    char gdfLocation[1024] = "/share/mivisionx/samples/gdf/read-gdf-sample.gdf";
+    snprintf(gdfFile, sizeof(gdfFile), "%s%s",rocmLocation, gdfLocation);
+    printf("GDF load file:%s\n", gdfFile);
+
+    FILE *file = fopen(gdfFile, "rb");
     if (file == NULL) {
-        perror("Error opening file");
+        perror("Error opening file:");
         return -1;
     }
 

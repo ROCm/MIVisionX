@@ -33,7 +33,6 @@ elseif(ROCM_PATH)
 else()
   set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 endif()
-
 # Set AMD Clang as default compiler
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
@@ -86,7 +85,8 @@ add_test(NAME vx_core_test
 if(VX_AMD_MEDIA_LIBRARY)
   add_test(NAME vx_amd_media_test
             COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_media_tests/gdf/decoder_test.gdf
+            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_media_tests/gdf/decoder_test.gdf 
+            scalar:STRING,\"1,${ROCM_PATH}/share/mivisionx/test/videos/AMD_driving_virtual_20.mp4:0\"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 endif(VX_AMD_MEDIA_LIBRARY)
@@ -196,7 +196,7 @@ add_test(
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_graph"
 )
-set_property(TEST openvx_graph PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1")
+set_property(TEST openvx_graph PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1;ROCM_PATH=${ROCM_PATH}")
 
 # 11_b - graph API - graph API test
 add_test(

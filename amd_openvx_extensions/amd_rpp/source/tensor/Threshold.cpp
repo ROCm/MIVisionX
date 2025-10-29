@@ -43,8 +43,8 @@ static vx_status VX_CALLBACK refreshThreshold(vx_node node, const vx_reference *
     vx_status status = VX_SUCCESS;
 
     // Copy per-sample min & max thresholds
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pMin, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pMax, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0] * data->pSrcDesc->c, sizeof(vx_float32), data->pMin, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0] * data->pSrcDesc->c, sizeof(vx_float32), data->pMax, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
@@ -184,9 +184,21 @@ static vx_status VX_CALLBACK initializeThreshold(vx_node node, const vx_referenc
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
-    // Allocate per-sample params
-    data->pMin = new vx_float32[data->pSrcDesc->n];
-    data->pMax = new vx_float32[data->pSrcDesc->n];
+    size_t min_max_array_size = data->pSrcDesc->n * data->pSrcDesc->c;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        hipError_t err = hipHostMalloc(&data->pMin, min_max_array_size * sizeof(float), hipHostMallocDefault);
+        if (err != hipSuccess)
+            return ERRMSG(VX_ERROR_NOT_ALLOCATED, "initialize: hipHostMalloc of size %ld failed \n", min_max_array_size * sizeof(float));
+        err = hipHostMalloc(&data->pMax, min_max_array_size * sizeof(float), hipHostMallocDefault);
+        if (err != hipSuccess)
+            return ERRMSG(VX_ERROR_NOT_ALLOCATED, "initialize: hipHostMalloc of size %ld failed \n", min_max_array_size * sizeof(float));
+#endif
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        // Allocate per-sample params
+        data->pMin = new vx_float32[min_max_array_size];
+        data->pMax = new vx_float32[min_max_array_size];
+    }
 
     // Initial refresh and create RPP handle
     refreshThreshold(node, parameters, num, data);
@@ -199,8 +211,23 @@ static vx_status VX_CALLBACK initializeThreshold(vx_node node, const vx_referenc
 static vx_status VX_CALLBACK uninitializeThreshold(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ThresholdLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pMin;
-    delete[] data->pMax;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pMin) {
+            hipError_t err = hipHostFree(data->pMin);
+            if (err != hipSuccess)
+                std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
+        }
+        if (data->pMax) {
+            hipError_t err = hipHostFree(data->pMax);
+            if (err != hipSuccess)
+                std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
+        }
+#endif
+    } else {
+        if (data->pMin) delete[] data->pMin;
+        if (data->pMax) delete[] data->pMax;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

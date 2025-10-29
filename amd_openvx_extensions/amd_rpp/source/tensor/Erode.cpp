@@ -51,9 +51,7 @@ static vx_status VX_CALLBACK refreshErode(vx_node node, const vx_reference *para
 #endif
     } else {
         // HOST backend not implemented for Erode
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
+        return VX_ERROR_NOT_SUPPORTED;
     }
     data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
 
@@ -127,8 +125,8 @@ static vx_status VX_CALLBACK processErode(vx_node node, const vx_reference *para
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else {
-        // HOST backend not implemented
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
+        // HOST backend not supported
+        return_status = VX_ERROR_NOT_SUPPORTED;
     }
 
     return return_status;
@@ -140,19 +138,17 @@ static vx_status VX_CALLBACK initializeErode(vx_node node, const vx_reference *p
 
     vx_enum input_tensor_dtype, output_tensor_dtype;
     vx_int32 roi_type, input_layout, output_layout;
-    vx_uint32 kernel_size_u32;
 
     // Read scalars
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &kernel_size_u32, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->kernelSize, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     data->roiType = static_cast<RpptRoiType>(roi_type);
     data->inputLayout = static_cast<vxTensorLayout>(input_layout);
     data->outputLayout = static_cast<vxTensorLayout>(output_layout);
-    data->kernelSize = static_cast<Rpp32u>(kernel_size_u32);
 
     // Src desc
     data->pSrcDesc = new RpptDesc;
@@ -160,7 +156,8 @@ static vx_status VX_CALLBACK initializeErode(vx_node node, const vx_reference *p
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
     data->pSrcDesc->dataType = getRpptDataType(input_tensor_dtype);
-    data->pSrcDesc->offsetInBytes = 0;
+    // For filter ops, use offset to handle border reads
+    data->pSrcDesc->offsetInBytes = (12 * (data->kernelSize / 2));
     fillDescriptionPtrfromDims(data->pSrcDesc, data->inputLayout, data->inputTensorDims);
 
     // Dst desc

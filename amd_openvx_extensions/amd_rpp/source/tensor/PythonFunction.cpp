@@ -113,18 +113,18 @@ static vx_status VX_CALLBACK validatePythonFunction(vx_node node, const vx_refer
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[2], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT64)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #3 (bridgeFnPtr) must be UINT64\n");
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #2 (bridgeFnPtr) type=%d, must be UINT64\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[3], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT64)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #4 (functionId) must be UINT64\n");
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #3 (functionId) type=%d, must be UINT64\n", scalar_type);
     for (int idx : {4, 5}) {
         STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[idx], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
         if (scalar_type != VX_TYPE_INT32)
-            return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #%d must be INT32\n", idx + 1);
+            return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #%d must be INT32\n", idx);
     }
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #7 (deviceType) must be UINT32\n");
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "PythonFunction validate: Parameter #6 (deviceType) type=%d, must be UINT32\n", scalar_type);
 
     // Mirror output meta from provided output tensor (created by API with proper dims/dtype)
     size_t num_dims = 0;

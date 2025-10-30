@@ -28,10 +28,10 @@ THE SOFTWARE.
 #include "vx_ext_amd.h"
 #include "kernels_rpp.h"
 
-#include "rpp.h"
-#include "rppdefs.h"
+#include "rpp/rpp.h"
+#include "rpp/rppdefs.h"
 #if RPP_LEGACY_SUPPORT
-#include "rppi.h"
+#include "rpp/rppi.h"
 #endif
 
 #if ENABLE_OPENCL

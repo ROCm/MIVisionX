@@ -4,6 +4,27 @@
 
 The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
+## MIVisionX 3.4.0 for ROCm 7.1.0
+
+### Added
+* VX_RPP - Update blur
+* HIP - HIP_CHECK for hipLaunchKernelGGL for gated launch
+
+### Changed
+* AMD Custom V1.1.0 - OpenMP updates
+* HALF - Fix half.hpp path updates
+
+### Resolved issues
+* AMD Custom - dependency linking errors resolved
+* VX_RPP - Fix memory leak
+* Packaging - Remove Meta Package dependency for HIP
+
+### Known issues
+* Installation on CentOS/RedHat/SLES requires the manual installation of the `FFMPEG` & `OpenCV` dev packages.
+
+### Upcoming changes
+* VX_AMD_MEDIA - rocDecode support for hardware decode
+
 ## MIVisionX 3.3.0 for ROCm 7.0.0
 
 ### Changed

@@ -20,6 +20,14 @@
 
 cmake_minimum_required(VERSION 3.10)
 
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+    message("-- custom_lib: ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+    set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
 # Set AMD Clang as default compiler
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
@@ -31,8 +39,6 @@ endif()
 
 project(custom_lib)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
-
 set(CUSTOM_LIB_SOURCES custom_api.cpp custom_copy_impl.cpp)
 include_directories(${ROCM_PATH}/include)
 link_directories(${HIP_PATH}/lib)
@@ -40,7 +46,5 @@ link_directories(${HIP_PATH}/lib)
 add_library(${PROJECT_NAME} OBJECT ${CUSTOM_LIB_SOURCES})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=${ENABLE_HIP})
 target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_AMD__)
-
-list(APPEND PACKAGE_DEPENDS PACKAGE HIP)
 
 message("-- ${White}${PROJECT_NAME} -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

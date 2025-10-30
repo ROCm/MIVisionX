@@ -261,7 +261,7 @@ if(Python3_FOUND)
   # 16 - openvx gdfs tests on CPU
   add_test(NAME openvx_gdf_tests_CPU 
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/runOpenVX.py
-            --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --backend_type CPU --hidden yes 
+            --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --backend_type CPU --hidden no 
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
   set_property(TEST openvx_gdf_tests_CPU PROPERTY ENVIRONMENT "PATH=$PATH:${ROCM_PATH}/bin")
@@ -302,7 +302,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
     # 21 - openvx gdfs tests on GPU
     add_test(NAME openvx_gdf_tests_GPU 
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/runOpenVX.py
-            --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --backend_type GPU --hidden yes 
+            --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --backend_type GPU --hidden no 
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     set_property(TEST openvx_gdf_tests_GPU PROPERTY ENVIRONMENT "PATH=$PATH:${ROCM_PATH}/bin")

@@ -148,8 +148,10 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshPythonFunction(node, parameters, num, data));
 
-    if (!data->pSrc || !data->pDst)
-        return ERRMSG(VX_ERROR_INVALID_REFERENCE, "PythonFunction process: null tensor buffers\n");
+    if (!data->pSrc || !data->pDst) {
+        vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_REFERENCE, "PythonFunction process: null tensor buffers\n");
+        return VX_ERROR_INVALID_REFERENCE;
+    }
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
         return VX_ERROR_NOT_IMPLEMENTED;

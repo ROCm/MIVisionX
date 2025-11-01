@@ -7,7 +7,7 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 ## MIVisionX 3.5.0 (Unreleased)
 
 ### Added
-* VX_RPP - Add PythonFunction extension
+*  Added the `PythonFunction` extension to VX_RPP
 
 ### Changed
 * AMD Clang++ - Location updated `${ROCM_PATH}/lib/llvm/bin`

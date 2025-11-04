@@ -110,6 +110,7 @@ list(APPEND SOURCES
         source/tensor/ResizeCrop.cpp
         source/tensor/ResizeCropMirror.cpp
         source/tensor/ResizeMirrorNormalize.cpp
+        source/tensor/Ricap.cpp
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/Snow.cpp

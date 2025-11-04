@@ -2277,6 +2277,20 @@ SHARED_PUBLIC vx_node VX_API_CALL vxExtRppRemap(vx_graph graph, vx_tensor pSrc, 
 
 SHARED_PUBLIC vx_node VX_API_CALL vxExtRppCropAndPatch(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pDst, vx_tensor pDstRoi, vx_tensor pCropRoi, vx_tensor pPatchRoi, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 
+/*! \brief [Graph] Creates a Ricap (Random Image Cropping And Patching) function node.
+ * \ingroup group_amd_rpp
+ * \param [in] graph The handle to the graph.
+ * \param [in] pSrc The input tensor in VX_TYPE_UINT8 or VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT8 format data.
+ * \param [out] pDst The output tensor in VX_TYPE_UINT8 or VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT8 format data.
+ * \param [in] pPermutation The input array in VX_TYPE_UINT32 format of length N*4, containing 4 indices per output sample that select which input samples supply the four patches.
+ * \param [in] pInputCropRoi The input tensor containing 4 crop ROIs per output sample in XYWH/LTRB encoding (see roiType). The tensor must be laid out as a contiguous array of RpptROI entries.
+ * \param [in] inputLayout The input layout in VX_TYPE_INT32 denoting the layout of pSrc (e.g., VX_NHWC, VX_NCHW, VX_NFHWC, VX_NFCHW).
+ * \param [in] outputLayout The output layout in VX_TYPE_INT32 denoting the layout of pDst.
+ * \param [in] roiType The ROI encoding type in VX_TYPE_INT32 denoting whether ROIs are XYWH or LTRB.
+ * \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using vxGetStatus.
+ */
+SHARED_PUBLIC vx_node VX_API_CALL vxExtRppRicap(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_array pPermutation, vx_tensor pInputCropRoi, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
 #ifdef __cplusplus
 }
 #endif

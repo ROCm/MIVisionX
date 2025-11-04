@@ -104,6 +104,7 @@ list(APPEND SOURCES
         source/tensor/Pixelate.cpp
         source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
+        source/tensor/Remap.cpp
         source/tensor/Resample.cpp
         source/tensor/Resize.cpp
         source/tensor/ResizeCrop.cpp

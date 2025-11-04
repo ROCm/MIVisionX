@@ -183,6 +183,7 @@ vx_status Magnitude_Register(vx_context);
 vx_status Phase_Register(vx_context);
 vx_status Erase_Register(vx_context);
 vx_status CropAndPatch_Register(vx_context);
+vx_status Remap_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -254,7 +255,7 @@ vx_status CropAndPatch_Register(vx_context);
 #define VX_KERNEL_RPP_CANNYEDGEDETECTOR_NAME                    "org.rpp.CannyEdgeDetector"
 #define VX_KERNEL_RPP_HARRISCORNERDETECTOR_NAME                 "org.rpp.HarrisCornerDetector"
 #define VX_KERNEL_RPP_FASTCORNERDETECTOR_NAME                   "org.rpp.FastCornerDetector"
-#define VX_KERNEL_RPP_REMAP_NAME                                "org.rpp.remap"
+#define VX_KERNEL_RPP_REMAPBATCHPD_NAME                         "org.rpp.remap"
 #define VX_KERNEL_RPP_TENSORADD_NAME                            "org.rpp.TensorAdd"
 #define VX_KERNEL_RPP_TENSORSUBTRACT_NAME                       "org.rpp.TensorSubtract"
 #define VX_KERNEL_RPP_TENSORMULTIPLY_NAME                       "org.rpp.TensorMultiply"
@@ -333,5 +334,6 @@ vx_status CropAndPatch_Register(vx_context);
 #define VX_KERNEL_RPP_PHASE_NAME                                "org.rpp.Phase"
 #define VX_KERNEL_RPP_ERASE_NAME                                "org.rpp.Erase"
 #define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
+#define VX_KERNEL_RPP_REMAP_TENSOR_NAME                         "org.rpp.Remap"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

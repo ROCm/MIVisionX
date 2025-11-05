@@ -65,6 +65,7 @@ set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES
         source/tensor/Blend.cpp
+        source/tensor/BitwiseOps.cpp
         source/tensor/Blur.cpp
         source/tensor/Brightness.cpp
         source/tensor/ColorTemperature.cpp

@@ -2242,6 +2242,21 @@ extern "C"
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppPhase(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 
+/*! \brief [Graph] Creates a BitwiseOps function node (AND/OR/XOR).
+ * \ingroup group_amd_rpp
+ * \param [in] graph The handle to the graph.
+ * \param [in] pSrc1 The first input tensor in VX_TYPE_UINT8 format data.
+ * \param [in] pSrc2 The second input tensor in VX_TYPE_UINT8 format data.
+ * \param [in] pSrcRoi The input tensor of batch size in unsigned int containing per-sample ROI values for the inputs in XYWH/LTRB format.
+ * \param [out] pDst The output tensor in VX_TYPE_UINT8 format data.
+ * \param [in] inputLayout The input layout in VX_TYPE_INT32 denoting the layout of input tensors (e.g., VX_NHWC, VX_NCHW, VX_NFHWC, VX_NFCHW).
+ * \param [in] outputLayout The output layout in VX_TYPE_INT32 denoting the layout of the output tensor.
+ * \param [in] roiType The ROI encoding type in VX_TYPE_INT32 denoting whether source ROI is XYWH or LTRB.
+ * \param [in] opType The operation selector in VX_TYPE_INT32: 0 = AND, 1 = OR, 2 = XOR.
+ * \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using vxGetStatus.
+ */
+SHARED_PUBLIC vx_node VX_API_CALL vxExtRppBitwiseOps(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType, vx_scalar opType);
+
 /*!
  * \brief [Graph] Creates a RPP CropAndPatch function node.
  * \ingroup group_amd_rpp

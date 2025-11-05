@@ -185,6 +185,7 @@ vx_status Erase_Register(vx_context);
 vx_status CropAndPatch_Register(vx_context);
 vx_status Remap_Register(vx_context);
 vx_status Ricap_Register(vx_context);
+vx_status BitwiseOps_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -337,5 +338,6 @@ vx_status Ricap_Register(vx_context);
 #define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
 #define VX_KERNEL_RPP_REMAP_TENSOR_NAME                         "org.rpp.Remap"
 #define VX_KERNEL_RPP_RICAP_NAME                                "org.rpp.Ricap"
+#define VX_KERNEL_RPP_BITWISE_OPS_NAME                          "org.rpp.BitwiseOps"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

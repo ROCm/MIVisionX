@@ -31,7 +31,9 @@ endif()
 
 project(runvx)
 
-find_package(OpenCV QUIET)
+if(UBUNTU_FOUND)
+    find_package(OpenCV QUIET)
+endif()
 
 include_directories(../../amd_openvx/openvx/include)
 

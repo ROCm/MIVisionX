@@ -44,7 +44,7 @@ if(WIN32)
     set(OpenCV_DIR "$ENV{OpenCV_DIR}")
 endif()
 
-if(UBUNTU_FOUND)
+if(NOT MIN_DEPS_MODE)
     find_package(OpenCV QUIET)
     find_package(FFmpeg QUIET)
 endif()

@@ -22,10 +22,11 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-enum class BitwiseOp : int32_t {
-    And = 0,
-    Or  = 1,
-    Xor = 2
+enum class vxBitwiseOp {
+    AND = 0,
+    OR  = 1,
+    XOR = 2,
+    NOT = 3
 };
 
 struct BitwiseOpsLocalData {
@@ -40,7 +41,7 @@ struct BitwiseOpsLocalData {
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
-    BitwiseOp opType;
+    vxBitwiseOp opType;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
@@ -52,13 +53,21 @@ static vx_status VX_CALLBACK refreshBitwiseOps(vx_node node, const vx_reference 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc1, sizeof(data->pSrc1)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pSrc2, sizeof(data->pSrc2)));
+        if (data->opType != vxBitwiseOp::NOT) {
+            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pSrc2, sizeof(data->pSrc2)));
+        } else {
+            data->pSrc2 = nullptr;
+        }
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc1, sizeof(data->pSrc1)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pSrc2, sizeof(data->pSrc2)));
+        if (data->opType != vxBitwiseOp::NOT) {
+            STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pSrc2, sizeof(data->pSrc2)));
+        } else {
+            data->pSrc2 = nullptr;
+        }
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
@@ -107,6 +116,18 @@ static vx_status VX_CALLBACK validateBitwiseOps(vx_node node, const vx_reference
     if (scalar_type != VX_TYPE_UINT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #8 type=%d (must be VX_TYPE_UINT32)\n", scalar_type);
 
+    // If op != NOT, ensure src2 tensor present and valid
+    vx_int32 op_type_val = 0;
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &op_type_val, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if (op_type_val != static_cast<vx_int32>(vxBitwiseOp::NOT)) {
+        if (parameters[1] == nullptr)
+            return ERRMSG(VX_ERROR_INVALID_PARAMETERS, "validate: BitwiseOps: parameter #1 (src2) must be provided for AND/OR/XOR ops\n");
+        size_t num_tensor_dims_src2;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims_src2, sizeof(num_tensor_dims_src2)));
+        if (num_tensor_dims_src2 < 4)
+            return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: BitwiseOps: tensor: #1 dimensions=%lu (must be >= 4)\n", num_tensor_dims_src2);
+    }
+
     // Check input tensor dims
     size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
@@ -142,14 +163,17 @@ static vx_status VX_CALLBACK processBitwiseOps(vx_node node, const vx_reference 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         switch (data->opType) {
-            case BitwiseOp::And:
+            case vxBitwiseOp::AND:
                 rpp_status = rppt_bitwise_and_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
                 break;
-            case BitwiseOp::Or:
+            case vxBitwiseOp::OR:
                 rpp_status = rppt_bitwise_or_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
                 break;
-            case BitwiseOp::Xor:
+            case vxBitwiseOp::XOR:
                 rpp_status = rppt_bitwise_xor_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                break;
+            case vxBitwiseOp::NOT:
+                rpp_status = rppt_bitwise_not_gpu(data->pSrc1, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
                 break;
             default:
                 return VX_ERROR_INVALID_PARAMETERS;
@@ -160,14 +184,17 @@ static vx_status VX_CALLBACK processBitwiseOps(vx_node node, const vx_reference 
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         switch (data->opType) {
-            case BitwiseOp::And:
+            case vxBitwiseOp::AND:
                 rpp_status = rppt_bitwise_and_host(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
                 break;
-            case BitwiseOp::Or:
+            case vxBitwiseOp::OR:
                 rpp_status = rppt_bitwise_or_host(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
                 break;
-            case BitwiseOp::Xor:
+            case vxBitwiseOp::XOR:
                 rpp_status = rppt_bitwise_xor_host(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                break;
+            case vxBitwiseOp::NOT:
+                rpp_status = rppt_bitwise_not_host(data->pSrc1, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
                 break;
             default:
                 return VX_ERROR_INVALID_PARAMETERS;
@@ -195,7 +222,7 @@ static vx_status VX_CALLBACK initializeBitwiseOps(vx_node node, const vx_referen
     data->roiType = static_cast<RpptRoiType>(roi_type);
     data->inputLayout = static_cast<vxTensorLayout>(input_layout);
     data->outputLayout = static_cast<vxTensorLayout>(output_layout);
-    data->opType = static_cast<BitwiseOp>(op_type);
+    data->opType = static_cast<vxBitwiseOp>(op_type);
 
     // Source desc (derive from src1)
     data->pSrcDesc = new RpptDesc;
@@ -281,7 +308,7 @@ vx_status BitwiseOps_Register(vx_context context) {
 
         // Parameters: src1 tensor, src2 tensor, src roi tensor, dst tensor, inputLayout, outputLayout, roiType, opType, deviceType
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_OPTIONAL));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));

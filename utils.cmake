@@ -43,15 +43,6 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
               endif()
           endif()
         endif()
-        set( DEB_OVERRIDES_INSTALL_FILENM
-          "${DEB_OVERRIDES_INSTALL_FILENM}" CACHE STRING "Debian Package Lintian Override File Name" FORCE)
-              # Configure the changelog file
-              #configure_file(
-              #  "${CMAKE_SOURCE_DIR}/DEBIAN/overrides.in"
-              #  "${CMAKE_BINARY_DIR}/DEBIAN/${DEB_OVERRIDES_INSTALL_FILENM}"
-              #  FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-              #  @ONLY
-              #)
       endif()
 
       # Install Change Log 
@@ -71,13 +62,6 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
                   DESTINATION ${CMAKE_INSTALL_DOCDIR}
                   COMPONENT ${COMPONENT_NAME_T})
       endif()
-      # Install lintian overrides
-      #if( BUILD_ENABLE_LINTIAN_OVERRIDES STREQUAL "ON" AND BUILD_DEBIAN_PKGING_FLAG STREQUAL "ON")
-      #  set( OVERRIDE_FILE "${CMAKE_BINARY_DIR}/DEBIAN/${DEB_OVERRIDES_INSTALL_FILENM}" )
-      #  install ( FILES ${OVERRIDE_FILE}
-      #      DESTINATION ${DEB_OVERRIDES_INSTALL_PATH}
-      #      COMPONENT ${COMPONENT_NAME_T})
-      #endif()
 
     else()
         # License file

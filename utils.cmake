@@ -25,7 +25,7 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
       # Configure the changelog file
       configure_file(
         "${CMAKE_SOURCE_DIR}/CHANGELOG.md"
-        "${CMAKE_BINARY_DIR}/DEBIAN/changelog.Debian"
+        "${CMAKE_BINARY_DIR}/DEBIAN/CHANGELOG.md"
         @ONLY
       )
 
@@ -56,9 +56,9 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
 
       # Install Change Log 
       find_program ( DEB_GZIP_EXEC gzip )
-      if(EXISTS "${CMAKE_BINARY_DIR}/DEBIAN/changelog.Debian" )
+      if(EXISTS "${CMAKE_BINARY_DIR}/DEBIAN/CHANGELOG.md" )
         execute_process(
-          COMMAND ${DEB_GZIP_EXEC} -f -n -9 "${CMAKE_BINARY_DIR}/DEBIAN/changelog.Debian"
+          COMMAND ${DEB_GZIP_EXEC} -f -n -9 "${CMAKE_BINARY_DIR}/DEBIAN/CHANGELOG.md"
           WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/DEBIAN"
           RESULT_VARIABLE result
           OUTPUT_VARIABLE output
@@ -72,12 +72,12 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
                   COMPONENT ${COMPONENT_NAME_T})
       endif()
       # Install lintian overrides
-      if( BUILD_ENABLE_LINTIAN_OVERRIDES STREQUAL "ON" AND BUILD_DEBIAN_PKGING_FLAG STREQUAL "ON")
-        set( OVERRIDE_FILE "${CMAKE_BINARY_DIR}/DEBIAN/${DEB_OVERRIDES_INSTALL_FILENM}" )
-        install ( FILES ${OVERRIDE_FILE}
-            DESTINATION ${DEB_OVERRIDES_INSTALL_PATH}
-            COMPONENT ${COMPONENT_NAME_T})
-      endif()
+      #if( BUILD_ENABLE_LINTIAN_OVERRIDES STREQUAL "ON" AND BUILD_DEBIAN_PKGING_FLAG STREQUAL "ON")
+      #  set( OVERRIDE_FILE "${CMAKE_BINARY_DIR}/DEBIAN/${DEB_OVERRIDES_INSTALL_FILENM}" )
+      #  install ( FILES ${OVERRIDE_FILE}
+      #      DESTINATION ${DEB_OVERRIDES_INSTALL_PATH}
+      #      COMPONENT ${COMPONENT_NAME_T})
+      #endif()
 
     else()
         # License file
@@ -97,7 +97,7 @@ function( set_debian_pkg_cmake_flags DEB_PACKAGE_NAME_T DEB_PACKAGE_VERSION_T DE
     set( DEB_MAINTAINER_EMAIL         "${DEB_MAINTAINER_EMAIL_T}" CACHE STRING "Debian Package Maintainer Email" )
     set( DEB_COPYRIGHT_YEAR           "2025" CACHE STRING "Debian Package Copyright Year" )
     set( DEB_LICENSE                  "MIT" CACHE STRING "Debian Package License Type" )
-    set( DEB_CHANGELOG_INSTALL_FILENM "changelog.Debian.gz" CACHE STRING "Debian Package ChangeLog File Name" ) 
+    set( DEB_CHANGELOG_INSTALL_FILENM "CHANGELOG.md.gz" CACHE STRING "Debian Package ChangeLog File Name" ) 
 
     if( BUILD_ENABLE_LINTIAN_OVERRIDES )
       set( DEB_OVERRIDES_INSTALL_FILENM "${DEB_PACKAGE_NAME}" CACHE STRING "Debian Package Lintian Override File Name" )

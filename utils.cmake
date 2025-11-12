@@ -13,12 +13,12 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
       # Configure the copyright file
       configure_file(
         "${CMAKE_SOURCE_DIR}/copyright.txt"
-        "${CMAKE_BINARY_DIR}/DEBIAN/copyright"
+        "${CMAKE_BINARY_DIR}/DEBIAN/copyright.txt"
         @ONLY
       )
 
       # Install copyright file
-      install ( FILES "${CMAKE_BINARY_DIR}/DEBIAN/copyright"
+      install ( FILES "${CMAKE_BINARY_DIR}/DEBIAN/copyright.txt"
 	        DESTINATION "${CMAKE_INSTALL_DOCDIR}"
 	        COMPONENT ${COMPONENT_NAME_T} )
 
@@ -46,12 +46,12 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
         set( DEB_OVERRIDES_INSTALL_FILENM
           "${DEB_OVERRIDES_INSTALL_FILENM}" CACHE STRING "Debian Package Lintian Override File Name" FORCE)
               # Configure the changelog file
-              configure_file(
-                "${CMAKE_SOURCE_DIR}/DEBIAN/overrides.in"
-                "${CMAKE_BINARY_DIR}/DEBIAN/${DEB_OVERRIDES_INSTALL_FILENM}"
-                FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-                @ONLY
-              )
+              #configure_file(
+              #  "${CMAKE_SOURCE_DIR}/DEBIAN/overrides.in"
+              #  "${CMAKE_BINARY_DIR}/DEBIAN/${DEB_OVERRIDES_INSTALL_FILENM}"
+              #  FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+              #  @ONLY
+              #)
       endif()
 
       # Install Change Log 

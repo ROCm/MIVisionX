@@ -171,12 +171,26 @@ if("${BACKEND}" STREQUAL "HIP")
   message("-- ${White}${PROJECT_NAME} -- AMD GPU_TARGETS: ${GPU_TARGETS}${ColourReset}")
 endif()
 
+# build with minimum third-party dependency
+if(NOT DEFINED MIN_DEPS_MODE)
+  set(MIN_DEPS_MODE OFF)   # set default dependency option
+  if(EXISTS "/etc/os-release")
+    file(READ "/etc/os-release" OS_RELEASE)
+    string(REGEX MATCH "22.04" UBUNTU_22_FOUND ${OS_RELEASE})
+    if(NOT UBUNTU_22_FOUND)
+      set(MIN_DEPS_MODE ON)
+      message("-- ${Yellow}${PROJECT_NAME} Warning -- Non-Ubuntu OS, Min dependency option turned on${ColourReset}")
+    endif()
+  endif()
+endif()
+
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=${NEURAL_NET} [Turn ON/OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM OpenCL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
+message("-- ${Cyan}     -D MIN_DEPS_MODE=${MIN_DEPS_MODE} [Build MIVisionX with minimum dependencies (default:OFF)]${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

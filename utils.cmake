@@ -19,8 +19,8 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
 
       # Install copyright file
       install ( FILES "${CMAKE_BINARY_DIR}/DEBIAN/copyright.txt"
-	        DESTINATION "${CMAKE_INSTALL_DOCDIR}"
-	        COMPONENT ${COMPONENT_NAME_T} )
+      DESTINATION "${CMAKE_INSTALL_DOCDIR}"
+      COMPONENT ${COMPONENT_NAME_T} )
 
       # Configure the changelog file
       configure_file(
@@ -28,22 +28,6 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
         "${CMAKE_BINARY_DIR}/DEBIAN/CHANGELOG.md"
         @ONLY
       )
-
-      if( BUILD_ENABLE_LINTIAN_OVERRIDES )
-        if(DEFINED BUILD_SHARED_LIBS AND NOT ${BUILD_SHARED_LIBS} STREQUAL "")
-          string(FIND ${DEB_OVERRIDES_INSTALL_FILENM} "static" OUT_VAR1)
-          if(OUT_VAR1 EQUAL -1)
-            set( DEB_OVERRIDES_INSTALL_FILENM "${DEB_OVERRIDES_INSTALL_FILENM}-static" )
-          endif()
-          else()
-            if(ENABLE_ASAN_PACKAGING)
-              string( FIND ${DEB_OVERRIDES_INSTALL_FILENM} "asan" OUT_VAR2)
-              if(OUT_VAR2 EQUAL -1)
-                set( DEB_OVERRIDES_INSTALL_FILENM "${DEB_OVERRIDES_INSTALL_FILENM}-asan" )
-              endif()
-          endif()
-        endif()
-      endif()
 
       # Install Change Log 
       find_program ( DEB_GZIP_EXEC gzip )
@@ -83,14 +67,14 @@ function( set_debian_pkg_cmake_flags DEB_PACKAGE_NAME_T DEB_PACKAGE_VERSION_T DE
     set( DEB_LICENSE                  "MIT" CACHE STRING "Debian Package License Type" )
     set( DEB_CHANGELOG_INSTALL_FILENM "CHANGELOG.md.gz" CACHE STRING "Debian Package ChangeLog File Name" ) 
 
-    if( BUILD_ENABLE_LINTIAN_OVERRIDES )
-      set( DEB_OVERRIDES_INSTALL_FILENM "${DEB_PACKAGE_NAME}" CACHE STRING "Debian Package Lintian Override File Name" )
-      set( DEB_OVERRIDES_INSTALL_PATH   "/usr/share/lintian/overrides/" CACHE STRING "Deb Pkg Lintian Override Install Loc" )
-    endif()
-
-    # Get TimeStamp
     find_program( DEB_DATE_TIMESTAMP_EXEC date )
     set ( DEB_TIMESTAMP_FORMAT_OPTION "-R" )
+
+    # Get TimeStamp
+    if(NOT DEB_DATE_TIMESTAMP_EXEC)
+      message(FATAL_ERROR "date command not found")
+    endif()
+
     execute_process (
         COMMAND ${DEB_DATE_TIMESTAMP_EXEC} ${DEB_TIMESTAMP_FORMAT_OPTION}
         OUTPUT_VARIABLE TIMESTAMP_T

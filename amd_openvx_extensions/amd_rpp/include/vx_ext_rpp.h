@@ -1639,13 +1639,13 @@ extern "C"
 	 * \param [out] pDst The output tensor in VX_TYPE_UINT8 or VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT8 format.
 	 * \param [in] pAnchorBoxInfo The input tensor containing per-sample, per-box erase anchor boxes in LTRB encoding. Dimensions must accommodate the maximum number of boxes per sample.
 	 * \param [in] pColors The input tensor containing per-sample, per-box erase colors. The tensor must provide a color triplet per box (layout-dependent).
-	 * \param [in] pNumBoxes The input array in VX_TYPE_UINT32 format containing the number of erase boxes per sample (length N).
+	 * \param [in] pNumBoxes The input tensor of type VX_TYPE_UINT32 or VX_TYPE_INT32 containing the number of erase boxes per sample (length N in the first dimension).
 	 * \param [in] inputLayout The input layout in VX_TYPE_INT32 denoting the layout of the input tensor.
 	 * \param [in] outputLayout The output layout in VX_TYPE_INT32 denoting the layout of the output tensor.
 	 * \param [in] roiType The ROI encoding type in VX_TYPE_INT32 denoting whether source ROI is XYWH or LTRB.
 	 * \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using vxGetStatus.
 	 */
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppErase(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pAnchorBoxInfo, vx_tensor pColors, vx_array pNumBoxes, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppErase(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pAnchorBoxInfo, vx_tensor pColors, vx_tensor pNumBoxes, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 
 	/*! \brief [Graph] Creates a Crop function node.
 	 * \ingroup group_amd_rpp

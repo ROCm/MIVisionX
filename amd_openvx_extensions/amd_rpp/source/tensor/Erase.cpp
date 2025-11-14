@@ -55,9 +55,6 @@ struct EraseLocalData {
 static vx_status VX_CALLBACK refreshErase(vx_node node, const vx_reference *parameters, vx_uint32 num, EraseLocalData *data) {
     vx_status status = VX_SUCCESS;
 
-    // Copy per-sample number of boxes
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->inputTensorDims[0], sizeof(Rpp32u), data->pNumBoxes, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
     // Map buffers based on device
     void *roi_tensor_ptr = nullptr;
     void *anchor_tensor_ptr = nullptr;
@@ -72,7 +69,7 @@ static vx_status VX_CALLBACK refreshErase(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &anchor_tensor_ptr, sizeof(anchor_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &colors_tensor_ptr, sizeof(colors_tensor_ptr)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &data->pNumBoxes, sizeof(data->pNumBoxes)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &data->pNumBoxes, sizeof(data->pNumBoxes)));
 #endif
     } else { // CPU
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
@@ -80,7 +77,7 @@ static vx_status VX_CALLBACK refreshErase(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &anchor_tensor_ptr, sizeof(anchor_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HOST, &colors_tensor_ptr, sizeof(colors_tensor_ptr)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HOST, &data->pNumBoxes, sizeof(data->pNumBoxes)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HOST, &data->pNumBoxes, sizeof(data->pNumBoxes)));
     }
 
     data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);

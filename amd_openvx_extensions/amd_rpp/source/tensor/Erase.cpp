@@ -211,9 +211,6 @@ static vx_status VX_CALLBACK initializeErase(vx_node node, const vx_reference *p
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
-    // Allocate per-sample params
-    data->pNumBoxes = new Rpp32u[data->pSrcDesc->n];
-
     // Initial refresh and create RPP handle
     refreshErase(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -225,7 +222,6 @@ static vx_status VX_CALLBACK initializeErase(vx_node node, const vx_reference *p
 static vx_status VX_CALLBACK uninitializeErase(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     EraseLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pNumBoxes;
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

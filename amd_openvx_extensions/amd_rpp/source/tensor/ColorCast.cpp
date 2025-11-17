@@ -50,9 +50,7 @@ static vx_status VX_CALLBACK refreshColorCast(vx_node node, const vx_reference *
 
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
@@ -71,17 +69,11 @@ static vx_status VX_CALLBACK refreshColorCast(vx_node node, const vx_reference *
         // Expand alpha
         for (int n = N - 1; n >= 0; n--) {
             unsigned base = n * F;
+            unsigned srcOff = n * 3;
             for (unsigned f = 0; f < F; f++) {
                 data->pAlpha[base + f] = data->pAlpha[n];
                 data->pSrcRoi[base + f].xywhROI = data->pSrcRoi[n].xywhROI;
-            }
-        }
-        // Expand rgb floats (triplets)
-        for (int n = N - 1; n >= 0; n--) {
-            unsigned srcOff = n * 3;
-            unsigned baseFrames = n * F;
-            for (unsigned f = 0; f < F; f++) {
-                unsigned dstIdx = (baseFrames + f) * 3;
+                unsigned dstIdx = (base + f) * 3;
                 data->pRgbFloats[dstIdx + 0] = data->pRgbFloats[srcOff + 0];
                 data->pRgbFloats[dstIdx + 1] = data->pRgbFloats[srcOff + 1];
                 data->pRgbFloats[dstIdx + 2] = data->pRgbFloats[srcOff + 2];
@@ -153,9 +145,7 @@ static vx_status VX_CALLBACK processColorCast(vx_node node, const vx_reference *
     refreshColorCast(node, parameters, num, data);
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         rpp_status = rppt_color_cast_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pRgb, data->pAlpha, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif

@@ -162,7 +162,7 @@ static vx_status VX_CALLBACK initializeColorTemperature(vx_node node, const vx_r
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        CHECK_RETURN_STATUS(hipHostMalloc(&data->pAdjustmentValue, data->pSrcDesc->n * sizeof(vx_int32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAdjustmentValue, data->pSrcDesc->n * sizeof(vx_int32)));
 #endif
     } else {
         data->pAdjustmentValue = new vx_int32[data->pSrcDesc->n];
@@ -179,7 +179,7 @@ static vx_status VX_CALLBACK uninitializeColorTemperature(vx_node node, const vx
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pAdjustmentValue) CHECK_RETURN_STATUS(hipHostFree(data->pAdjustmentValue));
+        if (data->pAdjustmentValue) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAdjustmentValue));
 #endif
     } else {
         if (data->pAdjustmentValue) delete[] data->pAdjustmentValue;

@@ -179,7 +179,7 @@ static vx_status VX_CALLBACK uninitializeColorTemperature(vx_node node, const vx
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pAdjustmentValue)  CHECK_RETURN_STATUS(hipHostFree(data->pAdjustmentValue));
+        if (data->pAdjustmentValue) CHECK_RETURN_STATUS(hipHostFree(data->pAdjustmentValue));
 #endif
     } else {
         if (data->pAdjustmentValue) delete[] data->pAdjustmentValue;

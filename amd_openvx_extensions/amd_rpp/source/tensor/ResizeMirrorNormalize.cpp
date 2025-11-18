@@ -193,9 +193,9 @@ static vx_status VX_CALLBACK initializeResizeMirrorNormalize(vx_node node, const
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch)));
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pResizeWidth, data->pSrcDesc->n * sizeof(vx_uint32)));
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pResizeHeight, data->pSrcDesc->n * sizeof(vx_uint32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, data->pSrcDesc->n * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_float32)));
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_float32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMirror, data->pSrcDesc->n * data->pSrcDesc->c * sizeof(vx_uint32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMirror, data->pSrcDesc->n * sizeof(vx_uint32)));
 #endif
     } else {
         data->pDstImgSize = new RpptImagePatch[data->pSrcDesc->n];

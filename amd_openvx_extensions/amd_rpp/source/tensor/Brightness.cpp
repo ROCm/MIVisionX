@@ -167,7 +167,7 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, data->pSrcDesc->n * sizeof(vx_float32)));
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pBeta, data->pSrcDesc->n * sizeof(vx_float32)));
 #endif
-    } else {    
+    } else {
         data->pAlpha = new vx_float32[data->pSrcDesc->n];
         data->pBeta = new vx_float32[data->pSrcDesc->n];
     }

@@ -131,13 +131,10 @@ vx_status get_kernels_to_publish()
 
     //tensor 
     STATUS_ERROR_CHECK(ADD_KERNEL(Blend_Register));
-    STATUS_ERROR_CHECK(ADD_KERNEL(NonLinearBlend_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Blur_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Brightness_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(ColorTemperature_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(ColorTwist_Register));
-    STATUS_ERROR_CHECK(ADD_KERNEL(ColorCast_Register));
-    STATUS_ERROR_CHECK(ADD_KERNEL(GridMask_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Contrast_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Copy_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Crop_Register));
@@ -178,14 +175,17 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(MelFilterBank_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Transpose_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Log1p_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ColorCast_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(GaussianFilter_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(GridMask_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(MedianFilter_Register));
-    STATUS_ERROR_CHECK(ADD_KERNEL(WarpPerspective_Register));
-    STATUS_ERROR_CHECK(ADD_KERNEL(Threshold_Register));
-    STATUS_ERROR_CHECK(ADD_KERNEL(Erode_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(NonLinearBlend_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Dilate_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Erode_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Magnitude_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Phase_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Threshold_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(WarpPerspective_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Erase_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(CropAndPatch_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Remap_Register));

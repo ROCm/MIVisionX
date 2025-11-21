@@ -125,13 +125,10 @@ vx_status WarpPerspectivebatchPD_Register(vx_context);
 #endif
 
 vx_status Blend_Register(vx_context);
-vx_status NonLinearBlend_Register(vx_context);
 vx_status Blur_Register(vx_context);
 vx_status Brightness_Register(vx_context);
 vx_status ColorTemperature_Register(vx_context);
 vx_status ColorTwist_Register(vx_context);
-vx_status ColorCast_Register(vx_context);
-vx_status GridMask_Register(vx_context);
 vx_status Contrast_Register(vx_context);
 vx_status Copy_Register(vx_context);
 vx_status Crop_Register(vx_context);
@@ -173,14 +170,17 @@ vx_status Normalize_Register(vx_context);
 vx_status MelFilterBank_Register(vx_context);
 vx_status Transpose_Register(vx_context);
 vx_status Log1p_Register(vx_context);
+vx_status ColorCast_Register(vx_context);
 vx_status GaussianFilter_Register(vx_context);
+vx_status GridMask_Register(vx_context);
 vx_status MedianFilter_Register(vx_context);
-vx_status WarpPerspective_Register(vx_context);
-vx_status Threshold_Register(vx_context);
-vx_status Erode_Register(vx_context);
+vx_status NonLinearBlend_Register(vx_context);
 vx_status Dilate_Register(vx_context);
+vx_status Erode_Register(vx_context);
 vx_status Magnitude_Register(vx_context);
 vx_status Phase_Register(vx_context);
+vx_status Threshold_Register(vx_context);
+vx_status WarpPerspective_Register(vx_context);
 vx_status Erase_Register(vx_context);
 vx_status CropAndPatch_Register(vx_context);
 vx_status Remap_Register(vx_context);
@@ -277,8 +277,6 @@ vx_status BitwiseOps_Register(vx_context);
 #define VX_KERNEL_RPP_BRIGHTNESS_NAME                           "org.rpp.Brightness"
 #define VX_KERNEL_RPP_COLORTEMPERATURE_NAME                     "org.rpp.ColorTemperature"
 #define VX_KERNEL_RPP_COLORTWIST_NAME                           "org.rpp.ColorTwist"
-#define VX_KERNEL_RPP_COLORCAST_NAME                            "org.rpp.ColorCast"
-#define VX_KERNEL_RPP_GRIDMASK_NAME                             "org.rpp.GridMask"
 #define VX_KERNEL_RPP_CONTRAST_NAME                             "org.rpp.Contrast"
 #define VX_KERNEL_RPP_COPY_NAME                                 "org.rpp.Copy"
 #define VX_KERNEL_RPP_CROP_NAME                                 "org.rpp.Crop"
@@ -325,15 +323,17 @@ vx_status BitwiseOps_Register(vx_context);
 #define VX_KERNEL_RPP_MELFILTERBANK_NAME                        "org.rpp.MelFilterBank"
 #define VX_KERNEL_RPP_TRANSPOSE_NAME                            "org.rpp.Transpose"
 #define VX_KERNEL_RPP_LOG1P_NAME                                "org.rpp.Log1p"
-#define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
+#define VX_KERNEL_RPP_COLORCAST_NAME                            "org.rpp.ColorCast"
 #define VX_KERNEL_RPP_GAUSSIAN_FILTER_NAME                      "org.rpp.GaussianFilter"
+#define VX_KERNEL_RPP_GRIDMASK_NAME                             "org.rpp.GridMask"
 #define VX_KERNEL_RPP_MEDIAN_FILTER_NAME                        "org.rpp.MedianFilter"
-#define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
-#define VX_KERNEL_RPP_THRESHOLD_NAME                            "org.rpp.Threshold"
-#define VX_KERNEL_RPP_ERODE_NAME                                "org.rpp.Erode"
+#define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
 #define VX_KERNEL_RPP_DILATE_NAME                               "org.rpp.Dilate"
+#define VX_KERNEL_RPP_ERODE_NAME                                "org.rpp.Erode"
 #define VX_KERNEL_RPP_MAGNITUDE_NAME                            "org.rpp.Magnitude"
 #define VX_KERNEL_RPP_PHASE_NAME                                "org.rpp.Phase"
+#define VX_KERNEL_RPP_THRESHOLD_NAME                            "org.rpp.Threshold"
+#define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
 #define VX_KERNEL_RPP_ERASE_NAME                                "org.rpp.Erase"
 #define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
 #define VX_KERNEL_RPP_REMAP_TENSOR_NAME                         "org.rpp.Remap"

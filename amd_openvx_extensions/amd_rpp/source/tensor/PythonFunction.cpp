@@ -30,7 +30,7 @@ THE SOFTWARE.
 typedef struct {
     size_t num_dims;                          /* e.g., 4 for [N,H,W,C] */
     size_t shape[ROCAL_PY_MAX_TENSOR_DIMS];   /* lengths per dimension */
-    size_t strides[ROCAL_PY_MAX_TENSOR_DIMS]; /* strides in elements */
+    size_t strides[ROCAL_PY_MAX_TENSOR_DIMS]; /* strides in bytes */
     vx_enum dtype;                            /* OpenVX scalar type enum */
     int layout;                               /* matches rocAL/vx tensor layout enums */
 } RocalPyTensorDesc;
@@ -173,7 +173,7 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
     if (in_itemsize == 0) return VX_ERROR_INVALID_TYPE;
     for (size_t i = 0; i < params.in_desc.num_dims; ++i) {
         params.in_desc.shape[i] = data->inputTensorDims[i];
-        params.in_desc.strides[i] = static_cast<size_t>(data->pSrcGenericDesc->strides[i]) / in_itemsize;
+        params.in_desc.strides[i] = static_cast<size_t>(data->pSrcGenericDesc->strides[i]);
     }
 
     // out_desc
@@ -184,13 +184,13 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
     if (out_itemsize == 0) return VX_ERROR_INVALID_TYPE;
     for (size_t i = 0; i < params.out_desc.num_dims; ++i) {
         params.out_desc.shape[i] = data->outputTensorDims[i];
-        params.out_desc.strides[i] = static_cast<size_t>(data->pDstGenericDesc->strides[i]) / out_itemsize;
+        params.out_desc.strides[i] = static_cast<size_t>(data->pDstGenericDesc->strides[i]);
     }
 
-    vx_status st = data->bridge_fn(data->pSrc, data->pDst, &params);
-    if (st != VX_SUCCESS) {
-        vxAddLogEntry((vx_reference)node, st, "PythonFunction bridge returned error: %d\n", st);
-        return st;
+    vx_status status = data->bridge_fn(data->pSrc, data->pDst, &params);
+    if (status != VX_SUCCESS) {
+        vxAddLogEntry((vx_reference)node, status, "PythonFunction bridge returned error: %d\n", status);
+        return status;
     }
     return VX_SUCCESS;
 }

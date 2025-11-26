@@ -2805,7 +2805,6 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
                 }
             }
 
-            // Free the array itself
             if (data->children) {
                 delete[] data->children;
                 data->children = nullptr;
@@ -2855,7 +2854,6 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
                 }
             }
 
-            // Free the array itself
             if (data->children) {
                 delete[] data->children;
                 data->children = nullptr;

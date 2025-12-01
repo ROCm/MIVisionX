@@ -2804,6 +2804,12 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
                     data->children[i] = NULL;
                 }
             }
+
+            if (data->children) {
+                delete[] data->children;
+                data->children = nullptr;
+            }
+
             // remove the data from graph
             if (agoRemoveData(&graph->dataList, data, nullptr)) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoReleaseData: agoRemoveData(context,%s) failed\n", data->name.c_str());
@@ -2847,6 +2853,12 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
                     data->children[i] = NULL;
                 }
             }
+
+            if (data->children) {
+                delete[] data->children;
+                data->children = nullptr;
+            }
+
             // remove the data from context
             if (agoRemoveData(&context->dataList, data, nullptr)) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoReleaseData: agoRemoveData(context,%s) failed\n", data->name.c_str());

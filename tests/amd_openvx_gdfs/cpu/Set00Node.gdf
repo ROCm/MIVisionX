@@ -1,0 +1,3 @@
+# agoKernel_Set00_U8
+data output = image:480,360,U008
+node com.amd.openvx.Set00_U8 output

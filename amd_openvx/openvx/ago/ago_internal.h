@@ -53,7 +53,7 @@ THE SOFTWARE.
 #define USE_AVX 0
 
 // AGO configuration
-#define USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD    0// 0:seperate-sobel-and-nonmaxsupression 1:combine-sobel-and-nonmaxsupression
+#define USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD    0 // 0:seperate-sobel-and-nonmaxsupression 1:combine-sobel-and-nonmaxsupression
 #define AGO_MEMORY_ALLOC_EXTRA_PADDING       64 // extra bytes to the left and right of buffer allocations
 #define AGO_MAX_DEPTH_FROM_DELAY_OBJECT       4 // number of levels from delay object to low-level object
 
@@ -755,7 +755,7 @@ struct AgoContext {
     cl_context   opencl_context;
     cl_command_queue opencl_cmdq;
     vx_uint32 opencl_config_flags;
-    char opencl_extensions[1024];
+    std::string opencl_extensions;
 #if defined(CL_VERSION_2_0)
     cl_device_svm_capabilities opencl_svmcaps;
 #endif

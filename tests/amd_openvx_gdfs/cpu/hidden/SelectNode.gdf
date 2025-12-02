@@ -1,0 +1,8 @@
+# ovxKernel_Select - com.amd.openvx.Select_DATA_DATA_DATA: not implemented
+
+data input_condition = scalar:BOOL,0
+data input_1 = image:480,360,U008
+data input_2 = image:480,360,U008
+data output = image:480,360,U008
+node org.khronos.openvx.select input_condition input_1 input_2 output
+

@@ -2791,7 +2791,7 @@ static void agoCodeGenOpenCL_BilinearSampleFXY(std::string& opencl_code)
         "  float fx0, fx1, fy0, fy1, ii; uint x, y;\n"
         "  fx1 = fract(sx, &ii); fx0 = 1.0f - fx1; x = (uint)ii;\n"
         "  fy1 = fract(sy, &ii); fy0 = 1.0f - fy1; y = (uint)ii;\n"
-        "  p += mad24(stride, y, x);\n"
+        "  p += (int)mad24(stride, y, x);\n"
         "  return BilinearSample(p, stride, 1, fy0, fy1, 0, fx0, fx1);\n"
         "}\n"
         "#endif\n"
@@ -15493,7 +15493,9 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        hipMemset(oImg->hip_memory, 0, oImg->size + oImg->gpu_buffer_offset);
+        if(hipMemset(oImg->hip_memory, 0, oImg->size + oImg->gpu_buffer_offset)){
+            return VX_FAILURE;
+        }
         if (HipExec_ScaleGaussianHalf_U8_U8_5x5(
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height - 1,
             oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
@@ -18970,14 +18972,20 @@ int agoKernel_WarpAffine_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
             "  float dx = (float)x, dy = (float)y;\n"
             "  sx = mad(dy, matrix.M[1][0], matrix.M[2][0]); sx = mad(dx, matrix.M[0][0], sx);\n"
             "  sy = mad(dy, matrix.M[1][1], matrix.M[2][1]); sy = mad(dx, matrix.M[0][1], sy);\n"
-            "  rv.s0 = p[mad24(stride, (uint)sy, (uint)sx)];\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s0 |= p[mad24(stride, (uint)sy, (uint)sx)] << 8;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s0 |= p[mad24(stride, (uint)sy, (uint)sx)] << 16;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s0 |= p[mad24(stride, (uint)sy, (uint)sx)] << 24;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s1  = p[mad24(stride, (uint)sy, (uint)sx)];\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s1 |= p[mad24(stride, (uint)sy, (uint)sx)] << 8;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s1 |= p[mad24(stride, (uint)sy, (uint)sx)] << 16;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s1 |= p[mad24(stride, (uint)sy, (uint)sx)] << 24;\n"
+            "  // sx can be negative -- index computation result as a signed int\n"
+            "  // to avoid overflowing with a huge unsigned value. It likely worked with 32b\n"
+            "  // GPUs by accident, but produces a crash on CPU drivers (PoCL and Intel drivers).\n"
+            "  // with this warpAffine.GraphProcessing/4/random/sz=16x16/VX_BORDER_UNDEFINED/\n"
+            "  // VX_INTERPOLATION_NEAREST_NEIGHBOR/VX_MATRIX_RANDOM/VX_DF_IMAGE_U8 passes with PoCL-CPU\n"
+            "  // but still fails randomly on Intel CPU driver\n"
+            "  rv.s0 = p[(int)mad24(stride, (uint)sy, (uint)sx)];\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s0 |= p[(int)mad24(stride, (uint)sy, (uint)sx)] << 8;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s0 |= p[(int)mad24(stride, (uint)sy, (uint)sx)] << 16;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s0 |= p[(int)mad24(stride, (uint)sy, (uint)sx)] << 24;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s1  = p[(int)mad24(stride, (uint)sy, (uint)sx)];\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s1 |= p[(int)mad24(stride, (uint)sy, (uint)sx)] << 8;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s1 |= p[(int)mad24(stride, (uint)sy, (uint)sx)] << 16;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; rv.s1 |= p[(int)mad24(stride, (uint)sy, (uint)sx)] << 24;\n"
             "  *r = rv;\n"
             "}\n"
             ), node->opencl_name);
@@ -19382,14 +19390,14 @@ int agoKernel_WarpPerspective_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd
             "  sx = mad(dy, matrix.M[1][0], matrix.M[2][0]); sx = mad(dx, matrix.M[0][0], sx);\n"
             "  sy = mad(dy, matrix.M[1][1], matrix.M[2][1]); sy = mad(dx, matrix.M[0][1], sy);\n"
             "  sz = mad(dy, matrix.M[1][2], matrix.M[2][2]); sz = mad(dx, matrix.M[0][2], sz);\n"
-            "  isz = 1.0f / sz; rv.s0 = p[mad24(stride, (uint)(sy*isz), (uint)(sx*isz))];\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s0 |= p[mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 8;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s0 |= p[mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 16;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s0 |= p[mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 24;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1  = p[mad24(stride, (uint)(sy*isz), (uint)(sx*isz))];\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1 |= p[mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 8;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1 |= p[mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 16;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1 |= p[mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 24;\n"
+            "  isz = 1.0f / sz; rv.s0 = p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))];\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s0 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 8;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s0 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 16;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s0 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 24;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1  = p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))];\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 8;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 16;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 24;\n"
             "  *r = rv;\n"
             "}\n"
             ), node->opencl_name);

@@ -25,8 +25,10 @@
 ################################################################################
 
 # ROCM Path
-if(ROCM_PATH)
-    message("-- FindMIVISIONX: ROCM_PATH Set -- ${ROCM_PATH}")
+if(DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+    message("-- amd_openvx_extensions:ROCM_PATH Set -- ${ROCM_PATH}")
 else()
     set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 endif()
@@ -173,8 +175,9 @@ find_package_handle_standard_args(
     REQUIRED_VARS
         OPENVX_INCLUDE_DIR
         OPENVX_LIBRARY
-        VX_RPP_LIBRARY
         RUNVX_EXECUTABLE
+        VX_RPP_INCLUDE_DIR
+        VX_RPP_LIBRARY
         MIVISIONX_INCLUDE_DIR
         MIVISIONX_LIBRARIES
         MIVISIONX_BACKEND
@@ -187,6 +190,7 @@ set(VX_AMD_MEDIA_LIBRARY ${VX_AMD_MEDIA_LIBRARY} CACHE INTERNAL "")
 set(VX_AMD_MIGRAPHX_LIBRARY ${VX_AMD_MIGRAPHX_LIBRARY} CACHE INTERNAL "")
 set(VX_NN_LIBRARY ${VX_NN_LIBRARY} CACHE INTERNAL "")
 set(VX_OPENCV_LIBRARY ${VX_OPENCV_LIBRARY} CACHE INTERNAL "")
+set(VX_RPP_INCLUDE_DIR ${VX_RPP_INCLUDE_DIR} CACHE INTERNAL "")
 set(VX_RPP_LIBRARY ${VX_RPP_LIBRARY} CACHE INTERNAL "")
 set(RUNVX_EXECUTABLE ${RUNVX_EXECUTABLE} CACHE INTERNAL "")
 set(MIVISIONX_INCLUDE_DIR ${MIVISIONX_INCLUDE_DIR} CACHE INTERNAL "")

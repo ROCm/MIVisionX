@@ -1,0 +1,7 @@
+# agoKernel_FastCornerMerge_XY_XY
+
+data output = array:KEYPOINT,2000
+data input_1 = array:KEYPOINT,1000
+data input_2 = array:KEYPOINT,1000
+
+node com.amd.openvx.FastCornerMerge_XY_XY output input_1 input_2

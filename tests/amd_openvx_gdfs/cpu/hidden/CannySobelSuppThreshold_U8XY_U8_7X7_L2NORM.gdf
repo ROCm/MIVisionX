@@ -1,0 +1,7 @@
+# agoKernel_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM
+data output = image:1920,1080,U008
+type cannyStack userstruct:64
+data stack = array:cannyStack,10000
+data input = image:1920,1080,U008
+data value = threshold:RANGE,U008,U008:INIT,100,200
+node com.amd.openvx.CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM output NULL input value

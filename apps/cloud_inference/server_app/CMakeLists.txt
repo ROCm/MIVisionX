@@ -19,15 +19,23 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10)
-project(inference_server_app)
 
-set(CMAKE_CXX_STANDARD 14)
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
+endif()
+
+project(inference_server_app)
 
 # ROCm Path
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 # avoid setting the default installation path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
+	set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
@@ -36,13 +44,14 @@ set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
 
 # Find Modules
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # OpenCV -- Display Component
 find_package(OpenCV REQUIRED)
 
 # RPP
-find_package(AMDRPP QUIET)
+find_package(rpp QUIET)
 
 # Choose Backend - TBD: ADD FindMIVisionX.cmake
 set(MIVISIONX_BACKEND_OPENCL_FOUND 0)
@@ -67,8 +76,9 @@ add_executable(${PROJECT_NAME} ${My_Source_Files})
 
 # Link Libraries & Set CXX Flags
 target_link_libraries(${PROJECT_NAME} vx_nn openvx pthread dl)
-# -mf16c -- Support F16C built-in functions and code generation.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=gnu++14")
+# -msse4.2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 built-in functions and code generation.
+# -mf16c   -- Support F16C built-in functions and code generation.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c")
 
 # Link OpenCL/HIP
 set(ENABLE_OPENCL 0)

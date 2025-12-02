@@ -1,0 +1,6 @@
+# agoKernel_CannyEdgeTrace_U8_U8
+data output = image:1920,1080,U008
+type cannyStack userstruct:64
+data stack = array:cannyStack,10000
+
+node com.amd.openvx.CannyEdgeTrace_U8_U8 output NULL

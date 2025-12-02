@@ -1,0 +1,4 @@
+# agoKernel_SobelPhase_U8_U8_3x3
+data output = image:1920,1080,U008
+data input = image:1920,1080,U008
+node com.amd.openvx.SobelPhase_U8_U8_3x3 output input

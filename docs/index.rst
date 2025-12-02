@@ -8,39 +8,42 @@
 MIVisionX documentation
 ******************************************
 
-AMD MIVisionX toolkit is a comprehensive set of computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. MIVisionX delivers AMD's implementation of `Khronos OpenVX <https://www.khronos.org/openvx/>`_, and a Convolutional Neural Net model compiler & optimizer supporting `ONNX <https://onnx.ai/>`_ and `Khronos NNEF <https://www.khronos.org/nnef>`_ exchange formats. The MIVisionX toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers. For more information, refer to :ref:`what-is-mivisionx`.
+MIVisionX is a comprehensive machine intelligence and computer vision toolkit. MIVisionX includes AMD's implementation of `Khronos OpenVX <https://www.khronos.org/openvx/>`_, as well as a Convolutional Neural Net model compiler and optimizer supporting the `ONNX <https://onnx.ai/>`_ and `Khronos NNEF <https://www.khronos.org/nnef>`_ exchange formats. The MIVisionX toolkit is used for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including on small embedded CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
-You can access MIVisionX on `GitHub repository <https://github.com/ROCm/MIVisionX>`_.
-
-The documentation is structured as follows:
+The MIVisionX public repository is located at `https://github.com/ROCm/MIVisionX <https://github.com/ROCm/MIVisionX>`_.
 
 .. grid:: 2
   :gutter: 3
 
   .. grid-item-card:: Installation
 
-    * :ref:`installation`
-    * :ref:`amd-openvx-install`
-    * :ref:`model-compiler-install`
+    * :doc:`MIVisionX prerequisites <./install/MIVisionX-prerequisites>`
+    * :doc:`Build and install MIVisionX for Linux <./install/MIVisionX-linux-build-and-install>`
+    * :doc:`Install MIVisionX using the package installer on Linux <./install/MIVisionX-package-install>`
+    * :doc:`Install MIVisionX on Windows <./install/MIVisionX-windows-install>`
+    * :doc:`Build and install MIVisionX on macOS <./install/MIVisionX-macOS-install>`
+    * :doc:`Install the model compiler on Linux <./install/MIVisionX-model-compiler-install>`
+    * :doc:`Install AMD OpenVX <./install/MIVisionX-install-OpenVX>`
+    * :doc:`Test the MIVisionX installation <./install/MIVisionX-test-install>`
 
   .. grid-item-card:: How to
 
-    * :doc:`Using AMD OpenVX <./how-to/amd_openvx>`
-    * :doc:`Working with model compiler <./how-to/model-compiler>`
-    * :doc:`Using MIVisionX with Docker <./how-to/mivisionx-docker>`
+    * :doc:`Use the model compiler <./how-to/MIVisionX-how-to-model-compiler>`
+    * :doc:`Use MIVisionX with Docker <./how-to/MIVisionX-use-docker>`
 
-  .. grid-item-card:: API reference
+  .. grid-item-card:: Reference
 
-    * :doc:`MIVisionX APIs <doxygen/html/modules>`
-    * :doc:`MIVisionX Files <doxygen/html/files>`
-    * :doc:`MIVisionX toolkit documentation <./reference/toolkit>`
-    * :doc:`MIVisionX utilities documentation <./reference/utilities>`
+    * :doc:`AMD OpenVX <./reference/MIVisionX-AMD-Openvx>`
+    * :doc:`MIVisionX toolkits <./reference/MIVisionX-toolkits>`
+    * :doc:`MIVisionX supported models and operators <./reference/MIVisionX-supported-models>`
+    * :doc:`MIVisionX environment variables <./reference/MIVisionX-env-variables>`
+    * :doc:`MIVisionX API reference <doxygen/html/modules>`
 
-  .. grid-item-card:: Tutorials
 
-    * :doc:`MIVisionX applications <./tutorials/mivisionx-apps>`
-    * :doc:`MIVisionX samples documentation <./tutorials/mivisionx-samples>`
-    * :doc:`MIVisionX tests <./tutorials/mivisionx-tests>`
+  .. grid-item-card:: Examples
+
+    * :doc:`MIVisionX sample applications <./tutorials/MIVisionX-apps-samples>`
+    * :doc:`Model compiler samples <./tutorials/MIVisionX-model-comp-samples>`
 
 
 To contribute to the documentation, refer to

@@ -115,11 +115,11 @@ static vx_status VX_CALLBACK processCopybatchPD(vx_node node, const vx_reference
         refreshCopybatchPD(node, parameters, num, data);
         if (df_image == VX_DF_IMAGE_U8)
         {
-            hipMemcpy(data->hip_pDst, data->hip_pSrc, size, hipMemcpyDeviceToDevice);
+            CHECK_HIP_RETURN_STATUS(hipMemcpy(data->hip_pDst, data->hip_pSrc, size, hipMemcpyDeviceToDevice));
         }
         else if (df_image == VX_DF_IMAGE_RGB)
         {
-            hipMemcpy(data->hip_pDst, data->hip_pSrc, size * 3, hipMemcpyDeviceToDevice);
+            CHECK_HIP_RETURN_STATUS(hipMemcpy(data->hip_pDst, data->hip_pSrc, size * 3, hipMemcpyDeviceToDevice));
         }
 #endif
     }

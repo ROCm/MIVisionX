@@ -136,7 +136,6 @@ vx_status releaseGraphHandle(vx_node node, NeuralNetworkCommonHandle * handle)
 {
     handle->count--;
     if(handle->count == 0) {
-        // Destroy MIOpen handle before deleting the structure
         if(handle->miopen_handle){
             miopenDestroy(handle->miopen_handle);
             handle->miopen_handle = nullptr;

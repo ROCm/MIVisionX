@@ -2058,8 +2058,8 @@ extern "C"
 	/*! \brief [Graph] Invokes the python execution callback function from rocAL, passes the input to the callback and returns the output.
 	 * \ingroup group_amd_rpp
 	 * \param [in] graph The handle to the graph.
-	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
-	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> or <tt>\ref VX_TYPE_INT16</tt> format data.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> or <tt>\ref VX_TYPE_INT16</tt> format data.
 	 * \param [in] bridgeFnPtr The pointer to the bridge function in <tt>\ref VX_TYPE_UINT64</tt> format.
 	 * \param [in] functionId The python function ID in <tt>\ref VX_TYPE_UINT64</tt> format.
 	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denoting the layout of input tensor.

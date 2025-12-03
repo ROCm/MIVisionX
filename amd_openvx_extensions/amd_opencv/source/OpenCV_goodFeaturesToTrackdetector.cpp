@@ -246,6 +246,8 @@ static vx_status VX_CALLBACK CV_good_feature_detector_Kernel(vx_node node, const
     //Converting OpenCV Keypoints to OpenVX Keypoints
     STATUS_ERROR_CHECK(CVPoints2f_to_VX_keypoints(Points2, array));
 
+    if (mat) delete mat;
+
     return status;
 }
 

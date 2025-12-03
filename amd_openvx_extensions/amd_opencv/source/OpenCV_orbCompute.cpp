@@ -293,6 +293,9 @@ static vx_status VX_CALLBACK CV_orb_compute_Kernel(vx_node node, const vx_refere
     STATUS_ERROR_CHECK(CV_to_VX_keypoints(key_points, array));
     STATUS_ERROR_CHECK(CV_DESP_to_VX_DESP(Desp, DESP, 32));//32 bit Desp supported in this release
 
+    if (mat) delete mat;      
+    if (mask_mat) delete mask_mat;
+
     return status;
 }
 

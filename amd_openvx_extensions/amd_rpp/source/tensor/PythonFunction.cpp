@@ -30,7 +30,7 @@ THE SOFTWARE.
 typedef struct {
     size_t num_dims;                          /* e.g., 4 for [N,H,W,C] */
     size_t shape[ROCAL_PY_MAX_TENSOR_DIMS];   /* lengths per dimension */
-    size_t strides[ROCAL_PY_MAX_TENSOR_DIMS]; /* strides in bytes */
+    size_t strides[ROCAL_PY_MAX_TENSOR_DIMS]; /* strides in elements */
     vx_enum dtype;                            /* OpenVX scalar type enum */
     int layout;                               /* matches rocAL/vx tensor layout enums */
 } RocalPyTensorDesc;
@@ -198,11 +198,22 @@ static vx_status VX_CALLBACK processPythonFunction(vx_node node, const vx_refere
 }
 
 static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    (void)num;
-    auto *data = new PythonFunctionLocalData;
+    auto *data = new PythonFunctionLocalData{};  // Zero-initializes all members
     vx_int32 input_layout = 0, output_layout = 0;
     vx_enum input_tensor_dtype = 0, output_tensor_dtype = 0;
+    uint64_t bridge_fn_ptr = 0;
 
+    // Get bridge function pointer from scalar
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &bridge_fn_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    data->bridge_fn = reinterpret_cast<rocal_process_python_function_fn>(static_cast<uintptr_t>(bridge_fn_ptr));
+
+    if (!data->bridge_fn) {
+        vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_REFERENCE, "PythonFunction bridge function pointer is null.\n");
+        delete data;
+        return VX_ERROR_INVALID_REFERENCE;
+    }
+
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->function_id, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)); // Python function id to be forwarded to rocAL bridge
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
@@ -228,21 +239,6 @@ static vx_status VX_CALLBACK initializePythonFunction(vx_node node, const vx_ref
     data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
     data->pDstGenericDesc->offsetInBytes = 0;
     fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->outputTensorDims);
-
-    // Get bridge function pointer from scalar
-    uint64_t bridge_fn_ptr = 0;
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[2], &bridge_fn_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    data->bridge_fn = reinterpret_cast<rocal_process_python_function_fn>(static_cast<uintptr_t>(bridge_fn_ptr));
-
-    if (!data->bridge_fn) {
-        vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_REFERENCE, "PythonFunction bridge function pointer is null.\n");
-        return VX_ERROR_INVALID_REFERENCE;
-    }
-
-    // Python function id to be forwarded to rocAL bridge
-    vx_int64 function_id = 0;
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &function_id, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    data->function_id = static_cast<uint64_t>(function_id);
 
     // Call refreshPythonFunction
     STATUS_ERROR_CHECK(refreshPythonFunction(node, parameters, num, data));

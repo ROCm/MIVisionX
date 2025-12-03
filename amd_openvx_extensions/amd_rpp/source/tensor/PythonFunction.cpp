@@ -264,9 +264,7 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
                                                   vx_uint32 &supported_target_affinity) {
     AgoTargetAffinityInfo affinity;
     vxQueryContext(vxGetContext((vx_reference)graph), VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
-    supported_target_affinity = (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-                                    ? AGO_TARGET_AFFINITY_GPU
-                                    : AGO_TARGET_AFFINITY_CPU;
+    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
     return VX_SUCCESS;
 }
 

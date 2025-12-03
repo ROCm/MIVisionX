@@ -136,13 +136,15 @@ vx_status releaseGraphHandle(vx_node node, NeuralNetworkCommonHandle * handle)
 {
     handle->count--;
     if(handle->count == 0) {
-        //TBD: release miopen_handle
+        if(handle->miopen_handle){
+            miopenDestroy(handle->miopen_handle);
+            handle->miopen_handle = nullptr;
+        }
         delete handle;
         ERROR_CHECK_STATUS(vxSetModuleHandle(node, OPENVX_KHR_NN, NULL));
     }
     return VX_SUCCESS;
 }
-
 
 void nn_layer_test_dumpBuffer(const char * fileNameFormat, vx_tensor tensor)
 {

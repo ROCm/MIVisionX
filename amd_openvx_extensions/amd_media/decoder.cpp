@@ -350,13 +350,11 @@ CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
 #endif
 
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
-        // Free SwsContext properly
         if (conversionContext[mediaIndex]) {
             sws_freeContext(conversionContext[mediaIndex]);
             conversionContext[mediaIndex] = NULL;
         }
         
-        // Free AVCodecContext properly
         if (videoCodecContext[mediaIndex]) {
             avcodec_free_context(&videoCodecContext[mediaIndex]);
         }

@@ -22,15 +22,10 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-// Local copy of rocAL Python bridge C ABI (keep in sync with rocAL)
-#ifndef ROCAL_PY_MAX_TENSOR_DIMS
-#define ROCAL_PY_MAX_TENSOR_DIMS 5
-#endif
-
 typedef struct {
     size_t num_dims;                          /* e.g., 4 for [N,H,W,C] */
-    size_t shape[ROCAL_PY_MAX_TENSOR_DIMS];   /* lengths per dimension */
-    size_t strides[ROCAL_PY_MAX_TENSOR_DIMS]; /* strides in elements */
+    size_t shape[RPP_MAX_TENSOR_DIMS];        /* lengths per dimension */
+    size_t strides[RPP_MAX_TENSOR_DIMS];      /* strides in elements */
     vx_enum dtype;                            /* OpenVX scalar type enum */
     int layout;                               /* matches rocAL/vx tensor layout enums */
 } RocalPyTensorDesc;

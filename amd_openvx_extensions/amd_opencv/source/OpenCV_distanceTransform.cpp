@@ -116,6 +116,8 @@ static vx_status VX_CALLBACK CV_distanceTransform_Kernel(vx_node node, const vx_
     //Converting OpenCV Mat into VX Image
     STATUS_ERROR_CHECK(CV_to_VX_Image(image_out, &bl));
 
+    if (mat) delete mat;
+
     return status;
 }
 

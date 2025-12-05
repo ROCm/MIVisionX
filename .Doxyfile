@@ -1785,7 +1785,7 @@ USE_MATHJAX            = YES
 # The default value is: MathJax_2.
 # This tag requires that the tag USE_MATHJAX is set to YES.
 
-MATHJAX_VERSION        = MathJax_2
+MATHJAX_VERSION        = MathJax_3
 
 # When MathJax is enabled you can set the default output format to be used for
 # the MathJax output. For more details about the output format see MathJax
@@ -1815,8 +1815,10 @@ MATHJAX_FORMAT         = HTML-CSS
 # - in case of MathJax version 2: https://cdn.jsdelivr.net/npm/mathjax@2
 # - in case of MathJax version 3: https://cdn.jsdelivr.net/npm/mathjax@3
 # This tag requires that the tag USE_MATHJAX is set to YES.
+# NOTE: Explicitly set to MathJax 3 to avoid security vulnerabilities in MathJax 2.7.9
+# Doxygen 1.9.1 doesn't properly honor MATHJAX_VERSION, so we must set the path explicitly
 
-MATHJAX_RELPATH        =
+MATHJAX_RELPATH        = https://cdn.jsdelivr.net/npm/mathjax@3
 
 # The MATHJAX_EXTENSIONS tag can be used to specify one or more MathJax
 # extension names that should be enabled during MathJax rendering. For example

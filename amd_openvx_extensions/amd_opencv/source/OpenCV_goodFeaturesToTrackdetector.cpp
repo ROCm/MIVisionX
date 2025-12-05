@@ -247,6 +247,7 @@ static vx_status VX_CALLBACK CV_good_feature_detector_Kernel(vx_node node, const
     STATUS_ERROR_CHECK(CVPoints2f_to_VX_keypoints(Points2, array));
 
     if (mat) delete mat;
+    if (mask_mat) delete mask_mat;
 
     return status;
 }

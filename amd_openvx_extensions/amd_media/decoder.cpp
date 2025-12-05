@@ -685,7 +685,7 @@ vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
                 int ret = sws_scale(conversionContext[mediaIndex], frame->data, frame->linesize, 0, frame->height, dst_data, dst_linesize);
                 if (ret < decoderImageHeight) {
                     fprintf(stderr, "Error in output image scaling using sws_scale <%d>\n", ret);
-                     av_frame_free(&frame); 
+                    av_frame_free(&frame); 
                     return VX_FAILURE;
                 }
                 #if DUMP_DECODED_FRAME

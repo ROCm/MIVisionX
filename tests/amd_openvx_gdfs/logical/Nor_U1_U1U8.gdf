@@ -1,0 +1,5 @@
+# agoKernel_Nor_U1_U1U8
+data input_1 = uniform-image:1920,1080,U001
+data input_2 = uniform-image:1920,1080,U008
+data output_1 = image:1920,1080,U001
+node com.amd.openvx.Nor_U1_U1U8 output_1 input_1 input_2

@@ -24,17 +24,31 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED On)
 set(CMAKE_CXX_EXTENSIONS ON)
-if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/bin/amdclang++")
-    set(CMAKE_C_COMPILER ${ROCM_PATH}/bin/amdclang)
-    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/bin/amdclang++)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
 endif()
-set(VERSION "2.0.0")
+
+# VX_RPP Version
+# * must match with include/vx_ext_rpp_version.h
+set(VERSION "3.1.0")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
-find_package(AMDRPP REQUIRED)
+find_package(rpp 2.2.1 REQUIRED)
+
+message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
+message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
+message("-- \t${White}rpp_LIB_DIR -- ${rpp_LIB_DIR}${ColourReset}")
+message("-- \t${White}rpp_LIBRARY -- ${rpp_LIBRARY}${ColourReset}")
+message("-- \t${White}rpp_FOUND -- ${rpp_FOUND}${ColourReset}")
+message("-- \t${White}rpp_VERSION -- ${rpp_VERSION}${ColourReset}")
+message("-- \t${White}rpp_VERSION_MAJOR -- ${rpp_VERSION_MAJOR}${ColourReset}")
+message("-- \t${White}rpp_VERSION_MINOR -- ${rpp_VERSION_MINOR}${ColourReset}")
+message("-- \t${White}rpp_VERSION_PATCH -- ${rpp_VERSION_PATCH}${ColourReset}")
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(OpenCL REQUIRED)
@@ -46,10 +60,68 @@ endif()
 
 include_directories(../../amd_openvx/openvx/include/ include)
 # AMD RPP
-include_directories(${AMDRPP_INCLUDE_DIRS})
-set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})
+include_directories(${rpp_INCLUDE_DIR})
+set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES
+        source/tensor/Blend.cpp
+        source/tensor/Blur.cpp
+        source/tensor/Brightness.cpp
+        source/tensor/ColorTemperature.cpp
+        source/tensor/ColorTwist.cpp
+        source/tensor/Contrast.cpp
+        source/tensor/Copy.cpp
+        source/tensor/Crop.cpp
+        source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Downmix.cpp
+        source/tensor/Exposure.cpp
+        source/tensor/FishEye.cpp
+        source/tensor/Flip.cpp
+        source/tensor/Fog.cpp
+        source/tensor/GammaCorrection.cpp
+        source/tensor/Glitch.cpp
+        source/tensor/Hue.cpp
+        source/tensor/Jitter.cpp
+        source/tensor/LensCorrection.cpp
+        source/tensor/Log1p.cpp
+        source/tensor/MelFilterBank.cpp
+        source/tensor/Noise.cpp
+        source/tensor/NonSilentRegionDetection.cpp
+        source/tensor/Nop.cpp
+        source/tensor/Normalize.cpp
+        source/tensor/Rotate.cpp
+        source/tensor/Pixelate.cpp
+        source/tensor/PreemphasisFilter.cpp
+        source/tensor/Rain.cpp
+        source/tensor/Resample.cpp
+        source/tensor/Resize.cpp
+        source/tensor/ResizeCrop.cpp
+        source/tensor/ResizeCropMirror.cpp
+        source/tensor/ResizeMirrorNormalize.cpp
+        source/tensor/Saturation.cpp
+        source/tensor/SequenceRearrange.cpp
+        source/tensor/Snow.cpp
+        source/tensor/Spectrogram.cpp
+        source/tensor/TensorAddTensor.cpp
+        source/tensor/TensorMulScalar.cpp
+        source/tensor/ToDecibels.cpp
+        source/tensor/Vignette.cpp
+        source/tensor/WarpAffine.cpp
+        source/tensor/Slice.cpp
+        source/tensor/Transpose.cpp
+        source/kernel_rpp.cpp
+        source/internal_publishKernels.cpp
+    )
+
+set(RPP_LEGACY_SUPPORT_FOUND 0)
+if(EXISTS ${rpp_INCLUDE_DIR}/rpp/rpp_legacy_support.h)
+    file(READ ${rpp_INCLUDE_DIR}/rpp/rpp_legacy_support.h RPP_LEGACY_SUPPORT_FILE)
+    string(REGEX MATCH "RPP_LEGACY_SUPPORT ([0-1]*)" _ ${RPP_LEGACY_SUPPORT_FILE})
+    set(RPP_LEGACY_SUPPORT_FOUND ${CMAKE_MATCH_1})
+endif()
+
+if(RPP_LEGACY_SUPPORT_FOUND)
+    list(APPEND SOURCES
         source/image/AbsoluteDifferencebatchPD.cpp
         source/image/AccumulatebatchPD.cpp
         source/image/AccumulateSquaredbatchPD.cpp
@@ -180,6 +252,7 @@ list(APPEND SOURCES
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )
+endif()
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
     message("-- ${Green}vx_rpp -- Building with OpenCL${ColourReset}")
@@ -213,15 +286,14 @@ else()
 endif()
 
 set(RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND 0)
-find_path(RPP_INCLUDE_DIR NAMES rpp.h PATHS ${ROCM_PATH}/include/rpp)
-if(EXISTS ${RPP_INCLUDE_DIR}/rpp_audio_augmentations_support.h)
-    file(READ ${RPP_INCLUDE_DIR}/rpp_audio_augmentations_support.h RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE)
+if(EXISTS ${rpp_INCLUDE_DIR}/rpp/rpp_audio_augmentations_support.h)
+    file(READ ${rpp_INCLUDE_DIR}/rpp/rpp_audio_augmentations_support.h RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE)
     string(REGEX MATCH "RPP_AUDIO_AUGMENTATIONS_SUPPORT ([0-9]*)" _ ${RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE})
     set(RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND ${CMAKE_MATCH_1})
 endif()
 
 # Audio features for VX_RPP
-if((${RPP_VERSION_MAJOR} VERSION_GREATER "1") OR (${RPP_VERSION_MAJOR} VERSION_EQUAL "1" AND ${RPP_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${RPP_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
+if((${rpp_VERSION_MAJOR} VERSION_GREATER "1") OR (${rpp_VERSION_MAJOR} VERSION_EQUAL "1" AND ${rpp_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${rpp_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
 AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAUDIO_SUPPORT=1")
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
@@ -231,6 +303,14 @@ else()
     message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
 endif()
 
+if(RPP_LEGACY_SUPPORT_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEGACY_SUPPORT=1")
+    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=1)
+    message("-- ${White}vx_rpp BatchPD augmentations included${ColourReset}")
+else()
+    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=0)
+    message("-- ${Yellow}vx_rpp BatchPD augmentations excluded${ColourReset}")
+endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenVX)

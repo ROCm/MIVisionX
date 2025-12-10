@@ -92,6 +92,8 @@ int VX_to_CV_MATRIX(Mat** mat, vx_matrix matrix_vx)
             m_cv->at<float>(i, j) = dyn_matrix[z];
             z++;
         }
+    
+    delete[] dyn_matrix;
 
     *mat = m_cv;
     return status;

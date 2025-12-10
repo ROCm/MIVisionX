@@ -1,0 +1,12 @@
+#data input_1 = image:U008,1920,1080
+#data input_2 = image:U008,1920,1080
+#data output = image:U008,1920,1080
+#node com.amd.openvx.And_U8_U8U8 output input_1 input_2 attr:AFFINITY:CPU
+data input_iyuv = image:IYUV,1280,720
+data inter_luma = image:U008,1280,720
+data output_gaussian_pyramid = pyramid:U008,1280,720,4,HALF
+node com.amd.openvx.ChannelCopy_U8_U8 inter_luma input_iyuv[0] attr:AFFINITY:CPU
+node com.amd.openvx.ChannelCopy_U8_U8 output_gaussian_pyramid[0] inter_luma attr:AFFINITY:CPU
+node com.amd.openvx.ScaleGaussianHalf_U8_U8_5x5 output_gaussian_pyramid[1] output_gaussian_pyramid[0] attr:AFFINITY:CPU
+node com.amd.openvx.ScaleGaussianHalf_U8_U8_5x5 output_gaussian_pyramid[2] output_gaussian_pyramid[1] attr:AFFINITY:CPU
+node com.amd.openvx.ScaleGaussianHalf_U8_U8_5x5 output_gaussian_pyramid[3] output_gaussian_pyramid[2] attr:AFFINITY:CPU

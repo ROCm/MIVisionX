@@ -172,7 +172,7 @@ static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
 #if ENABLE_HIP
-    hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch));
+    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch)));
 #else
     data->pDstImgSize = new RpptImagePatch[data->pSrcDesc->n];
 #endif    
@@ -190,7 +190,7 @@ static vx_status VX_CALLBACK uninitializeResize(vx_node node, const vx_reference
     delete[] data->pResizeWidth;
     delete[] data->pResizeHeight;
 #if ENABLE_HIP
-    if (data->pDstImgSize != nullptr)  hipHostFree(data->pDstImgSize);
+    if (data->pDstImgSize != nullptr)  CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
 #else
     delete[] data->pDstImgSize;
 #endif

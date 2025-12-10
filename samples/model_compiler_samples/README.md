@@ -27,7 +27,7 @@ Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/n
 
 ### Prerequisites
 
-* Ubuntu `20.04`/`22.04` or CentOS `7`/`8`
+* Ubuntu `22.04`/`24.04` or CentOS `8`
 * [ROCm supported hardware](https://docs.amd.com/bundle/ROCm-Installation-Guide-v5.1.1/page/Prerequisite_Actions.html) 
 	* AMD Radeon GPU or AMD APU required
 * Latest [ROCm](https://docs.amd.com/category/ROCm™%20v5.x)
@@ -40,13 +40,12 @@ MIVisionX provides developers with docker images for Ubuntu `20.04` / `22.04`. U
 Docker files to build MIVisionX containers are [available](docker#mivisionx-docker)
 
 ### MIVisionX Docker
-* [Ubuntu 20.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-20.04)
 * [Ubuntu 22.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-22.04)
 
-### Docker Workflow on Ubuntu `20.04`/`22.04`
+### Docker Workflow on Ubuntu `22.04`/`24.04`
 
 #### Prerequisites
-* Ubuntu `20.04`/`22.04`
+* Ubuntu `22.04`
 * [ROCm supported hardware](https://docs.amd.com)
 * [ROCm](https://docs.amd.com)
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)

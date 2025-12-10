@@ -1,0 +1,4 @@
+# agoKernel_SetFF_U8
+data output = image:480,360,U008
+node com.amd.openvx.SetFF_U8 output
+

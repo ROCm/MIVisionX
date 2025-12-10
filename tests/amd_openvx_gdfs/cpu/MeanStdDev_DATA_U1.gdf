@@ -1,0 +1,6 @@
+# oagoKernel_MeanStdDev_DATA_U1
+data input = image:480,360,U001
+data output_mean = scalar:FLOAT32,0.0
+data output_stddev = scalar:FLOAT32,0.0
+#node com.amd.openvx.MeanStdDev_DATA_U1 output_mean input
+node org.khronos.openvx.mean_stddev input output_mean output_stddev

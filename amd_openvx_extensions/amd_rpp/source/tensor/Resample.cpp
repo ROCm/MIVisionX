@@ -175,7 +175,7 @@ static vx_status VX_CALLBACK processResample(vx_node node, const vx_reference *p
 static vx_status VX_CALLBACK initializeResample(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ResampleLocalData *data = new ResampleLocalData;
     if (data) {
-        memset(data, 0, sizeof(ResampleLocalData));
+        memset((void *)data, 0, sizeof(ResampleLocalData));
         vx_enum input_tensor_dtype, output_tensor_dtype;
         STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &data->quality));
         STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));

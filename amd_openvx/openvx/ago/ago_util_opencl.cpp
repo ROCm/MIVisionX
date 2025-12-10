@@ -208,8 +208,13 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
         // create context
         context->opencl_context_imported = false;
         context->opencl_context = clCreateContextFromType(ctxprop, CL_DEVICE_TYPE_GPU, NULL, NULL, &status);
+        if (status == CL_DEVICE_NOT_FOUND) {
+          // try again, but this time any device type will do
+          context->opencl_context =
+            clCreateContextFromType(ctxprop, CL_DEVICE_TYPE_ALL, NULL, NULL, &status);
+        }
         if (!context || status != CL_SUCCESS) {
-            agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clCreateContextFromType(CL_DEVICE_TYPE_GPU) => %d (failed)\n", status);
+            agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clCreateContextFromType() => %d (failed)\n", status);
             return -1;
         }
     }
@@ -261,22 +266,36 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
 #else
     agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device - %d: %s [%s] [%d]\n", device_id, deviceName, deviceVersion, context->opencl_config_flags);
 #endif
-    memset(context->opencl_extensions, 0, sizeof(context->opencl_extensions));
-    status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_EXTENSIONS, sizeof(context->opencl_extensions), context->opencl_extensions, NULL);
-    if (status) { 
-        agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_EXTENSIONS) => %d\n", context->opencl_device_list[device_id], status);
-        return -1; 
+
+    size_t cl_ext_size = 0;
+    status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_EXTENSIONS, 0, NULL, &cl_ext_size);
+    if (status) {
+        agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_EXTENSIONS) for getting the value size => %d\n", context->opencl_device_list[device_id], status);
+        return -1;
     }
+
+    char *temp_ext_str = (char *) calloc(cl_ext_size, 1);
+
+    status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_EXTENSIONS, cl_ext_size, temp_ext_str, NULL);
+
+    if (status != CL_SUCCESS) {
+        agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_EXTENSIONS) => %d\n", context->opencl_device_list[device_id], status);
+        return -1;
+    }
+
+    context->opencl_extensions = std::string(temp_ext_str);
+    free (temp_ext_str);
+
 #if defined(CL_VERSION_2_0)
     context->opencl_svmcaps = 0;
     status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_SVM_CAPABILITIES, sizeof(context->opencl_svmcaps), &context->opencl_svmcaps, NULL);
-    if (status) { 
+    if (status != CL_SUCCESS) {
         agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_SVM_CAPABILITIES) => %d\n", context->opencl_device_list[device_id], status);
-        return -1; 
+        return -1;
     }
 #endif
     // get default OpenCL build options
-    strcpy(context->opencl_build_options, (context->opencl_config_flags & CONFIG_OPENCL_USE_1_2) ? "-cl-std=CL1.2" : "-cl-std=CL2.0");
+    strcpy(context->opencl_build_options, (context->opencl_config_flags & CONFIG_OPENCL_USE_1_2) ? "-cl-std=CL1.2" : "");
     // override build options with environment variable
     agoGetEnvironmentVariable("AGO_OPENCL_BUILD_OPTIONS", context->opencl_build_options, sizeof(context->opencl_build_options));
     // override affinity device_info
@@ -1406,54 +1425,69 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
     // Replace pragma with built in functions.
     if (code.find("#pragma OPENCL EXTENSION cl_amd_media_ops : enable") != std::string::npos)
     {
+        // There is a workaround through renamed functions and #defines because
+        // Intel CPU OpenCL for some reason declares the cl_amd_media_ops built-ins
+        // and includes the 'overloadable' attribute in the declarations. Since these
+        // definitions do not use the 'overloadable' (it's not standard OpenCL C), the
+        // definitions are not compatible with them, causing a build error due to
+        // a mismatching declaration.
         std::string clmediaopscode = OPENCL_FORMAT(
-            "inline uint amd_pack(float4 src){\n"
-            "	uint dst =  ((uint)(clamp (src.s0,0.0f,255.0f))     )\n"
-            "			  + ((uint)(clamp (src.s1,0.0f,255.0f))<< 8 ) \n"
-            "			  + ((uint)(clamp (src.s2,0.0f,255.0f))<< 16) \n"
-            "			  + ((uint)(clamp (src.s3,0.0f,255.0f))<< 24); \n"
+            "inline uint amd_pack_emu(float4 src){\n"
+            " int4 rounded = convert_int4_rte(src);\n"
+            "	uint dst =  ((uint)(clamp (rounded.s0, 0, 255))     )\n"
+            "			  + ((uint)(clamp (rounded.s1, 0, 255))<< 8 ) \n"
+            "			  + ((uint)(clamp (rounded.s2, 0, 255))<< 16) \n"
+            "			  + ((uint)(clamp (rounded.s3, 0, 255))<< 24); \n"
             "	return dst;\n"
             "}\n"
+            "#define amd_pack amd_pack_emu\n"
             "\n"
-            "inline float amd_unpack3(uint src){\n"
+            "inline float amd_unpack3_emu(uint src){\n"
             "	float dst=  (float)((src >> 24) & 0xff);\n"
             "	return dst;\n"
             "}\n"
+            "#define amd_unpack3 amd_unpack3_emu\n"
             "\n"
-            "inline float amd_unpack2(uint src){\n"
+            "inline float amd_unpack2_emu(uint src){\n"
             "	float dst=  (float)((src >> 16) & 0xff);\n"
             "	return dst;\n"
             "}\n"
+            "#define amd_unpack2 amd_unpack2_emu\n"
             "\n"
-            "inline float amd_unpack1(uint src){\n"
+            "inline float amd_unpack1_emu(uint src){\n"
             "	float dst= (float)((src >> 8) & 0xff);\n"
             "	return dst;\n"
             "}\n"
+            "#define amd_unpack1 amd_unpack1_emu\n"
             "\n"
-            "inline float amd_unpack0(uint src){\n"
+            "inline float amd_unpack0_emu(uint src){\n"
             "	float dst=  (float)((src)& 0xff);\n"
             "	return dst;\n"
             "}\n"
+            "#define amd_unpack0 amd_unpack0_emu\n"
             "\n"
-            "inline uint amd_bitalign(uint src0,uint src1, uint src2){\n"
+            "inline uint amd_bitalign_emu(uint src0,uint src1, uint src2){\n"
             "	uint dst = (uint)(as_ulong((uint2)(src1,src0)) >> (src2 & 31));\n"
             "	return dst;\n"
             "}\n"
+            "#define amd_bitalign amd_bitalign_emu\n"
             "\n"
-            "inline uint amd_bytealign(uint src0,uint src1, uint src2){\n"
+            "inline uint amd_bytealign_emu(uint src0,uint src1, uint src2){\n"
             "	uint dst = (uint)(as_ulong((uint2)(src1,src0)) >> (src2 & 31) * 8 );\n"
             "	return dst;\n"
             "}\n"
+            "#define amd_bytealign amd_bytealign_emu\n"
             "\n"
-            "inline uint amd_lerp(uint src0, uint src1, uint src2) {\n"
+            "inline uint amd_lerp_emu(uint src0, uint src1, uint src2) {\n"
             "	uint dst = (((((src0 >>  0) & 0xff) + ((src1 >>  0) & 0xff) + ((src2 >>  0) & 1)) >> 1) <<  0) + \n"
             "			   (((((src0 >>  8) & 0xff) + ((src1 >>  8) & 0xff) + ((src2 >>  8) & 1)) >> 1) <<  8) + \n"
             "			   (((((src0 >> 16) & 0xff) + ((src1 >> 16) & 0xff) + ((src2 >> 16) & 1)) >> 1) << 16) + \n"
             "			   (((((src0 >> 24) & 0xff) + ((src1 >> 24) & 0xff) + ((src2 >> 24) & 1)) >> 1) << 24); \n"
             "	return dst;"
             "}\n"
+            "#define amd_lerp amd_lerp_emu\n"
             "\n"
-            "inline uint amd_sad(uint src0, uint src1, uint src2){ \n"
+            "inline uint amd_sad_emu(uint src0, uint src1, uint src2){ \n"
             "	uint dst = src2 + \n"
             "			   abs(((src0 >>  0) & 0xff) - ((src1 >>  0) & 0xff)) + \n"
             "			   abs(((src0 >>  8) & 0xff) - ((src1 >>  8) & 0xff)) + \n"
@@ -1461,8 +1495,9 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "			   abs(((src0 >> 24) & 0xff) - ((src1 >> 24) & 0xff));  \n"
             "	return dst; \n"
             "}\n"
+            "#define amd_sad amd_sad_emu\n"
             "\n"
-            "inline uint amd_sadhi(uint src0, uint src1, uint src2){ \n"
+            "inline uint amd_sadhi_emu(uint src0, uint src1, uint src2){ \n"
             "	uint dst = src2 + \n"
             "			   (abs(((src0 >>  0) & 0xff) - ((src1 >>  0) & 0xff)) << 16) + \n"
             "			   (abs(((src0 >>  8) & 0xff) - ((src1 >>  8) & 0xff)) << 16) + \n"
@@ -1470,8 +1505,9 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "			   (abs(((src0 >> 24) & 0xff) - ((src1 >> 24) & 0xff)) << 16);  \n"
             "	return dst; \n"
             "}\n"
+            "#define amd_sadhi amd_sadhi_emu\n"
             "\n"
-            "inline uint amd_sad4(uint4 src0, uint4 src1, uint src2) { \n"
+            "inline uint amd_sad4_emu(uint4 src0, uint4 src1, uint src2) { \n"
             "	uint dst = src2 + \n"
             "			   abs(((src0.s0 >>  0) & 0xff) - ((src1.s0 >>  0) & 0xff)) + \n"
             "              abs(((src0.s0 >>  8) & 0xff) - ((src1.s0 >>  8) & 0xff)) + \n"
@@ -1491,11 +1527,12 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "              abs(((src0.s3 >> 24) & 0xff) - ((src1.s3 >> 24) & 0xff));  \n"
             "	return dst;	\n"
             "}\n"
+            "#define amd_sad4 amd_sad4_emu\n"
             "\n"
             );
 
         std::string clmediaops2code = OPENCL_FORMAT(
-            "inline uint amd_msad(uint src0, uint src1, uint src2){ \n"
+            "inline uint amd_msad_emu(uint src0, uint src1, uint src2){ \n"
             "	uchar4 src0u8 = as_uchar4(src0); \n"
             "	uchar4 src1u8 = as_uchar4(src1); \n"
             "	uint dst = src2 + \n"
@@ -1505,8 +1542,9 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "			   ((src1u8.s3 == 0) ? 0 : abs(src0u8.s3 - src1u8.s3));  \n"
             "	return dst; \n"
             "}\n"
+            "#define amd_msad amd_msad_emu\n"
             "\n"
-            "inline ulong amd_qsad(ulong src0, uint src1, ulong src2) { \n"
+            "inline ulong amd_qsad_emu(ulong src0, uint src1, ulong src2) { \n"
             "	uchar8 src0u8 = as_uchar8(src0); \n"
             "	ushort4 src2u16 = as_ushort4(src2); \n"
             "	ushort4 dstu16; \n"
@@ -1517,8 +1555,9 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "	ulong dst = as_ulong(dstu16); \n"
             "	return dst; \n"
             "}\n"
+            "#define amd_qsad amd_qsad_emu\n"
             "\n"
-            "inline ulong amd_mqsad(ulong src0, uint src1, ulong src2) { \n"
+            "inline ulong amd_mqsad_emu(ulong src0, uint src1, ulong src2) { \n"
             "	uchar8 src0u8 = as_uchar8(src0); \n"
             "	ushort4 src2u16 = as_ushort4(src2); \n"
             "   ushort4 dstu16; \n"
@@ -1529,8 +1568,9 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "   ulong dst = as_ulong(dstu16); \n"
             "	return dst; \n"
             "}\n"
+            "#define amd_mqsad amd_mqsad_emu\n"
             "\n"
-            "inline uint amd_sadw(uint src0, uint src1, uint src2) { \n"
+            "inline uint amd_sadw_emu(uint src0, uint src1, uint src2) { \n"
             "	  ushort2 src0u16 = as_ushort2(src0); \n"
             "     ushort2 src1u16 = as_ushort2(src1); \n"
             "     uint dst = src2 + \n"
@@ -1538,13 +1578,15 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "                abs(src0u16.s1 - src1u16.s1); \n"
             "	  return dst; \n"
             "}\n"
+            "#define amd_sadw amd_sadw_emu\n"
             "\n"
-            "inline uint amd_sadd(uint src0, uint src1, uint src2) { \n"
+            "inline uint amd_sadd_emu(uint src0, uint src1, uint src2) { \n"
             "	   uint dst = src2 +  abs(src0 - src1); \n"
             "	   return dst; \n"
             "}\n"
+            "#define amd_sadd amd_sadd_emu\n"
             "\n"
-            "inline uint amd_bfe(uint src0, uint src1, uint src2) { \n"
+            "inline uint amd_bfe_emu(uint src0, uint src1, uint src2) { \n"
             "   uint dst;"
             "	uint offset = src1 & 31;\n"
             "	uint width  = src2 & 31;\n"
@@ -1556,26 +1598,31 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "       dst = src0 >> offset;\n"
             "   return dst;\n"
             "}\n"
+            "#define amd_bfe amd_bfe_emu\n"
             "\n"
-            "inline uint amd_bfm(uint src0 , uint src1){ \n"
+            "inline uint amd_bfm_emu(uint src0 , uint src1){ \n"
             "	uint dst = ((1 << (src0 & 0x1f)) - 1) << (src1 & 0x1f); \n"
             "	return dst; \n"
             "}\n"
+            "#define amd_bfm amd_bfm_emu\n"
             "\n"
-            "inline uint amd_min3(uint src0, uint src1, uint src2) { \n"
+            "inline uint amd_min3_emu(uint src0, uint src1, uint src2) { \n"
             "	uint dst = min(src0, min(src1,src2));\n"
             "   return dst;\n "
             "}\n"
+            "#define amd_min3 amd_min3_emu\n"
             "\n"
-            "inline uint amd_max3(uint src0, uint src1, uint src2) { \n"
+            "inline uint amd_max3_emu(uint src0, uint src1, uint src2) { \n"
             "	uint dst = max(src0, max(src1,src2)); \n"
             "	return dst; \n"
             "}\n"
+            "#define amd_max3 amd_max3_emu\n"
             "\n"
-            "inline uint amd_median3(uint src0, uint src1, uint src2){ \n"
+            "inline uint amd_median3_emu(uint src0, uint src1, uint src2){ \n"
             "	uint dst = max(min(src0,src1), min(max(src0,src1),src2)); \n"
             "	return dst; \n"
             "}\n"
+            "#define amd_median3 amd_median3_emu\n"
             "\n"
         );
         replaceString(code, "#pragma OPENCL EXTENSION cl_amd_media_ops : enable", clmediaopscode);
@@ -1701,38 +1748,39 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
         "void load_U8x8(U8x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + x;\n"
-        "  *r = *((__global U8x8 *) p);\n"
+        "  // Assume p is sizeof(uint) aligned.\n"
+        "  *r = vload2(0, (__global uint *)p);\n"
         "}\n"
         "\n"
         "void load_S16x8(S16x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + x + x;\n"
-        "  *r = *((__global S16x8 *) p);\n"
+        "  *r = vload4(0, (__global int *)p);\n"
         "}\n"
         "\n"
         "void load_U16x8(U16x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + x + x;\n"
-        "  *r = *((__global U16x8 *) p);\n"
+        "  *r = vload4(0, (__global uint *)p);\n"
         "}\n"
         "\n"
         "void load_U24x8(U24x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + x * 3;\n"
-        "  (*r).s0123 = *((__global uint4 *)(p + 0));\n"
-        "  (*r).s45 = *((__global uint2 *)(p + 16));\n"
+        "  (*r).s0123 = vload4(0, (__global uint *)p);\n"
+        "  (*r).s45 = vload2(0, (__global uint *)(p + 16));\n"
         "}\n"
         "\n"
         "void load_U32x8(U32x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + (x << 2);\n"
-        "  *r = *((__global U32x8 *) p);\n"
+        "  *r = vload8(0, (__global uint *)p);\n"
         "}\n"
         "\n"
         "void load_F32x8(F32x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + (x << 2);\n"
-        "  *r = *((__global F32x8 *) p);\n"
+        "  *r = vload8(0, (__global float *)p);\n"
         "}\n"
         "\n"
         "void store_U1x8(U1x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
@@ -1744,38 +1792,38 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
         "void store_U8x8(U8x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + x;\n"
-        "  *((__global U8x8 *)p) = r;\n"
+        "  vstore2(r, 0, (__global uint *)p);\n"
         "}\n"
         "\n"
         "void store_S16x8(S16x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + x + x;\n"
-        "  *((__global S16x8 *)p) = r;\n"
+        "  vstore4(r, 0, (__global int *)p);\n"
         "}\n"
         "\n"
         "void store_U16x8(U16x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + x + x;\n"
-        "  *((__global U16x8 *)p) = r;\n"
+        "  vstore4(r, 0, (__global uint *)p);\n"
         "}\n"
         "\n"
         "void store_U24x8(U24x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + x * 3;\n"
-        "  *((__global uint4 *)(p + 0)) = r.s0123;\n"
-        "  *((__global uint2 *)(p + 16)) = r.s45;\n"
+        "  vstore4(r.s0123, 0, (__global uint *)p);\n"
+        "  vstore2(r.s45, 0, (__global uint *)(p + 16));\n"
         "}\n"
         "\n"
         "void store_U32x8(U32x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + (x << 2);\n"
-        "  *((__global U32x8 *)p) = r;\n"
+        "  vstore8(r, 0, (__global uint *)p);\n"
         "}\n"
         "\n"
         "void store_F32x8(F32x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
         "{\n"
         "  p += y*stride + (x << 2);\n"
-        "  *((__global F32x8 *)p) = r;\n"
+        "  vstore8(r, 0, (__global float *)p);\n"
         "}\n"
         "\n"
         "void Convert_U8_U1 (U8x8 * p0, U1x8 p1)\n"

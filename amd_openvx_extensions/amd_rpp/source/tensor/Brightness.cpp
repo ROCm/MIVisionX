@@ -238,9 +238,17 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
         fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
     }
 
-    data->pAlpha = new vx_float32[data->inputTensorDims[0]];
-    data->pBeta = new vx_float32[data->inputTensorDims[0]];
-    data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, data->inputTensorDims[0] * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pBeta, data->inputTensorDims[0] * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pConditionalExecution, data->inputTensorDims[0] * sizeof(vx_int32)));
+#endif
+    } else {
+        data->pAlpha = new vx_float32[data->inputTensorDims[0]];
+        data->pBeta = new vx_float32[data->inputTensorDims[0]];
+        data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
+    }
     refreshBrightness(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -250,9 +258,17 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
 static vx_status VX_CALLBACK uninitializeBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     BrightnessLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pAlpha;
-    delete[] data->pBeta;
-    delete[] data->pConditionalExecution;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pAlpha) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAlpha));
+        if (data->pBeta) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pBeta));
+        if (data->pConditionalExecution) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pConditionalExecution));
+#endif
+    } else {
+        if (data->pAlpha) delete[] data->pAlpha;
+        if (data->pBeta) delete[] data->pBeta;
+        if (data->pConditionalExecution) delete[] data->pConditionalExecution;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     delete data->pSrcGenericDesc;

@@ -39,6 +39,7 @@ extern "C" SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context conte
 vx_status ADD_KERNEL(std::function<vx_status(vx_context)>);
 vx_status get_kernels_to_publish();
 
+#if RPP_LEGACY_SUPPORT
 vx_status AbsoluteDifferencebatchPD_Register(vx_context);
 vx_status AccumulatebatchPD_Register(vx_context);
 vx_status AccumulateSquaredbatchPD_Register(vx_context);
@@ -121,6 +122,7 @@ vx_status ThresholdingbatchPD_Register(vx_context);
 vx_status VignettebatchPD_Register(vx_context);
 vx_status WarpAffinebatchPD_Register(vx_context);
 vx_status WarpPerspectivebatchPD_Register(vx_context);
+#endif
 
 vx_status Blend_Register(vx_context);
 vx_status Blur_Register(vx_context);
@@ -167,6 +169,7 @@ vx_status Slice_Register(vx_context);
 vx_status Normalize_Register(vx_context);
 vx_status MelFilterBank_Register(vx_context);
 vx_status Transpose_Register(vx_context);
+vx_status Log1p_Register(vx_context);
 vx_status GaussianNoise_Register(vx_context);
 
 // kernel names
@@ -304,6 +307,7 @@ vx_status GaussianNoise_Register(vx_context);
 #define VX_KERNEL_RPP_NORMALIZE_NAME                            "org.rpp.Normalize"
 #define VX_KERNEL_RPP_MELFILTERBANK_NAME                        "org.rpp.MelFilterBank"
 #define VX_KERNEL_RPP_TRANSPOSE_NAME                            "org.rpp.Transpose"
+#define VX_KERNEL_RPP_LOG1P_NAME                                "org.rpp.Log1p"
 #define VX_KERNEL_RPP_GAUSSIAN_NOISE_NAME                       "org.rpp.GaussianNoise"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

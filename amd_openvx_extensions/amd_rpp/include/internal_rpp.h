@@ -28,9 +28,11 @@ THE SOFTWARE.
 #include "vx_ext_amd.h"
 #include "kernels_rpp.h"
 
-#include "rpp.h"
-#include "rppdefs.h"
-#include "rppi.h"
+#include "rpp/rpp.h"
+#include "rpp/rppdefs.h"
+#if RPP_LEGACY_SUPPORT
+#include "rpp/rppi.h"
+#endif
 
 #if ENABLE_OPENCL
 #include <CL/cl.h>
@@ -52,6 +54,14 @@ using namespace std;
 #define STATUS_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) return status;}
 #define PARAM_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) goto exit;}
 #define ERROR_CHECK_OBJECT(obj)  { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS){ vxAddLogEntry((vx_reference)(obj), status, "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; }}
+#define CHECK_HIP_RETURN_STATUS(x)                                                                         \
+    do {                                                                                               \
+        int retval = (x);                                                                              \
+        if (retval != 0) {                                                                             \
+            fprintf(stderr, "Runtime error: %s returned %d at %s:%d", #x, retval, __FILE__, __LINE__); \
+            return VX_FAILURE;                                                                         \
+        }                                                                                              \
+    } while (0)
 #define MAX_KERNELS 500
 
 //! Brief Common data shared across all nodes in a graph
@@ -87,8 +97,10 @@ const std::map<vxTensorLayout, RpptLayout> tensorLayoutMapping = {
 #if RPP_AUDIO
     {vxTensorLayout::VX_NHW, RpptLayout::NHW},
     {vxTensorLayout::VX_NFT, RpptLayout::NFT},
-    {vxTensorLayout::VX_NTF, RpptLayout::NTF}
+    {vxTensorLayout::VX_NTF, RpptLayout::NTF},
 #endif
+    {vxTensorLayout::VX_NDHWC, RpptLayout::NDHWC},
+    {vxTensorLayout::VX_NCDHW, RpptLayout::NCDHW}
 };
 
 //! Brief The utility functions

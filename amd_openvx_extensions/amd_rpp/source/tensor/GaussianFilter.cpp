@@ -155,7 +155,7 @@ static vx_status VX_CALLBACK initializeGaussianFilter(vx_node node, const vx_ref
     vx_enum input_tensor_dtype, output_tensor_dtype;
     vx_int32 roi_type, input_layout, output_layout;
 
-    // Read scalars: kernelSize, borderType, layouts, roiType, deviceType
+    // Read scalars: kernelSize, layouts, roiType, deviceType
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &data->kernelSize, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));

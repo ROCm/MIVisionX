@@ -2090,14 +2090,14 @@ extern "C"
 
 	/*!
      * \brief [Graph] Creates a RPP NonLinearBlend node.
-     * \param [in] graph The handle to the graph.
-     * \param [in] pSrc1 The first input tensor of <tt>vx_tensor</tt>.
-     * \param [in] pSrc2 The second input tensor of <tt>vx_tensor</tt>.
-     * \param [in] pSrcRoi The input roi tensor of <tt>vx_tensor</tt>.
-     * \param [out] pDst The output tensor of <tt>vx_tensor</tt>.
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc1 The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pSrc2 The second input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in xywh/ltrb format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
      * \param [in] pStdDev The input array in <tt>VX_TYPE_FLOAT32</tt> format containing per-sample standard deviation values for non-linear blending.
-     * \param [in] inputLayout The input layout of <tt>vx_scalar</tt>.
-     * \param [in] outputLayout The output layout of <tt>vx_scalar</tt>.
+	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
+	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.
      * \param [in] roiType The roi type of <tt>vx_scalar</tt>.
      * \return <tt> vx_node</tt>.
      * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.

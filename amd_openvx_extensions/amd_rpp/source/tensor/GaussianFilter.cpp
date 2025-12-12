@@ -186,7 +186,13 @@ static vx_status VX_CALLBACK initializeGaussianFilter(vx_node node, const vx_ref
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
     // Per-sample stddev array sized by batch 'n'
-    data->pStdDev = new Rpp32f[data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, data->pSrcDesc->n * sizeof(Rpp32f)));
+#endif
+    } else {
+        data->pStdDev = new Rpp32f[data->pSrcDesc->n];
+    }
     STATUS_ERROR_CHECK(refreshGaussianFilter(node, parameters, num, data));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -196,7 +202,13 @@ static vx_status VX_CALLBACK initializeGaussianFilter(vx_node node, const vx_ref
 static vx_status VX_CALLBACK uninitializeGaussianFilter(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     GaussianFilterLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pStdDev;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pStdDev) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pStdDev));
+#endif
+    } else {
+        if (data->pStdDev) delete[] data->pStdDev;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

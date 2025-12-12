@@ -189,9 +189,17 @@ static vx_status VX_CALLBACK initializeColorCast(vx_node node, const vx_referenc
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
     const size_t n = data->pSrcDesc->n;
-    data->pAlpha = new vx_float32[n];
-    data->pRgbFloats = new vx_float32[n * 3];
-    data->pRgb = new RpptRGB[n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, n * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pRgbFloats, n * 3 * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pRgb, n * sizeof(RpptRGB)));
+#endif
+    } else {
+        data->pAlpha = new vx_float32[n];
+        data->pRgbFloats = new vx_float32[n * 3];
+        data->pRgb = new RpptRGB[n];
+    }
 
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, static_cast<Rpp32u>(n), data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -201,9 +209,17 @@ static vx_status VX_CALLBACK initializeColorCast(vx_node node, const vx_referenc
 static vx_status VX_CALLBACK uninitializeColorCast(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ColorCastLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pAlpha;
-    delete[] data->pRgbFloats;
-    delete[] data->pRgb;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pAlpha) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAlpha));
+        if (data->pRgbFloats) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pRgbFloats));
+        if (data->pRgb) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pRgb));
+#endif
+    } else {
+        if (data->pAlpha) delete[] data->pAlpha;
+        if (data->pRgbFloats) delete[] data->pRgbFloats;
+        if (data->pRgb) delete[] data->pRgb;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
@@ -251,15 +267,6 @@ vx_status ColorCast_Register(vx_context context) {
     if (kernel) {
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
         // Parameters:
-        // 0: src tensor
-        // 1: src roi tensor
-        // 2: dst tensor
-        // 3: rgb array (float32) size N*3
-        // 4: alpha array (float32) size N
-        // 5: inputLayout (int32)
-        // 6: outputLayout (int32)
-        // 7: roiType (int32)
-        // 8: deviceType (uint32)
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));

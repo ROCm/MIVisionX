@@ -107,6 +107,8 @@ static vx_status VX_CALLBACK CV_countNonZero_Kernel(vx_node node, const vx_refer
     //Converting int to Scalar
     STATUS_ERROR_CHECK(vxWriteScalarValue(scalar, &NonZero));
 
+    if (mat) delete mat;
+
     return status;
 }
 

@@ -196,6 +196,9 @@ static vx_status VX_CALLBACK CV_brisk_compute_Kernel(vx_node node, const vx_refe
     STATUS_ERROR_CHECK(CV_to_VX_keypoints(key_points, array));
     STATUS_ERROR_CHECK(CV_DESP_to_VX_DESP(desp, DESP, 64));//Supports 64 bit descriptor at this time
 
+    if (mat) delete mat;
+    if (mask_mat) delete mask_mat;
+
     return status;
 }
 

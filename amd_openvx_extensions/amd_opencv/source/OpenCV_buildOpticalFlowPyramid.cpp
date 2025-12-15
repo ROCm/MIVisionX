@@ -284,6 +284,8 @@ static vx_status VX_CALLBACK CV_buildOpticalFlowPyramid_Kernel(vx_node node, con
     //Converting OpenCV Mat into VX Image
     STATUS_ERROR_CHECK(CV_to_VX_Pyramid(pyramid_vx, pyramid_cv));
 
+    if (mat) delete mat;
+
     return status;
 }
 

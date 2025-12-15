@@ -174,7 +174,13 @@ static vx_status VX_CALLBACK initializeWarpAffine(vx_node node, const vx_referen
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pAffine = new vx_float32[AFFINE_MATRIX_SIZE * data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAffine, AFFINE_MATRIX_SIZE * data->pSrcDesc->n * sizeof(vx_float32)));
+#endif
+    } else {
+        data->pAffine = new vx_float32[AFFINE_MATRIX_SIZE * data->pSrcDesc->n];
+    }
     refreshWarpAffine(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -184,7 +190,13 @@ static vx_status VX_CALLBACK initializeWarpAffine(vx_node node, const vx_referen
 static vx_status VX_CALLBACK uninitializeWarpAffine(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     WarpAffineLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pAffine;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pAffine) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAffine));
+#endif
+    } else {
+        if (data->pAffine) delete[] data->pAffine;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

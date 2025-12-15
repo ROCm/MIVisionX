@@ -37,7 +37,7 @@ struct WarpPerspectiveLocalData {
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
-    size_t ouputTensorDims[RPP_MAX_TENSOR_DIMS];
+    size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
 static vx_status VX_CALLBACK refreshWarpPerspective(vx_node node, const vx_reference *parameters, vx_uint32 num, WarpPerspectiveLocalData *data) {
@@ -59,20 +59,12 @@ static vx_status VX_CALLBACK refreshWarpPerspective(vx_node node, const vx_refer
     data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
-        for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
+        for (int n = static_cast<int>(data->inputTensorDims[0]) - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; f++) {
-                int var = (index * PERSPECTIVE_MATRIX_SIZE) + f;
-                int var2 = n * PERSPECTIVE_MATRIX_SIZE;
-                data->pPerspective[var] = data->pPerspective[var2];
-                data->pPerspective[var + 1] = data->pPerspective[var2 + 1];
-                data->pPerspective[var + 2] = data->pPerspective[var2 + 2];
-                data->pPerspective[var + 3] = data->pPerspective[var2 + 3];
-                data->pPerspective[var + 4] = data->pPerspective[var2 + 4];
-                data->pPerspective[var + 5] = data->pPerspective[var2 + 5];
-                data->pPerspective[var + 6] = data->pPerspective[var2 + 6];
-                data->pPerspective[var + 7] = data->pPerspective[var2 + 7];
-                data->pPerspective[var + 8] = data->pPerspective[var2 + 8];
+                int destMatrixOffset = (index * PERSPECTIVE_MATRIX_SIZE) + f;
+                int srcMatrixOffset = n * PERSPECTIVE_MATRIX_SIZE;
+                memcpy(&data->pPerspective[destMatrixOffset], &data->pPerspective[srcMatrixOffset], PERSPECTIVE_MATRIX_SIZE * sizeof(Rpp32f));
                 data->pSrcRoi[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
             }
         }
@@ -167,11 +159,11 @@ static vx_status VX_CALLBACK initializeWarpPerspective(vx_node node, const vx_re
     // Querying for output tensor
     data->pDstDesc = new RpptDesc;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->ouputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
     data->pDstDesc->dataType = getRpptDataType(output_tensor_dtype);
     data->pDstDesc->offsetInBytes = 0;
-    fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
+    fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP

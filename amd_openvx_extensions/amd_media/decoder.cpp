@@ -349,14 +349,22 @@ CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
     }
 #endif
 
-    // release media resources
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
-        if (conversionContext[mediaIndex]) av_free(conversionContext[mediaIndex]);
-        if (inputMediaFormat[mediaIndex]) av_free(inputMediaFormat[mediaIndex]);
-        if (videoCodecContext[mediaIndex]->hw_device_ctx) av_buffer_unref(&videoCodecContext[mediaIndex]->hw_device_ctx);
-        if (videoCodecContext[mediaIndex]) av_free(videoCodecContext[mediaIndex]);
-        if (inputMediaFormatContext[mediaIndex]) av_free(inputMediaFormatContext[mediaIndex]);
+        if (conversionContext[mediaIndex]) {
+            sws_freeContext(conversionContext[mediaIndex]);
+            conversionContext[mediaIndex] = NULL;
+        }
+        
+        if (videoCodecContext[mediaIndex]) {
+            avcodec_free_context(&videoCodecContext[mediaIndex]);
+        }
+        
+        if (inputMediaFormatContext[mediaIndex]) {
+            avformat_flush(inputMediaFormatContext[mediaIndex]);
+            avformat_close_input(&inputMediaFormatContext[mediaIndex]);
+        }
     }
+
 #if DUMP_DECODED_FRAME
     if (fpIn) fclose(fpIn);
 #endif
@@ -677,6 +685,7 @@ vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
                 int ret = sws_scale(conversionContext[mediaIndex], frame->data, frame->linesize, 0, frame->height, dst_data, dst_linesize);
                 if (ret < decoderImageHeight) {
                     fprintf(stderr, "Error in output image scaling using sws_scale <%d>\n", ret);
+                    av_frame_free(&frame); 
                     return VX_FAILURE;
                 }
                 #if DUMP_DECODED_FRAME
@@ -747,9 +756,11 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     status = avcodec_send_packet(videoCodecContext[mediaIndex], &avpkt);
                     if (status < 0) {
                         vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Sending packet to video decoder status:%x", AVERROR(status));
+                        av_packet_unref(&avpkt);
                         return;
                     }
-                   break;
+                    av_packet_unref(&avpkt);
+                    break;
                 }
             }
             AVFrame *frame = NULL, *sw_frame = NULL, *tmp_frame = NULL;
@@ -814,6 +825,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     mapped_ptr = (void *)clEnqueueMapBuffer(cmdq, (cl_mem)mem[bufId], CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, gpuOffset + mediaIndex * mapHeight * gpuStride, mapHeight * gpuStride, 0, NULL, NULL, &err);
                     if(err) {
                         fprintf(stderr,"map output for sw_scale: clEnqueueMapBuffer failed (%d)", err);
+                        av_frame_free(&tmp_frame);
                         continue;
                     }
                     uint8_t *dst_data[4] = {0};
@@ -828,6 +840,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     int ret = sws_scale(conversionContext[mediaIndex], tmp_frame->data, tmp_frame->linesize, 0, tmp_frame->height, dst_data, dst_linesize);
                     if (ret < decoderImageHeight) {
                         fprintf(stderr, "Error in output image scaling using sws_scale\n");
+                        av_frame_free(&tmp_frame);
                         continue;
                     }
                     #if DUMP_DECODED_FRAME
@@ -841,6 +854,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     err = clEnqueueUnmapMemObject(cmdq, (cl_mem)mem[bufId], mapped_ptr, 0, NULL, NULL);
                     if(err) {
                         fprintf(stderr,"map output for sw_scale: clEnqueueMapBuffer failed (%d)", err);
+                        av_frame_free(&tmp_frame);
                         continue;
                     }
                     err = clFinish(cmdq);
@@ -860,6 +874,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     int ret = sws_scale(conversionContext[mediaIndex], tmp_frame->data, tmp_frame->linesize, 0, tmp_frame->height, dst_data, dst_linesize);
                     if (ret < decoderImageHeight) {
                         fprintf(stderr, "Error in output image scaling using sws_scale\n");
+                        av_frame_free(&tmp_frame);
                         continue;
                     }
                     #if DUMP_DECODED_FRAME
@@ -873,6 +888,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                         hipError_t err = hipMemcpyHtoD((void *)((uint8_t *)mem[bufId] + gpuOffset + mediaIndex * mapHeight * gpuStride), decodeBuffer[bufId], mapHeight * gpuStride);
                         if (err != hipSuccess) {
                             vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: hipMemcpyHtoD(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
+                            av_frame_free(&tmp_frame);
                             continue;
                         }
                     }
@@ -884,6 +900,7 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                     cl_int err = clEnqueueWriteBuffer(cmdq, (cl_mem)mem[bufId], CL_TRUE, gpuOffset + mediaIndex * decoderImageHeight * gpuStride, decoderImageHeight * gpuStride, tmp_frame->data, 0, nullptr, nullptr);
                     if (err < 0) {
                         vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: clEnqueueWriteBuffer(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
+                        av_frame_free(&tmp_frame);
                         continue;
                     }
                     clFinish(cmdq);
@@ -892,11 +909,13 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                         hipError_t err = hipMemcpyHtoD((void *)((uint8_t *)mem[bufId] + gpuOffset + mediaIndex * decoderImageHeight * gpuStride), tmp_frame->data, decoderImageHeight * gpuStride);
                         if (err != hipSuccess) {
                             vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: hipMemcpyHtoD(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
+                            av_frame_free(&tmp_frame);
                             continue;
                         }
                     }
 #endif
                 }
+                av_frame_free(&tmp_frame);
             } else {
                 PushFrame(mediaIndex, tmp_frame);
             }
@@ -912,7 +931,6 @@ end:
     PushAck(mediaIndex, -1);
     av_packet_unref(&avpkt);
 }
-
 
 //! \brief The kernel execution.
 static vx_status VX_CALLBACK amd_media_decode_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num)

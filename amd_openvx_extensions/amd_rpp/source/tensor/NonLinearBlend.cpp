@@ -36,7 +36,7 @@ struct NonLinearBlendLocalData {
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
-    size_t ouputTensorDims[RPP_MAX_TENSOR_DIMS];
+    size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
 static vx_status VX_CALLBACK refreshNonLinearBlend(vx_node node, const vx_reference *parameters, vx_uint32 num, NonLinearBlendLocalData *data) {
@@ -162,14 +162,20 @@ static vx_status VX_CALLBACK initializeNonLinearBlend(vx_node node, const vx_ref
     // Output tensor desc
     data->pDstDesc = new RpptDesc;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
-    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, &data->ouputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
     data->pDstDesc->dataType = getRpptDataType(output_tensor_dtype);
     data->pDstDesc->offsetInBytes = 0;
-    fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
+    fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
     // Per-sample stddev array sized by batch 'n'
-    data->pStdDev = new Rpp32f[data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, data->pSrcDesc->n * sizeof(Rpp32f)));
+#endif
+    } else {
+        data->pStdDev = new Rpp32f[data->pSrcDesc->n];
+    }
     STATUS_ERROR_CHECK(refreshNonLinearBlend(node, parameters, num, data));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -179,7 +185,13 @@ static vx_status VX_CALLBACK initializeNonLinearBlend(vx_node node, const vx_ref
 static vx_status VX_CALLBACK uninitializeNonLinearBlend(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     NonLinearBlendLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pStdDev;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pStdDev) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pStdDev));
+#endif
+    } else {
+        if (data->pStdDev) delete[] data->pStdDev;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
@@ -229,9 +241,6 @@ vx_status NonLinearBlend_Register(vx_context context) {
 
     if (kernel) {
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
-        // Parameter order:
-        // 0: src1 tensor, 1: src2 tensor, 2: src_roi tensor, 3: dst tensor, 4: stddev array,
-        // 5: inputLayout, 6: outputLayout, 7: roiType, 8: deviceType
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));

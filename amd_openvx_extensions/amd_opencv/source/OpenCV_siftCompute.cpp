@@ -235,6 +235,9 @@ static vx_status VX_CALLBACK CV_SIFT_Compute_Kernel(vx_node node, const vx_refer
     STATUS_ERROR_CHECK(CV_to_VX_keypoints(key_points, array));
     STATUS_ERROR_CHECK(CV_DESP_to_VX_DESP(Desp, DESP, 512));// 512 Desp supported in this release
 
+    if (mat) delete mat;         
+    if (mask_mat) delete mask_mat;  
+
     return status;
 }
 

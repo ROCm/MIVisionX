@@ -62,9 +62,9 @@ static vx_status VX_CALLBACK refreshWarpPerspective(vx_node node, const vx_refer
         for (int n = static_cast<int>(data->inputTensorDims[0]) - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; f++) {
-                int destMatrixOffset = (index * PERSPECTIVE_MATRIX_SIZE) + f;
+                int dstMatrixOffset = (index * PERSPECTIVE_MATRIX_SIZE) + f;
                 int srcMatrixOffset = n * PERSPECTIVE_MATRIX_SIZE;
-                memcpy(&data->pPerspective[destMatrixOffset], &data->pPerspective[srcMatrixOffset], PERSPECTIVE_MATRIX_SIZE * sizeof(Rpp32f));
+                memcpy(&data->pPerspective[dstMatrixOffset], &data->pPerspective[srcMatrixOffset], PERSPECTIVE_MATRIX_SIZE * sizeof(Rpp32f));
                 data->pSrcRoi[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
             }
         }
@@ -167,9 +167,9 @@ static vx_status VX_CALLBACK initializeWarpPerspective(vx_node node, const vx_re
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        hipError_t err = hipHostMalloc(&data->pPerspective, PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n * sizeof(float), hipHostMallocDefault);
+        hipError_t err = hipHostMalloc(&data->pPerspective, PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n * sizeof(Rpp32f), hipHostMallocDefault);
         if (err != hipSuccess)
-            return ERRMSG(VX_ERROR_NOT_ALLOCATED, "initialize: hipHostMalloc of size %ld failed \n", PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n * sizeof(float));
+            return ERRMSG(VX_ERROR_NOT_ALLOCATED, "initialize: hipHostMalloc of size %ld failed \n", PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n * sizeof(Rpp32f));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         data->pPerspective = new Rpp32f[PERSPECTIVE_MATRIX_SIZE * data->pSrcDesc->n];

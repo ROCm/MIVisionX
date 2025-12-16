@@ -151,7 +151,7 @@ static vx_status VX_CALLBACK processCropAndPatch(vx_node node, const vx_referenc
 
     CropAndPatchLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshCropAndPatch(node, parameters, num, data);
+    STATUS_ERROR_CHECK(refreshCropAndPatch(node, parameters, num, data));
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -210,7 +210,7 @@ static vx_status VX_CALLBACK initializeCropAndPatch(vx_node node, const vx_refer
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
     // Initial refresh and create RPP handle
-    refreshCropAndPatch(node, parameters, num, data);
+    STATUS_ERROR_CHECK(refreshCropAndPatch(node, parameters, num, data));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 

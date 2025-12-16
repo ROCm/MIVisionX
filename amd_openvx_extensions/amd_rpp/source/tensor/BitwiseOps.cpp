@@ -158,7 +158,7 @@ static vx_status VX_CALLBACK processBitwiseOps(vx_node node, const vx_reference 
 
     BitwiseOpsLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshBitwiseOps(node, parameters, num, data);
+    STATUS_ERROR_CHECK(refreshBitwiseOps(node, parameters, num, data));
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
@@ -243,7 +243,7 @@ static vx_status VX_CALLBACK initializeBitwiseOps(vx_node node, const vx_referen
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
     // Initial refresh & RPP handle
-    refreshBitwiseOps(node, parameters, num, data);
+    STATUS_ERROR_CHECK(refreshBitwiseOps(node, parameters, num, data));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 

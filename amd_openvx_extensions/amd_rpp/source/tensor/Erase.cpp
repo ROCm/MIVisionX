@@ -155,7 +155,7 @@ static vx_status VX_CALLBACK processErase(vx_node node, const vx_reference *para
 
     EraseLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshErase(node, parameters, num, data);
+    STATUS_ERROR_CHECK(refreshErase(node, parameters, num, data));
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -212,7 +212,7 @@ static vx_status VX_CALLBACK initializeErase(vx_node node, const vx_reference *p
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
     // Initial refresh and create RPP handle
-    refreshErase(node, parameters, num, data);
+    STATUS_ERROR_CHECK(refreshErase(node, parameters, num, data));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 

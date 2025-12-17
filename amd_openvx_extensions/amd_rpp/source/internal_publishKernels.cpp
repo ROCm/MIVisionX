@@ -175,6 +175,12 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(MelFilterBank_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Transpose_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Log1p_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Log_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(GaussianNoise_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ShotNoise_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Water_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ColorJitter_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Spatter_Register));
     return status;
 }
 

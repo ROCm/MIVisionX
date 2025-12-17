@@ -114,7 +114,12 @@ list(APPEND SOURCES
         source/tensor/Spatter.cpp
         source/tensor/Spectrogram.cpp
         source/tensor/TensorAddTensor.cpp
+        source/tensor/TensorMax.cpp
+        source/tensor/TensorMean.cpp
+        source/tensor/TensorMin.cpp
         source/tensor/TensorMulScalar.cpp
+        source/tensor/TensorStdDev.cpp
+        source/tensor/TensorSum.cpp
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp

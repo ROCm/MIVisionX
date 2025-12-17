@@ -187,6 +187,11 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(Lut_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Posterize_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Solarize_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(TensorSum_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(TensorMin_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(TensorMax_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(TensorMean_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(TensorStdDev_Register));
     return status;
 }
 

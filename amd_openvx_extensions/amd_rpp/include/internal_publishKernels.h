@@ -182,6 +182,11 @@ vx_status JpegCompressionDistortion_Register(vx_context);
 vx_status Lut_Register(vx_context);
 vx_status Posterize_Register(vx_context);
 vx_status Solarize_Register(vx_context);
+vx_status TensorSum_Register(vx_context);
+vx_status TensorMin_Register(vx_context);
+vx_status TensorMax_Register(vx_context);
+vx_status TensorMean_Register(vx_context);
+vx_status TensorStdDev_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -331,5 +336,10 @@ vx_status Solarize_Register(vx_context);
 #define VX_KERNEL_RPP_LUT_NAME                                  "org.rpp.Lut"
 #define VX_KERNEL_RPP_POSTERIZE_NAME                            "org.rpp.Posterize"
 #define VX_KERNEL_RPP_SOLARIZE_NAME                             "org.rpp.Solarize"
+#define VX_KERNEL_RPP_TENSOR_SUM_NAME                           "org.rpp.TensorSum"
+#define VX_KERNEL_RPP_TENSOR_MIN_NAME                           "org.rpp.TensorMin"
+#define VX_KERNEL_RPP_TENSOR_MAX_NAME                           "org.rpp.TensorMax"
+#define VX_KERNEL_RPP_TENSOR_MEAN_NAME                          "org.rpp.TensorMean"
+#define VX_KERNEL_RPP_TENSOR_STDDEV_NAME                        "org.rpp.TensorStdDev"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

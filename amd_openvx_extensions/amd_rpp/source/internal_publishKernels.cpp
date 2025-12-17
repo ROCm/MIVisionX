@@ -181,6 +181,12 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(Water_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(ColorJitter_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Spatter_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ChannelPermute_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ColorToGreyscale_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(JpegCompressionDistortion_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Lut_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Posterize_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Solarize_Register));
     return status;
 }
 

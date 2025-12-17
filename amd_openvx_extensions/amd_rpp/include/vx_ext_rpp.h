@@ -2229,15 +2229,15 @@ extern "C"
 	 * \brief [Graph] Creates an Erase function node.
 	 * \ingroup group_amd_rpp
 	 * \param [in] graph The handle to the graph.
-	 * \param [in] pSrc The input tensor in VX_TYPE_UINT8 or VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT8 format.
+	 * \param [in] pSrc The input tensor in <tt>VX_TYPE_UINT8</tt> or <tt>VX_TYPE_FLOAT32</tt> or <tt>VX_TYPE_FLOAT16</tt> or <tt>VX_TYPE_INT8</tt> format.
 	 * \param [in] pSrcRoi The input tensor containing per-sample ROI values for the input in XYWH/LTRB format.
-	 * \param [out] pDst The output tensor in VX_TYPE_UINT8 or VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT8 format.
+	 * \param [out] pDst The output tensor in <tt>VX_TYPE_UINT8</tt> or <tt>VX_TYPE_FLOAT32</tt> or <tt>VX_TYPE_FLOAT16</tt> or <tt>VX_TYPE_INT8</tt> format.
 	 * \param [in] pAnchorBoxInfo The input tensor containing per-sample, per-box erase anchor boxes in LTRB encoding. Dimensions must accommodate the maximum number of boxes per sample.
 	 * \param [in] pColors The input tensor containing per-sample, per-box erase colors. The tensor must provide a color triplet per box (layout-dependent).
-	 * \param [in] pNumBoxes The input tensor of type VX_TYPE_UINT32 or VX_TYPE_INT32 containing the number of erase boxes per sample (length N in the first dimension).
-	 * \param [in] inputLayout The input layout in VX_TYPE_INT32 denoting the layout of the input tensor.
-	 * \param [in] outputLayout The output layout in VX_TYPE_INT32 denoting the layout of the output tensor.
-	 * \param [in] roiType The ROI encoding type in VX_TYPE_INT32 denoting whether source ROI is XYWH or LTRB.
+	 * \param [in] pNumBoxes The input tensor of type <tt>VX_TYPE_UINT32</tt> or <tt>VX_TYPE_INT32</tt> containing the number of erase boxes per sample (length N in the first dimension).
+	 * \param [in] inputLayout The input layout in <tt>VX_TYPE_INT32</tt> denoting the layout of the input tensor.
+	 * \param [in] outputLayout The output layout in <tt>VX_TYPE_INT32</tt> denoting the layout of the output tensor.
+	 * \param [in] roiType The ROI encoding type in <tt>VX_TYPE_INT32</tt> denoting whether source ROI is XYWH or LTRB.
 	 * \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using vxGetStatus.
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppErase(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pAnchorBoxInfo, vx_tensor pColors, vx_tensor pNumBoxes, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
@@ -2245,14 +2245,14 @@ extern "C"
 	/*! \brief [Graph] Creates a BitwiseOps function node (AND/OR/XOR).
 	* \ingroup group_amd_rpp
 	* \param [in] graph The handle to the graph.
-	* \param [in] pSrc1 The first input tensor in VX_TYPE_UINT8 format data.
-	* \param [in] pSrc2 The second input tensor in VX_TYPE_UINT8 format data.
+	* \param [in] pSrc1 The first input tensor in <tt>VX_TYPE_UINT8</tt> format data.
+	* \param [in] pSrc2 The second input tensor in <tt>VX_TYPE_UINT8</tt> format data.
 	* \param [in] pSrcRoi The input tensor of batch size in unsigned int containing per-sample ROI values for the inputs in XYWH/LTRB format.
-	* \param [out] pDst The output tensor in VX_TYPE_UINT8 format data.
-	* \param [in] inputLayout The input layout in VX_TYPE_INT32 denoting the layout of input tensors (e.g., VX_NHWC, VX_NCHW, VX_NFHWC, VX_NFCHW).
-	* \param [in] outputLayout The output layout in VX_TYPE_INT32 denoting the layout of the output tensor.
-	* \param [in] roiType The ROI encoding type in VX_TYPE_INT32 denoting whether source ROI is XYWH or LTRB.
-	* \param [in] opType The operation selector in VX_TYPE_INT32: 0 = AND, 1 = OR, 2 = XOR.
+	* \param [out] pDst The output tensor in <tt>VX_TYPE_UINT8</tt> format data.
+	* \param [in] inputLayout The input layout in <tt>VX_TYPE_INT32</tt> denoting the layout of input tensors (e.g., VX_NHWC, VX_NCHW, VX_NFHWC, VX_NFCHW).
+	* \param [in] outputLayout The output layout in <tt>VX_TYPE_INT32</tt> denoting the layout of the output tensor.
+	* \param [in] roiType The ROI encoding type in <tt>VX_TYPE_INT32</tt> denoting whether source ROI is XYWH or LTRB.
+	* \param [in] opType The operation selector in <tt>VX_TYPE_INT32</tt>: 0 = AND, 1 = OR, 2 = XOR.
 	* \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using vxGetStatus.
 	*/
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppBitwiseOps(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType, vx_scalar opType);
@@ -2288,9 +2288,8 @@ extern "C"
 	* \param [in] roiType The ROI encoding type in <tt>\ref VX_TYPE_INT32</tt> denoting whether source ROI is XYWH or LTRB.
 	* \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using vxGetStatus.
 	*/
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppRemap(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
-												vx_tensor pRowRemap, vx_tensor pColRemap,
-												vx_scalar interpolationType, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppRemap(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pRowRemap, vx_tensor pColRemap,
+													vx_scalar interpolationType, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
 
 	/*! \brief [Graph] Creates a Ricap (Random Image Cropping And Patching) function node.
 	* \ingroup group_amd_rpp

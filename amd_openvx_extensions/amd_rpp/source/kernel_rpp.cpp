@@ -3163,7 +3163,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppCropAndPatch(vx_graph graph,
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppRicap(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_array pPermutation, vx_tensor pInputCropRoi, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppRicap(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_tensor pPermutation, vx_tensor pInputCropRoi, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {

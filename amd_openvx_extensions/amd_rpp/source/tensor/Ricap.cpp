@@ -25,80 +25,43 @@ THE SOFTWARE.
 struct RicapLocalData {
     vxRppHandle* handle = nullptr;
     vx_uint32 deviceType = AGO_TARGET_AFFINITY_CPU;
-
-    // IO buffers
     RppPtr_t pSrc = nullptr;
     RppPtr_t pDst = nullptr;
-
-    // Param buffers
-    Rpp32u* pPermutation = nullptr;     // size = batchSize * 4
-    vx_size permutationLength = 0;      // number of u32 items copied in pPermutation
-    RpptROI* pInputCropRoi = nullptr;   // array of 4 ROIs
-
-    // Tensor descriptions
+    Rpp32u* pPermutation = nullptr;
+    RpptROI* pInputCropRoi = nullptr;
     RpptDescPtr pSrcDesc = nullptr;
     RpptDescPtr pDstDesc = nullptr;
-
-    // Layouts and roi
     vxTensorLayout inputLayout = vxTensorLayout::VX_NHWC;
     vxTensorLayout outputLayout = vxTensorLayout::VX_NHWC;
     RpptRoiType roiType = RpptRoiType::XYWH;
-
-    // Cached dims
-    size_t inputTensorDims[RPP_MAX_TENSOR_DIMS] = {};
-    size_t outputTensorDims[RPP_MAX_TENSOR_DIMS] = {};
+    size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
+    size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-static vx_status VX_CALLBACK refreshRicap(vx_node node, const vx_reference* parameters, vx_uint32 num, RicapLocalData* data)
-{
+static vx_status VX_CALLBACK refreshRicap(vx_node node, const vx_reference* parameters, vx_uint32 num, RicapLocalData* data) {
     vx_status status = VX_SUCCESS;
+    void* cropRoiTensorPtr = nullptr;
 
     // Query IO buffers
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
-        void* cropRoiTensorPtr = nullptr;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pPermutation, sizeof(data->pPermutation)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &cropRoiTensorPtr, sizeof(cropRoiTensorPtr)));
-        data->pInputCropRoi = reinterpret_cast<RpptROI*>(cropRoiTensorPtr);
 #endif
-    } else {
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        void* cropRoiTensorPtr = nullptr;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pPermutation, sizeof(data->pPermutation)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &cropRoiTensorPtr, sizeof(cropRoiTensorPtr)));
-        data->pInputCropRoi = reinterpret_cast<RpptROI*>(cropRoiTensorPtr);
     }
 
-    // Copy permutation array (vx_array of VX_TYPE_UINT32)
-    vx_size numItems = 0;
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_NUMITEMS, &numItems, sizeof(numItems)));
-    if (numItems != data->permutationLength) {
-        // (Re)allocate if length changed
-        delete[] data->pPermutation;
-        data->pPermutation = nullptr;
-        if (numItems > 0) {
-            data->pPermutation = new Rpp32u[numItems];
-        }
-        data->permutationLength = numItems;
-    }
-    if (data->pPermutation && data->permutationLength) {
-        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2],
-                                            0,
-                                            data->permutationLength,
-                                            sizeof(Rpp32u),
-                                            data->pPermutation,
-                                            VX_READ_ONLY,
-                                            VX_MEMORY_TYPE_HOST));
-    }
-
+    data->pInputCropRoi = reinterpret_cast<RpptROI*>(cropRoiTensorPtr);
     return status;
 }
 
-static vx_status VX_CALLBACK validateRicap(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
-{
+static vx_status VX_CALLBACK validateRicap(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_status status = VX_SUCCESS;
 
     // inputLayout (idx: 4)
@@ -149,39 +112,14 @@ static vx_status VX_CALLBACK processRicap(vx_node node, const vx_reference* para
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshRicap(node, parameters, num, data));
 
-    // The permutation tensor must be batchSize * 4
-    const vx_uint32 batchSize = data->pSrcDesc ? data->pSrcDesc->n : 0;
-    const vx_size expected = static_cast<vx_size>(batchSize) * 4;
-    if (data->permutationLength != expected) {
-        // Basic guard - not fatal error but return invalid if lengths do not match expectations
-        return ERRMSG(VX_ERROR_INVALID_VALUE, "process: Ricap: permutation length=%lu (expected %u*4=%lu)\n",
-                      data->permutationLength, batchSize, expected);
-    }
-
     RppStatus rpp_status = RPP_SUCCESS;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        rpp_status = rppt_ricap_gpu(data->pSrc,
-                                    data->pSrcDesc,
-                                    data->pDst,
-                                    data->pDstDesc,
-                                    data->pPermutation,
-                                    data->pInputCropRoi,
-                                    data->roiType,
-                                    data->handle->rppHandle);
+#if ENABLE_HIP
+        rpp_status = rppt_ricap_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pPermutation, data->pInputCropRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
-    } else {
-        rpp_status = rppt_ricap_host(data->pSrc,
-                                     data->pSrcDesc,
-                                     data->pDst,
-                                     data->pDstDesc,
-                                     data->pPermutation,
-                                     data->pInputCropRoi,
-                                     data->roiType,
-                                     data->handle->rppHandle);
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        rpp_status = rppt_ricap_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pPermutation, data->pInputCropRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
 
@@ -195,6 +133,7 @@ static vx_status VX_CALLBACK initializeRicap(vx_node node, const vx_reference* p
 
     // Read scalars
     vx_int32 input_layout, output_layout, roi_type;
+    vx_enum input_tensor_dtype, output_tensor_dtype;
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[6], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
@@ -208,7 +147,6 @@ static vx_status VX_CALLBACK initializeRicap(vx_node node, const vx_reference* p
     data->pSrcDesc = new RpptDesc;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
-    vx_enum input_tensor_dtype;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
     data->pSrcDesc->dataType = getRpptDataType(input_tensor_dtype);
     data->pSrcDesc->offsetInBytes = 0;
@@ -218,7 +156,6 @@ static vx_status VX_CALLBACK initializeRicap(vx_node node, const vx_reference* p
     data->pDstDesc = new RpptDesc;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
-    vx_enum output_tensor_dtype;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
     data->pDstDesc->dataType = getRpptDataType(output_tensor_dtype);
     data->pDstDesc->offsetInBytes = 0;
@@ -237,13 +174,8 @@ static vx_status VX_CALLBACK uninitializeRicap(vx_node node, const vx_reference*
     RicapLocalData* data = nullptr;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (!data) return VX_SUCCESS;
-
-    delete[] data->pPermutation;
-    data->pPermutation = nullptr;
-
     delete data->pSrcDesc;
     delete data->pDstDesc;
-
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
 
@@ -293,24 +225,14 @@ vx_status Ricap_Register(vx_context context)
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
     STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
-
-    // Parameters:
-    // 0: pSrc tensor (input)
-    // 1: pDst tensor (output)
-    // 2: pPermutation (vx_array, uint32) (input)
-    // 3: pInputCropRoi (vx_tensor, array of 4 RpptROI) (input)
-    // 4: inputLayout (scalar int32) (input)
-    // 5: outputLayout (scalar int32) (input)
-    // 6: roiType (scalar int32) (input)
-    // 7: deviceType (scalar uint32) (input)
-    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED)); // pSrc
-    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED)); // pDst
-    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT,  VX_TYPE_ARRAY,  VX_PARAMETER_STATE_REQUIRED)); // pPermutation
-    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED)); // pInputCropRoi (4 ROIs)
-    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED)); // inputLayout
-    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED)); // outputLayout
-    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED)); // roiType
-    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED)); // deviceType
+    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT,  VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED));
+    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+    PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
 
     PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
 

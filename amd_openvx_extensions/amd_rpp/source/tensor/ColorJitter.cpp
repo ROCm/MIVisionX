@@ -193,10 +193,10 @@ static vx_status VX_CALLBACK uninitializeColorJitter(vx_node node, const vx_refe
     if (!data)
         return VX_FAILURE;
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        delete[] data->pBrightness;
-        delete[] data->pContrast;
-        delete[] data->pHue;
-        delete[] data->pSaturation;
+        if (data->pBrightness) delete[] data->pBrightness;
+        if (data->pContrast) delete[] data->pContrast;
+        if (data->pHue) delete[] data->pHue;
+        if (data->pSaturation) delete[] data->pSaturation;
     }
     delete data->pSrcDesc;
     delete data->pDstDesc;

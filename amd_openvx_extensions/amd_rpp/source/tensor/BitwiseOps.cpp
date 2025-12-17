@@ -179,8 +179,6 @@ static vx_status VX_CALLBACK processBitwiseOps(vx_node node, const vx_reference 
                 return VX_ERROR_INVALID_PARAMETERS;
         }
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#else
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         switch (data->opType) {
@@ -305,8 +303,6 @@ vx_status BitwiseOps_Register(vx_context context) {
 
     if (kernel) {
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
-
-        // Parameters: src1 tensor, src2 tensor, src roi tensor, dst tensor, inputLayout, outputLayout, roiType, opType, deviceType
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_OPTIONAL));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));

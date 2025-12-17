@@ -25,29 +25,17 @@ THE SOFTWARE.
 struct EraseLocalData {
     vxRppHandle *handle;
     vx_uint32 deviceType;
-
-    // IO buffers
     RppPtr_t pSrc;
     RppPtr_t pDst;
-
-    // Parameter buffers
-    RpptRoiLtrb *pAnchor;     // per-sample, per-box anchors (LTRB)
-    RppPtr_t pColors;         // per-sample, per-box colors buffer
-    Rpp32u *pNumBoxes;        // per-sample number of boxes
-
-    // Tensor descriptions
+    RpptRoiLtrb *pAnchor;
+    RppPtr_t pColors;
+    Rpp32u *pNumBoxes;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
-
-    // ROI
     RpptROI *pSrcRoi;
     RpptRoiType roiType;
-
-    // Layouts
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
-
-    // Cached dims
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
@@ -61,9 +49,7 @@ static vx_status VX_CALLBACK refreshErase(vx_node node, const vx_reference *para
     void *colors_tensor_ptr = nullptr;
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
@@ -71,7 +57,7 @@ static vx_status VX_CALLBACK refreshErase(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &colors_tensor_ptr, sizeof(colors_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &data->pNumBoxes, sizeof(data->pNumBoxes)));
 #endif
-    } else { // CPU
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
@@ -92,8 +78,7 @@ static vx_status VX_CALLBACK refreshErase(vx_node node, const vx_reference *para
             for (unsigned f = 0; f < num_of_frames; f++) {
                 data->pNumBoxes[index + f] = data->pNumBoxes[n];
                 data->pSrcRoi[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
-                // NOTE: pAnchor/pColors are tensors and should be authored to cover NF expansion by the client.
-                // We do not duplicate variable-sized per-box tensors here.
+                data->pAnchor[index + f] = data->pAnchor[n];
             }
         }
     }
@@ -158,15 +143,13 @@ static vx_status VX_CALLBACK processErase(vx_node node, const vx_reference *para
     STATUS_ERROR_CHECK(refreshErase(node, parameters, num, data));
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         rpp_status = rppt_erase_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
                                     data->pAnchor, data->pColors, data->pNumBoxes,
                                     data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
-    } else { // CPU
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_erase_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
                                      data->pAnchor, data->pColors, data->pNumBoxes,
                                      data->pSrcRoi, data->roiType, data->handle->rppHandle);
@@ -272,18 +255,16 @@ vx_status Erase_Register(vx_context context) {
 
     if (kernel) {
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
-
-        // Parameters: src tensor, src roi tensor, dst tensor, anchorBoxInfo tensor, colors tensor, numBoxes, inputLayout, outputLayout, roiType, deviceType
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED)); // anchorBoxInfo (LTRB)
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED)); // colors buffer
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED)); // num boxes per-sample
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED)); // inputLayout
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED)); // outputLayout
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED)); // roiType
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED)); // deviceType
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT,  VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
 
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }

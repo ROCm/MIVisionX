@@ -3103,7 +3103,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppRemap(vx_graph graph, vx_tensor pSrc, v
             (vx_reference)roiType,
             (vx_reference)deviceType
         };
-        node = createNode(graph, VX_KERNEL_RPP_REMAP_TENSOR, params, 10);
+        node = createNode(graph, VX_KERNEL_RPP_REMAP, params, 10);
     }
     return node;
 }

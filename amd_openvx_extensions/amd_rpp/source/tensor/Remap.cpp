@@ -25,32 +25,18 @@ THE SOFTWARE.
 struct RemapLocalData {
     vxRppHandle *handle;
     vx_uint32 deviceType;
-
-    // IO buffers
     RppPtr_t pSrc;
     RppPtr_t pDst;
-
-    // Remap tables
     Rpp32f *pRowRemap;
     Rpp32f *pColRemap;
-
-    // Tensor descriptions
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptDescPtr pTableDesc;
-
-    // ROI
     RpptROI *pSrcRoi;
     RpptRoiType roiType;
-
-    // Interpolation
     RpptInterpolationType interpolationType;
-
-    // Layouts
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
-
-    // Cached dims
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t tableTensorDims[RPP_MAX_TENSOR_DIMS];
@@ -64,16 +50,14 @@ static vx_status VX_CALLBACK refreshRemap(vx_node node, const vx_reference *para
     void *col_map_ptr = nullptr;
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &row_map_ptr, sizeof(row_map_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &col_map_ptr, sizeof(col_map_ptr)));
 #endif
-    } else { // CPU
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
@@ -161,16 +145,14 @@ static vx_status VX_CALLBACK processRemap(vx_node node, const vx_reference *para
     STATUS_ERROR_CHECK(refreshRemap(node, parameters, num, data));
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         rpp_status = rppt_remap_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
                                     data->pRowRemap, data->pColRemap, data->pTableDesc,
                                     data->interpolationType, data->pSrcRoi, data->roiType,
                                     data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
-    } else { // CPU
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_remap_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
                                      data->pRowRemap, data->pColRemap, data->pTableDesc,
                                      data->interpolationType, data->pSrcRoi, data->roiType,
@@ -267,8 +249,8 @@ vx_status Remap_Register(vx_context context) {
     vx_status status = VX_SUCCESS;
 
     // Add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, VX_KERNEL_RPP_REMAP_TENSOR_NAME,
-                                       VX_KERNEL_RPP_REMAP_TENSOR,
+    vx_kernel kernel = vxAddUserKernel(context, VX_KERNEL_RPP_REMAP_NAME,
+                                       VX_KERNEL_RPP_REMAP,
                                        processRemap,
                                        10,
                                        validateRemap,
@@ -290,18 +272,16 @@ vx_status Remap_Register(vx_context context) {
 
     if (kernel) {
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
-
-        // Parameters: src tensor, srcRoi tensor, dst tensor, rowRemap tensor, colRemap tensor, interpolationType, inputLayout, outputLayout, roiType, deviceType
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT,  VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED)); // pSrc
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT,  VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED)); // pSrcRoi
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED)); // pDst
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT,  VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED)); // rowRemapTable
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT,  VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED)); // colRemapTable
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED)); // interpolationType
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED)); // inputLayout
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED)); // outputLayout
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED)); // roiType
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED)); // deviceType
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT,  VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT,  VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT,  VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT,  VX_TYPE_TENSOR,  VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT,  VX_TYPE_SCALAR,  VX_PARAMETER_STATE_REQUIRED));
 
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }

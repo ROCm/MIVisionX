@@ -2277,15 +2277,15 @@ extern "C"
 	/*! \brief [Graph] Creates a RPP Remap function node for tensors.
 	* \ingroup group_amd_rpp
 	* \param [in] graph The handle to the graph.
-	* \param [in] pSrc The input tensor in VX_TYPE_UINT8 or VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT8 format.
+	* \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
 	* \param [in] pSrcRoi The input tensor containing per-sample ROI values for the input in XYWH/LTRB format.
-	* \param [out] pDst The output tensor in VX_TYPE_UINT8 or VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT8 format.
-	* \param [in] pRowRemap The input remap table tensor of type VX_TYPE_FLOAT32 containing row numbers per pixel. Must be common-desc NHWC with c=1.
-	* \param [in] pColRemap The input remap table tensor of type VX_TYPE_FLOAT32 containing column numbers per pixel. Must be common-desc NHWC with c=1.
-	* \param [in] interpolationType The interpolation policy in VX_TYPE_INT32 (supports NEAREST_NEIGHBOR and BILINEAR).
-	* \param [in] inputLayout The input layout in VX_TYPE_INT32 denoting layout of input tensor.
-	* \param [in] outputLayout The output layout in VX_TYPE_INT32 denoting layout of output tensor.
-	* \param [in] roiType The ROI encoding type in VX_TYPE_INT32 denoting whether source ROI is XYWH or LTRB.
+	* \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
+	* \param [in] pRowRemap The input remap table tensor of type <tt>\ref VX_TYPE_FLOAT32</tt> containing row numbers per pixel. Must be common-desc NHWC with c=1.
+	* \param [in] pColRemap The input remap table tensor of type <tt>\ref VX_TYPE_FLOAT32</tt> containing column numbers per pixel. Must be common-desc NHWC with c=1.
+	* \param [in] interpolationType The interpolation policy in <tt>\ref VX_TYPE_INT32</tt> (supports NEAREST_NEIGHBOR and BILINEAR).
+	* \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denoting layout of input tensor.
+	* \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denoting layout of output tensor.
+	* \param [in] roiType The ROI encoding type in <tt>\ref VX_TYPE_INT32</tt> denoting whether source ROI is XYWH or LTRB.
 	* \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using vxGetStatus.
 	*/
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppRemap(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,

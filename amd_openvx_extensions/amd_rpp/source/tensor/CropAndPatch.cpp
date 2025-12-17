@@ -25,27 +25,17 @@ THE SOFTWARE.
 struct CropAndPatchLocalData {
     vxRppHandle *handle;
     vx_uint32 deviceType;
-
-    // IO buffers
     RppPtr_t pSrc1;
     RppPtr_t pSrc2;
     RppPtr_t pDst;
-
-    // Tensor descriptions
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
-
-    // ROIs
     RpptROI *pDstRoi;
     RpptROI *pCropRoi;
     RpptROI *pPatchRoi;
     RpptRoiType roiType;
-
-    // Layouts
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
-
-    // Cached dims
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
@@ -58,9 +48,7 @@ static vx_status VX_CALLBACK refreshCropAndPatch(vx_node node, const vx_referenc
     void *patch_roi_tensor_ptr = nullptr;
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc1, sizeof(data->pSrc1)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pSrc2, sizeof(data->pSrc2)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
@@ -68,7 +56,7 @@ static vx_status VX_CALLBACK refreshCropAndPatch(vx_node node, const vx_referenc
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &crop_roi_tensor_ptr, sizeof(crop_roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &patch_roi_tensor_ptr, sizeof(patch_roi_tensor_ptr)));
 #endif
-    } else { // CPU
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc1, sizeof(data->pSrc1)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pSrc2, sizeof(data->pSrc2)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
@@ -154,16 +142,14 @@ static vx_status VX_CALLBACK processCropAndPatch(vx_node node, const vx_referenc
     STATUS_ERROR_CHECK(refreshCropAndPatch(node, parameters, num, data));
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         rpp_status = rppt_crop_and_patch_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc,
                                              data->pDst, data->pDstDesc,
                                              data->pDstRoi, data->pCropRoi, data->pPatchRoi,
                                              data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
-    } else { // CPU
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_crop_and_patch_host(data->pSrc1, data->pSrc2, data->pSrcDesc,
                                               data->pDst, data->pDstDesc,
                                               data->pDstRoi, data->pCropRoi, data->pPatchRoi,

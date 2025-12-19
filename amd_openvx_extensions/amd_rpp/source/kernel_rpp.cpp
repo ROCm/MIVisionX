@@ -2886,7 +2886,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppMedianFilter(vx_graph graph, vx_tensor 
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppColorCast(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pRgb, vx_array pAlpha, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppColorCast(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pRgb, vx_array pAlpha, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {

@@ -175,6 +175,7 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(MelFilterBank_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Transpose_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Log1p_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(PythonFunction_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(ColorCast_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(GaussianFilter_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(GridMask_Register));

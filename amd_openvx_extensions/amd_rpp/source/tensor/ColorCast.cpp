@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,8 +28,7 @@ struct ColorCastLocalData {
     RppPtr_t pSrc;
     RppPtr_t pDst;
     vx_float32 *pAlpha;
-    vx_float32 *pRgbFloats; // length = n * 3
-    RpptRGB *pRgb;           // length = n
+    RpptRGB *pRgb;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
@@ -43,51 +42,39 @@ struct ColorCastLocalData {
 static vx_status VX_CALLBACK refreshColorCast(vx_node node, const vx_reference *parameters, vx_uint32 num, ColorCastLocalData *data) {
     vx_status status = VX_SUCCESS;
 
-    // Copy alpha (size N) into first N elements
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pAlpha, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    // Copy rgb floats (size N*3) into first N*3 elements
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0] * 3, sizeof(vx_float32), data->pRgbFloats, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
-    void *roi_tensor_ptr;
+    
+    void *roi_tensor_ptr, *rgb_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &rgb_tensor_ptr, sizeof(rgb_tensor_ptr)));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &rgb_tensor_ptr, sizeof(rgb_tensor_ptr)));
     }
     data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
+    data->pRgb = reinterpret_cast<RpptRGB *>(rgb_tensor_ptr);
 
     // Expand NF layouts: replicate per-sample params and ROI across frames
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         const unsigned N = static_cast<unsigned>(data->inputTensorDims[0]);
         const unsigned F = static_cast<unsigned>(data->inputTensorDims[1]); // Num of frames per sample
-        // Expand alpha
+        // Expand alpha and RGB values
         for (int n = N - 1; n >= 0; n--) {
             unsigned base = n * F;
             unsigned srcOff = n * 3;
             for (unsigned f = 0; f < F; f++) {
                 data->pAlpha[base + f] = data->pAlpha[n];
                 data->pSrcRoi[base + f].xywhROI = data->pSrcRoi[n].xywhROI;
-                unsigned dstIdx = (base + f) * 3;
-                data->pRgbFloats[dstIdx + 0] = data->pRgbFloats[srcOff + 0];
-                data->pRgbFloats[dstIdx + 1] = data->pRgbFloats[srcOff + 1];
-                data->pRgbFloats[dstIdx + 2] = data->pRgbFloats[srcOff + 2];
+                data->pRgb[base + f] = data->pRgb[srcOff];
             }
         }
-    }
-
-    // Pack floats into RpptRGB
-    const size_t n = data->pSrcDesc->n;
-    for (size_t i = 0; i < n; ++i) {
-        const size_t off = i * 3;
-        data->pRgb[i].R = data->pRgbFloats[off + 0];
-        data->pRgb[i].G = data->pRgbFloats[off + 1];
-        data->pRgb[i].B = data->pRgbFloats[off + 2];
     }
 
     return status;
@@ -192,13 +179,9 @@ static vx_status VX_CALLBACK initializeColorCast(vx_node node, const vx_referenc
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, n * sizeof(vx_float32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pRgbFloats, n * 3 * sizeof(vx_float32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pRgb, n * sizeof(RpptRGB)));
 #endif
     } else {
         data->pAlpha = new vx_float32[n];
-        data->pRgbFloats = new vx_float32[n * 3];
-        data->pRgb = new RpptRGB[n];
     }
 
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, static_cast<Rpp32u>(n), data->deviceType));
@@ -212,13 +195,9 @@ static vx_status VX_CALLBACK uninitializeColorCast(vx_node node, const vx_refere
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         if (data->pAlpha) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAlpha));
-        if (data->pRgbFloats) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pRgbFloats));
-        if (data->pRgb) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pRgb));
 #endif
     } else {
         if (data->pAlpha) delete[] data->pAlpha;
-        if (data->pRgbFloats) delete[] data->pRgbFloats;
-        if (data->pRgb) delete[] data->pRgb;
     }
     delete data->pSrcDesc;
     delete data->pDstDesc;
@@ -269,7 +248,7 @@ vx_status ColorCast_Register(vx_context context) {
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));

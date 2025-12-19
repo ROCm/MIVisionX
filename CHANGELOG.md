@@ -4,6 +4,11 @@
 
 The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
+## (Unreleased) MIVisionX 3.6.0
+
+### Added
+*  Added the `PythonFunction` extension to VX_RPP
+
 ## MIVisionX 3.5.0 for ROCm 7.2.0
 
 ### Changed

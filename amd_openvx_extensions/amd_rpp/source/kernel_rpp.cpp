@@ -1901,6 +1901,26 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppBrightness(vx_graph graph, vx_tensor pS
     return node;
 }
 
+VX_API_ENTRY vx_node VX_API_CALL vxExtPythonFunction(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_scalar bridgeFnPtr, vx_scalar functionId, vx_scalar inputLayout, vx_scalar outputLayout) {
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 devType = getGraphAffinity(graph);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
+        vx_reference params[] = {
+            (vx_reference)pSrc,
+            (vx_reference)pDst,
+            (vx_reference)bridgeFnPtr,
+            (vx_reference)functionId,
+            (vx_reference)inputLayout,
+            (vx_reference)outputLayout,
+            (vx_reference)deviceType
+        };
+        node = createNode(graph, VX_KERNEL_PYTHONFUNCTION, params, 7);
+    }
+    return node;
+}
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtRppCopy(vx_graph graph, vx_tensor pSrc, vx_tensor pDst) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -2886,7 +2906,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppMedianFilter(vx_graph graph, vx_tensor 
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppColorCast(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pRgb, vx_array pAlpha, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppColorCast(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_tensor pRgb, vx_array pAlpha, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {

@@ -38,7 +38,7 @@ project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
-find_package(rpp 2.2.1 REQUIRED)
+find_package(rpp 2.3.0 REQUIRED)
 
 message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
 message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
@@ -114,100 +114,6 @@ list(APPEND SOURCES
         source/internal_publishKernels.cpp
     )
 
-set(RPP_LEGACY_SUPPORT_FOUND 0)
-if(EXISTS ${rpp_INCLUDE_DIR}/rpp/rpp_legacy_support.h)
-    file(READ ${rpp_INCLUDE_DIR}/rpp/rpp_legacy_support.h RPP_LEGACY_SUPPORT_FILE)
-    string(REGEX MATCH "RPP_LEGACY_SUPPORT ([0-1]*)" _ ${RPP_LEGACY_SUPPORT_FILE})
-    set(RPP_LEGACY_SUPPORT_FOUND ${CMAKE_MATCH_1})
-endif()
-
-if(RPP_LEGACY_SUPPORT_FOUND)
-    list(APPEND SOURCES
-        source/image/AbsoluteDifferencebatchPD.cpp
-        source/image/AccumulatebatchPD.cpp
-        source/image/AccumulateSquaredbatchPD.cpp
-        source/image/AccumulateWeightedbatchPD.cpp
-        source/image/AddbatchPD.cpp
-        source/image/BitwiseANDbatchPD.cpp
-        source/image/BitwiseNOTbatchPD.cpp
-        source/image/BlendbatchPD.cpp
-        source/image/BlurbatchPD.cpp
-        source/image/BoxFilterbatchPD.cpp
-        source/image/BrightnessbatchPD.cpp
-        source/image/CannyEdgeDetector.cpp
-        source/image/ChannelCombinebatchPD.cpp
-        source/image/ChannelExtractbatchPD.cpp
-        source/image/ColorTemperaturebatchPD.cpp
-        source/image/ColorTwistbatchPD.cpp
-        source/image/ContrastbatchPD.cpp
-        source/image/CopybatchPD.cpp
-        source/image/CropMirrorNormalizePD.cpp
-        source/image/CropPD.cpp
-        source/image/CustomConvolutionbatchPD.cpp
-        source/image/DataObjectCopybatchPD.cpp
-        source/image/DilatebatchPD.cpp
-        source/image/ErodebatchPD.cpp
-        source/image/ExclusiveORbatchPD.cpp
-        source/image/ExposurebatchPD.cpp
-        source/image/FastCornerDetector.cpp
-        source/image/FisheyebatchPD.cpp
-        source/image/FlipbatchPD.cpp
-        source/image/FogbatchPD.cpp
-        source/image/GammaCorrectionbatchPD.cpp
-        source/image/GaussianFilterbatchPD.cpp
-        source/image/GaussianImagePyramidbatchPD.cpp
-        source/image/HarrisCornerDetector.cpp
-        source/image/Histogram.cpp
-        source/image/HistogramBalancebatchPD.cpp
-        source/image/HistogramEqualizebatchPD.cpp
-        source/image/HuebatchPD.cpp
-        source/image/InclusiveORbatchPD.cpp
-        source/image/JitterbatchPD.cpp
-        source/image/LaplacianImagePyramid.cpp
-        source/image/LensCorrectionbatchPD.cpp
-        source/image/LocalBinaryPatternbatchPD.cpp
-        source/image/LookUpTablebatchPD.cpp
-        source/image/MagnitudebatchPD.cpp
-        source/image/MaxbatchPD.cpp
-        source/image/MeanStddev.cpp
-        source/image/MedianFilterbatchPD.cpp
-        source/image/MinbatchPD.cpp
-        source/image/MinMaxLoc.cpp
-        source/image/MultiplybatchPD.cpp
-        source/image/NoisebatchPD.cpp
-        source/image/NonLinearFilterbatchPD.cpp
-        source/image/NonMaxSupressionbatchPD.cpp
-        source/image/NopbatchPD.cpp
-        source/image/PhasebatchPD.cpp
-        source/image/PixelatebatchPD.cpp
-        source/image/RainbatchPD.cpp
-        source/image/RandomCropLetterBoxbatchPD.cpp
-        source/image/RandomShadowbatchPD.cpp
-        source/image/Remap.cpp
-        source/image/ResizebatchPD.cpp
-        source/image/ResizeCropbatchPD.cpp
-        source/image/ResizeCropMirrorPD.cpp
-        source/image/ResizeMirrorNormalizeTensor.cpp
-        source/image/Resizetensor.cpp
-        source/image/RotatebatchPD.cpp
-        source/image/SaturationbatchPD.cpp
-        source/image/ScalebatchPD.cpp
-        source/image/SequenceRearrangebatchPD.cpp
-        source/image/SnowbatchPD.cpp
-        source/image/SobelbatchPD.cpp
-        source/image/SubtractbatchPD.cpp
-        source/image/TensorAdd.cpp
-        source/image/TensorLookup.cpp
-        source/image/TensorMatrixMultiply.cpp
-        source/image/TensorMultiply.cpp
-        source/image/TensorSubtract.cpp
-        source/image/ThresholdingbatchPD.cpp
-        source/image/VignettebatchPD.cpp
-        source/image/WarpAffinebatchPD.cpp
-        source/image/WarpPerspectivebatchPD.cpp
-    )
-endif()
-
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
     message("-- ${Green}vx_rpp -- Building with OpenCL${ColourReset}")
     set(ENABLE_OPENCL 1)
@@ -255,15 +161,6 @@ AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
 else()
     target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=0)
     message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
-endif()
-
-if(RPP_LEGACY_SUPPORT_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEGACY_SUPPORT=1")
-    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=1)
-    message("-- ${White}vx_rpp BatchPD augmentations included${ColourReset}")
-else()
-    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=0)
-    message("-- ${Yellow}vx_rpp BatchPD augmentations excluded${ColourReset}")
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

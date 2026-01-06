@@ -171,6 +171,11 @@ vx_status MelFilterBank_Register(vx_context);
 vx_status Transpose_Register(vx_context);
 vx_status Log1p_Register(vx_context);
 vx_status PythonFunction_Register(vx_context);
+vx_status ColorCast_Register(vx_context);
+vx_status GaussianFilter_Register(vx_context);
+vx_status GridMask_Register(vx_context);
+vx_status MedianFilter_Register(vx_context);
+vx_status NonLinearBlend_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -309,5 +314,10 @@ vx_status PythonFunction_Register(vx_context);
 #define VX_KERNEL_RPP_TRANSPOSE_NAME                            "org.rpp.Transpose"
 #define VX_KERNEL_RPP_LOG1P_NAME                                "org.rpp.Log1p"
 #define VX_KERNEL_RPP_PYTHON_FUNCTION_NAME                      "org.rpp.PythonFunction"
+#define VX_KERNEL_RPP_COLORCAST_NAME                            "org.rpp.ColorCast"
+#define VX_KERNEL_RPP_GAUSSIAN_FILTER_NAME                      "org.rpp.GaussianFilter"
+#define VX_KERNEL_RPP_GRIDMASK_NAME                             "org.rpp.GridMask"
+#define VX_KERNEL_RPP_MEDIAN_FILTER_NAME                        "org.rpp.MedianFilter"
+#define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

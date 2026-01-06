@@ -31,7 +31,7 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.1.0")
+set(VERSION "3.1.2")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
@@ -68,6 +68,7 @@ list(APPEND SOURCES
         source/tensor/Blur.cpp
         source/tensor/Brightness.cpp
         source/tensor/ColorTemperature.cpp
+        source/tensor/ColorCast.cpp
         source/tensor/ColorTwist.cpp
         source/tensor/Contrast.cpp
         source/tensor/Copy.cpp
@@ -79,14 +80,18 @@ list(APPEND SOURCES
         source/tensor/Flip.cpp
         source/tensor/Fog.cpp
         source/tensor/GammaCorrection.cpp
+        source/tensor/GaussianFilter.cpp
         source/tensor/Glitch.cpp
+        source/tensor/GridMask.cpp
         source/tensor/Hue.cpp
         source/tensor/Jitter.cpp
         source/tensor/LensCorrection.cpp
         source/tensor/Log1p.cpp
+        source/tensor/MedianFilter.cpp
         source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
         source/tensor/NonSilentRegionDetection.cpp
+        source/tensor/NonLinearBlend.cpp
         source/tensor/Nop.cpp
         source/tensor/Normalize.cpp
         source/tensor/Rotate.cpp

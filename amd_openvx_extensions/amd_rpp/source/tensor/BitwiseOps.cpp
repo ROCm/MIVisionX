@@ -121,7 +121,7 @@ static vx_status VX_CALLBACK validateBitwiseOps(vx_node node, const vx_reference
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &op_type_val, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if (op_type_val != static_cast<vx_int32>(vxBitwiseOp::NOT)) {
         if (parameters[1] == nullptr)
-            return ERRMSG(VX_ERROR_INVALID_PARAMETERS, "validate: BitwiseOps: parameter #1 (src2) must be provided for AND/OR/XOR ops\n");
+            return VX_ERROR_INVALID_PARAMETERS;
         size_t num_tensor_dims_src2;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims_src2, sizeof(num_tensor_dims_src2)));
         if (num_tensor_dims_src2 < 4)

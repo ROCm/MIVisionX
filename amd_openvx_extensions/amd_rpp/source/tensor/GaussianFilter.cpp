@@ -129,19 +129,20 @@ static vx_status VX_CALLBACK processGaussianFilter(vx_node node, const vx_refere
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
     GaussianFilterLocalData *data = NULL;
+    auto border_type = RpptImageBorderType::REPLICATE;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshGaussianFilter(node, parameters, num, data));
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         rpp_status = rppt_gaussian_filter_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                              data->pStdDev, data->kernelSize,
+                                              data->pStdDev, data->kernelSize, border_type,
                                               data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_gaussian_filter_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                             data->pStdDev, data->kernelSize,
+                                             data->pStdDev, data->kernelSize, border_type,
                                              data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }

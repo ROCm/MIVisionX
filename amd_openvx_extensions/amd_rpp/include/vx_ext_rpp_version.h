@@ -40,6 +40,13 @@ extern "C" {
 #define VX_EXT_RPP_VERSION_MAJOR 3
 #define VX_EXT_RPP_VERSION_MINOR 1
 #define VX_EXT_RPP_VERSION_PATCH 2
+
+#define VX_EXT_RPP_CHECK_VERSION(major, minor, patch) \
+    ((VX_EXT_RPP_VERSION_MAJOR > (major)) || \
+    (VX_EXT_RPP_VERSION_MAJOR == (major) && VX_EXT_RPP_VERSION_MINOR > (minor)) || \
+    (VX_EXT_RPP_VERSION_MAJOR == (major) && VX_EXT_RPP_VERSION_MINOR == (minor) && \
+    VX_EXT_RPP_VERSION_PATCH >= (patch)))
+
 #ifdef __cplusplus
 }
 #endif

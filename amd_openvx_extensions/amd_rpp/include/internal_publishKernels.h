@@ -170,6 +170,12 @@ vx_status Normalize_Register(vx_context);
 vx_status MelFilterBank_Register(vx_context);
 vx_status Transpose_Register(vx_context);
 vx_status Log1p_Register(vx_context);
+vx_status PythonFunction_Register(vx_context);
+vx_status ColorCast_Register(vx_context);
+vx_status GaussianFilter_Register(vx_context);
+vx_status GridMask_Register(vx_context);
+vx_status MedianFilter_Register(vx_context);
+vx_status NonLinearBlend_Register(vx_context);
 vx_status Log_Register(vx_context);
 vx_status GaussianNoise_Register(vx_context);
 vx_status ShotNoise_Register(vx_context);
@@ -319,6 +325,12 @@ vx_status Solarize_Register(vx_context);
 #define VX_KERNEL_RPP_MELFILTERBANK_NAME                        "org.rpp.MelFilterBank"
 #define VX_KERNEL_RPP_TRANSPOSE_NAME                            "org.rpp.Transpose"
 #define VX_KERNEL_RPP_LOG1P_NAME                                "org.rpp.Log1p"
+#define VX_KERNEL_RPP_PYTHON_FUNCTION_NAME                      "org.rpp.PythonFunction"
+#define VX_KERNEL_RPP_COLORCAST_NAME                            "org.rpp.ColorCast"
+#define VX_KERNEL_RPP_GAUSSIAN_FILTER_NAME                      "org.rpp.GaussianFilter"
+#define VX_KERNEL_RPP_GRIDMASK_NAME                             "org.rpp.GridMask"
+#define VX_KERNEL_RPP_MEDIAN_FILTER_NAME                        "org.rpp.MedianFilter"
+#define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
 #define VX_KERNEL_RPP_LOG_NAME                                  "org.rpp.Log"
 #define VX_KERNEL_RPP_GAUSSIAN_NOISE_NAME                       "org.rpp.GaussianNoise"
 #define VX_KERNEL_RPP_SHOT_NOISE_NAME                           "org.rpp.ShotNoise"

@@ -1017,7 +1017,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppNonLinearBlend(vx_graph graph, vx_tenso
 }
 
 VX_API_ENTRY vx_node VX_API_CALL vxExtRppGaussianFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
-                                                        vx_array pStdDev, vx_scalar kernelSize,
+                                                        vx_array pStdDev, vx_scalar kernelSize, vx_scalar borderType,
                                                         vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType) {
                                                             
     vx_node node = NULL;
@@ -1031,12 +1031,13 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppGaussianFilter(vx_graph graph, vx_tenso
             (vx_reference)pDst,
             (vx_reference)pStdDev,
             (vx_reference)kernelSize,
+            (vx_reference)borderType,
             (vx_reference)inputLayout,
             (vx_reference)outputLayout,
             (vx_reference)roiType,
             (vx_reference)deviceType
         };
-        node = createNode(graph, VX_KERNEL_RPP_GAUSSIAN_FILTER, params, 9);
+        node = createNode(graph, VX_KERNEL_RPP_GAUSSIAN_FILTER, params, 10);
     }
     return node;
 }

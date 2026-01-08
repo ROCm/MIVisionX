@@ -12,6 +12,9 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 ### Removed
 *  Removed the batchPD extensions from VX_RPP
 
+### Changed
+*  Updated vx_rpp extension for Gaussian Filter
+
 ## MIVisionX 3.5.0 for ROCm 7.2.0
 
 ### Changed

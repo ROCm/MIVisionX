@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
+#include <limits>
 #include <vector>
 
 struct TensorStdDevLocalData {
@@ -126,15 +127,27 @@ static vx_status VX_CALLBACK processTensorStdDev(vx_node node, const vx_referenc
     return return_status;
 }
 
-static Rpp32u computeTensorLength(vx_tensor tensor) {
+static vx_status computeTensorLength(vx_tensor tensor, Rpp32u *tensorLength) {
+    if (!tensorLength)
+        return VX_FAILURE;
     size_t num_dims = 0;
-    vxQueryTensor(tensor, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims));
+    vx_status status = vxQueryTensor(tensor, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims));
+    if (status != VX_SUCCESS)
+        return status;
     std::vector<vx_size> dims(num_dims, 0);
-    vxQueryTensor(tensor, VX_TENSOR_DIMS, dims.data(), sizeof(vx_size) * num_dims);
+    status = vxQueryTensor(tensor, VX_TENSOR_DIMS, dims.data(), sizeof(vx_size) * num_dims);
+    if (status != VX_SUCCESS)
+        return status;
     uint64_t length = 1;
-    for (vx_size dim : dims)
+    for (vx_size dim : dims) {
+        if (dim == 0)
+            return VX_ERROR_INVALID_DIMENSION;
         length *= dim;
-    return static_cast<Rpp32u>(length);
+        if (length > static_cast<uint64_t>(std::numeric_limits<Rpp32u>::max()))
+            return VX_ERROR_INVALID_DIMENSION;
+    }
+    *tensorLength = static_cast<Rpp32u>(length);
+    return VX_SUCCESS;
 }
 
 static vx_status VX_CALLBACK initializeTensorStdDev(vx_node node, const vx_reference *parameters, vx_uint32 num) {
@@ -159,7 +172,7 @@ static vx_status VX_CALLBACK initializeTensorStdDev(vx_node node, const vx_refer
     data->pSrcDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pSrcDesc, data->inputLayout, data->inputTensorDims);
 
-    data->reductionLength = computeTensorLength((vx_tensor)parameters[2]);
+    STATUS_ERROR_CHECK(computeTensorLength((vx_tensor)parameters[2], &data->reductionLength));
 
     STATUS_ERROR_CHECK(refreshTensorStdDev(node, parameters, num, data));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));

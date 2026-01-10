@@ -2910,7 +2910,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppLog(vx_graph graph, vx_tensor pSrc, vx_
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_uint32 devType = getGraphAffinity(graph);
-        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devtype);
+        vx_scalar deviceType = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &devType);
         vx_reference params[] = {
             (vx_reference)pSrc,
             (vx_reference)pSrcRoi,

@@ -280,6 +280,15 @@ static vx_status VX_CALLBACK uninitializeGaussianNoise(vx_node node, const vx_re
     delete data->pDstDesc;
     delete data->pSrcGenericDesc;
     delete data->pDstGenericDesc;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        hipError_t err = hipHostFree(data->pSrcRoi3D);
+        if (err != hipSuccess)
+            std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
+#endif
+    } else {
+        if (data->pSrcRoi3D) delete[] data->pSrcRoi3D;
+    }
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
     return VX_SUCCESS;

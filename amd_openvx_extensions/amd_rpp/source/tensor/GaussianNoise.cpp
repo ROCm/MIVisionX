@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2026 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,8 @@ struct GaussianNoiseLocalData {
     vx_uint32 deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    vx_float32 *mean;
-    vx_float32 *std_dev;
+    vx_float32 *pMean;
+    vx_float32 *pStdDev;
     vx_int32 *pConditionalExecution;
     vx_uint32 seed;
     RpptDescPtr pSrcDesc;
@@ -41,13 +41,13 @@ struct GaussianNoiseLocalData {
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
-    size_t ouputTensorDims[RPP_MAX_TENSOR_DIMS];
+    size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-static vx_status VX_CALLBACK refreshNoise(vx_node node, const vx_reference *parameters, vx_uint32 num, GaussianNoiseLocalData *data) {
+static vx_status VX_CALLBACK refreshGaussianNoise(vx_node node, const vx_reference *parameters, vx_uint32 num, GaussianNoiseLocalData *data) {
     vx_status status = VX_SUCCESS;
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0], sizeof(vx_float32), data->mean, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0], sizeof(vx_float32), data->std_dev, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pMean, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pStdDev, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->inputTensorDims[0], sizeof(vx_float32), data->pConditionalExecution, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     void *roi_tensor_ptr;
@@ -72,8 +72,8 @@ static vx_status VX_CALLBACK refreshNoise(vx_node node, const vx_reference *para
     }
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         if(!data->pConditionalExecution[i]) {
-            data->mean[i] = 0.0;
-            data->std_dev[i] = 0.0;
+            data->pMean[i] = 0.0;
+            data->pStdDev[i] = 0.0;
         }
     }
     if (data->inputLayout == vxTensorLayout::VX_NDHWC) {
@@ -105,8 +105,8 @@ static vx_status VX_CALLBACK refreshNoise(vx_node node, const vx_reference *para
             for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
                 unsigned index = n * num_of_frames;
                 for (unsigned f = 0; f < num_of_frames; f++) {
-                    data->mean[index + f] = data->mean[n];
-                    data->std_dev[index + f] = data->std_dev[n];
+                    data->pMean[index + f] = data->pMean[n];
+                    data->pStdDev[index + f] = data->pStdDev[n];
                     data->pSrcRoi[index + f].xywhROI.xy.x = data->pSrcRoi[n].xywhROI.xy.x;
                     data->pSrcRoi[index + f].xywhROI.xy.y = data->pSrcRoi[n].xywhROI.xy.y;
                     data->pSrcRoi[index + f].xywhROI.roiWidth = data->pSrcRoi[n].xywhROI.roiWidth;
@@ -118,37 +118,37 @@ static vx_status VX_CALLBACK refreshNoise(vx_node node, const vx_reference *para
     return status;
 }
 
-static vx_status VX_CALLBACK validateNoise(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
+static vx_status VX_CALLBACK validateGaussianNoise(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #7 type=%d (must be size)\n", scalar_type);
+    if (scalar_type != VX_TYPE_INT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #6 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #8 type=%d (must be size)\n", scalar_type);
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #7 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[8], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #9 type=%d (must be size)\n", scalar_type);
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #8 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[9], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #10 type=%d (must be size)\n", scalar_type);
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #9 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[10], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #11 type=%d (must be size)\n", scalar_type);
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #10 type=%d (must be size)\n", scalar_type);
 
     // Check for input tensor
     size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
     if (num_tensor_dims < 4)
-        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Noise: tensor: #0 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: GaussianNoise: tensor: #0 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
 
     // Check for output tensor
     vx_uint8 tensor_fixed_point_position;
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_dtype;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Noise : tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+    if (num_tensor_dims < 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: GaussianNoise : tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &tensor_dtype, sizeof(tensor_dtype)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_FIXED_POINT_POSITION, &tensor_fixed_point_position, sizeof(tensor_fixed_point_position)));
@@ -159,22 +159,22 @@ static vx_status VX_CALLBACK validateNoise(vx_node node, const vx_reference para
     return status;
 }
 
-static vx_status VX_CALLBACK processNoise(vx_node node, const vx_reference *parameters, vx_uint32 num) {
+static vx_status VX_CALLBACK processGaussianNoise(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
     vx_status return_status = VX_SUCCESS;
     GaussianNoiseLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshNoise(node, parameters, num, data);
+    refreshGaussianNoise(node, parameters, num, data);
     if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW) {
         if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
     #if ENABLE_OPENCL
             return_status = VX_ERROR_NOT_IMPLEMENTED;
     #elif ENABLE_HIP
-            rpp_status = rppt_gaussian_noise_voxel_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->mean, data->std_dev, data->seed, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
+            rpp_status = rppt_gaussian_noise_voxel_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pMean, data->pStdDev, data->seed, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     #endif
         } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rpp_status = rppt_gaussian_noise_voxel_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->mean, data->std_dev, data->seed, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
+            rpp_status = rppt_gaussian_noise_voxel_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pMean, data->pStdDev, data->seed, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         }
     }
@@ -183,18 +183,18 @@ static vx_status VX_CALLBACK processNoise(vx_node node, const vx_reference *para
     #if ENABLE_OPENCL
             return_status = VX_ERROR_NOT_IMPLEMENTED;
     #elif ENABLE_HIP
-            rpp_status = rppt_gaussian_noise_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->mean, data->std_dev, data->seed, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+            rpp_status = rppt_gaussian_noise_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pMean, data->pStdDev, data->seed, data->pSrcRoi, data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     #endif
         } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rpp_status = rppt_gaussian_noise_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->mean, data->std_dev, data->seed, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+            rpp_status = rppt_gaussian_noise_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pMean, data->pStdDev, data->seed, data->pSrcRoi, data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         }
     }
     return return_status;
 }
 
-static vx_status VX_CALLBACK initializeNoise(vx_node node, const vx_reference *parameters, vx_uint32 num) {
+static vx_status VX_CALLBACK initializeGaussianNoise(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     GaussianNoiseLocalData *data = new GaussianNoiseLocalData;
     memset(data, 0, sizeof(GaussianNoiseLocalData));
 
@@ -222,11 +222,11 @@ static vx_status VX_CALLBACK initializeNoise(vx_node node, const vx_reference *p
         // Querying for output tensor
         data->pDstGenericDesc = new RpptGenericDesc;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstGenericDesc->numDims, sizeof(data->pDstGenericDesc->numDims)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->ouputTensorDims, sizeof(vx_size) * data->pDstGenericDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstGenericDesc->numDims));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
         data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
         data->pDstGenericDesc->offsetInBytes = 0;
-        fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->ouputTensorDims); 
+        fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->outputTensorDims); 
     }
     else {
         data->pSrcDesc = new RpptDesc;
@@ -240,41 +240,46 @@ static vx_status VX_CALLBACK initializeNoise(vx_node node, const vx_reference *p
         // Querying for output tensor
         data->pDstDesc = new RpptDesc;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &data->pDstDesc->numDims, sizeof(data->pDstDesc->numDims)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->ouputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &data->outputTensorDims, sizeof(vx_size) * data->pDstDesc->numDims));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
         data->pDstDesc->dataType = getRpptDataType(output_tensor_dtype);
         data->pDstDesc->offsetInBytes = 0;
-        fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
+        fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
     }
 
-    data->mean = new vx_float32[data->inputTensorDims[0]];
-    data->std_dev = new vx_float32[data->inputTensorDims[0]];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, data->inputTensorDims[0] * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, data->inputTensorDims[0] * sizeof(vx_float32)));
+#endif
+    } else {
+        data->pMean = new vx_float32[data->inputTensorDims[0]];
+        data->pStdDev = new vx_float32[data->inputTensorDims[0]];
+    }
     data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
-    refreshNoise(node, parameters, num, data);
+    refreshGaussianNoise(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }
 
-static vx_status VX_CALLBACK uninitializeNoise(vx_node node, const vx_reference *parameters, vx_uint32 num) {
+static vx_status VX_CALLBACK uninitializeGaussianNoise(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     GaussianNoiseLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->mean;
-    delete[] data->std_dev;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pMean) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pMean));
+        if (data->pStdDev) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pStdDev));
+#endif
+    } else {
+        if (data->pMean) delete[] data->pMean;
+        if (data->pStdDev) delete[] data->pStdDev;
+    }
     delete[] data->pConditionalExecution;
     delete data->pSrcDesc;
     delete data->pDstDesc;
     delete data->pSrcGenericDesc;
     delete data->pDstGenericDesc;
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        hipError_t err = hipHostFree(data->pSrcRoi3D);
-        if (err != hipSuccess)
-            std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
-#endif
-    } else {
-        if (data->pSrcRoi3D) delete[] data->pSrcRoi3D;
-    }
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
     return VX_SUCCESS;
@@ -302,11 +307,11 @@ vx_status GaussianNoise_Register(vx_context context) {
     // Add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.GaussianNoise",
                                        VX_KERNEL_RPP_GAUSSIAN_NOISE,
-                                       processNoise,
+                                       processGaussianNoise,
                                        11,
-                                       validateNoise,
-                                       initializeNoise,
-                                       uninitializeNoise);
+                                       validateGaussianNoise,
+                                       initializeGaussianNoise,
+                                       uninitializeGaussianNoise);
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));

@@ -31,14 +31,14 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.1.2")
+set(VERSION "3.1.3")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
-find_package(rpp 2.2.1 REQUIRED)
+find_package(rpp 2.2.2 REQUIRED)
 
 message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
 message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
@@ -74,7 +74,9 @@ list(APPEND SOURCES
         source/tensor/Copy.cpp
         source/tensor/Crop.cpp
         source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Dilate.cpp
         source/tensor/Downmix.cpp
+        source/tensor/Erode.cpp
         source/tensor/Exposure.cpp
         source/tensor/FishEye.cpp
         source/tensor/Flip.cpp
@@ -87,6 +89,7 @@ list(APPEND SOURCES
         source/tensor/Jitter.cpp
         source/tensor/LensCorrection.cpp
         source/tensor/Log1p.cpp
+        source/tensor/Magnitude.cpp
         source/tensor/MedianFilter.cpp
         source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
@@ -95,6 +98,7 @@ list(APPEND SOURCES
         source/tensor/Nop.cpp
         source/tensor/Normalize.cpp
         source/tensor/Rotate.cpp
+        source/tensor/Phase.cpp
         source/tensor/Pixelate.cpp
         source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
@@ -109,9 +113,11 @@ list(APPEND SOURCES
         source/tensor/Spectrogram.cpp
         source/tensor/TensorAddTensor.cpp
         source/tensor/TensorMulScalar.cpp
+        source/tensor/Threshold.cpp
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
+        source/tensor/WarpPerspective.cpp
         source/tensor/Slice.cpp
         source/tensor/Transpose.cpp
         source/tensor/PythonFunction.cpp

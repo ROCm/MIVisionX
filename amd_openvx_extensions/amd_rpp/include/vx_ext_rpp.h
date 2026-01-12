@@ -2153,6 +2153,94 @@ extern "C"
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppGaussianFilter(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst,
 	                                                         vx_array pStdDev, vx_scalar kernelSize, vx_scalar borderType,
 	                                                         vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+													 
+	/*! \brief [Graph] Creates an Erode function node.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the ROI values for the input in XYWH/LTRB format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] kernelSize The input scalar in <tt>\ref VX_TYPE_UINT32</tt> format containing the kernel size for the erode operation.
+	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
+	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.
+	 * \param [in] roiType The ROI encoding type in <tt>\ref VX_TYPE_INT32</tt> denotes whether source ROI is XYWH or LTRB.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppErode(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar kernelSize, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+	/*! \brief [Graph] Creates a Dilate function node.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the ROI values for the input in XYWH/LTRB format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	 * \param [in] kernelSize The input scalar in <tt>\ref VX_TYPE_UINT32</tt> format containing the kernel size for the dilate operation.
+	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
+	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.
+	 * \param [in] roiType The ROI encoding type in <tt>\ref VX_TYPE_INT32</tt> denotes whether source ROI is XYWH or LTRB.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppDilate(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar kernelSize, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+	/*! \brief [Graph] Creates a Magnitude function node.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc1 The first input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
+	 * \param [in] pSrc2 The second input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing per-sample ROI values for the inputs in XYWH/LTRB format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
+	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denoting the layout of the input tensors.
+	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denoting the layout of the output tensor.
+	 * \param [in] roiType The ROI encoding type in <tt>\ref VX_TYPE_INT32</tt> denoting whether source ROI is XYWH or LTRB.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppMagnitude(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+	/*! \brief [Graph] Creates a Phase function node.
+	 * \ingroup group_amd_rpp
+	 * \param [in] graph The handle to the graph.
+	 * \param [in] pSrc1 The first input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
+	 * \param [in] pSrc2 The second input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing per-sample ROI values for the inputs in XYWH/LTRB format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
+	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denoting the layout of the input tensors.
+	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denoting the layout of the output tensor.
+	 * \param [in] roiType The ROI encoding type in <tt>\ref VX_TYPE_INT32</tt> denoting whether source ROI is XYWH or LTRB.
+	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	 */
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppPhase(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pSrcRoi, vx_tensor pDst, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+	
+	/*!
+	* \brief [Graph] Creates a Threshold function node.
+	* \ingroup group_amd_rpp
+	* \param [in] graph The handle to the graph.
+	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing per-sample ROI values for the inputs in XYWH/LTRB format.
+	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format.
+	 * \param [in] pMin The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing per-sample minimum threshold values.
+	 * \param [in] pMax The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing per-sample maximum threshold values.
+	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denoting the layout of the input tensor.
+	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denoting the layout of the output tensor.
+	 * \param [in] roiType The ROI encoding type in <tt>\ref VX_TYPE_INT32</tt> denoting whether source ROI is XYWH or LTRB.
+	* \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using vxGetStatus.
+	*/
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppThreshold(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pMin, vx_array pMax, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
+	/*!
+	* \brief [Graph] Creates a RPP Warp Perspective function node.
+	* \param [in] graph The handle to the graph.
+	* \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	* \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int</tt> containing the roi values for the input in XYWH/LTRB format.
+	* \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
+	* \param [in] pPerspectiveArray The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing per-sample 3x3 perspective transform matrices (9 values per sample, row-major).
+	* \param [in] interpolationType The resize interpolation type in <tt>\ref VX_TYPE_INT32</tt> format containing the interpolation policy.
+	* \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denoting the layout of input tensor (e.g., VX_NHWC, VX_NCHW, etc.).
+	* \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denoting the layout of output tensor (e.g., VX_NHWC, VX_NCHW, etc.).
+	* \param [in] roiType The ROI encoding type in <tt>\ref VX_TYPE_INT32</tt> denoting whether source ROI is of XYWH or LTRB type.
+	* \return A node reference vx_node. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+	*/
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppWarpPerspective(vx_graph graph, vx_tensor pSrc, vx_tensor pSrcRoi, vx_tensor pDst, vx_array pPerspectiveArray, vx_scalar interpolationType, vx_scalar inputLayout, vx_scalar outputLayout, vx_scalar roiType);
+
 #ifdef __cplusplus
 }
 #endif

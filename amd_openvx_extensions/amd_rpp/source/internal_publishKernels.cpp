@@ -187,6 +187,11 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(Phase_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Threshold_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(WarpPerspective_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Erase_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(CropAndPatch_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Remap_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Ricap_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(BitwiseOps_Register));
 
     return status;
 }

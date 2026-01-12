@@ -31,7 +31,7 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.1.3")
+set(VERSION "3.1.4")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
@@ -65,6 +65,7 @@ set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES
         source/tensor/Blend.cpp
+        source/tensor/BitwiseOps.cpp
         source/tensor/Blur.cpp
         source/tensor/Brightness.cpp
         source/tensor/ColorTemperature.cpp
@@ -73,9 +74,11 @@ list(APPEND SOURCES
         source/tensor/Contrast.cpp
         source/tensor/Copy.cpp
         source/tensor/Crop.cpp
+        source/tensor/CropAndPatch.cpp
         source/tensor/CropMirrorNormalize.cpp
         source/tensor/Dilate.cpp
         source/tensor/Downmix.cpp
+        source/tensor/Erase.cpp
         source/tensor/Erode.cpp
         source/tensor/Exposure.cpp
         source/tensor/FishEye.cpp
@@ -102,11 +105,13 @@ list(APPEND SOURCES
         source/tensor/Pixelate.cpp
         source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
+        source/tensor/Remap.cpp
         source/tensor/Resample.cpp
         source/tensor/Resize.cpp
         source/tensor/ResizeCrop.cpp
         source/tensor/ResizeCropMirror.cpp
         source/tensor/ResizeMirrorNormalize.cpp
+        source/tensor/Ricap.cpp
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/Snow.cpp

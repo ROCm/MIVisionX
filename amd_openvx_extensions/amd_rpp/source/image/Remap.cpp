@@ -225,7 +225,7 @@ vx_status remap_Register(vx_context context)
     vx_status status = VX_SUCCESS;
     // Add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.remap",
-                                       VX_KERNEL_RPP_REMAP,
+                                       VX_KERNEL_RPP_REMAPBATCHPD,
                                        processremap,
                                        8,
                                        validateremap,

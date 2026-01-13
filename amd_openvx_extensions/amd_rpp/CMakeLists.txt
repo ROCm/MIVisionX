@@ -65,6 +65,7 @@ set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES
         source/tensor/Blend.cpp
+        source/tensor/BitwiseOps.cpp
         source/tensor/Blur.cpp
         source/tensor/Brightness.cpp
         source/tensor/ChannelPermute.cpp
@@ -76,8 +77,12 @@ list(APPEND SOURCES
         source/tensor/Contrast.cpp
         source/tensor/Copy.cpp
         source/tensor/Crop.cpp
+        source/tensor/CropAndPatch.cpp
         source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Dilate.cpp
         source/tensor/Downmix.cpp
+        source/tensor/Erase.cpp
+        source/tensor/Erode.cpp
         source/tensor/Exposure.cpp
         source/tensor/FishEye.cpp
         source/tensor/Flip.cpp
@@ -93,6 +98,7 @@ list(APPEND SOURCES
         source/tensor/LensCorrection.cpp
         source/tensor/Log.cpp
         source/tensor/Log1p.cpp
+        source/tensor/Magnitude.cpp
         source/tensor/MedianFilter.cpp
         source/tensor/Lut.cpp
         source/tensor/MelFilterBank.cpp
@@ -102,15 +108,18 @@ list(APPEND SOURCES
         source/tensor/Nop.cpp
         source/tensor/Normalize.cpp
         source/tensor/Rotate.cpp
+        source/tensor/Phase.cpp
         source/tensor/Pixelate.cpp
         source/tensor/Posterize.cpp
         source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
+        source/tensor/Remap.cpp
         source/tensor/Resample.cpp
         source/tensor/Resize.cpp
         source/tensor/ResizeCrop.cpp
         source/tensor/ResizeCropMirror.cpp
         source/tensor/ResizeMirrorNormalize.cpp
+        source/tensor/Ricap.cpp
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
         source/tensor/ShotNoise.cpp
@@ -125,9 +134,11 @@ list(APPEND SOURCES
         source/tensor/TensorMulScalar.cpp
         source/tensor/TensorStdDev.cpp
         source/tensor/TensorSum.cpp
+        source/tensor/Threshold.cpp
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
+        source/tensor/WarpPerspective.cpp
         source/tensor/Water.cpp
         source/tensor/Slice.cpp
         source/tensor/Transpose.cpp

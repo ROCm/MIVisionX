@@ -350,7 +350,7 @@ vx_status Solarize_Register(vx_context);
 #define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
 #define VX_KERNEL_RPP_ERASE_NAME                                "org.rpp.Erase"
 #define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
-#define VX_KERNEL_RPP_REMAP_NAME                         "org.rpp.Remap"
+#define VX_KERNEL_RPP_REMAP_NAME                                "org.rpp.Remap"
 #define VX_KERNEL_RPP_RICAP_NAME                                "org.rpp.Ricap"
 #define VX_KERNEL_RPP_BITWISE_OPS_NAME                          "org.rpp.BitwiseOps"
 #define VX_KERNEL_RPP_LOG_NAME                                  "org.rpp.Log"

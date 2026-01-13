@@ -176,6 +176,17 @@ vx_status GaussianFilter_Register(vx_context);
 vx_status GridMask_Register(vx_context);
 vx_status MedianFilter_Register(vx_context);
 vx_status NonLinearBlend_Register(vx_context);
+vx_status Dilate_Register(vx_context);
+vx_status Erode_Register(vx_context);
+vx_status Magnitude_Register(vx_context);
+vx_status Phase_Register(vx_context);
+vx_status Threshold_Register(vx_context);
+vx_status WarpPerspective_Register(vx_context);
+vx_status Erase_Register(vx_context);
+vx_status CropAndPatch_Register(vx_context);
+vx_status Remap_Register(vx_context);
+vx_status Ricap_Register(vx_context);
+vx_status BitwiseOps_Register(vx_context);
 vx_status Log_Register(vx_context);
 vx_status GaussianNoise_Register(vx_context);
 vx_status ShotNoise_Register(vx_context);
@@ -253,7 +264,7 @@ vx_status Spatter_Register(vx_context);
 #define VX_KERNEL_RPP_CANNYEDGEDETECTOR_NAME                    "org.rpp.CannyEdgeDetector"
 #define VX_KERNEL_RPP_HARRISCORNERDETECTOR_NAME                 "org.rpp.HarrisCornerDetector"
 #define VX_KERNEL_RPP_FASTCORNERDETECTOR_NAME                   "org.rpp.FastCornerDetector"
-#define VX_KERNEL_RPP_REMAP_NAME                                "org.rpp.remap"
+#define VX_KERNEL_RPP_REMAPBATCHPD_NAME                         "org.rpp.remap"
 #define VX_KERNEL_RPP_TENSORADD_NAME                            "org.rpp.TensorAdd"
 #define VX_KERNEL_RPP_TENSORSUBTRACT_NAME                       "org.rpp.TensorSubtract"
 #define VX_KERNEL_RPP_TENSORMULTIPLY_NAME                       "org.rpp.TensorMultiply"
@@ -325,6 +336,17 @@ vx_status Spatter_Register(vx_context);
 #define VX_KERNEL_RPP_GRIDMASK_NAME                             "org.rpp.GridMask"
 #define VX_KERNEL_RPP_MEDIAN_FILTER_NAME                        "org.rpp.MedianFilter"
 #define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
+#define VX_KERNEL_RPP_DILATE_NAME                               "org.rpp.Dilate"
+#define VX_KERNEL_RPP_ERODE_NAME                                "org.rpp.Erode"
+#define VX_KERNEL_RPP_MAGNITUDE_NAME                            "org.rpp.Magnitude"
+#define VX_KERNEL_RPP_PHASE_NAME                                "org.rpp.Phase"
+#define VX_KERNEL_RPP_THRESHOLD_NAME                            "org.rpp.Threshold"
+#define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
+#define VX_KERNEL_RPP_ERASE_NAME                                "org.rpp.Erase"
+#define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
+#define VX_KERNEL_RPP_REMAP_NAME                         "org.rpp.Remap"
+#define VX_KERNEL_RPP_RICAP_NAME                                "org.rpp.Ricap"
+#define VX_KERNEL_RPP_BITWISE_OPS_NAME                          "org.rpp.BitwiseOps"
 #define VX_KERNEL_RPP_LOG_NAME                                  "org.rpp.Log"
 #define VX_KERNEL_RPP_GAUSSIAN_NOISE_NAME                       "org.rpp.GaussianNoise"
 #define VX_KERNEL_RPP_SHOT_NOISE_NAME                           "org.rpp.ShotNoise"

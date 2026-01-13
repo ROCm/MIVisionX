@@ -92,8 +92,6 @@ const std::map<vxTensorLayout, RpptLayout> tensorLayoutMapping = {
     {vxTensorLayout::VX_NCHW, RpptLayout::NCHW},
     {vxTensorLayout::VX_NFHWC, RpptLayout::NHWC},
     {vxTensorLayout::VX_NFCHW, RpptLayout::NCHW},
-    {vxTensorLayout::VX_NDHWC, RpptLayout::NDHWC},
-    {vxTensorLayout::VX_NCDHW, RpptLayout::NCDHW},
 #if RPP_AUDIO
     {vxTensorLayout::VX_NHW, RpptLayout::NHW},
     {vxTensorLayout::VX_NFT, RpptLayout::NFT},

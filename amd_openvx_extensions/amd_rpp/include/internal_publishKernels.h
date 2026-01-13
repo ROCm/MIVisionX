@@ -187,6 +187,12 @@ vx_status CropAndPatch_Register(vx_context);
 vx_status Remap_Register(vx_context);
 vx_status Ricap_Register(vx_context);
 vx_status BitwiseOps_Register(vx_context);
+vx_status Log_Register(vx_context);
+vx_status GaussianNoise_Register(vx_context);
+vx_status ShotNoise_Register(vx_context);
+vx_status Water_Register(vx_context);
+vx_status ColorJitter_Register(vx_context);
+vx_status Spatter_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -341,5 +347,11 @@ vx_status BitwiseOps_Register(vx_context);
 #define VX_KERNEL_RPP_REMAP_NAME                         "org.rpp.Remap"
 #define VX_KERNEL_RPP_RICAP_NAME                                "org.rpp.Ricap"
 #define VX_KERNEL_RPP_BITWISE_OPS_NAME                          "org.rpp.BitwiseOps"
+#define VX_KERNEL_RPP_LOG_NAME                                  "org.rpp.Log"
+#define VX_KERNEL_RPP_GAUSSIAN_NOISE_NAME                       "org.rpp.GaussianNoise"
+#define VX_KERNEL_RPP_SHOT_NOISE_NAME                           "org.rpp.ShotNoise"
+#define VX_KERNEL_RPP_WATER_NAME                                "org.rpp.Water"
+#define VX_KERNEL_RPP_COLORJITTER_NAME                          "org.rpp.ColorJitter"
+#define VX_KERNEL_RPP_SPATTER_NAME                              "org.rpp.Spatter"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

@@ -31,7 +31,7 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.1.4")
+set(VERSION "3.1.5")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
@@ -68,6 +68,7 @@ list(APPEND SOURCES
         source/tensor/BitwiseOps.cpp
         source/tensor/Blur.cpp
         source/tensor/Brightness.cpp
+        source/tensor/ColorJitter.cpp
         source/tensor/ColorTemperature.cpp
         source/tensor/ColorCast.cpp
         source/tensor/ColorTwist.cpp
@@ -86,11 +87,13 @@ list(APPEND SOURCES
         source/tensor/Fog.cpp
         source/tensor/GammaCorrection.cpp
         source/tensor/GaussianFilter.cpp
+        source/tensor/GaussianNoise.cpp
         source/tensor/Glitch.cpp
         source/tensor/GridMask.cpp
         source/tensor/Hue.cpp
         source/tensor/Jitter.cpp
         source/tensor/LensCorrection.cpp
+        source/tensor/Log.cpp
         source/tensor/Log1p.cpp
         source/tensor/Magnitude.cpp
         source/tensor/MedianFilter.cpp
@@ -114,7 +117,9 @@ list(APPEND SOURCES
         source/tensor/Ricap.cpp
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
+        source/tensor/ShotNoise.cpp
         source/tensor/Snow.cpp
+        source/tensor/Spatter.cpp
         source/tensor/Spectrogram.cpp
         source/tensor/TensorAddTensor.cpp
         source/tensor/TensorMulScalar.cpp
@@ -123,6 +128,7 @@ list(APPEND SOURCES
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
         source/tensor/WarpPerspective.cpp
+        source/tensor/Water.cpp
         source/tensor/Slice.cpp
         source/tensor/Transpose.cpp
         source/tensor/PythonFunction.cpp

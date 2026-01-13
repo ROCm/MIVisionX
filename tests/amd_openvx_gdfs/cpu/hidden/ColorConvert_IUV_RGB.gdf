@@ -1,0 +1,5 @@
+# agoKernel_ColorConvert_IUV_RGB
+data output = image:1920,1080,U008
+data input_1 = image:1920,1080,RGB2
+data input_2 = image:1920,1080,RGB2
+node com.amd.openvx.ColorConvert_IUV_RGB output input_1 input_2

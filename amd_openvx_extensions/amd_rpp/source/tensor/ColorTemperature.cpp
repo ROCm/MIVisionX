@@ -114,8 +114,7 @@ static vx_status VX_CALLBACK processColorTemperature(vx_node node, const vx_refe
     ColorTemperatureLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshColorTemperature(node, parameters, num, data);
-    // rppt_color_temperature not available in RPP TOT, will be enabled once support is added
-    /*if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
@@ -125,7 +124,7 @@ static vx_status VX_CALLBACK processColorTemperature(vx_node node, const vx_refe
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_color_temperature_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pAdjustmentValue, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }*/
+    }
     return return_status;
 }
 
@@ -161,7 +160,14 @@ static vx_status VX_CALLBACK initializeColorTemperature(vx_node node, const vx_r
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pAdjustmentValue = new vx_int32[data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAdjustmentValue, data->pSrcDesc->n * sizeof(vx_int32)));
+#endif
+    } else {
+        data->pAdjustmentValue = new vx_int32[data->pSrcDesc->n];
+    }
+
     refreshColorTemperature(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -171,7 +177,13 @@ static vx_status VX_CALLBACK initializeColorTemperature(vx_node node, const vx_r
 static vx_status VX_CALLBACK uninitializeColorTemperature(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ColorTemperatureLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pAdjustmentValue;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pAdjustmentValue) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAdjustmentValue));
+#endif
+    } else {
+        if (data->pAdjustmentValue) delete[] data->pAdjustmentValue;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

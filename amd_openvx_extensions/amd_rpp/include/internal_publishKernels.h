@@ -39,6 +39,7 @@ extern "C" SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context conte
 vx_status ADD_KERNEL(std::function<vx_status(vx_context)>);
 vx_status get_kernels_to_publish();
 
+#if RPP_LEGACY_SUPPORT
 vx_status AbsoluteDifferencebatchPD_Register(vx_context);
 vx_status AccumulatebatchPD_Register(vx_context);
 vx_status AccumulateSquaredbatchPD_Register(vx_context);
@@ -121,6 +122,7 @@ vx_status ThresholdingbatchPD_Register(vx_context);
 vx_status VignettebatchPD_Register(vx_context);
 vx_status WarpAffinebatchPD_Register(vx_context);
 vx_status WarpPerspectivebatchPD_Register(vx_context);
+#endif
 
 vx_status Blend_Register(vx_context);
 vx_status Blur_Register(vx_context);
@@ -166,6 +168,25 @@ vx_status NonSilentRegionDetection_Register(vx_context);
 vx_status Slice_Register(vx_context);
 vx_status Normalize_Register(vx_context);
 vx_status MelFilterBank_Register(vx_context);
+vx_status Transpose_Register(vx_context);
+vx_status Log1p_Register(vx_context);
+vx_status PythonFunction_Register(vx_context);
+vx_status ColorCast_Register(vx_context);
+vx_status GaussianFilter_Register(vx_context);
+vx_status GridMask_Register(vx_context);
+vx_status MedianFilter_Register(vx_context);
+vx_status NonLinearBlend_Register(vx_context);
+vx_status Dilate_Register(vx_context);
+vx_status Erode_Register(vx_context);
+vx_status Magnitude_Register(vx_context);
+vx_status Phase_Register(vx_context);
+vx_status Threshold_Register(vx_context);
+vx_status WarpPerspective_Register(vx_context);
+vx_status Erase_Register(vx_context);
+vx_status CropAndPatch_Register(vx_context);
+vx_status Remap_Register(vx_context);
+vx_status Ricap_Register(vx_context);
+vx_status BitwiseOps_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -237,7 +258,7 @@ vx_status MelFilterBank_Register(vx_context);
 #define VX_KERNEL_RPP_CANNYEDGEDETECTOR_NAME                    "org.rpp.CannyEdgeDetector"
 #define VX_KERNEL_RPP_HARRISCORNERDETECTOR_NAME                 "org.rpp.HarrisCornerDetector"
 #define VX_KERNEL_RPP_FASTCORNERDETECTOR_NAME                   "org.rpp.FastCornerDetector"
-#define VX_KERNEL_RPP_REMAP_NAME                                "org.rpp.remap"
+#define VX_KERNEL_RPP_REMAPBATCHPD_NAME                         "org.rpp.remap"
 #define VX_KERNEL_RPP_TENSORADD_NAME                            "org.rpp.TensorAdd"
 #define VX_KERNEL_RPP_TENSORSUBTRACT_NAME                       "org.rpp.TensorSubtract"
 #define VX_KERNEL_RPP_TENSORMULTIPLY_NAME                       "org.rpp.TensorMultiply"
@@ -301,5 +322,24 @@ vx_status MelFilterBank_Register(vx_context);
 #define VX_KERNEL_RPP_SLICE_NAME                                "org.rpp.Slice"
 #define VX_KERNEL_RPP_NORMALIZE_NAME                            "org.rpp.Normalize"
 #define VX_KERNEL_RPP_MELFILTERBANK_NAME                        "org.rpp.MelFilterBank"
+#define VX_KERNEL_RPP_TRANSPOSE_NAME                            "org.rpp.Transpose"
+#define VX_KERNEL_RPP_LOG1P_NAME                                "org.rpp.Log1p"
+#define VX_KERNEL_RPP_PYTHON_FUNCTION_NAME                      "org.rpp.PythonFunction"
+#define VX_KERNEL_RPP_COLORCAST_NAME                            "org.rpp.ColorCast"
+#define VX_KERNEL_RPP_GAUSSIAN_FILTER_NAME                      "org.rpp.GaussianFilter"
+#define VX_KERNEL_RPP_GRIDMASK_NAME                             "org.rpp.GridMask"
+#define VX_KERNEL_RPP_MEDIAN_FILTER_NAME                        "org.rpp.MedianFilter"
+#define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
+#define VX_KERNEL_RPP_DILATE_NAME                               "org.rpp.Dilate"
+#define VX_KERNEL_RPP_ERODE_NAME                                "org.rpp.Erode"
+#define VX_KERNEL_RPP_MAGNITUDE_NAME                            "org.rpp.Magnitude"
+#define VX_KERNEL_RPP_PHASE_NAME                                "org.rpp.Phase"
+#define VX_KERNEL_RPP_THRESHOLD_NAME                            "org.rpp.Threshold"
+#define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
+#define VX_KERNEL_RPP_ERASE_NAME                                "org.rpp.Erase"
+#define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
+#define VX_KERNEL_RPP_REMAP_NAME                         "org.rpp.Remap"
+#define VX_KERNEL_RPP_RICAP_NAME                                "org.rpp.Ricap"
+#define VX_KERNEL_RPP_BITWISE_OPS_NAME                          "org.rpp.BitwiseOps"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

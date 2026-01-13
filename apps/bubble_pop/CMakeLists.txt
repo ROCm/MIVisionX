@@ -23,10 +23,18 @@
 # SOFTWARE.
 #
 ###############################################################################
-cmake_minimum_required(VERSION 3.5)
-project(vx_pop)
+cmake_minimum_required(VERSION 3.10)
 
-set(CMAKE_CXX_STANDARD 14)
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
+endif()
+
+project(vx_pop)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 #Added Default libdir
@@ -47,7 +55,7 @@ include_directories(${OPENVX_INCLUDES})
 
 set(SHARED_LIB_TYPE so)
 if(APPLE)
-  set(SHARED_LIB_TYPE dylib)
+	set(SHARED_LIB_TYPE dylib)
 endif()
 
 if(DEFINED OPENVX_LIBRARIES)
@@ -57,13 +65,13 @@ else()
 	message(STATUS "BUBBLE POP - OPENVX_LIBRARIES: \t<empty> \tDefault:${OPENVX_LIBRARIES}")
 endif()
 
-list    (APPEND SOURCES
+list(APPEND SOURCES
 		source/AMD_VX_Pop_Bubble.cpp
         source/AMD_VX_Pop_Donut.cpp
 		source/internal_dataTranslator.cpp
 		source/internal_publishKernels.cpp
 		source/internal_vxNodes.cpp
-	    )
+)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES})
@@ -86,8 +94,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	target_link_libraries(vx_opencv OpenVX)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14")
 endif()
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)

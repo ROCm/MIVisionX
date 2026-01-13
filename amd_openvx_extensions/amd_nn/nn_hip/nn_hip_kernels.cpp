@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#include <iostream>
 #include "../../../amd_openvx/openvx/hipvx/hip_common_funcs.h"
 #include "nn_hip_host_decls.h"
 
@@ -72,6 +73,7 @@ int HipExec_Gather_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
         hipLaunchKernelGGL(Hip_Gather_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             ind, ind_offset, ind_stride, out, out_offset, out_stride, axis);
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -110,6 +112,7 @@ int HipExec_Tile_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads
         hipLaunchKernelGGL(Hip_Tile_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             in_dims, rep, rep_offset, rep_stride, out, out_offset, out_stride);
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -265,6 +268,7 @@ int HipExec_Cast_layer(hipStream_t stream, dim3 globalThreads, dim3 localThreads
             }
         }
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -362,6 +366,7 @@ int HipExec_image_to_tensor_layer(hipStream_t stream, vx_df_image format, vx_enu
     } else {
         return VX_ERROR_NOT_SUPPORTED;
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -495,6 +500,7 @@ int HipExec_tensor_to_image_layer(hipStream_t stream, vx_df_image format, vx_enu
     } else {
         return VX_ERROR_NOT_SUPPORTED;
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -555,6 +561,8 @@ int HipExec_copy(hipStream_t stream, vx_enum type, uchar* inp, uchar* out, uint 
             hipLaunchKernelGGL(copy_v2<float>, gridDim, blockDim, 0, stream, (float*)inp, (float*)out, width, height, ldi, i_offset, ldc, c_offset);
         }
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+
     return VX_SUCCESS;
 }
 
@@ -570,8 +578,13 @@ Hip_permute_layer(uchar* in, uint in_offset, uint4 in_stride, uchar* order_buf, 
     int idx = i;
     for(int k = num_axis - 1, j = 0; k >= 0; k--, j++) {
         int order = 3 - ((int *)(order_buf + order_offset))[j];
+#if USE_HIP_VERSION_7
+        old_idx += (idx / out_stride[k]) * (in_stride[order]);
+        idx %= (out_stride[k]);
+#else
         old_idx += (idx / out_stride.data[k]) * (in_stride.data[order]);
         idx %= (out_stride.data[k]);
+#endif
     }
     out += out_offset + i;
     in += in_offset + old_idx;
@@ -587,6 +600,7 @@ int HipExec_permute_layer(hipStream_t stream, dim3 globalThreads, dim3 localThre
 
     hipLaunchKernelGGL(Hip_permute_layer, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
         order_buf, order_offset, order_cap, out, out_offset, out_stride);
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -634,6 +648,7 @@ int HipExec_tensor_log_layer(hipStream_t stream, dim3 globalThreads, dim3 localT
         hipLaunchKernelGGL(Hip_tensor_log_layer_half, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             out, out_offset, out_stride);
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -682,6 +697,7 @@ int HipExec_tensor_exp_layer(hipStream_t stream, dim3 globalThreads, dim3 localT
         hipLaunchKernelGGL(Hip_tensor_exp_layer_half, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             out, out_offset, out_stride);
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -785,6 +801,7 @@ int HipExec_Prior_Box_layer(hipStream_t stream, dim3 globalThreads, dim3 localTh
     hipLaunchKernelGGL(Hip_Prior_Box_layer, gridDim, localThreads, 0, stream, imgWidth, imgHeight,
         layerWidth, layerHeight, minSize, maxSize, flip, clip, offset, output_num, output_dims_ch2 / 4, num_bytes_for_each_prior, out, out_offset,
         out_stride, aspect_ratio_buf, aspect_ratio_offset, aspect_ratio_num, variance_buf, variance_offset);
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -1576,6 +1593,7 @@ int HipExec_Concat_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
         default:
             return VX_ERROR_NOT_SUPPORTED;
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 }
@@ -1980,6 +1998,7 @@ int HipExec_Argmax_layer(hipStream_t stream, dim3 globalThreads, dim3 localThrea
     } else {
         return VX_ERROR_NOT_SUPPORTED;
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
 
     return VX_SUCCESS;
 
@@ -2156,6 +2175,8 @@ int HipExec_tensor_compare_layer(hipStream_t stream, dim3 globalThreads, dim3 lo
                 break;
         }
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+
     return VX_SUCCESS;
 }
 
@@ -2191,5 +2212,7 @@ int HipExec_Upsample_Nearest_layer(hipStream_t stream, dim3 globalThreads, dim3 
         hipLaunchKernelGGL(Hip_Upsample_Nearest_layer<__half>, gridDim, localThreads, 0, stream, in, in_offset, in_stride,
             out, out_offset, out_stride);
     }
+    HIP_CHECK(hipGetLastError()); // Check for launch error
+    
     return VX_SUCCESS;
 }

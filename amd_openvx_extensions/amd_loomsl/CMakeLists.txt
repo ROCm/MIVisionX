@@ -18,18 +18,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.5)
-set(VERSION "1.0.0")
-project(amd_loomsl VERSION ${VERSION} LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10)
 
-set(CMAKE_CXX_STANDARD 14)
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
+endif()
+
+set(VERSION "1.0.0")
+
+project(amd_loomsl VERSION ${VERSION} LANGUAGES CXX)
 
 find_package(OpenCL REQUIRED)
 
 include_directories(${OpenCL_INCLUDE_DIRS} 
-		    ${OpenCL_INCLUDE_DIRS}/Headers 
-		    ../../amd_openvx/openvx/include
-		   )
+		${OpenCL_INCLUDE_DIRS}/Headers 
+		../../amd_openvx/openvx/include
+)
 
 list(APPEND SOURCES
 	kernels/alpha_blend.cpp
@@ -63,13 +72,14 @@ install(TARGETS vx_loomsl LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT 
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES live_stitch_api.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../samples/loom_360_stitch DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/samples/loom_360_stitch DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
+	# -msse4.2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 built-in functions and code generation.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
 endif()
 
 message("-- ${White}amd_loom -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

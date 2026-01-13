@@ -1,0 +1,5 @@
+# agoKernel_Xor_U8_U1U1
+data input_1 = uniform-image:1920,1080,U001
+data input_2 = uniform-image:1920,1080,U001
+data output_1 = image:1920,1080,U008
+node com.amd.openvx.Xor_U8_U1U1 output_1 input_1 input_2

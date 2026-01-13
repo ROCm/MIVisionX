@@ -18,11 +18,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.5)
-set(VERSION "1.1.0")
-project(vx_amd_media VERSION ${VERSION} LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10)
 
-set(CMAKE_CXX_STANDARD 14)
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
+endif()
+set(VERSION "1.1.0")
+
+project(vx_amd_media VERSION ${VERSION} LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
@@ -78,6 +86,11 @@ elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     target_link_libraries(${PROJECT_NAME} hip::host)
 endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+if(FFMPEG_VERSION_4)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC WITH_FFMPEG_VERSION_4=1)
+else()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC WITH_FFMPEG_VERSION_4=0)
+endif()
 
 # install MIVisionX libs -- {ROCM_PATH}/lib
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
@@ -86,13 +99,16 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_amd_media.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+# install - test
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/amd_media_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-    # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute. 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations -msse4.2 -std=gnu++14")
+    # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute.
+    # -msse4.2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 built-in functions and code generation. 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations -msse4.2")
 endif()
 
 message("-- ${White}amd_media -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")

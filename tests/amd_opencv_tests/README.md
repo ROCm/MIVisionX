@@ -28,7 +28,6 @@ absdiff.gdf
 adaptiveThreshold.gdf
 add.gdf
 addWeighted.gdf
-amd_opencv_test_results
 bilateralFilter.gdf
 bitwise_and.gdf
 bitwise_not.gdf

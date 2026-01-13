@@ -33,7 +33,7 @@ from subprocess import Popen, PIPE
 
 __copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
     
@@ -147,10 +147,10 @@ profileLevel = args.profiler_level
 miopenFind = args.miopen_find
 testInfo = args.test_info
 backendType = args.backend_type
-installDir = args.install_directory
+ROCM_PATH = args.install_directory
 reinstall = args.reinstall.upper()
 
-platfromInfo = platform.platform()
+platformInfo = platform.platform()
 
 returnStatus = 0
 
@@ -191,10 +191,15 @@ if reinstall not in ('OFF', 'ON'):
     parser.print_help()
     exit()
 
+# override default path if env path set 
+if "ROCM_PATH" in os.environ:
+    ROCM_PATH = os.environ.get('ROCM_PATH')
+print("ROCm PATH set to -- "+ROCM_PATH+"\n")
+
 # check install
-runVX_exe = installDir+'/bin/runvx'
+runVX_exe = ROCM_PATH+'/bin/runvx'
 if (os.path.isfile(runVX_exe)):
-    print("STATUS: MIVisionX Install Path Found - "+installDir)
+    print("STATUS: MIVisionX Install Path Found - "+ROCM_PATH)
 else:
     print("\nERROR: MIVisionX Install Path Not Found\n")
     exit()
@@ -204,11 +209,11 @@ print("\nMIVisionX runNeuralNetworkTests V-"+__version__+"\n")
 # check for Scripts
 scriptPath = os.path.dirname(os.path.realpath(__file__))
 modelCompilerDir = os.path.expanduser(
-    installDir+'/libexec/mivisionx/model_compiler/python')
+    ROCM_PATH+'/libexec/mivisionx/model_compiler/python')
 pythonScript = modelCompilerDir+'/caffe_to_nnir.py'
 modelCompilerScript = os.path.abspath(pythonScript)
 if (os.path.isfile(modelCompilerScript)):
-    print("\nMIVisionX Neural Net Tests on "+platfromInfo+"\n")
+    print("\nMIVisionX Neural Net Tests on "+platformInfo+"\n")
     print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir+"\n")
 else:
     print("ERROR: Model Compiler Scripts Not Found at - "+modelCompilerDir)
@@ -230,51 +235,58 @@ if os.path.exists('/etc/os-release'):
 inferenceDebianPackages = [
     'inxi',
     'python3-dev',
-    'python3-pip',
-    'protobuf-compiler',
-    'libprotoc-dev'
+    'python3-pip'
 ]
 
 inferenceRPMPackages = [
     'inxi',
     'python3-devel',
-    'python3-pip',
-    'protobuf-devel',
-    'python3-protobuf'
+    'python3-pip'
 ]
 
-# Debian based
-pipNumpyVersion = "numpy==1.23.0"
-pipProtoVersion= "protobuf==3.12.4"
-pipONNXVersion = "onnx==1.12.0"
+# pip3 versions
+pipNumpyVersion = "numpy~=1.23.0"
+pipProtoVersion= "protobuf~=3.12.4"
+pipONNXVersion = "onnx~=1.12.0"
+pipFutureVersion = "future~=1.0.0"
+pipPytzVersion = "pytz~=2022.1"
+pipGoogleVersion = "google~=3.0.0"
+pipNNEFVersion = "nnef~=1.0.7"
+
+# Debian pip3 packages
 if "VERSION_ID=24" in os_info_data:
-    pipNumpyVersion = "numpy==2.0.0"
-    pipONNXVersion = "onnx==1.16.0"
-    pipProtoVersion= "protobuf==3.20.2"
-pip3InferencePackagesUbuntu = [
-    'future==0.18.2',
-    'pytz==2022.1',
-    'google==3.0.0',
+    pipNumpyVersion = "numpy~=2.0.0"
+    pipONNXVersion = "onnx~=1.16.0"
+    pipProtoVersion= "protobuf~=3.20.2"
+
+pip3InferencePackagesDebian = [
+    str(pipFutureVersion),
+    str(pipPytzVersion),
+    str(pipGoogleVersion),
     str(pipNumpyVersion),
     str(pipProtoVersion),
     str(pipONNXVersion),
+    str(pipNNEFVersion)
 ]
 
-# RPM based
-pipONNXversion = "onnx==1.11.0" 
-if "VERSION_ID=7" in os_info_data or "VERSION_ID=8" in os_info_data:
+# RPM pip3 packages
+pipONNXversion = "onnx~=1.11.0"
+if "VERSION_ID=8" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
+    pipNNEFversion = "protobuf==3.12.4" # TBD: NO NNEF Package for RHEL 8
 if "NAME=SLES" in os_info_data:
     pipNumpyVersion = "numpy==1.19.5"
     pipProtoVersion= "protobuf==3.19.5"
+    pipNNEFversion = "protobuf==3.19.5" # TBD: NO NNEF Package for SLES
 
 pip3InferencePackagesRPM = [
-    'future==0.18.2',
-    'pytz==2022.1',
-    'google==3.0.0',
+    str(pipFutureVersion),
+    str(pipPytzVersion),
+    str(pipGoogleVersion),
     str(pipNumpyVersion),
     str(pipProtoVersion),
-    str(pipONNXversion)
+    str(pipONNXVersion),
+    str(pipNNEFVersion)
 ]
 
 # Delete previous install
@@ -309,36 +321,36 @@ if not os.path.exists(modelCompilerDeps):
         if "VERSION_ID=7" in os_info_data:
             linuxCMake = 'cmake3'
             sudoValidate = 'sudo -k'
-            platfromInfo = platfromInfo+'-redhat-7'
+            platformInfo = platformInfo+'-redhat-7'
         elif "VERSION_ID=8" in os_info_data:
-            platfromInfo = platfromInfo+'-redhat-8'
+            platformInfo = platformInfo+'-redhat-8'
         elif "VERSION_ID=9" in os_info_data:
-            platfromInfo = platfromInfo+'-redhat-9'
+            platformInfo = platformInfo+'-redhat-9'
         else:
-            platfromInfo = platfromInfo+'-redhat-centos-undefined-version'
+            platformInfo = platformInfo+'-redhat-centos-undefined-version'
     elif "Ubuntu" in os_info_data:
         linuxSystemInstall = 'apt-get -y'
         linuxSystemInstall_check = '--allow-unauthenticated'
         linuxFlag = '-S'
         if "VERSION_ID=20" in os_info_data:
-            platfromInfo = platfromInfo+'-Ubuntu-20'
+            platformInfo = platformInfo+'-Ubuntu-20'
         elif "VERSION_ID=22" in os_info_data:
-            platfromInfo = platfromInfo+'-Ubuntu-22'
+            platformInfo = platformInfo+'-Ubuntu-22'
         elif "VERSION_ID=24" in os_info_data:
-            platfromInfo = platfromInfo+'-Ubuntu-24'
+            platformInfo = platformInfo+'-Ubuntu-24'
         else:
-            platfromInfo = platfromInfo+'-Ubuntu-undefined-version'
+            platformInfo = platformInfo+'-Ubuntu-undefined-version'
     elif "SLES" in os_info_data:
         linuxSystemInstall = 'zypper -n'
         linuxSystemInstall_check = '--no-gpg-checks'
-        platfromInfo = platfromInfo+'-SLES'
+        platformInfo = platformInfo+'-SLES'
     elif "Mariner" in os_info_data:
         linuxSystemInstall = 'tdnf -y'
         linuxSystemInstall_check = '--nogpgcheck'
-        platfromInfo = platfromInfo+'-Mariner'
+        platformInfo = platformInfo+'-Mariner'
     else:
-        print("\nMIVisionX runNeuralNetworkTests.py on "+platfromInfo+" is unsupported\n")
-        print("\nMIVisionX Setup Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP5\n")
+        print("\nMIVisionX runNeuralNetworkTests.py on "+platformInfo+" is unsupported\n")
+        print("\nMIVisionX Setup Supported on: Ubuntu 22/24; CentOS 7/8; RedHat 8/9; & SLES 15 SP5\n")
         exit()
 
     if userName == 'root':
@@ -347,29 +359,29 @@ if not os.path.exists(modelCompilerDeps):
 
     os.makedirs(modelCompilerDeps)
     os.system('sudo -v')
-    if "Ubuntu" in platfromInfo:
+    if "Ubuntu" in platformInfo:
         for i in range(len(inferenceDebianPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ inferenceDebianPackages[i]))
-        for i in range(len(pip3InferencePackagesUbuntu)):
-                            ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesUbuntu[i]))
+        for i in range(len(pip3InferencePackagesDebian)):
+                            ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesDebian[i]))
     else:
         for i in range(len(inferenceRPMPackages)):
             ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                         ' '+linuxSystemInstall_check+' install -y '+ inferenceRPMPackages[i]))
         for i in range(len(pip3InferencePackagesRPM)):
                             ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-    # Install NNEF Deps
-    ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
-    ERROR_CHECK(os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
-    ERROR_CHECK(os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
-    ERROR_CHECK(os.system(
-        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
+        if "SLES" in platformInfo or "Mariner" in platformInfo or "redhat-8" in platformInfo:
+            ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
+            ERROR_CHECK(os.system(
+                '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
+            ERROR_CHECK(os.system(
+                '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
+            ERROR_CHECK(os.system(
+                '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
-    if "centos-7" in platfromInfo:
+    if "centos-7" in platformInfo:
         linuxCMake = 'cmake3'
 
 currentWorkingDirectory = os.getcwd()
@@ -881,7 +893,7 @@ if profileMode == 0 or profileMode == 9:
 platform_name = platform.platform()
 if os.path.exists('/usr/bin/yum'):
     if "centos" not in platform_name or "redhat" not in platform_name:
-        platfromInfo = platform_name+'-CentOS-RedHat'
+        platformInfo = platform_name+'-CentOS-RedHat'
 elif os.path.exists('/usr/bin/apt-get'):
     if "Ubuntu" not in platform_name:
         platform_name = platform_name+'-Ubuntu'
@@ -890,7 +902,7 @@ elif os.path.exists('/usr/bin/zypper'):
         platform_name = platform_name+'-SLES'
 else:
     print("\nMIVisionX Neural Network Test on "+platform_name+" is unsupported")
-    print("MIVisionX Neural Network Test Supported on: Ubuntu 20/22; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
+    print("MIVisionX Neural Network Test Supported on: Ubuntu 22/24; CentOS 7/8; RedHat 8/9; & SLES 15 SP3")
     print("\nMIVisionX Neural Network Test on "+platform_name+" is unreliable")
 
 platform_name_fq = shell('hostname --all-fqdns')
@@ -911,7 +923,7 @@ gpu_info = gpu_info.rstrip()  # strip out X info
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
 
-lib_tree = shell('ldd -v '+installDir+'/lib/libvx_nn.so')
+lib_tree = shell('ldd -v '+ROCM_PATH+'/lib/libvx_nn.so')
 lib_tree = strip_libtree_addresses(lib_tree)
 
 vbios = shell('(cd /opt/rocm/bin/; ./rocm-smi -v)')

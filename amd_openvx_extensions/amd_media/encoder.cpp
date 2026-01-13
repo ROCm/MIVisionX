@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <string>
 #include <vector>
 #include <sstream>
+#include <iostream>
 
 // GPU configuration
 #define ENCODE_ENABLE_GPU       1         // enable use of GPU buffers
@@ -195,7 +196,11 @@ CLoomIoMediaEncoder::~CLoomIoMediaEncoder()
     #if ENABLE_OPENCL
         if (cmdq) clReleaseCommandQueue(cmdq);
     #elif ENABLE_HIP
-        if (hostBuffer) hipHostFree((void *)hostBuffer);
+        if (hostBuffer){
+            if(hipHostFree((void *)hostBuffer)){
+               std::cerr << "Error: hipHostFree failed" << std::endl;
+            }
+        }
     #endif
     }
 

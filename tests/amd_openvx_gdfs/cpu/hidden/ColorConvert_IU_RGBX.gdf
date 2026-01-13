@@ -1,0 +1,4 @@
+# agoKernel_ColorConvert_IU_RGBX
+data output = image:960,540,U008
+data input = image:1920,1080,RGBA
+node com.amd.openvx.ColorConvert_IU_RGBX output input

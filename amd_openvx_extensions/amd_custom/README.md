@@ -10,7 +10,7 @@ More details of the usage and implementation of a new custion function can be fo
 It is built with MIVisionX package.
 
 ### Pre-requisites
-
+* OpenMP
 * AMD OpenVX&trade; library
 * ROCM installed system with AMD GPU
 * [ROCm](https://rocmdocs.amd.com/en/latest/)

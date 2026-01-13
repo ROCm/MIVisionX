@@ -18,16 +18,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
+
+# ROCM Path
+if(DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH $ENV{ROCM_PATH} CACHE PATH "Default ROCm installation path")
+elseif(ROCM_PATH)
+    message("-- amd_openvx_extensions:ROCM_PATH Set -- ${ROCM_PATH}")
+else()
+    set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
+endif()
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
+endif()
+
 project(DGTest)
 
-set(CMAKE_CXX_STANDARD 14)
-
-# ROCm Path
-set(ROCM_PATH /opt/rocm CACHE PATH "Default ROCm installation path")
 # avoid setting the default installation path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
+	set(CMAKE_INSTALL_PREFIX ${ROCM_PATH} CACHE PATH "MIVisionX default installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
@@ -54,9 +68,9 @@ target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread annmodule)
 if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
 	message("-- ${PROJECT_NAME} -- OpenCV Version Supported -- Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X")
 	if(${OpenCV_VERSION_MAJOR} EQUAL 4)
-	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=1)
     else()
-	    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC USE_OPENCV_4=0)
     endif()
 	include_directories(${OpenCV_INCLUDE_DIRS})
 	target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES})

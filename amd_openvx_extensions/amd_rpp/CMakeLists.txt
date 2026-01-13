@@ -18,15 +18,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.5)
-set(VERSION "1.0.0")
+cmake_minimum_required(VERSION 3.10)
+
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
+endif()
+
+# VX_RPP Version
+# * must match with include/vx_ext_rpp_version.h
+set(VERSION "3.1.4")
+
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
-
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
-find_package(AMDRPP REQUIRED)
+find_package(rpp 2.2.2 REQUIRED)
+
+message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
+message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
+message("-- \t${White}rpp_LIB_DIR -- ${rpp_LIB_DIR}${ColourReset}")
+message("-- \t${White}rpp_LIBRARY -- ${rpp_LIBRARY}${ColourReset}")
+message("-- \t${White}rpp_FOUND -- ${rpp_FOUND}${ColourReset}")
+message("-- \t${White}rpp_VERSION -- ${rpp_VERSION}${ColourReset}")
+message("-- \t${White}rpp_VERSION_MAJOR -- ${rpp_VERSION_MAJOR}${ColourReset}")
+message("-- \t${White}rpp_VERSION_MINOR -- ${rpp_VERSION_MINOR}${ColourReset}")
+message("-- \t${White}rpp_VERSION_PATCH -- ${rpp_VERSION_PATCH}${ColourReset}")
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(OpenCL REQUIRED)
@@ -38,10 +60,85 @@ endif()
 
 include_directories(../../amd_openvx/openvx/include/ include)
 # AMD RPP
-include_directories(${AMDRPP_INCLUDE_DIRS})
-set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${AMDRPP_LIBRARIES})
+include_directories(${rpp_INCLUDE_DIR})
+set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES
+        source/tensor/Blend.cpp
+        source/tensor/BitwiseOps.cpp
+        source/tensor/Blur.cpp
+        source/tensor/Brightness.cpp
+        source/tensor/ColorTemperature.cpp
+        source/tensor/ColorCast.cpp
+        source/tensor/ColorTwist.cpp
+        source/tensor/Contrast.cpp
+        source/tensor/Copy.cpp
+        source/tensor/Crop.cpp
+        source/tensor/CropAndPatch.cpp
+        source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Dilate.cpp
+        source/tensor/Downmix.cpp
+        source/tensor/Erase.cpp
+        source/tensor/Erode.cpp
+        source/tensor/Exposure.cpp
+        source/tensor/FishEye.cpp
+        source/tensor/Flip.cpp
+        source/tensor/Fog.cpp
+        source/tensor/GammaCorrection.cpp
+        source/tensor/GaussianFilter.cpp
+        source/tensor/Glitch.cpp
+        source/tensor/GridMask.cpp
+        source/tensor/Hue.cpp
+        source/tensor/Jitter.cpp
+        source/tensor/LensCorrection.cpp
+        source/tensor/Log1p.cpp
+        source/tensor/Magnitude.cpp
+        source/tensor/MedianFilter.cpp
+        source/tensor/MelFilterBank.cpp
+        source/tensor/Noise.cpp
+        source/tensor/NonSilentRegionDetection.cpp
+        source/tensor/NonLinearBlend.cpp
+        source/tensor/Nop.cpp
+        source/tensor/Normalize.cpp
+        source/tensor/Rotate.cpp
+        source/tensor/Phase.cpp
+        source/tensor/Pixelate.cpp
+        source/tensor/PreemphasisFilter.cpp
+        source/tensor/Rain.cpp
+        source/tensor/Remap.cpp
+        source/tensor/Resample.cpp
+        source/tensor/Resize.cpp
+        source/tensor/ResizeCrop.cpp
+        source/tensor/ResizeCropMirror.cpp
+        source/tensor/ResizeMirrorNormalize.cpp
+        source/tensor/Ricap.cpp
+        source/tensor/Saturation.cpp
+        source/tensor/SequenceRearrange.cpp
+        source/tensor/Snow.cpp
+        source/tensor/Spectrogram.cpp
+        source/tensor/TensorAddTensor.cpp
+        source/tensor/TensorMulScalar.cpp
+        source/tensor/Threshold.cpp
+        source/tensor/ToDecibels.cpp
+        source/tensor/Vignette.cpp
+        source/tensor/WarpAffine.cpp
+        source/tensor/WarpPerspective.cpp
+        source/tensor/Slice.cpp
+        source/tensor/Transpose.cpp
+        source/tensor/PythonFunction.cpp
+        source/kernel_rpp.cpp
+        source/internal_publishKernels.cpp
+    )
+
+set(RPP_LEGACY_SUPPORT_FOUND 0)
+if(EXISTS ${rpp_INCLUDE_DIR}/rpp/rpp_legacy_support.h)
+    file(READ ${rpp_INCLUDE_DIR}/rpp/rpp_legacy_support.h RPP_LEGACY_SUPPORT_FILE)
+    string(REGEX MATCH "RPP_LEGACY_SUPPORT ([0-1]*)" _ ${RPP_LEGACY_SUPPORT_FILE})
+    set(RPP_LEGACY_SUPPORT_FOUND ${CMAKE_MATCH_1})
+endif()
+
+if(RPP_LEGACY_SUPPORT_FOUND)
+    list(APPEND SOURCES
         source/image/AbsoluteDifferencebatchPD.cpp
         source/image/AccumulatebatchPD.cpp
         source/image/AccumulateSquaredbatchPD.cpp
@@ -124,52 +221,8 @@ list(APPEND SOURCES
         source/image/VignettebatchPD.cpp
         source/image/WarpAffinebatchPD.cpp
         source/image/WarpPerspectivebatchPD.cpp
-        source/tensor/Blend.cpp
-        source/tensor/Blur.cpp
-        source/tensor/Brightness.cpp
-        source/tensor/ColorTemperature.cpp
-        source/tensor/ColorTwist.cpp
-        source/tensor/Contrast.cpp
-        source/tensor/Copy.cpp
-        source/tensor/Crop.cpp
-        source/tensor/CropMirrorNormalize.cpp
-        source/tensor/Downmix.cpp
-        source/tensor/Exposure.cpp
-        source/tensor/FishEye.cpp
-        source/tensor/Flip.cpp
-        source/tensor/Fog.cpp
-        source/tensor/GammaCorrection.cpp
-        source/tensor/Glitch.cpp
-        source/tensor/Hue.cpp
-        source/tensor/Jitter.cpp
-        source/tensor/LensCorrection.cpp
-        source/tensor/MelFilterBank.cpp
-        source/tensor/Noise.cpp
-        source/tensor/NonSilentRegionDetection.cpp
-        source/tensor/Nop.cpp
-        source/tensor/Normalize.cpp
-        source/tensor/Rotate.cpp
-        source/tensor/Pixelate.cpp
-        source/tensor/PreemphasisFilter.cpp
-        source/tensor/Rain.cpp
-        source/tensor/Resample.cpp
-        source/tensor/Resize.cpp
-        source/tensor/ResizeCrop.cpp
-        source/tensor/ResizeCropMirror.cpp
-        source/tensor/ResizeMirrorNormalize.cpp
-        source/tensor/Saturation.cpp
-        source/tensor/SequenceRearrange.cpp
-        source/tensor/Snow.cpp
-        source/tensor/Spectrogram.cpp
-        source/tensor/TensorAddTensor.cpp
-        source/tensor/TensorMulScalar.cpp
-        source/tensor/ToDecibels.cpp
-        source/tensor/Vignette.cpp
-        source/tensor/WarpAffine.cpp
-        source/tensor/Slice.cpp
-        source/kernel_rpp.cpp
-        source/internal_publishKernels.cpp
     )
+endif()
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
     message("-- ${Green}vx_rpp -- Building with OpenCL${ColourReset}")
@@ -200,19 +253,19 @@ else()
     set(ENABLE_HIP 0)
     add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP})
     add_library(vx_rpp SHARED ${SOURCES})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" ) # Currently used by rpp. To be removed.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=0" ) # Currently used by rpp. To be removed.
 endif()
 
 set(RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND 0)
-find_path(RPP_INCLUDE_DIR NAMES rpp.h PATHS ${ROCM_PATH}/include/rpp)
-if(EXISTS ${RPP_INCLUDE_DIR}/rpp_audio_augmentations_support.h)
-    file(READ ${RPP_INCLUDE_DIR}/rpp_audio_augmentations_support.h RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE)
+if(EXISTS ${rpp_INCLUDE_DIR}/rpp/rpp_audio_augmentations_support.h)
+    file(READ ${rpp_INCLUDE_DIR}/rpp/rpp_audio_augmentations_support.h RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE)
     string(REGEX MATCH "RPP_AUDIO_AUGMENTATIONS_SUPPORT ([0-9]*)" _ ${RPP_AUDIO_AUGMENTATIONS_SUPPORT_FILE})
     set(RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND ${CMAKE_MATCH_1})
 endif()
 
 # Audio features for VX_RPP
-if(${RPP_VERSION_MAJOR} VERSION_GREATER_EQUAL "1" AND ${RPP_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${RPP_VERSION_PATCH} VERSION_GREATER_EQUAL "0" AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
+if((${rpp_VERSION_MAJOR} VERSION_GREATER "1") OR (${rpp_VERSION_MAJOR} VERSION_EQUAL "1" AND ${rpp_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${rpp_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
+AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAUDIO_SUPPORT=1")
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
     target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=1)
@@ -221,6 +274,14 @@ else()
     message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
 endif()
 
+if(RPP_LEGACY_SUPPORT_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEGACY_SUPPORT=1")
+    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=1)
+    message("-- ${White}vx_rpp BatchPD augmentations included${ColourReset}")
+else()
+    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=0)
+    message("-- ${Yellow}vx_rpp BatchPD augmentations excluded${ColourReset}")
+endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenVX)
@@ -228,7 +289,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections -std=gnu++14 -mavx2")
+    # -mavx2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and AVX2 built-in functions and code generation.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
 endif()
 
 target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST})
@@ -242,3 +304,4 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_ext_rpp.h include/vx_ext_rpp_version.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/vx_rpp_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)

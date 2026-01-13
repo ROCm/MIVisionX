@@ -120,6 +120,8 @@ static int HafCpu_Histogram3Thresholds_DATA_U8
 	return AGO_SUCCESS;
 }
 
+/*Unused functionality*/
+/*
 static int HafCpu_Histogram8Bins_DATA_U8
 	(
 		vx_uint32   * dstHist,
@@ -354,6 +356,7 @@ static int HafCpu_Histogram9Bins_DATA_U8
 	}
 	return AGO_SUCCESS;
 }
+*/
 
 static int HafCpu_Histogram16Bins_DATA_U8
 	(

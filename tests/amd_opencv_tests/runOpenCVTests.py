@@ -188,14 +188,14 @@ for i in range(len(gdfListOpenCV)):
     testFileName = gdfListOpenCV[i]
     echoGDF = 'Running Test GDF - '+testFileName
     os.system('echo '+echoGDF +
-              ' | tee -a gdf_test_results/openCV_visionOutput.log')
+            ' | tee -a gdf_test_results/openCV_visionOutput.log')
     print(RunVXapp+' -frames:'+str(numFrames)+' -dump-profile file '+scriptPath+'/gdfs/' +
-              testFileName+' | tee -a gdf_test_results/openCV_visionOutput.log')
+            testFileName+' | tee -a gdf_test_results/openCV_visionOutput.log')
     os.system(RunVXapp+' -frames:'+str(numFrames)+' -dump-profile file '+scriptPath+'/gdfs/' +
-              testFileName+' | tee -a gdf_test_results/openCV_visionOutput.log')
+            testFileName+' | tee -a gdf_test_results/openCV_visionOutput.log')
     print("\n")
 print("\nSTATUS: OpenCV EXT Vision Test Results - " +
-      scriptPath+"/gdfs/gdf_test_results\n")
+    scriptPath+"/gdfs/gdf_test_results\n")
 
 
 orig_stdout = sys.stdout

@@ -44,6 +44,7 @@ vx_status get_kernels_to_publish()
     vx_status status = VX_SUCCESS;
 
     Kernel_List = new Kernellist(MAX_KERNELS);
+#if RPP_LEGACY_SUPPORT
     STATUS_ERROR_CHECK(ADD_KERNEL(BrightnessbatchPD_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(GammaCorrectionbatchPD_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(BlendbatchPD_Register));
@@ -126,6 +127,7 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(ResizeMirrorNormalizeTensor_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(SequenceRearrangebatchPD_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Resizetensor_Register));
+#endif
 
     //tensor 
     STATUS_ERROR_CHECK(ADD_KERNEL(Blend_Register));
@@ -171,6 +173,26 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(Slice_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(Normalize_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(MelFilterBank_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Transpose_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Log1p_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(PythonFunction_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ColorCast_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(GaussianFilter_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(GridMask_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(MedianFilter_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(NonLinearBlend_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Dilate_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Erode_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Magnitude_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Phase_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Threshold_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(WarpPerspective_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Erase_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(CropAndPatch_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Remap_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Ricap_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(BitwiseOps_Register));
+
     return status;
 }
 

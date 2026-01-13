@@ -57,12 +57,6 @@ Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/n
 **NOTE:**
 To get the best performance from the validation toolkit use the [RPP Develop Branch](https://github.com/ROCm/rpp/tree/develop)
 
-* Install OpenMP
-
-``` 
-sudo apt-get install libomp-dev
-```
-
 * Set number of OpenMP Threads
 
 ``` 

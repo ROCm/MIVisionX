@@ -1,33 +1,85 @@
-# MIVisionX Tests
+# MIVisionX Test Suite
 
-MIVisionX test suite to verify installation and functionality
+This folder contains the MIVisionX test suite, designed to thoroughly verify the installation and functionality of the MIVisionX™ toolkit. It covers various modules, extensions, and core OpenVX™ implementations, ensuring a robust and reliable computer vision development experience.
 
-## Conformance Tests
+## Overview
 
-[OpenVX 1.3 Conformance tests](conformance_tests) for Vision Feature Set for CPU and GPU (OpenCL & HIP Backend)
+The MIVisionX test suite is a comprehensive collection of tests that validate the proper installation, functionality, and performance of the MIVisionX libraries and modules. It's an essential tool for developers and users to ensure the integrity of their MIVisionX setup across different backends (CPU, OpenCL™, HIP).
 
-## Library Tests
+## Test Categories
 
-[Verify installation test](library_tests) and check if all libraries are built and installed
+The tests are organized into logical categories to facilitate easier understanding and execution.
 
-## Neural Network Tests
+### Core OpenVX Tests
 
-Run [neural network tests](neural_network_tests) to verify `Caffe`/`ONNX`/`NNEF` model flow with OpenVX for verification and performance
+These tests focus on the fundamental OpenVX specification and AMD's implementation.
 
-## OpenVX Node Tests
+* **[OpenVX API Tests](openvx_api_tests)**: Verifies the functionality of the OpenVX C/C++ API.
+* **[OpenVX Conformance Tests](openvx_conformance_tests)**: Runs the official OpenVX 1.3 Conformance tests for the Vision Feature Set, targeting both CPU and GPU (OpenCL & HIP Backend) implementations.
+* **[OpenVX Node Tests](openvx_node_tests)**: Exercises various AMD OpenVX functionalities across HOST, OpenCL, and HIP backends using `RunVX`.
+* **[Vision Tests](vision_tests)**: Conducts tests on OpenVX vision functions for both verification and performance assessment.
+* **AMD OpenVX Tests**: Validates AMD's specific implementation of OpenVX and its vendor extensions.
 
-[RunVX tests](openvx_node_tests) for AMD OpenVX&trade; functionalities in HOST/OCL/HIP backends
+### AMD Extension Tests
 
-## Smoke Tests
+This section covers tests for AMD-specific OpenVX extensions, enhancing MIVisionX capabilities.
 
-Quick MIVisionX [test suite](smoke_tests)
+* **AMD Media Tests (`vx_amd_media`)**: Tests the OpenVX AMD media extension module, which includes:
+    * `com.amd.amd_media.decode` node for video/JPEG decoding.
+    * `com.amd.amd_media.encode` node for video encoding.
+* **AMD MIGraphX Tests (`vx_amd_migraphx`)**: Verifies the `com.amd.amd_migraphx_node`, which allows importing the [AMD MIGraphX library](https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx) into an OpenVX graph for efficient inference.
+* **AMD OpenCV Tests (`vx_opencv`)**: Assesses the OpenVX module that provides a mechanism to access OpenCV functionality as OpenVX kernels, with tests implemented using GDFs.
+* **VX_RPP Tests (`vx_rpp`)**: Tests the AMD VX RPP extension, an OpenVX module that provides an interface to access RPP (ROCm Performance Primitives) functionality as OpenVX kernels. These tests utilize GDFs.
 
-## Vision Tests
+### Neural Network Tests
 
-OpenVX [vision function tests](vision_tests) for verification and performance
+These tests focus on MIVisionX's capabilities for neural network inference.
 
-## Zen DNN Unit Tests
+* **[Neural Network Tests](neural_network_tests)**: Verifies the `Caffe`, `ONNX`, and `NNEF` model flow with OpenVX for accurate verification and performance analysis.
+* **[Zen DNN Unit Tests](zen_dnn_tests)**: Provides unit, verification, and performance tests for Zen DNN integration.
 
-[Zen DNN tests](zen_dnn_tests) for unit test, verification and performance
+### Utility Tests
 
-**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.
+These tests provide general system checks and quick verification.
+
+* **[Library Tests](library_tests)**: Verifies the installation and checks if all MIVisionX libraries are properly built and installed.
+* **[Smoke Tests](smoke_tests)**: A quick MIVisionX test suite for rapid validation of core functionality.
+
+## Getting Started
+
+To run these tests, you typically need a complete MIVisionX installation. Refer to the main MIVisionX documentation for detailed build and installation instructions.
+
+## MIVisionX dependency map
+
+### HIP Backend
+
+**Docker Image:** `sudo docker build -f docker/ubuntu20/{DOCKER_LEVEL_FILE_NAME}.dockerfile -t {mivisionx-level-NUMBER} .`
+
+- ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `new component added to the level`
+- ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `existing component from the previous level`
+
+| Build Level | MIVisionX Dependencies                             | Modules                                                                   | Libraries and Executables                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Docker Tag                                                                                                                                                                                                     |
+| ----------- | -------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Level_1`   | cmake <br> gcc <br> g++                            | amd_openvx  <br> utilities                                                | ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libopenvx.so` - OpenVX&trade; Lib - CPU <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib - CPU <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `runvx` - OpenVX&trade; Graph Executor - CPU with Display OFF                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-1?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_2`   | ROCm HIP <br> +Level 1                             | amd_openvx <br> amd_openvx_extensions <br> utilities                      | ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libopenvx.so`  - OpenVX&trade; Lib - CPU/GPU <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib - CPU/GPU <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `runvx` - OpenVX&trade; Graph Executor - Display OFF                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-2?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_3`   | OpenCV <br> FFMPEG <br> +Level 2                   | amd_openvx <br> amd_openvx_extensions <br> utilities                      | ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `mv_compile` - Neural Net Model Compile <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-3?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_4`   | MIOpen <br> MIGraphX <br> +Level 3 | amd_openvx <br>  amd_openvx_extensions <br> utilities           | ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_amd_migraphx.so` - OpenVX&trade; MIGraphX Extension <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension                                                                                                                                                                                                                                                                                                                                                                                                                                           | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-4?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+| `Level_5`   | AMD_RPP <br> +Level 4              | amd_openvx <br> amd_openvx_extensions <br> utilities | ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libopenvx.so`  - OpenVX&trade; Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvxu.so` - OpenVX&trade; immediate node Lib <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_amd_media.so` - OpenVX&trade; Media Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_opencv.so` - OpenVX&trade; OpenCV InterOp Extension <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `mv_compile` - Neural Net Model Compile <br> ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `runvx` - OpenVX&trade; Graph Executor - Display ON <br>  ![#1589F0](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/blue_square.png) `libvx_nn.so` - OpenVX&trade; Neural Net Extension <br> ![#c5f015](https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/green_square.png) `libvx_rpp.so` - OpenVX&trade; RPP Extension | [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/kiritigowda/ubuntu-18.04/mivisionx-level-5?style=flat-square)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04) |
+
+> [!IMPORTANT]
+> OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.
+
+## Contributing
+
+We welcome contributions to the MIVisionX test suite! If you find a bug, have an idea for a new test, or want to improve existing ones.
+
+## License
+
+This test suite is released under the MIT License
+
+## Trademarks
+
+* OpenVX™ and the OpenVX logo are trademarks of the Khronos Group Inc.
+* MIVisionX™ is a trademark of Advanced Micro Devices, Inc.
+* OpenCL™ is a trademark of Apple Inc. used under license by Khronos.
+* All other trademarks are the property of their respective owners.

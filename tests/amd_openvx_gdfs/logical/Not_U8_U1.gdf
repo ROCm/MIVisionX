@@ -1,0 +1,4 @@
+# agoKernel_Not_U8_U1
+data input = uniform-image:1920,1080,U001
+data output = image:1920,1080,U008
+node com.amd.openvx.Not_U8_U1 output input

@@ -18,11 +18,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.5)
-set(VERSION "1.3.0")
-project(openvx VERSION ${VERSION} LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10)
 
-set(CMAKE_CXX_STANDARD 14)
+# Set AMD Clang as default compiler
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED On)
+set(CMAKE_CXX_EXTENSIONS ON)
+if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang++")
+    set(CMAKE_C_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang)
+    set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
+endif()
+set(VERSION "1.3.0")
+
+project(openvx VERSION ${VERSION} LANGUAGES CXX)
 
 include_directories(include ago api)
 
@@ -148,18 +156,19 @@ install(FILES
             include/VX/vx_types.h
             include/VX/vx_vendors.h
             include/VX/vxu.h
-	    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX COMPONENT dev)
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx/VX COMPONENT dev)
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/
-install(DIRECTORY ../../apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
-install(DIRECTORY ../../apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
-install(DIRECTORY ../../samples/c_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
-install(DIRECTORY ../../samples/images DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/apps/bubble_pop DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/apps/optical_flow DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/apps COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/samples/c_samples DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/samples/images DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/samples COMPONENT dev)
 
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /DVX_API_ENTRY=__declspec(dllexport)")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=gnu++14")
+    # -msse4.2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 built-in functions and code generation.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
     target_link_libraries(openvx dl m)
 endif()
 

@@ -165,19 +165,14 @@ int agoGpuAllocBuffers(AgoGraph * graph)
     // get data groups (Gd)
     auto getMemObjectType = [=](AgoData * data) -> cl_mem_object_type {
         cl_mem_object_type obj_type = CL_MEM_OBJECT_BUFFER;
-        if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_UINT8)
-            obj_type = CL_MEM_OBJECT_IMAGE1D;
         return (vx_uint32)obj_type;
     };
 #elif ENABLE_HIP
     auto getMemObjectType = [=](AgoData * data) -> vx_uint32 {
         vx_uint32 obj_type = HIP_MEM_KIND_BUFFER;
-        if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_UINT8)
-            obj_type = HIP_MEM_KIND_IMAGE1D;
         return (vx_uint32)obj_type;
     };
 #endif
-
     auto getMemObjectSize = [=](AgoData * data) -> size_t {
         return data->gpu_buffer_offset + data->size;
     };
@@ -282,7 +277,6 @@ int agoGpuAllocBuffers(AgoGraph * graph)
                 else {
                     Gd[j][i]->opencl_buffer = Gd[j][k]->opencl_buffer;
                 }
-                Gd[j][i]->gpu_buffer_offset = Gd[j][k]->gpu_buffer_offset;
             }
         }
 #else
@@ -298,7 +292,6 @@ int agoGpuAllocBuffers(AgoGraph * graph)
                 else {
                     Gd[j][i]->hip_memory = Gd[j][k]->hip_memory;
                 }
-                Gd[j][i]->gpu_buffer_offset = Gd[j][k]->gpu_buffer_offset;
             }
         }
 #endif
@@ -772,10 +765,10 @@ static int agoOptimizeDramaAllocMergeSuperNodes(AgoGraph * graph)
                 auto data = node->paramList[i];
                 if (data) {
                     auto it = std::find(superNodeInfo->inputList.begin(), superNodeInfo->inputList.end(), data);
-                    if (it == superNodeInfo->inputList.end() && (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                    if (it == superNodeInfo->inputList.end() && (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                         superNodeInfo->inputList.push_back(data);
                     it = std::find(superNodeInfo->outputList.begin(), superNodeInfo->outputList.end(), data);
-                    if (it == superNodeInfo->outputList.end() && (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                    if (it == superNodeInfo->outputList.end() && (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                         superNodeInfo->outputList.push_back(data);
                 }
             }

@@ -636,6 +636,9 @@ static vx_status VX_CALLBACK CV_simple_blob_detector_INITIALIZE_Kernel(vx_node n
     //Converting OpenCV Keypoints to OpenVX Keypoints
     STATUS_ERROR_CHECK(CV_to_VX_keypoints(key_points, array));
 
+    if (mat) delete mat;         
+    if (mask_mat) delete mask_mat;
+
     return status;
 }
 

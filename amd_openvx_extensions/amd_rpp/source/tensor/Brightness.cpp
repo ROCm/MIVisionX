@@ -70,7 +70,7 @@ static vx_status VX_CALLBACK refreshBrightness(vx_node node, const vx_reference 
         if (!data->pSrcRoi3D) data->pSrcRoi3D = new RpptROI3D[data->inputTensorDims[0]];
     }
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        if(!data->pConditionalExecution[i]) {
+        if (!data->pConditionalExecution[i]) {
             data->pAlpha[i] = 1.0f;
             data->pBeta[i] = 0.0f;
         }
@@ -162,11 +162,11 @@ static vx_status VX_CALLBACK processBrightness(vx_node node, const vx_reference 
     #if ENABLE_OPENCL
             return_status = VX_ERROR_NOT_IMPLEMENTED;
     #elif ENABLE_HIP
-            rppt_fused_multiply_add_scalar_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
+            rpp_status = rppt_fused_multiply_add_scalar_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     #endif
         } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rppt_fused_multiply_add_scalar_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
+            rpp_status = rppt_fused_multiply_add_scalar_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         }
     }

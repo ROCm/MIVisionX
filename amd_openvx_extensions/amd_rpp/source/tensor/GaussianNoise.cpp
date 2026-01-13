@@ -71,7 +71,7 @@ static vx_status VX_CALLBACK refreshGaussianNoise(vx_node node, const vx_referen
         if (!data->pSrcRoi3D) data->pSrcRoi3D = new RpptROI3D[data->inputTensorDims[0]];
     }
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        if(!data->pConditionalExecution[i]) {
+        if (!data->pConditionalExecution[i]) {
             data->pMean[i] = 0.0;
             data->pStdDev[i] = 0.0;
         }

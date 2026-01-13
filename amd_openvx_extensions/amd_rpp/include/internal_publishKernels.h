@@ -91,8 +91,17 @@ vx_status GaussianFilter_Register(vx_context);
 vx_status GridMask_Register(vx_context);
 vx_status MedianFilter_Register(vx_context);
 vx_status NonLinearBlend_Register(vx_context);
-
-// kernel names
+vx_status Dilate_Register(vx_context);
+vx_status Erode_Register(vx_context);
+vx_status Magnitude_Register(vx_context);
+vx_status Phase_Register(vx_context);
+vx_status Threshold_Register(vx_context);
+vx_status WarpPerspective_Register(vx_context);
+vx_status Erase_Register(vx_context);
+vx_status CropAndPatch_Register(vx_context);
+vx_status Remap_Register(vx_context);
+vx_status Ricap_Register(vx_context);
+vx_status BitwiseOps_Register(vx_context);
 
 //tensor
 #define VX_KERNEL_RPP_BLEND_NAME                                "org.rpp.Blend"
@@ -152,5 +161,16 @@ vx_status NonLinearBlend_Register(vx_context);
 #define VX_KERNEL_RPP_GRIDMASK_NAME                             "org.rpp.GridMask"
 #define VX_KERNEL_RPP_MEDIAN_FILTER_NAME                        "org.rpp.MedianFilter"
 #define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
+#define VX_KERNEL_RPP_DILATE_NAME                               "org.rpp.Dilate"
+#define VX_KERNEL_RPP_ERODE_NAME                                "org.rpp.Erode"
+#define VX_KERNEL_RPP_MAGNITUDE_NAME                            "org.rpp.Magnitude"
+#define VX_KERNEL_RPP_PHASE_NAME                                "org.rpp.Phase"
+#define VX_KERNEL_RPP_THRESHOLD_NAME                            "org.rpp.Threshold"
+#define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
+#define VX_KERNEL_RPP_ERASE_NAME                                "org.rpp.Erase"
+#define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
+#define VX_KERNEL_RPP_REMAP_NAME                         "org.rpp.Remap"
+#define VX_KERNEL_RPP_RICAP_NAME                                "org.rpp.Ricap"
+#define VX_KERNEL_RPP_BITWISE_OPS_NAME                          "org.rpp.BitwiseOps"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

@@ -56,7 +56,7 @@ void updateDestinationRoi(SliceLocalData *data, unsigned *src_roi, unsigned *dst
     if (total_anchor_dims == 1) {
         // if input is 1D - shape will be of size (batchSize) or (batchSize, 1) - so fill only 1st dim of length in dst_roi from buffer and set 2nd dim of length to 1
         for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 4) {
-            dst_roi[j] = 0;
+            dst_roi[j] = data->pAnchor[i];
             dst_roi[j + 1] = 0;
             dst_roi[j + 2] = data->pShape[i];
             dst_roi[j + 3] = 1;
@@ -89,22 +89,11 @@ static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &pAnchorTemp, sizeof(data->pAnchor)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &pShapeTemp, sizeof(data->pShape)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &data->pAnchor, sizeof(data->pAnchor)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &data->pShape, sizeof(data->pShape)));
         if (!data->pFillValues) {
-            hipError_t err = hipHostMalloc(&data->pFillValues, data->inputTensorDims[0] * sizeof(Rpp32f), hipHostMallocDefault);
-            if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * sizeof(Rpp32f));
+            CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pFillValues, data->inputTensorDims[0] * sizeof(Rpp32f), hipHostMallocDefault));
         }
-
-        if (data->pAnchor == nullptr)
-            hipHostMalloc(&(data->pAnchor), data->inputTensorDims[0] * sizeof(Rpp32s)); // TODO - needs to be handled for inputs greater than 1D
-        if (data->pShape == nullptr)
-            hipHostMalloc(&(data->pShape), data->inputTensorDims[0] * sizeof(Rpp32s)); // TODO - needs to be handled for inputs greater than 1D
-        
-        CHECK_RETURN_STATUS(hipMemcpyAsync(data->pAnchor, pAnchorTemp, data->inputTensorDims[0] * sizeof(int), hipMemcpyDeviceToHost, data->handle->hipstream));
-        CHECK_RETURN_STATUS(hipMemcpyAsync(data->pShape, pShapeTemp, data->inputTensorDims[0] * sizeof(int), hipMemcpyDeviceToHost, data->handle->hipstream));
-        CHECK_RETURN_STATUS(hipStreamSynchronize(data->handle->hipstream));
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[6], 0, data->inputTensorDims[0], sizeof(float), data->pFillValues, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
@@ -229,6 +218,7 @@ static vx_status VX_CALLBACK initializeSlice(vx_node node, const vx_reference *p
 
         data->pSrcDims = new uint[data->inputTensorDims[0] * 2];
 
+        refreshSlice(node, parameters, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
         return VX_SUCCESS;
@@ -245,13 +235,13 @@ static vx_status VX_CALLBACK uninitializeSlice(vx_node node, const vx_reference 
     if (data->pDstDesc) delete data->pDstDesc;
     if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;
     if (data->pDstGenericDesc) delete data->pDstGenericDesc;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    hipHostFree(data->pAnchor);
-    hipHostFree(data->pShape);
-    hipHostFree(data->pFillValues);
-#else
-    if (data->pFillValues) delete[] data->pFillValues;
-#endif 
+        if (data->pFillValues) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pFillValues));
+#endif
+    } else {
+        if (data->pFillValues) delete[] data->pFillValues;
+    }
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
     return VX_SUCCESS;

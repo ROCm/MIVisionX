@@ -42,9 +42,7 @@ static vx_status VX_CALLBACK refreshNonSilentRegionDetection(vx_node node, const
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst1, sizeof(data->pDst1)));
@@ -118,21 +116,19 @@ static vx_status VX_CALLBACK processNonSilentRegionDetection(vx_node node, const
     NonSilentRegionDetectionLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshNonSilentRegionDetection(node, parameters, data);
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if RPP_AUDIO
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
         rpp_status = rppt_non_silent_region_detection_gpu(data->pSrc, data->pSrcDesc, data->pSrcLength, data->pDst1, data->pDst2, data->cutOffDB, data->windowLength, data->referencePower, data->resetInterval, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         rpp_status = rppt_non_silent_region_detection_host(data->pSrc, data->pSrcDesc, data->pSrcLength, data->pDst1, data->pDst2, data->cutOffDB, data->windowLength, data->referencePower, data->resetInterval, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#else
-        return_status = VX_ERROR_NOT_SUPPORTED;
-#endif
     }
+#else
+    return_status = VX_ERROR_NOT_SUPPORTED;
+#endif
     return return_status;
 }
 
@@ -157,11 +153,13 @@ static vx_status VX_CALLBACK initializeNonSilentRegionDetection(vx_node node, co
         data->pSrcDesc->offsetInBytes = 0;
         fillAudioDescriptionPtrFromDims(data->pSrcDesc, data->inputTensorDims);
 
+        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    hipHostMalloc(&data->pSrcLength, data->pSrcDesc->n * sizeof(int));
-#else
-    data->pSrcLength = new int[data->pSrcDesc->n];
-#endif 
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSrcLength, data->pSrcDesc->n * sizeof(int)));
+#endif
+        } else {
+            data->pSrcLength = new int[data->pSrcDesc->n];
+        }
 
         refreshNonSilentRegionDetection(node, parameters, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -175,11 +173,13 @@ static vx_status VX_CALLBACK initializeNonSilentRegionDetection(vx_node node, co
 static vx_status VX_CALLBACK uninitializeNonSilentRegionDetection(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     NonSilentRegionDetectionLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    if (data->pSrcLength != nullptr)  hipHostFree(data->pSrcLength);
-#else
-    if (data->pSrcLength) delete[] data->pSrcLength;
+        if (data->pSrcLength) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcLength));
 #endif
+    } else {
+        if (data->pSrcLength) delete[] data->pSrcLength;
+    }
     if (data->pSrcDesc) delete data->pSrcDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;

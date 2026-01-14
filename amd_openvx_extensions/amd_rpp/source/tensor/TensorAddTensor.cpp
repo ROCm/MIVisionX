@@ -53,7 +53,6 @@ static vx_status VX_CALLBACK refreshTensorAddTensor(vx_node node, const vx_refer
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc1, sizeof(data->pSrc1)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pSrc2, sizeof(data->pSrc2)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));

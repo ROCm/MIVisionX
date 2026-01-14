@@ -191,13 +191,15 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
         data->pDstDesc->offsetInBytes = 0;
         fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims, data->spectrogramLayout);
 
-    #if ENABLE_HIP
-        hipHostMalloc(&data->pSrcLength, data->pSrcDesc->n * sizeof(int));
-        hipHostMalloc(&data->pWindowFn, data->windowLength * sizeof(float));
-    #else
-        data->pSrcLength = new int[data->pSrcDesc->n];
-        data->pWindowFn = new float[data->windowLength];
-    #endif 
+        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+            CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSrcLength, data->pSrcDesc->n * sizeof(int)));
+            CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pWindowFn, data->windowLength * sizeof(float)));
+#endif
+        } else {
+            data->pSrcLength = new int[data->pSrcDesc->n];
+            data->pWindowFn = new float[data->windowLength];
+        }
 
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->windowLength, sizeof(float), data->pWindowFn, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -211,13 +213,15 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
 static vx_status VX_CALLBACK uninitializeSpectrogram(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     SpectrogramLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    if (data->pSrcLength != nullptr)  hipHostFree(data->pSrcLength);
-    if (data->pWindowFn != nullptr)  hipHostFree(data->pWindowFn);
-#else
-    if (data->pSrcLength) delete[] data->pSrcLength;
-    if (data->pWindowFn) delete[] data->pWindowFn;
+        if (data->pSrcLength) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcLength));
+        if (data->pWindowFn) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pWindowFn));
 #endif
+    } else {
+        if (data->pSrcLength) delete[] data->pSrcLength;
+        if (data->pWindowFn) delete[] data->pWindowFn;
+    }
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

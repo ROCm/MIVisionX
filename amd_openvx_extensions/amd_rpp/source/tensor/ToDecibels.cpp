@@ -162,11 +162,13 @@ static vx_status VX_CALLBACK initializeToDecibels(vx_node node, const vx_referen
         data->pDstDesc->offsetInBytes = 0;
         fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
-    #if ENABLE_HIP
-        hipHostMalloc(&data->pSrcDims, data->pSrcDesc->n * sizeof(RpptImagePatch));
-    #else
-        data->pSrcDims = new RpptImagePatch[data->pSrcDesc->n];
-    #endif
+        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSrcDims, data->pSrcDesc->n * sizeof(RpptImagePatch)));
+#endif
+        } else {
+            data->pSrcDims = new RpptImagePatch[data->pSrcDesc->n];
+        }
         refreshToDecibels(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -179,11 +181,13 @@ static vx_status VX_CALLBACK initializeToDecibels(vx_node node, const vx_referen
 static vx_status VX_CALLBACK uninitializeToDecibels(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ToDecibelsLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    if (data->pSrcDims != nullptr)  hipHostFree(data->pSrcDims);
-#else
-    if (data->pSrcDims) delete[] data->pSrcDims;
+        if (data->pSrcDims) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcDims));
 #endif
+    } else {
+        if (data->pSrcDims) delete[] data->pSrcDims;
+    }
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

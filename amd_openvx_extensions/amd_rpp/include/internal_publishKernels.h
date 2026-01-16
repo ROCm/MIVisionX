@@ -176,6 +176,29 @@ vx_status GaussianFilter_Register(vx_context);
 vx_status GridMask_Register(vx_context);
 vx_status MedianFilter_Register(vx_context);
 vx_status NonLinearBlend_Register(vx_context);
+vx_status Dilate_Register(vx_context);
+vx_status Erode_Register(vx_context);
+vx_status Magnitude_Register(vx_context);
+vx_status Phase_Register(vx_context);
+vx_status Threshold_Register(vx_context);
+vx_status WarpPerspective_Register(vx_context);
+vx_status Erase_Register(vx_context);
+vx_status CropAndPatch_Register(vx_context);
+vx_status Remap_Register(vx_context);
+vx_status Ricap_Register(vx_context);
+vx_status BitwiseOps_Register(vx_context);
+vx_status Log_Register(vx_context);
+vx_status GaussianNoise_Register(vx_context);
+vx_status ShotNoise_Register(vx_context);
+vx_status Water_Register(vx_context);
+vx_status ColorJitter_Register(vx_context);
+vx_status Spatter_Register(vx_context);
+vx_status ChannelPermute_Register(vx_context);
+vx_status ColorToGreyscale_Register(vx_context);
+vx_status JpegCompressionDistortion_Register(vx_context);
+vx_status Lut_Register(vx_context);
+vx_status Posterize_Register(vx_context);
+vx_status Solarize_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -247,7 +270,7 @@ vx_status NonLinearBlend_Register(vx_context);
 #define VX_KERNEL_RPP_CANNYEDGEDETECTOR_NAME                    "org.rpp.CannyEdgeDetector"
 #define VX_KERNEL_RPP_HARRISCORNERDETECTOR_NAME                 "org.rpp.HarrisCornerDetector"
 #define VX_KERNEL_RPP_FASTCORNERDETECTOR_NAME                   "org.rpp.FastCornerDetector"
-#define VX_KERNEL_RPP_REMAP_NAME                                "org.rpp.remap"
+#define VX_KERNEL_RPP_REMAPBATCHPD_NAME                         "org.rpp.remap"
 #define VX_KERNEL_RPP_TENSORADD_NAME                            "org.rpp.TensorAdd"
 #define VX_KERNEL_RPP_TENSORSUBTRACT_NAME                       "org.rpp.TensorSubtract"
 #define VX_KERNEL_RPP_TENSORMULTIPLY_NAME                       "org.rpp.TensorMultiply"
@@ -319,5 +342,28 @@ vx_status NonLinearBlend_Register(vx_context);
 #define VX_KERNEL_RPP_GRIDMASK_NAME                             "org.rpp.GridMask"
 #define VX_KERNEL_RPP_MEDIAN_FILTER_NAME                        "org.rpp.MedianFilter"
 #define VX_KERNEL_RPP_NON_LINEAR_BLEND_NAME                     "org.rpp.NonLinearBlend"
+#define VX_KERNEL_RPP_DILATE_NAME                               "org.rpp.Dilate"
+#define VX_KERNEL_RPP_ERODE_NAME                                "org.rpp.Erode"
+#define VX_KERNEL_RPP_MAGNITUDE_NAME                            "org.rpp.Magnitude"
+#define VX_KERNEL_RPP_PHASE_NAME                                "org.rpp.Phase"
+#define VX_KERNEL_RPP_THRESHOLD_NAME                            "org.rpp.Threshold"
+#define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
+#define VX_KERNEL_RPP_ERASE_NAME                                "org.rpp.Erase"
+#define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
+#define VX_KERNEL_RPP_REMAP_NAME                                "org.rpp.Remap"
+#define VX_KERNEL_RPP_RICAP_NAME                                "org.rpp.Ricap"
+#define VX_KERNEL_RPP_BITWISE_OPS_NAME                          "org.rpp.BitwiseOps"
+#define VX_KERNEL_RPP_LOG_NAME                                  "org.rpp.Log"
+#define VX_KERNEL_RPP_GAUSSIAN_NOISE_NAME                       "org.rpp.GaussianNoise"
+#define VX_KERNEL_RPP_SHOT_NOISE_NAME                           "org.rpp.ShotNoise"
+#define VX_KERNEL_RPP_WATER_NAME                                "org.rpp.Water"
+#define VX_KERNEL_RPP_COLORJITTER_NAME                          "org.rpp.ColorJitter"
+#define VX_KERNEL_RPP_SPATTER_NAME                              "org.rpp.Spatter"
+#define VX_KERNEL_RPP_CHANNELPERMUTE_NAME                       "org.rpp.ChannelPermute"
+#define VX_KERNEL_RPP_COLORTOGREYSCALE_NAME                     "org.rpp.ColorToGreyscale"
+#define VX_KERNEL_RPP_JPEGCOMPRESSIONDISTORTION_NAME            "org.rpp.JpegCompressionDistortion"
+#define VX_KERNEL_RPP_LUT_NAME                                  "org.rpp.Lut"
+#define VX_KERNEL_RPP_POSTERIZE_NAME                            "org.rpp.Posterize"
+#define VX_KERNEL_RPP_SOLARIZE_NAME                             "org.rpp.Solarize"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

@@ -181,6 +181,29 @@ vx_status get_kernels_to_publish()
     STATUS_ERROR_CHECK(ADD_KERNEL(GridMask_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(MedianFilter_Register));
     STATUS_ERROR_CHECK(ADD_KERNEL(NonLinearBlend_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Dilate_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Erode_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Magnitude_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Phase_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Threshold_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(WarpPerspective_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Erase_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(CropAndPatch_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Remap_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Ricap_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(BitwiseOps_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Log_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(GaussianNoise_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ShotNoise_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Water_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ColorJitter_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Spatter_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ChannelPermute_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(ColorToGreyscale_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(JpegCompressionDistortion_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Lut_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Posterize_Register));
+    STATUS_ERROR_CHECK(ADD_KERNEL(Solarize_Register));
     return status;
 }
 

@@ -31,14 +31,14 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.1.2")
+set(VERSION "3.1.6")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
-find_package(rpp 2.2.1 REQUIRED)
+find_package(rpp 2.2.2 REQUIRED)
 
 message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
 message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
@@ -65,29 +65,42 @@ set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES
         source/tensor/Blend.cpp
+        source/tensor/BitwiseOps.cpp
         source/tensor/Blur.cpp
         source/tensor/Brightness.cpp
+        source/tensor/ChannelPermute.cpp
+        source/tensor/ColorJitter.cpp
         source/tensor/ColorTemperature.cpp
         source/tensor/ColorCast.cpp
+        source/tensor/ColorToGreyscale.cpp
         source/tensor/ColorTwist.cpp
         source/tensor/Contrast.cpp
         source/tensor/Copy.cpp
         source/tensor/Crop.cpp
+        source/tensor/CropAndPatch.cpp
         source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Dilate.cpp
         source/tensor/Downmix.cpp
+        source/tensor/Erase.cpp
+        source/tensor/Erode.cpp
         source/tensor/Exposure.cpp
         source/tensor/FishEye.cpp
         source/tensor/Flip.cpp
         source/tensor/Fog.cpp
         source/tensor/GammaCorrection.cpp
         source/tensor/GaussianFilter.cpp
+        source/tensor/GaussianNoise.cpp
         source/tensor/Glitch.cpp
         source/tensor/GridMask.cpp
         source/tensor/Hue.cpp
         source/tensor/Jitter.cpp
+        source/tensor/JpegCompressionDistortion.cpp
         source/tensor/LensCorrection.cpp
+        source/tensor/Log.cpp
         source/tensor/Log1p.cpp
+        source/tensor/Magnitude.cpp
         source/tensor/MedianFilter.cpp
+        source/tensor/Lut.cpp
         source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
         source/tensor/NonSilentRegionDetection.cpp
@@ -95,23 +108,33 @@ list(APPEND SOURCES
         source/tensor/Nop.cpp
         source/tensor/Normalize.cpp
         source/tensor/Rotate.cpp
+        source/tensor/Phase.cpp
         source/tensor/Pixelate.cpp
+        source/tensor/Posterize.cpp
         source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
+        source/tensor/Remap.cpp
         source/tensor/Resample.cpp
         source/tensor/Resize.cpp
         source/tensor/ResizeCrop.cpp
         source/tensor/ResizeCropMirror.cpp
         source/tensor/ResizeMirrorNormalize.cpp
+        source/tensor/Ricap.cpp
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
+        source/tensor/ShotNoise.cpp
         source/tensor/Snow.cpp
+        source/tensor/Solarize.cpp
+        source/tensor/Spatter.cpp
         source/tensor/Spectrogram.cpp
         source/tensor/TensorAddTensor.cpp
         source/tensor/TensorMulScalar.cpp
+        source/tensor/Threshold.cpp
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
+        source/tensor/WarpPerspective.cpp
+        source/tensor/Water.cpp
         source/tensor/Slice.cpp
         source/tensor/Transpose.cpp
         source/tensor/PythonFunction.cpp

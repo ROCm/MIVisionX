@@ -31,7 +31,7 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.1.5")
+set(VERSION "3.1.6")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
@@ -68,9 +68,11 @@ list(APPEND SOURCES
         source/tensor/BitwiseOps.cpp
         source/tensor/Blur.cpp
         source/tensor/Brightness.cpp
+        source/tensor/ChannelPermute.cpp
         source/tensor/ColorJitter.cpp
         source/tensor/ColorTemperature.cpp
         source/tensor/ColorCast.cpp
+        source/tensor/ColorToGreyscale.cpp
         source/tensor/ColorTwist.cpp
         source/tensor/Contrast.cpp
         source/tensor/Copy.cpp
@@ -92,11 +94,13 @@ list(APPEND SOURCES
         source/tensor/GridMask.cpp
         source/tensor/Hue.cpp
         source/tensor/Jitter.cpp
+        source/tensor/JpegCompressionDistortion.cpp
         source/tensor/LensCorrection.cpp
         source/tensor/Log.cpp
         source/tensor/Log1p.cpp
         source/tensor/Magnitude.cpp
         source/tensor/MedianFilter.cpp
+        source/tensor/Lut.cpp
         source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
         source/tensor/NonSilentRegionDetection.cpp
@@ -106,6 +110,7 @@ list(APPEND SOURCES
         source/tensor/Rotate.cpp
         source/tensor/Phase.cpp
         source/tensor/Pixelate.cpp
+        source/tensor/Posterize.cpp
         source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
         source/tensor/Remap.cpp
@@ -119,6 +124,7 @@ list(APPEND SOURCES
         source/tensor/SequenceRearrange.cpp
         source/tensor/ShotNoise.cpp
         source/tensor/Snow.cpp
+        source/tensor/Solarize.cpp
         source/tensor/Spatter.cpp
         source/tensor/Spectrogram.cpp
         source/tensor/TensorAddTensor.cpp

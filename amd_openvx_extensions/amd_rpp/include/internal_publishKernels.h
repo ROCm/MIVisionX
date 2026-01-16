@@ -193,6 +193,12 @@ vx_status ShotNoise_Register(vx_context);
 vx_status Water_Register(vx_context);
 vx_status ColorJitter_Register(vx_context);
 vx_status Spatter_Register(vx_context);
+vx_status ChannelPermute_Register(vx_context);
+vx_status ColorToGreyscale_Register(vx_context);
+vx_status JpegCompressionDistortion_Register(vx_context);
+vx_status Lut_Register(vx_context);
+vx_status Posterize_Register(vx_context);
+vx_status Solarize_Register(vx_context);
 
 // kernel names
 #define VX_KERNEL_RPP_NOPBATCHPD_NAME                           "org.rpp.NopbatchPD"
@@ -344,7 +350,7 @@ vx_status Spatter_Register(vx_context);
 #define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
 #define VX_KERNEL_RPP_ERASE_NAME                                "org.rpp.Erase"
 #define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
-#define VX_KERNEL_RPP_REMAP_NAME                         "org.rpp.Remap"
+#define VX_KERNEL_RPP_REMAP_NAME                                "org.rpp.Remap"
 #define VX_KERNEL_RPP_RICAP_NAME                                "org.rpp.Ricap"
 #define VX_KERNEL_RPP_BITWISE_OPS_NAME                          "org.rpp.BitwiseOps"
 #define VX_KERNEL_RPP_LOG_NAME                                  "org.rpp.Log"
@@ -353,5 +359,11 @@ vx_status Spatter_Register(vx_context);
 #define VX_KERNEL_RPP_WATER_NAME                                "org.rpp.Water"
 #define VX_KERNEL_RPP_COLORJITTER_NAME                          "org.rpp.ColorJitter"
 #define VX_KERNEL_RPP_SPATTER_NAME                              "org.rpp.Spatter"
+#define VX_KERNEL_RPP_CHANNELPERMUTE_NAME                       "org.rpp.ChannelPermute"
+#define VX_KERNEL_RPP_COLORTOGREYSCALE_NAME                     "org.rpp.ColorToGreyscale"
+#define VX_KERNEL_RPP_JPEGCOMPRESSIONDISTORTION_NAME            "org.rpp.JpegCompressionDistortion"
+#define VX_KERNEL_RPP_LUT_NAME                                  "org.rpp.Lut"
+#define VX_KERNEL_RPP_POSTERIZE_NAME                            "org.rpp.Posterize"
+#define VX_KERNEL_RPP_SOLARIZE_NAME                             "org.rpp.Solarize"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

@@ -68,8 +68,11 @@ list(APPEND SOURCES
         source/tensor/BitwiseOps.cpp
         source/tensor/Blur.cpp
         source/tensor/Brightness.cpp
+        source/tensor/ChannelPermute.cpp
+        source/tensor/ColorJitter.cpp
         source/tensor/ColorTemperature.cpp
         source/tensor/ColorCast.cpp
+        source/tensor/ColorToGreyscale.cpp
         source/tensor/ColorTwist.cpp
         source/tensor/Contrast.cpp
         source/tensor/Copy.cpp
@@ -86,14 +89,18 @@ list(APPEND SOURCES
         source/tensor/Fog.cpp
         source/tensor/GammaCorrection.cpp
         source/tensor/GaussianFilter.cpp
+        source/tensor/GaussianNoise.cpp
         source/tensor/Glitch.cpp
         source/tensor/GridMask.cpp
         source/tensor/Hue.cpp
         source/tensor/Jitter.cpp
+        source/tensor/JpegCompressionDistortion.cpp
         source/tensor/LensCorrection.cpp
+        source/tensor/Log.cpp
         source/tensor/Log1p.cpp
         source/tensor/Magnitude.cpp
         source/tensor/MedianFilter.cpp
+        source/tensor/Lut.cpp
         source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
         source/tensor/NonSilentRegionDetection.cpp
@@ -103,6 +110,7 @@ list(APPEND SOURCES
         source/tensor/Rotate.cpp
         source/tensor/Phase.cpp
         source/tensor/Pixelate.cpp
+        source/tensor/Posterize.cpp
         source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
         source/tensor/Remap.cpp
@@ -114,15 +122,24 @@ list(APPEND SOURCES
         source/tensor/Ricap.cpp
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
+        source/tensor/ShotNoise.cpp
         source/tensor/Snow.cpp
+        source/tensor/Solarize.cpp
+        source/tensor/Spatter.cpp
         source/tensor/Spectrogram.cpp
         source/tensor/TensorAddTensor.cpp
+        source/tensor/TensorMax.cpp
+        source/tensor/TensorMean.cpp
+        source/tensor/TensorMin.cpp
         source/tensor/TensorMulScalar.cpp
+        source/tensor/TensorStdDev.cpp
+        source/tensor/TensorSum.cpp
         source/tensor/Threshold.cpp
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
         source/tensor/WarpPerspective.cpp
+        source/tensor/Water.cpp
         source/tensor/Slice.cpp
         source/tensor/Transpose.cpp
         source/tensor/PythonFunction.cpp

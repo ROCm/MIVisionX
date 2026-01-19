@@ -102,6 +102,23 @@ vx_status CropAndPatch_Register(vx_context);
 vx_status Remap_Register(vx_context);
 vx_status Ricap_Register(vx_context);
 vx_status BitwiseOps_Register(vx_context);
+vx_status Log_Register(vx_context);
+vx_status GaussianNoise_Register(vx_context);
+vx_status ShotNoise_Register(vx_context);
+vx_status Water_Register(vx_context);
+vx_status ColorJitter_Register(vx_context);
+vx_status Spatter_Register(vx_context);
+vx_status ChannelPermute_Register(vx_context);
+vx_status ColorToGreyscale_Register(vx_context);
+vx_status JpegCompressionDistortion_Register(vx_context);
+vx_status Lut_Register(vx_context);
+vx_status Posterize_Register(vx_context);
+vx_status Solarize_Register(vx_context);
+vx_status TensorSum_Register(vx_context);
+vx_status TensorMin_Register(vx_context);
+vx_status TensorMax_Register(vx_context);
+vx_status TensorMean_Register(vx_context);
+vx_status TensorStdDev_Register(vx_context);
 
 //tensor
 #define VX_KERNEL_RPP_BLEND_NAME                                "org.rpp.Blend"
@@ -169,8 +186,25 @@ vx_status BitwiseOps_Register(vx_context);
 #define VX_KERNEL_RPP_WARP_PERSPECTIVE_NAME                     "org.rpp.WarpPerspective"
 #define VX_KERNEL_RPP_ERASE_NAME                                "org.rpp.Erase"
 #define VX_KERNEL_RPP_CROP_AND_PATCH_NAME                       "org.rpp.CropAndPatch"
-#define VX_KERNEL_RPP_REMAP_NAME                         "org.rpp.Remap"
+#define VX_KERNEL_RPP_REMAP_NAME                                "org.rpp.Remap"
 #define VX_KERNEL_RPP_RICAP_NAME                                "org.rpp.Ricap"
 #define VX_KERNEL_RPP_BITWISE_OPS_NAME                          "org.rpp.BitwiseOps"
+#define VX_KERNEL_RPP_LOG_NAME                                  "org.rpp.Log"
+#define VX_KERNEL_RPP_GAUSSIAN_NOISE_NAME                       "org.rpp.GaussianNoise"
+#define VX_KERNEL_RPP_SHOT_NOISE_NAME                           "org.rpp.ShotNoise"
+#define VX_KERNEL_RPP_WATER_NAME                                "org.rpp.Water"
+#define VX_KERNEL_RPP_COLORJITTER_NAME                          "org.rpp.ColorJitter"
+#define VX_KERNEL_RPP_SPATTER_NAME                              "org.rpp.Spatter"
+#define VX_KERNEL_RPP_CHANNELPERMUTE_NAME                       "org.rpp.ChannelPermute"
+#define VX_KERNEL_RPP_COLORTOGREYSCALE_NAME                     "org.rpp.ColorToGreyscale"
+#define VX_KERNEL_RPP_JPEGCOMPRESSIONDISTORTION_NAME            "org.rpp.JpegCompressionDistortion"
+#define VX_KERNEL_RPP_LUT_NAME                                  "org.rpp.Lut"
+#define VX_KERNEL_RPP_POSTERIZE_NAME                            "org.rpp.Posterize"
+#define VX_KERNEL_RPP_SOLARIZE_NAME                             "org.rpp.Solarize"
+#define VX_KERNEL_RPP_TENSOR_SUM_NAME                           "org.rpp.TensorSum"
+#define VX_KERNEL_RPP_TENSOR_MIN_NAME                           "org.rpp.TensorMin"
+#define VX_KERNEL_RPP_TENSOR_MAX_NAME                           "org.rpp.TensorMax"
+#define VX_KERNEL_RPP_TENSOR_MEAN_NAME                          "org.rpp.TensorMean"
+#define VX_KERNEL_RPP_TENSOR_STDDEV_NAME                        "org.rpp.TensorStdDev"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_

@@ -27,8 +27,8 @@ struct SliceLocalData {
     Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
-    Rpp32s *pAnchor = nullptr;
-    Rpp32s *pShape = nullptr;
+    Rpp32s *pAnchor;
+    Rpp32s *pShape;
     Rpp32f *pFillValues;
     Rpp32u policy;
     Rpp32u *pSrcDims;
@@ -79,7 +79,6 @@ void updateDestinationRoi(SliceLocalData *data, unsigned *src_roi, unsigned *dst
 static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *parameters, SliceLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr, *roi_tensor_ptr_dst;
-    Rpp32s *pAnchorTemp, *pShapeTemp;
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL

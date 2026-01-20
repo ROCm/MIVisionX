@@ -52,20 +52,32 @@ inline double hann(double x) {
 // initialization function used for filling the values in Resampling window (RpptResamplingWindow)
 // using the coeffs and lobes value this function generates a LUT (look up table) which is further used in Resample audio augmentation
 #if RPP_AUDIO
-inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t lobes) {
+inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t lobes, bool is_pinned_memory) {
     float scale = 2.0f * lobes / (coeffs - 1);
     float scale_envelope = 2.0f / coeffs;
     window.coeffs = coeffs;
     window.lobes = lobes;
-    window.lookup.clear();
-    window.lookup.resize(coeffs + 5);
-    window.lookupSize = window.lookup.size();
+    if (is_pinned_memory) {
+#if ENABLE_HIP
+        auto status = hipHostMalloc(&window.lookupPinned, (coeffs + 5) * sizeof(float));
+        if (status != hipSuccess) {
+            fprintf(stderr, "Runtime error: hipHostMalloc for window.lookupPinned returned %d at %s:%d\n", status, __FILE__, __LINE__);
+            window.lookupPinned = nullptr;
+        }
+#endif
+    } else {
+        window.lookup.clear();
+        window.lookup.resize(coeffs + 5);
+    }
+    
+    window.lookupSize = coeffs + 5;
     int32_t center = (coeffs - 1) * 0.5f;
+    float* lookupPtr = is_pinned_memory ? window.lookupPinned : window.lookup.data();
     for (int32_t i = 0; i < coeffs; i++) {
         float x = (i - center) * scale;
         float y = (i - center) * scale_envelope;
         float w = sinc(x) * hann(y);
-        window.lookup[i + 1] = w;
+        lookupPtr[i + 1] = w;
     }
     window.center = center + 1;
     window.scale = 1.0f / scale;
@@ -215,7 +227,7 @@ static vx_status VX_CALLBACK initializeResample(vx_node node, const vx_reference
             data->pInRateTensor = new float[data->pSrcDesc->n];
             data->window = new RpptResamplingWindow();
         }
-        windowed_sinc(*(data->window), lookupSize, lobes);
+        windowed_sinc(*(data->window), lookupSize, lobes, data->deviceType == AGO_TARGET_AFFINITY_GPU);
 #endif
         refreshResample(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -234,18 +246,15 @@ static vx_status VX_CALLBACK uninitializeResample(vx_node node, const vx_referen
         if (data->pInRateTensor) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pInRateTensor));
         if (data->pSrcRoi) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcRoi));
         if (data->window) {
-            if (data->window->lookup)
-                CHECK_HIP_RETURN_STATUS(hipHostFree(data->window->lookup));
+            if (data->window->lookupPinned)
+                CHECK_HIP_RETURN_STATUS(hipHostFree(data->window->lookupPinned));
             CHECK_HIP_RETURN_STATUS(hipHostFree(data->window));
         }
 #endif
     } else {
         if (data->pInRateTensor) delete[] data->pInRateTensor;
         if (data->pSrcRoi) delete[] data->pSrcRoi;
-        if (data->window) {
-            if (data->window->lookup) delete [] data->window->lookup;
-            delete data->window;
-        }
+        if (data->window) delete data->window;
     }
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;

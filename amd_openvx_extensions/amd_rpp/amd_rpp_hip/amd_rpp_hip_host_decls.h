@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include "hip/hip_runtime.h"
 #include "hip/hip_fp16.h"
 #include <VX/vx.h>
-#include "rppdefs.h"
+#include "rpp/rppdefs.h"
 
 int HipExecTensorMulScalar(hipStream_t stream,
                            const float *srcPtr,

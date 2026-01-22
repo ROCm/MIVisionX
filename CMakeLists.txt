@@ -18,6 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 cmake_minimum_required(VERSION 3.10)
+include( utils.cmake )
+set( MIVISIONX "mivisionx" )
+set( BUILD_ENABLE_LINTIAN_OVERRIDES ON CACHE BOOL "Enable/Disable Lintian Overrides" )
+set( BUILD_DEBIAN_PKGING_FLAG ON CACHE BOOL "Internal Status Flag to indicate Debian Packaging Build" )
 
 # ROCM Path
 if(DEFINED ENV{ROCM_PATH})
@@ -148,7 +152,7 @@ if("${BACKEND}" STREQUAL "HIP")
   set(LOOM OFF)
   # Set supported GPU Targets
   if(NOT GPU_TARGETS AND NOT AMDGPU_TARGETS)
-    set(DEFAULT_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102;gfx950;gfx1200;gfx1201")
+    set(DEFAULT_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1151;gfx1102;gfx950;gfx1200;gfx1201")
   endif()
 
   # Set AMD GPU_TARGETS
@@ -171,12 +175,26 @@ if("${BACKEND}" STREQUAL "HIP")
   message("-- ${White}${PROJECT_NAME} -- AMD GPU_TARGETS: ${GPU_TARGETS}${ColourReset}")
 endif()
 
+# build with minimum third-party dependency
+if(NOT DEFINED MIN_DEPS_MODE)
+  set(MIN_DEPS_MODE OFF)   # set default dependency option
+  if(EXISTS "/etc/os-release")
+    file(READ "/etc/os-release" OS_RELEASE)
+    string(REGEX MATCH "22.04" UBUNTU_22_FOUND ${OS_RELEASE})
+    if(NOT UBUNTU_22_FOUND)
+      set(MIN_DEPS_MODE ON)
+      message("-- ${Yellow}${PROJECT_NAME} Warning -- Non-Ubuntu OS, Min dependency option turned on${ColourReset}")
+    endif()
+  endif()
+endif()
+
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=${NEURAL_NET} [Turn ON/OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM OpenCL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
+message("-- ${Cyan}     -D MIN_DEPS_MODE=${MIN_DEPS_MODE} [Build MIVisionX with minimum dependencies (default:OFF)]${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
@@ -197,12 +215,14 @@ option(BUILT_WITH_SOURCE "MIVisionX built with source"        ON)
 add_subdirectory(tests)
 
 # set package information
+set(PKG_MAINTAINER_NM  "MIVisionX Support")
+set(PKG_MAINTAINER_EMAIL  "mivisionx.support@amd.com")
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set(CPACK_PACKAGE_LICENSE       "MIT")
-set(CPACK_PACKAGE_CONTACT       "MIVisionX Support <mivisionx.support@amd.com>")
+set(CPACK_PACKAGE_CONTACT "${PKG_MAINTAINER_NM} <${PKG_MAINTAINER_EMAIL}>")
 set(CPACK_PACKAGE_VENDOR        "AMD ROCm")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://github.com/ROCm/MIVisionX")
@@ -210,9 +230,11 @@ set(CPACK_PACKAGE_HOMEPAGE      "https://github.com/ROCm/MIVisionX")
 if(ENABLE_ASAN_PACKAGING)
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "AMD MIVisionX address sanitizer libraries")
   set(CPACK_RPM_PACKAGE_SUMMARY "AMD MIVisionX address sanitizer libraries")
+  set( COMP_TYPE "asan" )
 else()
   set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
   set(CPACK_RPM_PACKAGE_SUMMARY "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+  set( COMP_TYPE "runtime" )
 endif()
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
@@ -345,6 +367,8 @@ else()
     message("-- ${White}AMD ROCm MIVisionX Dev Package -- ${CPACK_DEBIAN_DEV_PACKAGE_DEPENDS}${ColourReset}")
   endif()
 endif()
+
+configure_pkg( ${MIVISIONX} ${COMP_TYPE} ${CPACK_PACKAGE_VERSION} ${PKG_MAINTAINER_NM} ${PKG_MAINTAINER_EMAIL} )
 
 include(CPack)
 

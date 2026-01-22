@@ -162,8 +162,16 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pAlpha = new vx_float32[data->pSrcDesc->n];
-    data->pBeta = new vx_float32[data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, data->pSrcDesc->n * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pBeta, data->pSrcDesc->n * sizeof(vx_float32)));
+#endif
+    } else {
+        data->pAlpha = new vx_float32[data->pSrcDesc->n];
+        data->pBeta = new vx_float32[data->pSrcDesc->n];
+    }
+
     refreshBrightness(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -173,8 +181,15 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
 static vx_status VX_CALLBACK uninitializeBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     BrightnessLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pAlpha;
-    delete[] data->pBeta;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pAlpha) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAlpha));
+        if (data->pBeta) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pBeta));
+#endif
+    } else {
+        if (data->pAlpha) delete[] data->pAlpha;
+        if (data->pBeta) delete[] data->pBeta;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

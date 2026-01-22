@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <string>
 #include <vector>
 #include <sstream>
+#include <iostream>
 
 // GPU configuration
 #define ENCODE_ENABLE_GPU       1         // enable use of GPU buffers

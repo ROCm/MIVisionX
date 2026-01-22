@@ -154,6 +154,8 @@ static vx_status VX_CALLBACK CV_FAST_detector_Kernel(vx_node node, const vx_refe
     //Converting OpenCV Keypoints to OpenVX Keypoints
     STATUS_ERROR_CHECK(CV_to_VX_keypoints(key_points, array));
 
+    if (mat) delete mat;
+
     return status;
 }
 

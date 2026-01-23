@@ -22,9 +22,6 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-#include <limits>
-#include <vector>
-
 struct TensorSumLocalData {
     vxRppHandle *handle;
     vx_uint32 deviceType;
@@ -122,29 +119,6 @@ static vx_status VX_CALLBACK processTensorSum(vx_node node, const vx_reference *
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
-}
-
-static vx_status computeTensorLength(vx_tensor tensor, Rpp32u *tensorLength) {
-    if (!tensorLength)
-        return VX_FAILURE;
-    size_t num_dims = 0;
-    vx_status status = vxQueryTensor(tensor, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims));
-    if (status != VX_SUCCESS)
-        return status;
-    std::vector<vx_size> dims(num_dims, 0);
-    status = vxQueryTensor(tensor, VX_TENSOR_DIMS, dims.data(), sizeof(vx_size) * num_dims);
-    if (status != VX_SUCCESS)
-        return status;
-    uint64_t length = 1;
-    for (vx_size dim : dims) {
-        if (dim == 0)
-            return VX_ERROR_INVALID_DIMENSION;
-        length *= dim;
-        if (length > static_cast<uint64_t>(std::numeric_limits<Rpp32u>::max()))
-            return VX_ERROR_INVALID_DIMENSION;
-    }
-    *tensorLength = static_cast<Rpp32u>(length);
-    return VX_SUCCESS;
 }
 
 static vx_status VX_CALLBACK initializeTensorSum(vx_node node, const vx_reference *parameters, vx_uint32 num) {

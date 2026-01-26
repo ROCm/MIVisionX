@@ -31,7 +31,7 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.1.6")
+set(VERSION "3.1.7")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
@@ -128,7 +128,12 @@ list(APPEND SOURCES
         source/tensor/Spatter.cpp
         source/tensor/Spectrogram.cpp
         source/tensor/TensorAddTensor.cpp
+        source/tensor/TensorMax.cpp
+        source/tensor/TensorMean.cpp
+        source/tensor/TensorMin.cpp
         source/tensor/TensorMulScalar.cpp
+        source/tensor/TensorStdDev.cpp
+        source/tensor/TensorSum.cpp
         source/tensor/Threshold.cpp
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp

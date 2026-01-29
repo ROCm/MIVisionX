@@ -42,9 +42,12 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
         if(NOT ${result} EQUAL 0)
           message(FATAL_ERROR "Failed to compress: ${error}")
         endif()
-        install ( FILES "${CMAKE_BINARY_DIR}/DEBIAN/${DEB_CHANGELOG_INSTALL_FILENM}"
-                  DESTINATION ${CMAKE_INSTALL_DOCDIR}
-                  COMPONENT ${COMPONENT_NAME_T})
+
+        if("${COMPONENT_NAME_T}" STREQUAL "runtime")
+          install ( FILES "${CMAKE_BINARY_DIR}/DEBIAN/${DEB_CHANGELOG_INSTALL_FILENM}"
+                    DESTINATION ${CMAKE_INSTALL_DOCDIR}
+                    COMPONENT ${COMPONENT_NAME_T})
+        endif()
       endif()
 
     else()

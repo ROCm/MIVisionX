@@ -10,6 +10,7 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
     find_file (DEBIAN debian_version debconf.conf PATHS /etc)
     if(DEBIAN)
       set( BUILD_DEBIAN_PKGING_FLAG ON CACHE BOOL "Internal Status Flag to indicate Debian Packaging Build" FORCE )
+      set( BUILD_ENABLE_LINTIAN_OVERRIDES ON CACHE BOOL "Enable/Disable Lintian Overrides" FORCE)
       set_debian_pkg_cmake_flags( ${PACKAGE_NAME_T} ${PACKAGE_VERSION_T}
                                   ${MAINTAINER_NM_T} ${MAINTAINER_EMAIL_T} )
 
@@ -85,6 +86,7 @@ function( set_debian_pkg_cmake_flags DEB_PACKAGE_NAME_T DEB_PACKAGE_VERSION_T DE
     execute_process (
         COMMAND ${DEB_DATE_TIMESTAMP_EXEC} ${DEB_TIMESTAMP_FORMAT_OPTION}
         OUTPUT_VARIABLE TIMESTAMP_T
+        OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     set( DEB_TIMESTAMP                "${TIMESTAMP_T}" CACHE STRING "Current Time Stamp for Copyright/Changelog" )
 

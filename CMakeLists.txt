@@ -22,8 +22,8 @@ include( utils.cmake )
 set( MIVISIONX "mivisionx" )
 set( BUILD_ENABLE_LINTIAN_OVERRIDES OFF CACHE BOOL "Enable/Disable Lintian Overrides" )
 set( BUILD_DEBIAN_PKGING_FLAG OFF CACHE BOOL "Internal Status Flag to indicate Debian Packaging Build" )
-# LINTIAN-CPACK interferes with inbox packaging, add an option to disable it but don't disable by default
-option(DISABLE_LINTIAN_SUPPORT "disable LINTIAN Support from building" OFF)
+# LINTIAN-CPACK interferes with inbox packaging, add an option to disable it
+option(DISABLE_LINTIAN_SUPPORT "disable LINTIAN Support from building" ON)
 
 
 # ROCM Path

@@ -9,6 +9,9 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 ### Added
 *  Added the `PythonFunction` extension to VX_RPP
 
+### Removed
+*  Removed the batchPD extensions from VX_RPP
+
 ### Changed
 *  Updated vx_rpp extension for Gaussian Filter
 

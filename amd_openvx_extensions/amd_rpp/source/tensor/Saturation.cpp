@@ -36,8 +36,6 @@ struct SaturationLocalData {
     vxTensorLayout outputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t ouputTensorDims[RPP_MAX_TENSOR_DIMS];
-    RppiSize *pSrcDimensions;
-    RppiSize maxSrcDimensions;
 };
 
 static vx_status VX_CALLBACK refreshSaturation(vx_node node, const vx_reference *parameters, vx_uint32 num, SaturationLocalData *data) {
@@ -59,18 +57,13 @@ static vx_status VX_CALLBACK refreshSaturation(vx_node node, const vx_reference 
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
     data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
-    // Fill width and height array with ROI data required by RPP batchPD kernels
-    for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcDimensions[i].width = data->pSrcRoi[i].xywhROI.roiWidth;
-        data->pSrcDimensions[i].height = data->pSrcRoi[i].xywhROI.roiHeight;
-    }
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; f++) {
                 data->pSaturationFactor[index + f] = data->pSaturationFactor[n];
-                data->pSrcDimensions[index + f] = data->pSrcDimensions[n];
+                data->pSrcRoi[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
             }
         }
     }
@@ -128,11 +121,11 @@ static vx_status VX_CALLBACK processSaturation(vx_node node, const vx_reference 
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        rpp_status = rppi_saturationRGB_u8_pkd3_batchPD_gpu(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pSaturationFactor, data->inputTensorDims[0], data->handle->rppHandle);
+        rpp_status = rppt_saturation_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSaturationFactor, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppi_saturationRGB_u8_pkd3_batchPD_host(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pSaturationFactor, data->inputTensorDims[0], data->handle->rppHandle);
+        rpp_status = rppt_saturation_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSaturationFactor, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;
@@ -170,11 +163,13 @@ static vx_status VX_CALLBACK initializeSaturation(vx_node node, const vx_referen
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->pSaturationFactor = new vx_float32[data->pSrcDesc->n];
-    data->pSrcDimensions = new RppiSize[data->pSrcDesc->n];
-
-    data->maxSrcDimensions.height = data->pSrcDesc->h;
-    data->maxSrcDimensions.width = data->pSrcDesc->w;
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        data->pSaturationFactor = new vx_float32[data->pSrcDesc->n];
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSaturationFactor, data->pSrcDesc->n * sizeof(vx_float32)));
+#endif
+    }
     refreshSaturation(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -184,8 +179,13 @@ static vx_status VX_CALLBACK initializeSaturation(vx_node node, const vx_referen
 static vx_status VX_CALLBACK uninitializeSaturation(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     SaturationLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pSaturationFactor;
-    delete[] data->pSrcDimensions;
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        delete[] data->pSaturationFactor;
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSaturationFactor));
+#endif
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

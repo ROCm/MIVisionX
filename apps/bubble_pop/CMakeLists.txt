@@ -87,8 +87,8 @@ else()
 	target_compile_definitions(vxPop PUBLIC USE_OPENCV_4=0)
 endif()
 
-file(COPY image DESTINATION ${CMAKE_BINARY_DIR})
-file(COPY gdf DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY image DESTINATION ${MIVISIONX_BINARY_DIR})
+file(COPY gdf DESTINATION ${MIVISIONX_BINARY_DIR})
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	target_link_libraries(vx_opencv OpenVX)

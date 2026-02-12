@@ -121,7 +121,7 @@ static vx_status VX_CALLBACK processJpegCompressionDistortion(vx_node node, cons
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        rpp_status = rppt_jpeg_compression_distortion_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_jpeg_compression_distortion_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pQuality, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {

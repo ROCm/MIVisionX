@@ -169,8 +169,7 @@ static vx_status VX_CALLBACK processBrightness(vx_node node, const vx_reference 
             rpp_status = rppt_fused_multiply_add_scalar_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         }
-    }
-    else {
+    } else {
         if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
     #if ENABLE_OPENCL
             return_status = VX_ERROR_NOT_IMPLEMENTED;
@@ -217,9 +216,8 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
         data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
         data->pDstGenericDesc->offsetInBytes = 0;
-        fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->ouputTensorDims); 
-    }
-    else {
+        fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->ouputTensorDims);
+    } else {
         data->pSrcDesc = new RpptDesc;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
@@ -242,13 +240,12 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
 #if ENABLE_HIP
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, data->inputTensorDims[0] * sizeof(vx_float32)));
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pBeta, data->inputTensorDims[0] * sizeof(vx_float32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pConditionalExecution, data->inputTensorDims[0] * sizeof(vx_int32)));
 #endif
     } else {
         data->pAlpha = new vx_float32[data->inputTensorDims[0]];
         data->pBeta = new vx_float32[data->inputTensorDims[0]];
-        data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
     }
+    data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
     refreshBrightness(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -262,22 +259,23 @@ static vx_status VX_CALLBACK uninitializeBrightness(vx_node node, const vx_refer
 #if ENABLE_HIP
         if (data->pAlpha) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pAlpha));
         if (data->pBeta) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pBeta));
-        if (data->pConditionalExecution) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pConditionalExecution));
 #endif
     } else {
         if (data->pAlpha) delete[] data->pAlpha;
         if (data->pBeta) delete[] data->pBeta;
-        if (data->pConditionalExecution) delete[] data->pConditionalExecution;
     }
+    if (data->pConditionalExecution) delete[] data->pConditionalExecution;
     delete data->pSrcDesc;
     delete data->pDstDesc;
     delete data->pSrcGenericDesc;
     delete data->pDstGenericDesc;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        hipError_t err = hipHostFree(data->pSrcRoi3D);
-        if (err != hipSuccess)
-            std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
+        if (data->pSrcRoi3D) {
+            hipError_t err = hipHostFree(data->pSrcRoi3D);
+            if (err != hipSuccess)
+                std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
+        }
 #endif
     } else {
         if (data->pSrcRoi3D) delete[] data->pSrcRoi3D;

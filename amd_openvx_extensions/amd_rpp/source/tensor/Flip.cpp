@@ -164,8 +164,7 @@ static vx_status VX_CALLBACK processFlip(vx_node node, const vx_reference *param
             rpp_status = rppt_flip_voxel_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pHorizontalFlag, data->pVerticalFlag, data->pDepthFlag, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
             return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
         }
-    }
-    else {
+    } else {
         if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
     #if ENABLE_OPENCL
             return_status = VX_ERROR_NOT_IMPLEMENTED;
@@ -212,9 +211,8 @@ static vx_status VX_CALLBACK initializeFlip(vx_node node, const vx_reference *pa
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_tensor_dtype, sizeof(output_tensor_dtype)));
         data->pDstGenericDesc->dataType = getRpptDataType(output_tensor_dtype);
         data->pDstGenericDesc->offsetInBytes = 0;
-        fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->ouputTensorDims); 
-    }
-    else {
+        fillGenericDescriptionPtrfromDims(data->pDstGenericDesc, data->outputLayout, data->ouputTensorDims);
+    } else {
         data->pSrcDesc = new RpptDesc;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
@@ -270,9 +268,11 @@ static vx_status VX_CALLBACK uninitializeFlip(vx_node node, const vx_reference *
     delete data->pDstGenericDesc;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        hipError_t err = hipHostFree(data->pSrcRoi3D);
-        if (err != hipSuccess)
-            std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
+        if (data->pSrcRoi3D) {
+            hipError_t err = hipHostFree(data->pSrcRoi3D);
+            if (err != hipSuccess)
+                std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
+        }
 #endif
     } else {
         if (data->pSrcRoi3D) delete[] data->pSrcRoi3D;

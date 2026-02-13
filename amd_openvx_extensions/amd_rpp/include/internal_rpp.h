@@ -30,9 +30,6 @@ THE SOFTWARE.
 
 #include "rpp/rpp.h"
 #include "rpp/rppdefs.h"
-#if RPP_LEGACY_SUPPORT
-#include "rpp/rppi.h"
-#endif
 
 #if ENABLE_OPENCL
 #include <CL/cl.h>
@@ -46,6 +43,8 @@ THE SOFTWARE.
 #include<algorithm>
 #include<functional>
 #include<map>
+#include<limits>
+#include<vector>
 
 using namespace std;
 
@@ -110,6 +109,29 @@ void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTen
 void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims, vxTensorLayout layout = vxTensorLayout::VX_NHW);
 RpptDataType getRpptDataType(vx_enum dataType);
 size_t getDataTypeSize(vx_enum dataType);
+
+static vx_status computeTensorLength(vx_tensor tensor, Rpp32u *tensorLength) {
+    if (!tensorLength)
+        return VX_FAILURE;
+    size_t num_dims = 0;
+    vx_status status = vxQueryTensor(tensor, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims));
+    if (status != VX_SUCCESS)
+        return status;
+    std::vector<vx_size> dims(num_dims, 0);
+    status = vxQueryTensor(tensor, VX_TENSOR_DIMS, dims.data(), sizeof(vx_size) * num_dims);
+    if (status != VX_SUCCESS)
+        return status;
+    uint64_t length = 1;
+    for (vx_size dim : dims) {
+        if (dim == 0)
+            return VX_ERROR_INVALID_DIMENSION;
+        length *= dim;
+        if (length > static_cast<uint64_t>(std::numeric_limits<Rpp32u>::max()))
+            return VX_ERROR_INVALID_DIMENSION;
+    }
+    *tensorLength = static_cast<Rpp32u>(length);
+    return VX_SUCCESS;
+}
 
 class Kernellist
 {

@@ -123,7 +123,11 @@ static vx_status VX_CALLBACK processCropMirrorNormalize(vx_node node, const vx_r
     CropMirrorNormalizeLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshCropMirrorNormalize(node, parameters, num, data);
+#if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    RppBackend backend = RPP_HOST_BACKEND;
+#endif
     RppStatus rpp_status = rppt_crop_mirror_normalize(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pMultiplier, data->pOffset,
                                                       data->pMirror, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
     return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;

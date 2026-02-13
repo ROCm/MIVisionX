@@ -122,7 +122,11 @@ static vx_status VX_CALLBACK processGaussianNoise(vx_node node, const vx_referen
     GaussianNoiseLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshGaussianNoise(node, parameters, num, data);
+#if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    RppBackend backend = RPP_HOST_BACKEND;
+#endif
     RppStatus rpp_status = rppt_gaussian_noise(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pMean, data->pStdDev, data->seed, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
     return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }

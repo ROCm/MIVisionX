@@ -211,7 +211,11 @@ static vx_status VX_CALLBACK processNormalize(vx_node node, const vx_reference *
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshNormalize(node, parameters, num, data);
 #if RPP_AUDIO
+#if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    RppBackend backend = RPP_HOST_BACKEND;
+#endif
     RppStatus rpp_status = rppt_normalize(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle, backend);
     return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif

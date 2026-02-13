@@ -114,7 +114,11 @@ static vx_status VX_CALLBACK processColorToGreyscale(vx_node node, const vx_refe
     ColorToGreyscaleLocalData *data = nullptr;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshColorToGreyscale(node, parameters, num, data));
+#if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    RppBackend backend = RPP_HOST_BACKEND;
+#endif
     RppStatus rpp_status = rppt_color_to_greyscale(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->subpixelLayout, data->handle->rppHandle, backend);
     return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }

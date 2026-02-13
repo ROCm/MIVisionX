@@ -112,7 +112,11 @@ static vx_status VX_CALLBACK processVignette(vx_node node, const vx_reference *p
     VignetteLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshVignette(node, parameters, num, data);
+#if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    RppBackend backend = RPP_HOST_BACKEND;
+#endif
     RppStatus rpp_status = rppt_vignette(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pStdDev, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
     return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }

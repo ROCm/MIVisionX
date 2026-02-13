@@ -132,7 +132,11 @@ static vx_status VX_CALLBACK processMedianFilter(vx_node node, const vx_referenc
     MedianFilterLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshMedianFilter(node, parameters, num, data));
+#if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    RppBackend backend = RPP_HOST_BACKEND;
+#endif
     RppStatus rpp_status = rppt_median_filter(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
                                               data->kernelSize, data->borderType,
                                               data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);

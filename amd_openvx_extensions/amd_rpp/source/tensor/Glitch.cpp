@@ -134,11 +134,11 @@ static vx_status VX_CALLBACK processGlitch(vx_node node, const vx_reference *par
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        rpp_status = rppt_glitch(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pXOffsetR, data->pYOffsetR, data->pXOffsetG, data->pYOffsetG, data->pXOffsetB, data->pYOffsetB, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
+        rpp_status = rppt_glitch_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pXOffsetR, data->pYOffsetR, data->pXOffsetG, data->pYOffsetG, data->pXOffsetB, data->pYOffsetB, data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_glitch(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pXOffsetR, data->pYOffsetR, data->pXOffsetG, data->pYOffsetG, data->pXOffsetB, data->pYOffsetB data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
+        rpp_status = rppt_glitch_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pXOffsetR, data->pYOffsetR, data->pXOffsetG, data->pYOffsetG, data->pXOffsetB, data->pYOffsetB data->pSrcRoi, data->roiType, data->handle->rppHandle);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }*/
     return return_status;

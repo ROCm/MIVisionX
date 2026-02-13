@@ -158,7 +158,11 @@ static vx_status VX_CALLBACK processBitwiseOps(vx_node node, const vx_reference 
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshBitwiseOps(node, parameters, num, data));
 
+#if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    RppBackend backend = RPP_HOST_BACKEND;
+#endif
     switch (data->opType) {
         case vxBitwiseOp::AND:
             rpp_status = rppt_bitwise_and(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);

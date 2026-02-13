@@ -71,7 +71,21 @@ static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *para
         if (!data->pFillValues) data->pFillValues = new Rpp32f[data->inputTensorDims[0]];
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->inputTensorDims[0], sizeof(float), data->pFillValues, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
-    data->pSrcRoi3D = static_cast<unsigned *>(roi_tensor_ptr);
+    RppSize_t numDims;
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * numDims));
+
+    // For Identifying if the input Tensor is 1D (excluding the Nth dimension) [ even if 2nd dim is 1 - The tensor is considered 1D ]
+    if ((numDims == 3) && (data->inputTensorDims[2] == 1)) {
+        RpptROI *src_roi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
+        for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 2) {
+            data->pSrcDims[j] = src_roi[i].xywhROI.xy.x;
+            data->pSrcDims[j + 1] = src_roi[i].xywhROI.roiWidth;
+        }
+        data->pSrcRoi3D = static_cast<unsigned *>(data->pSrcDims);
+    } else {
+        data->pSrcRoi3D = static_cast<unsigned *>(roi_tensor_ptr);
+    }
     return status;
 }
 

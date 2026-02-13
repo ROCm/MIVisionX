@@ -43,7 +43,7 @@ struct SliceLocalData {
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
-static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *parameters, vx_uint32 num, SliceLocalData *data) {
+static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *parameters, SliceLocalData *data) {
     vx_status status = VX_SUCCESS;
     void *roi_tensor_ptr;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {

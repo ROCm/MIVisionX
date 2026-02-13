@@ -38,7 +38,7 @@ SOFTWARE.
 extern "C" {
 #endif
 #define VX_EXT_RPP_VERSION_MAJOR 3
-#define VX_EXT_RPP_VERSION_MINOR 2
+#define VX_EXT_RPP_VERSION_MINOR 3
 #define VX_EXT_RPP_VERSION_PATCH 0
 
 #define VX_EXT_RPP_CHECK_VERSION(major, minor, patch) \

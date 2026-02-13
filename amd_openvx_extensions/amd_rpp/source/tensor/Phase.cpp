@@ -120,24 +120,12 @@ static vx_status VX_CALLBACK validatePhase(vx_node node, const vx_reference para
 }
 
 static vx_status VX_CALLBACK processPhase(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_SUCCESS;
-
     PhaseLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshPhase(node, parameters, num, data);
-
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        rpp_status = rppt_phase(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_phase(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }
-
-    return return_status;
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+    RppStatus rpp_status = rppt_phase(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializePhase(vx_node node, const vx_reference *parameters, vx_uint32 num) {

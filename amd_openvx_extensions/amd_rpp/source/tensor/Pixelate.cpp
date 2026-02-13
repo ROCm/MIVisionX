@@ -108,23 +108,12 @@ static vx_status VX_CALLBACK validatePixelate(vx_node node, const vx_reference p
 }
 
 static vx_status VX_CALLBACK processPixelate(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_ERROR_NOT_IMPLEMENTED;
     PixelateLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshPixelate(node, parameters, num, data);
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        rpp_status = rppt_pixelate(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->interDstPtr, data->pixelationPercentage, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_pixelate(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->interDstPtr, data->pixelationPercentage, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }
-    return return_status;
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+    RppStatus rpp_status = rppt_pixelate(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->interDstPtr, data->pixelationPercentage, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializePixelate(vx_node node, const vx_reference *parameters, vx_uint32 num) {

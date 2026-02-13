@@ -154,53 +154,28 @@ static vx_status VX_CALLBACK validateBitwiseOps(vx_node node, const vx_reference
 
 static vx_status VX_CALLBACK processBitwiseOps(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_SUCCESS;
-
     BitwiseOpsLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshBitwiseOps(node, parameters, num, data));
 
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        switch (data->opType) {
-            case vxBitwiseOp::AND:
-                rpp_status = rppt_bitwise_and(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
-                break;
-            case vxBitwiseOp::OR:
-                rpp_status = rppt_bitwise_or(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
-                break;
-            case vxBitwiseOp::XOR:
-                rpp_status = rppt_bitwise_xor(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
-                break;
-            case vxBitwiseOp::NOT:
-                rpp_status = rppt_bitwise_not(data->pSrc1, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
-                break;
-            default:
-                return VX_ERROR_INVALID_PARAMETERS;
-        }
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        switch (data->opType) {
-            case vxBitwiseOp::AND:
-                rpp_status = rppt_bitwise_and(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
-                break;
-            case vxBitwiseOp::OR:
-                rpp_status = rppt_bitwise_or(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
-                break;
-            case vxBitwiseOp::XOR:
-                rpp_status = rppt_bitwise_xor(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
-                break;
-            case vxBitwiseOp::NOT:
-                rpp_status = rppt_bitwise_not(data->pSrc1, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
-                break;
-            default:
-                return VX_ERROR_INVALID_PARAMETERS;
-        }
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+    switch (data->opType) {
+        case vxBitwiseOp::AND:
+            rpp_status = rppt_bitwise_and(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+            break;
+        case vxBitwiseOp::OR:
+            rpp_status = rppt_bitwise_or(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+            break;
+        case vxBitwiseOp::XOR:
+            rpp_status = rppt_bitwise_xor(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+            break;
+        case vxBitwiseOp::NOT:
+            rpp_status = rppt_bitwise_not(data->pSrc1, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+            break;
+        default:
+            return VX_ERROR_INVALID_PARAMETERS;
     }
-
-    return return_status;
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializeBitwiseOps(vx_node node, const vx_reference *parameters, vx_uint32 num) {

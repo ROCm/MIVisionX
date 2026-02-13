@@ -14,6 +14,7 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 
 ### Changed
 *  Updated vx_rpp extension for Gaussian Filter
+*  Updated vx_rpp extensions to call unified rppt functions
 
 ## MIVisionX 3.5.0 for ROCm 7.2.0
 

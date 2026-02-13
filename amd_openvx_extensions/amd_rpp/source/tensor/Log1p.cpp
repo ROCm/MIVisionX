@@ -98,12 +98,12 @@ static vx_status VX_CALLBACK processLog1p(vx_node node, const vx_reference *para
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        rpp_status = rppt_log1p_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pSrcRoi, data->handle->rppHandle);
+        rpp_status = rppt_log1p(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pSrcRoi, data->handle->rppHandle, RPP_HIP_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_log1p_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pSrcRoi, data->handle->rppHandle);
+        rpp_status = rppt_log1p(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pSrcRoi, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;

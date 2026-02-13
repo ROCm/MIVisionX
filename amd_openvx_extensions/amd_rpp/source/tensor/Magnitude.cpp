@@ -129,11 +129,11 @@ static vx_status VX_CALLBACK processMagnitude(vx_node node, const vx_reference *
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_magnitude_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_magnitude(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_magnitude_host(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_magnitude(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
 

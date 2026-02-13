@@ -164,16 +164,16 @@ static vx_status VX_CALLBACK processBitwiseOps(vx_node node, const vx_reference 
 #if ENABLE_HIP
         switch (data->opType) {
             case vxBitwiseOp::AND:
-                rpp_status = rppt_bitwise_and_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                rpp_status = rppt_bitwise_and(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
                 break;
             case vxBitwiseOp::OR:
-                rpp_status = rppt_bitwise_or_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                rpp_status = rppt_bitwise_or(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
                 break;
             case vxBitwiseOp::XOR:
-                rpp_status = rppt_bitwise_xor_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                rpp_status = rppt_bitwise_xor(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
                 break;
             case vxBitwiseOp::NOT:
-                rpp_status = rppt_bitwise_not_gpu(data->pSrc1, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                rpp_status = rppt_bitwise_not(data->pSrc1, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
                 break;
             default:
                 return VX_ERROR_INVALID_PARAMETERS;
@@ -183,16 +183,16 @@ static vx_status VX_CALLBACK processBitwiseOps(vx_node node, const vx_reference 
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         switch (data->opType) {
             case vxBitwiseOp::AND:
-                rpp_status = rppt_bitwise_and_host(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                rpp_status = rppt_bitwise_and(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
                 break;
             case vxBitwiseOp::OR:
-                rpp_status = rppt_bitwise_or_host(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                rpp_status = rppt_bitwise_or(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
                 break;
             case vxBitwiseOp::XOR:
-                rpp_status = rppt_bitwise_xor_host(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                rpp_status = rppt_bitwise_xor(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
                 break;
             case vxBitwiseOp::NOT:
-                rpp_status = rppt_bitwise_not_host(data->pSrc1, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+                rpp_status = rppt_bitwise_not(data->pSrc1, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
                 break;
             default:
                 return VX_ERROR_INVALID_PARAMETERS;

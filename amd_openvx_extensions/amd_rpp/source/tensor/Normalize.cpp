@@ -216,12 +216,12 @@ static vx_status VX_CALLBACK processNormalize(vx_node node, const vx_reference *
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        rpp_status = rppt_normalize_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
+        rpp_status = rppt_normalize(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle, RPP_HIP_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_normalize_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
+        rpp_status = rppt_normalize(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
 #endif

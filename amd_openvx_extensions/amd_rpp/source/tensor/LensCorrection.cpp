@@ -125,11 +125,11 @@ static vx_status VX_CALLBACK processLensCorrection(vx_node node, const vx_refere
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        rpp_status = rppt_lens_correction_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, static_cast<Rpp32f *>(data->d_pRowRemapTable), static_cast<Rpp32f *>(data->d_pColRemapTable), data->pTableDesc, data->pCameraMatrix, data->pDistortionCoeffs, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_lens_correction(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, static_cast<Rpp32f *>(data->d_pRowRemapTable), static_cast<Rpp32f *>(data->d_pColRemapTable), data->pTableDesc, data->pCameraMatrix, data->pDistortionCoeffs, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_lens_correction_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pRowRemapTable, data->pColRemapTable, data->pTableDesc, data->pCameraMatrix, data->pDistortionCoeffs, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_lens_correction(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pRowRemapTable, data->pColRemapTable, data->pTableDesc, data->pCameraMatrix, data->pDistortionCoeffs, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;

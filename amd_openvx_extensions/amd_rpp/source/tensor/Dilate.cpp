@@ -121,7 +121,7 @@ static vx_status VX_CALLBACK processDilate(vx_node node, const vx_reference *par
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_dilate_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_dilate(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else {

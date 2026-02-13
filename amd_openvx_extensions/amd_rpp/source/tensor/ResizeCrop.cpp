@@ -131,11 +131,11 @@ static vx_status VX_CALLBACK processResizeCrop(vx_node node, const vx_reference 
 #if ENABLE_OPENCL
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #elif ENABLE_HIP
-        rpp_status = rppt_resize_crop_mirror_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pDstImgSize, data->interpolationType, data->pMirror, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_resize_crop_mirror(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pDstImgSize, data->interpolationType, data->pMirror, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_resize_crop_mirror_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pDstImgSize, data->interpolationType, data->pMirror, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_resize_crop_mirror(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pDstImgSize, data->interpolationType, data->pMirror, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;

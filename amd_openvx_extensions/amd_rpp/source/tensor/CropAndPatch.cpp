@@ -143,17 +143,17 @@ static vx_status VX_CALLBACK processCropAndPatch(vx_node node, const vx_referenc
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_crop_and_patch_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc,
-                                             data->pDst, data->pDstDesc,
-                                             data->pDstRoi, data->pCropRoi, data->pPatchRoi,
-                                             data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_crop_and_patch(data->pSrc1, data->pSrc2, data->pSrcDesc,
+                                         data->pDst, data->pDstDesc,
+                                         data->pDstRoi, data->pCropRoi, data->pPatchRoi,
+                                         data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_crop_and_patch_host(data->pSrc1, data->pSrc2, data->pSrcDesc,
-                                              data->pDst, data->pDstDesc,
-                                              data->pDstRoi, data->pCropRoi, data->pPatchRoi,
-                                              data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_crop_and_patch(data->pSrc1, data->pSrc2, data->pSrcDesc,
+                                         data->pDst, data->pDstDesc,
+                                         data->pDstRoi, data->pCropRoi, data->pPatchRoi,
+                                         data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
 

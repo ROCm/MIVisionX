@@ -126,13 +126,13 @@ static vx_status VX_CALLBACK processNonLinearBlend(vx_node node, const vx_refere
     STATUS_ERROR_CHECK(refreshNonLinearBlend(node, parameters, num, data));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_non_linear_blend_gpu(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                               data->pStdDev, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_non_linear_blend(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc,
+                                          data->pStdDev, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) { // CPU
-        rpp_status = rppt_non_linear_blend_host(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                                data->pStdDev, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_non_linear_blend(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc,
+                                          data->pStdDev, data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;

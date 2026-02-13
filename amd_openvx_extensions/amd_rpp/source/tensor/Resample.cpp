@@ -162,8 +162,8 @@ static vx_status VX_CALLBACK processResample(vx_node node, const vx_reference *p
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
 #if RPP_AUDIO
-        rpp_status = rppt_resample_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                        data->pInRateTensor, data->pOutRateTensor, data->pSrcRoi, data->window, data->handle->rppHandle);
+        rpp_status = rppt_resample(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
+                                    data->pInRateTensor, data->pOutRateTensor, data->pSrcRoi, data->window, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #else
         return_status = VX_ERROR_NOT_SUPPORTED;

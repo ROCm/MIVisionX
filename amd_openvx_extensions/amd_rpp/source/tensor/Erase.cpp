@@ -144,15 +144,15 @@ static vx_status VX_CALLBACK processErase(vx_node node, const vx_reference *para
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_erase_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                    data->pAnchor, data->pColors, data->pNumBoxes,
-                                    data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_erase(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
+                                data->pAnchor, data->pColors, data->pNumBoxes,
+                                data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HIP_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_erase_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                     data->pAnchor, data->pColors, data->pNumBoxes,
-                                     data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_erase(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
+                                data->pAnchor, data->pColors, data->pNumBoxes,
+                                data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
 

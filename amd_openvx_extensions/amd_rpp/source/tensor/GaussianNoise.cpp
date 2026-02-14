@@ -122,7 +122,7 @@ static vx_status VX_CALLBACK validateGaussianNoise(vx_node node, const vx_refere
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_INT32)
+    if (scalar_type != VX_TYPE_UINT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #6 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
@@ -245,18 +245,19 @@ static vx_status VX_CALLBACK initializeGaussianNoise(vx_node node, const vx_refe
         fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
     }
 
+    const size_t rpp_batch_size = data->pSrcDesc ? data->pSrcDesc->n : data->inputTensorDims[0];
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, data->inputTensorDims[0] * sizeof(vx_float32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, data->inputTensorDims[0] * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, rpp_batch_size * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, rpp_batch_size * sizeof(vx_float32)));
 #endif
     } else {
-        data->pMean = new vx_float32[data->inputTensorDims[0]];
-        data->pStdDev = new vx_float32[data->inputTensorDims[0]];
+        data->pMean = new vx_float32[rpp_batch_size];
+        data->pStdDev = new vx_float32[rpp_batch_size];
     }
     data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
     refreshGaussianNoise(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, rpp_batch_size, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }

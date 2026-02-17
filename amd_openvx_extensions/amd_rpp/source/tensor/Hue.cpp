@@ -110,12 +110,15 @@ static vx_status VX_CALLBACK validateHue(vx_node node, const vx_reference parame
 static vx_status VX_CALLBACK processHue(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     HueLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshHue(node, parameters, num, data);
+    vx_status status = refreshHue(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
     if (data->pSrcDesc->c == 1)
         return VX_ERROR_NOT_SUPPORTED;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_hue(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pHueShift, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);

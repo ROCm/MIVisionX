@@ -108,10 +108,13 @@ static vx_status VX_CALLBACK validateFishEye(vx_node node, const vx_reference pa
 static vx_status VX_CALLBACK processFishEye(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     FishEyeLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshFishEye(node, parameters, num, data);
+    vx_status status = refreshFishEye(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_fisheye(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);

@@ -125,6 +125,8 @@ static vx_status VX_CALLBACK processNonLinearBlend(vx_node node, const vx_refere
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_non_linear_blend(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc,

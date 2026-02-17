@@ -92,10 +92,13 @@ static vx_status VX_CALLBACK validateChannelPermute(vx_node node, const vx_refer
 static vx_status VX_CALLBACK processChannelPermute(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ChannelPermuteLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshChannelPermute(node, parameters, num, data);
+    vx_status status = refreshChannelPermute(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_channel_permute(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pPermutationTensor, data->handle->rppHandle, backend);

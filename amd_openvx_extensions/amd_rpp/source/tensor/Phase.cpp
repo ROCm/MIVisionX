@@ -122,10 +122,13 @@ static vx_status VX_CALLBACK validatePhase(vx_node node, const vx_reference para
 static vx_status VX_CALLBACK processPhase(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     PhaseLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshPhase(node, parameters, num, data);
+    vx_status status = refreshPhase(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_phase(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);

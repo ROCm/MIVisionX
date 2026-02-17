@@ -127,10 +127,13 @@ static vx_status VX_CALLBACK validateColorCast(vx_node node, const vx_reference 
 static vx_status VX_CALLBACK processColorCast(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     ColorCastLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshColorCast(node, parameters, num, data);
+    vx_status status = refreshColorCast(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_color_cast(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pRgb, data->pAlpha, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);

@@ -91,10 +91,13 @@ static vx_status VX_CALLBACK validateLog(vx_node node, const vx_reference parame
 static vx_status VX_CALLBACK processLog(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     LogLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshLog(node, parameters, num, data);
+    vx_status status = refreshLog(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_log(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pSrcRoi, data->handle->rppHandle, backend);

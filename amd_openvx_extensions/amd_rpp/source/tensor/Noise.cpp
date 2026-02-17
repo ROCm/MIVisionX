@@ -127,10 +127,13 @@ static vx_status VX_CALLBACK validateNoise(vx_node node, const vx_reference para
 static vx_status VX_CALLBACK processNoise(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     NoiseLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshNoise(node, parameters, num, data);
+    vx_status status = refreshNoise(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_salt_and_pepper_noise(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pNoiseProb, data->pSaltProb, data->pSaltValue, data->pPepperValue, data->seed, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);

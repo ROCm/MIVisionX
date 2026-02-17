@@ -114,10 +114,13 @@ static vx_status VX_CALLBACK validateRain(vx_node node, const vx_reference param
 static vx_status VX_CALLBACK processRain(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     RainLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshRain(node, parameters, num, data);
+    vx_status status = refreshRain(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_rain(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->rainPercentage, data->rainWidth, data->rainHeight, data->rainSlantAngle, data->pRainTransperancy, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);

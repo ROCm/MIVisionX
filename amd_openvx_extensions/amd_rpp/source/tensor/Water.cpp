@@ -129,10 +129,13 @@ static vx_status VX_CALLBACK validateWater(vx_node node, const vx_reference para
 static vx_status VX_CALLBACK processWater(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     WaterLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshWater(node, parameters, num, data);
+    vx_status status = refreshWater(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
     RppStatus rpp_status = rppt_water(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pAmplitudeX, data->pAmplitudeY, data->pFrequencyX, data->pFrequencyY, data->pPhaseX, data->pPhaseY, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);

@@ -119,7 +119,7 @@ static vx_status VX_CALLBACK processNonSilentRegionDetection(vx_node node, const
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
 #if RPP_AUDIO
-        rpp_status = rppt_non_silent_region_detection_host(data->pSrc, data->pSrcDesc, data->pSrcLength, data->pDst1, data->pDst2, data->cutOffDB, data->windowLength, data->referencePower, data->resetInterval, data->handle->rppHandle);
+        rpp_status = rppt_non_silent_region_detection(data->pSrc, data->pSrcDesc, data->pSrcLength, data->pDst1, data->pDst2, data->cutOffDB, data->windowLength, data->referencePower, data->resetInterval, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #else
         return_status = VX_ERROR_NOT_SUPPORTED;

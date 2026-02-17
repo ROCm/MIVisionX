@@ -118,24 +118,19 @@ static vx_status VX_CALLBACK validateColorTwist(vx_node node, const vx_reference
 }
 
 static vx_status VX_CALLBACK processColorTwist(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_SUCCESS;
     ColorTwistLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshColorTwist(node, parameters, num, data);
+    vx_status status = refreshColorTwist(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
+#if ENABLE_HIP
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
-    {
-#if ENABLE_OPENCL
         return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        rpp_status = rppt_color_twist_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pSrcDesc, data->pAlpha, data->pBeta, data->pHue, data->pSat, data->pSrcRoi, data->roiType, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_color_twist_host(data->pSrc, data->pSrcDesc, data->pDst, data->pSrcDesc, data->pAlpha, data->pBeta, data->pHue, data->pSat, data->pSrcRoi, data->roiType, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }
-    return return_status;
+    RppStatus rpp_status = rppt_color_twist(data->pSrc, data->pSrcDesc, data->pDst, data->pSrcDesc, data->pAlpha, data->pBeta, data->pHue, data->pSat, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializeColorTwist(vx_node node, const vx_reference *parameters, vx_uint32 num) {

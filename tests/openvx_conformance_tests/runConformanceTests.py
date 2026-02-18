@@ -631,6 +631,9 @@ def main() -> int:
             )
 
     # -- Run CTS --------------------------------------------------------------
+    # Run all requested backends to completion; collect failures and report at the end.
+    failures: List[str] = []
+
     if not args.skip_cts_run:
         if backend_type in ("ALL", "HOST"):
             warn_if_missing_cts_module(cts_host_build, "test-testmodule")
@@ -642,14 +645,14 @@ def main() -> int:
                 summary = write_cts_failure_summary(out_md=out_md, rc=rc, env=env, build_dir=cts_host_build)
                 log.error("CTS run failed (%s). See log: %s", describe_returncode(rc), out_md)
                 log.error("Failure summary: %s", summary)
-                return normalize_returncode(rc)
+                failures.append("HOST (%s)" % describe_returncode(rc))
             host_data = report_path.read_text(encoding="utf-8")
             cts_log_data = out_md.read_text(encoding="utf-8")
             Path("HOST_Conformance_Logs.md").write_text(host_data + "\n\n" + cts_log_data, encoding="utf-8")
 
         if backend_type in ("ALL", "OCL"):
             warn_if_missing_cts_module(cts_ocl_build, "test-testmodule")
-            md_paths: list[Path] = []
+            md_paths = []  # type: List[Path]
             for target in ("CPU", "GPU"):
                 env = make_runtime_env(build_dir=cts_ocl_build, vx_test_data_path=vx_test_data_path, ago_default_target=target)
                 log_runtime_env(env)
@@ -660,14 +663,16 @@ def main() -> int:
                     summary = write_cts_failure_summary(out_md=out_md, rc=rc, env=env, build_dir=cts_ocl_build)
                     log.error("CTS run failed (target=%s, %s). See log: %s", target, describe_returncode(rc), out_md)
                     log.error("Failure summary: %s", summary)
-                    return normalize_returncode(rc)
+                    failures.append("OCL-%s (%s)" % (target, describe_returncode(rc)))
             ocl_data = report_path.read_text(encoding="utf-8")
-            combined = ocl_data + "\n\n" + "\n\n".join(p.read_text(encoding="utf-8") for p in md_paths)
+            combined = ocl_data + "\n\n" + "\n\n".join(
+                p.read_text(encoding="utf-8") for p in md_paths if p.exists()
+            )
             Path("OCL_Conformance_Logs.md").write_text(combined, encoding="utf-8")
 
         if backend_type in ("ALL", "HIP"):
             warn_if_missing_cts_module(cts_hip_build, "test-testmodule")
-            md_paths = []
+            md_paths = []  # type: List[Path]
             for target in ("CPU", "GPU"):
                 env = make_runtime_env(build_dir=cts_hip_build, vx_test_data_path=vx_test_data_path, ago_default_target=target)
                 log_runtime_env(env)
@@ -678,10 +683,16 @@ def main() -> int:
                     summary = write_cts_failure_summary(out_md=out_md, rc=rc, env=env, build_dir=cts_hip_build)
                     log.error("CTS run failed (target=%s, %s). See log: %s", target, describe_returncode(rc), out_md)
                     log.error("Failure summary: %s", summary)
-                    return normalize_returncode(rc)
+                    failures.append("HIP-%s (%s)" % (target, describe_returncode(rc)))
             hip_data = report_path.read_text(encoding="utf-8")
-            combined = hip_data + "\n\n" + "\n\n".join(p.read_text(encoding="utf-8") for p in md_paths)
+            combined = hip_data + "\n\n" + "\n\n".join(
+                p.read_text(encoding="utf-8") for p in md_paths if p.exists()
+            )
             Path("HIP_Conformance_Logs.md").write_text(combined, encoding="utf-8")
+
+    if failures:
+        log.error("CTS failures: %s", ", ".join(failures))
+        return 1
 
     log.info("runConformanceTests.py - V:%s", __version__)
     return 0

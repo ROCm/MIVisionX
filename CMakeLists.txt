@@ -71,7 +71,7 @@ option(ENHANCED_MESSAGE "MIVisionX Enhanced Message Option"        ON)
 option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
-option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
+option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")

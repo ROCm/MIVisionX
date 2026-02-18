@@ -33,7 +33,7 @@ import dataclasses
 from collections import deque
 from datetime import datetime
 from pathlib import Path
-from typing import IO, TextIO
+from typing import Dict, IO, List, TextIO, Tuple
 import argparse
 import logging
 import os
@@ -62,8 +62,8 @@ __status__ = "Shipping"
 # Type aliases
 # ---------------------------------------------------------------------------
 
-Command = list[str]
-Env = dict[str, str]
+Command = List[str]
+Env = Dict[str, str]
 
 # ---------------------------------------------------------------------------
 # Constants / defaults
@@ -79,10 +79,10 @@ class Defaults:
     CTS_REPO: str = "https://github.com/KhronosGroup/OpenVX-cts.git"
     CTS_BRANCH: str = "openvx_1.3"
     HIP_LIB: str = "/opt/rocm/lib/libamdhip64.so"
-    LINUX_LINK_LIBS: tuple[str, ...] = ("pthread", "dl", "m", "rt")
+    LINUX_LINK_LIBS: Tuple[str, ...] = ("pthread", "dl", "m", "rt")
     PARALLEL_JOBS: int = 8
-    VALID_BACKENDS: tuple[str, ...] = ("ALL", "HOST", "HIP", "OCL")
-    ENV_KEYS_TO_LOG: tuple[str, ...] = (
+    VALID_BACKENDS: Tuple[str, ...] = ("ALL", "HOST", "HIP", "OCL")
+    ENV_KEYS_TO_LOG: Tuple[str, ...] = (
         "VX_TEST_DATA_PATH",
         "AGO_DEFAULT_TARGET",
         "LD_LIBRARY_PATH",

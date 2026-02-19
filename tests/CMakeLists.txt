@@ -264,7 +264,7 @@ if(Python3_FOUND)
             --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --backend_type CPU --hidden no 
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
-  set_property(TEST openvx_gdf_tests_CPU PROPERTY ENVIRONMENT "PATH=$PATH:${ROCM_PATH}/bin")
+  set_property(TEST openvx_gdf_tests_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 endif(Python3_FOUND)
 
 # HIP Tests
@@ -305,7 +305,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
             --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --backend_type GPU --hidden no 
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
-    set_property(TEST openvx_gdf_tests_GPU PROPERTY ENVIRONMENT "PATH=$PATH:${ROCM_PATH}/bin")
+    set_property(TEST openvx_gdf_tests_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
   endif(Python3_FOUND)
 endif(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "OPENCL"))
 

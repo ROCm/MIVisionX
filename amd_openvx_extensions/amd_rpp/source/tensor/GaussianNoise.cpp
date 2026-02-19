@@ -276,7 +276,7 @@ static vx_status VX_CALLBACK uninitializeGaussianNoise(vx_node node, const vx_re
         if (data->pSrcRoi3D) {
             hipError_t err = hipHostFree(data->pSrcRoi3D);
             if (err != hipSuccess)
-                std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
+                std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
         }
 #endif
     } else {

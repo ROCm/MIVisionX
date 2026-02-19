@@ -180,7 +180,7 @@ static vx_status VX_CALLBACK initializeFlip(vx_node node, const vx_reference *pa
     data->inputLayout = static_cast<vxTensorLayout>(input_layout);
     data->outputLayout = static_cast<vxTensorLayout>(output_layout);
 
-    // Querying for input tensor    
+    // Querying for input tensor
     if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW) {
         data->pSrcGenericDesc = new RpptGenericDesc;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcGenericDesc->numDims, sizeof(data->pSrcGenericDesc->numDims)));
@@ -264,7 +264,7 @@ static vx_status VX_CALLBACK uninitializeFlip(vx_node node, const vx_reference *
         if (data->pSrcRoi3D) {
             hipError_t err = hipHostFree(data->pSrcRoi3D);
             if (err != hipSuccess)
-                std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
+                std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
         }
 #endif
     } else {

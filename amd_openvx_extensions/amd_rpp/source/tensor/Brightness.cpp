@@ -262,7 +262,7 @@ static vx_status VX_CALLBACK uninitializeBrightness(vx_node node, const vx_refer
         if (data->pSrcRoi3D) {
             hipError_t err = hipHostFree(data->pSrcRoi3D);
             if (err != hipSuccess)
-                std::cerr << "\n[ERR] hipFree failed  " << std::to_string(err) << "\n";
+                std::cerr << "\n[ERR] hipHostFree failed  " << std::to_string(err) << "\n";
         }
 #endif
     } else {

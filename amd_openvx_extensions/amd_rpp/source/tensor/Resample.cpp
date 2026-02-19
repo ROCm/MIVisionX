@@ -59,7 +59,7 @@ inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t 
     window.lobes = lobes;
     if (is_pinned_memory) {
 #if ENABLE_HIP
-        auto status = hipHostMalloc(&window.lookupPinned, (coeffs + 5) * sizeof(float));
+        auto status = hipHostMalloc(&(window.lookupPinned), (coeffs + 5) * sizeof(float));
         if (status != hipSuccess) {
             fprintf(stderr, "Runtime error: hipHostMalloc for window.lookupPinned returned %d at %s:%d\n", status, __FILE__, __LINE__);
             window.lookupPinned = nullptr;
@@ -169,24 +169,20 @@ static vx_status VX_CALLBACK processResample(vx_node node, const vx_reference *p
     ResampleLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshResample(node, parameters, num, data);
-#if RPP_AUDIO
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        data->pDstDesc->strides.hStride = data->pDstDesc->strides.nStride;
-        rpp_status = rppt_resample_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                        data->pInRateTensor, data->pOutRateTensor, data->pSrcRoi, *(data->window), data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    #endif
-    }
-    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-#if RPP_AUDIO
-        rpp_status = rppt_resample(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                    data->pInRateTensor, data->pOutRateTensor, data->pSrcRoi, data->window, data->handle->rppHandle, RPP_HOST_BACKEND);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
-        return_status = VX_ERROR_NOT_SUPPORTED;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    }
+#if RPP_AUDIO
+    rpp_status = rppt_resample(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
+                                data->pInRateTensor, data->pOutRateTensor, data->pSrcRoi, *(data->window), data->handle->rppHandle, backend);
+    return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#else
+    return_status = VX_ERROR_NOT_SUPPORTED;
+#endif
     return return_status;
 }
 

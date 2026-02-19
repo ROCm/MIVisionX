@@ -135,14 +135,20 @@ static vx_status VX_CALLBACK processSpectrogram(vx_node node, const vx_reference
     SpectrogramLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshSpectrogram(node, parameters, data);
-#if RPP_AUDIO
-        rpp_status = rppt_spectrogram(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
-                                       data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->handle->rppHandle, RPP_HOST_BACKEND);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#if ENABLE_HIP
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
-        return_status = VX_ERROR_NOT_SUPPORTED; 
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    }
+#if RPP_AUDIO
+    rpp_status = rppt_spectrogram(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
+                                    data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->handle->rppHandle, backend);
+    return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#else
+    return_status = VX_ERROR_NOT_SUPPORTED; 
+#endif
     return return_status;
 }
 

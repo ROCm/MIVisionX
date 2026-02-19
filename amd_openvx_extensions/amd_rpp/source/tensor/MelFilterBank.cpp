@@ -132,15 +132,8 @@ static vx_status VX_CALLBACK processMelFilterBank(vx_node node, const vx_referen
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshMelFilterBank(node, parameters, num, data);
 #if RPP_AUDIO
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        rpp_status = rppt_mel_filter_bank_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->freqHigh, data->freqLow,
-                                               data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_mel_filter_bank_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->freqHigh, data->freqLow,
-                                               data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle);
+        rpp_status = rppt_mel_filter_bank(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->freqHigh, data->freqLow,
+                                          data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
 #else

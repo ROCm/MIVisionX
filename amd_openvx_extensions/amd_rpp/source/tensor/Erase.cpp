@@ -135,28 +135,20 @@ static vx_status VX_CALLBACK validateErase(vx_node node, const vx_reference para
 }
 
 static vx_status VX_CALLBACK processErase(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_SUCCESS;
-
     EraseLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshErase(node, parameters, num, data));
-
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_erase_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                    data->pAnchor, data->pColors, data->pNumBoxes,
-                                    data->pSrcRoi, data->roiType, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_erase_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                     data->pAnchor, data->pColors, data->pNumBoxes,
-                                     data->pSrcRoi, data->roiType, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }
-
-    return return_status;
+    RppStatus rpp_status = rppt_erase(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
+                                      data->pAnchor, data->pColors, data->pNumBoxes,
+                                      data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializeErase(vx_node node, const vx_reference *parameters, vx_uint32 num) {

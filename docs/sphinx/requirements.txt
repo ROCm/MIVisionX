@@ -43,7 +43,7 @@ comm==0.2.2
     # via ipykernel
 contourpy==1.3.1
     # via matplotlib
-cryptography==44.0.1
+cryptography==46.0.5
     # via pyjwt
 cycler==0.12.1
     # via matplotlib
@@ -167,7 +167,7 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-pillow==11.0.0
+pillow==12.1.1
     # via matplotlib
 platformdirs==4.3.6
     # via jupyter-core
@@ -227,7 +227,7 @@ requests==2.32.4
     # via
     #   pygithub
     #   sphinx
-rocm-docs-core[api-reference]==1.31.1
+rocm-docs-core[api-reference]==1.31.3
     # via -r requirements.in
 rpds-py==0.22.3
     # via
@@ -299,8 +299,9 @@ traitlets==5.14.3
     #   matplotlib-inline
     #   nbclient
     #   nbformat
-typing-extensions==4.12.2
+typing-extensions==4.15.0
     # via
+    #   cryptography
     #   ipython
     #   myst-nb
     #   pydata-sphinx-theme

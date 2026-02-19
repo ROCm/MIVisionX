@@ -20,8 +20,9 @@
 cmake_minimum_required(VERSION 3.10)
 include( utils.cmake )
 set( MIVISIONX "mivisionx" )
-set( BUILD_ENABLE_LINTIAN_OVERRIDES ON CACHE BOOL "Enable/Disable Lintian Overrides" )
-set( BUILD_DEBIAN_PKGING_FLAG ON CACHE BOOL "Internal Status Flag to indicate Debian Packaging Build" )
+set( BUILD_ENABLE_LINTIAN_OVERRIDES OFF CACHE BOOL "Enable/Disable Lintian Overrides" )
+set( BUILD_DEBIAN_PKGING_FLAG OFF CACHE BOOL "Internal Status Flag to indicate Debian Packaging Build" )
+option(DISABLE_LINTIAN "disable lintian" ON) 
 
 # ROCM Path
 if(DEFINED ENV{ROCM_PATH})
@@ -40,6 +41,9 @@ if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang
   set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
 endif()
 
+set(MIVISIONX_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(MIVISIONX_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
 ## MIVisionX package version
 set(VERSION "3.5.0")
 
@@ -49,9 +53,9 @@ project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${MIVISIONX_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${MIVISIONX_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${MIVISIONX_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 
 find_program(MAKE_NSIS_EXE makensis)
 find_program(RPMBUILD_EXE rpmbuild)
@@ -67,7 +71,7 @@ option(ENHANCED_MESSAGE "MIVisionX Enhanced Message Option"        ON)
 option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
-option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
+option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")
@@ -90,6 +94,7 @@ if(ENHANCED_MESSAGE)
 endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
+message("-- ${BoldBlue}MIVisionX Source Root Path -- ${MIVISIONX_ROOT_DIR}${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH ON)
@@ -349,8 +354,8 @@ endif()
 if(APPLE)
   set(CPACK_GENERATOR "Bundle")
   set(CPACK_BUNDLE_NAME "${PROJECT_NAME}")
-  set(CPACK_BUNDLE_PLIST "${CMAKE_SOURCE_DIR}/.github/info.plist")
-  set(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/docs/data/MIVisionX.bmp")
+  set(CPACK_BUNDLE_PLIST "${MIVISIONX_ROOT_DIR}/.github/info.plist")
+  set(CPACK_BUNDLE_ICON "${MIVISIONX_ROOT_DIR}/docs/data/MIVisionX.bmp")
 else()
   set(CPACK_GENERATOR "TGZ;ZIP")
   if(EXISTS ${MAKE_NSIS_EXE})
@@ -368,7 +373,9 @@ else()
   endif()
 endif()
 
-configure_pkg( ${MIVISIONX} ${COMP_TYPE} ${CPACK_PACKAGE_VERSION} ${PKG_MAINTAINER_NM} ${PKG_MAINTAINER_EMAIL} )
+if(NOT DISABLE_LINTIAN)
+    configure_pkg( ${MIVISIONX} ${COMP_TYPE} ${CPACK_PACKAGE_VERSION} ${PKG_MAINTAINER_NM} ${PKG_MAINTAINER_EMAIL} )
+endif()
 
 include(CPack)
 

@@ -136,17 +136,8 @@ static vx_status VX_CALLBACK processSpectrogram(vx_node node, const vx_reference
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshSpectrogram(node, parameters, data);
 #if RPP_AUDIO
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-    #if ENABLE_OPENCL
-            return_status = VX_ERROR_NOT_IMPLEMENTED;
-    #elif ENABLE_HIP
-            rpp_status = rppt_spectrogram_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
-                                            data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->handle->rppHandle);
-            return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_spectrogram_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
-                                           data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->handle->rppHandle);
+        rpp_status = rppt_spectrogram(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
+                                       data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #else
         return_status = VX_ERROR_NOT_SUPPORTED; 

@@ -8,9 +8,16 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 
 ### Added
 *  Added the `PythonFunction` extension to VX_RPP
+*  Added unified `rppt_*()` function with `RppBackend` parameter for vx_rpp extensions to support runtime backend selection
+
+### Removed
+*  Removed the batchPD extensions from VX_RPP
+*  Removed separate `rppt_*_host()` and `rppt_*_gpu()` function calls for vx_rpp extensions
 
 ### Changed
 *  Updated vx_rpp extension for Gaussian Filter
+*  **Breaking change**: This change requires updating to RPP version 3.1.0 with unified API support
+*  MIGraphX extension turned off by default
 
 ## MIVisionX 3.5.0 for ROCm 7.2.0
 

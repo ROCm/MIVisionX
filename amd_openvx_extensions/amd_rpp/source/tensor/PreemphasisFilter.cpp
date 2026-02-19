@@ -102,7 +102,8 @@ static vx_status VX_CALLBACK processPreemphasisFilter(vx_node node, const vx_ref
 #endif
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_pre_emphasis_filter_host((float *)data->pSrc, data->pSrcDesc, (float *)data->pDst, data->pDstDesc, (Rpp32s *)data->pSampleSize, data->pPreemphCoeff, RpptAudioBorderType(data->borderType), data->handle->rppHandle);
+#if RPP_AUDIO
+        rpp_status = rppt_pre_emphasis_filter((float *)data->pSrc, data->pSrcDesc, (float *)data->pDst, data->pDstDesc, (Rpp32s *)data->pSampleSize, data->pPreemphCoeff, RpptAudioBorderType(data->borderType), data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
 #else

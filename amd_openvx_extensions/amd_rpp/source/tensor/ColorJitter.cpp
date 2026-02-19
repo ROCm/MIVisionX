@@ -128,9 +128,9 @@ static vx_status VX_CALLBACK processColorJitter(vx_node node, const vx_reference
         return_status = VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_color_jitter_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                            data->pBrightness, data->pContrast, data->pHue, data->pSaturation,
-                                            data->pSrcRoi, data->roiType, data->handle->rppHandle);
+        rpp_status = rppt_color_jitter(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
+                                        data->pBrightness, data->pContrast, data->pHue, data->pSaturation,
+                                        data->pSrcRoi, data->roiType, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
     }
     return return_status;

@@ -94,15 +94,8 @@ static vx_status VX_CALLBACK processDownmix(vx_node node, const vx_reference *pa
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshDownmix(node, parameters, num, data);
 #if RPP_AUDIO
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        rpp_status = rppt_down_mixing_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, (Rpp32s *)data->pSrcRoi, false, data->handle->rppHandle);
+        rpp_status = rppt_down_mixing(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, (Rpp32s *)data->pSrcRoi, false, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-#endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_down_mixing_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, (Rpp32s *)data->pSrcRoi, false, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }
 #else
     return_status = VX_ERROR_NOT_SUPPORTED;
 #endif
